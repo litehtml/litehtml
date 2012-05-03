@@ -28,7 +28,21 @@ litehtml::element::~element()
 
 void litehtml::element::appendChild( litehtml::element* el )
 {
-	if(el)
+	bool add = true;
+	if(el->is_white_space())
+	{
+		if(m_children.empty())
+		{
+			add = false;
+		} else
+		{
+			if(m_children.back()->is_white_space())
+			{
+				add = false;
+			}
+		}
+	}
+	if(el && add)
 	{
 		el->m_parent = this;
 		m_children.push_back(el);
@@ -346,6 +360,21 @@ void litehtml::element::parse_styles()
 	m_borders.top		= m_doc->cvt_units(m_css_borders.top,		fntsize);
 	m_borders.bottom	= m_doc->cvt_units(m_css_borders.bottom,	fntsize);
 
+	css_length line_height;
+	line_height.fromString(get_style_property(L"line-height",	true,	L"normal"));
+	if(line_height.is_predefined())
+	{
+		line_height.set_value(110, css_units_percentage);
+		m_line_height = line_height.calc_percent(fntsize);
+	} else if(line_height.units() == css_units_none)
+	{
+		m_line_height = (int) (line_height.val() * fntsize);
+	} else
+	{
+		m_line_height = line_height.calc_percent(fntsize);
+	}
+
+
 	if(m_display == display_list_item)
 	{
 		const wchar_t* list_type = get_style_property(L"list-style-type", true, L"disc");
@@ -583,9 +612,8 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 	m_floats.clear();
 
 	line ln;
-	set_line_left(ln, 0);
-
-	int max_x = get_line_right(0, max_width);
+	init_line(ln, 0, max_width);
+	int max_x = ln.line_right();
 
 	for(elements_vector::iterator i = m_inlines.begin(); i != m_inlines.end(); i++)
 	{
@@ -627,7 +655,7 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 				{
 					if(!ln.empty())
 					{
-						max_x = add_line(ln, max_x);
+						max_x = add_line(ln, max_width);
 					}
 					int rw = el->render_table(hdc, ln.get_left(), ln.get_top(), max_x);
 					ln += el;
@@ -639,7 +667,7 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 				{
 					if(!ln.empty())
 					{
-						max_x = add_line(ln, max_x);
+						max_x = add_line(ln, max_width);
 					}
 					int rw = el->render(hdc, ln.get_left(), ln.get_top(), max_x);
 					ln += el;
@@ -651,29 +679,21 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 				{
 					if(!ln.empty())
 					{
-						max_x = add_line(ln, max_x);
+						add_line(ln, max_width);
 					}
-					ln.set_left(0);
-					if(set_line_clear(ln, el->m_clear))
-					{
-						max_x = get_line_right(ln.get_top(), max_width);
-					}
-					int rw = el->render(hdc, ln.get_left(), ln.get_top(), max_x);
+					init_line(ln, ln.get_top(), max_width, el->m_clear);
+					int rw = el->render(hdc, 0, ln.get_top(), max_width);
 					ln += el;
-					max_x = add_line(ln, max_width);
+					add_line(ln, max_width);
+
+					max_x = ln.line_right();
 					ret_width = max(ret_width, rw);
 				}
 				break;
 			case display_inline_block:
 				{
 					el->render(hdc, ln.get_left(), ln.get_top(), max_x);
-
-					int oldTop = ln.get_top();
-					max_x = place_inline(el, ln, max_x, max_width);
-					if(oldTop != ln.get_top())
-					{
-						max_x = get_line_right(ln.get_top(), max_width);
-					}
+					max_x = place_inline(el, ln, max_width);
 					ret_width = max(ret_width, el->right());
 				}
 				break;
@@ -682,12 +702,7 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 					litehtml::size sz;
 					el->get_content_size(hdc, sz, max_x);
 					el->m_pos = sz;
-					int oldTop = ln.get_top();
-					max_x = place_inline(el, ln, max_x, max_width);
-					if(oldTop != ln.get_top())
-					{
-						max_x = get_line_right(ln.get_top(), max_width);
-					}
+					max_x = place_inline(el, ln, max_width);
 					ret_width = max(ret_width, el->right());
 				}
 				break;
@@ -705,35 +720,7 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 
 	// calculate outlines
 
-	m_padding.left	= m_css_padding.left.calc_percent(parent_width);
-	m_padding.right	= m_css_padding.right.calc_percent(parent_width);
-
-	m_borders.left	= m_css_borders.left.calc_percent(parent_width);
-	m_borders.right	= m_css_borders.right.calc_percent(parent_width);
-
-	m_margins.left	= m_css_margins.left.calc_percent(parent_width);
-	m_margins.right	= m_css_margins.right.calc_percent(parent_width);
-
-	m_margins.top		= m_css_margins.top.calc_percent(0);
-	m_margins.bottom	= m_css_margins.bottom.calc_percent(0);
-
-	if(m_display == display_block)
-	{
-		if(m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
-		{
-			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right;
-			m_margins.left	= (parent_width - el_width) / 2;
-			m_margins.right	= (parent_width - el_width) - m_margins.left;
-		} else if(m_css_margins.left.is_predefined() && !m_css_margins.right.is_predefined())
-		{
-			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.right;
-			m_margins.left	= parent_width - el_width;
-		} else if(!m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
-		{
-			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.left;
-			m_margins.right	= parent_width - el_width;
-		}
-	}
+	calc_outlines(parent_width);
 
 	//
 
@@ -871,7 +858,7 @@ int litehtml::element::add_line( line& ln, int max_width )
 
 	int ln_top = 0;
 
-	if(ln.finish())
+	if(ln.finish(m_text_align))
 	{
 		m_lines.push_back(ln);
 		ln_top = ln.get_top() + ln.get_height()/* + 1*/;
@@ -882,9 +869,9 @@ int litehtml::element::add_line( line& ln, int max_width )
 
 
 	ln.clear();
-	set_line_left(ln, ln_top);
-	ln.set_top(ln_top, this);
-	return get_line_right(ln.get_top(), max_width);
+	init_line(ln, ln_top, max_width);
+	
+	return ln.line_right();
 }
 
 int litehtml::element::get_base_line()
@@ -1227,56 +1214,22 @@ int litehtml::element::get_line_right( int y, int def_right ) const
 
 void litehtml::element::fix_line_width( line& ln, int max_width )
 {
-	int left	= get_line_left(ln.get_top());
-	int right	= get_line_right(ln.get_top(), max_width);
-
 	elements_vector els;
 	ln.get_elements(els);
 
 	line ln_new;
-	ln_new.set_top(ln.get_top(), this);
-	ln_new.set_left(left);
+	init_line(ln_new, ln.get_top(), max_width);
 
 	for(elements_vector::iterator i = els.begin(); i != els.end(); i++)
 	{
 		object_ptr<element> el = (*i);
-		place_inline(el, ln_new, right, max_width);
+		place_inline(el, ln_new, max_width);
 	}
 
 	ln = ln_new;
-
-
-/*
-	int left	= get_line_left(ln.get_top());
-	int right	= get_line_right(ln.get_top(), max_width);
-
-	int width = max_width;
-	elements_vector els;
-	ln.fix_width(left, width, els);
-	if(!els.empty())
-	{
-		width = add_line(ln, max_width);
-		for (elements_vector::iterator i = els.begin(); i != els.end(); i++)
-		{
-			object_ptr<element> el = (*i);
-			if(!ln.empty() && ln.get_left() + el->width() > width)
-			{
-				width = add_line(ln, max_width);
-			} else
-			{
-				el->m_pos.x = ln.get_left() + el->content_margins_left();
-			}
-			ln += el;
-		}
-		if(!ln.empty())
-		{
-			width = add_line(ln, max_width);
-		}
-	}
-*/
 }
 
-void litehtml::element::set_line_left(line& ln, int top)
+void litehtml::element::init_line(line& ln, int top, int def_right, element_clear el_clear)
 {
 	int left = 0;
 	if(m_list_style_position == list_style_position_inside && m_display == display_list_item)
@@ -1289,7 +1242,38 @@ void litehtml::element::set_line_left(line& ln, int top)
 		left += get_line_left(top);
 	}
 
-	ln.set_left(left);
+	switch(el_clear)
+	{
+	case clear_left:
+		{
+			int fh = get_left_floats_height();
+			if(fh && fh > ln.get_top())
+			{
+				top = fh;
+			}
+		}
+		break;
+	case clear_right:
+		{
+			int fh = get_right_floats_height();
+			if(fh && fh > ln.get_top())
+			{
+				top = fh;
+			}
+		}
+		break;
+	case clear_both:
+		{
+			int fh = get_floats_height();
+			if(fh && fh > ln.get_top())
+			{
+				top = fh;
+			}
+		}
+		break;
+	}
+
+	ln.init(left, get_line_right(top, def_right), top, m_line_height);
 }
 
 void litehtml::element::add_float( element* el )
@@ -1321,61 +1305,20 @@ void litehtml::element::get_abs_position( position& pos, const element* root )
 	}
 }
 
-bool litehtml::element::set_line_clear( line& ln, element_clear clr )
+int litehtml::element::place_inline( element* el, line& ln, int max_width )
 {
-	switch(clr)
-	{
-	case clear_left:
-		{
-			int fh = get_left_floats_height();
-			if(fh && fh > ln.get_top())
-			{
-				ln.set_top(fh, this);
-				return true;
-			}
-		}
-		break;
-	case clear_right:
-		{
-			int fh = get_right_floats_height();
-			if(fh && fh > ln.get_top())
-			{
-				ln.set_top(fh, this);
-				return true;
-			}
-		}
-		break;
-	case clear_both:
-		{
-			int fh = get_floats_height();
-			if(fh && fh > ln.get_top())
-			{
-				ln.set_top(fh, this);
-				return true;
-			}
-		}
-		break;
-	}
-	return false;
-}
-
-int litehtml::element::place_inline( element* el, line& ln, int max_x, int max_right )
-{
-	int ret = max_x;
-	if(ln.get_left() + el->width() > max_x && !(el->is_white_space() && ln.is_white_space()))
+	if(!ln.have_room_for(el))
 	{
 		if(!ln.empty())
 		{
-			ret = add_line(ln, max_right);
-			return place_inline(el, ln, ret, max_right);
+			add_line(ln, max_width);
+			return place_inline(el, ln, max_width);
 		} else
 		{
 			int new_top = find_next_line_top(ln.get_top(), el->width());
 			if(new_top != ln.get_top())
 			{
-				ln.set_top(new_top, this);
-				set_line_left(ln, ln.get_top());
-				ret = get_line_right(ln.get_top(), max_x);
+				init_line(ln, new_top, max_width);
 			}
 		}
 	}
@@ -1383,7 +1326,7 @@ int litehtml::element::place_inline( element* el, line& ln, int max_x, int max_r
 	el->m_pos.x = ln.get_left() + el->content_margins_left();
 	ln += el;
 
-	return ret;
+	return ln.line_right();
 }
 
 int litehtml::element::find_next_line_top( int top, int width )
@@ -1586,3 +1529,37 @@ void litehtml::element::add_absolute( element* el )
 		m_parent->add_absolute(el);
 	}
 }
+
+void litehtml::element::calc_outlines( int parent_width )
+{
+	m_padding.left	= m_css_padding.left.calc_percent(parent_width);
+	m_padding.right	= m_css_padding.right.calc_percent(parent_width);
+
+	m_borders.left	= m_css_borders.left.calc_percent(parent_width);
+	m_borders.right	= m_css_borders.right.calc_percent(parent_width);
+
+	m_margins.left	= m_css_margins.left.calc_percent(parent_width);
+	m_margins.right	= m_css_margins.right.calc_percent(parent_width);
+
+	m_margins.top		= m_css_margins.top.calc_percent(0);
+	m_margins.bottom	= m_css_margins.bottom.calc_percent(0);
+
+	if(m_display == display_block)
+	{
+		if(m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
+		{
+			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right;
+			m_margins.left	= (parent_width - el_width) / 2;
+			m_margins.right	= (parent_width - el_width) - m_margins.left;
+		} else if(m_css_margins.left.is_predefined() && !m_css_margins.right.is_predefined())
+		{
+			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.right;
+			m_margins.left	= parent_width - el_width;
+		} else if(!m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
+		{
+			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.left;
+			m_margins.right	= parent_width - el_width;
+		}
+	}
+}
+

@@ -38,6 +38,12 @@ void litehtml::line::set_top( int top, element* parent )
 	m_top	= top;
 	int parent_base_line = parent ? parent->get_base_line() : 0;
 
+	int add = 0;
+	if(m_min_height > m_height)
+	{
+		add = (m_min_height - m_height) / 2;
+	}
+
 	for(elements_vector::iterator i = m_items.begin(); i != m_items.end(); i++)
 	{
 		object_ptr<element> el = (*i);
@@ -47,6 +53,7 @@ void litehtml::line::set_top( int top, element* parent )
 			{
 			case va_baseline:
 				el->m_pos.y = top + m_height - m_bottom_margin - parent_base_line - m_padding_bottom - el->m_pos.height + el->get_base_line() - m_top_margin;
+				el->m_pos.y += add;
 				break;
 			default:
 				el->m_pos.y = top + el->content_margins_top();
@@ -64,17 +71,36 @@ void litehtml::line::get_elements( elements_vector& els )
 	els.insert(els.begin(), m_items.begin(), m_items.end());
 }
 
-bool litehtml::line::finish()
+bool litehtml::line::finish(text_align align)
 {
 	m_height			= 0;
 	m_padding_bottom	= 0;
 	m_top_margin		= 0;
 	m_bottom_margin		= 0;
 
+	int add = 0;
+
+	if(!is_block() && !empty() && align != text_align_left)
+	{
+		switch(align)
+		{
+		case text_align_right:
+			add = line_right() - m_items.back()->right();
+			break;
+		case text_align_center:
+			add = (line_right() - m_items.back()->right()) / 2;
+			break;
+		}
+		if(add < 0) add = 0;
+	}
+
 	bool ret = false;
 	for(elements_vector::reverse_iterator i = m_items.rbegin(); i!= m_items.rend(); i++)
 	{
 		object_ptr<element> el = (*i);
+
+		el->m_pos.x += add;
+
 		if(el->is_white_space() && !ret)
 		{
 			el->m_skip = true;
@@ -100,4 +126,22 @@ void litehtml::line::add_top( int add )
 		object_ptr<element> el = (*i);
 		el->m_pos.y += add;
 	}
+}
+
+void litehtml::line::init( int left, int right, int top, int line_height )
+{
+	m_line_left		= left;
+	m_left			= left;
+	m_line_right	= right;
+	m_min_height	= line_height;
+	m_top			= top;
+}
+
+bool litehtml::line::have_room_for( element* el )
+{
+	if(m_left + el->width() > m_line_right)
+	{
+		return false;
+	}
+	return true;
 }

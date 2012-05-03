@@ -41,6 +41,7 @@ namespace litehtml
 		bool				m_skip;
 		background			m_bg;
 		element_position	m_el_position;
+		int					m_line_height;
 
 		css_margins			m_css_margins;
 		css_margins			m_css_padding;
@@ -73,6 +74,8 @@ namespace litehtml
 		
 		bool						select(const wchar_t* selectors);
 		virtual int					render(uint_ptr hdc, int x, int y, int max_width);
+
+		void						calc_outlines( int parent_width );
 		virtual int					render_table(uint_ptr hdc, int x, int y, int max_width);
 		virtual void				parse_styles();
 		void						draw(uint_ptr hdc, int x, int y, position* clip);
@@ -122,12 +125,11 @@ namespace litehtml
 		int							get_line_left(int y) const;
 		int							get_line_right(int y, int def_right) const;
 		void						fix_line_width(line& ln, int max_width);
-		void						set_line_left(line& ln, int top);
+		void						init_line(line& ln, int top, int def_right, element_clear el_clear = clear_none);
 		void						add_float(element* el);
 		void						add_absolute(element* el);
 		bool						is_floats_holder() const;
-		bool						set_line_clear(line& ln, element_clear clr);
-		int							place_inline(element* el, line& ln, int max_x, int max_right);
+		int							place_inline(element* el, line& ln, int max_width);
 		int							find_next_line_top(int top, int width);
 		void						parse_background();
 	};
