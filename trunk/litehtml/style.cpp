@@ -63,7 +63,148 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 		return;
 	}
 
-	if(!wcscmp(name, L"list-style"))
+	// Parse border spacing properties 
+	if(	!wcscmp(name, L"border-spacing"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ");
+		if(tokens.size() == 1)
+		{
+			add_property(L"-litehtml-border-spacing-x", tokens[0].c_str(), baseurl);
+			add_property(L"-litehtml-border-spacing-y", tokens[0].c_str(), baseurl);
+		} else if(tokens.size() == 2)
+		{
+			add_property(L"-litehtml-border-spacing-x", tokens[0].c_str(), baseurl);
+			add_property(L"-litehtml-border-spacing-y", tokens[1].c_str(), baseurl);
+		}
+	} else
+
+	// Parse borders shorthand properties 
+
+	if(	!wcscmp(name, L"border"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ", L"", L"()");
+		int idx;
+		std::wstring str;
+		for(string_vector::const_iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+		{
+			idx = value_index(tok->c_str(), border_style_strings, -1);
+			if(idx >= 0)
+			{
+				add_property(L"border-left-style", tok->c_str(), baseurl);
+				add_property(L"border-right-style", tok->c_str(), baseurl);
+				add_property(L"border-top-style", tok->c_str(), baseurl);
+				add_property(L"border-bottom-style", tok->c_str(), baseurl);
+			} else
+			{
+				if((*tok)[0] == L'#' || tok->substr(0, 3) == L"rgb")
+				{
+					add_property(L"border-left-color", tok->c_str(), baseurl);
+					add_property(L"border-right-color", tok->c_str(), baseurl);
+					add_property(L"border-top-color", tok->c_str(), baseurl);
+					add_property(L"border-bottom-color", tok->c_str(), baseurl);
+				} else
+				{
+					add_property(L"border-left-width", tok->c_str(), baseurl);
+					add_property(L"border-right-width", tok->c_str(), baseurl);
+					add_property(L"border-top-width", tok->c_str(), baseurl);
+					add_property(L"border-bottom-width", tok->c_str(), baseurl);
+				}
+			}
+		}
+	} else if(	!wcscmp(name, L"border-left")	||
+		!wcscmp(name, L"border-right")	||
+		!wcscmp(name, L"border-top")	||
+		!wcscmp(name, L"border-bottom") )
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ", L"", L"()");
+		int idx;
+		std::wstring str;
+		for(string_vector::const_iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+		{
+			idx = value_index(tok->c_str(), border_style_strings, -1);
+			if(idx >= 0)
+			{
+				str = name;
+				str += L"-style";
+				add_property(str.c_str(), tok->c_str(), baseurl);
+			} else
+			{
+				if((*tok)[0] == L'#' || tok->substr(0, 3) == L"rgb")
+				{
+					str = name;
+					str += L"-color";
+					add_property(str.c_str(), tok->c_str(), baseurl);
+				} else
+				{
+					str = name;
+					str += L"-width";
+					add_property(str.c_str(), tok->c_str(), baseurl);
+				}
+			}
+		}
+	} else 
+
+	// Parse border radius shorthand properties 
+	if(!wcscmp(name, L"border-bottom-left-radius"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ");
+		if(tokens.size() >= 2)
+		{
+			add_property(L"border-bottom-left-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-y", tokens[1].c_str(), baseurl);
+		} else if(tokens.size() == 1)
+		{
+			add_property(L"border-bottom-left-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-y", tokens[0].c_str(), baseurl);
+		}
+
+	} else if(!wcscmp(name, L"border-bottom-right-radius"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ");
+		if(tokens.size() >= 2)
+		{
+			add_property(L"border-bottom-right-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-y", tokens[1].c_str(), baseurl);
+		} else if(tokens.size() == 1)
+		{
+			add_property(L"border-bottom-right-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-y", tokens[0].c_str(), baseurl);
+		}
+
+	} else if(!wcscmp(name, L"border-top-right-radius"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ");
+		if(tokens.size() >= 2)
+		{
+			add_property(L"border-top-right-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-y", tokens[1].c_str(), baseurl);
+		} else if(tokens.size() == 1)
+		{
+			add_property(L"border-top-right-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-y", tokens[0].c_str(), baseurl);
+		}
+
+	} else if(!wcscmp(name, L"border-top-left-radius"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ");
+		if(tokens.size() >= 2)
+		{
+			add_property(L"border-top-left-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-top-left-radius-y", tokens[1].c_str(), baseurl);
+		} else if(tokens.size() == 1)
+		{
+			add_property(L"border-top-left-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-top-left-radius-y", tokens[0].c_str(), baseurl);
+		}
+
+	} else if(!wcscmp(name, L"list-style"))
 	{
 		string_vector tokens;
 		tokenize(val, tokens, L" ", L"", L"()");

@@ -5,6 +5,7 @@
 #include "iterators.h"
 #include "stylesheet.h"
 #include <string>
+#include "table.h"
 
 litehtml::element::element(litehtml::document* doc)
 {
@@ -26,7 +27,7 @@ litehtml::element::~element()
 
 }
 
-void litehtml::element::appendChild( litehtml::element* el )
+bool litehtml::element::appendChild( litehtml::element* el )
 {
 	bool add = true;
 	if(el->is_white_space())
@@ -46,7 +47,9 @@ void litehtml::element::appendChild( litehtml::element* el )
 	{
 		el->m_parent = this;
 		m_children.push_back(el);
+		return true;
 	}
+	return false;
 }
 
 litehtml::element::ptr litehtml::element::parentElement() const
@@ -161,7 +164,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 	pos.y	+= y;
 
 	position el_pos = pos;
-	el_pos += get_margins();
+	el_pos += content_margins();
 
 	if(el_pos.does_intersect(clip))
 	{
@@ -191,6 +194,11 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 				m_bg.m_repeat, 
 				m_bg.m_attachment);
 		}
+
+		bg_draw_pos = pos;
+		bg_draw_pos += m_padding;
+		bg_draw_pos += m_borders;
+		m_doc->get_painter()->draw_borders(hdc, m_css_borders, bg_draw_pos);
 	}
 
 	if(m_display == display_list_item && m_list_style_type != list_style_type_none)
@@ -340,10 +348,43 @@ void litehtml::element::parse_styles()
 	m_css_padding.top.fromString(		get_style_property(L"padding-top",			false,	L"0"), L"");
 	m_css_padding.bottom.fromString(	get_style_property(L"padding-bottom",		false,	L"0"), L"");
 
-	m_css_borders.left.fromString(		get_style_property(L"border-left-width",	false,	L"medium"), border_width_strings);
-	m_css_borders.right.fromString(		get_style_property(L"border-right-width",	false,	L"medium"), border_width_strings);
-	m_css_borders.top.fromString(		get_style_property(L"border-top-width",		false,	L"medium"), border_width_strings);
-	m_css_borders.bottom.fromString(	get_style_property(L"border-bottom-width",	false,	L"medium"), border_width_strings);
+	m_css_borders.left.width.fromString(	get_style_property(L"border-left-width",	false,	L"medium"), border_width_strings);
+	m_css_borders.right.width.fromString(	get_style_property(L"border-right-width",	false,	L"medium"), border_width_strings);
+	m_css_borders.top.width.fromString(		get_style_property(L"border-top-width",		false,	L"medium"), border_width_strings);
+	m_css_borders.bottom.width.fromString(	get_style_property(L"border-bottom-width",	false,	L"medium"), border_width_strings);
+
+	m_css_borders.left.color = web_color::from_string(get_style_property(L"border-left-color",	false,	L""));
+	m_css_borders.left.style = (border_style) value_index(get_style_property(L"border-left-style", false, L"none"), border_style_strings, border_style_none);
+
+	m_css_borders.right.color = web_color::from_string(get_style_property(L"border-right-color",	false,	L""));
+	m_css_borders.right.style = (border_style) value_index(get_style_property(L"border-right-style", false, L"none"), border_style_strings, border_style_none);
+
+	m_css_borders.top.color = web_color::from_string(get_style_property(L"border-top-color",	false,	L""));
+	m_css_borders.top.style = (border_style) value_index(get_style_property(L"border-top-style", false, L"none"), border_style_strings, border_style_none);
+
+	m_css_borders.bottom.color = web_color::from_string(get_style_property(L"border-bottom-color",	false,	L""));
+	m_css_borders.bottom.style = (border_style) value_index(get_style_property(L"border-bottom-style", false, L"none"), border_style_strings, border_style_none);
+
+	m_css_borders.radius.top_left_x.fromString(get_style_property(L"border-top-left-radius-x", false, L"0"));
+	m_css_borders.radius.top_left_y.fromString(get_style_property(L"border-top-left-radius-y", false, L"0"));
+
+	m_css_borders.radius.top_right_x.fromString(get_style_property(L"border-top-right-radius-x", false, L"0"));
+	m_css_borders.radius.top_right_y.fromString(get_style_property(L"border-top-right-radius-y", false, L"0"));
+
+	m_css_borders.radius.bottom_right_x.fromString(get_style_property(L"border-bottom-right-radius-x", false, L"0"));
+	m_css_borders.radius.bottom_right_y.fromString(get_style_property(L"border-bottom-right-radius-y", false, L"0"));
+
+	m_css_borders.radius.bottom_left_x.fromString(get_style_property(L"border-bottom-left-radius-x", false, L"0"));
+	m_css_borders.radius.bottom_left_y.fromString(get_style_property(L"border-bottom-left-radius-y", false, L"0"));
+
+	m_doc->cvt_units(m_css_borders.radius.bottom_left_x,			fntsize);
+	m_doc->cvt_units(m_css_borders.radius.bottom_left_y,			fntsize);
+	m_doc->cvt_units(m_css_borders.radius.bottom_right_x,			fntsize);
+	m_doc->cvt_units(m_css_borders.radius.bottom_right_y,			fntsize);
+	m_doc->cvt_units(m_css_borders.radius.top_left_x,				fntsize);
+	m_doc->cvt_units(m_css_borders.radius.top_left_y,				fntsize);
+	m_doc->cvt_units(m_css_borders.radius.top_right_x,				fntsize);
+	m_doc->cvt_units(m_css_borders.radius.top_right_y,				fntsize);
 
 	m_margins.left		= m_doc->cvt_units(m_css_margins.left,		fntsize);
 	m_margins.right		= m_doc->cvt_units(m_css_margins.right,		fntsize);
@@ -355,10 +396,10 @@ void litehtml::element::parse_styles()
 	m_padding.top		= m_doc->cvt_units(m_css_padding.top,		fntsize);
 	m_padding.bottom	= m_doc->cvt_units(m_css_padding.bottom,	fntsize);
 
-	m_borders.left		= m_doc->cvt_units(m_css_borders.left,		fntsize);
-	m_borders.right		= m_doc->cvt_units(m_css_borders.right,		fntsize);
-	m_borders.top		= m_doc->cvt_units(m_css_borders.top,		fntsize);
-	m_borders.bottom	= m_doc->cvt_units(m_css_borders.bottom,	fntsize);
+	m_borders.left		= m_doc->cvt_units(m_css_borders.left.width,	fntsize);
+	m_borders.right		= m_doc->cvt_units(m_css_borders.right.width,	fntsize);
+	m_borders.top		= m_doc->cvt_units(m_css_borders.top.width,		fntsize);
+	m_borders.bottom	= m_doc->cvt_units(m_css_borders.bottom.width,	fntsize);
 
 	css_length line_height;
 	line_height.fromString(get_style_property(L"line-height",	true,	L"normal"));
@@ -394,208 +435,23 @@ void litehtml::element::parse_styles()
 	find_inlines();
 }
 
-int litehtml::element::render_table( uint_ptr hdc, int x, int y, int max_width )
-{
-	m_pos.move_to(x, y);
-	m_pos.x	+= content_margins_left();
-	m_pos.y += content_margins_top();
-
-	int block_width = m_css_width.calc_percent(max_width);
-
-	if(block_width)
-	{
-		max_width = block_width;
-	} else
-	{
-		max_width -= content_margins_left() + content_margins_right();
-	}
-
-	table_grid grid;
-
-	elements_iterator row_iter(this, &go_inside_table(), &table_rows_selector());
-
-	element* row = row_iter.next();
-	while(row)
-	{
-		grid.begin_row();
-
-		elements_iterator cell_iter(row, &go_inside_table(), &table_cells_selector());
-		element* cell = cell_iter.next();
-		while(cell)
-		{
-			grid.add_cell(cell);
-
-			cell = cell_iter.next();
-		}
-		row = row_iter.next();
-		grid.end_row();
-	}
-
-	// full width render
-	int row_idx = 0;
-	int col_idx = 0;
-	for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end(); row++, row_idx++)
-	{
-		col_idx = 0;
-		for(table_grid::row::iterator cell = row->begin(); cell != row->end(); cell++, col_idx++)
-		{
-			if(cell->el)
-			{
-				int width = cell->el->render(hdc, 0, 0, max_width);
-				grid.m_cols_width[col_idx] = max(grid.m_cols_width[col_idx], width);
-			}
-		}
-	}
-
-	// find the table width
-	int width = 0;
-	int max_col_width = 0;
-	for(int i=0; i < (int) grid.m_cols_width.size(); i++)
-	{
-		width += grid.m_cols_width[i];
-		max_col_width = max(max_col_width, grid.m_cols_width[i]);
-	}
-
-
-	// adjust the columns width
-	if(width > max_width && max_col_width)
-	{
-		int mw = max_width;
-		max_width = 0;
-
-		for(int i=0; i < (int) grid.m_cols_width.size(); i++)
-		{
-			grid.m_cols_width[i] = (int) ((double) grid.m_cols_width[i] * (double) mw / (double) width);
-			max_width += grid.m_cols_width[i];
-		}
-	}
-
-
-	int top = 0;
-	int left = 0;
-
-	// render cells with computed width
-
-	row_idx = 0;
-	for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end(); row++, row_idx++)
-	{
-		col_idx = 0;
-		left = 0;
-		for(table_grid::row::iterator cell = row->begin(); cell != row->end(); cell++, col_idx++)
-		{
-			if(cell->el || cell == row->begin())
-			{
-				int w = grid.m_cols_width[col_idx];
-				for(int i = 1; i < cell->colspan && i + col_idx < (int) grid.m_cols_width.size(); i++)
-				{
-					w += grid.m_cols_width[col_idx + i];
-				}
-				if(cell->el)
-				{
-					cell->el->render(hdc, left, top, w);
-					if(cell->rowspan == 1)
-					{
-						grid.m_rows_height[row_idx] = max(grid.m_rows_height[row_idx], cell->el->height());
-					}
-				}
-			}
-			left += grid.m_cols_width[col_idx];
-		}
-		top += grid.m_rows_height[row_idx];
-	}
-
-	// set the rows height
-
-	bool need_second_pass = false;
-
-	row_idx = 0;
-	for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end(); row++, row_idx++)
-	{
-		col_idx = 0;
-		for(table_grid::row::iterator cell = row->begin(); cell != row->end(); cell++, col_idx++)
-		{
-			if(cell->el)
-			{
-				if(cell->rowspan == 1)
-				{
-					cell->el->m_pos.height = grid.m_rows_height[row_idx];
-				} else
-				{
-					int h = 0;
-					int last_row = row_idx;
-					for(int i = 0; i + row_idx < (int) grid.m_rows_height.size() && i < cell->rowspan; i++)
-					{
-						h += grid.m_rows_height[row_idx + i];
-						last_row = row_idx + i;
-					}
-					if(cell->el->m_pos.height > h)
-					{
-						need_second_pass = true;
-						grid.m_rows_height[last_row] += cell->el->m_pos.height - h;
-					} else
-					{
-						cell->el->m_pos.height = h;
-					}
-				}
-			}
-		}
-	}
-
-	if(need_second_pass)
-	{
-		// re-pos cells cells with computed width
-		row_idx = 0;
-		top		= 0;
-		for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end(); row++, row_idx++)
-		{
-			col_idx = 0;
-			for(table_grid::row::iterator cell = row->begin(); cell != row->end(); cell++, col_idx++)
-			{
-				if(cell->el)
-				{
-					int h = 0;
-					for(int i = 0; i + row_idx < (int) grid.m_rows_height.size() && i < cell->rowspan; i++)
-					{
-						h += grid.m_rows_height[row_idx + i];
-					}
-					cell->el->m_pos.height	= h;
-					cell->el->m_pos.y		= top;						
-				}
-			}
-			top += grid.m_rows_height[row_idx];
-		}
-	}
-
-
-	m_pos.width		= max_col_width;
-	m_pos.height	= top;
-
-	return max_col_width;
-}
-
 int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 {
 	int parent_width = max_width;
 
 	m_pos.move_to(x, y);
 
-/*
-	if(m_css_margins.left.is_predefined() || !m_css_margins.left.is_predefined() && m_css_margins.left.units() == css_units_percentage)
-	{
-		m_margins.left = 0;
-	}
-	if(m_css_margins.right.is_predefined() || !m_css_margins.right.is_predefined() && m_css_margins.right.units() == css_units_percentage)
-	{
-		m_margins.right = 0;
-	}
-*/
-
 	m_pos.x	+= content_margins_left();
 	m_pos.y += content_margins_top();
 
 	int ret_width = 0;
 
-	int block_width = m_css_width.calc_percent(parent_width);
+	int block_width = 0;
+
+	if(m_display != display_table_cell)
+	{
+		block_width = m_css_width.calc_percent(parent_width);
+	}
 
 	if(block_width)
 	{
@@ -652,17 +508,6 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 			switch(el->m_display)
 			{
 			case display_table:
-				{
-					if(!ln.empty())
-					{
-						max_x = add_line(ln, max_width);
-					}
-					int rw = el->render_table(hdc, ln.get_left(), ln.get_top(), max_x);
-					ln += el;
-					max_x = add_line(ln, max_width);
-					ret_width = max(ret_width, rw);
-				}
-				break;
 			case display_list_item:
 				{
 					if(!ln.empty())
@@ -745,6 +590,9 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 		{
 			m_pos.height	+= m_lines.back().get_margin_bottom();
 		}
+	} else
+	{
+		m_pos.height = m_css_height.calc_percent(0);
 	}
 
 	if(is_floats_holder())
@@ -761,12 +609,14 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 	m_pos.y += content_margins_top();
 
 	// TODO: Percents are incorrect
+/*
 	int block_height = m_css_height.calc_percent(100);
 
 	if(block_height)
 	{
 		m_pos.height = block_height;
 	}
+*/
 
 	ret_width += content_margins_left() + content_margins_right();
 
@@ -1535,8 +1385,8 @@ void litehtml::element::calc_outlines( int parent_width )
 	m_padding.left	= m_css_padding.left.calc_percent(parent_width);
 	m_padding.right	= m_css_padding.right.calc_percent(parent_width);
 
-	m_borders.left	= m_css_borders.left.calc_percent(parent_width);
-	m_borders.right	= m_css_borders.right.calc_percent(parent_width);
+	m_borders.left	= m_css_borders.left.width.calc_percent(parent_width);
+	m_borders.right	= m_css_borders.right.width.calc_percent(parent_width);
 
 	m_margins.left	= m_css_margins.left.calc_percent(parent_width);
 	m_margins.right	= m_css_margins.right.calc_percent(parent_width);

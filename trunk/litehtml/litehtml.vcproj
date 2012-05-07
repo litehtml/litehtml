@@ -284,6 +284,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\borders.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\css_length.cpp"
 				>
 			</File>
@@ -305,6 +309,14 @@
 			</File>
 			<File
 				RelativePath=".\el_space.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\el_table.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\el_td.cpp"
 				>
 			</File>
 			<File
@@ -336,6 +348,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\table.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\tokenizer.cpp"
 				>
 			</File>
@@ -355,6 +371,10 @@
 			</File>
 			<File
 				RelativePath=".\background.h"
+				>
+			</File>
+			<File
+				RelativePath=".\borders.h"
 				>
 			</File>
 			<File
@@ -398,6 +418,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_table.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_td.h"
+				>
+			</File>
+			<File
 				RelativePath=".\el_text.h"
 				>
 			</File>
@@ -431,6 +459,10 @@
 			</File>
 			<File
 				RelativePath=".\stylesheet.h"
+				>
+			</File>
+			<File
+				RelativePath=".\table.h"
 				>
 			</File>
 			<File

@@ -49,6 +49,7 @@ public:
 										const litehtml::css_position& bg_pos,
 										litehtml::background_repeat repeat, 
 										litehtml::background_attachment attachment);
+	virtual void		draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos);
 
 protected:
 	virtual void OnCreate();

@@ -666,3 +666,59 @@ void CHTMLViewWnd::draw_background( uint_ptr hdc, const wchar_t* image, const wc
 		}
 	}
 }
+
+void CHTMLViewWnd::draw_borders( uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos )
+{
+	// draw left border
+	if(borders.left.width.val() != 0 && borders.left.style > border_style_hidden)
+	{
+		HPEN pen = CreatePen(PS_SOLID, 1, RGB(borders.left.color.red, borders.left.color.green, borders.left.color.blue));
+		HPEN oldPen = (HPEN) SelectObject((HDC) hdc, pen);
+		for(int x = 0; x < borders.left.width.val(); x++)
+		{
+			MoveToEx((HDC) hdc, draw_pos.left() + x, draw_pos.top(), NULL);
+			LineTo((HDC) hdc, draw_pos.left() + x, draw_pos.bottom());
+		}
+		SelectObject((HDC) hdc, oldPen);
+		DeleteObject(pen);
+	}
+	// draw right border
+	if(borders.right.width.val() != 0 && borders.right.style > border_style_hidden)
+	{
+		HPEN pen = CreatePen(PS_SOLID, 1, RGB(borders.right.color.red, borders.right.color.green, borders.right.color.blue));
+		HPEN oldPen = (HPEN) SelectObject((HDC) hdc, pen);
+		for(int x = 0; x < borders.right.width.val(); x++)
+		{
+			MoveToEx((HDC) hdc, draw_pos.right() - x - 1, draw_pos.top(), NULL);
+			LineTo((HDC) hdc, draw_pos.right() - x - 1, draw_pos.bottom());
+		}
+		SelectObject((HDC) hdc, oldPen);
+		DeleteObject(pen);
+	}
+	// draw top border
+	if(borders.top.width.val() != 0 && borders.top.style > border_style_hidden)
+	{
+		HPEN pen = CreatePen(PS_SOLID, 1, RGB(borders.top.color.red, borders.top.color.green, borders.top.color.blue));
+		HPEN oldPen = (HPEN) SelectObject((HDC) hdc, pen);
+		for(int y = 0; y < borders.top.width.val(); y++)
+		{
+			MoveToEx((HDC) hdc, draw_pos.left(), draw_pos.top() + y, NULL);
+			LineTo((HDC) hdc, draw_pos.right(), draw_pos.top() + y);
+		}
+		SelectObject((HDC) hdc, oldPen);
+		DeleteObject(pen);
+	}
+	// draw bottom border
+	if(borders.bottom.width.val() != 0 && borders.bottom.style > border_style_hidden)
+	{
+		HPEN pen = CreatePen(PS_SOLID, 1, RGB(borders.bottom.color.red, borders.bottom.color.green, borders.bottom.color.blue));
+		HPEN oldPen = (HPEN) SelectObject((HDC) hdc, pen);
+		for(int y = 0; y < borders.bottom.width.val(); y++)
+		{
+			MoveToEx((HDC) hdc, draw_pos.left(), draw_pos.bottom() - y - 1, NULL);
+			LineTo((HDC) hdc, draw_pos.right(), draw_pos.bottom() - y - 1);
+		}
+		SelectObject((HDC) hdc, oldPen);
+		DeleteObject(pen);
+	}
+}

@@ -271,43 +271,6 @@ namespace litehtml
 		void next_place(position& pos, style_display display);
 	};
 
-	struct table_cell
-	{
-		element*		el;
-		int				colspan;
-		int				rowspan;
-
-		table_cell()
-		{
-			colspan = 0;
-			rowspan	= 0;
-			el		= 0;
-		}
-
-		table_cell(const table_cell& val)
-		{
-			el		= val.el;
-			colspan	= val.colspan;
-			rowspan	= val.rowspan;
-		}
-	};
-
-	class table_grid
-	{
-	public:
-		typedef std::vector<table_cell>		row;
-		typedef std::vector<row>			rows;
-
-		rows		m_rows;
-		int_vector	m_rows_height;
-		int_vector	m_cols_width;
-
-		void begin_row();
-		void add_cell(element* el);
-		void end_row();
-		bool is_rowspanned(int r, int c);
-	};
-
 	enum attr_select_condition
 	{
 		select_exists,
@@ -410,6 +373,22 @@ namespace litehtml
 		border_width_thin,
 		border_width_medium,
 		border_width_thick
+	};
+
+#define  border_style_strings	L"none;hidden;dotted;dashed;solid;double;groove;ridge;inset;outset"
+
+	enum border_style
+	{
+		border_style_none,
+		border_style_hidden,
+		border_style_dotted,
+		border_style_dashed,
+		border_style_solid,
+		border_style_double,
+		border_style_groove,
+		border_style_ridge,
+		border_style_inset,
+		border_style_outset
 	};
 
 #define  element_float_strings	L"none;left;right"
