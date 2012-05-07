@@ -5,6 +5,7 @@
 #include "line.h"
 #include "background.h"
 #include "css_margins.h"
+#include "borders.h"
 
 namespace litehtml
 {
@@ -12,6 +13,7 @@ namespace litehtml
 	{
 		friend class elements_iterator;
 		friend class line;
+		friend class el_table;
 	public:
 		typedef litehtml::object_ptr<litehtml::element>	ptr;
 	protected:
@@ -45,7 +47,7 @@ namespace litehtml
 
 		css_margins			m_css_margins;
 		css_margins			m_css_padding;
-		css_margins			m_css_borders;
+		css_borders			m_css_borders;
 		css_length			m_css_width;
 		css_length			m_css_height;
 		css_length			m_css_left;
@@ -57,11 +59,11 @@ namespace litehtml
 		element(litehtml::document* doc);
 		virtual ~element();
 
-		virtual void				appendChild(litehtml::element* el);
+		virtual bool				appendChild(litehtml::element* el);
 		virtual element::ptr		parentElement() const;
 		virtual const wchar_t*		get_tagName() const;
 		virtual void				set_tagName(const wchar_t* tag);
-		virtual litehtml::style&		get_style();
+		virtual litehtml::style&	get_style();
 
 		virtual void				set_attr(const wchar_t* name, const wchar_t* val);
 		virtual const wchar_t*		get_attr(const wchar_t* name, const wchar_t* def = 0);
@@ -76,7 +78,6 @@ namespace litehtml
 		virtual int					render(uint_ptr hdc, int x, int y, int max_width);
 
 		void						calc_outlines( int parent_width );
-		virtual int					render_table(uint_ptr hdc, int x, int y, int max_width);
 		virtual void				parse_styles();
 		void						draw(uint_ptr hdc, int x, int y, position* clip);
 
@@ -91,6 +92,8 @@ namespace litehtml
 		int							content_margins_bottom()	const;
 		int							content_margins_left()		const;
 		int							content_margins_right()		const;
+
+		margins						content_margins()		const;
 
 		int							margin_top()		const;
 		int							margin_bottom()		const;
@@ -224,4 +227,16 @@ namespace litehtml
 	{
 		m_tag = tag;
 	}
+
+	inline litehtml::margins litehtml::element::content_margins() const
+	{
+		margins ret;
+		ret.left	= content_margins_left();
+		ret.right	= content_margins_right();
+		ret.top		= content_margins_top();
+		ret.bottom	= content_margins_bottom();
+		return ret;
+	}
+
 }
+

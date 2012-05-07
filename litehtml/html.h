@@ -7,6 +7,7 @@
 #include <Windows.h>
 #include "types.h"
 #include "background.h"
+#include "borders.h"
 
 namespace litehtml
 {
@@ -35,6 +36,7 @@ namespace litehtml
 											const litehtml::css_position& bg_pos,
 											litehtml::background_repeat repeat, 
 											litehtml::background_attachment attachment) = 0;
+		virtual void		draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos) = 0;
 	};
 
 	void trim(std::wstring &s);

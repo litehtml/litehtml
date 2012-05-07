@@ -4,6 +4,8 @@
 #include "elements.h"
 #include "tokenizer.h"
 #include "stylesheet.h"
+#include "el_table.h"
+#include "el_td.h"
 
 const wchar_t* g_empty_tags[] =
 {
@@ -108,6 +110,12 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				} else if(!_wcsicmp(sc.get_tag_name(), L"html"))
 				{
 					newTag = NULL;
+				} else if(!_wcsicmp(sc.get_tag_name(), L"table"))
+				{
+					newTag = new litehtml::el_table(doc);
+				} else if(!_wcsicmp(sc.get_tag_name(), L"td"))
+				{
+					newTag = new litehtml::el_td(doc);
 				} else
 				{
 					newTag = new litehtml::element(doc);
@@ -116,8 +124,10 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				if(newTag)
 				{
 					newTag->set_tagName(sc.get_tag_name());
-					parent->appendChild(newTag);
-					parent = newTag;
+					if(parent->appendChild(newTag))
+					{
+						parent = newTag;
+					}
 				}
 			}
 			break;
