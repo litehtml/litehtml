@@ -182,11 +182,11 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 
 		if(m_bg.m_color.alpha)
 		{
-			m_doc->get_painter()->fill_rect(hdc, bg_draw_pos, m_bg.m_color);
+			m_doc->container()->fill_rect(hdc, bg_draw_pos, m_bg.m_color);
 		}
 		if(!m_bg.m_image.empty())
 		{
-			m_doc->get_painter()->draw_background(hdc, 
+			m_doc->container()->draw_background(hdc, 
 				m_bg.m_image.c_str(), 
 				m_bg.m_baseurl.c_str(), 
 				bg_draw_pos, 
@@ -198,7 +198,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 		bg_draw_pos = pos;
 		bg_draw_pos += m_padding;
 		bg_draw_pos += m_borders;
-		m_doc->get_painter()->draw_borders(hdc, m_css_borders, bg_draw_pos);
+		m_doc->container()->draw_borders(hdc, m_css_borders, bg_draw_pos);
 	}
 
 	if(m_display == display_list_item && m_list_style_type != list_style_type_none)
@@ -210,7 +210,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 			marker_x -= marker_height;
 		}
 		litehtml::web_color color = get_color(L"color", true, web_color(0, 0, 0));
-		m_doc->get_painter()->draw_list_marker(hdc, m_list_style_type, marker_x, pos.y, marker_height, color);
+		m_doc->container()->draw_list_marker(hdc, m_list_style_type, marker_x, pos.y, marker_height, color);
 	}
 
 	if(pos.does_intersect(clip))
@@ -561,8 +561,6 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 
 	m_pos.width		= max_width;
 
-	m_pos.move_to(x, y);
-
 	// calculate outlines
 
 	calc_outlines(parent_width);
@@ -571,24 +569,24 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 
 	if(!m_lines.empty())
 	{
-		if(!m_padding.top && !m_borders.top && m_lines.front().collapse_top_margin())
+		m_pos.height = m_lines.back().get_top() + m_lines.back().get_height();
+
+		if(!m_padding.top && !m_borders.top && m_lines.front().collapse_top_margin() || is_body())
 		{
-			m_margins.top		= max(m_margins.top,	m_lines.front().get_margin_top());
-		} else
-		{
+			int add = m_lines.front().get_margin_top();
+			m_margins.top = max(m_margins.top,	m_lines.front().get_margin_top());
 			for(line::vector::iterator ln = m_lines.begin(); ln != m_lines.end(); ln++)
 			{
-				ln->add_top(m_lines.front().get_margin_top());
+				ln->add_top(-add);
 			}
+
+			m_pos.height -= add;
 		}
-		m_pos.height = m_lines.back().get_top() + m_lines.back().get_height() - m_lines.back().get_margin_bottom() - m_lines.front().get_margin_top();
 
 		if(!m_padding.bottom && !m_borders.bottom && m_lines.back().collapse_bottom_margin())
 		{
 			m_margins.bottom	= max(m_margins.bottom,	m_lines.back().get_margin_bottom());
-		} else
-		{
-			m_pos.height	+= m_lines.back().get_margin_bottom();
+			m_pos.height		-= m_lines.back().get_margin_bottom();
 		}
 	} else
 	{
@@ -605,18 +603,17 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 	}
 
 
+	m_pos.move_to(x, y);
 	m_pos.x	+= content_margins_left();
 	m_pos.y += content_margins_top();
 
 	// TODO: Percents are incorrect
-/*
 	int block_height = m_css_height.calc_percent(100);
 
 	if(block_height)
 	{
 		m_pos.height = block_height;
 	}
-*/
 
 	ret_width += content_margins_left() + content_margins_right();
 
@@ -727,7 +724,7 @@ int litehtml::element::add_line( line& ln, int max_width )
 int litehtml::element::get_base_line()
 {
 	uint_ptr font = get_font();
-	return m_doc->get_painter()->get_text_base_line(0, font);
+	return m_doc->container()->get_text_base_line(0, font);
 }
 
 void litehtml::element::find_inlines()
@@ -1413,3 +1410,23 @@ void litehtml::element::calc_outlines( int parent_width )
 	}
 }
 
+void litehtml::element::finish()
+{
+	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		(*i)->finish();
+	}
+}
+
+void litehtml::element::get_text( std::wstring& text )
+{
+	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		(*i)->get_text(text);
+	}
+}
+
+bool litehtml::element::is_body()
+{
+	return false;
+}

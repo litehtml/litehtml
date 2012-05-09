@@ -10,3 +10,8 @@ litehtml::el_body::~el_body()
 {
 
 }
+
+bool litehtml::el_body::is_body()
+{
+	return true;
+}

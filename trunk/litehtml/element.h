@@ -69,6 +69,7 @@ namespace litehtml
 		virtual const wchar_t*		get_attr(const wchar_t* name, const wchar_t* def = 0);
 		virtual void				apply_stylesheet(const litehtml::style_sheet& style);
 		virtual bool				is_white_space();
+		virtual bool				is_body();
 		virtual int					get_base_line();
 
 		style_display				get_display() const;
@@ -101,7 +102,7 @@ namespace litehtml
 		int							margin_right()		const;
 		margins						get_margins()		const;
 
-		const wchar_t*				get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
+		virtual const wchar_t*		get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
 
 		uint_ptr					get_font();
 		int							get_font_size();
@@ -112,6 +113,8 @@ namespace litehtml
 		bool						operator!=(const css_element_selector& selector);
 		element*					find_ancestor(const css_selector& selector);
 		void						get_abs_position(position& pos, const element* root);
+		virtual void				get_text(std::wstring& text);
+		virtual void				finish();
 
 	protected:
 		virtual void				get_content_size(uint_ptr hdc, size& sz, int max_width);

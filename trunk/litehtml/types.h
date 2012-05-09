@@ -260,17 +260,6 @@ namespace litehtml
 		va_text_bottom
 	};
 
-	struct inline_pos
-	{
-		position	block;
-		int			x;
-		int			y;
-		int			line_height;
-
-		void place_element(position& pos, style_display display);
-		void next_place(position& pos, style_display display);
-	};
-
 	enum attr_select_condition
 	{
 		select_exists,
@@ -324,7 +313,8 @@ namespace litehtml
 		combinator_descendant,
 		combinator_child,
 		combinator_adjacent_sibling,
-		combinator_general_sibling
+		combinator_general_sibling,
+		combinator_pseudo
 	};
 
 	class css_selector
