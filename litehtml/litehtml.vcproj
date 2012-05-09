@@ -304,6 +304,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_link.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\el_para.cpp"
 				>
 			</File>
@@ -321,6 +325,10 @@
 			</File>
 			<File
 				RelativePath=".\el_text.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\el_title.cpp"
 				>
 			</File>
 			<File
@@ -390,10 +398,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\def_value.h"
-				>
-			</File>
-			<File
 				RelativePath=".\document.h"
 				>
 			</File>
@@ -407,6 +411,10 @@
 			</File>
 			<File
 				RelativePath=".\el_image.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_link.h"
 				>
 			</File>
 			<File
@@ -427,6 +435,10 @@
 			</File>
 			<File
 				RelativePath=".\el_text.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_title.h"
 				>
 			</File>
 			<File

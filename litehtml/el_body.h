@@ -8,5 +8,7 @@ namespace litehtml
 	public:
 		el_body(litehtml::document* doc);
 		virtual ~el_body();
+
+		virtual bool is_body();
 	};
 }

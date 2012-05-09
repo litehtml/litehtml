@@ -722,3 +722,21 @@ void CHTMLViewWnd::draw_borders( uint_ptr hdc, const css_borders& borders, const
 		DeleteObject(pen);
 	}
 }
+
+void CHTMLViewWnd::set_caption( const wchar_t* caption )
+{
+	if(caption)
+	{
+		SetWindowText(GetParent(m_hWnd), caption);
+	}
+}
+
+void CHTMLViewWnd::set_base_url( const wchar_t* base_url )
+{
+
+}
+
+void CHTMLViewWnd::link( const wchar_t* href, const wchar_t* type, const wchar_t* rel )
+{
+
+}

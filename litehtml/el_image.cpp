@@ -14,21 +14,21 @@ litehtml::el_image::~el_image( void )
 
 void litehtml::el_image::get_content_size( uint_ptr hdc, size& sz, int max_width )
 {
-	m_doc->get_painter()->get_image_size(m_src.c_str(), sz);
+	m_doc->container()->get_image_size(m_src.c_str(), sz);
 }
 
 void litehtml::el_image::draw_content( uint_ptr hdc, const litehtml::position& pos )
 {
-	m_doc->get_painter()->draw_image(hdc, m_src.c_str(), pos);
+	m_doc->container()->draw_image(hdc, m_src.c_str(), pos);
 }
 
 void litehtml::el_image::parse_styles()
 {
 	element::parse_styles();
 	m_src = get_attr(L"src", L"");
-	m_doc->get_painter()->load_image(m_src.c_str());
+	m_doc->container()->load_image(m_src.c_str());
 	litehtml::size sz;
-	m_doc->get_painter()->get_image_size(m_src.c_str(), sz);
+	m_doc->container()->get_image_size(m_src.c_str(), sz);
 
 	if(!m_css_height.val())
 	{

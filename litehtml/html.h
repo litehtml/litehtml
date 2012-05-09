@@ -12,7 +12,7 @@
 namespace litehtml
 {
 	// call back interface to draw text, images and other elements
-	class painter
+	class document_container
 	{
 	public:
 		virtual uint_ptr	create_font(const wchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration) = 0;
@@ -37,6 +37,10 @@ namespace litehtml
 											litehtml::background_repeat repeat, 
 											litehtml::background_attachment attachment) = 0;
 		virtual void		draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos) = 0;
+
+		virtual	void		set_caption(const wchar_t* caption)		= 0;
+		virtual	void		set_base_url(const wchar_t* base_url)	= 0;
+		virtual	void		link(const wchar_t* href, const wchar_t* type, const wchar_t* rel)	= 0;
 	};
 
 	void trim(std::wstring &s);

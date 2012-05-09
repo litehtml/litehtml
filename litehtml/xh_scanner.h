@@ -10,7 +10,7 @@
 #include <stdlib.h> // wchar_t
 #include <string.h> // strcmp, etc.
 
-namespace markup 
+namespace litehtml 
 {
   typedef wchar_t wchar;
 

@@ -52,8 +52,14 @@ void litehtml::line::set_top( int top, element* parent )
 			switch(el->m_vertical_align)
 			{
 			case va_baseline:
-				el->m_pos.y = top + m_height - m_bottom_margin - parent_base_line - m_padding_bottom - el->m_pos.height + el->get_base_line() - m_top_margin;
-				el->m_pos.y += add;
+				if(!is_block())
+				{
+					el->m_pos.y = top + m_height - m_bottom_margin - parent_base_line - m_padding_bottom - el->m_pos.height + el->get_base_line() - m_top_margin;
+					el->m_pos.y += add;
+				} else
+				{
+					el->m_pos.y = top + el->content_margins_top();
+				}
 				break;
 			default:
 				el->m_pos.y = top + el->content_margins_top();

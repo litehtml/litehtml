@@ -1,5 +1,4 @@
 #pragma once
-#include "def_value.h"
 #include "attributes.h"
 
 namespace litehtml

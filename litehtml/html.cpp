@@ -101,57 +101,6 @@ litehtml::web_color litehtml::web_color::from_string( const wchar_t* str )
 }
 
 
-void litehtml::inline_pos::place_element( position& pos, style_display display )
-{
-	switch(display)
-	{
-	case display_block:
-		{
-			x			= block.left();
-			y			+= line_height;
-			pos.move_to(x, y);
-			line_height	= pos.height;
-		}
-		break;
-	case display_inline:
-		{
-			if(x + pos.width > block.right())
-			{
-				x			= block.left();
-				y			+= line_height;
-				line_height	= pos.height;
-			} else
-			{
-				line_height = max(line_height, pos.height);
-			}
-			pos.move_to(x, y);
-			x += pos.width;
-		}
-		break;
-	}
-}
-
-void litehtml::inline_pos::next_place( position& pos, style_display display )
-{
-	switch(display)
-	{
-	case display_block:
-		pos.move_to(block.left(), y + line_height);
-		break;
-	case display_inline:
-		{
-			if(x + pos.width > block.right())
-			{
-				pos.move_to(block.left(), y + line_height);
-			} else
-			{
-				pos.move_to(x, y);
-			}
-		}
-		break;
-	}
-}
-
 void litehtml::css_element_selector::parse( const std::wstring& txt )
 {
 	std::wstring::size_type el_end = txt.find_first_of(L".#[:");
@@ -257,7 +206,7 @@ bool litehtml::css_selector::parse( const std::wstring& text )
 		return false;
 	}
 	string_vector tokens;
-	tokenize(text, tokens, L"", L" \t>+~");
+	tokenize(text, tokens, L"", L" \t>+~:");
 
 	if(tokens.empty())
 	{
@@ -303,6 +252,9 @@ bool litehtml::css_selector::parse( const std::wstring& text )
 		break;
 	case L'~':
 		m_combinator	= combinator_adjacent_sibling;
+		break;
+	case L':':
+		m_combinator	= combinator_pseudo;
 		break;
 	default:
 		m_combinator	= combinator_descendant;

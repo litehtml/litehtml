@@ -6,7 +6,7 @@ using namespace litehtml;
 
 typedef std::map<std::wstring, Gdiplus::Image*>	images_map;
 
-class CHTMLViewWnd : public litehtml::painter
+class CHTMLViewWnd : public litehtml::document_container
 {
 	HWND					m_hWnd;
 	HINSTANCE				m_hInst;
@@ -27,7 +27,7 @@ public:
 	HWND	wnd()	{ return m_hWnd;	}
 	void	refresh();
 
-	// litehtml::painter members
+	// litehtml::document_container members
 	virtual uint_ptr	create_font(const wchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration);
 	virtual void		delete_font(uint_ptr hFont);
 	virtual int			line_height(uint_ptr hdc, uint_ptr hFont);
@@ -50,6 +50,10 @@ public:
 										litehtml::background_repeat repeat, 
 										litehtml::background_attachment attachment);
 	virtual void		draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos);
+
+	virtual	void		set_caption(const wchar_t* caption);
+	virtual	void		set_base_url(const wchar_t* base_url);
+	virtual	void		link(const wchar_t* href, const wchar_t* type, const wchar_t* rel);
 
 protected:
 	virtual void OnCreate();

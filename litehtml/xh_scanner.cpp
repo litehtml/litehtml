@@ -2,7 +2,7 @@
 #include "string.h"
 #include <ctype.h>
 
-namespace markup 
+namespace litehtml 
 {
 
   
@@ -537,7 +537,7 @@ namespace markup
 		{L"",0}
 	};
 
-	markup::wchar scanner::resolve_entity( const wchar* buf, int buf_size )
+	litehtml::wchar scanner::resolve_entity( const wchar* buf, int buf_size )
 	{
 		for(int i=0; g_HTMLCodes[i].szCode[0]; i++)
 		{

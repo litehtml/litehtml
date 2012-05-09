@@ -1,11 +1,12 @@
 #include "html.h"
 #include "document.h"
-#include "xh_scanner.h"
 #include "elements.h"
 #include "tokenizer.h"
 #include "stylesheet.h"
 #include "el_table.h"
 #include "el_td.h"
+#include "el_link.h"
+#include "el_title.h"
 
 const wchar_t* g_empty_tags[] =
 {
@@ -20,19 +21,10 @@ const wchar_t* g_empty_tags[] =
 	0
 };
 
-struct str_istream: public markup::instream
-{
-	const wchar_t* p;
-	const wchar_t* end;
-
-	str_istream(const wchar_t* src): p(src), end(src + wcslen(src)) {}
-	virtual wchar_t get_char() { return p < end? *p++: 0; }
-};
-
-litehtml::document::document(litehtml::painter* objPainter)
+litehtml::document::document(litehtml::document_container* objContainer)
 {
 	m_root		= 0;
-	m_painter	= objPainter;
+	m_container	= objContainer;
 	m_font_name	= L"Times New Roman";
 	m_font_size	= 16;
 }
@@ -46,11 +38,11 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str, litehtml::painter* objPainter, const wchar_t* stylesheet, const wchar_t* cssbaseurl )
+litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str, litehtml::document_container* objPainter, const wchar_t* stylesheet, const wchar_t* cssbaseurl )
 {
 	litehtml::document::ptr doc = new litehtml::document(objPainter);
 	str_istream si(str);
-	markup::scanner sc(si);
+	litehtml::scanner sc(si);
 
 	if(stylesheet)
 	{
@@ -60,12 +52,12 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 	element::ptr parent = NULL;
 
 	int t = 0;
-	while((t = sc.get_token()) != markup::scanner::TT_EOF)
+	while((t = sc.get_token()) != litehtml::scanner::TT_EOF)
 	{
-		if(	t == markup::scanner::TT_TAG_START || 
-			t == markup::scanner::TT_WORD || 
-			t == markup::scanner::TT_SPACE ||
-			t == markup::scanner::TT_TAG_END)
+		if(	t == litehtml::scanner::TT_TAG_START || 
+			t == litehtml::scanner::TT_WORD || 
+			t == litehtml::scanner::TT_SPACE ||
+			t == litehtml::scanner::TT_TAG_END)
 		{
 			if(!parent)
 			{
@@ -86,9 +78,9 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 
 		switch(t)
 		{
-		case markup::scanner::TT_ERROR:
+		case litehtml::scanner::TT_ERROR:
 			break;
-		case markup::scanner::TT_TAG_START:
+		case litehtml::scanner::TT_TAG_START:
 			{
 				// add "body" element into "html" if current tag is not "head" or "body"
 				if(!parent->parentElement() && _wcsicmp(sc.get_tag_name(), L"html") && _wcsicmp(sc.get_tag_name(), L"head") && _wcsicmp(sc.get_tag_name(), L"body") )
@@ -116,6 +108,12 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				} else if(!_wcsicmp(sc.get_tag_name(), L"td"))
 				{
 					newTag = new litehtml::el_td(doc);
+				} else if(!_wcsicmp(sc.get_tag_name(), L"link"))
+				{
+					newTag = new litehtml::el_link(doc);
+				} else if(!_wcsicmp(sc.get_tag_name(), L"title"))
+				{
+					newTag = new litehtml::el_title(doc);
 				} else
 				{
 					newTag = new litehtml::element(doc);
@@ -131,23 +129,23 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				}
 			}
 			break;
-		case markup::scanner::TT_TAG_END:
+		case litehtml::scanner::TT_TAG_END:
 			if(!_wcsicmp(parent->get_tagName(), sc.get_tag_name()))
 			{
-				litehtml::element* newTag = parent->parentElement();
+				litehtml::element::ptr newTag = parent->parentElement();
 				parent = newTag;
 			}
 			break;
-		case markup::scanner::TT_ATTR:
+		case litehtml::scanner::TT_ATTR:
 			parent->set_attr(sc.get_attr_name(), sc.get_value());
 			break;
-		case markup::scanner::TT_WORD: 
+		case litehtml::scanner::TT_WORD: 
 			{
 				element::ptr el = new litehtml::el_text(sc.get_value(), doc);
 				parent->appendChild(el);
 			}
 			break;
-		case markup::scanner::TT_SPACE:
+		case litehtml::scanner::TT_SPACE:
 			if(parent)
 			{
 				element::ptr el = new litehtml::el_space(doc);
@@ -159,6 +157,8 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 
 	if(doc->m_root)
 	{
+		doc->m_root->finish();
+
 		for(style_sheet::vector::const_iterator i = master_stylesheet.begin(); i != master_stylesheet.end(); i++)
 		{
 			doc->m_root->apply_stylesheet(*i);
@@ -249,7 +249,7 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, const wcha
 			}
 		}
 
-		ret = m_painter->create_font(name, cvt_font_size(size), fw, fs, decor);
+		ret = m_container->create_font(name, cvt_font_size(size), fw, fs, decor);
 		m_fonts[key] = ret;
 	}
 	return ret;
@@ -355,19 +355,19 @@ int litehtml::document::cvt_units( css_length& val, int fontSize ) const
 		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_pt:
-		ret = m_painter->pt_to_px((int) val.val());
+		ret = m_container->pt_to_px((int) val.val());
 		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_in:
-		ret = m_painter->pt_to_px((int) (val.val() * 72));
+		ret = m_container->pt_to_px((int) (val.val() * 72));
 		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_cm:
-		ret = m_painter->pt_to_px((int) (val.val() * 0.3937 * 72));
+		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72));
 		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_mm:
-		ret = m_painter->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
+		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
 		val.set_value((float) ret, css_units_px);
 		break;
 	}
