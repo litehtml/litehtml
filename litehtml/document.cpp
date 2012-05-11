@@ -7,6 +7,10 @@
 #include "el_td.h"
 #include "el_link.h"
 #include "el_title.h"
+#include "el_style.h"
+#include "el_comment.h"
+#include "el_base.h"
+#include <math.h>
 
 const wchar_t* g_empty_tags[] =
 {
@@ -44,20 +48,19 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 	str_istream si(str);
 	litehtml::scanner sc(si);
 
-	if(stylesheet)
-	{
-		parse_stylesheet(stylesheet, doc->m_styles, cssbaseurl);
-	}
+	doc->add_stylesheet(stylesheet, cssbaseurl);
 
 	element::ptr parent = NULL;
 
 	int t = 0;
 	while((t = sc.get_token()) != litehtml::scanner::TT_EOF)
 	{
-		if(	t == litehtml::scanner::TT_TAG_START || 
-			t == litehtml::scanner::TT_WORD || 
-			t == litehtml::scanner::TT_SPACE ||
-			t == litehtml::scanner::TT_TAG_END)
+		if(	t == litehtml::scanner::TT_TAG_START		|| 
+			t == litehtml::scanner::TT_WORD				|| 
+			t == litehtml::scanner::TT_SPACE			||
+			t == litehtml::scanner::TT_TAG_END			||
+			t == litehtml::scanner::TT_COMMENT_START	||
+			t == litehtml::scanner::TT_COMMENT_END	)
 		{
 			if(!parent)
 			{
@@ -78,6 +81,27 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 
 		switch(t)
 		{
+		case litehtml::scanner::TT_COMMENT_START:
+			{
+				element::ptr newTag = new litehtml::el_comment(doc);
+				if(parent->appendChild(newTag))
+				{
+					parent = newTag;
+				}
+			}
+			break;
+		case litehtml::scanner::TT_COMMENT_END:
+			{
+				litehtml::element::ptr newTag = parent->parentElement();
+				parent = newTag;
+			}
+			break;
+		case litehtml::scanner::TT_DATA:
+			if(parent)
+			{
+				parent->set_data(sc.get_value());
+			}
+			break;
 		case litehtml::scanner::TT_ERROR:
 			break;
 		case litehtml::scanner::TT_TAG_START:
@@ -114,6 +138,12 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				} else if(!_wcsicmp(sc.get_tag_name(), L"title"))
 				{
 					newTag = new litehtml::el_title(doc);
+				} else if(!_wcsicmp(sc.get_tag_name(), L"style"))
+				{
+					newTag = new litehtml::el_style(doc);
+				} else if(!_wcsicmp(sc.get_tag_name(), L"base"))
+				{
+					newTag = new litehtml::el_base(doc);
 				} else
 				{
 					newTag = new litehtml::element(doc);
@@ -164,6 +194,11 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 			doc->m_root->apply_stylesheet(*i);
 		}
 
+		for(css_text::vector::iterator css = doc->m_css.begin(); css != doc->m_css.end(); css++)
+		{
+			parse_stylesheet(css->text.c_str(), doc->m_styles, css->baseurl.c_str());
+		}
+
 		for(style_sheet::vector::const_iterator i = doc->m_styles.begin(); i != doc->m_styles.end(); i++)
 		{
 			doc->m_root->apply_stylesheet(*i);
@@ -174,7 +209,7 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 	return doc;
 }
 
-litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, const wchar_t* size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration )
+litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration )
 {
 	uint_ptr ret = 0;
 
@@ -185,12 +220,15 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, const wcha
 
 	if(!size)
 	{
-		size = L"medium";
+		size = container()->get_default_font_size();
 	}
+
+	wchar_t strSize[20];
+	_itow_s(size, strSize, 20, 10);
 
 	std::wstring key = name;
 	key += L":";
-	key += size;
+	key += strSize;
 	key += L":";
 	key += weight;
 	key += L":";
@@ -249,13 +287,13 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, const wcha
 			}
 		}
 
-		ret = m_container->create_font(name, cvt_font_size(size), fw, fs, decor);
+		ret = m_container->create_font(name, size, fw, fs, decor);
 		m_fonts[key] = ret;
 	}
 	return ret;
 }
 
-litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, const wchar_t* size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration )
+litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration )
 {
 	if(!name || name && !_wcsicmp(name, L"inherit"))
 	{
@@ -264,12 +302,15 @@ litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, const wcha
 
 	if(!size)
 	{
-		size = L"medium";
+		size = container()->get_default_font_size();
 	}
+
+	wchar_t strSize[20];
+	_itow_s(size, strSize, 20, 10);
 
 	std::wstring key = name;
 	key += L":";
-	key += size;
+	key += strSize;
 	key += L":";
 	key += weight;
 	key += L":";
@@ -351,7 +392,7 @@ int litehtml::document::cvt_units( css_length& val, int fontSize ) const
 		ret = (int) val.val();
 		break;
 	case css_units_em:
-		ret = (int) (val.val() * fontSize);
+		ret = round_f(val.val() * fontSize);
 		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_pt:
@@ -374,42 +415,6 @@ int litehtml::document::cvt_units( css_length& val, int fontSize ) const
 	return ret;
 }
 
-int litehtml::document::cvt_font_size( const wchar_t* size ) const
-{
-	int sz = value_index(size, font_size_strings, -1);
-	if(sz >= 0)
-	{
-		switch(sz)
-		{
-		case fontSize_xx_small:
-			sz = m_font_size * 3 / 5;
-			break;
-		case fontSize_x_small:
-			sz = m_font_size * 3 / 4;
-			break;
-		case fontSize_small:
-			sz = m_font_size * 8 / 9;
-			break;
-		case fontSize_large:
-			sz = m_font_size * 6 / 5;
-			break;
-		case fontSize_x_large:
-			sz = m_font_size * 3 / 2;
-			break;
-		case fontSize_xx_large:
-			sz = m_font_size * 2;
-			break;
-		default:
-			sz = m_font_size;
-			break;
-		}
-	} else
-	{
-		sz = cvt_units(size, m_font_size);
-	}
-	return sz;
-}
-
 int litehtml::document::width() const
 {
 	return m_root ? m_root->width() : 0;
@@ -422,5 +427,8 @@ int litehtml::document::height() const
 
 void litehtml::document::add_stylesheet( const wchar_t* str, const wchar_t* baseurl )
 {
-	parse_stylesheet(str, m_styles, baseurl);
+	if(str && str[0])
+	{
+		m_css.push_back(css_text(str, baseurl));
+	}
 }

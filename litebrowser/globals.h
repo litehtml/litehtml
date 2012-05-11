@@ -14,3 +14,4 @@
 #include <gdiplus.h>
 #include <shlwapi.h>
 #include "..\include\litehtml.h"
+#include <Wininet.h>

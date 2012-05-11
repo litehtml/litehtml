@@ -8,6 +8,8 @@
 #include "types.h"
 #include "background.h"
 #include "borders.h"
+#include "element.h"
+#include "web_color.h"
 
 namespace litehtml
 {
@@ -24,11 +26,12 @@ namespace litehtml
 		virtual uint_ptr	get_temp_dc() = 0;
 		virtual void		release_temp_dc(uint_ptr hdc) = 0;
 		virtual int			pt_to_px(int pt) = 0;
+		virtual int			get_default_font_size() = 0;
 		virtual int			get_text_base_line(uint_ptr hdc, uint_ptr hFont) = 0;
 		virtual void		draw_list_marker(uint_ptr hdc, list_style_type marker_type, int x, int y, int height, const web_color& color) = 0;
-		virtual void		load_image(const wchar_t* src) = 0;
-		virtual void		get_image_size(const wchar_t* src, litehtml::size& sz) = 0;
-		virtual void		draw_image(uint_ptr hdc, const wchar_t* src, const litehtml::position& pos) = 0;
+		virtual void		load_image(const wchar_t* src, const wchar_t* baseurl) = 0;
+		virtual void		get_image_size(const wchar_t* src, const wchar_t* baseurl, litehtml::size& sz) = 0;
+		virtual void		draw_image(uint_ptr hdc, const wchar_t* src, const wchar_t* baseurl, const litehtml::position& pos) = 0;
 		virtual void		draw_background(uint_ptr hdc, 
 											const wchar_t* image, 
 											const wchar_t* baseurl, 
@@ -40,9 +43,21 @@ namespace litehtml
 
 		virtual	void		set_caption(const wchar_t* caption)		= 0;
 		virtual	void		set_base_url(const wchar_t* base_url)	= 0;
-		virtual	void		link(const wchar_t* href, const wchar_t* type, const wchar_t* rel)	= 0;
+		virtual	void		link(litehtml::document* doc, litehtml::element::ptr el)	= 0;
 	};
 
 	void trim(std::wstring &s);
 	int value_index(const wchar_t* val, const wchar_t* strings, int defValue = -1, const wchar_t* delim = L";");
+	int value_in_list(const wchar_t* val, const wchar_t* strings, const wchar_t* delim = L";");
+
+	inline int round_f(float val)
+	{
+		int int_val = (int) val;
+		if(val - int_val >= 0.5)
+		{
+			int_val++;
+		}
+		return int_val;
+	}
+
 }

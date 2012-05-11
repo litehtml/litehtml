@@ -19,41 +19,41 @@ namespace litehtml
 	protected:
 		litehtml::element*		m_parent;
 		litehtml::document*		m_doc;
-		elements_vector		m_children;
-		elements_vector		m_inlines;
-		line::vector		m_lines;
-		std::wstring		m_id;
-		std::wstring		m_class;
-		std::wstring		m_tag;
+		elements_vector			m_children;
+		elements_vector			m_inlines;
+		line::vector			m_lines;
+		std::wstring			m_id;
+		std::wstring			m_class;
+		std::wstring			m_tag;
 		litehtml::style			m_style;
-		string_map			m_attrs;
-		position			m_pos;
-		margins				m_margins;
-		margins				m_padding;
-		margins				m_borders;
-		vertical_align		m_vertical_align;
-		text_align			m_text_align;
-		style_display		m_display;
-		list_style_type		m_list_style_type;
-		list_style_position	m_list_style_position;
-		element_float		m_float;
-		element_clear		m_clear;
-		elements_vector		m_floats;
-		elements_vector		m_absolutes;
-		bool				m_skip;
-		background			m_bg;
-		element_position	m_el_position;
-		int					m_line_height;
+		string_map				m_attrs;
+		position				m_pos;
+		margins					m_margins;
+		margins					m_padding;
+		margins					m_borders;
+		vertical_align			m_vertical_align;
+		text_align				m_text_align;
+		style_display			m_display;
+		list_style_type			m_list_style_type;
+		list_style_position		m_list_style_position;
+		element_float			m_float;
+		element_clear			m_clear;
+		elements_vector			m_floats;
+		elements_vector			m_absolutes;
+		bool					m_skip;
+		background				m_bg;
+		element_position		m_el_position;
+		int						m_line_height;
 
-		css_margins			m_css_margins;
-		css_margins			m_css_padding;
-		css_borders			m_css_borders;
-		css_length			m_css_width;
-		css_length			m_css_height;
-		css_length			m_css_left;
-		css_length			m_css_right;
-		css_length			m_css_top;
-		css_length			m_css_bottom;
+		css_margins				m_css_margins;
+		css_margins				m_css_padding;
+		css_borders				m_css_borders;
+		css_length				m_css_width;
+		css_length				m_css_height;
+		css_length				m_css_left;
+		css_length				m_css_right;
+		css_length				m_css_top;
+		css_length				m_css_bottom;
 
 	public:
 		element(litehtml::document* doc);
@@ -63,6 +63,7 @@ namespace litehtml
 		virtual element::ptr		parentElement() const;
 		virtual const wchar_t*		get_tagName() const;
 		virtual void				set_tagName(const wchar_t* tag);
+		virtual void				set_data(const wchar_t* data);
 		virtual litehtml::style&	get_style();
 
 		virtual void				set_attr(const wchar_t* name, const wchar_t* val);
@@ -105,8 +106,8 @@ namespace litehtml
 		virtual const wchar_t*		get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
 
 		uint_ptr					get_font();
-		int							get_font_size();
-		litehtml::web_color				get_color(const wchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
+		virtual int					get_font_size();
+		litehtml::web_color			get_color(const wchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		bool						operator==(const css_selector& selector);
 		bool						operator!=(const css_selector& selector);
 		bool						operator==(const css_element_selector& selector);

@@ -16,6 +16,30 @@ namespace litehtml
 		virtual wchar_t get_char() { return p < end? *p++: 0; }
 	};
 
+	struct css_text
+	{
+		typedef std::vector<css_text>	vector;
+
+		std::wstring	text;
+		std::wstring	baseurl;
+		
+		css_text()
+		{
+		}
+
+		css_text(const wchar_t* txt, const wchar_t* url)
+		{
+			text	= txt ? txt : L"";
+			baseurl	= url ? url : L"";
+		}
+
+		css_text(const css_text& val)
+		{
+			text	= val.text;
+			baseurl	= val.baseurl;
+		}
+	};
+
 
 	class element;
 
@@ -27,6 +51,7 @@ namespace litehtml
 		element*				m_root;
 		document_container*		m_container;
 		fonts_map				m_fonts;
+		css_text::vector		m_css;
 		style_sheet::vector		m_styles;
 		std::wstring			m_font_name;
 		int						m_font_size;
@@ -36,13 +61,12 @@ namespace litehtml
 		virtual ~document();
 
 		litehtml::document_container*	container()	{ return m_container; }
-		uint_ptr		get_font(const wchar_t* name, const wchar_t* size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration);
+		uint_ptr		get_font(const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration);
 		void			render(uint_ptr hdc, int max_width);
 		void			draw(uint_ptr hdc, int x, int y, position* clip);
 		web_color		get_def_color()	{ return m_def_color; }
 		int				cvt_units(const wchar_t* str, int fontSize, bool* is_percent = 0) const;
 		int				cvt_units(css_length& val, int fontSize) const;
-		int				cvt_font_size( const wchar_t* size ) const;
 		int				width() const;
 		int				height() const;
 		void			add_stylesheet(const wchar_t* str, const wchar_t* baseurl);
@@ -53,6 +77,6 @@ namespace litehtml
 		//void			load_default_styles();
 		litehtml::element*	add_root();
 		litehtml::element*	add_body();
-		litehtml::uint_ptr	add_font(const wchar_t* name, const wchar_t* size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration);
+		litehtml::uint_ptr	add_font(const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration);
 	};
 }
