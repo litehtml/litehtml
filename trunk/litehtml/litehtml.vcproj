@@ -296,7 +296,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_base.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\el_body.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\el_comment.cpp"
 				>
 			</File>
 			<File
@@ -313,6 +321,10 @@
 			</File>
 			<File
 				RelativePath=".\el_space.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\el_style.cpp"
 				>
 			</File>
 			<File
@@ -364,6 +376,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\web_color.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\xh_scanner.cpp"
 				>
 			</File>
@@ -406,7 +422,15 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_base.h"
+				>
+			</File>
+			<File
 				RelativePath=".\el_body.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_comment.h"
 				>
 			</File>
 			<File
@@ -423,6 +447,10 @@
 			</File>
 			<File
 				RelativePath=".\el_space.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_style.h"
 				>
 			</File>
 			<File
@@ -483,6 +511,10 @@
 			</File>
 			<File
 				RelativePath=".\types.h"
+				>
+			</File>
+			<File
+				RelativePath=".\web_color.h"
 				>
 			</File>
 			<File

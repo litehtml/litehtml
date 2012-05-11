@@ -331,6 +331,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\downloader.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\HtmlViewWnd.cpp"
 				>
 			</File>
@@ -354,6 +358,10 @@
 			>
 			<File
 				RelativePath=".\BrowserWnd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\downloader.h"
 				>
 			</File>
 			<File
@@ -403,10 +411,6 @@
 				>
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\ReadMe.txt"
-			>
-		</File>
 	</Files>
 	<Globals>
 	</Globals>

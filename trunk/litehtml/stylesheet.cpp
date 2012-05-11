@@ -6,35 +6,35 @@ litehtml::style_sheet::vector litehtml::master_stylesheet;
 void litehtml::parse_stylesheet( const wchar_t* str, style_sheet::vector& styles, const wchar_t* baseurl )
 {
 	std::wstring text = str;
+
+	// remove comments
+	std::wstring::size_type c_start = text.find(L"/*");
+	while(c_start != std::wstring::npos)
+	{
+		std::wstring::size_type c_end = text.find(L"*/", c_start + 2);
+		text.erase(c_start, c_end - c_start + 2);
+		c_start = text.find(L"/*");
+	}
+
 	std::wstring::size_type pos = text.find_first_not_of(L" \n\r\t");
 	while(pos != std::wstring::npos)
 	{
-		while(pos != std::wstring::npos && text.substr(pos, 2) == L"/*")
+		std::wstring::size_type style_start = text.find(L"{", pos);
+		std::wstring::size_type style_end	= text.find(L"}", pos);
+		if(style_start != std::wstring::npos && style_end != std::wstring::npos)
 		{
-			pos = text.find(L"*/", pos + 2);
-			if(pos != std::wstring::npos)
-			{
-				pos = text.find_first_not_of(L" \n\r\t", pos + 2);
-			}
-		}
-		if(pos != std::wstring::npos)
+			style_sheet st;
+			st.add_selector(text.substr(pos, style_start - pos));
+
+			st.m_style.add(text.substr(style_start + 1, style_end - style_start - 2).c_str(), baseurl);
+			styles.push_back(st);
+
+			pos = style_end + 1;
+		} else
 		{
-			std::wstring::size_type style_start = text.find(L"{", pos);
-			std::wstring::size_type style_end	= text.find(L"}", pos);
-			if(style_start != std::wstring::npos && style_end != std::wstring::npos)
-			{
-				style_sheet st;
-				st.add_selector(text.substr(pos, style_start - pos - 1));
-
-				st.m_style.add(text.substr(style_start + 1, style_end - style_start - 2).c_str(), baseurl);
-				styles.push_back(st);
-
-				pos = style_end + 1;
-			} else
-			{
-				pos = std::wstring::npos;
-			}
+			pos = std::wstring::npos;
 		}
+
 		if(pos != std::wstring::npos)
 		{
 			pos = text.find_first_not_of(L" \n\r\t", pos);

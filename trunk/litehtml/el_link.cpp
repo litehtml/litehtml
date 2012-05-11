@@ -15,5 +15,5 @@ litehtml::el_link::~el_link()
 
 void litehtml::el_link::finish()
 {
-	m_doc->container()->link(get_attr(L"href"), get_attr(L"type"), get_attr(L"rel"));
+	m_doc->container()->link(m_doc, this);
 }

@@ -35,71 +35,15 @@ int litehtml::value_index( const wchar_t* val, const wchar_t* strings, int defVa
 	return defValue;
 }
 
-
-litehtml::web_color litehtml::web_color::from_string( const wchar_t* str )
+int litehtml::value_in_list( const wchar_t* val, const wchar_t* strings, const wchar_t* delim )
 {
-	if(!str)
+	int idx = value_index(val, strings, -1, delim);
+	if(idx >= 0)
 	{
-		return web_color(0, 0, 0);
+		return true;
 	}
-	if(str[0] == L'#')
-	{
-		std::wstring red		= L"";
-		std::wstring green		= L"";
-		std::wstring blue		= L"";
-		if(wcslen(str + 1) == 3)
-		{
-			red		+= str[1];
-			red		+= str[1];
-			green	+= str[2];
-			green	+= str[2];
-			blue	+= str[3];
-			blue	+= str[3];
-		} else if(wcslen(str + 1) == 6)
-		{
-			red		+= str[1];
-			red		+= str[2];
-			green	+= str[3];
-			green	+= str[4];
-			blue	+= str[5];
-			blue	+= str[6];
-		}
-		wchar_t* sss = 0;
-		web_color clr;
-		clr.red		= (byte) wcstol(red.c_str(),	&sss, 16);
-		clr.green	= (byte) wcstol(green.c_str(),	&sss, 16);
-		clr.blue	= (byte) wcstol(blue.c_str(),	&sss, 16);
-		return clr;
-	} else if(!wcsncmp(str, L"rgb", 3))
-	{
-		std::wstring s = str;
-
-		std::wstring::size_type pos = s.find_first_of(L"(");
-		if(pos != std::wstring::npos)
-		{
-			s.erase(s.begin(), s.begin() + pos + 1);
-		}
-		pos = s.find_last_of(L")");
-		if(pos != std::wstring::npos)
-		{
-			s.erase(s.begin() + pos, s.end());
-		}
-
-		std::vector<std::wstring> tokens;
-		tokenize(s, tokens, L", \t");
-
-		web_color clr;
-
-		if(tokens.size() >= 1)	clr.red		= (byte) _wtoi(tokens[0].c_str());
-		if(tokens.size() >= 2)	clr.green	= (byte) _wtoi(tokens[1].c_str());
-		if(tokens.size() >= 3)	clr.blue	= (byte) _wtoi(tokens[2].c_str());
-		if(tokens.size() >= 4)	clr.alpha	= (byte) _wtoi(tokens[3].c_str());
-
-		return clr;
-	}
-	return web_color(0, 0, 0);
+	return false;
 }
-
 
 void litehtml::css_element_selector::parse( const std::wstring& txt )
 {

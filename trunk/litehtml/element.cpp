@@ -247,12 +247,11 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 litehtml::uint_ptr litehtml::element::get_font()
 {
 	const wchar_t* name			= get_style_property(L"font-family",		true,	L"inherit");
-	const wchar_t* size			= get_style_property(L"font-size",			true,	L"medium");
 	const wchar_t* weight		= get_style_property(L"font-weight",		true,	L"normal");
 	const wchar_t* style		= get_style_property(L"font-style",			true,	L"normal");
 	const wchar_t* decoration	= get_style_property(L"text-decoration",	true,	L"none");
 
-	return m_doc->get_font(name, size, weight, style, decoration);
+	return m_doc->get_font(name, get_font_size(), weight, style, decoration);
 }
 
 const wchar_t* litehtml::element::get_style_property( const wchar_t* name, bool inherited, const wchar_t* def /*= 0*/ )
@@ -306,6 +305,13 @@ void litehtml::element::parse_styles()
 	if(style)
 	{
 		m_style.add(style, NULL);
+	}
+
+	// TODO: remove this nahren
+	if(m_class == L"logo")
+	{
+		int i=0;
+		i++;
 	}
 
 	int fntsize = get_font_size();
@@ -437,12 +443,24 @@ void litehtml::element::parse_styles()
 
 int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 {
+	// TODO: remove this nahren
+	if(m_class == L"quicklinks")
+	{
+		int i=0;
+		i++;
+	}
+
 	int parent_width = max_width;
 
 	m_pos.move_to(x, y);
 
 	m_pos.x	+= content_margins_left();
 	m_pos.y += content_margins_top();
+
+	if(m_el_position == element_position_relative)
+	{
+		m_pos.x += m_css_left.calc_percent(parent_width);
+	}
 
 	int ret_width = 0;
 
@@ -606,9 +624,13 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 	m_pos.move_to(x, y);
 	m_pos.x	+= content_margins_left();
 	m_pos.y += content_margins_top();
+	if(m_el_position == element_position_relative)
+	{
+		m_pos.x += m_css_left.calc_percent(parent_width);
+	}
 
 	// TODO: Percents are incorrect
-	int block_height = m_css_height.calc_percent(100);
+	int block_height = m_css_height.calc_percent(m_pos.height);
 
 	if(block_height)
 	{
@@ -684,7 +706,66 @@ bool litehtml::element::is_white_space()
 
 int litehtml::element::get_font_size()
 {
-	return m_doc->cvt_font_size(get_style_property(L"font-size", true,	L"medium"));
+	const wchar_t* str = get_style_property(L"font-size", false, 0);
+
+	int parent_sz = 0;
+	int doc_font_size = m_doc->container()->get_default_font_size();
+	if(m_parent)
+	{
+		parent_sz = m_parent->get_font_size();
+	} else
+	{
+		parent_sz = doc_font_size;
+	}
+
+
+	if(!str)
+	{
+		return parent_sz;
+	}
+
+	int ret = 0;
+
+	css_length sz;
+	sz.fromString(str, font_size_strings);
+	if(sz.is_predefined())
+	{
+		switch(sz.predef())
+		{
+		case fontSize_xx_small:
+			ret = doc_font_size * 3 / 5;
+			break;
+		case fontSize_x_small:
+			ret = doc_font_size * 3 / 4;
+			break;
+		case fontSize_small:
+			ret = doc_font_size * 8 / 9;
+			break;
+		case fontSize_large:
+			ret = doc_font_size * 6 / 5;
+			break;
+		case fontSize_x_large:
+			ret = doc_font_size * 3 / 2;
+			break;
+		case fontSize_xx_large:
+			ret = doc_font_size * 2;
+			break;
+		default:
+			ret = doc_font_size;
+			break;
+		}
+	} else
+	{
+		if(sz.units() == css_units_percentage)
+		{
+			ret = sz.calc_percent(parent_sz);
+		} else
+		{
+			ret = m_doc->cvt_units(sz, parent_sz);
+		}
+	}
+
+	return ret;
 }
 
 void litehtml::element::clear_inlines()
@@ -1249,14 +1330,27 @@ void litehtml::element::parse_background()
 		tokenize(str, res, L" \t");
 		if(res.size() > 0)
 		{
-			m_bg.m_position.x.fromString(res[0], L"left;right;center");
-			if(res.size() > 1)
+			if(res.size() == 1)
 			{
-				m_bg.m_position.y.fromString(res[1], L"top;bottom;center");
+				if( value_in_list(res[0].c_str(), L"left;right;center") )
+				{
+					m_bg.m_position.x.fromString(res[0], L"left;right;center");
+					m_bg.m_position.y.set_value(50, css_units_percentage);
+				} else if( value_in_list(res[0].c_str(), L"top;bottom;center") )
+				{
+					m_bg.m_position.y.fromString(res[0], L"top;bottom;center");
+					m_bg.m_position.x.set_value(50, css_units_percentage);
+				} else
+				{
+					m_bg.m_position.x.fromString(res[0], L"left;right;center");
+					m_bg.m_position.y.set_value(50, css_units_percentage);
+				}
 			} else
 			{
-				m_bg.m_position.x.set_value(50, css_units_percentage);
+				m_bg.m_position.x.fromString(res[0], L"left;right;center");
+				m_bg.m_position.y.fromString(res[1], L"top;bottom;center");
 			}
+
 			if(m_bg.m_position.x.is_predefined())
 			{
 				switch(m_bg.m_position.x.predef())
@@ -1429,4 +1523,9 @@ void litehtml::element::get_text( std::wstring& text )
 bool litehtml::element::is_body()
 {
 	return false;
+}
+
+void litehtml::element::set_data( const wchar_t* data )
+{
+
 }

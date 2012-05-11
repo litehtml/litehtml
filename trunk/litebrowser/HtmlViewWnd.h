@@ -39,9 +39,9 @@ public:
 	virtual void		release_temp_dc(uint_ptr hdc);
 	virtual int			pt_to_px(int pt);
 	virtual void		draw_list_marker(uint_ptr hdc, list_style_type marker_type, int x, int y, int height, const web_color& color);
-	virtual void		load_image(const wchar_t* src);
-	virtual void		get_image_size(const wchar_t* src, litehtml::size& sz);
-	virtual void		draw_image(uint_ptr hdc, const wchar_t* src, const litehtml::position& pos);
+	virtual void		load_image(const wchar_t* src, const wchar_t* baseurl);
+	virtual void		get_image_size(const wchar_t* src, const wchar_t* baseurl, litehtml::size& sz);
+	virtual void		draw_image(uint_ptr hdc, const wchar_t* src, const wchar_t* baseurl, const litehtml::position& pos);
 	virtual void		draw_background(uint_ptr hdc, 
 										const wchar_t* image, 
 										const wchar_t* baseurl, 
@@ -53,7 +53,8 @@ public:
 
 	virtual	void		set_caption(const wchar_t* caption);
 	virtual	void		set_base_url(const wchar_t* base_url);
-	virtual	void		link(const wchar_t* href, const wchar_t* type, const wchar_t* rel);
+	virtual	void		link(litehtml::document* doc, litehtml::element::ptr el);
+	virtual int			get_default_font_size();
 
 protected:
 	virtual void OnCreate();
@@ -68,7 +69,8 @@ protected:
 	void	redraw();
 	void	update_scroll();
 	void	clear_images();
-	LPWSTR	load_file(LPCWSTR path);
+	LPWSTR	load_text_file(LPCWSTR path);
+	void	make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
 
 private:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);

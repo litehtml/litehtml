@@ -63,6 +63,16 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 		return;
 	}
 
+	// Add baseurl for background image 
+	if(	!wcscmp(name, L"background-image"))
+	{
+		m_properties[name] = val;
+		if(baseurl)
+		{
+			m_properties[L"background-image-baseurl"] = baseurl;
+		}
+	} else
+
 	// Parse border spacing properties 
 	if(	!wcscmp(name, L"border-spacing"))
 	{
@@ -98,7 +108,7 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 				add_property(L"border-bottom-style", tok->c_str(), baseurl);
 			} else
 			{
-				if((*tok)[0] == L'#' || tok->substr(0, 3) == L"rgb")
+				if(web_color::is_color(tok->c_str()))
 				{
 					add_property(L"border-left-color", tok->c_str(), baseurl);
 					add_property(L"border-right-color", tok->c_str(), baseurl);
@@ -132,7 +142,7 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 				add_property(str.c_str(), tok->c_str(), baseurl);
 			} else
 			{
-				if((*tok)[0] == L'#' || tok->substr(0, 3) == L"rgb")
+				if(web_color::is_color(tok->c_str()))
 				{
 					str = name;
 					str += L"-color";
@@ -305,52 +315,7 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 		}
 	} else if(!wcscmp(name, L"font"))
 	{
-		string_vector tokens;
-		tokenize(val, tokens, L" ", L"", L"\"");
-
-		int idx = (int) tokens.size() - 1;
-		
-		if(idx >= 0)
-		{
-			m_properties[L"font-family"] = tokens[idx];
-			idx--;
-		}
-
-		if(idx >= 0)
-		{
-			string_vector szlh;
-			tokenize(tokens[idx], szlh, L"/");
-
-			if(szlh.size() == 1)
-			{
-				m_properties[L"font-size"]		= szlh[0];
-			} else	if(szlh.size() >= 2)
-			{
-				m_properties[L"font-size"]		= szlh[0];
-				m_properties[L"line-height"]	= szlh[1];
-			}
-			idx--;
-		}
-
-		if(idx >= 0)
-		{
-			m_properties[L"font-weight"] = tokens[idx];
-			idx--;
-		}
-
-		if(idx >= 0)
-		{
-			m_properties[L"font-variant"] = tokens[idx];
-			idx--;
-		}
-
-		if(idx >= 0)
-		{
-			m_properties[L"font-style"] = tokens[idx];
-			idx--;
-		}
-
-
+		parse_short_font(val);
 	} else 
 	{
 		m_properties[name] = val;
@@ -387,7 +352,7 @@ void litehtml::style::parse_short_background( const std::wstring& val, const wch
 	bool origin_found = false;
 	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
 	{
-		if(tok->substr(0, 3) == L"rgb" || (*tok)[0] == L'#')
+		if(web_color::is_color(tok->c_str()))
 		{
 			m_properties[L"background-color"] = *tok;
 		} else if(tok->substr(0, 3) == L"url")
@@ -398,19 +363,13 @@ void litehtml::style::parse_short_background( const std::wstring& val, const wch
 				m_properties[L"background-image-baseurl"] = baseurl;
 			}
 
-		} else if(	*tok == L"repeat"	|| 
-					*tok == L"repeat-x" || 
-					*tok == L"repeat-y"	||
-					*tok == L"no-repeat")
+		} else if( value_in_list(tok->c_str(), background_repeat_strings) )
 		{
 			m_properties[L"background-repeat"] = *tok;
-		} else if(	*tok == L"scroll"	|| 
-					*tok == L"fixed")
+		} else if( value_in_list(tok->c_str(), background_attachment_strings) )
 		{
 			m_properties[L"background-attachment"] = *tok;
-		} else if(	*tok == L"border-box"	|| 
-					*tok == L"padding-box"	||
-					*tok == L"content-box")
+		} else if( value_in_list(tok->c_str(), background_box_strings) )
 		{
 			if(!origin_found)
 			{
@@ -420,9 +379,7 @@ void litehtml::style::parse_short_background( const std::wstring& val, const wch
 			{
 				m_properties[L"background-clip"] = *tok;
 			}
-		} else if(	*tok == L"left"		|| 
-					*tok == L"right"	||
-					*tok == L"center"	||
+		} else if(	value_in_list(tok->c_str(), L"left;right;top;bottom;center") ||
 					iswdigit((*tok)[0]) ||
 					(*tok)[0] == L'-'	||
 					(*tok)[0] == L'.'	||
@@ -435,6 +392,67 @@ void litehtml::style::parse_short_background( const std::wstring& val, const wch
 			{
 				m_properties[L"background-position"] = *tok;
 			}
+		}
+	}
+}
+
+void litehtml::style::parse_short_font( const std::wstring& val )
+{
+	string_vector tokens;
+	tokenize(val, tokens, L" ", L"", L"\"");
+
+	int idx = 0;
+	bool was_normal = false;
+	bool is_family = false;
+	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+	{
+		idx = value_index(tok->c_str(), font_style_strings);
+		if(!is_family)
+		{
+			if(idx >= 0)
+			{
+				if(idx == 0 && !was_normal)
+				{
+					m_properties[L"font-weight"]	= *tok;
+					m_properties[L"font-variant"]	= *tok;
+					m_properties[L"font-style"]		= *tok;
+				} else
+				{
+					m_properties[L"font-style"] = *tok;
+				}
+			} else
+			{
+				if(value_in_list(tok->c_str(), font_weight_strings))
+				{
+					m_properties[L"font-weight"] = *tok;
+				} else
+				{
+					if(value_in_list(tok->c_str(), font_variant_strings))
+					{
+						m_properties[L"font-variant"] = *tok;
+					} else if( iswdigit((*tok)[0]) )
+					{
+						string_vector szlh;
+						tokenize(*tok, szlh, L"/");
+
+						if(szlh.size() == 1)
+						{
+							m_properties[L"font-size"]		= szlh[0];
+						} else	if(szlh.size() >= 2)
+						{
+							m_properties[L"font-size"]		= szlh[0];
+							m_properties[L"line-height"]	= szlh[1];
+						}
+					} else
+					{
+						is_family = true;
+						m_properties[L"font-family"] += *tok;
+					}
+				}
+			}
+		} else
+		{
+			m_properties[L"font-family"] += *tok;
 		}
 	}
 }

@@ -3,6 +3,7 @@
 #include "attributes.h"
 #include "css_length.h"
 #include "css_position.h"
+#include "web_color.h"
 
 namespace litehtml
 {

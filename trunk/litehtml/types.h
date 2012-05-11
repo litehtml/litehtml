@@ -26,47 +26,6 @@ namespace litehtml
 
 	typedef unsigned char	byte;
 
-	struct web_color
-	{
-		byte    blue;
-		byte    green;
-		byte    red;
-		byte    alpha;
-
-		web_color(byte r, byte g, byte b, byte a = 255)
-		{
-			blue	= b;
-			green	= g;
-			red		= r;
-			alpha	= a;
-		}
-
-		web_color()
-		{
-			blue	= 0;
-			green	= 0;
-			red		= 0;
-			alpha	= 0xFF;
-		}
-
-		web_color(const web_color& val)
-		{
-			blue	= val.blue;
-			green	= val.green;
-			red		= val.red;
-			alpha	= val.alpha;
-		}
-
-		void operator=(const web_color& val)
-		{
-			blue	= val.blue;
-			green	= val.green;
-			red		= val.red;
-			alpha	= val.alpha;
-		}
-		static web_color from_string(const wchar_t* str);
-	};
-
 	struct margins
 	{
 		int	left;
@@ -218,14 +177,29 @@ namespace litehtml
 		fontStyleItalic
 	};
 
-#define  font_weight_strings	L"normal;bold;bolder;lighter"
+#define  font_variant_strings		L"normal;small-caps"
+
+	enum font_variant
+	{
+		font_variant_normal,
+		font_variant_italic
+	};
+
+#define  font_weight_strings	L"normal;bold;bolder;lighter100;200;300;400;500;600;700"
 
 	enum font_weight
 	{
 		fontWeightNormal,
 		fontWeightBold,
 		fontWeightBolder,
-		fontWeightLighter
+		fontWeightLighter,
+		fontWeight100,
+		fontWeight200,
+		fontWeight300,
+		fontWeight400,
+		fontWeight500,
+		fontWeight600,
+		fontWeight700
 	};
 
 #define  list_style_type_strings	L"none;circle;disc;square"

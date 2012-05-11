@@ -48,6 +48,7 @@ namespace litehtml
 		void parse(const wchar_t* txt, const wchar_t* baseurl);
 		void parse_short_border(const std::wstring& prefix, const std::wstring& val);
 		void parse_short_background(const std::wstring& val, const wchar_t* baseurl);
+		void parse_short_font(const std::wstring& val);
 	};
 
 	class style_sheet

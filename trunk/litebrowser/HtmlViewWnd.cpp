@@ -2,6 +2,7 @@
 #include "HtmlViewWnd.h"
 #include "memdc.h"
 #include "..\litehtml\tokenizer.h"
+#include "downloader.h"
 
 using namespace Gdiplus;
 
@@ -33,7 +34,7 @@ CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst)
 		RegisterClass(&wc);
 	}
 
-	LPWSTR css_text = load_file(L"D:\\WORK\\drawhtml\\include\\master.css");
+	LPWSTR css_text = load_text_file(L"file://D:/WORK/drawhtml/include/master.css");
 	if(css_text)
 	{
 		litehtml::load_master_stylesheet(css_text);
@@ -271,36 +272,16 @@ int CHTMLViewWnd::get_text_base_line( uint_ptr hdc, uint_ptr hFont )
 
 void CHTMLViewWnd::open( LPCWSTR path )
 {
-	m_doc = NULL;
-	m_base_path = L"";
+	make_url(path, NULL, m_doc_path);
 
-	m_doc_path = path;
+	m_doc		= NULL;
+	m_base_path = m_doc_path;
 
-	LPWSTR html_text = load_file(path);
+	LPWSTR html_text = load_text_file(m_doc_path.c_str());
 	if(html_text)
 	{
-		WCHAR css_path[MAX_PATH];
-		lstrcpy(css_path, path);
-		LPWSTR ext = PathFindExtension(css_path);
-		lstrcpy(ext, L".css");
-
-		LPWSTR css_text = load_file(css_path);
-
-		LPWSTR base_path = new WCHAR[lstrlen(path) + 1];
-		lstrcpy(base_path, path);
-		PathRemoveFileSpec(base_path);
-		PathAddBackslash(base_path);
-		m_base_path = base_path;
-		delete base_path;
-
-		m_doc = litehtml::document::createFromString(html_text, this, css_text, NULL);
+		m_doc = litehtml::document::createFromString(html_text, this, NULL, NULL);
 		delete html_text;
-
-		if(css_text)
-		{
-			delete css_text;
-		}
-
 	}
 
 
@@ -494,26 +475,68 @@ void CHTMLViewWnd::draw_list_marker( uint_ptr hdc, list_style_type marker_type, 
 	}
 }
 
-void CHTMLViewWnd::load_image( const wchar_t* src )
+void CHTMLViewWnd::load_image( const wchar_t* src, const wchar_t* baseurl )
 {
-	if(m_images.find(src) == m_images.end())
+	std::wstring url;
+	make_url(src, baseurl, url);
+	if(m_images.find(url.c_str()) == m_images.end())
 	{
-		std::wstring path = m_base_path;
-		path += src;
-		if(PathFileExists(path.c_str()))
+		CRemotedFile rf;
+
+		HANDLE hFile = rf.Open(url.c_str());
+		if(hFile != INVALID_HANDLE_VALUE)
 		{
-			Image* img = Image::FromFile(path.c_str());
-			if(img)
+			DWORD szHigh;
+			DWORD szLow = GetFileSize(hFile, &szHigh);
+			HANDLE hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, szHigh, szLow, NULL);
+			if(hMapping)
 			{
-				m_images[src] = img;
+				SIZE_T memSize;
+				if(szHigh)
+				{
+					memSize = MAXDWORD;
+				} else
+				{
+					memSize = szLow;
+				}
+				LPVOID data = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, memSize);
+
+				HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, memSize);
+				LPVOID hgData = GlobalLock(hGlobal);
+				CopyMemory(hgData, data, memSize);
+				GlobalUnlock(hGlobal);
+
+				UnmapViewOfFile(data);
+				CloseHandle(hMapping);
+
+				IStream* pStream = NULL;
+				if (::CreateStreamOnHGlobal(hGlobal, TRUE, &pStream) == S_OK)
+				{
+					Image* img = Gdiplus::Image::FromStream(pStream);
+					pStream->Release();
+					if(img)
+					{ 
+						if (img->GetLastStatus() != Gdiplus::Ok)
+						{
+							delete img;
+							img = NULL;
+						} else
+						{
+							m_images[url.c_str()] = img;
+						}
+					}
+				}
 			}
 		}
 	}
 }
 
-void CHTMLViewWnd::get_image_size( const wchar_t* src, litehtml::size& sz )
+void CHTMLViewWnd::get_image_size( const wchar_t* src, const wchar_t* baseurl, litehtml::size& sz )
 {
-	images_map::iterator img = m_images.find(src);
+	std::wstring url;
+	make_url(src, baseurl, url);
+
+	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
 		sz.width	= (int) img->second->GetWidth();
@@ -521,9 +544,11 @@ void CHTMLViewWnd::get_image_size( const wchar_t* src, litehtml::size& sz )
 	}
 }
 
-void CHTMLViewWnd::draw_image( uint_ptr hdc, const wchar_t* src, const litehtml::position& pos )
+void CHTMLViewWnd::draw_image( uint_ptr hdc, const wchar_t* src, const wchar_t* baseurl, const litehtml::position& pos )
 {
-	images_map::iterator img = m_images.find(src);
+	std::wstring url;
+	make_url(src, baseurl, url);
+	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
 		Graphics graphics((HDC) hdc);
@@ -547,22 +572,18 @@ void CHTMLViewWnd::clear_images()
 	m_images.clear();
 }
 
-LPWSTR CHTMLViewWnd::load_file( LPCWSTR path )
+LPWSTR CHTMLViewWnd::load_text_file( LPCWSTR path )
 {
 	LPWSTR strW = NULL;
 
-	HANDLE fl = CreateFile(path, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	CRemotedFile rf;
+
+	HANDLE fl = rf.Open(path);
 	if(fl != INVALID_HANDLE_VALUE)
 	{
-		LPWSTR base_path = new WCHAR[lstrlen(path) + 1];
-		lstrcpy(base_path, path);
-		PathRemoveFileSpec(base_path);
-		PathAddBackslash(base_path);
-		m_base_path = base_path;
-		delete base_path;
-
 		DWORD size = GetFileSize(fl, NULL);
 		LPSTR str = (LPSTR) malloc(size + 1);
+		
 		DWORD cbRead = 0;
 		ReadFile(fl, str, size, &cbRead, NULL);
 		str[cbRead] = 0;
@@ -571,7 +592,6 @@ LPWSTR CHTMLViewWnd::load_file( LPCWSTR path )
 		MultiByteToWideChar(CP_UTF8, 0, str, cbRead + 1, strW, cbRead + 1);
 
 		free(str);
-		CloseHandle(fl);
 	}
 
 	return strW;
@@ -596,9 +616,12 @@ void CHTMLViewWnd::refresh()
 
 void CHTMLViewWnd::draw_background( uint_ptr hdc, const wchar_t* image, const wchar_t* baseurl, const litehtml::position& draw_pos, const litehtml::css_position& bg_pos, litehtml::background_repeat repeat, litehtml::background_attachment attachment )
 {
-	load_image(image);
+	load_image(image, baseurl);
 
-	images_map::iterator img = m_images.find(image);
+	std::wstring url;
+	make_url(image, baseurl, url);
+
+	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
 		Graphics graphics((HDC) hdc);
@@ -623,7 +646,7 @@ void CHTMLViewWnd::draw_background( uint_ptr hdc, const wchar_t* image, const wc
 			pos.y += (int) bg_pos.y.val();
 		} else
 		{
-			pos.y += (int) ( (float) (draw_pos.width - img->second->GetHeight()) * bg_pos.y.val() / 100.0);
+			pos.y += (int) ( (float) (draw_pos.height - img->second->GetHeight()) * bg_pos.y.val() / 100.0);
 		}
 
 		switch(repeat)
@@ -733,10 +756,79 @@ void CHTMLViewWnd::set_caption( const wchar_t* caption )
 
 void CHTMLViewWnd::set_base_url( const wchar_t* base_url )
 {
-
+	if(base_url)
+	{
+		if(PathIsRelative(base_url) && !PathIsURL(base_url))
+		{
+			make_url(base_url, NULL, m_base_path);
+		} else
+		{
+			m_base_path = base_url;
+		}
+	} else
+	{
+		m_base_path = m_doc_path;
+	}
 }
 
-void CHTMLViewWnd::link( const wchar_t* href, const wchar_t* type, const wchar_t* rel )
+void CHTMLViewWnd::link( litehtml::document* doc, litehtml::element::ptr el )
 {
+	const wchar_t* rel = el->get_attr(L"rel");
+	if(rel && !wcscmp(rel, L"stylesheet"))
+	{
+		const wchar_t* media = el->get_attr(L"media", L"screen");
+		if(media && wcsstr(media, L"screen"))
+		{
+			const wchar_t* href = el->get_attr(L"href");
+			if(href)
+			{
+				std::wstring url;
+				make_url(href, NULL, url);
+				LPWSTR css = load_text_file(url.c_str());
+				if(css)
+				{
+					doc->add_stylesheet(css, url.c_str());
+					delete css;
+				}
+			}
+		}
+	}
+}
 
+void CHTMLViewWnd::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
+{
+	if(PathIsRelative(url) && !PathIsURL(url))
+	{
+		WCHAR abs_url[512];
+		DWORD dl = 512;
+		if(basepath)
+		{
+			UrlCombine(basepath, url, abs_url, &dl, 0);
+		} else
+		{
+			UrlCombine(m_base_path.c_str(), url, abs_url, &dl, 0);
+		}
+		out = abs_url;
+	} else
+	{
+		if(PathIsURL(url))
+		{
+			out = url;
+		} else
+		{
+			WCHAR abs_url[512];
+			DWORD dl = 512;
+			UrlCreateFromPath(url, abs_url, &dl, 0);
+			out = abs_url;
+		}
+	}
+	if(out.substr(0, 8) == L"file:///")
+	{
+		out.erase(5, 1);
+	}
+}
+
+int CHTMLViewWnd::get_default_font_size()
+{
+	return 16;
 }
