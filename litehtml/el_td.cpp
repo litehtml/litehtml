@@ -14,10 +14,8 @@ litehtml::el_td::~el_td()
 
 void litehtml::el_td::parse_styles()
 {
-	css_length width;
-	const wchar_t* str_width = get_attr(L"width", L"auto");
-	width.fromString(str_width, L"auto");
-	if(!width.is_predefined())
+	const wchar_t* str_width = get_attr(L"width");
+	if(str_width)
 	{
 		m_style.add_property(L"width", str_width, 0);
 	}

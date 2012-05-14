@@ -19,6 +19,21 @@ void litehtml::parse_stylesheet( const wchar_t* str, style_sheet::vector& styles
 	std::wstring::size_type pos = text.find_first_not_of(L" \n\r\t");
 	while(pos != std::wstring::npos)
 	{
+		while(text[pos] == L'@')
+		{
+			pos = text.find(L";", pos);
+			if(pos == std::wstring::npos)
+			{
+				break;
+			}
+			pos++;
+		}
+
+		if(pos == std::wstring::npos)
+		{
+			break;
+		}
+
 		std::wstring::size_type style_start = text.find(L"{", pos);
 		std::wstring::size_type style_end	= text.find(L"}", pos);
 		if(style_start != std::wstring::npos && style_end != std::wstring::npos)

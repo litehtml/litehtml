@@ -18,5 +18,6 @@ namespace litehtml
 
 		virtual int		render(uint_ptr hdc, int x, int y, int max_width);
 		virtual bool	appendChild(litehtml::element* el);
+		virtual void	parse_styles();
 	};
 }

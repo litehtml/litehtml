@@ -137,7 +137,7 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 			{
 				if(cell->colspan == 1)
 				{
-					int width;
+					int width = 0;
 					if(!cell->el->m_css_width.is_predefined())
 					{
 						if(cell->el->m_css_width.units() == css_units_percentage)
@@ -328,4 +328,15 @@ bool litehtml::el_table::appendChild( litehtml::element* el )
 		return element::appendChild(el);
 	}
 	return false;
+}
+
+void litehtml::el_table::parse_styles()
+{
+	const wchar_t* str = get_attr(L"width");
+	if(str)
+	{
+		m_style.add_property(L"width", str, 0);
+	}
+
+	element::parse_styles();
 }

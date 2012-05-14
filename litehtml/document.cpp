@@ -22,6 +22,7 @@ const wchar_t* g_empty_tags[] =
 	L"input",
 	L"button",
 	L"img",
+	L"param",
 	0
 };
 
@@ -131,6 +132,15 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 					newTag = new litehtml::el_table(doc);
 				} else if(!_wcsicmp(sc.get_tag_name(), L"td"))
 				{
+					if(_wcsicmp(parent->get_tagName(), L"tr"))
+					{
+						newTag = new litehtml::element(doc);
+						newTag->set_tagName(L"tr");
+						if(parent->appendChild(newTag))
+						{
+							parent = newTag;
+						}
+					}
 					newTag = new litehtml::el_td(doc);
 				} else if(!_wcsicmp(sc.get_tag_name(), L"link"))
 				{
@@ -138,6 +148,18 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				} else if(!_wcsicmp(sc.get_tag_name(), L"title"))
 				{
 					newTag = new litehtml::el_title(doc);
+				} else if(!_wcsicmp(sc.get_tag_name(), L"tr"))
+				{
+					if(!value_in_list(parent->get_tagName(), L"tbody;thead;tfoot"))
+					{
+						newTag = new litehtml::element(doc);
+						newTag->set_tagName(L"tbody");
+						if(parent->appendChild(newTag))
+						{
+							parent = newTag;
+						}
+					}
+					newTag = new litehtml::element(doc);
 				} else if(!_wcsicmp(sc.get_tag_name(), L"style"))
 				{
 					newTag = new litehtml::el_style(doc);
@@ -164,6 +186,21 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 			{
 				litehtml::element::ptr newTag = parent->parentElement();
 				parent = newTag;
+			} else
+			{
+				if(!_wcsicmp(sc.get_tag_name(), L"table"))
+				{
+					while(parent && _wcsicmp(parent->get_tagName(), L"table"))
+					{
+						litehtml::element::ptr newTag = parent->parentElement();
+						parent = newTag;
+					}
+					if(parent)
+					{
+						litehtml::element::ptr newTag = parent->parentElement();
+						parent = newTag;
+					}
+				}
 			}
 			break;
 		case litehtml::scanner::TT_ATTR:
