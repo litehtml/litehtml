@@ -4,16 +4,7 @@
 
 litehtml::element* litehtml::elements_iterator::next()
 {
-	m_idx++;
-
-	while(m_idx >= (int) m_el->children().size() && m_stack.size())
-	{
-		stack_item si = m_stack.back();
-		m_stack.pop_back();
-		m_idx	= si.idx;
-		m_el	= si.el;
-		m_idx++;
-	}
+	next_idx();
 
 	while(m_idx < (int) m_el->children().size())
 	{
@@ -33,16 +24,26 @@ litehtml::element* litehtml::elements_iterator::next()
 				return m_el->children()[m_idx];
 			} else
 			{
-				m_idx++;
+				next_idx();
 			}
 		}
 	}
 
-	if(m_idx >= (int) m_el->children().size())
-	{
-		return 0;
-	}
 	return 0;
+}
+
+void litehtml::elements_iterator::next_idx()
+{
+	m_idx++;
+	while(m_idx >= (int) m_el->children().size() && m_stack.size())
+	{
+		stack_item si = m_stack.back();
+		m_stack.pop_back();
+		m_idx	= si.idx;
+		m_el	= si.el;
+		m_idx++;
+		continue;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

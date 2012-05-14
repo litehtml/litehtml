@@ -42,6 +42,9 @@ namespace litehtml
 		}
 
 		element* next();
+	
+	private:
+		void next_idx();
 	};
 
 	class go_inside_inline : public iterator_selector

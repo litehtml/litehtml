@@ -9,6 +9,7 @@
 
 litehtml::element::element(litehtml::document* doc)
 {
+	m_second_pass			= false;
 	m_text_align			= text_align_left;
 	m_el_position			= element_position_static;
 	m_skip					= false;
@@ -643,9 +644,11 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 			(m_float != float_none && m_css_width.is_predefined())	|| 
 			m_el_position == element_position_absolute ) 
 			
-			&& ret_width < max_width)
+			&& ret_width < max_width && !m_second_pass)
 	{
+		m_second_pass = true;
 		render(hdc, x, y, ret_width);
+		m_second_pass = false;
 		m_pos.width = ret_width - (content_margins_left() + content_margins_right());
 	}
 
@@ -1419,6 +1422,11 @@ void litehtml::element::parse_background()
 	// parse background-image
 	parse_css_url(get_style_property(L"background-image", false, L""), m_bg.m_image);
 	m_bg.m_baseurl = get_style_property(L"background-image-baseurl", false, L"");
+
+	if(!m_bg.m_image.empty())
+	{
+		m_doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.empty() ? 0 : m_bg.m_baseurl.c_str());
+	}
 }
 
 int litehtml::element::margin_top() const

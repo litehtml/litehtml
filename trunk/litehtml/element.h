@@ -139,6 +139,9 @@ namespace litehtml
 		int							place_inline(element* el, line& ln, int max_width);
 		int							find_next_line_top(int top, int width);
 		void						parse_background();
+
+	private:
+		bool	m_second_pass;
 	};
 
 	/************************************************************************/
@@ -157,7 +160,7 @@ namespace litehtml
 
 	inline bool	element::is_floats_holder() const
 	{
-		if(m_display == display_inline_block || !m_parent || m_tag == L"body" || m_float != float_none)
+		if(m_display == display_inline_block || m_display == display_table_cell || !m_parent || m_tag == L"body" || m_float != float_none)
 		{
 			return true;
 		}
