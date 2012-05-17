@@ -7,6 +7,10 @@ litehtml::background::background(void)
 	m_repeat		= background_repeat_repeat;
 	m_clip			= background_box_border;
 	m_origin		= background_box_padding;
+	m_color.alpha	= 0;
+	m_color.red		= 0;
+	m_color.green	= 0;
+	m_color.blue	= 0;
 }
 
 litehtml::background::background( const background& val )

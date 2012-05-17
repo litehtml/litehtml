@@ -41,3 +41,15 @@ void litehtml::el_text::get_text( std::wstring& text )
 	text += m_text;
 }
 
+const wchar_t* litehtml::el_text::get_style_property( const wchar_t* name, bool inherited, const wchar_t* def /*= 0*/ )
+{
+	if(inherited)
+	{
+		return m_parent->get_style_property(name, inherited, def);
+	}
+	return def;
+}
+
+void litehtml::el_text::parse_styles()
+{
+}

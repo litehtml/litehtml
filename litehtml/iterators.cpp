@@ -16,7 +16,8 @@ litehtml::element* litehtml::elements_iterator::next()
 			si.el		= m_el;
 			m_stack.push_back(si);
 			m_el		= el;
-			m_idx		= 0;
+			m_idx		= -1;
+			return el;
 		} else
 		{
 			if(!m_select || m_select && m_select->select(m_el->children()[m_idx]))

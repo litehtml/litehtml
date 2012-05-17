@@ -44,6 +44,7 @@ namespace litehtml
 		background				m_bg;
 		element_position		m_el_position;
 		int						m_line_height;
+		litehtml::line*			m_line;
 
 		css_margins				m_css_margins;
 		css_margins				m_css_padding;
@@ -64,7 +65,6 @@ namespace litehtml
 		virtual const wchar_t*		get_tagName() const;
 		virtual void				set_tagName(const wchar_t* tag);
 		virtual void				set_data(const wchar_t* data);
-		virtual litehtml::style&	get_style();
 
 		virtual void				set_attr(const wchar_t* name, const wchar_t* val);
 		virtual const wchar_t*		get_attr(const wchar_t* name, const wchar_t* def = 0);
@@ -72,6 +72,7 @@ namespace litehtml
 		virtual bool				is_white_space();
 		virtual bool				is_body();
 		virtual int					get_base_line();
+		virtual background			get_background();
 
 		style_display				get_display() const;
 		elements_vector&			children();
@@ -122,6 +123,7 @@ namespace litehtml
 		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
 		virtual void				clear_inlines();
 		virtual void				find_inlines();
+		void						get_inline_boxes(position::vector& boxes);
 
 	private:
 		bool						select_one(const std::wstring& selector);
