@@ -9,6 +9,7 @@
 
 litehtml::element::element(litehtml::document* doc)
 {
+	m_line					= 0;
 	m_second_pass			= false;
 	m_text_align			= text_align_left;
 	m_el_position			= element_position_static;
@@ -61,11 +62,6 @@ litehtml::element::ptr litehtml::element::parentElement() const
 const wchar_t* litehtml::element::get_tagName() const
 {
 	return m_tag.c_str();
-}
-
-litehtml::style& litehtml::element::get_style()
-{
-	return m_style;
 }
 
 void litehtml::element::set_attr( const wchar_t* name, const wchar_t* val )
@@ -167,39 +163,67 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 	position el_pos = pos;
 	el_pos += content_margins();
 
-	if(el_pos.does_intersect(clip))
+	if(m_display != display_inline)
 	{
-		position bg_draw_pos = pos;
-		switch(m_bg.m_clip)
+		if(el_pos.does_intersect(clip))
 		{
-		case background_box_padding:
-			bg_draw_pos += m_padding;
-			break;
-		case background_box_border:
+			background bg = get_background();
+			position bg_draw_pos = pos;
+			switch(bg.m_clip)
+			{
+			case background_box_padding:
+				bg_draw_pos += m_padding;
+				break;
+			case background_box_border:
+				bg_draw_pos += m_padding;
+				bg_draw_pos += m_borders;
+				break;
+			}
+
+			if(bg.m_color.alpha)
+			{
+				m_doc->container()->fill_rect(hdc, bg_draw_pos, bg.m_color);
+			}
+			if(!bg.m_image.empty())
+			{
+				m_doc->container()->draw_background(hdc, 
+					bg.m_image.c_str(), 
+					bg.m_baseurl.c_str(), 
+					bg_draw_pos, 
+					bg.m_position,
+					bg.m_repeat, 
+					bg.m_attachment);
+			}
+
+			bg_draw_pos = pos;
 			bg_draw_pos += m_padding;
 			bg_draw_pos += m_borders;
-			break;
+			m_doc->container()->draw_borders(hdc, m_css_borders, bg_draw_pos);
 		}
+	} else
+	{
+		background bg = get_background();
 
-		if(m_bg.m_color.alpha)
+		if(bg.m_color.alpha || !bg.m_image.empty())
 		{
-			m_doc->container()->fill_rect(hdc, bg_draw_pos, m_bg.m_color);
-		}
-		if(!m_bg.m_image.empty())
-		{
-			m_doc->container()->draw_background(hdc, 
-				m_bg.m_image.c_str(), 
-				m_bg.m_baseurl.c_str(), 
-				bg_draw_pos, 
-				m_bg.m_position,
-				m_bg.m_repeat, 
-				m_bg.m_attachment);
-		}
+			position::vector boxes;
+			get_inline_boxes(boxes);
 
-		bg_draw_pos = pos;
-		bg_draw_pos += m_padding;
-		bg_draw_pos += m_borders;
-		m_doc->container()->draw_borders(hdc, m_css_borders, bg_draw_pos);
+			for(position::vector::iterator box = boxes.begin(); box != boxes.end(); box++)
+			{
+				if(box->does_intersect(clip))
+				{
+					if(bg.m_color.alpha)
+					{
+						position pos = *box;
+						pos.x	+= x;
+						pos.y	+= y;
+
+						m_doc->container()->fill_rect(hdc, pos, bg.m_color);
+					}
+				}
+			}
+		}
 	}
 
 	if(m_display == display_list_item && m_list_style_type != list_style_type_none)
@@ -445,7 +469,7 @@ void litehtml::element::parse_styles()
 int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 {
 	// TODO: remove this nahren
-	if(m_class == L"quicklinks")
+	if(m_class == L"odd")
 	{
 		int i=0;
 		i++;
@@ -670,7 +694,7 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 
 		if(el->m_css_right.is_predefined())
 		{
-			el->m_pos.x = left - m_padding.left - m_borders.left;
+			el->m_pos.x = left - m_padding.left - m_borders.left + el->content_margins_left();
 		} else
 		{
 			if(el->m_css_left.is_predefined())
@@ -678,14 +702,14 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 				el->m_pos.x = right - el->width();
 			} else
 			{
-				el->m_pos.x = left - m_padding.left - m_borders.left;
-				el->m_pos.width = right - left;
+				el->m_pos.x = left - m_padding.left - m_borders.left + el->content_margins_left();
+				el->m_pos.width = right - left - el->content_margins_left() - el->content_margins_right();
 			}
 		}
 
 		if(el->m_css_bottom.is_predefined())
 		{
-			el->m_pos.y = top - m_padding.top - m_borders.top;
+			el->m_pos.y = top - m_padding.top - m_borders.top + el->content_margins_top();
 		} else
 		{
 			if(el->m_css_top.is_predefined())
@@ -693,8 +717,8 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 				el->m_pos.y = bottom - el->height();
 			} else
 			{
-				el->m_pos.y = top - m_padding.top - m_borders.top;
-				el->m_pos.height = bottom - top;
+				el->m_pos.y = top - m_padding.top - m_borders.top + el->content_margins_top();;
+				el->m_pos.height = bottom - top - el->content_margins_top() - el->content_margins_bottom();
 			}
 		}
 	}
@@ -814,11 +838,19 @@ int litehtml::element::get_base_line()
 void litehtml::element::find_inlines()
 {
 	clear_inlines();
+
+	if(m_display == display_inline)
+	{
+		return;
+	}
+
 	elements_iterator iter(this, &go_inside_inline(), 0);
 	element* el = iter.next();
 	while(el)
 	{
 		bool add = true;
+
+		el->m_line = 0;
 
 		if(el->m_el_position == element_position_absolute)
 		{
@@ -1536,4 +1568,40 @@ bool litehtml::element::is_body()
 void litehtml::element::set_data( const wchar_t* data )
 {
 
+}
+
+litehtml::background litehtml::element::get_background()
+{
+	return m_bg;
+}
+
+void litehtml::element::get_inline_boxes( position::vector& boxes )
+{
+	line* old_line = 0;
+	position pos;
+	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
+	{
+		element* el = (*iter);
+		if(el->m_line)
+		{
+			if(el->m_line != old_line)
+			{
+				if(old_line)
+				{
+					boxes.push_back(pos);
+				}
+				old_line	= el->m_line;
+				pos.x		= el->left();
+				pos.y		= el->top();
+				pos.width	= 0;
+				pos.height	= 0;
+			}
+			pos.width	= el->left() + el->width() - pos.x;
+			pos.height	= max(pos.height, el->height());
+		}
+	}
+	if(pos.width || pos.height)
+	{
+		boxes.push_back(pos);
+	}
 }

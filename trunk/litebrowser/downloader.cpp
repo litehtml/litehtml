@@ -23,7 +23,7 @@ BOOL GetFile (HINTERNET IN hOpen, LPCWSTR szUrl, LPCWSTR szFileName)
 {
 	DWORD		dwSize;
 	WCHAR		szHead[] = L"Accept: */*\r\n\r\n";
-	LPVOID		szTemp	= malloc(1024);
+	LPVOID		szTemp	= malloc(10240);
 	HINTERNET  hConnect;
 
 	hConnect = InternetOpenUrl( hOpen, szUrl, szHead, lstrlen (szHead), INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_RELOAD, 0);
@@ -42,7 +42,7 @@ BOOL GetFile (HINTERNET IN hOpen, LPCWSTR szUrl, LPCWSTR szFileName)
 
 	do
 	{
-		if( !InternetReadFile (hConnect, szTemp, 1024,  &dwSize) )
+		if( !InternetReadFile (hConnect, szTemp, 10240,  &dwSize) )
 		{
 			CloseHandle(hFile);
 			DeleteFile(szFileName);

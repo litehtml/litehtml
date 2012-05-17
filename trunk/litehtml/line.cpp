@@ -6,6 +6,7 @@
 void litehtml::line::operator+=( element* el )
 {
 	m_items.push_back(el);
+	el->m_line = this;
 	if(el->m_float == float_none)
 	{
 		if(!el->is_white_space() || !m_last_white_space)
@@ -58,11 +59,14 @@ void litehtml::line::set_top( int top, element* parent )
 					el->m_pos.y += add;
 				} else
 				{
-					el->m_pos.y = top + el->content_margins_top();
+					el->m_pos.y = top + el->content_margins_top() + add;
 				}
 				break;
+			case va_middle:
+				el->m_pos.y = top + max(m_height, m_min_height) / 2 - el->m_pos.height / 2;
+				break;
 			default:
-				el->m_pos.y = top + el->content_margins_top();
+				el->m_pos.y = top + el->content_margins_top() + add;
 				break;
 			}
 		} else
@@ -120,6 +124,9 @@ bool litehtml::line::finish(text_align align)
 			m_bottom_margin		= max(el->margin_bottom(), m_bottom_margin);
 		}
 	}
+
+	m_height = max(m_min_height, m_height);
+
 	return ret;
 }
 
