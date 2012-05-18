@@ -330,7 +330,7 @@ bool litehtml::el_table::appendChild( litehtml::element* el )
 	return false;
 }
 
-void litehtml::el_table::parse_styles()
+void litehtml::el_table::parse_styles(bool is_reparse)
 {
 	const wchar_t* str = get_attr(L"width");
 	if(str)
@@ -338,5 +338,5 @@ void litehtml::el_table::parse_styles()
 		m_style.add_property(L"width", str, 0);
 	}
 
-	element::parse_styles();
+	element::parse_styles(is_reparse);
 }

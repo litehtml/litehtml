@@ -4,11 +4,11 @@
 
 namespace litehtml
 {
-	class line
+	class line : public object
 	{
 	public:
-		
-		typedef std::vector<line>	vector;
+		typedef object_ptr<line>		ptr;
+		typedef std::vector<line::ptr>	vector;
 
 	private:
 		elements_vector	m_items;

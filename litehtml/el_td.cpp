@@ -12,7 +12,7 @@ litehtml::el_td::~el_td()
 
 }
 
-void litehtml::el_td::parse_styles()
+void litehtml::el_td::parse_styles(bool is_reparse)
 {
 	const wchar_t* str_width = get_attr(L"width");
 	if(str_width)
@@ -20,5 +20,5 @@ void litehtml::el_td::parse_styles()
 		m_style.add_property(L"width", str_width, 0);
 	}
 
-	element::parse_styles();
+	element::parse_styles(is_reparse);
 }

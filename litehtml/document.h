@@ -70,6 +70,7 @@ namespace litehtml
 		int				width() const;
 		int				height() const;
 		void			add_stylesheet(const wchar_t* str, const wchar_t* baseurl);
+		bool			on_mouse_over(int x, int y, position::vector& redraw_boxes);
 
 		static litehtml::document::ptr createFromString(const wchar_t* str, litehtml::document_container* objPainter, const wchar_t* stylesheet, const wchar_t* cssbaseurl);
 	

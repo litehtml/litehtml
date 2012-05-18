@@ -469,3 +469,21 @@ void litehtml::document::add_stylesheet( const wchar_t* str, const wchar_t* base
 		m_css.push_back(css_text(str, baseurl));
 	}
 }
+
+bool litehtml::document::on_mouse_over( int x, int y, position::vector& redraw_boxes )
+{
+	if(!m_root)
+	{
+		return false;
+	}
+	if(m_root->on_mouse_over(x, y))
+	{
+		if(m_root->find_styles_changes(redraw_boxes, 0, 0))
+		{
+			int i=0;
+			i++;
+		}
+		return true;
+	}
+	return false;
+}

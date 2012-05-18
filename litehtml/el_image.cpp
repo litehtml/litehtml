@@ -22,9 +22,9 @@ void litehtml::el_image::draw_content( uint_ptr hdc, const litehtml::position& p
 	m_doc->container()->draw_image(hdc, m_src.c_str(), 0, pos);
 }
 
-void litehtml::el_image::parse_styles()
+void litehtml::el_image::parse_styles(bool is_reparse)
 {
-	element::parse_styles();
+	element::parse_styles(is_reparse);
 	m_src = get_attr(L"src", L"");
 	m_doc->container()->load_image(m_src.c_str(), NULL);
 	litehtml::size sz;

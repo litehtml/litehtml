@@ -12,7 +12,7 @@ namespace litehtml
 		el_image(litehtml::document* doc);
 		virtual ~el_image(void);
 
-		virtual void	parse_styles();
+		virtual void	parse_styles(bool is_reparse = false);
 
 	protected:
 		virtual void	get_content_size(uint_ptr hdc, size& sz, int max_width);
