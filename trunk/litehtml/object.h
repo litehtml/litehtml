@@ -97,6 +97,11 @@ namespace litehtml
 			return m_ptr;
 		}
 
+		const T* operator->() const
+		{
+			return m_ptr;
+		}
+
 		operator T*()
 		{
 			return m_ptr;

@@ -3,6 +3,7 @@
 #include "memdc.h"
 #include "..\litehtml\tokenizer.h"
 #include "downloader.h"
+#include <WindowsX.h>
 
 using namespace Gdiplus;
 
@@ -118,6 +119,9 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 			return 0;
 		case WM_KEYDOWN:
 			pThis->OnKeyDown((UINT) wParam);
+			return 0;
+		case WM_MOUSEMOVE:
+			pThis->OnMouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			return 0;
 		}
 	}
@@ -831,4 +835,27 @@ void CHTMLViewWnd::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
 int CHTMLViewWnd::get_default_font_size()
 {
 	return 16;
+}
+
+void CHTMLViewWnd::OnMouseMove( int x, int y )
+{
+	if(m_doc)
+	{
+		litehtml::position::vector redraw_boxes;
+		if(m_doc->on_mouse_over(x + m_left, y + m_top, redraw_boxes))
+		{
+			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
+			{
+				box->x -= m_left;
+				box->y -= m_top;
+				RECT rcRedraw;
+				rcRedraw.left	= box->left();
+				rcRedraw.right	= box->right();
+				rcRedraw.top	= box->top();
+				rcRedraw.bottom	= box->bottom();
+				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
+			}
+			UpdateWindow(m_hWnd);
+		}
+	}
 }

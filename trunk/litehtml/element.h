@@ -45,6 +45,8 @@ namespace litehtml
 		element_position		m_el_position;
 		int						m_line_height;
 		litehtml::line*			m_line;
+		string_vector			m_pseudo_classes;
+		used_styles::vector		m_style_sheets;		
 
 		css_margins				m_css_margins;
 		css_margins				m_css_padding;
@@ -68,11 +70,13 @@ namespace litehtml
 
 		virtual void				set_attr(const wchar_t* name, const wchar_t* val);
 		virtual const wchar_t*		get_attr(const wchar_t* name, const wchar_t* def = 0);
-		virtual void				apply_stylesheet(const litehtml::style_sheet& style);
+		virtual void				apply_stylesheet(const litehtml::style_sheet::ptr style);
 		virtual bool				is_white_space();
 		virtual bool				is_body();
 		virtual int					get_base_line();
 		virtual background			get_background();
+		virtual bool				on_mouse_over(int x, int y);
+		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
 
 		style_display				get_display() const;
 		elements_vector&			children();
@@ -81,7 +85,7 @@ namespace litehtml
 		virtual int					render(uint_ptr hdc, int x, int y, int max_width);
 
 		void						calc_outlines( int parent_width );
-		virtual void				parse_styles();
+		virtual void				parse_styles(bool is_reparse = false);
 		void						draw(uint_ptr hdc, int x, int y, position* clip);
 
 		int							left()		const;
@@ -109,11 +113,10 @@ namespace litehtml
 		uint_ptr					get_font();
 		virtual int					get_font_size();
 		litehtml::web_color			get_color(const wchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
-		bool						operator==(const css_selector& selector);
-		bool						operator!=(const css_selector& selector);
-		bool						operator==(const css_element_selector& selector);
-		bool						operator!=(const css_element_selector& selector);
-		element*					find_ancestor(const css_selector& selector);
+		int							select(const css_selector& selector, bool apply_pseudo = true);
+		int							select(const css_element_selector& selector, bool apply_pseudo = true);
+		int							select(const litehtml::style_sheet::ptr style, bool apply_pseudo = true);
+		element*					find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		void						get_abs_position(position& pos, const element* root);
 		virtual void				get_text(std::wstring& text);
 		virtual void				finish();
@@ -127,18 +130,18 @@ namespace litehtml
 
 	private:
 		bool						select_one(const std::wstring& selector);
-		int							add_line(line& ln, int max_width);
+		int							add_line(line::ptr& ln, int max_width);
 		int							get_floats_height() const;
 		int							get_left_floats_height() const;
 		int							get_right_floats_height() const;
 		int							get_line_left(int y) const;
 		int							get_line_right(int y, int def_right) const;
-		void						fix_line_width(line& ln, int max_width);
-		void						init_line(line& ln, int top, int def_right, element_clear el_clear = clear_none);
+		void						fix_line_width(line::ptr& ln, int max_width);
+		void						init_line(line::ptr& ln, int top, int def_right, element_clear el_clear = clear_none);
 		void						add_float(element* el);
 		void						add_absolute(element* el);
 		bool						is_floats_holder() const;
-		int							place_inline(element* el, line& ln, int max_width);
+		int							place_inline(element* el, line::ptr& ln, int max_width);
 		int							find_next_line_top(int top, int width);
 		void						parse_background();
 
@@ -168,18 +171,6 @@ namespace litehtml
 		}
 		return false;
 	}
-
-	inline bool element::operator!=(const css_selector& selector)
-	{
-		return !(*this == selector);
-	}
-
-
-	inline bool litehtml::element::operator!=( const css_element_selector& selector )
-	{
-		return !(*this == selector);
-	}
-
 
 	inline litehtml::style_display litehtml::element::get_display() const
 	{

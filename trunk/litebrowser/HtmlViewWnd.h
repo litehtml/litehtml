@@ -64,6 +64,7 @@ protected:
 	virtual void OnVScroll(int pos, int flags);
 	virtual void OnMouseWheel(int delta);
 	virtual void OnKeyDown(UINT vKey);
+	virtual void OnMouseMove(int x, int y);
 	
 	void	render();
 	void	redraw();

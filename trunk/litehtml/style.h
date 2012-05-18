@@ -42,6 +42,10 @@ namespace litehtml
 		}
 
 		void combine(const litehtml::style& src);
+		void clear()
+		{
+			m_properties.clear();
+		}
 
 	private:
 		void parse_property(const std::wstring& txt, const wchar_t* baseurl);
@@ -51,10 +55,11 @@ namespace litehtml
 		void parse_short_font(const std::wstring& val);
 	};
 
-	class style_sheet
+	class style_sheet : public object
 	{
 	public:
-		typedef std::vector<litehtml::style_sheet>	vector;
+		typedef object_ptr<style_sheet>			ptr;
+		typedef std::vector<style_sheet::ptr>	vector;
 
 		css_selector::vector	m_selectors;
 		style					m_style;
@@ -71,5 +76,31 @@ namespace litehtml
 			m_style		= val.m_style;
 		}
 		void add_selector(const std::wstring& txt);
+	};
+
+	class used_styles
+	{
+	public:
+		typedef std::vector<used_styles>	vector;
+
+		style_sheet::ptr	m_style_sheet;
+		bool				m_used;
+
+		used_styles()
+		{
+			m_used = false;
+		}
+
+		used_styles(style_sheet::ptr sh, bool used)
+		{
+			m_used			= used;
+			m_style_sheet	= sh;
+		}
+
+		used_styles(const used_styles& val)
+		{
+			m_style_sheet	= val.m_style_sheet;
+			m_used			= val.m_used;
+		}
 	};
 }

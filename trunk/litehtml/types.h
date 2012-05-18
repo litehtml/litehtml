@@ -121,6 +121,24 @@ namespace litehtml
 						top() > val->bottom()	|| 
 						bottom() < val->top());
 		}
+
+		bool empty() const
+		{
+			if(!width && !height)
+			{
+				return true;
+			}
+			return false;
+		}
+
+		bool is_point_inside(int x, int y)
+		{
+			if(x >= left() && x <= right() && y >= top() && y <= bottom())
+			{
+				return true;
+			}
+			return false;
+		}
 	};
 
 #define  style_display_strings		L"none;block;inline;inline-block;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group"
@@ -240,7 +258,8 @@ namespace litehtml
 		select_equal,
 		select_contain_str,
 		select_start_str,
-		select_end_str
+		select_end_str,
+		select_pseudo_class,
 	};
 
 	struct css_attribute_selector
@@ -287,8 +306,7 @@ namespace litehtml
 		combinator_descendant,
 		combinator_child,
 		combinator_adjacent_sibling,
-		combinator_general_sibling,
-		combinator_pseudo
+		combinator_general_sibling
 	};
 
 	class css_selector
