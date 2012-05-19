@@ -162,6 +162,10 @@ void litehtml::element::get_content_size( uint_ptr hdc, size& sz, int max_width 
 
 void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 {
+	if(m_display == display_none)
+	{
+		return;
+	}
 	position pos = m_pos;
 	pos.x	+= x;
 	pos.y	+= y;
@@ -217,15 +221,14 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 
 			for(position::vector::iterator box = boxes.begin(); box != boxes.end(); box++)
 			{
+				box->x	+= x;
+				box->y	+= y;
+
 				if(box->does_intersect(clip))
 				{
 					if(bg.m_color.alpha)
 					{
-						position pos = *box;
-						pos.x	+= x;
-						pos.y	+= y;
-
-						m_doc->container()->fill_rect(hdc, pos, bg.m_color);
+						m_doc->container()->fill_rect(hdc, *box, bg.m_color);
 					}
 				}
 			}
@@ -336,13 +339,6 @@ void litehtml::element::parse_styles(bool is_reparse)
 	if(style)
 	{
 		m_style.add(style, NULL);
-	}
-
-	// TODO: remove this nahren
-	if(m_class == L"logo")
-	{
-		int i=0;
-		i++;
 	}
 
 	int fntsize = get_font_size();
@@ -681,8 +677,8 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 	int abs_base_x	= - m_padding.left - m_borders.left;
 	int abs_base_y	= - m_padding.top - m_borders.top;
 
-	int abs_base_width	= m_pos.width + m_padding.left + m_borders.left + m_padding.right + m_borders.right;
-	int abs_base_height	= m_pos.height + m_padding.top + m_borders.top + m_padding.bottom + m_borders.bottom;
+	int abs_base_width	= m_pos.width + m_padding.left + m_padding.right;
+	int abs_base_height	= m_pos.height + m_padding.top + m_padding.bottom;
 
 	for(elements_vector::iterator abs_el = m_absolutes.begin(); abs_el != m_absolutes.end(); abs_el++)
 	{
@@ -693,35 +689,69 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 		int top		= el->m_css_top.calc_percent(abs_base_height);
 		int bottom	= m_pos.height - el->m_css_bottom.calc_percent(abs_base_height);
 		el->render(hdc, left, top, right - left);
+		int add = 0;
+		if(el->m_css_top.is_predefined())
+		{
+			add = m_padding.top;
+		}
+		if(el->m_css_bottom.is_predefined())
+		{
+			add = m_padding.bottom;
+		}
+		if(m_pos.height + add < el->top() + el->height())
+		{
+			m_pos.height = el->top() + el->height() - add;
+		}
+	}
+
+	for(elements_vector::iterator abs_el = m_absolutes.begin(); abs_el != m_absolutes.end(); abs_el++)
+	{
+		element* el = (*abs_el);
+
+		int left	= el->m_css_left.calc_percent(abs_base_width);
+		int right	= m_pos.width - el->m_css_right.calc_percent(abs_base_width);
+		int top		= el->m_css_top.calc_percent(abs_base_height);
+		int bottom	= m_pos.height - el->m_css_bottom.calc_percent(abs_base_height);
+
+		bool need_render = false;
 
 		if(el->m_css_right.is_predefined())
 		{
-			el->m_pos.x = left - m_padding.left - m_borders.left + el->content_margins_left();
+			el->m_pos.x = left - m_padding.left + el->content_margins_left();
 		} else
 		{
 			if(el->m_css_left.is_predefined())
 			{
-				el->m_pos.x = right - el->width();
+				el->m_pos.x = right + m_padding.right - el->width() + el->content_margins_left();
 			} else
 			{
-				el->m_pos.x = left - m_padding.left - m_borders.left + el->content_margins_left();
-				el->m_pos.width = right - left - el->content_margins_left() - el->content_margins_right();
+				el->m_pos.x = left - m_padding.left + el->content_margins_left();
+				el->m_pos.width = right - left - el->content_margins_left() - el->content_margins_right() + m_padding.left + m_padding.right;
+				need_render = true;
 			}
 		}
 
 		if(el->m_css_bottom.is_predefined())
 		{
-			el->m_pos.y = top - m_padding.top - m_borders.top + el->content_margins_top();
+			el->m_pos.y = top - m_padding.top + el->content_margins_top();
 		} else
 		{
 			if(el->m_css_top.is_predefined())
 			{
-				el->m_pos.y = bottom - el->height();
+				el->m_pos.y = bottom + m_padding.bottom - el->height() + el->content_margins_top();
 			} else
 			{
-				el->m_pos.y = top - m_padding.top - m_borders.top + el->content_margins_top();;
-				el->m_pos.height = bottom - top - el->content_margins_top() - el->content_margins_bottom();
+				el->m_pos.y = top - m_padding.top + el->content_margins_top();;
+				el->m_pos.height = bottom - top - el->content_margins_top() - el->content_margins_bottom() + m_padding.bottom + m_padding.top;
+				need_render = true;
 			}
+		}
+
+		if(need_render)
+		{
+			position pos = el->m_pos;
+			el->render(hdc, el->left(), el->right(), el->width());
+			el->m_pos = pos;
 		}
 	}
 
@@ -1696,11 +1726,6 @@ bool litehtml::element::on_mouse_over( int x, int y )
 		}
 	} else
 	{
-		if(m_tag == L"a")
-		{
-			int i=0;
-			i++;
-		}
 		position::vector boxes;
 		get_inline_boxes(boxes);
 		for(position::vector::iterator box = boxes.begin(); box != boxes.end() && !ret; box++)

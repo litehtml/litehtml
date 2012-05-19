@@ -350,6 +350,10 @@
 				RelativePath=".\ToolbarWnd.cpp"
 				>
 			</File>
+			<File
+				RelativePath="..\containers\win32_container.cpp"
+				>
+			</File>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -390,6 +394,10 @@
 			</File>
 			<File
 				RelativePath=".\ToolbarWnd.h"
+				>
+			</File>
+			<File
+				RelativePath="..\containers\win32_container.h"
 				>
 			</File>
 		</Filter>

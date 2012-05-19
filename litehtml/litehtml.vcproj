@@ -296,6 +296,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_anchor.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\el_base.cpp"
 				>
 			</File>
@@ -419,6 +423,10 @@
 			</File>
 			<File
 				RelativePath="..\include\drawhtml.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_anchor.h"
 				>
 			</File>
 			<File
