@@ -10,6 +10,7 @@
 #include "el_style.h"
 #include "el_comment.h"
 #include "el_base.h"
+#include "el_anchor.h"
 #include <math.h>
 
 const wchar_t* g_empty_tags[] =
@@ -148,6 +149,9 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				} else if(!_wcsicmp(sc.get_tag_name(), L"title"))
 				{
 					newTag = new litehtml::el_title(doc);
+				} else if(!_wcsicmp(sc.get_tag_name(), L"a"))
+				{
+					newTag = new litehtml::el_anchor(doc);
 				} else if(!_wcsicmp(sc.get_tag_name(), L"tr"))
 				{
 					if(!value_in_list(parent->get_tagName(), L"tbody;thead;tfoot"))
