@@ -2,7 +2,7 @@
 #include "iterators.h"
 #include "element.h"
 
-litehtml::element* litehtml::elements_iterator::next()
+litehtml::element* litehtml::elements_iterator::next(bool ret_parent)
 {
 	next_idx();
 
@@ -17,7 +17,11 @@ litehtml::element* litehtml::elements_iterator::next()
 			m_stack.push_back(si);
 			m_el		= el;
 			m_idx		= -1;
-			return el;
+			if(ret_parent)
+			{
+				return el;
+			}
+			next_idx();
 		} else
 		{
 			if(!m_select || m_select && m_select->select(m_el->children()[m_idx]))

@@ -41,7 +41,7 @@ namespace litehtml
 
 		}
 
-		element* next();
+		element* next(bool ret_parent = true);
 	
 	private:
 		void next_idx();

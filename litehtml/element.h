@@ -14,6 +14,7 @@ namespace litehtml
 		friend class elements_iterator;
 		friend class line;
 		friend class el_table;
+		friend class table_grid;
 	public:
 		typedef litehtml::object_ptr<litehtml::element>	ptr;
 	protected:

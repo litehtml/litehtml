@@ -131,7 +131,7 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				} else if(!_wcsicmp(sc.get_tag_name(), L"table"))
 				{
 					newTag = new litehtml::el_table(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"td"))
+				} else if(!_wcsicmp(sc.get_tag_name(), L"td") || !_wcsicmp(sc.get_tag_name(), L"th"))
 				{
 					if(_wcsicmp(parent->get_tagName(), L"tr"))
 					{

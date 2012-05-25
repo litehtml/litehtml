@@ -41,7 +41,7 @@ void litehtml::parse_stylesheet( const wchar_t* str, style_sheet::vector& styles
 			style_sheet::ptr st = new style_sheet;
 			st->add_selector(text.substr(pos, style_start - pos));
 
-			st->m_style.add(text.substr(style_start + 1, style_end - style_start - 2).c_str(), baseurl);
+			st->m_style.add(text.substr(style_start + 1, style_end - style_start - 1).c_str(), baseurl);
 			styles.push_back(st);
 
 			pos = style_end + 1;

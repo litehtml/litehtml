@@ -54,7 +54,7 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 
 	elements_iterator row_iter(this, &go_inside_table(), &table_rows_selector());
 
-	element* row = row_iter.next();
+	element* row = row_iter.next(false);
 	while(row)
 	{
 		grid.begin_row();
@@ -65,254 +65,185 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 		{
 			grid.add_cell(cell);
 
-			cell = cell_iter.next();
+			cell = cell_iter.next(false);
 		}
-		row = row_iter.next();
-		grid.end_row();
+		row = row_iter.next(false);
+	}
+	grid.finish();
+
+	// Calculate the minimum content width (MCW) of each cell: the formatted content may span any number of lines but may not overflow the cell box. 
+	// If the specified 'width' (W) of the cell is greater than MCW, W is the minimum cell width. A value of 'auto' means that MCW is the minimum 
+	// cell width.
+	// 
+	// Also, calculate the "maximum" cell width of each cell: formatting the content without breaking lines other than where explicit line breaks occur.
+
+	for(int row = 0; row < grid.rows_count(); row++)
+	{
+		for(int col = 0; col < grid.cols_count(); col++)
+		{
+			table_cell* cell = grid.cell(col, row);
+			if(cell && cell->el)
+			{
+				// calculate minimum content width
+				cell->min_width = cell->el->render(hdc, 0, 0, 1);
+				// calculate maximum content width
+				cell->max_width = cell->el->render(hdc, 0, 0, max_width);
+			}
+		}
 	}
 
-	// full width render
-	int row_idx = 0;
-	int col_idx = 0;
-	for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end(); row++, row_idx++)
+	// For each column, determine a maximum and minimum column width from the cells that span only that column. 
+	// The minimum is that required by the cell with the largest minimum cell width (or the column 'width', whichever is larger). 
+	// The maximum is that required by the cell with the largest maximum cell width (or the column 'width', whichever is larger).
+
+	for(int col = 0; col < grid.cols_count(); col++)
 	{
-		col_idx = 0;
-		for(table_grid::row::iterator cell = row->begin(); cell != row->end(); cell++, col_idx++)
+		grid.column(col).max_width = grid.cell(col, 0)->max_width;
+		grid.column(col).min_width = grid.cell(col, 0)->min_width;
+		for(int row = 1; row < grid.rows_count(); row++)
 		{
-			if(cell->el)
+			if(grid.cell(col, row)->colspan <= 1)
 			{
-				int width;
-				if(cell->el->m_css_width.units() != css_units_percentage || cell->el->m_css_width.is_predefined())
+				grid.column(col).max_width = max(grid.column(col).max_width, grid.cell(col, row)->max_width);
+				grid.column(col).min_width = max(grid.column(col).min_width, grid.cell(col, row)->min_width);
+			}
+		}
+	}
+
+	// For each cell that spans more than one column, increase the minimum widths of the columns it spans so that together, 
+	// they are at least as wide as the cell. Do the same for the maximum widths. 
+	// If possible, widen all spanned columns by approximately the same amount.
+
+	for(int col = 0; col < grid.cols_count(); col++)
+	{
+		for(int row = 0; row < grid.rows_count(); row++)
+		{
+			if(grid.cell(col, row)->colspan > 1)
+			{
+				int max_total_width = grid.column(col).max_width;
+				int min_total_width = grid.column(col).min_width;
+				for(int col2 = col + 1; col2 < col + grid.cell(col, row)->colspan; col2++)
 				{
-					width = cell->el->render(hdc, 0, 0, max_width);
-				} else
-				{
-					width = (int) cell->el->m_css_width.val() + cell->el->content_margins_left() + cell->el->content_margins_right();
+					max_total_width += grid.column(col2).max_width;
+					min_total_width += grid.column(col2).min_width;
 				}
-				if(cell->colspan == 1)
+				if(min_total_width < grid.cell(col, row)->min_width)
 				{
-					grid.m_cols_width[col_idx] = max(grid.m_cols_width[col_idx], width);
+					grid.distribute_min_width(grid.cell(col, row)->min_width - min_total_width, col, col + grid.cell(col, row)->colspan - 1);
+				}
+				if(max_total_width < grid.cell(col, row)->max_width)
+				{
+					grid.distribute_max_width(grid.cell(col, row)->max_width - max_total_width, col, col + grid.cell(col, row)->colspan - 1);
 				}
 			}
 		}
 	}
 
-	// find the table width
+	// If the 'table' or 'inline-table' element's 'width' property has a computed value (W) other than 'auto', the used width is the 
+	// greater of W, CAPMIN, and the minimum width required by all the columns plus cell spacing or borders (MIN). 
+	// If the used width is greater than MIN, the extra width should be distributed over the columns.
+	//
+	// If the 'table' or 'inline-table' element has 'width: auto', the used width is the greater of the table's containing block width, 
+	// CAPMIN, and MIN. However, if either CAPMIN or the maximum width required by the columns plus cell spacing or borders (MAX) is 
+	// less than that of the containing block, use max(MAX, CAPMIN).
+
+	int min_table_width = border_spacing_x * (grid.cols_count() + 1); // MIN
+	int max_table_width = border_spacing_x * (grid.cols_count() + 1); // MAX
+
+	for(int col = 0; col < grid.cols_count(); col++)
+	{
+		min_table_width += grid.column(col).min_width;
+		max_table_width += grid.column(col).max_width;
+	}
+
 	int table_width = 0;
-	int columns_width = 0;
-	for(int i=0; i < (int) grid.m_cols_width.size(); i++)
-	{
-		columns_width += grid.m_cols_width[i];
-	}
 
-	table_width = columns_width + border_spacing_x * ((int) grid.m_cols_width.size() + 1);
-	if(block_width)
+	if(!m_css_width.is_predefined())
 	{
-		table_width = block_width;
-		columns_width = table_width - border_spacing_x * ((int) grid.m_cols_width.size() + 1);
-	} else if(table_width > max_width)
-	{
-		table_width = max_width;		
-		columns_width = table_width - border_spacing_x * ((int) grid.m_cols_width.size() + 1);
-	}
-
-	std::vector<col_info> cols;
-	col_info inf;
-	for(int_vector::iterator col = grid.m_cols_width.begin(); col != grid.m_cols_width.end(); col++)
-	{
-		inf.width		= 0;
-		inf.is_auto	= true;
-		cols.push_back(inf);
-	}
-
-	// calculate columns width
-	row_idx = 0;
-	col_idx = 0;
-	for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end(); row++, row_idx++)
-	{
-		col_idx = 0;
-		for(table_grid::row::iterator cell = row->begin(); cell != row->end(); cell++, col_idx++)
+		table_width = max(min_table_width, max_width);
+		if(table_width > min_table_width)
 		{
-			if(cell->el)
+			for(int col2 = 0; col2 < grid.cols_count(); col2++)
 			{
-				if(cell->colspan == 1)
-				{
-					int width = 0;
-					if(!cell->el->m_css_width.is_predefined())
-					{
-						if(cell->el->m_css_width.units() == css_units_percentage)
-						{
-							width = cell->el->m_css_width.calc_percent(columns_width);
-						} else
-						{
-							width = grid.m_cols_width[col_idx];
-						}
-						cols[col_idx].is_auto = false;
-					} else if(cols[col_idx].is_auto)
-					{
-						width = columns_width / (int) cols.size();
-						cols[col_idx].is_auto = true;
-					}
-					cols[col_idx].width = max(cols[col_idx].width, width);
-				}
+				grid.column(col2).width	= grid.column(col2).min_width;
 			}
-		}
-	}
-
-	int auto_count = 0;
-	int auto_width = 0;
-	int fixed_width = 0;
-	col_idx = 0;
-	for(std::vector<col_info>::iterator col = cols.begin(); col != cols.end(); col++, col_idx++)
-	{
-		if(col->is_auto)
-		{
-			auto_count++;
-			auto_width += grid.m_cols_width[col_idx];
+			grid.distribute_width(table_width - min_table_width, 0, grid.cols_count() - 1/*, &table_column_accessor_width()*/);
 		} else
 		{
-			fixed_width += col->width;
-		}
-	}
-
-	col_idx = 0;
-	for(std::vector<col_info>::iterator col = cols.begin(); col != cols.end(); col++, col_idx++)
-	{
-		if(col->is_auto)
-		{
-			if(auto_width)
+			for(int col2 = 0; col2 < grid.cols_count(); col2++)
 			{
-				col->width = (int) ((double) (columns_width - fixed_width) * (double) grid.m_cols_width[col_idx] / (double) auto_width);
-			} else
-			{
-				col->width = 0;
+				grid.column(col2).width	= grid.column(col2).min_width;
 			}
 		}
+	} else
+	{
+		if(max_table_width < max_width)
+		{
+			table_width = max_table_width;
+			for(int col2 = 0; col2 < grid.cols_count(); col2++)
+			{
+				grid.column(col2).width	= grid.column(col2).max_width;
+			}
+		} else if(min_table_width >= max_width)
+		{
+			table_width = min_table_width;
+			for(int col2 = 0; col2 < grid.cols_count(); col2++)
+			{
+				grid.column(col2).width	= grid.column(col2).min_width;
+			}
+		} else
+		{
+			table_width = max_width;
+			for(int col2 = 0; col2 < grid.cols_count(); col2++)
+			{
+				grid.column(col2).width	= grid.column(col2).min_width;
+			}
+			grid.distribute_width(table_width - min_table_width, 0, grid.cols_count() - 1/*, &table_column_accessor_width()*/);
+		}
 	}
 
+	// now we have the columns widths and the table width
 
-	int top		= border_spacing_y;
-	int left	= border_spacing_x;
+	table_width = grid.set_table_width(table_width, border_spacing_x);
+
 	// render cells with computed width
+	int top		= border_spacing_y;
 
-	bool rerender = true;
-	while(rerender)
+	for(int row = 0; row < grid.rows_count(); row++)
 	{
-		top			= border_spacing_y;
-		row_idx		= 0;
-		rerender	= false;
-		for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end() && !rerender; row++, row_idx++)
+		int left	= border_spacing_x;
+		int max_height = 0;
+		for(int col = 0; col < grid.cols_count(); col++)
 		{
-			col_idx = 0;
-			left = border_spacing_x;
-			for(table_grid::row::iterator cell = row->begin(); cell != row->end() && !rerender; cell++, col_idx++)
-			{
-				if(cell->el || cell == row->begin())
-				{
-					int w = cols[col_idx].width;
-					for(int i = 1; i < cell->colspan && i + col_idx < (int) cols.size(); i++)
-					{
-						w += cols[col_idx + i].width + border_spacing_x;
-					}
-					if(cell->el)
-					{
-						int min_width = cell->el->render(hdc, left, top, w);
-						if(min_width > w)
-						{
-							for(int i = 0; i < cell->colspan && i + col_idx < (int) cols.size(); i++)
-							{
-								if(cols[col_idx + i].is_auto || i == cell->colspan - 1)
-								{
-									cols[col_idx].width += min_width - w;
-									break;
-								}
-							}
-
-							rerender = true;
-						}
-						if(cell->rowspan == 1)
-						{
-							grid.m_rows_height[row_idx] = max(grid.m_rows_height[row_idx], cell->el->height());
-						}
-					}
-				}
-				left += cols[col_idx].width + border_spacing_x;
-			}
-			top += grid.m_rows_height[row_idx] + border_spacing_y;
-		}
-	}
-
-	// find the final table width
-
-	columns_width = 0;
-	for(std::vector<col_info>::iterator col = cols.begin(); col != cols.end(); col++)
-	{
-		columns_width += col->width;
-	}
-	table_width = columns_width + border_spacing_x * ((int) grid.m_cols_width.size() + 1);
-
-	// set the rows height
-
-	bool need_second_pass = false;
-
-	row_idx = 0;
-	for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end(); row++, row_idx++)
-	{
-		col_idx = 0;
-		for(table_grid::row::iterator cell = row->begin(); cell != row->end(); cell++, col_idx++)
-		{
+			table_cell* cell = grid.cell(col, row);
 			if(cell->el)
 			{
-				if(cell->rowspan == 1)
+				int cell_width = (cell->colspan - 1) * border_spacing_x;
+				for (int col2 = col; col2 < col + cell->colspan; col2++)
 				{
-					cell->el->m_pos.height = grid.m_rows_height[row_idx] - cell->el->content_margins_top() - cell->el->content_margins_bottom();
-				} else
+					cell_width += grid.column(col2).width;
+				}
+				cell->el->render(hdc, left, top, cell_width);
+				cell->el->m_pos.width = cell_width - cell->el->content_margins_left() - cell->el->content_margins_right();
+				left += cell_width + border_spacing_x;
+				if(cell->rowspan <= 1)
 				{
-					int h = 0;
-					int last_row = row_idx;
-					for(int i = 0; i + row_idx < (int) grid.m_rows_height.size() && i < cell->rowspan; i++)
-					{
-						h += grid.m_rows_height[row_idx + i];
-						last_row = row_idx + i;
-					}
-					if(cell->el->m_pos.height > h)
-					{
-						need_second_pass = true;
-						grid.m_rows_height[last_row] += cell->el->height() - h;
-					} else
-					{
-						cell->el->m_pos.height = h - cell->el->content_margins_top() - cell->el->content_margins_bottom();
-					}
+					max_height = max(max_height, cell->el->height());
 				}
 			}
 		}
-	}
-
-	if(need_second_pass)
-	{
-		// re-pos cells cells with computed width
-		row_idx = 0;
-		top		= border_spacing_y;
-		for(table_grid::rows::iterator row = grid.m_rows.begin(); row != grid.m_rows.end(); row++, row_idx++)
+		grid.row(row).height = max_height;
+		
+		for(int col = 0; col < grid.cols_count(); col++)
 		{
-			col_idx = 0;
-			for(table_grid::row::iterator cell = row->begin(); cell != row->end(); cell++, col_idx++)
+			table_cell* cell = grid.cell(col, row);
+			if(cell->el)
 			{
-				if(cell->el)
-				{
-					int h = 0;
-					for(int i = 0; i + row_idx < (int) grid.m_rows_height.size() && i < cell->rowspan; i++)
-					{
-						h += grid.m_rows_height[row_idx + i];
-					}
-					cell->el->m_pos.height	= h - cell->el->content_margins_top() - cell->el->content_margins_bottom();
-					cell->el->m_pos.y		= top + cell->el->content_margins_top();
-				}
+				cell->el->m_pos.height = max_height - cell->el->content_margins_top() - cell->el->content_margins_bottom();
 			}
-			top += grid.m_rows_height[row_idx] + border_spacing_y;
 		}
+		top += max_height + border_spacing_y;
 	}
-
 
 	m_pos.width		= table_width;
 	m_pos.height	= top;
