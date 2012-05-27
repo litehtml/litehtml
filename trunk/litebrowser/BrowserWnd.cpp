@@ -2,19 +2,20 @@
 #include "BrowserWnd.h"
 #include "HtmlViewWnd.h"
 #include "ToolbarWnd.h"
+#include "downloader.h"
 
 CBrowserWnd::CBrowserWnd(HINSTANCE hInst)
 {
 	m_hInst		= hInst;
 	m_hWnd		= NULL;
-	m_view		= new CHTMLViewWnd(hInst);
-	m_toolbar	= new CToolbarWnd(hInst);
+	m_view		= new CHTMLViewWnd(hInst, &m_browser_context);
+	m_toolbar	= new CToolbarWnd(hInst, this);
 
 	WNDCLASS wc;
 	if(!GetClassInfo(m_hInst, BROWSERWND_CLASS, &wc))
 	{
 		ZeroMemory(&wc, sizeof(wc));
-		wc.style          = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
+		wc.style          = CS_DBLCLKS /*| CS_HREDRAW | CS_VREDRAW*/;
 		wc.lpfnWndProc    = (WNDPROC)CBrowserWnd::WndProc;
 		wc.cbClsExtra     = 0;
 		wc.cbWndExtra     = 0;
@@ -26,6 +27,29 @@ CBrowserWnd::CBrowserWnd(HINSTANCE hInst)
 		wc.lpszClassName  = BROWSERWND_CLASS;
 
 		RegisterClass(&wc);
+	}
+
+	LPWSTR css = NULL;
+
+	HRSRC hResource = ::FindResource(m_hInst, L"master.css", L"CSS");
+	if(hResource)
+	{
+		DWORD imageSize = ::SizeofResource(m_hInst, hResource);
+		if(imageSize)
+		{
+			LPCSTR pResourceData = (LPCSTR) ::LockResource(::LoadResource(m_hInst, hResource));
+			if(pResourceData)
+			{
+				css = new WCHAR[imageSize * 3];
+				int ret = MultiByteToWideChar(CP_UTF8, 0, pResourceData, imageSize, css, imageSize * 3);
+				css[ret] = 0;
+			}
+		}
+	}
+	if(css)
+	{
+		m_browser_context.load_master_stylesheet(css);
+		delete css;
 	}
 }
 
@@ -51,6 +75,8 @@ LRESULT CALLBACK CBrowserWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam, 
 	{
 		switch (uMessage)
 		{
+		case WM_ERASEBKGND:
+			return TRUE;
 		case WM_CREATE:
 			{
 				LPCREATESTRUCT lpcs = (LPCREATESTRUCT)lParam;
@@ -87,8 +113,8 @@ void CBrowserWnd::OnCreate()
 {
 	RECT rcClient;
 	GetClientRect(m_hWnd, &rcClient);
-	m_view->create(rcClient.left, rcClient.top + 32, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top - 32, m_hWnd);
-	m_toolbar->create(rcClient.left, rcClient.top, rcClient.right - rcClient.left, 32, m_hWnd);
+	m_toolbar->create(rcClient.left, rcClient.top, rcClient.right - rcClient.left, m_hWnd);
+	m_view->create(rcClient.left, rcClient.top + m_toolbar->height(), rcClient.right - rcClient.left, rcClient.bottom - rcClient.top - m_toolbar->height(), m_hWnd);
 	SetFocus(m_view->wnd());
 }
 
@@ -96,8 +122,11 @@ void CBrowserWnd::OnSize( int width, int height )
 {
 	RECT rcClient;
 	GetClientRect(m_hWnd, &rcClient);
-	SetWindowPos(m_view->wnd(), NULL, rcClient.left, rcClient.top + 32, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top - 32, SWP_NOZORDER);
-	SetWindowPos(m_toolbar->wnd(), NULL, rcClient.left, rcClient.top, rcClient.right - rcClient.left, 32, SWP_NOZORDER);
+	int toolbar_height = m_toolbar->set_width(rcClient.right - rcClient.left);
+	SetWindowPos(m_view->wnd(), NULL, rcClient.left, rcClient.top + toolbar_height, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top - toolbar_height, SWP_NOZORDER);
+	UpdateWindow(m_view->wnd());
+	SetWindowPos(m_toolbar->wnd(), NULL, rcClient.left, rcClient.top, rcClient.right - rcClient.left, toolbar_height, SWP_NOZORDER);
+	UpdateWindow(m_toolbar->wnd());
 }
 
 void CBrowserWnd::OnDestroy()
@@ -118,5 +147,29 @@ void CBrowserWnd::open( LPCWSTR path )
 	if(m_view)
 	{
 		m_view->open(path);
+	}
+}
+
+void CBrowserWnd::back()
+{
+	if(m_view)
+	{
+		m_view->back();
+	}
+}
+
+void CBrowserWnd::forward()
+{
+	if(m_view)
+	{
+		m_view->forward();
+	}
+}
+
+void CBrowserWnd::reload()
+{
+	if(m_view)
+	{
+		m_view->refresh();
 	}
 }

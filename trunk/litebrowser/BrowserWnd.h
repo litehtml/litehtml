@@ -7,16 +7,21 @@ class CToolbarWnd;
 
 class CBrowserWnd
 {
-	HWND			m_hWnd;
-	HINSTANCE		m_hInst;
-	CHTMLViewWnd*	m_view;
-	CToolbarWnd*	m_toolbar;
+	HWND				m_hWnd;
+	HINSTANCE			m_hInst;
+	CHTMLViewWnd*		m_view;
+	CToolbarWnd*		m_toolbar;
+	litehtml::context	m_browser_context;
 public:
 	CBrowserWnd(HINSTANCE hInst);
 	virtual ~CBrowserWnd(void);
 
 	void create();
 	void open(LPCWSTR path);
+
+	void back();
+	void forward();
+	void reload();
 
 protected:
 	virtual void OnCreate();

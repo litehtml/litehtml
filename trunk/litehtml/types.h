@@ -131,7 +131,7 @@ namespace litehtml
 			return false;
 		}
 
-		bool is_point_inside(int x, int y)
+		bool is_point_inside(int x, int y) const
 		{
 			if(x >= left() && x <= right() && y >= top() && y <= bottom())
 			{

@@ -1,5 +1,6 @@
 #include "html.h"
 #include "el_anchor.h"
+#include "document.h"
 
 litehtml::el_anchor::el_anchor( litehtml::document* doc ) : element(doc)
 {
@@ -9,4 +10,9 @@ litehtml::el_anchor::el_anchor( litehtml::document* doc ) : element(doc)
 litehtml::el_anchor::~el_anchor()
 {
 
+}
+
+void litehtml::el_anchor::on_click( int x, int y )
+{
+	m_doc->container()->on_anchor_click(get_attr(L"href", L""), this);
 }

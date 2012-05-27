@@ -157,7 +157,7 @@ void litehtml::win32_container::load_image( const wchar_t* src, const wchar_t* b
 	make_url(src, baseurl, url);
 	if(m_images.find(url.c_str()) == m_images.end())
 	{
-		Image* img = get_image(url.c_str());
+		Bitmap* img = get_image(url.c_str());
 		if(img)
 		{ 
 			m_images[url.c_str()] = img;
@@ -213,8 +213,6 @@ int litehtml::win32_container::get_default_font_size()
 
 void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* image, const wchar_t* baseurl, const litehtml::position& draw_pos, const litehtml::css_position& bg_pos, litehtml::background_repeat repeat, litehtml::background_attachment attachment )
 {
-	load_image(image, baseurl);
-
 	std::wstring url;
 	make_url(image, baseurl, url);
 
@@ -255,29 +253,32 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 			break;
 		case background_repeat_repeat_x:
 			{
+				Gdiplus::CachedBitmap bmp(img->second, &graphics);
 				for(int x = pos.left(); x < pos.right(); x += img->second->GetWidth())
 				{
-					graphics.DrawImage(img->second, x, pos.top(), img->second->GetWidth(), img->second->GetHeight());
+					graphics.DrawCachedBitmap(&bmp, x, pos.top());
 				}
 			}
 			break;
 		case background_repeat_repeat_y:
 			{
+				Gdiplus::CachedBitmap bmp(img->second, &graphics);
 				for(int y = pos.top(); y < pos.bottom(); y += img->second->GetHeight())
 				{
-					graphics.DrawImage(img->second, pos.left(), y, img->second->GetWidth(), img->second->GetHeight());
+					graphics.DrawCachedBitmap(&bmp, pos.left(), y);
 				}
 			}
 			break;
 		case background_repeat_repeat:
 			{
+				Gdiplus::CachedBitmap bmp(img->second, &graphics);
 				if(img->second->GetHeight() >= 0)
 				{
 					for(int x = pos.left(); x < pos.right(); x += img->second->GetWidth())
 					{
 						for(int y = pos.top(); y < pos.bottom(); y += img->second->GetHeight())
 						{
-							graphics.DrawImage(img->second, x, y, img->second->GetWidth(), img->second->GetHeight());
+							graphics.DrawCachedBitmap(&bmp, x, y);
 						}
 					}
 				}

@@ -233,7 +233,7 @@ void litehtml::table_grid::distribute_width( int width, int start, int end )
 
 	int add = width / (end - start + 1);
 	int added_width = 0;
-	for(int col = start; col < end; col++)
+	for(int col = start; col <= end; col++)
 	{
 		if(m_columns[col].css_width.is_predefined() || first_predef_width < 0)
 		{

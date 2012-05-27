@@ -288,6 +288,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\context.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\css_length.cpp"
 				>
 			</File>
@@ -403,6 +407,10 @@
 			</File>
 			<File
 				RelativePath=".\borders.h"
+				>
+			</File>
+			<File
+				RelativePath=".\context.h"
 				>
 			</File>
 			<File

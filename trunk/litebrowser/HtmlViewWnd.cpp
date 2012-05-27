@@ -7,7 +7,7 @@
 
 using namespace Gdiplus;
 
-CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst)
+CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 {
 	m_hInst		= hInst;
 	m_hWnd		= NULL;
@@ -16,30 +16,25 @@ CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst)
 	m_left		= 0;
 	m_max_top	= 0;
 	m_max_left	= 0;
+	m_context	= ctx;
+	m_cursor	= L"auto";
 
 	WNDCLASS wc;
 	if(!GetClassInfo(m_hInst, HTMLVIEWWND_CLASS, &wc))
 	{
 		ZeroMemory(&wc, sizeof(wc));
-		wc.style          = CS_DBLCLKS | CS_HREDRAW | CS_VREDRAW;
+		wc.style          = CS_HREDRAW | CS_VREDRAW;
 		wc.lpfnWndProc    = (WNDPROC)CHTMLViewWnd::WndProc;
 		wc.cbClsExtra     = 0;
 		wc.cbWndExtra     = 0;
 		wc.hInstance      = m_hInst;
 		wc.hIcon          = NULL;
-		wc.hCursor        = LoadCursor(NULL, IDC_ARROW);
-		wc.hbrBackground  = (HBRUSH) (COLOR_WINDOW + 1);
+		wc.hCursor        = NULL/*LoadCursor(NULL, IDC_ARROW)*/;
+		wc.hbrBackground  = NULL;
 		wc.lpszMenuName   = NULL;
 		wc.lpszClassName  = HTMLVIEWWND_CLASS;
 
 		RegisterClass(&wc);
-	}
-
-	LPWSTR css_text = load_text_file(L"file://D:/WORK/drawhtml/include/master.css");
-	if(css_text)
-	{
-		litehtml::load_master_stylesheet(css_text);
-		delete css_text;
 	}
 }
 
@@ -64,6 +59,9 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 	{
 		switch (uMessage)
 		{
+		case WM_SETCURSOR:
+			pThis->update_cursor();
+			break;
 		case WM_ERASEBKGND:
 			return TRUE;
 		case WM_CREATE:
@@ -77,13 +75,17 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 			break;
 		case WM_PAINT:
 			{
+
 /*
 				PAINTSTRUCT ps;
 				HDC hdc = BeginPaint(hWnd, &ps);
+
+				FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW + 1));
+
 				pThis->OnPaint(hdc, &ps.rcPaint);
+
 				EndPaint(hWnd, &ps);
 */
-
 
 				RECT rcClient;
 				GetClientRect(pThis->m_hWnd, &rcClient);
@@ -121,7 +123,30 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 			pThis->OnKeyDown((UINT) wParam);
 			return 0;
 		case WM_MOUSEMOVE:
-			pThis->OnMouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			{
+				TRACKMOUSEEVENT tme;
+				ZeroMemory(&tme, sizeof(TRACKMOUSEEVENT));
+				tme.cbSize = sizeof(TRACKMOUSEEVENT);
+				tme.dwFlags		= TME_QUERY;
+				tme.hwndTrack	= hWnd;
+				TrackMouseEvent(&tme);
+				if(!(tme.dwFlags & TME_LEAVE))
+				{
+					tme.dwFlags		= TME_LEAVE;
+					tme.hwndTrack	= hWnd;
+					TrackMouseEvent(&tme);
+				}
+				pThis->OnMouseMove(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			}
+			return 0;
+		case WM_MOUSELEAVE:
+			pThis->OnMouseLeave();
+			return 0;
+		case WM_LBUTTONDOWN:
+			pThis->OnLButtonDown(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			return 0;
+		case WM_LBUTTONUP:
+			pThis->OnLButtonUp(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 			return 0;
 		}
 	}
@@ -167,6 +192,10 @@ void CHTMLViewWnd::create( int x, int y, int width, int height, HWND parent )
 
 void CHTMLViewWnd::open( LPCWSTR path )
 {
+	if(!m_doc_path.empty())
+	{
+		m_history_back.push_back(m_doc_path);
+	}
 	make_url(path, NULL, m_doc_path);
 
 	m_doc		= NULL;
@@ -175,7 +204,7 @@ void CHTMLViewWnd::open( LPCWSTR path )
 	LPWSTR html_text = load_text_file(m_doc_path.c_str());
 	if(html_text)
 	{
-		m_doc = litehtml::document::createFromString(html_text, this, NULL, NULL);
+		m_doc = litehtml::document::createFromString(html_text, this, m_context);
 		delete html_text;
 	}
 
@@ -332,31 +361,6 @@ void CHTMLViewWnd::OnMouseWheel( int delta )
 	}
 }
 
-LPWSTR CHTMLViewWnd::load_text_file( LPCWSTR path )
-{
-	LPWSTR strW = NULL;
-
-	CRemotedFile rf;
-
-	HANDLE fl = rf.Open(path);
-	if(fl != INVALID_HANDLE_VALUE)
-	{
-		DWORD size = GetFileSize(fl, NULL);
-		LPSTR str = (LPSTR) malloc(size + 1);
-		
-		DWORD cbRead = 0;
-		ReadFile(fl, str, size, &cbRead, NULL);
-		str[cbRead] = 0;
-
-		strW = new WCHAR[cbRead + 1];
-		MultiByteToWideChar(CP_UTF8, 0, str, cbRead + 1, strW, cbRead + 1);
-
-		free(str);
-	}
-
-	return strW;
-}
-
 void CHTMLViewWnd::OnKeyDown( UINT vKey )
 {
 	switch(vKey)
@@ -412,7 +416,7 @@ void CHTMLViewWnd::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
 	{
 		WCHAR abs_url[512];
 		DWORD dl = 512;
-		if(basepath)
+		if(basepath && basepath[0])
 		{
 			UrlCombine(basepath, url, abs_url, &dl, 0);
 		} else
@@ -475,13 +479,14 @@ void CHTMLViewWnd::OnMouseMove( int x, int y )
 				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
 			}
 			UpdateWindow(m_hWnd);
+			update_cursor();
 		}
 	}
 }
 
-Gdiplus::Image* CHTMLViewWnd::get_image( LPCWSTR url )
+Gdiplus::Bitmap* CHTMLViewWnd::get_image( LPCWSTR url )
 {
-	Gdiplus::Image* img = NULL;
+	Gdiplus::Bitmap* img = NULL;
 
 	CRemotedFile rf;
 
@@ -514,7 +519,7 @@ Gdiplus::Image* CHTMLViewWnd::get_image( LPCWSTR url )
 			IStream* pStream = NULL;
 			if (::CreateStreamOnHGlobal(hGlobal, TRUE, &pStream) == S_OK)
 			{
-				img = Gdiplus::Image::FromStream(pStream);
+				img = Gdiplus::Bitmap::FromStream(pStream);
 				pStream->Release();
 				if(img)
 				{ 
@@ -529,4 +534,134 @@ Gdiplus::Image* CHTMLViewWnd::get_image( LPCWSTR url )
 	}
 
 	return img;
+}
+
+void CHTMLViewWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el )
+{
+	make_url(url, NULL, m_anchor);
+}
+
+void CHTMLViewWnd::OnMouseLeave()
+{
+	if(m_doc)
+	{
+		litehtml::position::vector redraw_boxes;
+		if(m_doc->on_mouse_leave(redraw_boxes))
+		{
+			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
+			{
+				box->x -= m_left;
+				box->y -= m_top;
+				RECT rcRedraw;
+				rcRedraw.left	= box->left();
+				rcRedraw.right	= box->right();
+				rcRedraw.top	= box->top();
+				rcRedraw.bottom	= box->bottom();
+				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
+			}
+			UpdateWindow(m_hWnd);
+		}
+	}
+}
+
+void CHTMLViewWnd::OnLButtonDown( int x, int y )
+{
+	if(m_doc)
+	{
+		litehtml::position::vector redraw_boxes;
+		if(m_doc->on_lbutton_down(x + m_left, y + m_top, redraw_boxes))
+		{
+			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
+			{
+				box->x -= m_left;
+				box->y -= m_top;
+				RECT rcRedraw;
+				rcRedraw.left	= box->left();
+				rcRedraw.right	= box->right();
+				rcRedraw.top	= box->top();
+				rcRedraw.bottom	= box->bottom();
+				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
+			}
+			UpdateWindow(m_hWnd);
+		}
+	}
+}
+
+void CHTMLViewWnd::OnLButtonUp( int x, int y )
+{
+	if(m_doc)
+	{
+		m_anchor = L"";
+		litehtml::position::vector redraw_boxes;
+		if(m_doc->on_lbutton_up(x + m_left, y + m_top, redraw_boxes))
+		{
+			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
+			{
+				box->x -= m_left;
+				box->y -= m_top;
+				RECT rcRedraw;
+				rcRedraw.left	= box->left();
+				rcRedraw.right	= box->right();
+				rcRedraw.top	= box->top();
+				rcRedraw.bottom	= box->bottom();
+				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
+			}
+			UpdateWindow(m_hWnd);
+		}
+		if(!m_anchor.empty())
+		{
+			open(m_anchor.c_str());
+		}
+	}
+}
+
+void CHTMLViewWnd::back()
+{
+	if(!m_history_back.empty())
+	{
+		if(!m_doc_path.empty())
+		{
+			m_history_forward.push_back(m_doc_path);
+		}
+		std::wstring url = m_history_back.back();
+		m_history_back.pop_back();
+		m_doc_path = L"";
+		open(url.c_str());
+	}
+}
+
+void CHTMLViewWnd::forward()
+{
+	if(!m_history_forward.empty())
+	{
+		if(!m_doc_path.empty())
+		{
+			m_history_back.push_back(m_doc_path);
+		}
+		std::wstring url = m_history_forward.back();
+		m_history_forward.pop_back();
+		m_doc_path = L"";
+		open(url.c_str());
+	}
+}
+
+void CHTMLViewWnd::set_cursor( const wchar_t* cursor )
+{
+	m_cursor = cursor;
+	if(m_cursor != L"auto")
+	{
+		int i = 0;
+		i++;
+	}
+}
+
+void CHTMLViewWnd::update_cursor()
+{
+	if(m_cursor == L"pointer")
+	{
+		SetCursor(LoadCursor(NULL, IDC_HAND));
+	} else
+	{
+		SetCursor(LoadCursor(NULL, IDC_ARROW));
+	}
 }

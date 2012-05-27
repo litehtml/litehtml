@@ -3,6 +3,7 @@
 #include "style.h"
 #include "types.h"
 #include "xh_scanner.h"
+#include "context.h"
 
 namespace litehtml
 {
@@ -54,10 +55,10 @@ namespace litehtml
 		css_text::vector		m_css;
 		style_sheet::vector		m_styles;
 		std::wstring			m_font_name;
-		int						m_font_size;
 		litehtml::web_color		m_def_color;
+		litehtml::context*		m_context;
 	public:
-		document(litehtml::document_container* objContainer);
+		document(litehtml::document_container* objContainer, litehtml::context* ctx);
 		virtual ~document();
 
 		litehtml::document_container*	container()	{ return m_container; }
@@ -71,8 +72,11 @@ namespace litehtml
 		int				height() const;
 		void			add_stylesheet(const wchar_t* str, const wchar_t* baseurl);
 		bool			on_mouse_over(int x, int y, position::vector& redraw_boxes);
+		bool			on_lbutton_down(int x, int y, position::vector& redraw_boxes);
+		bool			on_lbutton_up(int x, int y, position::vector& redraw_boxes);
+		bool			on_mouse_leave(position::vector& redraw_boxes);
 
-		static litehtml::document::ptr createFromString(const wchar_t* str, litehtml::document_container* objPainter, const wchar_t* stylesheet, const wchar_t* cssbaseurl);
+		static litehtml::document::ptr createFromString(const wchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx);
 	
 	private:
 		//void			load_default_styles();

@@ -215,6 +215,10 @@ namespace litehtml
       for(; i < 31 ; ++i )
       {
         t = get_char();
+
+		if(t == ';')
+			break;
+
         if(t == 0) return TT_EOF;
         if( !isalnum(t) )
         {
@@ -223,8 +227,6 @@ namespace litehtml
                  // but we try to use it.
         }
         buf[i] = char(t); 
-        if(t == ';')
-          break;
       }
       buf[i] = 0;
       if(i == 2)  
