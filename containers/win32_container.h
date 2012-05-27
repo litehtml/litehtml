@@ -6,7 +6,7 @@ namespace litehtml
 	class win32_container : public document_container
 	{
 	public:
-		typedef std::map<std::wstring, Gdiplus::Image*>	images_map;
+		typedef std::map<std::wstring, Gdiplus::Bitmap*>	images_map;
 	
 	private:
 		
@@ -42,6 +42,6 @@ namespace litehtml
 	protected:
 		void					clear_images();
 		virtual void			make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
-		virtual Gdiplus::Image*	get_image(LPCWSTR url) = 0;
+		virtual Gdiplus::Bitmap*	get_image(LPCWSTR url) = 0;
 	};
 }

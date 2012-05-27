@@ -555,7 +555,7 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 					{
 						max_x = add_line(ln, max_width);
 					}
-					int rw = el->render(hdc, ln->get_left(), ln->get_top(), max_x);
+					int rw = el->render(hdc, ln->get_left(), ln->get_top(), ln->line_right() - ln->get_left());
 					(*ln) += el;
 					max_x = add_line(ln, max_width);
 					ret_width = max(ret_width, rw);
@@ -1873,3 +1873,246 @@ bool litehtml::element::find_styles_changes( position::vector& redraw_boxes, int
 	return ret;
 }
 
+bool litehtml::element::on_mouse_leave()
+{
+	bool ret = false;
+
+	string_vector::iterator pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"hover");
+	if(pi != m_pseudo_classes.end())
+	{
+		m_pseudo_classes.erase(pi);
+		ret = true;
+	}
+
+	pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"active");
+	if(pi != m_pseudo_classes.end())
+	{
+		m_pseudo_classes.erase(pi);
+		ret = true;
+	}
+
+	for(elements_vector::iterator iter = m_inlines.begin(); iter != m_inlines.end(); iter++)
+	{
+		if((*iter)->m_float == float_none && !(*iter)->m_skip)
+		{
+			if((*iter)->on_mouse_leave())
+			{
+				ret = true;
+			}
+		}
+	}
+
+	for(elements_vector::iterator iter = m_floats.begin(); iter != m_floats.end(); iter++)
+	{
+		position el_pos;
+		(*iter)->get_abs_position(el_pos, this);
+		el_pos.x = el_pos.x + m_pos.x - (*iter)->m_pos.x;
+		el_pos.y = el_pos.y + m_pos.y - (*iter)->m_pos.y;
+
+		if((*iter)->on_mouse_leave())
+		{
+			ret = true;
+		}
+	}
+
+	for(elements_vector::iterator iter = m_absolutes.begin(); iter != m_absolutes.end(); iter++)
+	{
+		if((*iter)->on_mouse_leave())
+		{
+			ret = true;
+		}
+	}
+
+	return ret;
+}
+
+bool litehtml::element::on_lbutton_down( int x, int y )
+{
+	bool ret = false;
+	if(m_display != display_inline)
+	{
+		position pos = m_pos;
+		pos += m_padding;
+		pos += m_borders;
+		if(pos.is_point_inside(x, y))
+		{
+			if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"active") == m_pseudo_classes.end())
+			{
+				m_pseudo_classes.push_back(L"active");
+				ret = true;
+			}
+		} else
+		{
+			string_vector::iterator pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"active");
+			if(pi != m_pseudo_classes.end())
+			{
+				m_pseudo_classes.erase(pi);
+				ret = true;
+			}
+		}
+	} else
+	{
+		position::vector boxes;
+		get_inline_boxes(boxes);
+		for(position::vector::iterator box = boxes.begin(); box != boxes.end() && !ret; box++)
+		{
+			if(box->is_point_inside(x, y))
+			{
+				ret = true;
+			}
+		}
+
+		if(ret)
+		{
+			if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"active") == m_pseudo_classes.end())
+			{
+				m_pseudo_classes.push_back(L"active");
+				ret = true;
+			} else
+			{
+				ret = false;
+			}
+		} else
+		{
+			string_vector::iterator pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"active");
+			if(pi != m_pseudo_classes.end())
+			{
+				m_pseudo_classes.erase(pi);
+				ret = true;
+			} else
+			{
+				ret = false;
+			}
+		}
+	}
+
+	for(elements_vector::iterator iter = m_inlines.begin(); iter != m_inlines.end(); iter++)
+	{
+		if((*iter)->m_float == float_none && !(*iter)->m_skip)
+		{
+			if((*iter)->on_lbutton_down(x - m_pos.x, y - m_pos.y))
+			{
+				ret = true;
+			}
+		}
+	}
+
+	for(elements_vector::iterator iter = m_floats.begin(); iter != m_floats.end(); iter++)
+	{
+		position el_pos;
+		(*iter)->get_abs_position(el_pos, this);
+		el_pos.x = el_pos.x + m_pos.x - (*iter)->m_pos.x;
+		el_pos.y = el_pos.y + m_pos.y - (*iter)->m_pos.y;
+
+		if((*iter)->on_lbutton_down(x - el_pos.x, y - el_pos.y))
+		{
+			ret = true;
+		}
+	}
+
+	for(elements_vector::iterator iter = m_absolutes.begin(); iter != m_absolutes.end(); iter++)
+	{
+		if((*iter)->on_lbutton_down(x - m_pos.x, y - m_pos.y))
+		{
+			ret = true;
+		}
+	}
+
+	return ret;
+}
+
+bool litehtml::element::on_lbutton_up( int x, int y )
+{
+	bool ret = false;
+
+	string_vector::iterator pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"active");
+	if(pi != m_pseudo_classes.end())
+	{
+		m_pseudo_classes.erase(pi);
+		ret = true;
+		on_click(x, y);
+	}
+
+	for(elements_vector::iterator iter = m_inlines.begin(); iter != m_inlines.end(); iter++)
+	{
+		if((*iter)->m_float == float_none && !(*iter)->m_skip)
+		{
+			if((*iter)->on_lbutton_up(x, y))
+			{
+				ret = true;
+			}
+		}
+	}
+
+	for(elements_vector::iterator iter = m_floats.begin(); iter != m_floats.end(); iter++)
+	{
+		position el_pos;
+		(*iter)->get_abs_position(el_pos, this);
+		el_pos.x = el_pos.x + m_pos.x - (*iter)->m_pos.x;
+		el_pos.y = el_pos.y + m_pos.y - (*iter)->m_pos.y;
+
+		if((*iter)->on_lbutton_up(x, y))
+		{
+			ret = true;
+		}
+	}
+
+	for(elements_vector::iterator iter = m_absolutes.begin(); iter != m_absolutes.end(); iter++)
+	{
+		if((*iter)->on_lbutton_up(x, y))
+		{
+			ret = true;
+		}
+	}
+
+	return ret;
+}
+
+void litehtml::element::on_click( int x, int y )
+{
+
+}
+
+const wchar_t* litehtml::element::get_cursor()
+{
+	const wchar_t* ret = 0;
+
+	if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"hover") != m_pseudo_classes.end())
+	{
+		ret = get_style_property(L"cursor", true, 0);
+		if(ret)
+		{
+			int i=0;
+			i++;
+		}
+	}
+
+	for(elements_vector::iterator iter = m_inlines.begin(); iter != m_inlines.end(); iter++)
+	{
+		const wchar_t* cursor = (*iter)->get_cursor();
+		if(cursor)
+		{
+			ret = cursor;
+		}
+	}
+
+	for(elements_vector::iterator iter = m_floats.begin(); iter != m_floats.end(); iter++)
+	{
+		const wchar_t* cursor = (*iter)->get_cursor();
+		if(cursor)
+		{
+			ret = cursor;
+		}
+	}
+
+	for(elements_vector::iterator iter = m_absolutes.begin(); iter != m_absolutes.end(); iter++)
+	{
+		const wchar_t* cursor = (*iter)->get_cursor();
+		if(cursor)
+		{
+			ret = cursor;
+		}
+	}
+
+	return ret;
+}

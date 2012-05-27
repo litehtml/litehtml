@@ -1,8 +1,6 @@
 #include "html.h"
 #include "stylesheet.h"
 
-litehtml::style_sheet::vector litehtml::master_stylesheet;
-
 void litehtml::parse_stylesheet( const wchar_t* str, style_sheet::vector& styles, const wchar_t* baseurl )
 {
 	std::wstring text = str;
@@ -55,11 +53,6 @@ void litehtml::parse_stylesheet( const wchar_t* str, style_sheet::vector& styles
 			pos = text.find_first_not_of(L" \n\r\t", pos);
 		}
 	}
-}
-
-void litehtml::load_master_stylesheet( const wchar_t* str )
-{
-	parse_stylesheet(str, master_stylesheet, NULL);
 }
 
 void litehtml::parse_css_url( const std::wstring& str, std::wstring& url )

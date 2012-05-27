@@ -26,7 +26,7 @@ BOOL GetFile (HINTERNET IN hOpen, LPCWSTR szUrl, LPCWSTR szFileName)
 	LPVOID		szTemp	= malloc(10240);
 	HINTERNET  hConnect;
 
-	hConnect = InternetOpenUrl( hOpen, szUrl, szHead, lstrlen (szHead), INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_RELOAD, 0);
+	hConnect = InternetOpenUrl( hOpen, szUrl, szHead, lstrlen (szHead), /*INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_RELOAD*/0, 0);
 
 	if (!hConnect)
 	{
@@ -78,4 +78,29 @@ HANDLE CRemotedFile::Open( LPCWSTR url )
 	}
 	InternetCloseHandle(hInternet);
 	return INVALID_HANDLE_VALUE;
+}
+
+LPWSTR load_text_file( LPCWSTR path )
+{
+	LPWSTR strW = NULL;
+
+	CRemotedFile rf;
+
+	HANDLE fl = rf.Open(path);
+	if(fl != INVALID_HANDLE_VALUE)
+	{
+		DWORD size = GetFileSize(fl, NULL);
+		LPSTR str = (LPSTR) malloc(size + 1);
+
+		DWORD cbRead = 0;
+		ReadFile(fl, str, size, &cbRead, NULL);
+		str[cbRead] = 0;
+
+		strW = new WCHAR[cbRead + 1];
+		MultiByteToWideChar(CP_UTF8, 0, str, cbRead + 1, strW, cbRead + 1);
+
+		free(str);
+	}
+
+	return strW;
 }

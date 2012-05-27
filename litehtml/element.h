@@ -77,7 +77,12 @@ namespace litehtml
 		virtual int					get_base_line();
 		virtual background			get_background();
 		virtual bool				on_mouse_over(int x, int y);
+		virtual bool				on_mouse_leave();
+		virtual bool				on_lbutton_down(int x, int y);
+		virtual bool				on_lbutton_up(int x, int y);
+		virtual void				on_click(int x, int y);
 		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
+		virtual const wchar_t*		get_cursor();
 
 		style_display				get_display() const;
 		elements_vector&			children();

@@ -8,5 +8,7 @@ namespace litehtml
 	public:
 		el_anchor(litehtml::document* doc);
 		virtual ~el_anchor();
+
+		virtual void on_click(int x, int y);
 	};
 }

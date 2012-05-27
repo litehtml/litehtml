@@ -27,12 +27,12 @@ const wchar_t* g_empty_tags[] =
 	0
 };
 
-litehtml::document::document(litehtml::document_container* objContainer)
+litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
 	m_root		= 0;
 	m_container	= objContainer;
 	m_font_name	= L"Times New Roman";
-	m_font_size	= 16;
+	m_context	= ctx;
 }
 
 litehtml::document::~document()
@@ -44,13 +44,11 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str, litehtml::document_container* objPainter, const wchar_t* stylesheet, const wchar_t* cssbaseurl )
+litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx)
 {
-	litehtml::document::ptr doc = new litehtml::document(objPainter);
+	litehtml::document::ptr doc = new litehtml::document(objPainter, ctx);
 	str_istream si(str);
 	litehtml::scanner sc(si);
-
-	doc->add_stylesheet(stylesheet, cssbaseurl);
 
 	element::ptr parent = NULL;
 
@@ -230,7 +228,7 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 	{
 		doc->m_root->finish();
 
-		for(style_sheet::vector::const_iterator i = master_stylesheet.begin(); i != master_stylesheet.end(); i++)
+		for(style_sheet::vector::const_iterator i = ctx->master_css().begin(); i != ctx->master_css().end(); i++)
 		{
 			doc->m_root->apply_stylesheet(*i);
 		}
@@ -480,13 +478,54 @@ bool litehtml::document::on_mouse_over( int x, int y, position::vector& redraw_b
 	{
 		return false;
 	}
-	if(m_root->on_mouse_over(x, y))
+	bool res = m_root->on_mouse_over(x, y);
+	const wchar_t* cursor = m_root->get_cursor();
+	m_container->set_cursor(cursor ? cursor : L"auto");
+	if(res)
 	{
-		if(m_root->find_styles_changes(redraw_boxes, 0, 0))
-		{
-			int i=0;
-			i++;
-		}
+		m_root->find_styles_changes(redraw_boxes, 0, 0);
+		return true;
+	}
+	return false;
+}
+
+bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
+{
+	if(!m_root)
+	{
+		return false;
+	}
+	if(m_root->on_mouse_leave())
+	{
+		m_root->find_styles_changes(redraw_boxes, 0, 0);
+		return true;
+	}
+	return false;
+}
+
+bool litehtml::document::on_lbutton_down( int x, int y, position::vector& redraw_boxes )
+{
+	if(!m_root)
+	{
+		return false;
+	}
+	if(m_root->on_lbutton_down(x, y))
+	{
+		m_root->find_styles_changes(redraw_boxes, 0, 0);
+		return true;
+	}
+	return false;
+}
+
+bool litehtml::document::on_lbutton_up( int x, int y, position::vector& redraw_boxes )
+{
+	if(!m_root)
+	{
+		return false;
+	}
+	if(m_root->on_lbutton_up(x, y))
+	{
+		m_root->find_styles_changes(redraw_boxes, 0, 0);
 		return true;
 	}
 	return false;

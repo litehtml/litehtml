@@ -407,6 +407,62 @@
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}"
 			>
 			<File
+				RelativePath=".\html\addr-center.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\addr-left.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\addr-right.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\back-active.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\back-disabled.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\back-hover.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\back-normal.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\forward-active.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\forward-disabled.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\forward-hover.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\forward-normal.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\home-active.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\home-hover.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\home-normal.png"
+				>
+			</File>
+			<File
 				RelativePath=".\litebrowser.ico"
 				>
 			</File>
@@ -415,10 +471,46 @@
 				>
 			</File>
 			<File
+				RelativePath=".\html\reload-active.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\reload-hover.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\reload-normal.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\settings-active.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\settings-hover.png"
+				>
+			</File>
+			<File
+				RelativePath=".\html\settings-normal.png"
+				>
+			</File>
+			<File
 				RelativePath=".\small.ico"
 				>
 			</File>
+			<File
+				RelativePath=".\html\toolbar-bg.png"
+				>
+			</File>
 		</Filter>
+		<File
+			RelativePath="..\include\master.css"
+			>
+		</File>
+		<File
+			RelativePath=".\html\toolbar.html"
+			>
+		</File>
 	</Files>
 	<Globals>
 	</Globals>

@@ -10,3 +10,5 @@ public:
 
 	HANDLE Open(LPCWSTR url);
 };
+
+LPWSTR load_text_file( LPCWSTR path );

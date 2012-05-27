@@ -18,6 +18,53 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
+// Neutral resources
+
+#if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_NEU)
+#ifdef _WIN32
+LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
+#pragma code_page(1251)
+#endif //_WIN32
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// HTML
+//
+
+TOOLBAR.HTML            HTML                    "html\\toolbar.html"
+TOOLBAR-BG.PNG          HTML                    "html\\toolbar-bg.png"
+ADDR-CENTER.PNG         HTML                    "html\\addr-center.png"
+ADDR-LEFT.PNG           HTML                    "html\\addr-left.png"
+ADDR-RIGHT.PNG          HTML                    "html\\addr-right.png"
+BACK-ACTIVE.PNG         HTML                    "html\\back-active.png"
+BACK-DISABLED.PNG       HTML                    "html\\back-disabled.png"
+BACK-HOVER.PNG          HTML                    "html\\back-hover.png"
+BACK-NORMAL.PNG         HTML                    "html\\back-normal.png"
+FORWARD-ACTIVE.PNG      HTML                    "html\\forward-active.png"
+FORWARD-DISABLED.PNG    HTML                    "html\\forward-disabled.png"
+FORWARD-HOVER.PNG       HTML                    "html\\forward-hover.png"
+FORWARD-NORMAL.PNG      HTML                    "html\\forward-normal.png"
+HOME-ACTIVE.PNG         HTML                    "html\\home-active.png"
+HOME-HOVER.PNG          HTML                    "html\\home-hover.png"
+HOME-NORMAL.PNG         HTML                    "html\\home-normal.png"
+RELOAD-ACTIVE.PNG       HTML                    "html\\reload-active.png"
+RELOAD-HOVER.PNG        HTML                    "html\\reload-hover.png"
+RELOAD-NORMAL.PNG       HTML                    "html\\reload-normal.png"
+SETTINGS-ACTIVE.PNG     HTML                    "html\\settings-active.png"
+SETTINGS-HOVER.PNG      HTML                    "html\\settings-hover.png"
+SETTINGS-NORMAL.PNG     HTML                    "html\\settings-normal.png"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// CSS
+//
+
+master.css              CSS                     "D:\\WORK\\drawhtml\\include\\master.css"
+#endif    // Neutral resources
+/////////////////////////////////////////////////////////////////////////////
+
+
+/////////////////////////////////////////////////////////////////////////////
 // English (U.S.) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
@@ -33,8 +80,8 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
-IDI_litebrowser            ICON                    "litebrowser.ico"
 IDI_SMALL               ICON                    "small.ico"
+IDI_LITEBROWSER         ICON                    "litebrowser.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

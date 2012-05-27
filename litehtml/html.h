@@ -44,6 +44,8 @@ namespace litehtml
 		virtual	void		set_caption(const wchar_t* caption)		= 0;
 		virtual	void		set_base_url(const wchar_t* base_url)	= 0;
 		virtual	void		link(litehtml::document* doc, litehtml::element::ptr el)	= 0;
+		virtual	void		on_anchor_click(const wchar_t* url, litehtml::element::ptr el)	= 0;
+		virtual	void		set_cursor(const wchar_t* cursor)	= 0;
 	};
 
 	void trim(std::wstring &s);
