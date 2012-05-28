@@ -404,11 +404,12 @@ namespace litehtml
 		return TT_DATA;
 	}
 
-	struct HTMLCODES{
+	struct
+	{
 		wchar szCode[10];
 		wchar Code;
-	};
-	HTMLCODES g_HTMLCodes[] = {
+	} g_HTMLCodes[] = 
+	{
 		{L"&quot;",L'"'},
 		{L"&amp;",L'&'},
 		{L"&lt;",L'<'},
