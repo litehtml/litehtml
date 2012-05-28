@@ -284,10 +284,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\borders.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\context.cpp"
 				>
 			</File>
