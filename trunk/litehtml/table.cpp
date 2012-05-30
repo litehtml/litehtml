@@ -11,8 +11,7 @@ void litehtml::table_grid::add_cell( element* el )
 
 	while( is_rowspanned( (int) m_cells.size() - 1, (int) m_cells.back().size() ) )
 	{
-		table_cell empty_cell;
-		m_cells.back().push_back(empty_cell);
+		m_cells.back().push_back(table_cell());
 	}
 
 	m_cells.back().push_back(cell);
@@ -33,13 +32,16 @@ void litehtml::table_grid::begin_row()
 
 bool litehtml::table_grid::is_rowspanned( int r, int c )
 {
-	for(int i = r - 1; i >= 0; i--)
+	for(int row = r - 1; row >= 0; row--)
 	{
-		if(m_cells[i][c].rowspan > 1)
+		if(c < (int) m_cells[row].size())
 		{
-			if(m_cells[i][c].rowspan >= r - i + 1)
+			if(m_cells[row][c].rowspan > 1)
 			{
-				return true;
+				if(m_cells[row][c].rowspan >= r - row + 1)
+				{
+					return true;
+				}
 			}
 		}
 	}
@@ -184,6 +186,11 @@ void litehtml::table_grid::distribute_min_width( int width, int start, int end )
 
 void litehtml::table_grid::distribute_width( int width, int start, int end, table_column_accessor* acc )
 {
+	if(!(start >= 0 && start < m_cols_count && end >= 0 && end < m_cols_count))
+	{
+		return;
+	}
+
 	int cols_width = 0;
 	for(int col = start; col <= end; col++)
 	{
@@ -209,6 +216,11 @@ void litehtml::table_grid::distribute_width( int width, int start, int end, tabl
 
 void litehtml::table_grid::distribute_width( int width, int start, int end )
 {
+	if(!(start >= 0 && start < m_cols_count && end >= 0 && end < m_cols_count))
+	{
+		return;
+	}
+
 	int cols_width = 0;
 	int cols_width2 = 0;
 	int first_predef_width = -1;

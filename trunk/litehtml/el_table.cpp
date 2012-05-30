@@ -208,6 +208,7 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 
 	// render cells with computed width
 	int top		= border_spacing_y;
+	bool row_span_found = false;
 
 	for(int row = 0; row < grid.rows_count(); row++)
 	{
@@ -216,33 +217,93 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 		for(int col = 0; col < grid.cols_count(); col++)
 		{
 			table_cell* cell = grid.cell(col, row);
+			int cell_width = (cell->colspan - 1) * border_spacing_x;
 			if(cell->el)
 			{
-				int cell_width = (cell->colspan - 1) * border_spacing_x;
 				for (int col2 = col; col2 < col + cell->colspan; col2++)
 				{
 					cell_width += grid.column(col2).width;
 				}
 				cell->el->render(hdc, left, top, cell_width);
 				cell->el->m_pos.width = cell_width - cell->el->content_margins_left() - cell->el->content_margins_right();
-				left += cell_width + border_spacing_x;
 				if(cell->rowspan <= 1)
 				{
 					max_height = max(max_height, cell->el->height());
+				} else
+				{
+					row_span_found = true;
 				}
+			} else
+			{
+				cell_width += grid.column(col).width;
 			}
+			left += grid.column(col).width + border_spacing_x;
 		}
 		grid.row(row).height = max_height;
 		
 		for(int col = 0; col < grid.cols_count(); col++)
 		{
 			table_cell* cell = grid.cell(col, row);
-			if(cell->el)
+			if(cell->el && cell->rowspan <= 1)
 			{
 				cell->el->m_pos.height = max_height - cell->el->content_margins_top() - cell->el->content_margins_bottom();
 			}
 		}
 		top += max_height + border_spacing_y;
+	}
+
+	if(row_span_found)
+	{
+		bool row_height_changed = false;
+
+		for(int row = 0; row < grid.rows_count(); row++)
+		{
+			for(int col = 0; col < grid.cols_count(); col++)
+			{
+				table_cell* cell = grid.cell(col, row);
+				if(cell->el)
+				{
+					if(cell->rowspan > 1)
+					{
+						int cell_height = (cell->rowspan - 1) * border_spacing_y;
+						for (int row2 = row; row2 < row + cell->rowspan; row2++)
+						{
+							cell_height += grid.row(row2).height;
+						}
+						if(cell_height >= cell->el->height())
+						{
+							cell->el->m_pos.height = cell_height - cell->el->content_margins_top() - cell->el->content_margins_bottom();
+						} else
+						{
+							grid.row(row + cell->rowspan - 1).height += cell->el->height() - cell_height;
+							row_height_changed = true;
+						}
+					}
+				}
+			}
+		}
+		if(row_height_changed)
+		{
+			top		= border_spacing_y;
+			for(int row = 0; row < grid.rows_count(); row++)
+			{
+				for(int col = 0; col < grid.cols_count(); col++)
+				{
+					table_cell* cell = grid.cell(col, row);
+					if(cell->el)
+					{
+						int cell_height = (cell->rowspan - 1) * border_spacing_y;
+						for (int row2 = row; row2 < row + cell->rowspan; row2++)
+						{
+							cell_height += grid.row(row2).height;
+						}
+						cell->el->m_pos.height  = cell_height - cell->el->content_margins_top() - cell->el->content_margins_bottom();
+						cell->el->m_pos.y		= top + cell->el->content_margins_top();
+					}
+				}
+				top += grid.row(row).height + border_spacing_y;
+			}
+		}
 	}
 
 	m_pos.width		= table_width;
