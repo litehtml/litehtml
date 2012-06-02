@@ -105,6 +105,7 @@ namespace litehtml
 		bool	have_room_for(element* el);
 		int		line_right()				{	return m_line_right;			}
 		int		line_left()					{	return m_line_left;				}
+		void	set_line_height(int val)	{	m_min_height = val;				}
 		
 		element_clear get_clear_floats() const { return m_clear; }
 	};

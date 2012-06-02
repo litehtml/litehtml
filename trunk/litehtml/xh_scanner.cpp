@@ -220,7 +220,7 @@ namespace litehtml
 			break;
 
         if(t == 0) return TT_EOF;
-        if( !isalnum(t) )
+		if( !isalnum(t) && t != '#' )
         {
           push_back(t);
           break; // appears a erroneous entity token.
@@ -542,11 +542,24 @@ namespace litehtml
 
 	litehtml::wchar scanner::resolve_entity( const wchar* buf, int buf_size )
 	{
-		for(int i=0; g_HTMLCodes[i].szCode[0]; i++)
+		if(buf[0] == '#')
 		{
-			if(!wcsncmp(g_HTMLCodes[i].szCode + 1, buf, buf_size))
+			if(buf[1] == 'x' || buf[1] == 'X')
 			{
-				return g_HTMLCodes[i].Code;
+				wchar* end = 0;
+				return (wchar) wcstol(buf + 2, &end, 16);
+			} else
+			{
+				return (wchar) _wtoi(buf + 1);
+			}
+		} else
+		{
+			for(int i=0; g_HTMLCodes[i].szCode[0]; i++)
+			{
+				if(!_wcsnicmp(g_HTMLCodes[i].szCode + 1, buf, buf_size))
+				{
+					return g_HTMLCodes[i].Code;
+				}
 			}
 		}
 		return 0;

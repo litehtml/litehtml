@@ -11,7 +11,7 @@ litehtml::el_body::~el_body()
 
 }
 
-bool litehtml::el_body::is_body()
+bool litehtml::el_body::is_body()  const
 {
 	return true;
 }

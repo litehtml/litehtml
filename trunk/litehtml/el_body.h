@@ -9,6 +9,6 @@ namespace litehtml
 		el_body(litehtml::document* doc);
 		virtual ~el_body();
 
-		virtual bool is_body();
+		virtual bool is_body()  const;
 	};
 }

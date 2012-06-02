@@ -14,9 +14,7 @@ litehtml::el_space::~el_space()
 
 void litehtml::el_space::get_content_size( uint_ptr hdc, size& sz, int max_width )
 {
-	uint_ptr font = m_parent->get_font();
-	sz.height	= m_doc->container()->line_height(hdc, font);
-	sz.width	= m_doc->container()->text_width(hdc, L" ", font);
+	sz = m_size;
 }
 
 bool litehtml::el_space::is_white_space()
@@ -51,7 +49,16 @@ const wchar_t* litehtml::el_space::get_style_property( const wchar_t* name, bool
 	return def;
 }
 
-void litehtml::el_space::parse_styles()
+void litehtml::el_space::parse_styles(bool is_reparse)
 {
+	uint_ptr hdc = m_doc->container()->get_temp_dc();
+	uint_ptr font = m_parent->get_font();
+	m_size.height	= m_doc->container()->line_height(hdc, font);
+	m_size.width	= m_doc->container()->text_width(hdc, L" ", font);
+	m_doc->container()->release_temp_dc(hdc);
+}
 
+int litehtml::el_space::get_base_line()
+{
+	return m_parent->get_base_line();
 }

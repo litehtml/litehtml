@@ -308,6 +308,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_break.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\el_comment.cpp"
 				>
 			</File>
@@ -439,6 +443,10 @@
 			</File>
 			<File
 				RelativePath=".\el_body.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_break.h"
 				>
 			</File>
 			<File

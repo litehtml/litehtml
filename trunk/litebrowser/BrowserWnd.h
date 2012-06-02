@@ -10,7 +10,9 @@ class CBrowserWnd
 	HWND				m_hWnd;
 	HINSTANCE			m_hInst;
 	CHTMLViewWnd*		m_view;
+#ifndef NO_TOOLBAR
 	CToolbarWnd*		m_toolbar;
+#endif
 	litehtml::context	m_browser_context;
 public:
 	CBrowserWnd(HINSTANCE hInst);

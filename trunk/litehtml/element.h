@@ -48,12 +48,18 @@ namespace litehtml
 		litehtml::line*			m_line;
 		string_vector			m_pseudo_classes;
 		used_styles::vector		m_style_sheets;		
+		
+		uint_ptr				m_font;
+		int						m_font_size;
+		int						m_base_line;
 
 		css_margins				m_css_margins;
 		css_margins				m_css_padding;
 		css_borders				m_css_borders;
 		css_length				m_css_width;
 		css_length				m_css_height;
+		css_length				m_css_min_width;
+		css_length				m_css_min_height;
 		css_length				m_css_left;
 		css_length				m_css_right;
 		css_length				m_css_top;
@@ -73,7 +79,8 @@ namespace litehtml
 		virtual const wchar_t*		get_attr(const wchar_t* name, const wchar_t* def = 0);
 		virtual void				apply_stylesheet(const litehtml::style_sheet::ptr style);
 		virtual bool				is_white_space();
-		virtual bool				is_body();
+		virtual bool				is_body() const;
+		virtual bool				is_break() const;
 		virtual int					get_base_line();
 		virtual background			get_background();
 		virtual bool				on_mouse_over(int x, int y);
@@ -83,6 +90,7 @@ namespace litehtml
 		virtual void				on_click(int x, int y);
 		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
 		virtual const wchar_t*		get_cursor();
+		virtual void				init_font();
 
 		style_display				get_display() const;
 		elements_vector&			children();
@@ -148,7 +156,7 @@ namespace litehtml
 		void						add_absolute(element* el);
 		bool						is_floats_holder() const;
 		int							place_inline(element* el, line::ptr& ln, int max_width);
-		int							find_next_line_top(int top, int width);
+		int							find_next_line_top(int top, int width, int def_right);
 		void						parse_background();
 
 	private:
@@ -171,7 +179,12 @@ namespace litehtml
 
 	inline bool	element::is_floats_holder() const
 	{
-		if(m_display == display_inline_block || m_display == display_table_cell || !m_parent || m_tag == L"body" || m_float != float_none)
+		if(	m_display == display_inline_block || 
+			m_display == display_table_cell || 
+			!m_parent || 
+			is_body() || 
+			m_float != float_none ||
+			m_el_position == element_position_absolute)
 		{
 			return true;
 		}

@@ -23,3 +23,18 @@ void litehtml::el_comment::set_data( const wchar_t* data )
 		m_text = data;
 	}
 }
+
+void litehtml::el_comment::apply_stylesheet( const litehtml::style_sheet& style )
+{
+
+}
+
+void litehtml::el_comment::parse_styles( bool is_reparse )
+{
+	m_display = display_none;
+}
+
+int litehtml::el_comment::get_base_line()
+{
+	return 0;
+}

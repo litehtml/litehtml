@@ -18,9 +18,7 @@ litehtml::el_text::~el_text()
 
 void litehtml::el_text::get_content_size( uint_ptr hdc, size& sz, int max_width )
 {
-	uint_ptr font = m_parent->get_font();
-	sz.height	= m_doc->container()->line_height(hdc, font);
-	sz.width	= m_doc->container()->text_width(hdc, m_text.c_str(), font);
+	sz = m_size;
 }
 
 void litehtml::el_text::draw_content( uint_ptr hdc, const litehtml::position& pos )
@@ -50,6 +48,16 @@ const wchar_t* litehtml::el_text::get_style_property( const wchar_t* name, bool 
 	return def;
 }
 
-void litehtml::el_text::parse_styles()
+void litehtml::el_text::parse_styles(bool is_reparse)
 {
+	uint_ptr hdc = m_doc->container()->get_temp_dc();
+	uint_ptr font = m_parent->get_font();
+	m_size.height	= m_doc->container()->line_height(hdc, font);
+	m_size.width	= m_doc->container()->text_width(hdc, m_text.c_str(), font);
+	m_doc->container()->release_temp_dc(hdc);
+}
+
+int litehtml::el_text::get_base_line()
+{
+	return m_parent->get_base_line();
 }

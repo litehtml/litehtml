@@ -23,6 +23,9 @@ litehtml::element::element(litehtml::document* doc)
 	m_list_style_position	= list_style_position_outside;
 	m_float					= float_none;
 	m_clear					= clear_none;
+	m_font					= 0;
+	m_font_size				= 0;
+	m_base_line				= 0;
 }
 
 litehtml::element::~element()
@@ -280,12 +283,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 
 litehtml::uint_ptr litehtml::element::get_font()
 {
-	const wchar_t* name			= get_style_property(L"font-family",		true,	L"inherit");
-	const wchar_t* weight		= get_style_property(L"font-weight",		true,	L"normal");
-	const wchar_t* style		= get_style_property(L"font-style",			true,	L"normal");
-	const wchar_t* decoration	= get_style_property(L"text-decoration",	true,	L"none");
-
-	return m_doc->get_font(name, get_font_size(), weight, style, decoration);
+	return m_font;
 }
 
 const wchar_t* litehtml::element::get_style_property( const wchar_t* name, bool inherited, const wchar_t* def /*= 0*/ )
@@ -341,7 +339,7 @@ void litehtml::element::parse_styles(bool is_reparse)
 		m_style.add(style, NULL);
 	}
 
-	int fntsize = get_font_size();
+	init_font();
 
 	m_el_position	= (element_position)	value_index(get_style_property(L"position",		false,	L"static"), element_position_strings,	element_position_fixed);
 	m_text_align	= (text_align)			value_index(get_style_property(L"text-align",	true,	L"left"),	text_align_strings,			text_align_left);
@@ -354,7 +352,7 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 	m_clear = (element_clear) value_index(get_style_property(L"clear", false, L"none"), element_clear_strings, clear_none);
 
-	if(m_el_position == element_position_absolute)
+	if(m_el_position == element_position_absolute || m_float != float_none)
 	{
 		m_display = display_block;
 	} else
@@ -366,10 +364,24 @@ void litehtml::element::parse_styles(bool is_reparse)
 	m_css_width.fromString(		get_style_property(L"width",			false,	L"auto"), L"auto");
 	m_css_height.fromString(	get_style_property(L"height",			false,	L"auto"), L"auto");
 
+	m_doc->cvt_units(m_css_width,	m_font_size);
+	m_doc->cvt_units(m_css_height,	m_font_size);
+
+	m_css_min_width.fromString(		get_style_property(L"min-width",	false,	L"0"));
+	m_css_min_height.fromString(	get_style_property(L"min-height",	false,	L"0"));
+
+	m_doc->cvt_units(m_css_min_width,	m_font_size);
+	m_doc->cvt_units(m_css_min_height,	m_font_size);
+
 	m_css_left.fromString(		get_style_property(L"left",				false,	L"auto"), L"auto");
 	m_css_right.fromString(		get_style_property(L"right",			false,	L"auto"), L"auto");
 	m_css_top.fromString(		get_style_property(L"top",				false,	L"auto"), L"auto");
 	m_css_bottom.fromString(	get_style_property(L"bottom",			false,	L"auto"), L"auto");
+
+	m_doc->cvt_units(m_css_left,	m_font_size);
+	m_doc->cvt_units(m_css_right,	m_font_size);
+	m_doc->cvt_units(m_css_top,		m_font_size);
+	m_doc->cvt_units(m_css_bottom,	m_font_size);
 
 	m_css_margins.left.fromString(		get_style_property(L"margin-left",			false,	L"0"), L"auto");
 	m_css_margins.right.fromString(		get_style_property(L"margin-right",			false,	L"0"), L"auto");
@@ -410,42 +422,42 @@ void litehtml::element::parse_styles(bool is_reparse)
 	m_css_borders.radius.bottom_left_x.fromString(get_style_property(L"border-bottom-left-radius-x", false, L"0"));
 	m_css_borders.radius.bottom_left_y.fromString(get_style_property(L"border-bottom-left-radius-y", false, L"0"));
 
-	m_doc->cvt_units(m_css_borders.radius.bottom_left_x,			fntsize);
-	m_doc->cvt_units(m_css_borders.radius.bottom_left_y,			fntsize);
-	m_doc->cvt_units(m_css_borders.radius.bottom_right_x,			fntsize);
-	m_doc->cvt_units(m_css_borders.radius.bottom_right_y,			fntsize);
-	m_doc->cvt_units(m_css_borders.radius.top_left_x,				fntsize);
-	m_doc->cvt_units(m_css_borders.radius.top_left_y,				fntsize);
-	m_doc->cvt_units(m_css_borders.radius.top_right_x,				fntsize);
-	m_doc->cvt_units(m_css_borders.radius.top_right_y,				fntsize);
+	m_doc->cvt_units(m_css_borders.radius.bottom_left_x,			m_font_size);
+	m_doc->cvt_units(m_css_borders.radius.bottom_left_y,			m_font_size);
+	m_doc->cvt_units(m_css_borders.radius.bottom_right_x,			m_font_size);
+	m_doc->cvt_units(m_css_borders.radius.bottom_right_y,			m_font_size);
+	m_doc->cvt_units(m_css_borders.radius.top_left_x,				m_font_size);
+	m_doc->cvt_units(m_css_borders.radius.top_left_y,				m_font_size);
+	m_doc->cvt_units(m_css_borders.radius.top_right_x,				m_font_size);
+	m_doc->cvt_units(m_css_borders.radius.top_right_y,				m_font_size);
 
-	m_margins.left		= m_doc->cvt_units(m_css_margins.left,		fntsize);
-	m_margins.right		= m_doc->cvt_units(m_css_margins.right,		fntsize);
-	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		fntsize);
-	m_margins.bottom	= m_doc->cvt_units(m_css_margins.bottom,	fntsize);
+	m_margins.left		= m_doc->cvt_units(m_css_margins.left,		m_font_size);
+	m_margins.right		= m_doc->cvt_units(m_css_margins.right,		m_font_size);
+	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		m_font_size);
+	m_margins.bottom	= m_doc->cvt_units(m_css_margins.bottom,	m_font_size);
 
-	m_padding.left		= m_doc->cvt_units(m_css_padding.left,		fntsize);
-	m_padding.right		= m_doc->cvt_units(m_css_padding.right,		fntsize);
-	m_padding.top		= m_doc->cvt_units(m_css_padding.top,		fntsize);
-	m_padding.bottom	= m_doc->cvt_units(m_css_padding.bottom,	fntsize);
+	m_padding.left		= m_doc->cvt_units(m_css_padding.left,		m_font_size);
+	m_padding.right		= m_doc->cvt_units(m_css_padding.right,		m_font_size);
+	m_padding.top		= m_doc->cvt_units(m_css_padding.top,		m_font_size);
+	m_padding.bottom	= m_doc->cvt_units(m_css_padding.bottom,	m_font_size);
 
-	m_borders.left		= m_doc->cvt_units(m_css_borders.left.width,	fntsize);
-	m_borders.right		= m_doc->cvt_units(m_css_borders.right.width,	fntsize);
-	m_borders.top		= m_doc->cvt_units(m_css_borders.top.width,		fntsize);
-	m_borders.bottom	= m_doc->cvt_units(m_css_borders.bottom.width,	fntsize);
+	m_borders.left		= m_doc->cvt_units(m_css_borders.left.width,	m_font_size);
+	m_borders.right		= m_doc->cvt_units(m_css_borders.right.width,	m_font_size);
+	m_borders.top		= m_doc->cvt_units(m_css_borders.top.width,		m_font_size);
+	m_borders.bottom	= m_doc->cvt_units(m_css_borders.bottom.width,	m_font_size);
 
 	css_length line_height;
 	line_height.fromString(get_style_property(L"line-height",	true,	L"normal"));
 	if(line_height.is_predefined())
 	{
 		line_height.set_value(110, css_units_percentage);
-		m_line_height = line_height.calc_percent(fntsize);
+		m_line_height = line_height.calc_percent(m_font_size);
 	} else if(line_height.units() == css_units_none)
 	{
-		m_line_height = (int) (line_height.val() * fntsize);
+		m_line_height = (int) (line_height.val() * m_font_size);
 	} else
 	{
-		m_line_height = line_height.calc_percent(fntsize);
+		m_line_height = line_height.calc_percent(m_font_size);
 	}
 
 
@@ -473,6 +485,11 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 {
+	if(m_class == L"version")
+	{
+		int i = 0;
+		i++;
+	}
 	int parent_width = max_width;
 
 	m_pos.move_to(x, y);
@@ -521,7 +538,7 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 			int rw = el->render(hdc, get_line_left(ln->get_top()), ln->get_top(), max_x);
 			if(el->right() > max_x)
 			{
-				int new_top = find_next_line_top(el->top(), el->width());
+				int new_top = find_next_line_top(el->top(), el->width(), max_width);
 				el->m_pos.x = get_line_left(new_top) + el->content_margins_left();
 				el->m_pos.y = new_top + el->content_margins_top();
 			}
@@ -533,7 +550,7 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 			int rw = el->render(hdc, 0, ln->get_top(), max_x);
 			if(ln->get_left() + el->width() > max_x)
 			{
-				int new_top = find_next_line_top(el->top(), el->width());
+				int new_top = find_next_line_top(el->top(), el->width(), max_width);
 				el->m_pos.x = get_line_right(new_top, max_x) - (el->width() - el->content_margins_left());
 				el->m_pos.y = new_top + el->content_margins_top();
 			} else
@@ -569,6 +586,10 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 					}
 					init_line(ln, ln->get_top(), max_width, el->m_clear);
 					int rw = el->render(hdc, 0, ln->get_top(), max_width);
+					if(el->is_break())
+					{
+						ln->set_line_height(0);
+					}
 					(*ln) += el;
 					add_line(ln, max_width);
 
@@ -660,6 +681,12 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 		m_pos.height = block_height;
 	}
 
+	int min_height = m_css_min_height.calc_percent(m_pos.height);
+	if(min_height > m_pos.height)
+	{
+		m_pos.height = min_height;
+	}
+
 	ret_width += content_margins_left() + content_margins_right();
 
 	if((	m_display == display_inline_block						|| 
@@ -672,6 +699,16 @@ int litehtml::element::render( uint_ptr hdc, int x, int y, int max_width )
 		render(hdc, x, y, ret_width);
 		m_second_pass = false;
 		m_pos.width = ret_width - (content_margins_left() + content_margins_right());
+	}
+
+	int min_width = m_css_min_width.calc_percent(parent_width);
+	if(min_width != 0)
+	{
+		if(min_width > m_pos.width)
+		{
+			m_pos.width = min_width;
+			ret_width	= min_width;
+		}
 	}
 
 	int abs_base_x	= - m_padding.left - m_borders.left;
@@ -765,66 +802,7 @@ bool litehtml::element::is_white_space()
 
 int litehtml::element::get_font_size()
 {
-	const wchar_t* str = get_style_property(L"font-size", false, 0);
-
-	int parent_sz = 0;
-	int doc_font_size = m_doc->container()->get_default_font_size();
-	if(m_parent)
-	{
-		parent_sz = m_parent->get_font_size();
-	} else
-	{
-		parent_sz = doc_font_size;
-	}
-
-
-	if(!str)
-	{
-		return parent_sz;
-	}
-
-	int ret = 0;
-
-	css_length sz;
-	sz.fromString(str, font_size_strings);
-	if(sz.is_predefined())
-	{
-		switch(sz.predef())
-		{
-		case fontSize_xx_small:
-			ret = doc_font_size * 3 / 5;
-			break;
-		case fontSize_x_small:
-			ret = doc_font_size * 3 / 4;
-			break;
-		case fontSize_small:
-			ret = doc_font_size * 8 / 9;
-			break;
-		case fontSize_large:
-			ret = doc_font_size * 6 / 5;
-			break;
-		case fontSize_x_large:
-			ret = doc_font_size * 3 / 2;
-			break;
-		case fontSize_xx_large:
-			ret = doc_font_size * 2;
-			break;
-		default:
-			ret = doc_font_size;
-			break;
-		}
-	} else
-	{
-		if(sz.units() == css_units_percentage)
-		{
-			ret = sz.calc_percent(parent_sz);
-		} else
-		{
-			ret = m_doc->cvt_units(sz, parent_sz);
-		}
-	}
-
-	return ret;
+	return m_font_size;
 }
 
 void litehtml::element::clear_inlines()
@@ -862,8 +840,7 @@ int litehtml::element::add_line( line::ptr& ln, int max_width )
 
 int litehtml::element::get_base_line()
 {
-	uint_ptr font = get_font();
-	return m_doc->container()->get_text_base_line(0, font);
+	return m_base_line;
 }
 
 void litehtml::element::find_inlines()
@@ -1349,13 +1326,20 @@ void litehtml::element::add_float( element* el )
 
 void litehtml::element::get_abs_position( position& pos, const element* root )
 {
-	if(root == m_parent || !m_parent)
+	element* non_inline_parent = m_parent;
+
+	while(non_inline_parent && non_inline_parent->m_display == display_inline)
+	{
+		non_inline_parent = non_inline_parent->m_parent;
+	}
+
+	if(root == non_inline_parent || !non_inline_parent)
 	{
 		pos = m_pos;
 	} else
 	{
 		position parent_pos;
-		m_parent->get_abs_position(parent_pos, root);
+		non_inline_parent->get_abs_position(parent_pos, root);
 		pos = m_pos;
 		pos.x += parent_pos.x;
 		pos.y += parent_pos.y;
@@ -1372,7 +1356,7 @@ int litehtml::element::place_inline( element* el, line::ptr& ln, int max_width )
 			return place_inline(el, ln, max_width);
 		} else
 		{
-			int new_top = find_next_line_top(ln->get_top(), el->width());
+			int new_top = find_next_line_top(ln->get_top(), el->width(), max_width);
 			if(new_top != ln->get_top())
 			{
 				init_line(ln, new_top, max_width);
@@ -1386,13 +1370,13 @@ int litehtml::element::place_inline( element* el, line::ptr& ln, int max_width )
 	return ln->line_right();
 }
 
-int litehtml::element::find_next_line_top( int top, int width )
+int litehtml::element::find_next_line_top( int top, int width, int def_right )
 {
 	if(is_floats_holder())
 	{
-		int max_top = top;
-		int new_top = 0;
-		bool new_top_isvalid = false;
+		int new_top = top;
+		int_vector points;
+
 		for(elements_vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
 		{
 			element::ptr el = (*i);
@@ -1402,47 +1386,40 @@ int litehtml::element::find_next_line_top( int top, int width )
 			el_pos += el->m_padding;
 			el_pos += el->m_borders;
 
-			max_top = max(max_top, el_pos.bottom());
-
-			if(top >= el_pos.top() && top < el_pos.bottom())
+			if(el_pos.top() >= top)
 			{
-				int pos_left = get_line_left(el_pos.top());
-				int pos_right = get_line_right(el_pos.top(), m_pos.width);
-				if(pos_right - pos_left >= width)
+				if(find(points.begin(), points.end(), el_pos.top()) == points.end())
 				{
-					if(new_top_isvalid)
-					{
-						new_top = min(new_top, el_pos.top());
-					} else
-					{
-						new_top = el_pos.top();
-						new_top_isvalid = true;
-					}
+					points.push_back(el_pos.top());
 				}
-
-				pos_left = get_line_left(el_pos.bottom());
-				pos_right = get_line_right(el_pos.bottom(), m_pos.width);
-				if(pos_right - pos_left >= width)
+			}
+			if(el_pos.bottom() >= top)
+			{
+				if(find(points.begin(), points.end(), el_pos.bottom()) == points.end())
 				{
-					if(new_top_isvalid)
-					{
-						new_top = min(new_top, el_pos.bottom());
-					} else
-					{
-						new_top = el_pos.bottom();
-						new_top_isvalid = true;
-					}
+					points.push_back(el_pos.bottom());
 				}
 			}
 		}
-
-		if(!new_top_isvalid)
+		if(!points.empty())
 		{
-			new_top = max_top;
+			sort(points.begin(), points.end(), std::less<int>( ));
+			new_top = points.back();
+
+			for(int_vector::iterator i = points.begin(); i != points.end(); i++)
+			{
+				int pos_left	= get_line_left((*i));
+				int pos_right	= get_line_right((*i), def_right);
+				if(pos_right - pos_left >= width)
+				{
+					new_top = (*i);
+					break;
+				}
+			}
 		}
 		return new_top;
 	}
-	int new_top = m_parent->find_next_line_top(top + m_pos.y, width);
+	int new_top = m_parent->find_next_line_top(top + m_pos.y, width, def_right + m_pos.x);
 	return new_top - m_pos.y;
 }
 
@@ -1654,7 +1631,7 @@ void litehtml::element::get_text( std::wstring& text )
 	}
 }
 
-bool litehtml::element::is_body()
+bool litehtml::element::is_body()  const
 {
 	return false;
 }
@@ -2115,4 +2092,84 @@ const wchar_t* litehtml::element::get_cursor()
 	}
 
 	return ret;
+}
+
+void litehtml::element::init_font()
+{
+	// initialize font size
+	const wchar_t* str = get_style_property(L"font-size", false, 0);
+
+	int parent_sz = 0;
+	int doc_font_size = m_doc->container()->get_default_font_size();
+	if(m_parent)
+	{
+		parent_sz = m_parent->get_font_size();
+	} else
+	{
+		parent_sz = doc_font_size;
+	}
+
+
+	if(!str)
+	{
+		m_font_size = parent_sz;
+	} else
+	{
+		m_font_size = parent_sz;
+
+		css_length sz;
+		sz.fromString(str, font_size_strings);
+		if(sz.is_predefined())
+		{
+			switch(sz.predef())
+			{
+			case fontSize_xx_small:
+				m_font_size = doc_font_size * 3 / 5;
+				break;
+			case fontSize_x_small:
+				m_font_size = doc_font_size * 3 / 4;
+				break;
+			case fontSize_small:
+				m_font_size = doc_font_size * 8 / 9;
+				break;
+			case fontSize_large:
+				m_font_size = doc_font_size * 6 / 5;
+				break;
+			case fontSize_x_large:
+				m_font_size = doc_font_size * 3 / 2;
+				break;
+			case fontSize_xx_large:
+				m_font_size = doc_font_size * 2;
+				break;
+			default:
+				m_font_size = doc_font_size;
+				break;
+			}
+		} else
+		{
+			if(sz.units() == css_units_percentage)
+			{
+				m_font_size = sz.calc_percent(parent_sz);
+			} else
+			{
+				m_font_size = m_doc->cvt_units(sz, parent_sz);
+			}
+		}
+	}
+
+	// initialize font
+	const wchar_t* name			= get_style_property(L"font-family",		true,	L"inherit");
+	const wchar_t* weight		= get_style_property(L"font-weight",		true,	L"normal");
+	const wchar_t* style		= get_style_property(L"font-style",			true,	L"normal");
+	const wchar_t* decoration	= get_style_property(L"text-decoration",	true,	L"none");
+
+	m_font = m_doc->get_font(name, m_font_size, weight, style, decoration);
+
+	// initialize base line
+	m_base_line = m_doc->container()->get_text_base_line(0, m_font);
+}
+
+bool litehtml::element::is_break() const
+{
+	return false;
 }
