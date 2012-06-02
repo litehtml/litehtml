@@ -11,6 +11,7 @@
 #include "el_comment.h"
 #include "el_base.h"
 #include "el_anchor.h"
+#include "el_break.h"
 #include <math.h>
 
 const wchar_t* g_empty_tags[] =
@@ -117,6 +118,9 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				if(!_wcsicmp(sc.get_tag_name(), L"html"))
 				{
 					newTag = NULL;
+				} else if(!_wcsicmp(sc.get_tag_name(), L"br"))
+				{
+					newTag = new litehtml::el_break(doc);
 				} else if(!_wcsicmp(sc.get_tag_name(), L"p"))
 				{
 					newTag = new litehtml::el_para(doc);
@@ -168,6 +172,9 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 				} else if(!_wcsicmp(sc.get_tag_name(), L"base"))
 				{
 					newTag = new litehtml::el_base(doc);
+				} else if(!_wcsicmp(sc.get_tag_name(), L"body"))
+				{
+					newTag = new litehtml::el_body(doc);
 				} else
 				{
 					newTag = new litehtml::element(doc);

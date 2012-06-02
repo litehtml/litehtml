@@ -227,7 +227,7 @@ void litehtml::table_grid::distribute_width( int width, int start, int end )
 	for(int col = start; col <= end; col++)
 	{
 		cols_width2 += m_columns[col].max_width;
-		if(m_columns[col].css_width.is_predefined())
+		if(m_columns[col].css_width.is_predefined() || !m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage)
 		{
 			if(first_predef_width < 0)
 			{
@@ -247,7 +247,7 @@ void litehtml::table_grid::distribute_width( int width, int start, int end )
 	int added_width = 0;
 	for(int col = start; col <= end; col++)
 	{
-		if(m_columns[col].css_width.is_predefined() || first_predef_width < 0)
+		if((m_columns[col].css_width.is_predefined() || !m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage) || first_predef_width < 0)
 		{
 			if(cols_width)
 			{

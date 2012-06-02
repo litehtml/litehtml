@@ -9,7 +9,9 @@ CBrowserWnd::CBrowserWnd(HINSTANCE hInst)
 	m_hInst		= hInst;
 	m_hWnd		= NULL;
 	m_view		= new CHTMLViewWnd(hInst, &m_browser_context);
+#ifndef NO_TOOLBAR
 	m_toolbar	= new CToolbarWnd(hInst, this);
+#endif
 
 	WNDCLASS wc;
 	if(!GetClassInfo(m_hInst, BROWSERWND_CLASS, &wc))
@@ -56,7 +58,9 @@ CBrowserWnd::CBrowserWnd(HINSTANCE hInst)
 CBrowserWnd::~CBrowserWnd(void)
 {
 	if(m_view)		delete m_view;
+#ifndef NO_TOOLBAR
 	if(m_toolbar)	delete m_toolbar;
+#endif
 }
 
 LRESULT CALLBACK CBrowserWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam )
@@ -113,8 +117,12 @@ void CBrowserWnd::OnCreate()
 {
 	RECT rcClient;
 	GetClientRect(m_hWnd, &rcClient);
+#ifndef NO_TOOLBAR
 	m_toolbar->create(rcClient.left, rcClient.top, rcClient.right - rcClient.left, m_hWnd);
 	m_view->create(rcClient.left, rcClient.top + m_toolbar->height(), rcClient.right - rcClient.left, rcClient.bottom - rcClient.top - m_toolbar->height(), m_hWnd);
+#else
+	m_view->create(rcClient.left, rcClient.top, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top, m_hWnd);
+#endif
 	SetFocus(m_view->wnd());
 }
 
@@ -122,11 +130,17 @@ void CBrowserWnd::OnSize( int width, int height )
 {
 	RECT rcClient;
 	GetClientRect(m_hWnd, &rcClient);
+#ifndef NO_TOOLBAR
 	int toolbar_height = m_toolbar->set_width(rcClient.right - rcClient.left);
+#else
+	int toolbar_height = 0;
+#endif
 	SetWindowPos(m_view->wnd(), NULL, rcClient.left, rcClient.top + toolbar_height, rcClient.right - rcClient.left, rcClient.bottom - rcClient.top - toolbar_height, SWP_NOZORDER);
 	UpdateWindow(m_view->wnd());
+#ifndef NO_TOOLBAR
 	SetWindowPos(m_toolbar->wnd(), NULL, rcClient.left, rcClient.top, rcClient.right - rcClient.left, toolbar_height, SWP_NOZORDER);
 	UpdateWindow(m_toolbar->wnd());
+#endif
 }
 
 void CBrowserWnd::OnDestroy()

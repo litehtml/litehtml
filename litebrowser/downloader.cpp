@@ -26,7 +26,7 @@ BOOL GetFile (HINTERNET IN hOpen, LPCWSTR szUrl, LPCWSTR szFileName)
 	LPVOID		szTemp	= malloc(10240);
 	HINTERNET  hConnect;
 
-	hConnect = InternetOpenUrl( hOpen, szUrl, szHead, lstrlen (szHead), INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_RELOAD, 0);
+	hConnect = InternetOpenUrl( hOpen, szUrl, szHead, lstrlen (szHead), /*INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_RELOAD*/0, 0);
 
 	if (!hConnect)
 	{
