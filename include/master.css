@@ -111,6 +111,11 @@ img {
 	display: inline-block;
 }
 
+img[align=right]
+{
+	float: right;
+}
+
 hr {
     display: block;
     margin-top: 0.5em;

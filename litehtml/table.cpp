@@ -221,6 +221,98 @@ void litehtml::table_grid::distribute_width( int width, int start, int end )
 		return;
 	}
 
+	std::vector<table_column*> distribute_columns;
+
+	for(int step = 0; step < 3; step++)
+	{
+		distribute_columns.clear();
+
+		switch(step)
+		{
+		case 0:
+			{
+				// distribute between the columns with width == auto
+				for(int col = start; col <= end; col++)
+				{
+					if(m_columns[col].css_width.is_predefined())
+					{
+						distribute_columns.push_back(&m_columns[col]);
+					}
+				}
+			}
+			break;
+		case 1:
+			{
+				// distribute between the columns with percents
+				for(int col = start; col <= end; col++)
+				{
+					if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage)
+					{
+						distribute_columns.push_back(&m_columns[col]);
+					}
+				}
+			}
+			break;
+		case 2:
+			{
+				//well distribute between all columns
+				for(int col = start; col <= end; col++)
+				{
+					distribute_columns.push_back(&m_columns[col]);
+				}
+			}
+			break;
+		}
+
+		int added_width = 0;
+
+		if(!distribute_columns.empty() || step == 2)
+		{
+			int cols_width = 0;
+			for(std::vector<table_column*>::iterator col = distribute_columns.begin(); col != distribute_columns.end(); col++)
+			{
+				cols_width += (*col)->max_width - (*col)->min_width;
+			}
+
+			if(cols_width)
+			{
+				int add = width / (int) distribute_columns.size();
+				for(std::vector<table_column*>::iterator col = distribute_columns.begin(); col != distribute_columns.end(); col++)
+				{
+					add = round_f( (float) width * ((float) ((*col)->max_width - (*col)->min_width) / (float) cols_width) );
+					if((*col)->width + add >= (*col)->min_width)
+					{
+						(*col)->width	+= add;
+						added_width		+= add;
+					} else
+					{
+						added_width	+= ((*col)->width - (*col)->min_width) * (add / abs(add));
+						(*col)->width = (*col)->min_width;
+					}
+				}
+				if(added_width < width && step)
+				{
+					distribute_columns.front()->width += width - added_width;
+					added_width = width;
+				}
+			} else
+			{
+				distribute_columns.back()->width += width;
+				added_width = width;
+			}
+		}
+
+		if(added_width == width)
+		{
+			break;
+		} else
+		{
+			width -= added_width;
+		}
+	}
+
+
+/*
 	int cols_width = 0;
 	int cols_width2 = 0;
 	int first_predef_width = -1;
@@ -273,6 +365,7 @@ void litehtml::table_grid::distribute_width( int width, int start, int end )
 			m_columns[start].width += width - added_width;
 		}
 	}
+*/
 }
 
 int litehtml::table_grid::set_table_width( int new_width, int bs_x )

@@ -30,7 +30,6 @@ const wchar_t* g_empty_tags[] =
 
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
-	m_root		= 0;
 	m_container	= objContainer;
 	m_font_name	= L"Times New Roman";
 	m_context	= ctx;
@@ -38,11 +37,6 @@ litehtml::document::document(litehtml::document_container* objContainer, litehtm
 
 litehtml::document::~document()
 {
-	if(m_root)
-	{
-		m_root->release();
-		m_root = 0;
-	}
 }
 
 litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx)
@@ -51,182 +45,36 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 	str_istream si(str);
 	litehtml::scanner sc(si);
 
-	element::ptr parent = NULL;
+	doc->begin_parse();
 
 	int t = 0;
-	while((t = sc.get_token()) != litehtml::scanner::TT_EOF)
+	while((t = sc.get_token()) != litehtml::scanner::TT_EOF && !doc->m_parse_stack.empty())
 	{
-		if(	t == litehtml::scanner::TT_TAG_START		|| 
-			t == litehtml::scanner::TT_WORD				|| 
-			t == litehtml::scanner::TT_SPACE			||
-			t == litehtml::scanner::TT_TAG_END			||
-			t == litehtml::scanner::TT_COMMENT_START	||
-			t == litehtml::scanner::TT_COMMENT_END	)
-		{
-			if(!parent)
-			{
-				parent = doc->add_root();
-			} else
-			{
-				for(int i=0; g_empty_tags[i]; i++)
-				{
-					if(!_wcsicmp(parent->get_tagName(), g_empty_tags[i]))
-					{
-						element::ptr newTag = parent->parentElement();
-						parent = newTag;
-						break;
-					}
-				}
-			}
-		}
-
 		switch(t)
 		{
 		case litehtml::scanner::TT_COMMENT_START:
-			{
-				element::ptr newTag = new litehtml::el_comment(doc);
-				if(parent->appendChild(newTag))
-				{
-					parent = newTag;
-				}
-			}
+			doc->parse_comment_start();
 			break;
 		case litehtml::scanner::TT_COMMENT_END:
-			{
-				litehtml::element::ptr newTag = parent->parentElement();
-				parent = newTag;
-			}
+			doc->parse_comment_end();
 			break;
 		case litehtml::scanner::TT_DATA:
-			if(parent)
-			{
-				parent->set_data(sc.get_value());
-			}
-			break;
-		case litehtml::scanner::TT_ERROR:
+			doc->parse_data(sc.get_value());
 			break;
 		case litehtml::scanner::TT_TAG_START:
-			{
-				// add "body" element into "html" if current tag is not "head" or "body"
-				if(!parent->parentElement() && _wcsicmp(sc.get_tag_name(), L"html") && _wcsicmp(sc.get_tag_name(), L"head") && _wcsicmp(sc.get_tag_name(), L"body") )
-				{
-					element::ptr newTag = doc->add_body();
-					parent = newTag;
-				}
-
-				element::ptr newTag = NULL;
-				if(!_wcsicmp(sc.get_tag_name(), L"html"))
-				{
-					newTag = NULL;
-				} else if(!_wcsicmp(sc.get_tag_name(), L"br"))
-				{
-					newTag = new litehtml::el_break(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"p"))
-				{
-					newTag = new litehtml::el_para(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"img"))
-				{
-					newTag = new litehtml::el_image(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"html"))
-				{
-					newTag = NULL;
-				} else if(!_wcsicmp(sc.get_tag_name(), L"table"))
-				{
-					newTag = new litehtml::el_table(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"td") || !_wcsicmp(sc.get_tag_name(), L"th"))
-				{
-					if(_wcsicmp(parent->get_tagName(), L"tr"))
-					{
-						newTag = new litehtml::element(doc);
-						newTag->set_tagName(L"tr");
-						if(parent->appendChild(newTag))
-						{
-							parent = newTag;
-						}
-					}
-					newTag = new litehtml::el_td(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"link"))
-				{
-					newTag = new litehtml::el_link(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"title"))
-				{
-					newTag = new litehtml::el_title(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"a"))
-				{
-					newTag = new litehtml::el_anchor(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"tr"))
-				{
-					if(!value_in_list(parent->get_tagName(), L"tbody;thead;tfoot"))
-					{
-						newTag = new litehtml::element(doc);
-						newTag->set_tagName(L"tbody");
-						if(parent->appendChild(newTag))
-						{
-							parent = newTag;
-						}
-					}
-					newTag = new litehtml::element(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"style"))
-				{
-					newTag = new litehtml::el_style(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"base"))
-				{
-					newTag = new litehtml::el_base(doc);
-				} else if(!_wcsicmp(sc.get_tag_name(), L"body"))
-				{
-					newTag = new litehtml::el_body(doc);
-				} else
-				{
-					newTag = new litehtml::element(doc);
-				}
-
-				if(newTag)
-				{
-					newTag->set_tagName(sc.get_tag_name());
-					if(parent->appendChild(newTag))
-					{
-						parent = newTag;
-					}
-				}
-			}
+			doc->parse_tag_start(sc.get_tag_name());
 			break;
 		case litehtml::scanner::TT_TAG_END:
-			if(!_wcsicmp(parent->get_tagName(), sc.get_tag_name()))
-			{
-				litehtml::element::ptr newTag = parent->parentElement();
-				parent = newTag;
-			} else
-			{
-				if(!_wcsicmp(sc.get_tag_name(), L"table"))
-				{
-					while(parent && _wcsicmp(parent->get_tagName(), L"table"))
-					{
-						litehtml::element::ptr newTag = parent->parentElement();
-						parent = newTag;
-					}
-					if(parent)
-					{
-						litehtml::element::ptr newTag = parent->parentElement();
-						parent = newTag;
-					}
-				}
-			}
+			doc->parse_tag_end(sc.get_tag_name());
 			break;
 		case litehtml::scanner::TT_ATTR:
-			parent->set_attr(sc.get_attr_name(), sc.get_value());
+			doc->parse_attribute(sc.get_attr_name(), sc.get_value());
 			break;
 		case litehtml::scanner::TT_WORD: 
-			{
-				element::ptr el = new litehtml::el_text(sc.get_value(), doc);
-				parent->appendChild(el);
-			}
+			doc->parse_word(sc.get_value());
 			break;
 		case litehtml::scanner::TT_SPACE:
-			if(parent)
-			{
-				element::ptr el = new litehtml::el_space(doc);
-				parent->appendChild(el);
-			}
+			doc->parse_space();
 			break;
 		}
 	}
@@ -536,4 +384,233 @@ bool litehtml::document::on_lbutton_up( int x, int y, position::vector& redraw_b
 		return true;
 	}
 	return false;
+}
+
+litehtml::element::ptr litehtml::document::create_element( const wchar_t* tag_name )
+{
+	element::ptr newTag = NULL;
+	if(!_wcsicmp(tag_name, L"br"))
+	{
+		newTag = new litehtml::el_break(this);
+	} else if(!_wcsicmp(tag_name, L"p"))
+	{
+		newTag = new litehtml::el_para(this);
+	} else if(!_wcsicmp(tag_name, L"img"))
+	{
+		newTag = new litehtml::el_image(this);
+	} else if(!_wcsicmp(tag_name, L"table"))
+	{
+		newTag = new litehtml::el_table(this);
+	} else if(!_wcsicmp(tag_name, L"td") || !_wcsicmp(tag_name, L"th"))
+	{
+		newTag = new litehtml::el_td(this);
+	} else if(!_wcsicmp(tag_name, L"link"))
+	{
+		newTag = new litehtml::el_link(this);
+	} else if(!_wcsicmp(tag_name, L"title"))
+	{
+		newTag = new litehtml::el_title(this);
+	} else if(!_wcsicmp(tag_name, L"a"))
+	{
+		newTag = new litehtml::el_anchor(this);
+	} else if(!_wcsicmp(tag_name, L"tr"))
+	{
+		newTag = new litehtml::element(this);
+	} else if(!_wcsicmp(tag_name, L"style"))
+	{
+		newTag = new litehtml::el_style(this);
+	} else if(!_wcsicmp(tag_name, L"base"))
+	{
+		newTag = new litehtml::el_base(this);
+	} else if(!_wcsicmp(tag_name, L"body"))
+	{
+		newTag = new litehtml::el_body(this);
+	} else
+	{
+		newTag = new litehtml::element(this);
+	}
+
+	if(newTag)
+	{
+		newTag->set_tagName(tag_name);
+	}
+
+	return newTag;
+}
+
+void litehtml::document::parse_tag_start( const wchar_t* tag_name )
+{
+	parse_pop_empty_element();
+
+	// We add the html(root) element before parsing
+	if(!_wcsicmp(tag_name, L"html"))
+	{
+		return;
+	}
+
+	element::ptr el = create_element(tag_name);
+	if(el)
+	{
+		if(!_wcsicmp(m_parse_stack.back()->get_tagName(), L"html"))
+		{
+			// if last element is root we have to add head or body
+			if(!value_in_list(tag_name, L"head;body"))
+			{
+				parse_push_element(create_element(L"body"));
+			}
+		}
+
+		// fix <TD> and <TH>
+		if(value_in_list(tag_name, L"td;th"))
+		{
+			if(value_in_list(m_parse_stack.back()->get_tagName(), L"th;td"))
+			{
+				parse_pop_element();
+			}
+
+			if(_wcsicmp(m_parse_stack.back()->get_tagName() ,L"tr"))
+			{
+				parse_push_element(create_element(L"tr"));
+			}
+		}
+
+		// fix <TR>: add tbody into the table
+		if(!_wcsicmp(tag_name, L"tr"))
+		{
+			if(!value_in_list(m_parse_stack.back()->get_tagName(), L"tbody;thead;tfoot"))
+			{
+				parse_push_element(create_element(L"tbody"));
+			}
+		}
+
+		parse_push_element(el);
+	}
+}
+
+
+void litehtml::document::parse_tag_end( const wchar_t* tag_name )
+{
+	if(!m_parse_stack.empty())
+	{
+		if(!_wcsicmp(m_parse_stack.back()->get_tagName(), tag_name))
+		{
+			parse_pop_element();
+		} else
+		{
+			parse_pop_element(tag_name);
+		}
+	}
+}
+
+void litehtml::document::begin_parse()
+{
+	m_root = create_element(L"html");
+	m_parse_stack.push_back(m_root);
+}
+
+void litehtml::document::parse_push_element( element::ptr el )
+{
+	if(!m_parse_stack.empty())
+	{
+		m_parse_stack.back()->appendChild(el);
+		m_parse_stack.push_back(el);
+	}
+}
+
+void litehtml::document::parse_attribute( const wchar_t* attr_name, const wchar_t* attr_value )
+{
+	if(!m_parse_stack.empty())
+	{
+		m_parse_stack.back()->set_attr(attr_name, attr_value);
+	}
+}
+
+void litehtml::document::parse_word( const wchar_t* val )
+{
+	parse_pop_empty_element();
+
+	if(!m_parse_stack.empty())
+	{
+		element::ptr el = new litehtml::el_text(val, this);
+		m_parse_stack.back()->appendChild(el);
+	}
+}
+
+void litehtml::document::parse_space()
+{
+	parse_pop_empty_element();
+
+	if(!m_parse_stack.empty())
+	{
+		element::ptr el = new litehtml::el_space(this);
+		m_parse_stack.back()->appendChild(el);
+	}
+}
+
+void litehtml::document::parse_comment_start()
+{
+	parse_pop_empty_element();
+	parse_push_element(new litehtml::el_comment(this));
+}
+
+void litehtml::document::parse_comment_end()
+{
+	parse_pop_element();
+}
+
+void litehtml::document::parse_data( const wchar_t* val )
+{
+	if(!m_parse_stack.empty())
+	{
+		m_parse_stack.back()->set_data(val);
+	}
+}
+
+void litehtml::document::parse_pop_element()
+{
+	if(!m_parse_stack.empty())
+	{
+		m_parse_stack.pop_back();
+	}
+}
+
+void litehtml::document::parse_pop_element( const wchar_t* tag )
+{
+	bool found = false;
+	for(elements_vector::reverse_iterator iel = m_parse_stack.rbegin(); iel != m_parse_stack.rend(); iel++)
+	{
+		if(!_wcsicmp( (*iel)->get_tagName(), tag ))
+		{
+			found = true;
+		}
+	}
+
+	while(found)
+	{
+		if(!_wcsicmp( m_parse_stack.back()->get_tagName(), tag ))
+		{
+			found = false;
+		}
+		parse_pop_element();
+	}
+}
+
+void litehtml::document::parse_pop_empty_element()
+{
+	if(!m_parse_stack.empty())
+	{
+		bool is_empty_tag = false;
+		for(int i=0; g_empty_tags[i]; i++)
+		{
+			if(!_wcsicmp(m_parse_stack.back()->get_tagName(), g_empty_tags[i]))
+			{
+				is_empty_tag = true;
+				break;
+			}
+		}
+		if(is_empty_tag)
+		{
+			parse_pop_element();
+		}
+	}
 }

@@ -1,6 +1,8 @@
 #include "globals.h"
 #include "downloader.h"
 #include <strsafe.h>
+#include <shlwapi.h>
+#include <Mlang.h>
 
 #pragma comment(lib, "wininet.lib")
 
@@ -23,7 +25,6 @@ BOOL GetFile (HINTERNET IN hOpen, LPCWSTR szUrl, LPCWSTR szFileName)
 {
 	DWORD		dwSize;
 	WCHAR		szHead[] = L"Accept: */*\r\n\r\n";
-	LPVOID		szTemp	= malloc(10240);
 	HINTERNET  hConnect;
 
 	hConnect = InternetOpenUrl( hOpen, szUrl, szHead, lstrlen (szHead), /*INTERNET_FLAG_DONT_CACHE | INTERNET_FLAG_RELOAD*/0, 0);
@@ -40,12 +41,15 @@ BOOL GetFile (HINTERNET IN hOpen, LPCWSTR szUrl, LPCWSTR szFileName)
 		return FALSE;
 	}
 
+	LPVOID		szTemp	= malloc(10240);
+
 	do
 	{
 		if( !InternetReadFile (hConnect, szTemp, 10240,  &dwSize) )
 		{
 			CloseHandle(hFile);
 			DeleteFile(szFileName);
+			free(szTemp);
 			return FALSE;
 		}
 		if (!dwSize)
@@ -60,6 +64,8 @@ BOOL GetFile (HINTERNET IN hOpen, LPCWSTR szUrl, LPCWSTR szFileName)
 	InternetCloseHandle(hConnect);
 
 	CloseHandle(hFile);
+	free(szTemp);
+
 	return TRUE;
 }
 
@@ -80,7 +86,7 @@ HANDLE CRemotedFile::Open( LPCWSTR url )
 	return INVALID_HANDLE_VALUE;
 }
 
-LPWSTR load_text_file( LPCWSTR path )
+LPWSTR load_text_file( LPCWSTR path, bool is_html )
 {
 	LPWSTR strW = NULL;
 
@@ -96,8 +102,74 @@ LPWSTR load_text_file( LPCWSTR path )
 		ReadFile(fl, str, size, &cbRead, NULL);
 		str[cbRead] = 0;
 
-		strW = new WCHAR[cbRead + 1];
-		MultiByteToWideChar(CP_UTF8, 0, str, cbRead + 1, strW, cbRead + 1);
+		if(is_html)
+		{
+			std::wstring encoding;
+			char* begin = StrStrIA(str, "<meta");
+			while(begin && encoding.empty())
+			{
+				char* end = StrStrIA(begin, ">");
+				char* s1 = StrStrIA(begin, "Content-Type");
+				if(s1 && s1 < end)
+				{
+					s1 = StrStrIA(begin, "charset");
+					if(s1)
+					{
+						s1 += strlen("charset");
+						while(!isalnum(s1[0]) && s1 < end)
+						{
+							s1++;
+						}
+						while((isalnum(s1[0]) || s1[0] == '-') && s1 < end)
+						{
+							encoding += s1[0];
+							s1++;
+						}
+					}
+				}
+				if(encoding.empty())
+				{
+					begin = StrStrIA(begin + strlen("<meta"), "<meta");
+				}
+			}
+
+			if(!encoding.empty())
+			{
+				IMultiLanguage* ml = NULL;
+				HRESULT hr = CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_INPROC_SERVER, IID_IMultiLanguage, (LPVOID*) &ml);	
+
+				MIMECSETINFO charset_src = {0};
+				MIMECSETINFO charset_dst = {0};
+
+				BSTR bstrCharSet = SysAllocString(encoding.c_str());
+				ml->GetCharsetInfo(bstrCharSet, &charset_src);
+				SysFreeString(bstrCharSet);
+
+				bstrCharSet = SysAllocString(L"utf-8");
+				ml->GetCharsetInfo(bstrCharSet, &charset_dst);
+				SysFreeString(bstrCharSet);
+
+				DWORD dwMode = 0;
+				UINT  szDst = (UINT) strlen(str) * 4;
+				LPSTR dst = new char[szDst];
+
+				if(ml->ConvertString(&dwMode, charset_src.uiInternetEncoding, charset_dst.uiInternetEncoding, (LPBYTE) str, NULL, (LPBYTE) dst, &szDst) == S_OK)
+				{
+					dst[szDst] = 0;
+					delete str;
+					str = dst;
+				} else
+				{
+					delete dst;
+				}
+			}
+		}
+
+		if(!strW)
+		{
+			strW = new WCHAR[cbRead + 1];
+			MultiByteToWideChar(CP_UTF8, 0, str, cbRead + 1, strW, cbRead + 1);
+		}
 
 		free(str);
 	}
