@@ -7,6 +7,7 @@
 #include <string>
 #include "table.h"
 #include <algorithm>
+#include <locale>
 
 litehtml::element::element(litehtml::document* doc)
 {
@@ -72,7 +73,13 @@ void litehtml::element::set_attr( const wchar_t* name, const wchar_t* val )
 {
 	if(name && val)
 	{
-		m_attrs[name] = val;
+		std::wstring s_val = name;
+		std::locale lc = std::locale::global(std::locale::classic());
+		for(size_t i = 0; i < s_val.length(); i++)
+		{
+			s_val[i] = std::tolower(s_val[i], lc);
+		}
+		m_attrs[s_val] = val;
 	}
 }
 
@@ -169,6 +176,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, position* clip )
 	{
 		return;
 	}
+
 	position pos = m_pos;
 	pos.x	+= x;
 	pos.y	+= y;
@@ -1425,6 +1433,12 @@ int litehtml::element::find_next_line_top( int top, int width, int def_right )
 
 void litehtml::element::parse_background()
 {
+	if(m_tag == L"td")
+	{
+		int i=0;
+		i++;
+	}
+
 	// parse background-color
 	m_bg.m_color		= get_color(L"background-color", false, web_color(0, 0, 0, 0));
 
@@ -2172,4 +2186,15 @@ void litehtml::element::init_font()
 bool litehtml::element::is_break() const
 {
 	return false;
+}
+
+void litehtml::element::set_tagName( const wchar_t* tag )
+{
+	std::wstring s_val = tag;
+	std::locale lc = std::locale::global(std::locale::classic());
+	for(size_t i = 0; i < s_val.length(); i++)
+	{
+		s_val[i] = std::tolower(s_val[i], lc);
+	}
+	m_tag = s_val;
 }

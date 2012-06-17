@@ -22,7 +22,10 @@ void litehtml::el_td::parse_styles(bool is_reparse)
 	str = get_attr(L"background");
 	if(str)
 	{
-		m_style.add_property(L"background-image", str, 0);
+		std::wstring url = L"url('";
+		url += str;
+		url += L"')";
+		m_style.add_property(L"background-image", url.c_str(), 0);
 	}
 
 	element::parse_styles(is_reparse);

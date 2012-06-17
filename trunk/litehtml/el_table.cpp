@@ -98,9 +98,9 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 
 	for(int col = 0; col < grid.cols_count(); col++)
 	{
-		grid.column(col).max_width = grid.cell(col, 0)->max_width;
-		grid.column(col).min_width = grid.cell(col, 0)->min_width;
-		for(int row = 1; row < grid.rows_count(); row++)
+		grid.column(col).max_width = 0;
+		grid.column(col).min_width = 0;
+		for(int row = 0; row < grid.rows_count(); row++)
 		{
 			if(grid.cell(col, row)->colspan <= 1)
 			{
@@ -266,7 +266,7 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 					if(cell->rowspan > 1)
 					{
 						int cell_height = (cell->rowspan - 1) * border_spacing_y;
-						for (int row2 = row; row2 < row + cell->rowspan; row2++)
+						for (int row2 = row; row2 < row + cell->rowspan && row2 < grid.rows_count(); row2++)
 						{
 							cell_height += grid.row(row2).height;
 						}
@@ -275,7 +275,7 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 							cell->el->m_pos.height = cell_height - cell->el->content_margins_top() - cell->el->content_margins_bottom();
 						} else
 						{
-							grid.row(row + cell->rowspan - 1).height += cell->el->height() - cell_height;
+							grid.row(min(row + cell->rowspan - 1, grid.rows_count() - 1)).height += cell->el->height() - cell_height;
 							row_height_changed = true;
 						}
 					}
@@ -293,7 +293,7 @@ int litehtml::el_table::render( uint_ptr hdc, int x, int y, int max_width )
 					if(cell->el)
 					{
 						int cell_height = (cell->rowspan - 1) * border_spacing_y;
-						for (int row2 = row; row2 < row + cell->rowspan; row2++)
+						for (int row2 = row; row2 < row + cell->rowspan && row2 < grid.rows_count(); row2++)
 						{
 							cell_height += grid.row(row2).height;
 						}
@@ -327,6 +327,24 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 	const wchar_t* str = get_attr(L"width");
 	if(str)
 	{
+		m_style.add_property(L"width", str, 0);
+	}
+
+	str = get_attr(L"align");
+	if(str)
+	{
+		int align = value_index(str, L"left;center;right");
+		switch(align)
+		{
+		case 1:
+			m_style.add_property(L"margin-left", L"auto", 0);
+			m_style.add_property(L"margin-right", L"auto", 0);
+			break;
+		case 2:
+			m_style.add_property(L"margin-left", L"auto", 0);
+			m_style.add_property(L"margin-right", L"0", 0);
+			break;
+		}
 		m_style.add_property(L"width", str, 0);
 	}
 

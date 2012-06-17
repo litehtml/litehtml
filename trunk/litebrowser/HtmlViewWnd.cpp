@@ -201,7 +201,7 @@ void CHTMLViewWnd::open( LPCWSTR path )
 	m_doc		= NULL;
 	m_base_path = m_doc_path;
 
-	LPWSTR html_text = load_text_file(m_doc_path.c_str());
+	LPWSTR html_text = load_text_file(m_doc_path.c_str(), true);
 	if(html_text)
 	{
 		m_doc = litehtml::document::createFromString(html_text, this, m_context);

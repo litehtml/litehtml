@@ -242,11 +242,6 @@ namespace litehtml
 		return margin_right() + m_padding.right + m_borders.right;
 	}
 
-	inline void litehtml::element::set_tagName( const wchar_t* tag )
-	{
-		m_tag = tag;
-	}
-
 	inline litehtml::margins litehtml::element::content_margins() const
 	{
 		margins ret;

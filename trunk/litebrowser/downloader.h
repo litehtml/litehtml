@@ -11,4 +11,4 @@ public:
 	HANDLE Open(LPCWSTR url);
 };
 
-LPWSTR load_text_file( LPCWSTR path );
+LPWSTR load_text_file( LPCWSTR path, bool is_html = false );

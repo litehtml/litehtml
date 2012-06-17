@@ -106,5 +106,10 @@ namespace litehtml
 		{
 			return m_ptr;
 		}
+
+		operator const T*() const
+		{
+			return m_ptr;
+		}
 	};
 }
