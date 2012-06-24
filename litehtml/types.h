@@ -454,4 +454,14 @@ namespace litehtml
 		text_align_center,
 		text_align_justify
 	};
+
+#define overflow_strings		L"visible;hidden;scroll;auto"
+
+	enum overflow
+	{
+		overflow_visible,
+		overflow_hidden,
+		overflow_scroll,
+		overflow_auto
+	};
 }

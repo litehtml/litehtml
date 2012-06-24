@@ -81,7 +81,7 @@ void litehtml::table_grid::finish()
 	{
 		for(int row = 0; row < m_rows_count; row++)
 		{
-			if(cell(col, row)->el)
+			if(cell(col, row)->el && cell(col, row)->colspan <= 1)
 			{
 				if(!cell(col, row)->el->m_css_width.is_predefined())
 				{
@@ -396,6 +396,15 @@ int litehtml::table_grid::set_table_width( int new_width, int bs_x )
 	}
 
 	return table_width;
+}
+
+void litehtml::table_grid::clear()
+{
+	m_rows_count	= 0;
+	m_cols_count	= 0;
+	m_cells.clear();
+	m_columns.clear();
+	m_rows.clear();
 }
 
 //////////////////////////////////////////////////////////////////////////

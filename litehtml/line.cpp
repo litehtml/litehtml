@@ -5,6 +5,18 @@
 
 void litehtml::line::operator+=( element* el )
 {
+	if(!m_items.empty() && m_items.back()->is_break())
+	{
+		m_items.pop_back();
+		if(!m_items.empty())
+		{
+			m_last_white_space = m_items.back()->is_white_space();
+		} else
+		{
+			m_last_white_space = true;
+		}
+	}
+
 	m_items.push_back(el);
 	el->m_line = this;
 	if(el->m_float == float_none)
@@ -17,7 +29,8 @@ void litehtml::line::operator+=( element* el )
 			m_top_margin		= max(el->margin_top(), m_top_margin);
 			m_bottom_margin		= max(el->margin_bottom(), m_bottom_margin);
 			m_left += el->width();
-			if(el->m_display == display_block)
+
+			if(el->m_display == display_block || el->m_display == display_table)
 			{
 				m_is_block	= true;
 				m_clear		= el->m_clear;
@@ -25,6 +38,7 @@ void litehtml::line::operator+=( element* el )
 			{
 				m_is_block = false;
 			}
+
 			m_last_white_space = el->is_white_space();
 			el->m_skip = false;
 		} else
@@ -148,6 +162,7 @@ void litehtml::line::init( int left, int right, int top, int line_height )
 	m_line_right	= right;
 	m_min_height	= line_height;
 	m_top			= top;
+	m_height		= m_min_height;
 }
 
 bool litehtml::line::have_room_for( element* el )
@@ -155,6 +170,23 @@ bool litehtml::line::have_room_for( element* el )
 	if(m_left + el->width() > m_line_right)
 	{
 		return false;
+	}
+	return true;
+}
+
+bool litehtml::line::empty() const
+{
+	if(m_items.empty())
+	{
+		return true;
+	}
+	for(elements_vector::const_iterator i = m_items.begin(); i != m_items.end(); i++)
+	{
+		object_ptr<element> el = (*i);
+		if(!el->m_skip)
+		{
+			return false;
+		}
 	}
 	return true;
 }

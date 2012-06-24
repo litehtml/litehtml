@@ -27,6 +27,17 @@ void litehtml::el_td::parse_styles(bool is_reparse)
 		url += L"')";
 		m_style.add_property(L"background-image", url.c_str(), 0);
 	}
+	str = get_attr(L"align");
+	if(str)
+	{
+		m_style.add_property(L"text-align", str, 0);
+	}
+
+	str = get_attr(L"valign");
+	if(str)
+	{
+		m_style.add_property(L"vertical-align", str, 0);
+	}
 
 	element::parse_styles(is_reparse);
 }

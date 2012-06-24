@@ -19,7 +19,7 @@ namespace litehtml
 		virtual int					get_base_line();
 
 	protected:
-		virtual void				get_content_size(uint_ptr hdc, size& sz, int max_width);
+		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
 	};
 }
