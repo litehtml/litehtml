@@ -224,9 +224,7 @@ void CHTMLViewWnd::render()
 
 	RECT rcClient;
 	GetClientRect(m_hWnd, &rcClient);
-	HDC hdc = GetDC(m_hWnd);
-	m_doc->render((litehtml::uint_ptr) hdc, rcClient.right - rcClient.left);
-	ReleaseDC(m_hWnd, hdc);
+	m_doc->render(rcClient.right - rcClient.left);
 
 	m_max_top = m_doc->height() - (rcClient.bottom - rcClient.top);
 	if(m_max_top < 0) m_max_top = 0;

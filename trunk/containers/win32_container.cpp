@@ -219,6 +219,9 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
+		int img_width	= img->second->GetWidth();
+		int img_height	= img->second->GetHeight();
+
 		Graphics graphics((HDC) hdc);
 		graphics.SetInterpolationMode(InterpolationModeNearestNeighbor);
 		graphics.SetPixelOffsetMode(PixelOffsetModeHalf);
@@ -233,7 +236,7 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 			pos.x += (int) bg_pos.x.val();
 		} else
 		{
-			pos.x += (int) ((float) (draw_pos.width - img->second->GetWidth()) * bg_pos.x.val() / 100.0);
+			pos.x += (int) ((float) (draw_pos.width - img_width) * bg_pos.x.val() / 100.0);
 		}
 
 		if(bg_pos.y.units() != css_units_percentage)
@@ -241,7 +244,7 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 			pos.y += (int) bg_pos.y.val();
 		} else
 		{
-			pos.y += (int) ( (float) (draw_pos.height - img->second->GetHeight()) * bg_pos.y.val() / 100.0);
+			pos.y += (int) ( (float) (draw_pos.height - img_height) * bg_pos.y.val() / 100.0);
 		}
 
 		switch(repeat)

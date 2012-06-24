@@ -131,18 +131,22 @@ hr {
 
 table {
 	display:table;
+	border-spacing: 2px;
 }
 
 tbody, tfoot, thead {
 	display:table-row-group;
+	vertical-align:middle;
 }
 
 tr {
 	display:table-row;
+	vertical-align: inherit;
 }
 
 td, th {
 	display:table-cell;
+	vertical-align: inherit;
 }
 
 th {
@@ -215,4 +219,9 @@ margin-top: 1em;
 margin-bottom: 1em;
 margin-left: 40px;
 margin-left: 40px;
+}
+
+option
+{
+	display: none;
 }

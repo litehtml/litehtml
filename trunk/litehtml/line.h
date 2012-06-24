@@ -16,6 +16,7 @@ namespace litehtml
 		int				m_top_margin;
 		int				m_bottom_margin;
 		bool			m_is_block;
+		bool			m_is_break;
 		int				m_left;
 		int				m_top;
 		int				m_padding_bottom;
@@ -29,6 +30,7 @@ namespace litehtml
 	public:
 		line(void)
 		{
+			m_is_break			= false;
 			m_line_left			= 0;
 			m_line_right		= 0;
 			m_min_height		= 0;
@@ -54,6 +56,7 @@ namespace litehtml
 			m_top_margin		= val.m_top_margin;
 			m_bottom_margin		= val.m_bottom_margin;
 			m_is_block			= val.m_is_block;
+			m_is_break			= val.m_is_break;
 			m_left				= val.m_left;
 			m_top				= val.m_top;
 			m_padding_bottom	= val.m_padding_bottom;
@@ -74,6 +77,7 @@ namespace litehtml
 			m_top_margin		= 0;
 			m_bottom_margin		= 0;
 			m_is_block			= false;
+			m_is_break			= false;
 			m_left				= 0;
 			m_top				= 0;
 			m_padding_bottom	= 0;
@@ -90,13 +94,15 @@ namespace litehtml
 		void	add_top(int add);
 
 		int		get_height() const			{	return m_height;			}
+		void	set_height(int h)			{	m_height = h;				}
 		int		get_left() const			{	return m_left;				}
 		void	init(int left, int right, int top, int line_height);
 		int		get_top() const				{	return m_top;				}
 		int		get_margin_top() const		{	return m_top_margin;		}
 		int		get_margin_bottom() const	{	return m_bottom_margin;		}
 		bool	is_block() const			{	return m_is_block;			}
-		bool	empty()	const				{	return m_items.empty();		}
+		bool	is_break() const			{	return m_is_break;			}
+		bool	empty()	const;
 		bool	is_white_space() const		{	return m_last_white_space;	}
 		void	get_elements(elements_vector& els);
 		bool	finish(text_align align);

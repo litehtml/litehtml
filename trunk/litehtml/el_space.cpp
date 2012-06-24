@@ -12,7 +12,7 @@ litehtml::el_space::~el_space()
 
 }
 
-void litehtml::el_space::get_content_size( uint_ptr hdc, size& sz, int max_width )
+void litehtml::el_space::get_content_size( size& sz, int max_width )
 {
 	sz = m_size;
 }

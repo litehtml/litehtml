@@ -16,7 +16,7 @@ litehtml::el_text::~el_text()
 
 }
 
-void litehtml::el_text::get_content_size( uint_ptr hdc, size& sz, int max_width )
+void litehtml::el_text::get_content_size( size& sz, int max_width )
 {
 	sz = m_size;
 }

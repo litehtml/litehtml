@@ -139,6 +139,7 @@ namespace litehtml
 			m_cols_count	= 0;
 		}
 
+		void			clear();
 		void			begin_row();
 		void			add_cell(element* el);
 		bool			is_rowspanned(int r, int c);

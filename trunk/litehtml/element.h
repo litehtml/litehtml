@@ -65,6 +65,8 @@ namespace litehtml
 		css_length				m_css_top;
 		css_length				m_css_bottom;
 
+		overflow				m_overflow;
+
 	public:
 		element(litehtml::document* doc);
 		virtual ~element();
@@ -96,12 +98,13 @@ namespace litehtml
 		elements_vector&			children();
 		
 		bool						select(const wchar_t* selectors);
-		virtual int					render(uint_ptr hdc, int x, int y, int max_width);
+		virtual int					render(int x, int y, int max_width);
 
 		void						calc_outlines( int parent_width );
 		virtual void				parse_styles(bool is_reparse = false);
-		void						draw(uint_ptr hdc, int x, int y, position* clip);
+		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 
+		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
 		int							left()		const;
 		int							right()		const;
 		int							top()		const;
@@ -136,7 +139,7 @@ namespace litehtml
 		virtual void				finish();
 
 	protected:
-		virtual void				get_content_size(uint_ptr hdc, size& sz, int max_width);
+		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
 		virtual void				clear_inlines();
 		virtual void				find_inlines();
@@ -144,7 +147,7 @@ namespace litehtml
 
 	private:
 		bool						select_one(const std::wstring& selector);
-		int							add_line(line::ptr& ln, int max_width);
+		int							add_line(line::ptr& ln, int max_width, bool new_line = false);
 		int							get_floats_height() const;
 		int							get_left_floats_height() const;
 		int							get_right_floats_height() const;
@@ -184,7 +187,8 @@ namespace litehtml
 			!m_parent || 
 			is_body() || 
 			m_float != float_none ||
-			m_el_position == element_position_absolute)
+			m_el_position == element_position_absolute ||
+			m_overflow > overflow_visible)
 		{
 			return true;
 		}

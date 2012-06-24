@@ -175,9 +175,7 @@ void CToolbarWnd::create( int x, int y, int width, HWND parent )
 
 	m_doc = litehtml::document::createFromString(html, this, &m_context);
 	delete html;
-	HDC hdc = GetDC(NULL);
-	m_doc->render((litehtml::uint_ptr) hdc, width);
-	ReleaseDC(NULL, hdc);
+	m_doc->render(width);
 
 	m_hWnd = CreateWindow(TOOLBARWND_CLASS, L"toolbar", WS_CHILD | WS_VISIBLE, x, y, width, m_doc->height(), parent, NULL, m_hInst, (LPVOID) this);
 }
@@ -252,9 +250,7 @@ int CToolbarWnd::set_width( int width )
 {
 	if(m_doc)
 	{
-		HDC hdc = GetDC(NULL);
-		m_doc->render((litehtml::uint_ptr) hdc, width);
-		ReleaseDC(NULL, hdc);
+		m_doc->render(width);
 
 		return m_doc->height();
 	}

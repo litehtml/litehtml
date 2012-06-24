@@ -244,15 +244,15 @@ litehtml::element* litehtml::document::add_body()
 	return el;
 }
 
-void litehtml::document::render( uint_ptr hdc, int max_width )
+void litehtml::document::render( int max_width )
 {
 	if(m_root)
 	{
-		m_root->render(hdc, 0, 0, max_width);
+		m_root->render(0, 0, max_width);
 	}
 }
 
-void litehtml::document::draw( uint_ptr hdc, int x, int y, position* clip )
+void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip )
 {
 	if(m_root)
 	{
