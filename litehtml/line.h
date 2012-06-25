@@ -22,7 +22,6 @@ namespace litehtml
 		int				m_padding_bottom;
 		int				m_padding_top;
 		element_clear	m_clear;
-		bool			m_last_white_space;
 		int				m_min_height;
 
 		int				m_line_left;
@@ -42,7 +41,6 @@ namespace litehtml
 			m_is_block			= false;
 			m_left				= 0;
 			m_top				= 0;
-			m_last_white_space	= true;
 			m_clear				= clear_none;
 		}
 
@@ -62,7 +60,6 @@ namespace litehtml
 			m_padding_bottom	= val.m_padding_bottom;
 			m_padding_top		= val.m_padding_top;
 			m_clear				= val.m_clear;
-			m_last_white_space	= val.m_last_white_space;
 		}
 
 		~line(void)
@@ -83,7 +80,6 @@ namespace litehtml
 			m_padding_bottom	= 0;
 			m_padding_top		= 0;
 			m_clear				= clear_none;
-			m_last_white_space	= true;
 			m_min_height		= 0;
 			m_line_left			= 0;
 			m_line_right		= 0;
@@ -103,7 +99,6 @@ namespace litehtml
 		bool	is_block() const			{	return m_is_block;			}
 		bool	is_break() const			{	return m_is_break;			}
 		bool	empty()	const;
-		bool	is_white_space() const		{	return m_last_white_space;	}
 		void	get_elements(elements_vector& els);
 		bool	finish(text_align align);
 		bool	collapse_top_margin()		{	return (m_padding_top == 0);	}

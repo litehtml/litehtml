@@ -8,42 +8,70 @@ void litehtml::line::operator+=( element* el )
 	if(!m_items.empty() && m_items.back()->is_break())
 	{
 		m_items.pop_back();
+	}
+
+	element* last_space = 0;
+
+	if(el->is_white_space())
+	{
+		el->m_skip = true;
+	} else
+	{
 		if(!m_items.empty())
 		{
-			m_last_white_space = m_items.back()->is_white_space();
-		} else
-		{
-			m_last_white_space = true;
+			if(m_items.back()->is_white_space())
+			{
+				for(elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
+				{
+					if(!(*i)->is_white_space() && el->m_float == float_none)
+					{
+						last_space = m_items.back();
+						break;
+					}
+				}
+			}
 		}
+	}
+
+	if(el->is_break())
+	{
+		m_is_break = true;
 	}
 
 	m_items.push_back(el);
 	el->m_line = this;
-	if(el->m_float == float_none)
+	if(el->m_float == float_none && !el->m_skip)
 	{
-		if(!el->is_white_space() || !m_last_white_space)
+		if(last_space)
 		{
-			m_height			= max(el->height(), m_height);
-			m_padding_bottom	= max(m_padding_bottom, el->m_padding.bottom + el->m_borders.bottom);
-			m_padding_top		= max(m_padding_top, el->m_padding.top + el->m_borders.top);
-			m_top_margin		= max(el->margin_top(), m_top_margin);
-			m_bottom_margin		= max(el->margin_bottom(), m_bottom_margin);
-			m_left += el->width();
+			// add last space into the line
+			m_height			= max(last_space->height(), m_height);
+			m_padding_bottom	= max(m_padding_bottom, last_space->m_padding.bottom + last_space->m_borders.bottom);
+			m_padding_top		= max(m_padding_top, last_space->m_padding.top + last_space->m_borders.top);
+			m_top_margin		= max(last_space->margin_top(), m_top_margin);
+			m_bottom_margin		= max(last_space->margin_bottom(), m_bottom_margin);
+			m_left += last_space->width();
+			last_space->m_skip = false;
+			el->m_pos.x += last_space->width();
+		}
+		m_height			= max(el->height(), m_height);
+		m_padding_bottom	= max(m_padding_bottom, el->m_padding.bottom + el->m_borders.bottom);
+		m_padding_top		= max(m_padding_top, el->m_padding.top + el->m_borders.top);
+		m_top_margin		= max(el->margin_top(), m_top_margin);
+		m_bottom_margin		= max(el->margin_bottom(), m_bottom_margin);
+		m_left += el->width();
 
-			if(el->m_display == display_block || el->m_display == display_table)
-			{
-				m_is_block	= true;
-				m_clear		= el->m_clear;
-			} else
-			{
-				m_is_block = false;
-			}
+		if(el->m_display == display_block || el->m_display == display_table || el->is_break())
+		{
+			m_clear	= el->m_clear;
+		}
 
-			m_last_white_space = el->is_white_space();
-			el->m_skip = false;
+		if((el->m_display == display_block || el->m_display == display_table) && !el->is_break())
+		{
+			m_is_block	= true;
 		} else
 		{
-			el->m_skip = true;
+			m_is_block = false;
 		}
 	}
 }
@@ -54,7 +82,7 @@ void litehtml::line::set_top( int top, element* parent )
 	int parent_base_line = parent ? parent->get_base_line() : 0;
 
 	int add = 0;
-	if(m_min_height > m_height)
+	if(m_min_height > m_height && !is_block())
 	{
 		add = (m_min_height - m_height) / 2;
 	}
@@ -125,10 +153,7 @@ bool litehtml::line::finish(text_align align)
 
 		el->m_pos.x += add;
 
-		if(el->is_white_space() && !ret)
-		{
-			el->m_skip = true;
-		} else
+		if(!el->m_skip)
 		{
 			ret = true;
 			m_height			= max(el->height(), m_height);
@@ -139,7 +164,16 @@ bool litehtml::line::finish(text_align align)
 		}
 	}
 
-	m_height = max(m_min_height, m_height);
+	if(ret || m_is_break)
+	{
+		if(!m_is_block)
+		{
+			m_height = max(m_min_height, m_height);
+		}
+	} else
+	{
+		m_height = 0;
+	}
 
 	return ret;
 }
@@ -162,7 +196,7 @@ void litehtml::line::init( int left, int right, int top, int line_height )
 	m_line_right	= right;
 	m_min_height	= line_height;
 	m_top			= top;
-	m_height		= m_min_height;
+	m_height		= 0;
 }
 
 bool litehtml::line::have_room_for( element* el )
