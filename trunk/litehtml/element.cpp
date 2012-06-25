@@ -475,25 +475,32 @@ int litehtml::element::render( int x, int y, int max_width )
 	init_line(ln, 0, max_width);
 	int max_x = ln->line_right();
 
+	// TODO: remove this nahren
+	if(m_class == L"title")
+	{
+		int iii=0;
+		iii++;
+	}
+
 	for(elements_vector::iterator i = m_inlines.begin(); i != m_inlines.end(); i++)
 	{
 		element* el = (*i);
 
 		if(el->m_float == float_left)
 		{
-			int rw = el->render(get_line_left(ln->get_top()), ln->get_top(), max_x);
+			el->render(get_line_left(ln->get_top()), ln->get_top(), max_x);
 			if(el->right() > max_x)
 			{
 				int new_top = find_next_line_top(el->top(), el->width(), max_width);
 				el->m_pos.x = get_line_left(new_top) + el->content_margins_left();
 				el->m_pos.y = new_top + el->content_margins_top();
 			}
-			ret_width = max(ret_width, rw);
 			add_float(el);
 			fix_line_width(ln, max_width);
+			ret_width = max(ret_width, el->right());
 		} else if(el->m_float == float_right)
 		{
-			int rw = el->render(0, ln->get_top(), max_x);
+			el->render(0, ln->get_top(), max_x);
 			if(ln->get_left() + el->width() > max_x)
 			{
 				int new_top = find_next_line_top(el->top(), el->width(), max_width);
@@ -503,18 +510,30 @@ int litehtml::element::render( int x, int y, int max_width )
 			{
 				el->m_pos.x = max_x - el->width();
 			}
-			ret_width = max(ret_width, rw);
 			add_float(el);
 			fix_line_width(ln, max_width);
 			max_x = get_line_right(ln->get_top(), max_x);
+			ret_width = max(ret_width, ln->line_left() + (max_width - max_x));
 		} else
 		{
 			if(el->is_break())
 			{
 				// process line break
-				add_line(ln, max_width, true);
+				bool last_was_block = false;
+				if(!m_lines.empty() && m_lines.back()->is_block())
+				{
+					last_was_block = true;
+				}
+				if(!ln->empty()|| ln->is_break())
+				{
+					add_line(ln, max_width, true);
+				}
 				init_line(ln, ln->get_top(), max_width, el->m_clear);
 				(*ln) += el;
+				if(last_was_block)
+				{
+					add_line(ln, max_width, true);
+				}
 
 			} else
 			{
@@ -536,9 +555,9 @@ int litehtml::element::render( int x, int y, int max_width )
 				case display_block:
 					{
 						int ln_top = ln->get_top();
-						if(!ln->empty())
+						if(!ln->empty()/* || ln->is_break()*/)
 						{
-							add_line(ln, max_width);
+							add_line(ln, max_width/*, ln->is_break()*/);
 							ln_top = ln->get_top();
 						} else
 						{
@@ -576,7 +595,10 @@ int litehtml::element::render( int x, int y, int max_width )
 						el->get_content_size(sz, max_x);
 						el->m_pos = sz;
 						max_x = place_inline(el, ln, max_width);
-						ret_width = max(ret_width, el->right());
+						if(!el->m_skip)
+						{
+							ret_width = max(ret_width, el->right());
+						}
 					}
 					break;
 				}
@@ -594,9 +616,20 @@ int litehtml::element::render( int x, int y, int max_width )
 
 	calc_outlines(parent_width);
 
+	int ln_bottom = 0;
+
+	if(ln->get_clear_floats() != clear_none)
+	{
+		ln_bottom = ln->get_top() + ln->get_height();
+	} else if(!m_lines.empty())
+	{
+
+		ln_bottom = m_lines.back()->get_top() + m_lines.back()->get_height();
+	}
+
 	if(!m_lines.empty())
 	{
-		m_pos.height = m_lines.back()->get_top() + m_lines.back()->get_height();
+		m_pos.height = ln_bottom;
 
 		if(m_display == display_table_cell || is_body())
 		{
@@ -621,13 +654,16 @@ int litehtml::element::render( int x, int y, int max_width )
 			if(!m_padding.top && !m_borders.top && m_lines.front()->collapse_top_margin())
 			{
 				int add = m_lines.front()->get_margin_top();
-				m_margins.top = max(m_margins.top,	m_lines.front()->get_margin_top());
-				for(line::vector::iterator ln = m_lines.begin(); ln != m_lines.end(); ln++)
+				if(add)
 				{
-					(*ln)->add_top(-add);
-				}
+					m_margins.top = max(m_margins.top,	m_lines.front()->get_margin_top());
+					for(line::vector::iterator ln = m_lines.begin(); ln != m_lines.end(); ln++)
+					{
+						(*ln)->add_top(-add);
+					}
 
-				m_pos.height -= add;
+					m_pos.height -= add;
+				}
 			}
 
 			if(!m_padding.bottom && !m_borders.bottom && m_lines.back()->collapse_bottom_margin())
@@ -638,7 +674,7 @@ int litehtml::element::render( int x, int y, int max_width )
 		}
 	} else
 	{
-		m_pos.height = m_css_height.calc_percent(0);
+		m_pos.height = ln_bottom;
 	}
 
 	if(is_floats_holder())
@@ -1291,7 +1327,7 @@ void litehtml::element::init_line(line::ptr& ln, int top, int def_right, element
 	case clear_left:
 		{
 			int fh = get_left_floats_height();
-			if(fh && fh > ln->get_top())
+			if(fh && fh > top)
 			{
 				top = fh;
 			}
@@ -1300,7 +1336,7 @@ void litehtml::element::init_line(line::ptr& ln, int top, int def_right, element
 	case clear_right:
 		{
 			int fh = get_right_floats_height();
-			if(fh && fh > ln->get_top())
+			if(fh && fh > top)
 			{
 				top = fh;
 			}
@@ -1309,7 +1345,7 @@ void litehtml::element::init_line(line::ptr& ln, int top, int def_right, element
 	case clear_both:
 		{
 			int fh = get_floats_height();
-			if(fh && fh > ln->get_top())
+			if(fh && fh > top)
 			{
 				top = fh;
 			}
