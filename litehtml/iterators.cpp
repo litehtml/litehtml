@@ -57,7 +57,7 @@ void litehtml::elements_iterator::next_idx()
 
 bool litehtml::go_inside_inline::select( element* el )
 {
-	if(el->get_display() == display_inline)
+	if(el->get_display() == display_inline || el->get_display() == display_inline_text)
 	{
 		return true;
 	}

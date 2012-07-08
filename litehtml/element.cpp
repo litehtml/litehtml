@@ -28,6 +28,7 @@ litehtml::element::element(litehtml::document* doc)
 	m_font					= 0;
 	m_font_size				= 0;
 	m_base_line				= 0;
+	m_white_space			= white_space_normal;
 }
 
 litehtml::element::~element()
@@ -38,6 +39,7 @@ litehtml::element::~element()
 bool litehtml::element::appendChild( litehtml::element* el )
 {
 	bool add = true;
+/*
 	if(el->is_white_space())
 	{
 		if(m_children.empty())
@@ -51,6 +53,7 @@ bool litehtml::element::appendChild( litehtml::element* el )
 			}
 		}
 	}
+*/
 	if(el && add)
 	{
 		el->m_parent = this;
@@ -290,6 +293,7 @@ void litehtml::element::parse_styles(bool is_reparse)
 	m_el_position	= (element_position)	value_index(get_style_property(L"position",		false,	L"static"),		element_position_strings,	element_position_fixed);
 	m_text_align	= (text_align)			value_index(get_style_property(L"text-align",	true,	L"left"),		text_align_strings,			text_align_left);
 	m_overflow		= (overflow)			value_index(get_style_property(L"overflow",		false,	L"visible"),	overflow_strings,			overflow_visible);
+	m_white_space	= (white_space)			value_index(get_style_property(L"white-space",	true,	L"normal"),		white_space_strings,		white_space_normal);
 
 	const wchar_t* va	= get_style_property(L"vertical-align", true,	L"baseline");
 	m_vertical_align = (vertical_align) value_index(va, vertical_align_strings, va_baseline);
@@ -475,13 +479,6 @@ int litehtml::element::render( int x, int y, int max_width )
 	init_line(ln, 0, max_width);
 	int max_x = ln->line_right();
 
-	// TODO: remove this nahren
-	if(m_class == L"title")
-	{
-		int iii=0;
-		iii++;
-	}
-
 	for(elements_vector::iterator i = m_inlines.begin(); i != m_inlines.end(); i++)
 	{
 		element* el = (*i);
@@ -589,7 +586,8 @@ int litehtml::element::render( int x, int y, int max_width )
 						ret_width = max(ret_width, el->right());
 					}
 					break;
-				case display_inline:
+				//case display_inline:
+				case display_inline_text:
 					{
 						litehtml::size sz;
 						el->get_content_size(sz, max_x);
@@ -733,11 +731,11 @@ int litehtml::element::render( int x, int y, int max_width )
 		}
 	}
 
-	int abs_base_x	= - m_padding.left - m_borders.left;
-	int abs_base_y	= - m_padding.top - m_borders.top;
+	int abs_base_x	= 0/*- m_padding.left - m_borders.left*/;
+	int abs_base_y	= 0/*- m_padding.top - m_borders.top*/;
 
-	int abs_base_width	= m_pos.width + m_padding.left + m_padding.right;
-	int abs_base_height	= m_pos.height + m_padding.top + m_padding.bottom;
+	int abs_base_width	= m_pos.width/* + m_padding.left + m_padding.right*/;
+	int abs_base_height	= m_pos.height/* + m_padding.top + m_padding.bottom*/;
 
 	for(elements_vector::iterator abs_el = m_absolutes.begin(); abs_el != m_absolutes.end(); abs_el++)
 	{
@@ -899,7 +897,7 @@ void litehtml::element::find_inlines()
 	}
 
 	elements_iterator iter(this, &go_inside_inline(), 0);
-	element* el = iter.next();
+	element* el = iter.next(true);
 	while(el)
 	{
 		bool add = true;
@@ -946,7 +944,7 @@ void litehtml::element::find_inlines()
 		{
 			m_inlines.push_back(el);
 		}
-		el = iter.next();
+		el = iter.next(true);
 	}
 }
 
@@ -1714,13 +1712,13 @@ void litehtml::element::get_inline_boxes( position::vector& boxes )
 					boxes.push_back(pos);
 				}
 				old_line	= el->m_line;
-				pos.x		= el->left();
-				pos.y		= el->top();
+				pos.x		= el->left() + el->margin_left();
+				pos.y		= el->top() - m_padding.top - m_borders.top;
 				pos.width	= 0;
 				pos.height	= 0;
 			}
-			pos.width	= el->right() - pos.x;
-			pos.height	= max(pos.height, el->height());
+			pos.width	= el->right() - pos.x - el->margin_right() - el->margin_left();
+			pos.height	= max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom);
 		}
 	}
 	if(pos.width || pos.height)
@@ -1731,6 +1729,11 @@ void litehtml::element::get_inline_boxes( position::vector& boxes )
 
 bool litehtml::element::on_mouse_over( int x, int y )
 {
+	if(m_display == display_inline_text)
+	{
+		return false;
+	}
+
 	bool ret = false;
 	if(m_display != display_inline)
 	{
@@ -1826,6 +1829,11 @@ bool litehtml::element::on_mouse_over( int x, int y )
 
 bool litehtml::element::find_styles_changes( position::vector& redraw_boxes, int x, int y )
 {
+	if(m_display == display_inline_text)
+	{
+		return false;
+	}
+
 	bool ret = false;
 	bool apply = false;
 	for (used_styles::vector::iterator iter = m_style_sheets.begin(); iter != m_style_sheets.end() && !apply; iter++)
@@ -1957,6 +1965,11 @@ bool litehtml::element::on_mouse_leave()
 
 bool litehtml::element::on_lbutton_down( int x, int y )
 {
+	if(m_display == display_inline_text)
+	{
+		return false;
+	}
+
 	bool ret = false;
 	if(m_display != display_inline)
 	{
@@ -2052,6 +2065,11 @@ bool litehtml::element::on_lbutton_down( int x, int y )
 
 bool litehtml::element::on_lbutton_up( int x, int y )
 {
+	if(m_display == display_inline_text)
+	{
+		return false;
+	}
+
 	bool ret = false;
 
 	string_vector::iterator pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"active");
@@ -2287,24 +2305,38 @@ void litehtml::element::draw_background( uint_ptr hdc, int x, int y, const posit
 	{
 		background bg = get_background();
 
-		if(bg.m_color.alpha || !bg.m_image.empty())
+		position::vector boxes;
+		get_inline_boxes(boxes);
+
+		for(position::vector::iterator box = boxes.begin(); box != boxes.end(); box++)
 		{
-			position::vector boxes;
-			get_inline_boxes(boxes);
+			box->x	+= x;
+			box->y	+= y;
 
-			for(position::vector::iterator box = boxes.begin(); box != boxes.end(); box++)
+			if(box->does_intersect(clip))
 			{
-				box->x	+= x;
-				box->y	+= y;
+				position bg_pos = *box;
+				bg_pos -= m_borders;
 
-				if(box->does_intersect(clip))
+				if(bg.m_color.alpha)
 				{
-					if(bg.m_color.alpha)
-					{
-						m_doc->container()->fill_rect(hdc, *box, bg.m_color);
-					}
+					m_doc->container()->fill_rect(hdc, bg_pos, bg.m_color);
 				}
+
+				css_borders bdr;
+				bdr.top		= m_css_borders.top;
+				bdr.bottom	= m_css_borders.bottom;
+				if(box == boxes.begin())
+				{
+					bdr.left	= m_css_borders.left;
+				}
+				if(box == boxes.end() - 1)
+				{
+					bdr.right	= m_css_borders.right;
+				}
+				m_doc->container()->draw_borders(hdc, bdr, *box);
 			}
 		}
 	}
 }
+

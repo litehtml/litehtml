@@ -37,6 +37,7 @@ namespace litehtml
 		style_display			m_display;
 		list_style_type			m_list_style_type;
 		list_style_position		m_list_style_position;
+		white_space				m_white_space;
 		element_float			m_float;
 		element_clear			m_clear;
 		elements_vector			m_floats;
@@ -94,6 +95,7 @@ namespace litehtml
 		virtual const wchar_t*		get_cursor();
 		virtual void				init_font();
 
+		white_space					get_white_space() const;
 		style_display				get_display() const;
 		elements_vector&			children();
 		
@@ -125,6 +127,19 @@ namespace litehtml
 		int							margin_right()		const;
 		margins						get_margins()		const;
 
+		int							padding_top()		const;
+		int							padding_bottom()	const;
+		int							padding_left()		const;
+		int							padding_right()		const;
+		margins						get_paddings()		const;
+
+		int							border_top()		const;
+		int							border_bottom()		const;
+		int							border_left()		const;
+		int							border_right()		const;
+		margins						get_borders()		const;
+		css_borders					get_css_borders()	const;
+
 		virtual const wchar_t*		get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
 
 		uint_ptr					get_font();
@@ -137,6 +152,9 @@ namespace litehtml
 		void						get_abs_position(position& pos, const element* root);
 		virtual void				get_text(std::wstring& text);
 		virtual void				finish();
+
+		bool						is_first_child(const element* el);
+		bool						is_last_child(const element* el);
 
 	protected:
 		virtual void				get_content_size(size& sz, int max_width);
@@ -256,5 +274,88 @@ namespace litehtml
 		return ret;
 	}
 
+	inline litehtml::margins litehtml::element::get_paddings()	const
+	{
+		return m_padding;
+	}
+
+	inline litehtml::margins litehtml::element::get_borders()	const
+	{
+		return m_borders;
+	}
+
+	inline litehtml::css_borders litehtml::element::get_css_borders() const
+	{
+		return m_css_borders;
+	}
+
+	inline int litehtml::element::padding_top() const
+	{
+		return m_padding.top;
+	}
+
+	inline int litehtml::element::padding_bottom() const
+	{
+		return m_padding.bottom;
+	}
+
+	inline int litehtml::element::padding_left() const
+	{
+		return m_padding.left;
+	}
+
+	inline int litehtml::element::padding_right() const
+	{
+		return m_padding.right;
+	}
+
+	inline bool litehtml::element::is_first_child( const element* el )
+	{
+		if(!m_children.empty())
+		{
+			if(el == m_children.front())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	inline bool litehtml::element::is_last_child( const element* el )
+	{
+		if(!m_children.empty())
+		{
+			if(el == m_children.back())
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+
+	inline int litehtml::element::border_top() const
+	{
+		return m_borders.top;
+	}
+
+	inline int litehtml::element::border_bottom() const
+	{
+		return m_borders.bottom;
+	}
+
+	inline int litehtml::element::border_left() const
+	{
+		return m_borders.left;
+	}
+
+	inline int litehtml::element::border_right() const
+	{
+		return m_borders.right;
+	}
+
+	inline white_space litehtml::element::get_white_space() const
+	{
+		return m_white_space;
+	}
 }
 

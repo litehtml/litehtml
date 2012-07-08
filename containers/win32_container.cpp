@@ -346,3 +346,13 @@ void litehtml::win32_container::draw_borders( uint_ptr hdc, const css_borders& b
 		DeleteObject(pen);
 	}
 }
+
+wchar_t litehtml::win32_container::toupper( const wchar_t c )
+{
+	return (wchar_t) CharUpper((LPWSTR) c);
+}
+
+wchar_t litehtml::win32_container::tolower( const wchar_t c )
+{
+	return (wchar_t) CharLower((LPWSTR) c);
+}
