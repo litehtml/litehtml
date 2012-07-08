@@ -158,7 +158,8 @@ namespace litehtml
 		display_table_footer_group,
 		display_table_header_group,
 		display_table_row,
-		display_table_row_group
+		display_table_row_group,
+		display_inline_text,
 	};
 
 	enum style_border
@@ -464,4 +465,26 @@ namespace litehtml
 		overflow_scroll,
 		overflow_auto
 	};
+
+#define text_transform_strings		L"none;capitalize;uppercase;lowercase"
+
+	enum text_transform
+	{
+		text_transform_none,
+		text_transform_capitalize,
+		text_transform_uppercase,
+		text_transform_lowercase
+	};
+
+#define white_space_strings		L"normal;nowrap;pre;pre-line;pre-wrap"
+
+	enum white_space
+	{
+		white_space_normal,
+		white_space_nowrap,
+		white_space_pre,
+		white_space_pre_line,
+		white_space_pre_wrap
+	};
+
 }

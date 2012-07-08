@@ -38,6 +38,8 @@ namespace litehtml
 		virtual void		draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos);
 
 		virtual int			get_default_font_size();
+		virtual	wchar_t		toupper(const wchar_t c);
+		virtual	wchar_t		tolower(const wchar_t c);
 
 	protected:
 		void					clear_images();
