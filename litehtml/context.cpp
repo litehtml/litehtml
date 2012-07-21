@@ -5,5 +5,6 @@
 
 void litehtml::context::load_master_stylesheet( const wchar_t* str )
 {
-	parse_stylesheet(str, m_master_css, NULL);
+	m_master_css.parse_stylesheet(str, NULL);
+	m_master_css.sort_selectors();
 }

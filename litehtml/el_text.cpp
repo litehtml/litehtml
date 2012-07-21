@@ -36,7 +36,7 @@ void litehtml::el_text::draw_content( uint_ptr hdc, const litehtml::position& po
 	}
 }
 
-void litehtml::el_text::apply_stylesheet( const litehtml::style_sheet& style )
+void litehtml::el_text::apply_stylesheet( const litehtml::css& stylesheet )
 {
 
 }

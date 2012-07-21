@@ -1,14 +1,14 @@
 #pragma once
-#include "style.h"
+#include "stylesheet.h"
 
 namespace litehtml
 {
 	class context
 	{
-		style_sheet::vector	m_master_css;
+		litehtml::css	m_master_css;
 	public:
-		void					load_master_stylesheet(const wchar_t* str);
-		style_sheet::vector&	master_css()
+		void			load_master_stylesheet(const wchar_t* str);
+		litehtml::css&	master_css()
 		{
 			return m_master_css;
 		}

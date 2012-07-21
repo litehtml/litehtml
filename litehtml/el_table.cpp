@@ -353,6 +353,15 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 		m_style.add_property(L"width", str, 0);
 	}
 
+	str = get_attr(L"cellspacing");
+	if(str)
+	{
+		std::wstring val = str;
+		val += L" ";
+		val += str;
+		m_style.add_property(L"border-spacing", val.c_str(), 0);
+	}
+
 	element::parse_styles(is_reparse);
 
 	m_css_border_spacing_x.fromString(get_style_property(L"-litehtml-border-spacing-x", true, L"0px"));
@@ -364,10 +373,9 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 
 }
 
-void litehtml::el_table::find_inlines()
+void litehtml::el_table::init()
 {
 	m_grid.clear();
-	m_inlines.clear();
 
 	elements_iterator row_iter(this, &go_inside_table(), &table_rows_selector());
 
@@ -380,7 +388,6 @@ void litehtml::el_table::find_inlines()
 		element* cell = cell_iter.next();
 		while(cell)
 		{
-			m_inlines.push_back(cell);
 			m_grid.add_cell(cell);
 
 			cell = cell_iter.next(false);

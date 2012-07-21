@@ -80,7 +80,19 @@ namespace litehtml
     {
       wchar c = skip_whitespace();
 
-      if(c == '>') { c_scan = &scanner::scan_body; return scan_body(); }
+      if(c == '>') 
+	  { 
+		  if(!_wcsnicmp(tag_name, L"script", tag_name_length))
+		  {
+			  c_scan = &scanner::scan_raw_body; 
+			  return scan_raw_body(); 
+		  } else
+		  {
+			  c_scan = &scanner::scan_body; 
+			  return scan_body(); 
+		  }
+	  }
+
       if(c == '/')
       {
          wchar t = get_char();
@@ -161,12 +173,12 @@ namespace litehtml
           if(equal(tag_name,L"!--",3))  { c_scan = &scanner::scan_comment; return TT_COMMENT_START; }
           break;
         case 8:
-          if( equal(tag_name,L"![CDATA[",8) ) { c_scan = &scanner::scan_cdata; return TT_CDATA_START; }
-		  if( equal(tag_name,L"!DOCTYPE",8) ) { c_scan = &scanner::scan_entity_decl; return TT_DOCTYPE_START; }
+			if( equal(tag_name,L"![CDATA[",8) ) { c_scan = &scanner::scan_cdata; return TT_CDATA_START; }
+			if( equal(tag_name,L"!DOCTYPE",8) ) { c_scan = &scanner::scan_entity_decl; return TT_DOCTYPE_START; }
           break;
-        case 7:
-          if( equal(tag_name,L"!ENTITY",8) ) { c_scan = &scanner::scan_entity_decl; return TT_ENTITY_START; }
-          break;
+		case 7:
+			if( equal(tag_name,L"!ENTITY",8) ) { c_scan = &scanner::scan_entity_decl; return TT_ENTITY_START; }
+			break;
         }
 
         c = get_char();
@@ -565,7 +577,30 @@ namespace litehtml
 		return 0;
 	}
 
+	scanner::token_type scanner::scan_raw_body()
+	{
+		if(got_tail)
+		{
+			c_scan = &scanner::scan_body;
+			got_tail = false;
+			return TT_TAG_END;
+		}
+		for(value_length = 0; value_length < (MAX_TOKEN_SIZE - 1); ++value_length)
+		{
+			wchar c = get_char();
+			if( c == 0) return TT_EOF;
+			value[value_length] = c;
 
+			if(value_length >= 8 && !_wcsnicmp(value + value_length - 8, L"</script>", 9))
+			{
+				got_tail = true;
+				value_length -= 8;
+				break;
+			}
+		}
+		value[value_length] = 0;
+		return TT_DATA;
+	}
 
 }
  

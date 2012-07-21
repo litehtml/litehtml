@@ -24,7 +24,7 @@ void litehtml::el_comment::set_data( const wchar_t* data )
 	}
 }
 
-void litehtml::el_comment::apply_stylesheet( const litehtml::style_sheet& style )
+void litehtml::el_comment::apply_stylesheet( const litehtml::css& stylesheet )
 {
 
 }

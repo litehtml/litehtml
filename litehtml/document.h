@@ -53,7 +53,7 @@ namespace litehtml
 		document_container*		m_container;
 		fonts_map				m_fonts;
 		css_text::vector		m_css;
-		style_sheet::vector		m_styles;
+		litehtml::css			m_styles;
 		std::wstring			m_font_name;
 		litehtml::web_color		m_def_color;
 		litehtml::context*		m_context;

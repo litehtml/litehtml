@@ -1,5 +1,6 @@
 html {
-    display: block
+    display: block;
+	position: relative;
 }
 
 head {
@@ -111,7 +112,7 @@ img {
 	display: inline-block;
 }
 
-img[align=right]
+img[align="right"]
 {
 	float: right;
 }
@@ -214,14 +215,33 @@ ol ul, ul ol, ul ul, ol ol {
 }
 
 blockquote {
-display: block;
-margin-top: 1em;
-margin-bottom: 1em;
-margin-left: 40px;
-margin-left: 40px;
+	display: block;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 40px;
+	margin-left: 40px;
 }
 
-option
-{
+/*********** FORM ELEMENTS ************/
+
+form {
+	display: block;
+	margin-top: 0em;
+}
+
+option {
+	display: none;
+}
+
+input, textarea, keygen, select, button, isindex {
+	margin: 0em;
+	color: initial;
+	line-height: normal;
+	text-transform: none;
+	text-indent: 0;
+	text-shadow: none;
+	display: inline-block;
+}
+input[type="hidden"] {
 	display: none;
 }

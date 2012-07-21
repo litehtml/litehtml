@@ -3,7 +3,7 @@
 #include "line.h"
 
 
-void litehtml::line::operator+=( element* el )
+void litehtml::line::add_element( element* el )
 {
 	if(!m_items.empty() && m_items.back()->is_break())
 	{

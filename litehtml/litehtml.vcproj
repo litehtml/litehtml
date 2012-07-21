@@ -292,6 +292,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\css_selector.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\document.cpp"
 				>
 			</File>
@@ -423,6 +427,10 @@
 			</File>
 			<File
 				RelativePath=".\css_position.h"
+				>
+			</File>
+			<File
+				RelativePath=".\css_selector.h"
 				>
 			</File>
 			<File
