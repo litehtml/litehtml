@@ -28,6 +28,6 @@ namespace litehtml
 		virtual void	draw(uint_ptr hdc, int x, int y, const position* clip);
 
 	protected:
-		virtual void	find_inlines();
+		virtual void	init();
 	};
 }

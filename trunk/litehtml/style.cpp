@@ -457,18 +457,3 @@ void litehtml::style::parse_short_font( const std::wstring& val )
 	}
 }
 
-void litehtml::style_sheet::add_selector( const std::wstring& txt )
-{
-	std::wstring selector = txt;
-	trim(selector);
-	string_vector tokens;
-	tokenize(selector, tokens, L",");
-
-	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
-	{
-		css_selector selector;
-		trim(*tok);
-		selector.parse(*tok);
-		m_selectors.push_back(selector);
-	}
-}

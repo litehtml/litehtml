@@ -85,7 +85,7 @@ namespace litehtml
 			m_line_right		= 0;
 		}
 
-		void	operator+=(element* el);
+		void	add_element(element* el);
 		void	set_top(int top, element* parent);
 		void	add_top(int add);
 

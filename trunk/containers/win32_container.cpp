@@ -261,12 +261,22 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 				{
 					graphics.DrawCachedBitmap(&bmp, x, pos.top());
 				}
+
+				for(int x = pos.left() - img->second->GetWidth(); x + (int) img->second->GetWidth() > draw_pos.left(); x -= img->second->GetWidth())
+				{
+					graphics.DrawCachedBitmap(&bmp, x, pos.top());
+				}
 			}
 			break;
 		case background_repeat_repeat_y:
 			{
 				Gdiplus::CachedBitmap bmp(img->second, &graphics);
 				for(int y = pos.top(); y < pos.bottom(); y += img->second->GetHeight())
+				{
+					graphics.DrawCachedBitmap(&bmp, pos.left(), y);
+				}
+
+				for(int y = pos.top() - img->second->GetHeight(); y + (int) img->second->GetHeight() > draw_pos.top(); y -= img->second->GetHeight())
 				{
 					graphics.DrawCachedBitmap(&bmp, pos.left(), y);
 				}

@@ -1,7 +1,10 @@
 #include "html.h"
 #include "stylesheet.h"
+#include "tokenizer.h"
+#include <algorithm>
 
-void litehtml::parse_stylesheet( const wchar_t* str, style_sheet::vector& styles, const wchar_t* baseurl )
+
+void litehtml::css::parse_stylesheet( const wchar_t* str, const wchar_t* baseurl )
 {
 	std::wstring text = str;
 
@@ -36,11 +39,10 @@ void litehtml::parse_stylesheet( const wchar_t* str, style_sheet::vector& styles
 		std::wstring::size_type style_end	= text.find(L"}", pos);
 		if(style_start != std::wstring::npos && style_end != std::wstring::npos)
 		{
-			style_sheet::ptr st = new style_sheet;
-			st->add_selector(text.substr(pos, style_start - pos));
+			style::ptr st = new style;
+			st->add(text.substr(style_start + 1, style_end - style_start - 1).c_str(), baseurl);
 
-			st->m_style.add(text.substr(style_start + 1, style_end - style_start - 1).c_str(), baseurl);
-			styles.push_back(st);
+			parse_selectors(text.substr(pos, style_start - pos), st);
 
 			pos = style_end + 1;
 		} else
@@ -55,7 +57,7 @@ void litehtml::parse_stylesheet( const wchar_t* str, style_sheet::vector& styles
 	}
 }
 
-void litehtml::parse_css_url( const std::wstring& str, std::wstring& url )
+void litehtml::css::parse_css_url( const std::wstring& str, std::wstring& url )
 {
 	url = L"";
 	size_t pos1 = str.find(L'(');
@@ -78,4 +80,27 @@ void litehtml::parse_css_url( const std::wstring& str, std::wstring& url )
 			}
 		}
 	}
+}
+
+void litehtml::css::parse_selectors( const std::wstring& txt, litehtml::style::ptr styles )
+{
+	std::wstring selector = txt;
+	trim(selector);
+	string_vector tokens;
+	tokenize(selector, tokens, L",");
+
+	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+	{
+		css_selector::ptr selector = new css_selector;
+		selector->m_style = styles;
+		trim(*tok);
+		selector->parse(*tok);
+		selector->calc_specificity();
+		add_selector(selector);
+	}
+}
+
+void litehtml::css::sort_selectors()
+{
+	sort(m_selectors.begin(), m_selectors.end(), std::less<css_selector::ptr>( ));
 }

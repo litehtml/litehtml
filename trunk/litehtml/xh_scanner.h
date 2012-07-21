@@ -89,6 +89,7 @@ namespace litehtml
     token_type  scan_tag();
 	token_type  scan_entity_decl();
 	token_type  scan_doctype_decl();
+	token_type  scan_raw_body();
 
     wchar       skip_whitespace();
     void        push_back(wchar c);

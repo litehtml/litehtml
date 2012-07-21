@@ -25,6 +25,7 @@ const wchar_t* g_empty_tags[] =
 	L"button",
 	L"img",
 	L"param",
+	L"col",
 	0
 };
 
@@ -83,20 +84,16 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 	{
 		doc->m_root->finish();
 
-		for(style_sheet::vector::const_iterator i = ctx->master_css().begin(); i != ctx->master_css().end(); i++)
-		{
-			doc->m_root->apply_stylesheet(*i);
-		}
+		doc->m_root->apply_stylesheet(ctx->master_css());
 
 		for(css_text::vector::iterator css = doc->m_css.begin(); css != doc->m_css.end(); css++)
 		{
-			parse_stylesheet(css->text.c_str(), doc->m_styles, css->baseurl.c_str());
+			doc->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str());
 		}
+		doc->m_styles.sort_selectors();
 
-		for(style_sheet::vector::const_iterator i = doc->m_styles.begin(); i != doc->m_styles.end(); i++)
-		{
-			doc->m_root->apply_stylesheet(*i);
-		}
+		doc->m_root->apply_stylesheet(doc->m_styles);
+
 		doc->m_root->parse_styles();
 	}
 

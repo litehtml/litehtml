@@ -6,6 +6,8 @@
 #include "background.h"
 #include "css_margins.h"
 #include "borders.h"
+#include "css_selector.h"
+#include "stylesheet.h"
 
 namespace litehtml
 {
@@ -21,8 +23,6 @@ namespace litehtml
 		litehtml::element*		m_parent;
 		litehtml::document*		m_doc;
 		elements_vector			m_children;
-		elements_vector			m_inlines;
-		line::vector			m_lines;
 		std::wstring			m_id;
 		std::wstring			m_class;
 		std::wstring			m_tag;
@@ -48,7 +48,7 @@ namespace litehtml
 		int						m_line_height;
 		litehtml::line*			m_line;
 		string_vector			m_pseudo_classes;
-		used_styles::vector		m_style_sheets;		
+		used_selector::vector	m_used_styles;		
 		
 		uint_ptr				m_font;
 		int						m_font_size;
@@ -68,9 +68,21 @@ namespace litehtml
 
 		overflow				m_overflow;
 
+		/* rendered lines */
+		line::vector			m_lines;
+
 	public:
 		element(litehtml::document* doc);
 		virtual ~element();
+
+		/* render functions */
+
+		virtual int					render(int x, int y, int max_width);
+
+		int							place_element( element* el, int max_width );
+		virtual int					render_inline(litehtml::element* container, int max_width);
+		int							add_line(int max_width, element_clear clr = clear_none, int el_width = 0);
+		void						finish_line(int max_width);
 
 		virtual bool				appendChild(litehtml::element* el);
 		virtual element::ptr		parentElement() const;
@@ -80,7 +92,7 @@ namespace litehtml
 
 		virtual void				set_attr(const wchar_t* name, const wchar_t* val);
 		virtual const wchar_t*		get_attr(const wchar_t* name, const wchar_t* def = 0);
-		virtual void				apply_stylesheet(const litehtml::style_sheet::ptr style);
+		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual bool				is_white_space();
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
@@ -94,13 +106,15 @@ namespace litehtml
 		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
 		virtual const wchar_t*		get_cursor();
 		virtual void				init_font();
+		virtual bool				is_point_inside(int x, int y);
+		virtual bool				set_pseudo_class(const wchar_t* pclass, bool add);
+		virtual bool				in_normal_flow();
 
 		white_space					get_white_space() const;
 		style_display				get_display() const;
 		elements_vector&			children();
 		
 		bool						select(const wchar_t* selectors);
-		virtual int					render(int x, int y, int max_width);
 
 		void						calc_outlines( int parent_width );
 		virtual void				parse_styles(bool is_reparse = false);
@@ -147,7 +161,6 @@ namespace litehtml
 		litehtml::web_color			get_color(const wchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		int							select(const css_selector& selector, bool apply_pseudo = true);
 		int							select(const css_element_selector& selector, bool apply_pseudo = true);
-		int							select(const litehtml::style_sheet::ptr style, bool apply_pseudo = true);
 		element*					find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		void						get_abs_position(position& pos, const element* root);
 		virtual void				get_text(std::wstring& text);
@@ -159,24 +172,22 @@ namespace litehtml
 	protected:
 		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
-		virtual void				clear_inlines();
-		virtual void				find_inlines();
+		virtual void				init();
 		void						get_inline_boxes(position::vector& boxes);
 
 	private:
 		bool						select_one(const std::wstring& selector);
-		int							add_line(line::ptr& ln, int max_width, bool new_line = false);
 		int							get_floats_height() const;
 		int							get_left_floats_height() const;
 		int							get_right_floats_height() const;
 		int							get_line_left(int y) const;
 		int							get_line_right(int y, int def_right) const;
-		void						fix_line_width(line::ptr& ln, int max_width);
+		void						fix_line_width(int max_width);
 		void						init_line(line::ptr& ln, int top, int def_right, element_clear el_clear = clear_none);
 		void						add_float(element* el);
 		void						add_absolute(element* el);
 		bool						is_floats_holder() const;
-		int							place_inline(element* el, line::ptr& ln, int max_width);
+		int							place_inline(element* el, int max_width);
 		int							find_next_line_top(int top, int width, int def_right);
 		void						parse_background();
 

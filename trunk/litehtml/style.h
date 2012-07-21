@@ -3,12 +3,11 @@
 
 namespace litehtml
 {
-	class style
+	class style : public object
 	{
 	public:
-		typedef std::map<std::wstring, litehtml::style>		map;
-		typedef std::vector<litehtml::style>				vector;
-
+		typedef object_ptr<style>			ptr;
+		typedef std::vector<style::ptr>		vector;
 	private:
 		string_map		m_properties;
 	public:
@@ -55,29 +54,7 @@ namespace litehtml
 		void parse_short_font(const std::wstring& val);
 	};
 
-	class style_sheet : public object
-	{
-	public:
-		typedef object_ptr<style_sheet>			ptr;
-		typedef std::vector<style_sheet::ptr>	vector;
-
-		css_selector::vector	m_selectors;
-		style					m_style;
-
-		style_sheet()	{}
-		style_sheet(const style_sheet& val)
-		{
-			m_selectors	= val.m_selectors;
-			m_style		= val.m_style;
-		}
-		void operator=(const style_sheet& val)
-		{
-			m_selectors	= val.m_selectors;
-			m_style		= val.m_style;
-		}
-		void add_selector(const std::wstring& txt);
-	};
-
+/*
 	class used_styles
 	{
 	public:
@@ -103,4 +80,5 @@ namespace litehtml
 			m_used			= val.m_used;
 		}
 	};
+*/
 }

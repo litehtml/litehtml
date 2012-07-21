@@ -14,7 +14,7 @@ namespace litehtml
 		el_text(const wchar_t* text, litehtml::document* doc);
 		virtual ~el_text();
 
-		virtual void				apply_stylesheet(const litehtml::style_sheet& style);
+		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				get_text(std::wstring& text);
 		virtual const wchar_t*		get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
 		virtual void				parse_styles(bool is_reparse);
