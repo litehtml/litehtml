@@ -169,7 +169,7 @@ LPWSTR load_text_file( LPCWSTR path, bool is_html )
 		if(!strW)
 		{
 			strW = new WCHAR[cbRead + 1];
-			MultiByteToWideChar(CP_UTF8, 0, str, cbRead, strW, cbRead + 1);
+			MultiByteToWideChar(CP_UTF8, 0, str, -1, strW, cbRead + 1);
 		}
 
 		free(str);

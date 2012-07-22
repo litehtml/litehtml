@@ -359,3 +359,8 @@ void CToolbarWnd::set_cursor( const wchar_t* cursor )
 {
 
 }
+
+void CToolbarWnd::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl, const litehtml::string_vector& media )
+{
+
+}

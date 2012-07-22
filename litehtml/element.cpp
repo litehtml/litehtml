@@ -139,6 +139,12 @@ void litehtml::element::apply_stylesheet( const litehtml::css& stylesheet )
 {
 	for(litehtml::css_selector::vector::const_iterator sel = stylesheet.selectors().begin(); sel != stylesheet.selectors().end(); sel++)
 	{
+		if((*sel)->m_combinator == combinator_child && m_tag == L"li")
+		{
+			int iii=0;
+			iii++;
+		}
+
 		int apply = select(*(*sel), false);
 
 		if(apply)
@@ -427,6 +433,11 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 int litehtml::element::render( int x, int y, int max_width )
 {
+	if(m_class == L"box-left-top")
+	{
+		int iii = 0;
+		iii++;
+	}
 	int parent_width = max_width;
 
 	// restore margins after collapse

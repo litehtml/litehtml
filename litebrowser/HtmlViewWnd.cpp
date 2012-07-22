@@ -4,6 +4,7 @@
 #include "..\litehtml\tokenizer.h"
 #include "downloader.h"
 #include <WindowsX.h>
+#include <algorithm>
 
 using namespace Gdiplus;
 
@@ -390,7 +391,7 @@ void CHTMLViewWnd::link( litehtml::document* doc, litehtml::element::ptr el )
 	if(rel && !wcscmp(rel, L"stylesheet"))
 	{
 		const wchar_t* media = el->get_attr(L"media", L"screen");
-		if(media && wcsstr(media, L"screen"))
+		if(media && (wcsstr(media, L"screen") || wcsstr(media, L"all")))
 		{
 			const wchar_t* href = el->get_attr(L"href");
 			if(href)
@@ -661,5 +662,21 @@ void CHTMLViewWnd::update_cursor()
 	} else
 	{
 		SetCursor(LoadCursor(NULL, IDC_ARROW));
+	}
+}
+
+void CHTMLViewWnd::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl, const string_vector& media )
+{
+	if(media.empty() || std::find(media.begin(), media.end(), std::wstring(L"all")) != media.end() || std::find(media.begin(), media.end(), std::wstring(L"screen")) != media.end())
+	{
+		std::wstring css_url;
+		make_url(url.c_str(), baseurl.c_str(), css_url);
+		LPWSTR css = load_text_file(css_url.c_str());
+		if(css)
+		{
+			baseurl = css_url;
+			text = css;
+			delete css;
+		}
 	}
 }
