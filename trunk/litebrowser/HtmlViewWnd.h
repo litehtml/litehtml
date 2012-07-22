@@ -37,6 +37,7 @@ public:
 	virtual	void		set_caption(const wchar_t* caption);
 	virtual	void		set_base_url(const wchar_t* base_url);
 	virtual	void		link(litehtml::document* doc, litehtml::element::ptr el);
+	virtual void		import_css(std::wstring& text, const std::wstring& url, std::wstring& baseurl, const string_vector& media);
 	virtual	void		on_anchor_click(const wchar_t* url, litehtml::element::ptr el);
 	virtual	void		set_cursor(const wchar_t* cursor);
 

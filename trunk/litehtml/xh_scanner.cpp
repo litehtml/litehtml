@@ -82,7 +82,7 @@ namespace litehtml
 
       if(c == '>') 
 	  { 
-		  if(!_wcsnicmp(tag_name, L"script", tag_name_length))
+		  if(tag_name_length == 6 && !_wcsnicmp(tag_name, L"script", tag_name_length))
 		  {
 			  c_scan = &scanner::scan_raw_body; 
 			  return scan_raw_body(); 

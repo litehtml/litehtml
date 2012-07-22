@@ -4,7 +4,7 @@
 #include <algorithm>
 
 
-void litehtml::css::parse_stylesheet( const wchar_t* str, const wchar_t* baseurl )
+void litehtml::css::parse_stylesheet( const wchar_t* str, const wchar_t* baseurl, document_container* doc )
 {
 	std::wstring text = str;
 
@@ -22,7 +22,49 @@ void litehtml::css::parse_stylesheet( const wchar_t* str, const wchar_t* baseurl
 	{
 		while(text[pos] == L'@')
 		{
+			std::wstring::size_type sPos = pos;
 			pos = text.find(L";", pos);
+
+			if(text.substr(sPos, 7) == L"@import")
+			{
+				sPos += 7;
+				std::wstring iStr;
+				if(pos == std::wstring::npos)
+				{
+					iStr = text.substr(sPos);
+				} else
+				{
+					iStr = text.substr(sPos, pos - sPos);
+				}
+				trim(iStr);
+				string_vector tokens;
+				tokenize(iStr, tokens, L",", L"", L"()\"");
+				if(!tokens.empty())
+				{
+					std::wstring url;
+					parse_css_url(tokens.front(), url);
+					if(url.empty())
+					{
+						url = tokens.front();
+					}
+					tokens.erase(tokens.begin());
+					if(doc)
+					{
+						std::wstring css_text;
+						std::wstring css_baseurl;
+						if(baseurl)
+						{
+							css_baseurl = baseurl;
+						}
+						doc->import_css(css_text, url, css_baseurl, tokens);
+						if(!css_text.empty())
+						{
+							parse_stylesheet(css_text.c_str(), css_baseurl.c_str(), doc);
+						}
+					}
+				}
+			}
+
 			if(pos == std::wstring::npos)
 			{
 				break;

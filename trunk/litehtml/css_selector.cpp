@@ -128,7 +128,7 @@ bool litehtml::css_selector::parse( const std::wstring& text )
 	wchar_t combinator = 0;
 
 	tokens.pop_back();
-	while(!tokens.empty() && (tokens.back() == L" " || tokens.back() == L"\t" || tokens.back() == L"+" || tokens.back() == L"~"))
+	while(!tokens.empty() && (tokens.back() == L" " || tokens.back() == L"\t" || tokens.back() == L"+" || tokens.back() == L"~" || tokens.back() == L">"))
 	{
 		if(combinator == L' ' || combinator == 0)
 		{

@@ -88,7 +88,7 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 
 		for(css_text::vector::iterator css = doc->m_css.begin(); css != doc->m_css.end(); css++)
 		{
-			doc->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str());
+			doc->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), doc->container());
 		}
 		doc->m_styles.sort_selectors();
 
