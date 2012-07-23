@@ -680,3 +680,13 @@ void CHTMLViewWnd::import_css( std::wstring& text, const std::wstring& url, std:
 		}
 	}
 }
+
+void CHTMLViewWnd::get_client_rect( litehtml::position& client )
+{
+	RECT rcClient;
+	GetClientRect(m_hWnd, &rcClient);
+	client.x		= rcClient.left;
+	client.y		= rcClient.top;
+	client.width	= rcClient.right - rcClient.left;
+	client.height	= rcClient.bottom - rcClient.top;
+}

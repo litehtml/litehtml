@@ -4,6 +4,23 @@
 
 using namespace Gdiplus;
 
+
+
+litehtml::win32_container::win32_container()
+{
+	m_hClipRgn = NULL;
+}
+
+
+
+litehtml::win32_container::~win32_container()
+{
+	if(m_hClipRgn)
+	{
+		DeleteObject(m_hClipRgn);
+	}
+}
+
 litehtml::uint_ptr litehtml::win32_container::create_font( const wchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration )
 {
 	litehtml::string_vector fonts;
@@ -57,6 +74,8 @@ int litehtml::win32_container::text_width( uint_ptr hdc, const wchar_t* text, ui
 
 void litehtml::win32_container::draw_text( uint_ptr hdc, const wchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
+	apply_clip((HDC) hdc);
+
 	HFONT oldFont = (HFONT) SelectObject((HDC) hdc, (HFONT) hFont);
 
 	SetBkMode((HDC) hdc, TRANSPARENT);
@@ -67,14 +86,18 @@ void litehtml::win32_container::draw_text( uint_ptr hdc, const wchar_t* text, ui
 	DrawText((HDC) hdc, text, -1, &rcText, DT_SINGLELINE | DT_NOPREFIX | DT_BOTTOM | DT_NOCLIP);
 
 	SelectObject((HDC) hdc, oldFont);
+
+	release_clip((HDC) hdc);
 }
 
 void litehtml::win32_container::fill_rect( uint_ptr hdc, const litehtml::position& pos, litehtml::web_color color )
 {
+	apply_clip((HDC) hdc);
 	HBRUSH br = CreateSolidBrush(RGB(color.red, color.green, color.blue));
 	RECT rcFill = { pos.left(), pos.top(), pos.right(), pos.bottom() };
 	FillRect((HDC) hdc, &rcFill, br);
 	DeleteObject(br);
+	release_clip((HDC) hdc);
 }
 
 litehtml::uint_ptr litehtml::win32_container::get_temp_dc()
@@ -115,6 +138,8 @@ int litehtml::win32_container::get_text_base_line( uint_ptr hdc, uint_ptr hFont 
 
 void litehtml::win32_container::draw_list_marker( uint_ptr hdc, list_style_type marker_type, int x, int y, int height, const web_color& color )
 {
+	apply_clip((HDC) hdc);
+
 	Graphics graphics((HDC) hdc);
 	LinearGradientBrush* brush = NULL;
 
@@ -149,6 +174,7 @@ void litehtml::win32_container::draw_list_marker( uint_ptr hdc, list_style_type 
 		}
 		break;
 	}
+	release_clip((HDC) hdc);
 }
 
 void litehtml::win32_container::load_image( const wchar_t* src, const wchar_t* baseurl )
@@ -180,18 +206,26 @@ void litehtml::win32_container::get_image_size( const wchar_t* src, const wchar_
 
 void litehtml::win32_container::draw_image( uint_ptr hdc, const wchar_t* src, const wchar_t* baseurl, const litehtml::position& pos )
 {
+	apply_clip((HDC) hdc);
+
 	std::wstring url;
 	make_url(src, baseurl, url);
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
 		Graphics graphics((HDC) hdc);
+		if(m_hClipRgn)
+		{
+			graphics.SetClip(m_hClipRgn);
+		}
 		graphics.SetInterpolationMode(InterpolationModeNearestNeighbor);
 		graphics.SetPixelOffsetMode(PixelOffsetModeHalf);
 		graphics.DrawImage(img->second, pos.x, pos.y, pos.width, pos.height);
 
 		img->second->GetWidth();
 	}
+
+	release_clip((HDC) hdc);
 }
 
 void litehtml::win32_container::clear_images()
@@ -213,6 +247,8 @@ int litehtml::win32_container::get_default_font_size()
 
 void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* image, const wchar_t* baseurl, const litehtml::position& draw_pos, const litehtml::css_position& bg_pos, litehtml::background_repeat repeat, litehtml::background_attachment attachment )
 {
+	apply_clip((HDC) hdc);
+
 	std::wstring url;
 	make_url(image, baseurl, url);
 
@@ -299,10 +335,14 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 			break;
 		}
 	}
+
+	release_clip((HDC) hdc);
 }
 
 void litehtml::win32_container::draw_borders( uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos )
 {
+	apply_clip((HDC) hdc);
+
 	// draw left border
 	if(borders.left.width.val() != 0 && borders.left.style > border_style_hidden)
 	{
@@ -355,6 +395,8 @@ void litehtml::win32_container::draw_borders( uint_ptr hdc, const css_borders& b
 		SelectObject((HDC) hdc, oldPen);
 		DeleteObject(pen);
 	}
+
+	release_clip((HDC) hdc);
 }
 
 wchar_t litehtml::win32_container::toupper( const wchar_t c )
@@ -365,4 +407,64 @@ wchar_t litehtml::win32_container::toupper( const wchar_t c )
 wchar_t litehtml::win32_container::tolower( const wchar_t c )
 {
 	return (wchar_t) CharLower((LPWSTR) c);
+}
+
+void litehtml::win32_container::set_clip( const litehtml::position& pos, bool valid_x, bool valid_y )
+{
+	litehtml::position clip_pos = pos;
+	litehtml::position client_pos;
+	get_client_rect(client_pos);
+	if(!valid_x)
+	{
+		clip_pos.x		= client_pos.x;
+		clip_pos.width	= client_pos.width;
+	}
+	if(!valid_y)
+	{
+		clip_pos.y		= client_pos.y;
+		clip_pos.height	= client_pos.height;
+	}
+	m_clips.push_back(clip_pos);
+}
+
+void litehtml::win32_container::del_clip()
+{
+	if(!m_clips.empty())
+	{
+		m_clips.pop_back();
+		if(!m_clips.empty())
+		{
+			litehtml::position clip_pos = m_clips.back();
+		}
+	}
+}
+
+void litehtml::win32_container::apply_clip(HDC hdc)
+{
+	if(m_hClipRgn)
+	{
+		DeleteObject(m_hClipRgn);
+		m_hClipRgn = NULL;
+	}
+
+	if(!m_clips.empty())
+	{
+		POINT ptView = {0, 0};
+		GetWindowOrgEx(hdc, &ptView);
+
+		litehtml::position clip_pos = m_clips.back();
+		m_hClipRgn = CreateRectRgn(clip_pos.left() - ptView.x, clip_pos.top() - ptView.y, clip_pos.right() - ptView.x, clip_pos.bottom() - ptView.y);
+		SelectClipRgn(hdc, m_hClipRgn);
+	}
+}
+
+void litehtml::win32_container::release_clip(HDC hdc)
+{
+	SelectClipRgn(hdc, NULL);
+
+	if(m_hClipRgn)
+	{
+		DeleteObject(m_hClipRgn);
+		m_hClipRgn = NULL;
+	}
 }

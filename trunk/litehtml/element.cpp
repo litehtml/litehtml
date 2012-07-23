@@ -197,6 +197,11 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, const position* clip )
 
 	draw_background(hdc, x, y, clip);
 
+	if(m_overflow == overflow_hidden)
+	{
+		m_doc->container()->set_clip(pos, true, true);
+	}
+
 	if(m_display == display_list_item && m_list_style_type != list_style_type_none)
 	{
 		int marker_x		= pos.x;
@@ -227,6 +232,11 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, const position* clip )
 	{
 		element* el = (*i);
 		el->draw(hdc, pos.left(), pos.top(), clip);
+	}
+
+	if(m_overflow == overflow_hidden)
+	{
+		m_doc->container()->del_clip();
 	}
 }
 
@@ -433,9 +443,9 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 int litehtml::element::render( int x, int y, int max_width )
 {
-	if(m_class == L"box-left-top")
+	if(m_id == L"test")
 	{
-		int iii = 0;
+		int iii=0;
 		iii++;
 	}
 	int parent_width = max_width;
@@ -1900,7 +1910,8 @@ void litehtml::element::draw_background( uint_ptr hdc, int x, int y, const posit
 	pos.y	+= y;
 
 	position el_pos = pos;
-	el_pos += content_margins();
+	el_pos += m_padding;
+	el_pos += m_borders;
 
 	if(m_display != display_inline)
 	{

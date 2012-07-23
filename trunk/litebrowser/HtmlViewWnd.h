@@ -61,6 +61,7 @@ protected:
 	
 	virtual void			make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
 	virtual Gdiplus::Bitmap*	get_image(LPCWSTR url);
+	void						get_client_rect(litehtml::position& client);
 
 private:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);

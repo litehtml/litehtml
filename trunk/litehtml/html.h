@@ -49,6 +49,8 @@ namespace litehtml
 		virtual	wchar_t		toupper(const wchar_t c) = 0;
 		virtual	wchar_t		tolower(const wchar_t c) = 0;
 		virtual void		import_css(std::wstring& text, const std::wstring& url, std::wstring& baseurl, const string_vector& media) = 0;
+		virtual void		set_clip(const litehtml::position& pos, bool valid_x, bool valid_y) = 0;
+		virtual void		del_clip() = 0;
 	};
 
 	void trim(std::wstring &s);

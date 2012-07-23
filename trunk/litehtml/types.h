@@ -116,10 +116,17 @@ namespace litehtml
 		bool does_intersect(const position* val) const
 		{
 			if(!val) return true;
-			return !(	left() > val->right()	||
-						right() < val->left()	|| 
-						top() > val->bottom()	|| 
-						bottom() < val->top());
+
+			return (
+				left()			<= val->right()		&& 
+				right()			>= val->left()		&& 
+				bottom()		>= val->top()		&& 
+				top()			<= val->bottom()	)
+				|| (
+				val->left()		<= right()			&& 
+				val->right()	>= left()			&& 
+				val->bottom()	>= top()			&& 
+				val->top()		<= bottom()			);
 		}
 
 		bool empty() const
@@ -360,16 +367,6 @@ namespace litehtml
 		text_align_justify
 	};
 
-#define overflow_strings		L"visible;hidden;scroll;auto"
-
-	enum overflow
-	{
-		overflow_visible,
-		overflow_hidden,
-		overflow_scroll,
-		overflow_auto
-	};
-
 #define text_transform_strings		L"none;capitalize;uppercase;lowercase"
 
 	enum text_transform
@@ -389,6 +386,18 @@ namespace litehtml
 		white_space_pre,
 		white_space_pre_line,
 		white_space_pre_wrap
+	};
+
+#define overflow_strings		L"visible;hidden;scroll;auto;no-display;no-content"
+
+	enum overflow
+	{
+		overflow_visible,
+		overflow_hidden,
+		overflow_scroll,
+		overflow_auto,
+		overflow_no_display,
+		overflow_no_content
 	};
 
 }
