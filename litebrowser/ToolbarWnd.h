@@ -49,6 +49,8 @@ protected:
 	virtual void OnLButtonUp(int x, int y);
 	virtual void OnMouseLeave();
 
+	void						get_client_rect(litehtml::position& client);
+
 private:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 };

@@ -8,11 +8,16 @@ namespace litehtml
 	public:
 		typedef std::map<std::wstring, Gdiplus::Bitmap*>	images_map;
 	
-	private:
+		protected:
 		
-		images_map	m_images;
+		images_map					m_images;
+		litehtml::position::vector	m_clips;
+		HRGN						m_hClipRgn;
 
 	public:
+		win32_container();
+		virtual ~win32_container();
+
 		// litehtml::document_container members
 		virtual uint_ptr	create_font(const wchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration);
 		virtual void		delete_font(uint_ptr hFont);
@@ -40,10 +45,15 @@ namespace litehtml
 		virtual int			get_default_font_size();
 		virtual	wchar_t		toupper(const wchar_t c);
 		virtual	wchar_t		tolower(const wchar_t c);
+		virtual void		set_clip(const litehtml::position& pos, bool valid_x, bool valid_y);
+		virtual void		del_clip();
 
 	protected:
-		void					clear_images();
-		virtual void			make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
+		void						apply_clip(HDC hdc);
+		void						release_clip(HDC hdc);
+		void						clear_images();
+		virtual void				make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
 		virtual Gdiplus::Bitmap*	get_image(LPCWSTR url) = 0;
+		virtual void				get_client_rect(litehtml::position& client) = 0;
 	};
 }
