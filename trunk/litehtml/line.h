@@ -86,6 +86,8 @@ namespace litehtml
 		}
 
 		void	add_element(element* el);
+
+		element* get_last_space( );
 		void	set_top(int top, element* parent);
 		void	add_top(int add);
 

@@ -1,11 +1,13 @@
 #pragma once
-#include "..\containers\win32_container.h"
+#include "cairo_container.h"
+#include "gdiplus_container.h"
+#include "dib.h"
 
 #define HTMLVIEWWND_CLASS	L"HTMLVIEW_WINDOW"
 
 using namespace litehtml;
 
-class CHTMLViewWnd : public litehtml::win32_container
+class CHTMLViewWnd : public cairo_container
 {
 	HWND					m_hWnd;
 	HINSTANCE				m_hInst;
@@ -14,7 +16,6 @@ class CHTMLViewWnd : public litehtml::win32_container
 	int						m_left;
 	int						m_max_top;
 	int						m_max_left;
-	images_map				m_images;
 	std::wstring			m_base_path;
 	std::wstring			m_doc_path;
 	litehtml::context*		m_context;
@@ -26,12 +27,12 @@ public:
 	CHTMLViewWnd(HINSTANCE	hInst, litehtml::context* ctx);
 	virtual ~CHTMLViewWnd(void);
 
-	void	create(int x, int y, int width, int height, HWND parent);
-	void	open(LPCWSTR path);
-	HWND	wnd()	{ return m_hWnd;	}
-	void	refresh();
-	void	back();
-	void	forward();
+	void				create(int x, int y, int width, int height, HWND parent);
+	void				open(LPCWSTR path);
+	HWND				wnd()	{ return m_hWnd;	}
+	void				refresh();
+	void				back();
+	void				forward();
 
 	// litehtml::document_container members
 	virtual	void		set_caption(const wchar_t* caption);
@@ -42,26 +43,26 @@ public:
 	virtual	void		set_cursor(const wchar_t* cursor);
 
 protected:
-	virtual void OnCreate();
-	virtual void OnPaint(HDC hdc, LPCRECT rcClip);
-	virtual void OnSize(int width, int height);
-	virtual void OnDestroy();
-	virtual void OnVScroll(int pos, int flags);
-	virtual void OnMouseWheel(int delta);
-	virtual void OnKeyDown(UINT vKey);
-	virtual void OnMouseMove(int x, int y);
-	virtual void OnLButtonDown(int x, int y);
-	virtual void OnLButtonUp(int x, int y);
-	virtual void OnMouseLeave();
+	virtual void		OnCreate();
+	virtual void		OnPaint(simpledib::dib* dib, LPRECT rcDraw);
+	virtual void		OnSize(int width, int height);
+	virtual void		OnDestroy();
+	virtual void		OnVScroll(int pos, int flags);
+	virtual void		OnMouseWheel(int delta);
+	virtual void		OnKeyDown(UINT vKey);
+	virtual void		OnMouseMove(int x, int y);
+	virtual void		OnLButtonDown(int x, int y);
+	virtual void		OnLButtonUp(int x, int y);
+	virtual void		OnMouseLeave();
 	
-	void					render();
-	void					redraw();
-	void					update_scroll();
-	void					update_cursor();
+	void				render();
+	void				redraw(LPRECT rcDraw, BOOL update);
+	void				update_scroll();
+	void				update_cursor();
 	
-	virtual void			make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
-	virtual Gdiplus::Bitmap*	get_image(LPCWSTR url);
-	void						get_client_rect(litehtml::position& client);
+	virtual void		make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
+	virtual CTxDIB*		get_image(LPCWSTR url);
+	void				get_client_rect(litehtml::position& client);
 
 private:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);

@@ -185,7 +185,7 @@ void CToolbarWnd::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
 	out = url;
 }
 
-Gdiplus::Bitmap* CToolbarWnd::get_image( LPCWSTR url )
+litehtml::uint_ptr CToolbarWnd::get_image( LPCWSTR url )
 {
 	Gdiplus::Bitmap* bmp = NULL;
 
@@ -228,7 +228,7 @@ Gdiplus::Bitmap* CToolbarWnd::get_image( LPCWSTR url )
 		}
 	}
 
-	return bmp;
+	return (litehtml::uint_ptr) bmp;
 }
 
 void CToolbarWnd::set_caption( const wchar_t* caption )

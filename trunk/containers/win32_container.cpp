@@ -1,17 +1,12 @@
-#include "..\include/litehtml.h"
+#include "..\include\litehtml.h"
 #include "..\litehtml\tokenizer.h"
 #include "win32_container.h"
-
-using namespace Gdiplus;
-
 
 
 litehtml::win32_container::win32_container()
 {
 	m_hClipRgn = NULL;
 }
-
-
 
 litehtml::win32_container::~win32_container()
 {
@@ -90,13 +85,10 @@ void litehtml::win32_container::draw_text( uint_ptr hdc, const wchar_t* text, ui
 	release_clip((HDC) hdc);
 }
 
-void litehtml::win32_container::fill_rect( uint_ptr hdc, const litehtml::position& pos, litehtml::web_color color )
+void litehtml::win32_container::fill_rect( uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius )
 {
 	apply_clip((HDC) hdc);
-	HBRUSH br = CreateSolidBrush(RGB(color.red, color.green, color.blue));
-	RECT rcFill = { pos.left(), pos.top(), pos.right(), pos.bottom() };
-	FillRect((HDC) hdc, &rcFill, br);
-	DeleteObject(br);
+	fill_rect((HDC) hdc, pos.x, pos.y, pos.width, pos.height, color, radius);
 	release_clip((HDC) hdc);
 }
 
@@ -140,37 +132,28 @@ void litehtml::win32_container::draw_list_marker( uint_ptr hdc, list_style_type 
 {
 	apply_clip((HDC) hdc);
 
-	Graphics graphics((HDC) hdc);
-	LinearGradientBrush* brush = NULL;
-
 	int top_margin = height / 3;
 
-	Rect rc(x, y + top_margin, 
-		height - top_margin * 2, 
-		height - top_margin * 2);
+	int draw_x		= x;
+	int draw_y		= y + top_margin;
+	int draw_width	= height - top_margin * 2;
+	int draw_height	= height - top_margin * 2;
 
 	switch(marker_type)
 	{
 	case list_style_type_circle:
 		{
-			graphics.SetCompositingQuality(CompositingQualityHighQuality);
-			graphics.SetSmoothingMode(SmoothingModeAntiAlias);
-			Pen pen( Color(color.alpha, color.red, color.green, color.blue) );
-			graphics.DrawEllipse(&pen, rc.X, rc.Y, rc.Width, rc.Height);
+			draw_ellipse((HDC) hdc, draw_x, draw_y, draw_width, draw_height, color, 1);
 		}
 		break;
 	case list_style_type_disc:
 		{
-			graphics.SetCompositingQuality(CompositingQualityHighQuality);
-			graphics.SetSmoothingMode(SmoothingModeAntiAlias);
-			SolidBrush brush( Color(color.alpha, color.red, color.green, color.blue) );
-			graphics.FillEllipse(&brush, rc.X, rc.Y, rc.Width, rc.Height);
+			fill_ellipse((HDC) hdc, draw_x, draw_y, draw_width, draw_height, color);
 		}
 		break;
 	case list_style_type_square:
 		{
-			SolidBrush brush( Color(color.alpha, color.red, color.green, color.blue) );
-			graphics.FillRectangle(&brush, rc.X, rc.Y, rc.Width, rc.Height);
+			fill_rect((HDC) hdc, draw_x, draw_y, draw_width, draw_height, color, css_border_radius());
 		}
 		break;
 	}
@@ -183,7 +166,7 @@ void litehtml::win32_container::load_image( const wchar_t* src, const wchar_t* b
 	make_url(src, baseurl, url);
 	if(m_images.find(url.c_str()) == m_images.end())
 	{
-		Bitmap* img = get_image(url.c_str());
+		uint_ptr img = get_image(url.c_str());
 		if(img)
 		{ 
 			m_images[url.c_str()] = img;
@@ -199,8 +182,7 @@ void litehtml::win32_container::get_image_size( const wchar_t* src, const wchar_
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
-		sz.width	= (int) img->second->GetWidth();
-		sz.height	= (int) img->second->GetHeight();
+		get_img_size(img->second, sz);
 	}
 }
 
@@ -213,16 +195,7 @@ void litehtml::win32_container::draw_image( uint_ptr hdc, const wchar_t* src, co
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
-		Graphics graphics((HDC) hdc);
-		if(m_hClipRgn)
-		{
-			graphics.SetClip(m_hClipRgn);
-		}
-		graphics.SetInterpolationMode(InterpolationModeNearestNeighbor);
-		graphics.SetPixelOffsetMode(PixelOffsetModeHalf);
-		graphics.DrawImage(img->second, pos.x, pos.y, pos.width, pos.height);
-
-		img->second->GetWidth();
+		draw_img((HDC) hdc, img->second, pos);
 	}
 
 	release_clip((HDC) hdc);
@@ -234,7 +207,7 @@ void litehtml::win32_container::clear_images()
 	{
 		if(i->second)
 		{
-			delete i->second;
+			free_image(i->second);
 		}
 	}
 	m_images.clear();
@@ -255,15 +228,8 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
-		int img_width	= img->second->GetWidth();
-		int img_height	= img->second->GetHeight();
-
-		Graphics graphics((HDC) hdc);
-		graphics.SetInterpolationMode(InterpolationModeNearestNeighbor);
-		graphics.SetPixelOffsetMode(PixelOffsetModeHalf);
-
-		Region reg(Rect(draw_pos.left(), draw_pos.top(), draw_pos.width, draw_pos.height));
-		graphics.SetClip(&reg);
+		litehtml::size img_sz;
+		get_img_size(img->second, img_sz);
 
 		litehtml::position pos = draw_pos;
 
@@ -272,7 +238,7 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 			pos.x += (int) bg_pos.x.val();
 		} else
 		{
-			pos.x += (int) ((float) (draw_pos.width - img_width) * bg_pos.x.val() / 100.0);
+			pos.x += (int) ((float) (draw_pos.width - img_sz.width) * bg_pos.x.val() / 100.0);
 		}
 
 		if(bg_pos.y.units() != css_units_percentage)
@@ -280,120 +246,10 @@ void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* im
 			pos.y += (int) bg_pos.y.val();
 		} else
 		{
-			pos.y += (int) ( (float) (draw_pos.height - img_height) * bg_pos.y.val() / 100.0);
+			pos.y += (int) ( (float) (draw_pos.height - img_sz.height) * bg_pos.y.val() / 100.0);
 		}
 
-		switch(repeat)
-		{
-		case background_repeat_no_repeat:
-			{
-				graphics.DrawImage(img->second, pos.x, pos.y, img->second->GetWidth(), img->second->GetHeight());
-			}
-			break;
-		case background_repeat_repeat_x:
-			{
-				Gdiplus::CachedBitmap bmp(img->second, &graphics);
-				for(int x = pos.left(); x < pos.right(); x += img->second->GetWidth())
-				{
-					graphics.DrawCachedBitmap(&bmp, x, pos.top());
-				}
-
-				for(int x = pos.left() - img->second->GetWidth(); x + (int) img->second->GetWidth() > draw_pos.left(); x -= img->second->GetWidth())
-				{
-					graphics.DrawCachedBitmap(&bmp, x, pos.top());
-				}
-			}
-			break;
-		case background_repeat_repeat_y:
-			{
-				Gdiplus::CachedBitmap bmp(img->second, &graphics);
-				for(int y = pos.top(); y < pos.bottom(); y += img->second->GetHeight())
-				{
-					graphics.DrawCachedBitmap(&bmp, pos.left(), y);
-				}
-
-				for(int y = pos.top() - img->second->GetHeight(); y + (int) img->second->GetHeight() > draw_pos.top(); y -= img->second->GetHeight())
-				{
-					graphics.DrawCachedBitmap(&bmp, pos.left(), y);
-				}
-			}
-			break;
-		case background_repeat_repeat:
-			{
-				Gdiplus::CachedBitmap bmp(img->second, &graphics);
-				if(img->second->GetHeight() >= 0)
-				{
-					for(int x = pos.left(); x < pos.right(); x += img->second->GetWidth())
-					{
-						for(int y = pos.top(); y < pos.bottom(); y += img->second->GetHeight())
-						{
-							graphics.DrawCachedBitmap(&bmp, x, y);
-						}
-					}
-				}
-			}
-			break;
-		}
-	}
-
-	release_clip((HDC) hdc);
-}
-
-void litehtml::win32_container::draw_borders( uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos )
-{
-	apply_clip((HDC) hdc);
-
-	// draw left border
-	if(borders.left.width.val() != 0 && borders.left.style > border_style_hidden)
-	{
-		HPEN pen = CreatePen(PS_SOLID, 1, RGB(borders.left.color.red, borders.left.color.green, borders.left.color.blue));
-		HPEN oldPen = (HPEN) SelectObject((HDC) hdc, pen);
-		for(int x = 0; x < borders.left.width.val(); x++)
-		{
-			MoveToEx((HDC) hdc, draw_pos.left() + x, draw_pos.top(), NULL);
-			LineTo((HDC) hdc, draw_pos.left() + x, draw_pos.bottom());
-		}
-		SelectObject((HDC) hdc, oldPen);
-		DeleteObject(pen);
-	}
-	// draw right border
-	if(borders.right.width.val() != 0 && borders.right.style > border_style_hidden)
-	{
-		HPEN pen = CreatePen(PS_SOLID, 1, RGB(borders.right.color.red, borders.right.color.green, borders.right.color.blue));
-		HPEN oldPen = (HPEN) SelectObject((HDC) hdc, pen);
-		for(int x = 0; x < borders.right.width.val(); x++)
-		{
-			MoveToEx((HDC) hdc, draw_pos.right() - x - 1, draw_pos.top(), NULL);
-			LineTo((HDC) hdc, draw_pos.right() - x - 1, draw_pos.bottom());
-		}
-		SelectObject((HDC) hdc, oldPen);
-		DeleteObject(pen);
-	}
-	// draw top border
-	if(borders.top.width.val() != 0 && borders.top.style > border_style_hidden)
-	{
-		HPEN pen = CreatePen(PS_SOLID, 1, RGB(borders.top.color.red, borders.top.color.green, borders.top.color.blue));
-		HPEN oldPen = (HPEN) SelectObject((HDC) hdc, pen);
-		for(int y = 0; y < borders.top.width.val(); y++)
-		{
-			MoveToEx((HDC) hdc, draw_pos.left(), draw_pos.top() + y, NULL);
-			LineTo((HDC) hdc, draw_pos.right(), draw_pos.top() + y);
-		}
-		SelectObject((HDC) hdc, oldPen);
-		DeleteObject(pen);
-	}
-	// draw bottom border
-	if(borders.bottom.width.val() != 0 && borders.bottom.style > border_style_hidden)
-	{
-		HPEN pen = CreatePen(PS_SOLID, 1, RGB(borders.bottom.color.red, borders.bottom.color.green, borders.bottom.color.blue));
-		HPEN oldPen = (HPEN) SelectObject((HDC) hdc, pen);
-		for(int y = 0; y < borders.bottom.width.val(); y++)
-		{
-			MoveToEx((HDC) hdc, draw_pos.left(), draw_pos.bottom() - y - 1, NULL);
-			LineTo((HDC) hdc, draw_pos.right(), draw_pos.bottom() - y - 1);
-		}
-		SelectObject((HDC) hdc, oldPen);
-		DeleteObject(pen);
+		draw_img_bg((HDC) hdc, img->second, draw_pos, pos, repeat, attachment);
 	}
 
 	release_clip((HDC) hdc);
