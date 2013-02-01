@@ -1,12 +1,11 @@
 #pragma once
-#include <GdiPlus.h>
 
 namespace litehtml
 {
 	class win32_container : public document_container
 	{
 	public:
-		typedef std::map<std::wstring, Gdiplus::Bitmap*>	images_map;
+		typedef std::map<std::wstring, litehtml::uint_ptr>	images_map;
 	
 		protected:
 		
@@ -25,7 +24,7 @@ namespace litehtml
 		virtual int			get_text_base_line(uint_ptr hdc, uint_ptr hFont);
 		virtual int			text_width(uint_ptr hdc, const wchar_t* text, uint_ptr hFont);
 		virtual void		draw_text(uint_ptr hdc, const wchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos);
-		virtual void		fill_rect(uint_ptr hdc, const litehtml::position& pos, litehtml::web_color color);
+		virtual void		fill_rect(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius);
 		virtual uint_ptr	get_temp_dc();
 		virtual void		release_temp_dc(uint_ptr hdc);
 		virtual int			pt_to_px(int pt);
@@ -40,7 +39,6 @@ namespace litehtml
 											const litehtml::css_position& bg_pos,
 											litehtml::background_repeat repeat, 
 											litehtml::background_attachment attachment);
-		virtual void		draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos);
 
 		virtual int			get_default_font_size();
 		virtual	wchar_t		toupper(const wchar_t c);
@@ -49,11 +47,18 @@ namespace litehtml
 		virtual void		del_clip();
 
 	protected:
-		void						apply_clip(HDC hdc);
-		void						release_clip(HDC hdc);
-		void						clear_images();
-		virtual void				make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
-		virtual Gdiplus::Bitmap*	get_image(LPCWSTR url) = 0;
-		virtual void				get_client_rect(litehtml::position& client) = 0;
+		void				apply_clip(HDC hdc);
+		void				release_clip(HDC hdc);
+		void				clear_images();
+		virtual void		make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
+		virtual uint_ptr	get_image(LPCWSTR url) = 0;
+		virtual void		free_image(uint_ptr img) = 0;
+		virtual void		get_client_rect(litehtml::position& client) = 0;
+		virtual void		draw_ellipse(HDC hdc, int x, int y, int width, int height, const web_color& color, int line_width) = 0;
+		virtual void		fill_ellipse(HDC hdc, int x, int y, int width, int height, const web_color& color) = 0;
+		virtual void		fill_rect(HDC hdc, int x, int y, int width, int height, const web_color& color, const litehtml::css_border_radius& radius) = 0;
+		virtual void		get_img_size(litehtml::uint_ptr img, litehtml::size& sz) = 0;
+		virtual void		draw_img(HDC hdc, litehtml::uint_ptr img, const litehtml::position& pos) = 0;
+		virtual void		draw_img_bg(HDC hdc, litehtml::uint_ptr img, const litehtml::position& draw_pos, const litehtml::position& pos, litehtml::background_repeat repeat, litehtml::background_attachment attachment) = 0;
 	};
 }

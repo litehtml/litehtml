@@ -15,3 +15,10 @@
 #include <shlwapi.h>
 #include "..\include\litehtml.h"
 #include <Wininet.h>
+
+#define TLB_USE_TXDIB
+#define TLB_USE_CAIRO
+#define TLB_NO_TLBPDK
+#define TLB_USE_HTTPREADER
+
+#include <tlbpdklib.h>

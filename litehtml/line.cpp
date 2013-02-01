@@ -17,20 +17,7 @@ void litehtml::line::add_element( element* el )
 		el->m_skip = true;
 	} else
 	{
-		if(!m_items.empty())
-		{
-			if(m_items.back()->is_white_space())
-			{
-				for(elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
-				{
-					if(!(*i)->is_white_space() && el->m_float == float_none)
-					{
-						last_space = m_items.back();
-						break;
-					}
-				}
-			}
-		}
+		last_space = get_last_space();
 	}
 
 	if(el->is_break())
@@ -201,7 +188,13 @@ void litehtml::line::init( int left, int right, int top, int line_height )
 
 bool litehtml::line::have_room_for( element* el )
 {
-	if(m_left + el->width() > m_line_right)
+	int ls_width = 0;
+	element* last_space = get_last_space();
+	if(last_space)
+	{
+		ls_width = last_space->width();
+	}
+	if(m_left + el->width() + ls_width > m_line_right)
 	{
 		return false;
 	}
@@ -223,4 +216,24 @@ bool litehtml::line::empty() const
 		}
 	}
 	return true;
+}
+
+litehtml::element* litehtml::line::get_last_space( )
+{
+	element* last_space = 0;
+	if(!m_items.empty())
+	{
+		if(m_items.back()->is_white_space())
+		{
+			for(elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
+			{
+				if(!(*i)->is_white_space() && (*i)->m_float == float_none)
+				{
+					last_space = m_items.back();
+					break;
+				}
+			}
+		}
+	}
+	return last_space;
 }

@@ -214,7 +214,85 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 			add_property(L"border-top-left-radius-y", tokens[0].c_str(), baseurl);
 		}
 
-	} else if(!wcscmp(name, L"list-style"))
+	} else 
+
+	// Parse border-radius shorthand properties 
+	if(!wcscmp(name, L"border-radius"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L"/");
+		if(tokens.size() == 1)
+		{
+			add_property(L"border-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-radius-y", tokens[0].c_str(), baseurl);
+		} else if(tokens.size() >= 2)
+		{
+			add_property(L"border-radius-x", tokens[0].c_str(), baseurl);
+			add_property(L"border-radius-y", tokens[1].c_str(), baseurl);
+		}
+	} else if(!wcscmp(name, L"border-radius-x"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ");
+		if(tokens.size() == 1)
+		{
+			add_property(L"border-top-left-radius-x",		tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-x",		tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-x",	tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-x",	tokens[0].c_str(), baseurl);
+		} else if(tokens.size() == 2)
+		{
+			add_property(L"border-top-left-radius-x",		tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-x",		tokens[1].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-x",	tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-x",	tokens[1].c_str(), baseurl);
+		} else if(tokens.size() == 3)
+		{
+			add_property(L"border-top-left-radius-x",		tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-x",		tokens[1].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-x",	tokens[2].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-x",	tokens[1].c_str(), baseurl);
+		} else if(tokens.size() == 4)
+		{
+			add_property(L"border-top-left-radius-x",		tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-x",		tokens[1].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-x",	tokens[2].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-x",	tokens[3].c_str(), baseurl);
+		}
+	} else if(!wcscmp(name, L"border-radius-y"))
+	{
+		string_vector tokens;
+		tokenize(val, tokens, L" ");
+		if(tokens.size() == 1)
+		{
+			add_property(L"border-top-left-radius-y",		tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-y",		tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-y",	tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-y",	tokens[0].c_str(), baseurl);
+		} else if(tokens.size() == 2)
+		{
+			add_property(L"border-top-left-radius-y",		tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-y",		tokens[1].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-y",	tokens[0].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-y",	tokens[1].c_str(), baseurl);
+		} else if(tokens.size() == 3)
+		{
+			add_property(L"border-top-left-radius-y",		tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-y",		tokens[1].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-y",	tokens[2].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-y",	tokens[1].c_str(), baseurl);
+		} else if(tokens.size() == 4)
+		{
+			add_property(L"border-top-left-radius-y",		tokens[0].c_str(), baseurl);
+			add_property(L"border-top-right-radius-y",		tokens[1].c_str(), baseurl);
+			add_property(L"border-bottom-right-radius-y",	tokens[2].c_str(), baseurl);
+			add_property(L"border-bottom-left-radius-y",	tokens[3].c_str(), baseurl);
+		}
+	}
+	
+
+	// Parse list-style shorthand properties 
+	if(!wcscmp(name, L"list-style"))
 	{
 		string_vector tokens;
 		tokenize(val, tokens, L" ", L"", L"()");
@@ -236,11 +314,17 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 				}
 			}
 		}
-	} else if(!wcscmp(name, L"background"))
+	} else 
+		
+	// Parse background shorthand properties 
+	if(!wcscmp(name, L"background"))
 	{
 		parse_short_background(val, baseurl);
 
-	} else if(!wcscmp(name, L"margin") || !wcscmp(name, L"padding"))
+	} else 
+		
+	// Parse margin and padding shorthand properties 
+	if(!wcscmp(name, L"margin") || !wcscmp(name, L"padding"))
 	{
 		string_vector tokens;
 		tokenize(val, tokens, L" ");
@@ -269,19 +353,31 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 			m_properties[std::wstring(name) + L"-right"]	= tokens[0];
 			m_properties[std::wstring(name) + L"-left"]		= tokens[0];
 		}
-	} else if(	!wcscmp(name, L"border-left") || !wcscmp(name, L"border-right") ||
-				!wcscmp(name, L"border-top")  || !wcscmp(name, L"border-bottom"))
+	} else 
+		
+		
+	// Parse border-* shorthand properties 
+	if(	!wcscmp(name, L"border-left") || 
+		!wcscmp(name, L"border-right") ||
+		!wcscmp(name, L"border-top")  || 
+		!wcscmp(name, L"border-bottom"))
 	{
 		parse_short_border(name, val);
-	} else if(!wcscmp(name, L"border"))
+	} else 
+		
+	// Parse border shorthand properties 
+	if(!wcscmp(name, L"border"))
 	{
 		parse_short_border(L"border-left", val);
 		parse_short_border(L"border-top", val);
 		parse_short_border(L"border-right", val);
 		parse_short_border(L"border-bottom", val);
-	} else if(	!wcscmp(name, L"border-width") ||
-				!wcscmp(name, L"border-style")  ||
-				!wcscmp(name, L"border-color") )
+	} else 
+		
+	// Parse border-width/style/color shorthand properties 
+	if(	!wcscmp(name, L"border-width") ||
+		!wcscmp(name, L"border-style")  ||
+		!wcscmp(name, L"border-color") )
 	{
 		string_vector nametokens;
 		tokenize(name, nametokens, L"-");
@@ -313,7 +409,10 @@ void litehtml::style::add_property( const wchar_t* name, const wchar_t* val, con
 			m_properties[nametokens[0] + L"-right-"		+ nametokens[1]]	= tokens[0];
 			m_properties[nametokens[0] + L"-left-"		+ nametokens[1]]	= tokens[0];
 		}
-	} else if(!wcscmp(name, L"font"))
+	} else 
+		
+	// Parse font shorthand properties 
+	if(!wcscmp(name, L"font"))
 	{
 		parse_short_font(val);
 	} else 

@@ -22,7 +22,7 @@ namespace litehtml
 		virtual int			line_height(uint_ptr hdc, uint_ptr hFont) = 0;
 		virtual int			text_width(uint_ptr hdc, const wchar_t* text, uint_ptr hFont) = 0;
 		virtual void		draw_text(uint_ptr hdc, const wchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;
-		virtual void		fill_rect(uint_ptr hdc, const litehtml::position& pos, litehtml::web_color color) = 0;
+		virtual void		fill_rect(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius) = 0;
 		virtual uint_ptr	get_temp_dc() = 0;
 		virtual void		release_temp_dc(uint_ptr hdc) = 0;
 		virtual int			pt_to_px(int pt) = 0;

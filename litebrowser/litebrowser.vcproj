@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="tidy\include"
+				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -65,6 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;D:\WORK\TrueLaunchBar\tlb-pdk-public\lib\$(ConfigurationName)\$(PlatformName)\&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -119,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="tidy\include"
+				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_TOOLBAR"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -139,7 +140,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="uxtheme.lib"
 				LinkIncremental="2"
+				AdditionalLibraryDirectories="&quot;D:\WORK\TrueLaunchBar\tlb-pdk-public\lib\$(ConfigurationName)\$(PlatformName)\&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -194,7 +197,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="tidy\include"
+				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -214,6 +217,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;D:\WORK\TrueLaunchBar\tlb-pdk-public\lib\$(ConfigurationName)\$(PlatformName)\&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -272,7 +276,7 @@
 				AdditionalOptions="/MP"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="tidy\include"
+				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -291,7 +295,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="uxtheme.lib"
 				LinkIncremental="1"
+				AdditionalLibraryDirectories="&quot;D:\WORK\TrueLaunchBar\tlb-pdk-public\lib\$(ConfigurationName)\$(PlatformName)\&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -335,7 +341,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\cairo_container.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\dib.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\downloader.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\gdiplus_container.cpp"
 				>
 			</File>
 			<File
@@ -369,7 +387,19 @@
 				>
 			</File>
 			<File
+				RelativePath=".\cairo_container.h"
+				>
+			</File>
+			<File
+				RelativePath=".\dib.h"
+				>
+			</File>
+			<File
 				RelativePath=".\downloader.h"
+				>
+			</File>
+			<File
+				RelativePath=".\gdiplus_container.h"
 				>
 			</File>
 			<File

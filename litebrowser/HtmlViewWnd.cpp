@@ -41,7 +41,6 @@ CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 
 CHTMLViewWnd::~CHTMLViewWnd(void)
 {
-	clear_images();
 }
 
 LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam )
@@ -76,32 +75,14 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 			break;
 		case WM_PAINT:
 			{
-
-/*
 				PAINTSTRUCT ps;
 				HDC hdc = BeginPaint(hWnd, &ps);
 
-				FillRect(hdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW + 1));
+				simpledib::dib dib;
 
-				pThis->OnPaint(hdc, &ps.rcPaint);
-
-				EndPaint(hWnd, &ps);
-*/
-
-				RECT rcClient;
-				GetClientRect(pThis->m_hWnd, &rcClient);
-
-				PAINTSTRUCT ps;
-				HDC hdc = BeginPaint(hWnd, &ps);
-
-				CMemDC dc;
-				HDC memdc = dc.beginPaint(hdc, &ps.rcPaint);
-
-				FillRect(memdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW + 1));
-
-				pThis->OnPaint(memdc, &ps.rcPaint);
-
-				dc.endPaint();
+				dib.beginPaint(hdc, &ps.rcPaint);
+				pThis->OnPaint(&dib, &ps.rcPaint);
+				dib.endPaint();
 
 				EndPaint(hWnd, &ps);
 			}
@@ -160,18 +141,16 @@ void CHTMLViewWnd::OnCreate()
 
 }
 
-void CHTMLViewWnd::OnPaint( HDC hdc, LPCRECT rcClip )
+void CHTMLViewWnd::OnPaint( simpledib::dib* dib, LPRECT rcDraw )
 {
 	if(m_doc)
 	{
-		if(rcClip)
-		{
-			litehtml::position clip(rcClip->left, rcClip->top, rcClip->right - rcClip->left, rcClip->bottom - rcClip->top);
-			m_doc->draw((litehtml::uint_ptr) hdc, -m_left, -m_top, &clip);
-		} else
-		{
-			m_doc->draw((litehtml::uint_ptr) hdc, -m_left, -m_top, 0);
-		}
+		cairo_dev cr(dib);
+		cairo_set_source_rgb(cr, 1, 1, 1);
+		cairo_paint(cr);
+
+		litehtml::position clip(rcDraw->left, rcDraw->top, rcDraw->right - rcDraw->left, rcDraw->bottom - rcDraw->top);
+		m_doc->draw((litehtml::uint_ptr) dib, -m_left, -m_top, &clip);
 	}
 }
 
@@ -225,22 +204,30 @@ void CHTMLViewWnd::render()
 
 	RECT rcClient;
 	GetClientRect(m_hWnd, &rcClient);
-	m_doc->render(rcClient.right - rcClient.left);
 
-	m_max_top = m_doc->height() - (rcClient.bottom - rcClient.top);
+	int width	= rcClient.right - rcClient.left;
+	int height	= rcClient.bottom - rcClient.top;
+
+	m_doc->render(width);
+
+	m_max_top = m_doc->height() - height;
 	if(m_max_top < 0) m_max_top = 0;
 
-	m_max_left = m_doc->width() - (rcClient.right - rcClient.left);
+	m_max_left = m_doc->width() - width;
 	if(m_max_left < 0) m_max_left = 0;
 
-	redraw();
+	redraw(NULL, FALSE);
 }
 
-void CHTMLViewWnd::redraw()
+void CHTMLViewWnd::redraw(LPRECT rcDraw, BOOL update)
 {
 	if(m_hWnd)
 	{
-		InvalidateRect(m_hWnd, NULL, TRUE);
+		InvalidateRect(m_hWnd, rcDraw, TRUE);
+		if(update)
+		{
+			UpdateWindow(m_hWnd);
+		}
 	}
 }
 
@@ -373,8 +360,7 @@ void CHTMLViewWnd::OnKeyDown( UINT vKey )
 void CHTMLViewWnd::refresh()
 {
 	open(m_doc_path.c_str());
-	InvalidateRect(m_hWnd, NULL, TRUE);
-	UpdateWindow(m_hWnd);
+	redraw(NULL, TRUE);
 }
 
 void CHTMLViewWnd::set_caption( const wchar_t* caption )
@@ -475,7 +461,7 @@ void CHTMLViewWnd::OnMouseMove( int x, int y )
 				rcRedraw.right	= box->right();
 				rcRedraw.top	= box->top();
 				rcRedraw.bottom	= box->bottom();
-				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
+				redraw(&rcRedraw, FALSE);
 			}
 			UpdateWindow(m_hWnd);
 			update_cursor();
@@ -483,8 +469,45 @@ void CHTMLViewWnd::OnMouseMove( int x, int y )
 	}
 }
 
-Gdiplus::Bitmap* CHTMLViewWnd::get_image( LPCWSTR url )
+CTxDIB* CHTMLViewWnd::get_image( LPCWSTR url )
 {
+	CTxDIB* img = NULL;
+
+	CRemotedFile rf;
+
+	HANDLE hFile = rf.Open(url);
+	if(hFile != INVALID_HANDLE_VALUE)
+	{
+		DWORD szHigh;
+		DWORD szLow = GetFileSize(hFile, &szHigh);
+		HANDLE hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, szHigh, szLow, NULL);
+		if(hMapping)
+		{
+			SIZE_T memSize;
+			if(szHigh)
+			{
+				memSize = MAXDWORD;
+			} else
+			{
+				memSize = szLow;
+			}
+			LPVOID data = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, memSize);
+
+			img = new CTxDIB;
+			if(!img->load((LPBYTE) data, (DWORD) memSize))
+			{
+				delete img;
+				img = NULL;
+			}
+
+			UnmapViewOfFile(data);
+			CloseHandle(hMapping);
+		}
+	}
+
+	return img;
+
+/*
 	Gdiplus::Bitmap* img = NULL;
 
 	CRemotedFile rf;
@@ -532,7 +555,8 @@ Gdiplus::Bitmap* CHTMLViewWnd::get_image( LPCWSTR url )
 		}
 	}
 
-	return img;
+	return (uint_ptr) img;
+*/
 }
 
 void CHTMLViewWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el )
@@ -556,7 +580,7 @@ void CHTMLViewWnd::OnMouseLeave()
 				rcRedraw.right	= box->right();
 				rcRedraw.top	= box->top();
 				rcRedraw.bottom	= box->bottom();
-				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
+				redraw(&rcRedraw, FALSE);
 			}
 			UpdateWindow(m_hWnd);
 		}
@@ -579,7 +603,7 @@ void CHTMLViewWnd::OnLButtonDown( int x, int y )
 				rcRedraw.right	= box->right();
 				rcRedraw.top	= box->top();
 				rcRedraw.bottom	= box->bottom();
-				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
+				redraw(&rcRedraw, FALSE);
 			}
 			UpdateWindow(m_hWnd);
 		}
@@ -603,7 +627,7 @@ void CHTMLViewWnd::OnLButtonUp( int x, int y )
 				rcRedraw.right	= box->right();
 				rcRedraw.top	= box->top();
 				rcRedraw.bottom	= box->bottom();
-				InvalidateRect(m_hWnd, &rcRedraw, TRUE);
+				redraw(&rcRedraw, FALSE);
 			}
 			UpdateWindow(m_hWnd);
 		}
@@ -690,3 +714,4 @@ void CHTMLViewWnd::get_client_rect( litehtml::position& client )
 	client.width	= rcClient.right - rcClient.left;
 	client.height	= rcClient.bottom - rcClient.top;
 }
+
