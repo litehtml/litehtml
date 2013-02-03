@@ -6,20 +6,10 @@
 
 cairo_container::cairo_container(void)
 {
-	m_hTheme = OpenThemeData(NULL, TEXT("WINDOW"));
-	m_hClipRgn = NULL;
 }
 
 cairo_container::~cairo_container(void)
 {
-	if(m_hClipRgn)
-	{
-		DeleteObject(m_hClipRgn);
-	}
-	if(m_hTheme)
-	{
-		CloseThemeData(m_hTheme);
-	}
 	clear_images();
 }
 
@@ -203,8 +193,6 @@ int cairo_container::get_text_base_line( litehtml::uint_ptr hdc, litehtml::uint_
 
 void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, litehtml::list_style_type marker_type, int x, int y, int height, const litehtml::web_color& color )
 {
-	apply_clip(get_hdc(hdc));
-
 	int top_margin = height / 3;
 
 	int draw_x		= x;
@@ -230,7 +218,6 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, litehtml::list_s
 		}
 		break;
 	}
-	release_clip(get_hdc(hdc));
 }
 
 void cairo_container::load_image( const wchar_t* src, const wchar_t* baseurl )
@@ -262,127 +249,94 @@ void cairo_container::get_image_size( const wchar_t* src, const wchar_t* baseurl
 
 void cairo_container::draw_image( litehtml::uint_ptr hdc, const wchar_t* src, const wchar_t* baseurl, const litehtml::position& pos )
 {
-	apply_clip(get_hdc(hdc));
+	cairo_dev cr(get_dib(hdc));
+	apply_clip(cr);
 
 	std::wstring url;
 	make_url(src, baseurl, url);
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
-		img->second->draw(get_hdc(hdc), pos.x, pos.y, pos.width, pos.height);
+		cr.draw_image(img->second, pos.x, pos.y, pos.width, pos.height);
 	}
-
-	release_clip(get_hdc(hdc));
 }
 
 void cairo_container::draw_background( litehtml::uint_ptr hdc, const wchar_t* image, const wchar_t* baseurl, const litehtml::position& draw_pos, const litehtml::css_position& bg_pos, litehtml::background_repeat repeat, litehtml::background_attachment attachment )
 {
-	apply_clip(get_hdc(hdc));
+	cairo_dev cr(get_dib(hdc));
+	apply_clip(cr);
+
+	cairo_rectangle(cr, draw_pos.x, draw_pos.y, draw_pos.width, draw_pos.height);
+	cairo_clip(cr);
 
 	std::wstring url;
 	make_url(image, baseurl, url);
 
-	images_map::iterator img = m_images.find(url.c_str());
-	if(img != m_images.end())
+	images_map::iterator img_i = m_images.find(url.c_str());
+	if(img_i != m_images.end())
 	{
-		CTxDIB* bgbmp = img->second;
-
+		CTxDIB* bgbmp = img_i->second;
+		
 		litehtml::size img_sz;
-		img_sz.width = bgbmp->getWidth();
+		img_sz.width	= bgbmp->getWidth();
 		img_sz.height	= bgbmp->getHeight();
 
-		litehtml::position pos = draw_pos;
+		int bg_x = draw_pos.x;
+		int bg_y = draw_pos.y;
+
 
 		if(bg_pos.x.units() != litehtml::css_units_percentage)
 		{
-			pos.x += (int) bg_pos.x.val();
+			bg_x += (int) bg_pos.x.val();
 		} else
 		{
-			pos.x += (int) ((float) (draw_pos.width - img_sz.width) * bg_pos.x.val() / 100.0);
+			bg_x += (int) ((float) (draw_pos.width - img_sz.width) * bg_pos.x.val() / 100.0);
 		}
 
 		if(bg_pos.y.units() != litehtml::css_units_percentage)
 		{
-			pos.y += (int) bg_pos.y.val();
+			bg_y += (int) bg_pos.y.val();
 		} else
 		{
-			pos.y += (int) ( (float) (draw_pos.height - img_sz.height) * bg_pos.y.val() / 100.0);
+			bg_y += (int) ( (float) (draw_pos.height - img_sz.height) * bg_pos.y.val() / 100.0);
 		}
 
-		int img_width	= bgbmp->getWidth();
-		int img_height	= bgbmp->getHeight();
-
-		HRGN oldClip = CreateRectRgn(0, 0, 0, 0);
-		if(GetClipRgn(get_hdc(hdc), oldClip) != 1)
-		{
-			DeleteObject(oldClip);
-			oldClip = NULL;
-		}
-
-		POINT pt_wnd_org;
-		GetWindowOrgEx(get_hdc(hdc), &pt_wnd_org);
-
-		HRGN clipRgn = CreateRectRgn(draw_pos.left() - pt_wnd_org.x, draw_pos.top() - pt_wnd_org.y, draw_pos.right() - pt_wnd_org.x, draw_pos.bottom() - pt_wnd_org.y);
-		ExtSelectClipRgn(get_hdc(hdc), clipRgn, RGN_AND);
+		cairo_surface_t* img = cairo_image_surface_create_for_data((unsigned char*) bgbmp->getBits(), CAIRO_FORMAT_ARGB32, bgbmp->getWidth(), bgbmp->getHeight(), bgbmp->getWidth() * 4);
+		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(img);
+		cairo_matrix_t flib_m;
+		cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
+		cairo_matrix_translate(&flib_m, -bg_x, -bg_y);
+		cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
+		cairo_pattern_set_matrix (pattern, &flib_m);
 
 		switch(repeat)
 		{
 		case litehtml::background_repeat_no_repeat:
-			{
-				bgbmp->draw(get_hdc(hdc), pos.x, pos.y);
-			}
+			cr.draw_image(bgbmp, bg_x, bg_y, bgbmp->getWidth(), bgbmp->getHeight());
 			break;
+
 		case litehtml::background_repeat_repeat_x:
-			{
-				for(int x = pos.left(); x < pos.right(); x += bgbmp->getWidth())
-				{
-					bgbmp->draw(get_hdc(hdc), x, pos.top());
-				}
-
-				for(int x = pos.left() - bgbmp->getWidth(); x + (int) bgbmp->getWidth() > draw_pos.left(); x -= bgbmp->getWidth())
-				{
-					bgbmp->draw(get_hdc(hdc), x, pos.top());
-				}
-			}
+			cairo_set_source(cr, pattern);
+			cairo_rectangle(cr, draw_pos.left(), bg_y, draw_pos.width, bgbmp->getHeight());
+			cairo_fill(cr);
 			break;
+
 		case litehtml::background_repeat_repeat_y:
-			{
-				for(int y = pos.top(); y < pos.bottom(); y += bgbmp->getHeight())
-				{
-					bgbmp->draw(get_hdc(hdc), pos.left(), y);
-				}
-
-				for(int y = pos.top() - bgbmp->getHeight(); y + (int) bgbmp->getHeight() > draw_pos.top(); y -= bgbmp->getHeight())
-				{
-					bgbmp->draw(get_hdc(hdc), pos.left(), y);
-				}
-			}
+			cairo_set_source(cr, pattern);
+			cairo_rectangle(cr, bg_x, draw_pos.top(), bgbmp->getWidth(), draw_pos.height);
+			cairo_fill(cr);
 			break;
+
 		case litehtml::background_repeat_repeat:
-			{
-				if(bgbmp->getHeight() >= 0)
-				{
-					for(int x = pos.left(); x < pos.right(); x += bgbmp->getWidth())
-					{
-						for(int y = pos.top(); y < pos.bottom(); y += bgbmp->getHeight())
-						{
-							bgbmp->draw(get_hdc(hdc), x, y);
-						}
-					}
-				}
-			}
+			cairo_set_source(cr, pattern);
+			cairo_rectangle(cr, draw_pos.left(), draw_pos.top(), draw_pos.width, draw_pos.height);
+			cairo_fill(cr);
 			break;
 		}
 
-		SelectClipRgn(get_hdc(hdc), oldClip);
-		DeleteObject(clipRgn);
-		if(oldClip)
-		{
-			DeleteObject(oldClip);
-		}
+		cairo_pattern_destroy(pattern);
+		cairo_surface_destroy(img);
 	}
-
-	release_clip(get_hdc(hdc));
 }
 
 void cairo_container::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg)
@@ -739,42 +693,12 @@ void cairo_container::del_clip()
 	}
 }
 
-void cairo_container::apply_clip(HDC hdc)
-{
-	if(m_hClipRgn)
-	{
-		DeleteObject(m_hClipRgn);
-		m_hClipRgn = NULL;
-	}
-
-	if(!m_clips.empty())
-	{
-		POINT ptView = {0, 0};
-		GetWindowOrgEx(hdc, &ptView);
-
-		litehtml::position clip_pos = m_clips.back();
-		m_hClipRgn = CreateRectRgn(clip_pos.left() - ptView.x, clip_pos.top() - ptView.y, clip_pos.right() - ptView.x, clip_pos.bottom() - ptView.y);
-		SelectClipRgn(hdc, m_hClipRgn);
-	}
-}
-
 void cairo_container::apply_clip( cairo_t* cr )
 {
 	for(litehtml::position::vector::iterator iter = m_clips.begin(); iter != m_clips.end(); iter++)
 	{
 		cairo_rectangle(cr, iter->x, iter->y, iter->width, iter->height);
 		cairo_clip(cr);
-	}
-}
-
-void cairo_container::release_clip(HDC hdc)
-{
-	SelectClipRgn(hdc, NULL);
-
-	if(m_hClipRgn)
-	{
-		DeleteObject(m_hClipRgn);
-		m_hClipRgn = NULL;
 	}
 }
 
@@ -840,6 +764,37 @@ cairo_dev::~cairo_dev()
 {
 	cairo_destroy(m_cr);
 	cairo_surface_destroy(m_surface);
+}
+
+void cairo_dev::draw_image( CTxDIB* bmp, int x, int y, int cx, int cy )
+{
+	cairo_save(m_cr);
+
+	cairo_matrix_t flib_m;
+	cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
+
+	cairo_surface_t* img = NULL;
+
+	CTxDIB rbmp;
+
+	if(cx != bmp->getWidth() || cy != bmp->getHeight())
+	{
+		bmp->resample(cx, cy, &rbmp);
+		img = cairo_image_surface_create_for_data((unsigned char*) rbmp.getBits(), CAIRO_FORMAT_ARGB32, rbmp.getWidth(), rbmp.getHeight(), rbmp.getWidth() * 4);
+		cairo_matrix_translate(&flib_m, 0, -rbmp.getHeight());
+		cairo_matrix_translate(&flib_m, x, -y);
+	} else
+	{
+		img = cairo_image_surface_create_for_data((unsigned char*) bmp->getBits(), CAIRO_FORMAT_ARGB32, bmp->getWidth(), bmp->getHeight(), bmp->getWidth() * 4);
+		cairo_matrix_translate(&flib_m, 0, -bmp->getHeight());
+		cairo_matrix_translate(&flib_m, x, -y);
+	}
+
+	cairo_transform(m_cr, &flib_m);
+	cairo_set_source_surface(m_cr, img, 0, 0);
+	cairo_paint(m_cr);
+
+	cairo_restore(m_cr);
 }
 
 //////////////////////////////////////////////////////////////////////////

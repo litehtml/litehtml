@@ -13,6 +13,7 @@ public:
 	{
 		cairo_set_source_rgba(m_cr, color.red / 255.0, color.green / 255.0, color.blue / 255.0, color.alpha / 255.0);
 	}
+	void draw_image(CTxDIB* bmp, int x, int y, int cx, int cy);
 };
 
 class cairo_fnt
@@ -50,9 +51,6 @@ protected:
 
 	images_map					m_images;
 	litehtml::position::vector	m_clips;
-	HRGN						m_hClipRgn;
-	HTHEME						m_hTheme;
-
 public:
 	cairo_container(void);
 	virtual ~cairo_container(void);
@@ -96,11 +94,7 @@ protected:
 
 private:
 	simpledib::dib*				get_dib(litehtml::uint_ptr hdc)	{ return (simpledib::dib*) hdc;				}
-	HDC							get_hdc(litehtml::uint_ptr hdc)	{ return hdc ? get_dib(hdc)->hdc() : NULL;	}
-	double						cr_clr(BYTE clr)				{ return (double) clr / 255.0;				}
-	void						apply_clip(HDC hdc);
 	void						apply_clip(cairo_t* cr);
-	void						release_clip(HDC hdc);
 	void						clear_images();
 	void						add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg);
 };
