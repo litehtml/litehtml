@@ -443,7 +443,7 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 int litehtml::element::render( int x, int y, int max_width )
 {
-	if(m_class == L"test")
+	if(m_class == L"post-main")
 	{
 		int iii=0;
 		iii++;
@@ -513,7 +513,17 @@ int litehtml::element::render( int x, int y, int max_width )
 
 	calc_outlines(parent_width);
 
-	int ln_bottom = m_lines.back()->get_top() + m_lines.back()->get_height();
+	line::ptr lline = last_line();
+
+	int ln_bottom = lline->get_top() + lline->get_height();
+	if(!m_padding.bottom && !m_borders.bottom)
+	{
+		if(lline->get_margin_bottom() >= 0)
+		{
+			ln_bottom -= lline->get_margin_bottom();
+		}
+	}
+
 
 	if(!m_lines.empty())
 	{
@@ -718,6 +728,41 @@ int litehtml::element::get_font_size()
 	return m_font_size;
 }
 
+litehtml::line::ptr litehtml::element::last_line() const
+{
+	line::ptr ret;
+
+	if(!m_lines.empty())
+	{
+		ret = m_lines.back();
+	}
+
+	for(line::vector::const_reverse_iterator i = m_lines.rbegin(); i != m_lines.rend(); i++)
+	{
+		if(!(*i)->empty())
+		{
+			ret = (*i);
+			break;
+		}
+	}
+	return ret;
+}
+
+litehtml::line::ptr litehtml::element::first_line() const
+{
+	line::ptr ret;
+
+	for(line::vector::const_iterator i = m_lines.begin(); i != m_lines.end(); i++)
+	{
+		if(!(*i)->empty())
+		{
+			ret = (*i);
+			break;
+		}
+	}
+	return ret;
+}
+
 void litehtml::element::finish_line( int max_width )
 {
 	if(!m_lines.empty())
@@ -739,6 +784,12 @@ void litehtml::element::finish_line( int max_width )
 		if(prev_line && m_lines.back()->get_clear_floats() == clear_none)
 		{
 			top = prev_line->get_top() + prev_line->get_height() - min(m_lines.back()->get_margin_top(), prev_line->get_margin_bottom());
+		} else if(m_parent && !m_borders.top && !m_padding.top && m_margins.top >= 0 && m_float == float_none)
+		{
+			if(m_lines.back()->get_margin_top() >= 0)
+			{
+				top -= m_lines.back()->get_margin_top();
+			}
 		}
 
 		if(top != old_top)
@@ -756,13 +807,16 @@ void litehtml::element::finish_line( int max_width )
 	}
 }
 
-int litehtml::element::add_line( int max_width, element_clear clr, int el_width )
+int litehtml::element::add_line( int max_width, element_clear clr, int el_width, bool finish_prev )
 {
 	int top = 0;
 	
 	if(!m_lines.empty())
 	{
-		finish_line(max_width);
+		if(finish_prev)
+		{
+			finish_line(max_width);
+		}
 		top = m_lines.back()->get_top() + m_lines.back()->get_height();
 	}
 
@@ -1189,7 +1243,7 @@ void litehtml::element::fix_line_width( int max_width )
 	elements_vector els;
 	m_lines.back()->get_elements(els);
 	m_lines.pop_back();
-	add_line(max_width);
+	add_line(max_width, clear_none, 0, false);
 
 	for(elements_vector::iterator i = els.begin(); i != els.end(); i++)
 	{
@@ -1438,20 +1492,28 @@ void litehtml::element::parse_background()
 
 int litehtml::element::margin_top() const
 {
-//	if(m_lines.empty() || m_padding.top)
+	if(m_parent && !m_borders.top && !m_padding.top && m_margins.top >= 0 && in_normal_flow() && m_float == float_none)
 	{
-		return m_margins.top;
+		line::ptr ln = first_line();
+		if(ln && ln->get_margin_top()>= 0)
+		{
+			return max(m_margins.top, ln->get_margin_top());
+		}
 	}
-//	return max(m_lines.front().get_margin_top(), m_margins.top);
+	return m_margins.top;
 }
 
 int litehtml::element::margin_bottom() const
 {
-//	if(m_lines.empty() || m_padding.bottom)
+	if(m_parent && !m_borders.bottom && !m_padding.bottom && m_margins.bottom >= 0 && in_normal_flow() && m_float == float_none)
 	{
-		return m_margins.bottom;
+		line::ptr ln = last_line();
+		if(ln && ln->get_margin_bottom() >= 0)
+		{
+			return max(m_margins.bottom, ln->get_margin_bottom());
+		}
 	}
-//	return max(m_lines.front().get_margin_bottom(), m_margins.bottom);
+	return m_margins.bottom;
 }
 
 int litehtml::element::margin_left() const
@@ -2154,7 +2216,7 @@ bool litehtml::element::set_pseudo_class( const wchar_t* pclass, bool add )
 	return false;
 }
 
-bool litehtml::element::in_normal_flow()
+bool litehtml::element::in_normal_flow()  const
 {
 	if(m_el_position != element_position_absolute && m_display != display_none)
 	{

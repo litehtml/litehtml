@@ -833,7 +833,8 @@ utf8_str::utf8_str( LPCWSTR str )
 {
 	int sz = WideCharToMultiByte(CP_UTF8, 0, str, -1, m_str, 0, NULL, NULL) + 1;
 	m_str = new CHAR[sz];
-	WideCharToMultiByte(CP_UTF8, 0, str, -1, m_str, sz, NULL, NULL);
+	sz = WideCharToMultiByte(CP_UTF8, 0, str, -1, m_str, sz, NULL, NULL);
+	m_str[sz] = 0;
 }
 
 utf8_str::~utf8_str()

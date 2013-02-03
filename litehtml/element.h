@@ -81,8 +81,10 @@ namespace litehtml
 
 		int							place_element( element* el, int max_width );
 		virtual int					render_inline(litehtml::element* container, int max_width);
-		int							add_line(int max_width, element_clear clr = clear_none, int el_width = 0);
+		int							add_line(int max_width, element_clear clr = clear_none, int el_width = 0, bool finish_prev = true);
 		void						finish_line(int max_width);
+		line::ptr					first_line() const;
+		line::ptr					last_line() const;
 
 		virtual bool				appendChild(litehtml::element* el);
 		virtual element::ptr		parentElement() const;
@@ -108,7 +110,7 @@ namespace litehtml
 		virtual void				init_font();
 		virtual bool				is_point_inside(int x, int y);
 		virtual bool				set_pseudo_class(const wchar_t* pclass, bool add);
-		virtual bool				in_normal_flow();
+		virtual bool				in_normal_flow() const;
 
 		white_space					get_white_space() const;
 		style_display				get_display() const;
@@ -126,6 +128,7 @@ namespace litehtml
 		int							top()		const;
 		int							bottom()	const;
 		int							height()	const;
+		int							height_raw() const;
 		int							width()		const;
 
 		int							content_margins_top()		const;
@@ -248,6 +251,11 @@ namespace litehtml
 	inline int litehtml::element::height() const
 	{
 		return m_pos.height + margin_top() + margin_bottom() + m_padding.height() + m_borders.height();
+	}
+
+	inline int litehtml::element::height_raw() const
+	{
+		return m_pos.height + (m_margins.top > 0 ? m_margins.top : 0) + (m_margins.bottom > 0 ? m_margins.bottom : 0) + m_padding.height() + m_borders.height();
 	}
 
 	inline int litehtml::element::width() const
