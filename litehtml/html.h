@@ -10,6 +10,7 @@
 #include "borders.h"
 #include "element.h"
 #include "web_color.h"
+#include "object.h"
 
 namespace litehtml
 {
@@ -67,4 +68,13 @@ namespace litehtml
 		return int_val;
 	}
 
+	inline int round_d(double val)
+	{
+		int int_val = (int) val;
+		if(val - int_val >= 0.5)
+		{
+			int_val++;
+		}
+		return int_val;
+	}
 }

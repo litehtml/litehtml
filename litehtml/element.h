@@ -46,6 +46,7 @@ namespace litehtml
 		background				m_bg;
 		element_position		m_el_position;
 		int						m_line_height;
+		bool					m_lh_predefined;
 		litehtml::line*			m_line;
 		string_vector			m_pseudo_classes;
 		used_selector::vector	m_used_styles;		
@@ -111,6 +112,7 @@ namespace litehtml
 		virtual bool				is_point_inside(int x, int y);
 		virtual bool				set_pseudo_class(const wchar_t* pclass, bool add);
 		virtual bool				in_normal_flow() const;
+		virtual int					line_height() const;
 
 		white_space					get_white_space() const;
 		style_display				get_display() const;
@@ -193,6 +195,8 @@ namespace litehtml
 		int							place_inline(element* el, int max_width);
 		int							find_next_line_top(int top, int width, int def_right);
 		void						parse_background();
+		bool						collapse_top_margin() const;
+		bool						collapse_bottom_margin() const;
 
 	private:
 		bool	m_second_pass;

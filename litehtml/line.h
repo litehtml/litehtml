@@ -86,8 +86,6 @@ namespace litehtml
 		}
 
 		void	add_element(element* el);
-
-		element* get_last_space( );
 		void	set_top(int top, element* parent);
 		void	add_top(int add);
 
@@ -111,5 +109,6 @@ namespace litehtml
 		void	set_line_height(int val)	{	m_min_height = val;				}
 		
 		element_clear get_clear_floats() const { return m_clear; }
+		litehtml::element* get_last_space();
 	};
 }

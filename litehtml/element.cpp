@@ -29,6 +29,7 @@ litehtml::element::element(litehtml::document* doc)
 	m_font_size				= 0;
 	m_base_line				= 0;
 	m_white_space			= white_space_normal;
+	m_lh_predefined			= false;
 }
 
 litehtml::element::~element()
@@ -410,12 +411,15 @@ void litehtml::element::parse_styles(bool is_reparse)
 	{
 		line_height.set_value(110, css_units_percentage);
 		m_line_height = line_height.calc_percent(m_font_size);
+		m_lh_predefined = true;
 	} else if(line_height.units() == css_units_none)
 	{
 		m_line_height = (int) (line_height.val() * m_font_size);
+		m_lh_predefined = false;
 	} else
 	{
 		m_line_height = line_height.calc_percent(m_font_size);
+		m_lh_predefined = false;
 	}
 
 
@@ -443,7 +447,7 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 int litehtml::element::render( int x, int y, int max_width )
 {
-	if(m_class == L"post-main")
+	if(m_tag == L"div")
 	{
 		int iii=0;
 		iii++;
@@ -784,7 +788,7 @@ void litehtml::element::finish_line( int max_width )
 		if(prev_line && m_lines.back()->get_clear_floats() == clear_none)
 		{
 			top = prev_line->get_top() + prev_line->get_height() - min(m_lines.back()->get_margin_top(), prev_line->get_margin_bottom());
-		} else if(m_parent && !m_borders.top && !m_padding.top && m_margins.top >= 0 && m_float == float_none)
+		} else if(!prev_line && collapse_top_margin())
 		{
 			if(m_lines.back()->get_margin_top() >= 0)
 			{
@@ -1492,7 +1496,7 @@ void litehtml::element::parse_background()
 
 int litehtml::element::margin_top() const
 {
-	if(m_parent && !m_borders.top && !m_padding.top && m_margins.top >= 0 && in_normal_flow() && m_float == float_none)
+	if(collapse_top_margin())
 	{
 		line::ptr ln = first_line();
 		if(ln && ln->get_margin_top()>= 0)
@@ -1505,7 +1509,7 @@ int litehtml::element::margin_top() const
 
 int litehtml::element::margin_bottom() const
 {
-	if(m_parent && !m_borders.bottom && !m_padding.bottom && m_margins.bottom >= 0 && in_normal_flow() && m_float == float_none)
+	if(collapse_bottom_margin())
 	{
 		line::ptr ln = last_line();
 		if(ln && ln->get_margin_bottom() >= 0)
@@ -2224,3 +2228,27 @@ bool litehtml::element::in_normal_flow()  const
 	}
 	return false;
 }
+
+bool litehtml::element::collapse_top_margin() const
+{
+	if(!m_borders.top && !m_padding.top && in_normal_flow() && m_float == float_none && m_margins.top >= 0 && m_parent)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool litehtml::element::collapse_bottom_margin() const
+{
+	if(!m_borders.bottom && !m_padding.bottom && in_normal_flow() && m_float == float_none && m_margins.bottom >= 0 && m_parent)
+	{
+		return true;
+	}
+	return false;
+}
+
+int litehtml::element::line_height() const
+{
+	return m_line_height;
+}
+

@@ -127,3 +127,8 @@ void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 		draw_content(hdc, pos);
 	}
 }
+
+int litehtml::el_text::line_height() const
+{
+	return m_parent->line_height();
+}
