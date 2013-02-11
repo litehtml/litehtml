@@ -47,3 +47,8 @@ void litehtml::el_image::parse_styles(bool is_reparse)
 		}
 	}
 }
+
+int litehtml::el_image::line_height() const
+{
+	return height();
+}

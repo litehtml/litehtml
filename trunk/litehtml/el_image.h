@@ -13,6 +13,7 @@ namespace litehtml
 		virtual ~el_image(void);
 
 		virtual void	parse_styles(bool is_reparse = false);
+		virtual int		line_height() const;
 
 	protected:
 		virtual void	get_content_size(size& sz, int max_width);
