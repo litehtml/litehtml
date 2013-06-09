@@ -18,17 +18,13 @@ namespace litehtml
 	class document_container
 	{
 	public:
-		virtual uint_ptr	create_font(const wchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration) = 0;
+		virtual uint_ptr	create_font(const wchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration, litehtml::font_metrics* fm) = 0;
 		virtual void		delete_font(uint_ptr hFont) = 0;
-		virtual int			line_height(uint_ptr hdc, uint_ptr hFont) = 0;
-		virtual int			text_width(uint_ptr hdc, const wchar_t* text, uint_ptr hFont) = 0;
+		virtual int			text_width(const wchar_t* text, uint_ptr hFont) = 0;
 		virtual void		draw_text(uint_ptr hdc, const wchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;
 		virtual void		fill_rect(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius) = 0;
-		virtual uint_ptr	get_temp_dc() = 0;
-		virtual void		release_temp_dc(uint_ptr hdc) = 0;
 		virtual int			pt_to_px(int pt) = 0;
 		virtual int			get_default_font_size() = 0;
-		virtual int			get_text_base_line(uint_ptr hdc, uint_ptr hFont) = 0;
 		virtual void		draw_list_marker(uint_ptr hdc, list_style_type marker_type, int x, int y, int height, const web_color& color) = 0;
 		virtual void		load_image(const wchar_t* src, const wchar_t* baseurl) = 0;
 		virtual void		get_image_size(const wchar_t* src, const wchar_t* baseurl, litehtml::size& sz) = 0;
@@ -55,6 +51,7 @@ namespace litehtml
 	};
 
 	void trim(std::wstring &s);
+	void lcase(std::wstring &s);
 	int value_index(const wchar_t* val, const wchar_t* strings, int defValue = -1, const wchar_t* delim = L";");
 	int value_in_list(const wchar_t* val, const wchar_t* strings, const wchar_t* delim = L";");
 

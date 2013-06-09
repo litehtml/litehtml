@@ -284,6 +284,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\box.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\context.cpp"
 				>
 			</File>
@@ -411,6 +415,10 @@
 			</File>
 			<File
 				RelativePath=".\borders.h"
+				>
+			</File>
+			<File
+				RelativePath=".\box.h"
 				>
 			</File>
 			<File

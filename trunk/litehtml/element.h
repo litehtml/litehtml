@@ -8,6 +8,7 @@
 #include "borders.h"
 #include "css_selector.h"
 #include "stylesheet.h"
+#include "box.h"
 
 namespace litehtml
 {
@@ -17,12 +18,15 @@ namespace litehtml
 		friend class line;
 		friend class el_table;
 		friend class table_grid;
+		friend class block_box;
+		friend class line_box;
 	public:
 		typedef litehtml::object_ptr<litehtml::element>	ptr;
 	protected:
 		litehtml::element*		m_parent;
 		litehtml::document*		m_doc;
 		elements_vector			m_children;
+		box::vector				m_boxes;
 		std::wstring			m_id;
 		std::wstring			m_class;
 		std::wstring			m_tag;
@@ -47,13 +51,13 @@ namespace litehtml
 		element_position		m_el_position;
 		int						m_line_height;
 		bool					m_lh_predefined;
-		litehtml::line*			m_line;
+		litehtml::box*			m_box;
 		string_vector			m_pseudo_classes;
 		used_selector::vector	m_used_styles;		
 		
 		uint_ptr				m_font;
 		int						m_font_size;
-		int						m_base_line;
+		font_metrics			m_font_metrics;
 
 		css_margins				m_css_margins;
 		css_margins				m_css_padding;
@@ -69,9 +73,6 @@ namespace litehtml
 
 		overflow				m_overflow;
 
-		/* rendered lines */
-		line::vector			m_lines;
-
 	public:
 		element(litehtml::document* doc);
 		virtual ~element();
@@ -81,11 +82,10 @@ namespace litehtml
 		virtual int					render(int x, int y, int max_width);
 
 		int							place_element( element* el, int max_width );
+
+		int							new_box( element* el, int max_width );
+		int							finish_last_box(bool end_of_render = false);
 		virtual int					render_inline(litehtml::element* container, int max_width);
-		int							add_line(int max_width, element_clear clr = clear_none, int el_width = 0, bool finish_prev = true);
-		void						finish_line(int max_width);
-		line::ptr					first_line() const;
-		line::ptr					last_line() const;
 
 		virtual bool				appendChild(litehtml::element* el);
 		virtual element::ptr		parentElement() const;
@@ -112,6 +112,7 @@ namespace litehtml
 		virtual bool				is_point_inside(int x, int y);
 		virtual bool				set_pseudo_class(const wchar_t* pclass, bool add);
 		virtual bool				in_normal_flow() const;
+		virtual bool				is_replaced() const;
 		virtual int					line_height() const;
 
 		white_space					get_white_space() const;
@@ -161,7 +162,7 @@ namespace litehtml
 
 		virtual const wchar_t*		get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
 
-		uint_ptr					get_font();
+		virtual uint_ptr			get_font(font_metrics* fm = 0);
 		virtual int					get_font_size();
 		litehtml::web_color			get_color(const wchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		int							select(const css_selector& selector, bool apply_pseudo = true);
@@ -173,6 +174,8 @@ namespace litehtml
 
 		bool						is_first_child(const element* el);
 		bool						is_last_child(const element* el);
+		bool						is_inline_box();
+		position					get_placement();
 
 	protected:
 		virtual void				get_content_size(size& sz, int max_width);
@@ -192,7 +195,6 @@ namespace litehtml
 		void						add_float(element* el);
 		void						add_absolute(element* el);
 		bool						is_floats_holder() const;
-		int							place_inline(element* el, int max_width);
 		int							find_next_line_top(int top, int width, int def_right);
 		void						parse_background();
 		bool						collapse_top_margin() const;
@@ -249,7 +251,7 @@ namespace litehtml
 
 	inline int litehtml::element::bottom() const
 	{
-		return top() + width();
+		return top() + height();
 	}
 
 	inline int litehtml::element::height() const

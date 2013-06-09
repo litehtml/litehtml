@@ -52,3 +52,8 @@ int litehtml::el_image::line_height() const
 {
 	return height();
 }
+
+bool litehtml::el_image::is_replaced() const
+{
+	return true;
+}

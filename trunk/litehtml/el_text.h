@@ -21,6 +21,7 @@ namespace litehtml
 		virtual int					get_base_line();
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual int					line_height() const;
+		virtual uint_ptr			get_font(font_metrics* fm = 0);
 
 	protected:
 		virtual void				get_content_size(size& sz, int max_width);

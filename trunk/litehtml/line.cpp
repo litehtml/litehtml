@@ -26,7 +26,7 @@ void litehtml::line::add_element( element* el )
 	}
 
 	m_items.push_back(el);
-	el->m_line = this;
+	//el->m_box = this;
 	if(el->m_float == float_none && !el->m_skip)
 	{
 		if(last_space)

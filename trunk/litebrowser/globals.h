@@ -21,4 +21,5 @@
 #define TLB_NO_TLBPDK
 #define TLB_USE_HTTPREADER
 
+// you can download tlbpdklib here https://code.google.com/p/tlb-pdk/
 #include <tlbpdklib.h>

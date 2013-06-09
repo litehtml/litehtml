@@ -14,7 +14,6 @@ namespace litehtml
 	class element;
 
 	typedef std::map<std::wstring, std::wstring>			string_map;
-	typedef std::map<std::wstring, uint_ptr>				fonts_map;
 	typedef std::vector<litehtml::object_ptr<litehtml::element>>	elements_vector;
 	typedef std::vector<int>								int_vector;
 	typedef std::vector<std::wstring>						string_vector;
@@ -147,6 +146,25 @@ namespace litehtml
 			return false;
 		}
 	};
+
+	struct font_metrics
+	{
+		int		height;
+		int		ascent;
+		int		descent;
+		int		x_height;
+
+		int base_line()	{ return descent; }
+	};
+
+	struct font_item
+	{
+		uint_ptr		font;
+		font_metrics	metrics;
+	};
+
+	typedef std::map<std::wstring, font_item>	fonts_map;
+
 
 #define  style_display_strings		L"none;block;inline;inline-block;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group"
 

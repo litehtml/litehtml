@@ -1,12 +1,9 @@
 #include "globals.h"
 #include "HtmlViewWnd.h"
-#include "memdc.h"
 #include "..\litehtml\tokenizer.h"
 #include "downloader.h"
 #include <WindowsX.h>
 #include <algorithm>
-
-using namespace Gdiplus;
 
 CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 {

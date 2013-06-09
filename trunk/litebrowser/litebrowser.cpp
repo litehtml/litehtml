@@ -12,6 +12,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
                      LPTSTR    lpCmdLine,
                      int       nCmdShow)
 {
+	CoInitialize(NULL);
 	InitCommonControls();
 
 	GdiplusStartupInput gdiplusStartupInput;
@@ -22,9 +23,12 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 		CBrowserWnd wnd(hInstance);
 
 		wnd.create();
-		if(lpCmdLine)
+		if(lpCmdLine && lpCmdLine[0])
 		{
 			wnd.open(lpCmdLine);
+		} else
+		{
+			wnd.open(L"http://www.dmoz.org/");
 		}
 
 		MSG msg;

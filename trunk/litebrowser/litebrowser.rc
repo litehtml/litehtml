@@ -56,10 +56,58 @@ SETTINGS-NORMAL.PNG     HTML                    "html\\settings-normal.png"
 
 /////////////////////////////////////////////////////////////////////////////
 //
+// Icon
+//
+
+// Icon with lowest ID value placed first to ensure application icon
+// remains consistent on all systems.
+IDI_SMALL               ICON                    "small.ico"
+IDI_LITEBROWSER         ICON                    "litebrowser.ico"
+
+/////////////////////////////////////////////////////////////////////////////
+//
 // CSS
 //
 
 master.css              CSS                     "D:\\WORK\\drawhtml\\include\\master.css"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Version
+//
+
+VS_VERSION_INFO VERSIONINFO
+ FILEVERSION 0,2,0,0
+ PRODUCTVERSION 0,2,0,0
+ FILEFLAGSMASK 0x17L
+#ifdef _DEBUG
+ FILEFLAGS 0x1L
+#else
+ FILEFLAGS 0x0L
+#endif
+ FILEOS 0x4L
+ FILETYPE 0x1L
+ FILESUBTYPE 0x0L
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "000004b0"
+        BEGIN
+            VALUE "FileDescription", "litebrow Application"
+            VALUE "FileVersion", "0, 2, 0, 0"
+            VALUE "InternalName", "litebrow"
+            VALUE "LegalCopyright", "Copyright (C) 2013"
+            VALUE "OriginalFilename", "litebrow.exe"
+            VALUE "ProductName", "litebrow Application"
+            VALUE "ProductVersion", "0, 2, 0, 0"
+        END
+    END
+    BLOCK "VarFileInfo"
+    BEGIN
+        VALUE "Translation", 0x0, 1200
+    END
+END
+
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 
@@ -72,16 +120,6 @@ master.css              CSS                     "D:\\WORK\\drawhtml\\include\\ma
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 #endif //_WIN32
-
-/////////////////////////////////////////////////////////////////////////////
-//
-// Icon
-//
-
-// Icon with lowest ID value placed first to ensure application icon
-// remains consistent on all systems.
-IDI_SMALL               ICON                    "small.ico"
-IDI_LITEBROWSER         ICON                    "litebrowser.ico"
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////

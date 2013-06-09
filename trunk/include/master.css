@@ -101,7 +101,7 @@ h6 {
 } 
 
 br {
-	display:block;
+	display:inline-block;
 }
 
 span {
@@ -244,4 +244,10 @@ input, textarea, keygen, select, button, isindex {
 }
 input[type="hidden"] {
 	display: none;
+}
+
+
+article, aside, footer, header, hgroup, nav, section 
+{
+	display: block;
 }
