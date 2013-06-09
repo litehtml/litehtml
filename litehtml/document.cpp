@@ -100,7 +100,7 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 	return doc;
 }
 
-litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration )
+litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration, font_metrics* fm )
 {
 	uint_ptr ret = 0;
 
@@ -178,13 +178,20 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, 
 			}
 		}
 
-		ret = m_container->create_font(name, size, fw, fs, decor);
-		m_fonts[key] = ret;
+		font_item fi= {0};
+
+		fi.font = m_container->create_font(name, size, fw, fs, decor, &fi.metrics);
+		m_fonts[key] = fi;
+		ret = fi.font;
+		if(fm)
+		{
+			*fm = fi.metrics;
+		}
 	}
 	return ret;
 }
 
-litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration )
+litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration, font_metrics* fm )
 {
 	if(!name || name && !_wcsicmp(name, L"inherit"))
 	{
@@ -213,9 +220,13 @@ litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, int size, 
 
 	if(el != m_fonts.end())
 	{
-		return el->second;
+		if(fm)
+		{
+			*fm = el->second.metrics;
+		}
+		return el->second.font;
 	}
-	return add_font(name, size, weight, style, decoration);
+	return add_font(name, size, weight, style, decoration, fm);
 }
 
 litehtml::element* litehtml::document::add_root()
@@ -241,12 +252,13 @@ litehtml::element* litehtml::document::add_body()
 	return el;
 }
 
-void litehtml::document::render( int max_width )
+int litehtml::document::render( int max_width )
 {
 	if(m_root)
 	{
-		m_root->render(0, 0, max_width);
+		return m_root->render(0, 0, max_width);
 	}
+	return 0;
 }
 
 void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip )
@@ -270,15 +282,18 @@ int litehtml::document::cvt_units( const wchar_t* str, int fontSize, bool* is_pe
 	return cvt_units(val, fontSize);
 }
 
-int litehtml::document::cvt_units( css_length& val, int fontSize ) const
+int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) const
 {
-	if(val.is_predefined() || !val.is_predefined() && val.units() == css_units_percentage)
+	if(val.is_predefined())
 	{
 		return 0;
 	}
 	int ret = 0;
 	switch(val.units())
 	{
+	case css_units_percentage:
+		ret = val.calc_percent(size);
+		break;
 	case css_units_px:
 		ret = (int) val.val();
 		break;
@@ -611,3 +626,4 @@ void litehtml::document::parse_pop_empty_element()
 		}
 	}
 }
+

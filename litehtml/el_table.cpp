@@ -284,10 +284,10 @@ int litehtml::el_table::render( int x, int y, int max_width )
 			table_cell* cell = m_grid.cell(col, row);
 			if(cell->el)
 			{
-				if(!cell->el->m_lines.empty())
+				if(!cell->el->m_boxes.empty())
 				{
 					int add = 0;
-					int content_height	= cell->el->m_lines.back()->get_top() + cell->el->m_lines.back()->get_height();
+					int content_height	= cell->el->m_boxes.back()->bottom();
 
 					if(cell->el->m_pos.height > content_height)
 					{
@@ -302,9 +302,9 @@ int litehtml::el_table::render( int x, int y, int max_width )
 						}
 					}
 
-					for(size_t i = 0; i < cell->el->m_lines.size(); i++)
+					for(size_t i = 0; i < cell->el->m_boxes.size(); i++)
 					{
-						cell->el->m_lines[i]->add_top(add);
+						cell->el->m_boxes[i]->y_shift(add);
 					}
 				}
 			}
@@ -314,7 +314,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 	m_pos.width		= table_width;
 	m_pos.height	= top;
 
-	return table_width;
+	return min_table_width;
 }
 
 bool litehtml::el_table::appendChild( litehtml::element* el )
@@ -332,7 +332,7 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 	const wchar_t* str = get_attr(L"width");
 	if(str)
 	{
-		m_style.add_property(L"width", str, 0);
+		m_style.add_property(L"width", str, 0, false);
 	}
 
 	str = get_attr(L"align");
@@ -342,15 +342,15 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 		switch(align)
 		{
 		case 1:
-			m_style.add_property(L"margin-left", L"auto", 0);
-			m_style.add_property(L"margin-right", L"auto", 0);
+			m_style.add_property(L"margin-left", L"auto", 0, false);
+			m_style.add_property(L"margin-right", L"auto", 0, false);
 			break;
 		case 2:
-			m_style.add_property(L"margin-left", L"auto", 0);
-			m_style.add_property(L"margin-right", L"0", 0);
+			m_style.add_property(L"margin-left", L"auto", 0, false);
+			m_style.add_property(L"margin-right", L"0", 0, false);
 			break;
 		}
-		m_style.add_property(L"width", str, 0);
+		m_style.add_property(L"width", str, 0, false);
 	}
 
 	str = get_attr(L"cellspacing");
@@ -359,7 +359,7 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 		std::wstring val = str;
 		val += L" ";
 		val += str;
-		m_style.add_property(L"border-spacing", val.c_str(), 0);
+		m_style.add_property(L"border-spacing", val.c_str(), 0, false);
 	}
 
 	element::parse_styles(is_reparse);

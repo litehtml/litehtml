@@ -121,7 +121,7 @@
 				AdditionalOptions="/MP"
 				Optimization="0"
 				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
-				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_TOOLBAR"
+				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_TOOLBAR1"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -345,6 +345,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\cairo_font.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\dib.cpp"
 				>
 			</File>
@@ -362,10 +366,6 @@
 			</File>
 			<File
 				RelativePath=".\litebrowser.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\memdc.cpp"
 				>
 			</File>
 			<File
@@ -391,6 +391,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\cairo_font.h"
+				>
+			</File>
+			<File
 				RelativePath=".\dib.h"
 				>
 			</File>
@@ -412,10 +416,6 @@
 			</File>
 			<File
 				RelativePath=".\litebrowser.h"
-				>
-			</File>
-			<File
-				RelativePath=".\memdc.h"
 				>
 			</File>
 			<File

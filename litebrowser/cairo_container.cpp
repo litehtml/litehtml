@@ -3,98 +3,85 @@
 #include "..\litehtml\tokenizer.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include "cairo_font.h"
 
 cairo_container::cairo_container(void)
 {
+	m_temp_dib.create(1, 1, true);
+	m_font_link = NULL;
+	CoCreateInstance(CLSID_CMultiLanguage, NULL, CLSCTX_ALL, IID_IMLangFontLink2, (void**) &m_font_link);
 }
 
 cairo_container::~cairo_container(void)
 {
 	clear_images();
+	if(m_font_link)
+	{
+		m_font_link->Release();
+	}
 }
 
-litehtml::uint_ptr cairo_container::create_font( const wchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration )
+litehtml::uint_ptr cairo_container::create_font( const wchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
 	litehtml::string_vector fonts;
 	tokenize(faceName, fonts, L",");
 	litehtml::trim(fonts[0]);
 
-	cairo_fnt* fnt = new cairo_fnt(	fonts[0].c_str(), 
-									size, 
-									weight, 
-									(italic == litehtml::fontStyleItalic) ? TRUE : FALSE,
-									(decoration & litehtml::font_decoration_linethrough) ? TRUE : FALSE,
-									(decoration & litehtml::font_decoration_underline) ? TRUE : FALSE);
+	cairo_font* fnt = new cairo_font(	m_font_link,
+										fonts[0].c_str(), 
+										size, 
+										weight, 
+										(italic == litehtml::fontStyleItalic) ? TRUE : FALSE,
+										(decoration & litehtml::font_decoration_linethrough) ? TRUE : FALSE,
+										(decoration & litehtml::font_decoration_underline) ? TRUE : FALSE);
+
+	if(fm)
+	{
+		cairo_dev cr(&m_temp_dib);
+
+		cairo_font_metrics cfm;
+		fnt->get_metrics(cr, &cfm);
+
+		fm->ascent		= cfm.ascent;
+		fm->descent		= cfm.descent;
+		fm->height		= cfm.height;
+		fm->x_height	= cfm.x_height;
+	}
 
 	return (litehtml::uint_ptr) fnt;
 }
 
 void cairo_container::delete_font( litehtml::uint_ptr hFont )
 {
-	cairo_fnt* fnt = (cairo_fnt*) hFont;
+	cairo_font* fnt = (cairo_font*) hFont;
 	if(fnt)
 	{
 		delete fnt;
 	}
 }
 
-int cairo_container::line_height( litehtml::uint_ptr hdc, litehtml::uint_ptr hFont )
+int cairo_container::text_width( const wchar_t* text, litehtml::uint_ptr hFont )
 {
-	cairo_fnt* fnt = (cairo_fnt*) hFont;
-	cairo_dev cr(get_dib(hdc));
-	
-	cairo_set_font_face(cr, fnt->fnt());
-	cairo_set_font_size(cr, fnt->size());
-	cairo_font_extents_t ext;
-	cairo_font_extents(cr, &ext);
-	
-	return (int) ext.height;
-}
+	cairo_font* fnt = (cairo_font*) hFont;
+	cairo_dev cr(&m_temp_dib);
 
-int cairo_container::text_width( litehtml::uint_ptr hdc, const wchar_t* text, litehtml::uint_ptr hFont )
-{
-	cairo_fnt* fnt = (cairo_fnt*) hFont;
-	cairo_dev cr(get_dib(hdc));
-
-	cairo_set_font_face(cr, fnt->fnt());
-	cairo_set_font_size(cr, fnt->size());
-	cairo_text_extents_t ext;
-	cairo_text_extents(cr, utf8_str(text), &ext);
-
-	return (int) ext.x_advance;
+	return fnt->text_width(cr, text);
 }
 
 void cairo_container::draw_text( litehtml::uint_ptr hdc, const wchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
-	cairo_fnt* fnt = (cairo_fnt*) hFont;
+	cairo_font* fnt = (cairo_font*) hFont;
 	cairo_dev cr(get_dib(hdc));
 	apply_clip(cr);
 
-	utf8_str str(text);
+	cairo_font_metrics cfm;
+	fnt->get_metrics(cr, &cfm);
 
-	cairo_set_font_face(cr, fnt->fnt());
-	cairo_set_font_size(cr, fnt->size());
-
-	cairo_text_extents_t te;
-	cairo_font_extents_t fe;
-	
-	cairo_text_extents(cr, str, &te);
-	cairo_font_extents(cr, &fe);
-
-	double x = pos.left();
-	double y = pos.bottom()	- fe.descent;
+	int x = pos.left();
+	int y = pos.bottom()	- cfm.descent;
 
 	cr.set_color(color);
-	cairo_move_to (cr, x, y);
-	cairo_show_text(cr, str);
-	
-	if(fnt->is_underline())
-	{
-		cairo_set_line_width(cr, 1);
-		cairo_move_to(cr, x, y + 1.5);
-		cairo_line_to(cr, pos.right(), y + 1.5);
-		cairo_stroke(cr);
-	}
+	fnt->show_text(cr, x, y, text);
 }
 
 void cairo_container::fill_rect( litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius )
@@ -138,21 +125,6 @@ void cairo_container::fill_rect( litehtml::uint_ptr hdc, const litehtml::positio
 	}
 }
 
-litehtml::uint_ptr cairo_container::get_temp_dc()
-{
-	simpledib::dib* ret = new simpledib::dib;
-	ret->create(1, 1, true);
-	return (litehtml::uint_ptr) ret;
-}
-
-void cairo_container::release_temp_dc( litehtml::uint_ptr hdc )
-{
-	if(hdc)
-	{
-		delete get_dib(hdc);
-	}
-}
-
 int cairo_container::pt_to_px( int pt )
 {
 	HDC dc = GetDC(NULL);
@@ -164,31 +136,6 @@ int cairo_container::pt_to_px( int pt )
 int cairo_container::get_default_font_size()
 {
 	return 16;
-}
-
-int cairo_container::get_text_base_line( litehtml::uint_ptr hdc, litehtml::uint_ptr hFont )
-{
-	simpledib::dib* dib = get_dib(hdc);
-	if(!dib)
-	{
-		dib = new simpledib::dib;
-		dib->create(1, 1, true);
-	}
-
-	cairo_fnt* fnt = (cairo_fnt*) hFont;
-	cairo_dev cr(dib);
-
-	cairo_set_font_face(cr, fnt->fnt());
-	cairo_set_font_size(cr, fnt->size());
-	cairo_font_extents_t ext;
-	cairo_font_extents(cr, &ext);
-
-	if(!hdc)
-	{
-		delete dib;
-	}
-
-	return (int) ext.descent;
 }
 
 void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, litehtml::list_style_type marker_type, int x, int y, int height, const litehtml::web_color& color )
@@ -797,47 +744,3 @@ void cairo_dev::draw_image( CTxDIB* bmp, int x, int y, int cx, int cy )
 	cairo_restore(m_cr);
 }
 
-//////////////////////////////////////////////////////////////////////////
-
-cairo_fnt::cairo_fnt( LPCWSTR facename, int size, int weight, BOOL italic, BOOL strikeout, BOOL underline )
-{
-	m_bStrikeOut	= strikeout;
-	m_bUnderline	= underline;
-	m_size			= size;
-
-	LOGFONT lf;
-	ZeroMemory(&lf, sizeof(lf));
-	wcscpy_s(lf.lfFaceName, LF_FACESIZE, facename);
-
-	lf.lfHeight			= 100;
-	lf.lfWeight			= weight;
-	lf.lfItalic			= italic;
-	lf.lfCharSet		= DEFAULT_CHARSET;
-	lf.lfOutPrecision	= OUT_DEFAULT_PRECIS;
-	lf.lfClipPrecision	= CLIP_DEFAULT_PRECIS;
-	lf.lfQuality		= DEFAULT_QUALITY;
-	lf.lfStrikeOut		= strikeout;
-	lf.lfUnderline		= underline;
-
-	m_font_face = cairo_win32_font_face_create_for_logfontw(&lf);
-}
-
-cairo_fnt::~cairo_fnt()
-{
-	cairo_font_face_destroy(m_font_face);
-}
-
-//////////////////////////////////////////////////////////////////////////
-
-utf8_str::utf8_str( LPCWSTR str )
-{
-	int sz = WideCharToMultiByte(CP_UTF8, 0, str, -1, m_str, 0, NULL, NULL) + 1;
-	m_str = new CHAR[sz];
-	sz = WideCharToMultiByte(CP_UTF8, 0, str, -1, m_str, sz, NULL, NULL);
-	m_str[sz] = 0;
-}
-
-utf8_str::~utf8_str()
-{
-	if(m_str) delete m_str;
-}

@@ -16,7 +16,7 @@ void litehtml::el_para::parse_styles( bool is_reparse /*= false*/ )
 	const wchar_t* str = get_attr(L"align");
 	if(str)
 	{
-		m_style.add_property(L"text-align", str, 0);
+		m_style.add_property(L"text-align", str, 0, false);
 	}
 
 	element::parse_styles(is_reparse);

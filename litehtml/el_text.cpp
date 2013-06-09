@@ -85,17 +85,17 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 		}
 	}
 
-	uint_ptr hdc = m_doc->container()->get_temp_dc();
-	uint_ptr font = m_parent->get_font();
-	m_size.height	= m_doc->container()->line_height(hdc, font);
+	font_metrics fm;
+	uint_ptr font = m_parent->get_font(&fm);
+	m_size.height	= fm.height;
 	if(m_text_transform == text_transform_none)
 	{
-		m_size.width	= m_doc->container()->text_width(hdc, m_text.c_str(), font);
+		m_size.width	= m_doc->container()->text_width(m_text.c_str(), font);
 	} else
 	{
-		m_size.width	= m_doc->container()->text_width(hdc, m_transformed_text.c_str(), font);
+		m_size.width	= m_doc->container()->text_width(m_transformed_text.c_str(), font);
 	}
-	m_doc->container()->release_temp_dc(hdc);
+
 	if(m_parent->get_display() == display_inline)
 	{
 		if(m_parent->is_first_child(this))
@@ -131,4 +131,9 @@ void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 int litehtml::el_text::line_height() const
 {
 	return m_parent->line_height();
+}
+
+litehtml::uint_ptr litehtml::el_text::get_font( font_metrics* fm /*= 0*/ )
+{
+	return m_parent->get_font(fm);
 }

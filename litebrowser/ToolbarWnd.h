@@ -1,11 +1,12 @@
 #pragma once
-#include "gdiplus_container.h"
+#include "cairo_container.h"
+#include "dib.h"
 
 #define TOOLBARWND_CLASS	L"TOOLBAR_WINDOW"
 
 class CBrowserWnd;
 
-class CToolbarWnd : public gdiplus_container
+class CToolbarWnd : public cairo_container
 {
 	HWND					m_hWnd;
 	HINSTANCE				m_hInst;
@@ -28,8 +29,8 @@ public:
 	}
 	int set_width(int width);
 
-	virtual void				make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
-	virtual litehtml::uint_ptr	get_image(LPCWSTR url);
+	virtual void			make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
+	virtual CTxDIB*			get_image(LPCWSTR url);
 
 	// litehtml::document_container members
 	virtual	void	set_caption(const wchar_t* caption);
@@ -41,7 +42,7 @@ public:
 
 protected:
 	virtual void	OnCreate();
-	virtual void	OnPaint(HDC hdc, LPCRECT rcClip);
+	virtual void	OnPaint(simpledib::dib* dib, LPRECT rcDraw);
 	virtual void	OnSize(int width, int height);
 	virtual void	OnDestroy();
 	virtual void	OnMouseMove(int x, int y);

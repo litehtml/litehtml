@@ -1,6 +1,5 @@
 #include "globals.h"
 #include "ToolbarWnd.h"
-#include "memdc.h"
 #include <WindowsX.h>
 #include "BrowserWnd.h"
 
@@ -65,20 +64,14 @@ LRESULT CALLBACK CToolbarWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam, 
 			break;
 		case WM_PAINT:
 			{
-				RECT rcClient;
-				GetClientRect(pThis->m_hWnd, &rcClient);
-
 				PAINTSTRUCT ps;
 				HDC hdc = BeginPaint(hWnd, &ps);
 
-				CMemDC dc;
-				HDC memdc = dc.beginPaint(hdc, &ps.rcPaint);
+				simpledib::dib dib;
 
-				FillRect(memdc, &ps.rcPaint, (HBRUSH) (COLOR_WINDOW + 1));
-
-				pThis->OnPaint(memdc, &ps.rcPaint);
-
-				dc.endPaint();
+				dib.beginPaint(hdc, &ps.rcPaint);
+				pThis->OnPaint(&dib, &ps.rcPaint);
+				dib.endPaint();
 
 				EndPaint(hWnd, &ps);
 			}
@@ -128,18 +121,16 @@ void CToolbarWnd::OnCreate()
 
 }
 
-void CToolbarWnd::OnPaint( HDC hdc, LPCRECT rcClip )
+void CToolbarWnd::OnPaint( simpledib::dib* dib, LPRECT rcDraw )
 {
 	if(m_doc)
 	{
-		if(rcClip)
-		{
-			litehtml::position clip(rcClip->left, rcClip->top, rcClip->right - rcClip->left, rcClip->bottom - rcClip->top);
-			m_doc->draw((litehtml::uint_ptr) hdc, 0, 0, &clip);
-		} else
-		{
-			m_doc->draw((litehtml::uint_ptr) hdc, 0, 0, 0);
-		}
+		cairo_dev cr(dib);
+		cairo_set_source_rgb(cr, 1, 1, 1);
+		cairo_paint(cr);
+
+		litehtml::position clip(rcDraw->left, rcDraw->top, rcDraw->right - rcDraw->left, rcDraw->bottom - rcDraw->top);
+		m_doc->draw((litehtml::uint_ptr) dib, 0, 0, &clip);
 	}
 }
 
@@ -185,50 +176,16 @@ void CToolbarWnd::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
 	out = url;
 }
 
-litehtml::uint_ptr CToolbarWnd::get_image( LPCWSTR url )
+CTxDIB* CToolbarWnd::get_image( LPCWSTR url )
 {
-	Gdiplus::Bitmap* bmp = NULL;
-
-	HRSRC hResource = ::FindResource(m_hInst, url, RT_HTML);
-	if(hResource)
+	CTxDIB* img = new CTxDIB;
+	if(!img->load(FindResource(m_hInst, url, RT_HTML), m_hInst))
 	{
-		DWORD imageSize = ::SizeofResource(m_hInst, hResource);
-		if(imageSize)
-		{
-			const void* pResourceData = ::LockResource(::LoadResource(m_hInst, hResource));
-			if(pResourceData)
-			{
-				HGLOBAL buffer  = ::GlobalAlloc(GMEM_MOVEABLE, imageSize);
-				if(buffer)
-				{
-					void* pBuffer = ::GlobalLock(buffer);
-					if (pBuffer)
-					{
-						CopyMemory(pBuffer, pResourceData, imageSize);
-
-						IStream* pStream = NULL;
-						if (::CreateStreamOnHGlobal(buffer, FALSE, &pStream) == S_OK)
-						{
-							bmp = Gdiplus::Bitmap::FromStream(pStream);
-							pStream->Release();
-							if (bmp)
-							{ 
-								if (bmp->GetLastStatus() != Gdiplus::Ok)
-								{
-									delete bmp;
-									bmp = NULL;
-								}
-							}
-						}
-						::GlobalUnlock(buffer);
-					}
-					::GlobalFree(buffer);
-				}
-			}
-		}
+		delete img;
+		img = NULL;
 	}
 
-	return (litehtml::uint_ptr) bmp;
+	return img;
 }
 
 void CToolbarWnd::set_caption( const wchar_t* caption )
@@ -352,6 +309,53 @@ void CToolbarWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el
 	} else if(!wcscmp(url, L"reload"))
 	{
 		m_parent->reload();
+	} else if(!wcscmp(url, L"settings"))
+	{
+		litehtml::position pos = el->get_placement();
+		POINT pt;
+		pt.x	= pos.right();
+		pt.y	= pos.bottom();
+		MapWindowPoints(m_hWnd, NULL, &pt, 1);
+
+		HMENU hMenu = CreatePopupMenu();
+
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	6, L"DMOZ");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	7, L"litehtml project");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, L"");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	1, L"True Launch Bar");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	3, L"Tordex");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	4, L"True Paste");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	5, L"Text Accelerator");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, L"");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	2, L"Exit");
+
+		int ret = TrackPopupMenu(hMenu, TPM_RIGHTALIGN | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, m_hWnd, NULL);
+		DestroyMenu(hMenu);
+
+		switch(ret)
+		{
+		case 2:
+			PostQuitMessage(0);
+			break;
+		case 1:
+			m_parent->open(L"http://www.truelaunchbar.com/");
+			break;
+		case 3:
+			m_parent->open(L"http://www.tordex.com/");
+			break;
+		case 4:
+			m_parent->open(L"http://www.truepaste.com/");
+			break;
+		case 5:
+			m_parent->open(L"http://www.textaccelerator.com/");
+			break;
+		case 6:
+			m_parent->open(L"http://www.dmoz.org/");
+			break;
+		case 7:
+			m_parent->open(L"https://code.google.com/p/litehtml/");
+			break;
+		}
 	}
 }
 

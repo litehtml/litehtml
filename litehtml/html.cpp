@@ -17,6 +17,14 @@ void litehtml::trim(std::wstring &s)
 	}
 }
 
+void litehtml::lcase(std::wstring &s) 
+{
+	for(std::wstring::iterator i = s.begin(); i != s.end(); i++)
+	{
+		(*i) = towlower(*i);
+	}
+}
+
 int litehtml::value_index( const wchar_t* val, const wchar_t* strings, int defValue, const wchar_t* delim )
 {
 	if(!val || !strings || !delim)

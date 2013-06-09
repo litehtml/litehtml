@@ -64,12 +64,12 @@ namespace litehtml
 		virtual ~document();
 
 		litehtml::document_container*	container()	{ return m_container; }
-		uint_ptr						get_font(const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration);
-		void							render(int max_width);
+		uint_ptr						get_font(const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration, font_metrics* fm);
+		int								render(int max_width);
 		void							draw(uint_ptr hdc, int x, int y, const position* clip);
 		web_color						get_def_color()	{ return m_def_color; }
 		int								cvt_units(const wchar_t* str, int fontSize, bool* is_percent = 0) const;
-		int								cvt_units(css_length& val, int fontSize) const;
+		int								cvt_units(css_length& val, int fontSize, int size = 0) const;
 		int								width() const;
 		int								height() const;
 		void							add_stylesheet(const wchar_t* str, const wchar_t* baseurl);
@@ -85,7 +85,7 @@ namespace litehtml
 		//void			load_default_styles();
 		litehtml::element*	add_root();
 		litehtml::element*	add_body();
-		litehtml::uint_ptr	add_font(const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration);
+		litehtml::uint_ptr	add_font(const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration, font_metrics* fm);
 
 		void begin_parse();
 

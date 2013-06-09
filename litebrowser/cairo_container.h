@@ -1,5 +1,6 @@
 #pragma once
 #include "dib.h"
+#include <mlang.h>
 
 class cairo_dev
 {
@@ -16,56 +17,26 @@ public:
 	void draw_image(CTxDIB* bmp, int x, int y, int cx, int cy);
 };
 
-class cairo_fnt
-{
-	cairo_font_face_t*		m_font_face;
-	int						m_size;
-	BOOL					m_bUnderline;
-	BOOL					m_bStrikeOut;
-public:
-	cairo_fnt(LPCWSTR facename, int size, int weight, BOOL italic, BOOL strikeout, BOOL underline);
-	~cairo_fnt();
-
-	BOOL	is_strikeout()			{ return m_bStrikeOut;	}
-	BOOL	is_underline()			{ return m_bUnderline;	}
-	int		size()					{ return m_size;		}
-
-	cairo_font_face_t* fnt()		{ return m_font_face;	}
-};
-
-class utf8_str
-{
-	LPSTR m_str;
-public:
-	utf8_str(LPCWSTR str);
-	~utf8_str();
-
-	operator LPCSTR()	{ return m_str; }
-};
-
 class cairo_container :	public litehtml::document_container
 {
 	typedef std::map<std::wstring, CTxDIB*>	images_map;
 
 protected:
-
+	simpledib::dib				m_temp_dib;
 	images_map					m_images;
 	litehtml::position::vector	m_clips;
+	IMLangFontLink2*			m_font_link;
 public:
 	cairo_container(void);
 	virtual ~cairo_container(void);
 
-	virtual litehtml::uint_ptr	create_font(const wchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration);
+	virtual litehtml::uint_ptr	create_font(const wchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm);
 	virtual void				delete_font(litehtml::uint_ptr hFont);
-	virtual int					line_height(litehtml::uint_ptr hdc, litehtml::uint_ptr hFont);
-	virtual int					text_width(litehtml::uint_ptr hdc, const wchar_t* text, litehtml::uint_ptr hFont);
+	virtual int					text_width(const wchar_t* text, litehtml::uint_ptr hFont);
 	virtual void				draw_text(litehtml::uint_ptr hdc, const wchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos);
 	virtual void				fill_rect(litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius);
-	virtual litehtml::uint_ptr	get_temp_dc();
-	virtual void				release_temp_dc(litehtml::uint_ptr hdc);
 	virtual int					pt_to_px(int pt);
 	virtual int					get_default_font_size();
-	virtual int					get_text_base_line(litehtml::uint_ptr hdc, litehtml::uint_ptr hFont);
 	virtual void				draw_list_marker(litehtml::uint_ptr hdc, litehtml::list_style_type marker_type, int x, int y, int height, const litehtml::web_color& color);
 	virtual void				load_image(const wchar_t* src, const wchar_t* baseurl);
 	virtual void				get_image_size(const wchar_t* src, const wchar_t* baseurl, litehtml::size& sz);
