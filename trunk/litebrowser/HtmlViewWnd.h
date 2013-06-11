@@ -1,6 +1,5 @@
 #pragma once
-#include "cairo_container.h"
-#include "dib.h"
+#include "../containers/cairo/cairo_container.h"
 
 #define HTMLVIEWWND_CLASS	L"HTMLVIEW_WINDOW"
 

@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
+				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -65,7 +65,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;D:\WORK\TrueLaunchBar\tlb-pdk-public\lib\$(ConfigurationName)\$(PlatformName)\&quot;"
+				AdditionalLibraryDirectories="libs\cairo\32;libs\freeimage\32"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -120,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
+				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_TOOLBAR1"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -142,7 +142,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="uxtheme.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories="&quot;D:\WORK\TrueLaunchBar\tlb-pdk-public\lib\$(ConfigurationName)\$(PlatformName)\&quot;"
+				AdditionalLibraryDirectories="libs\cairo\64;libs\freeimage\64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -197,7 +197,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
+				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -217,7 +217,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;D:\WORK\TrueLaunchBar\tlb-pdk-public\lib\$(ConfigurationName)\$(PlatformName)\&quot;"
+				AdditionalLibraryDirectories="libs\cairo\32;libs\freeimage\32"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -276,7 +276,7 @@
 				AdditionalOptions="/MP"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="D:\WORK\TrueLaunchBar\tlb-pdk-public\include"
+				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -297,7 +297,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="uxtheme.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories="&quot;D:\WORK\TrueLaunchBar\tlb-pdk-public\lib\$(ConfigurationName)\$(PlatformName)\&quot;"
+				AdditionalLibraryDirectories="libs\cairo\64;libs\freeimage\64"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -353,7 +353,7 @@
 				>
 			</File>
 			<File
-				RelativePath="containers\gdiplus\gdiplus_container.cpp"
+				RelativePath="..\containers\gdiplus\gdiplus_container.cpp"
 				>
 			</File>
 			<File
