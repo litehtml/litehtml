@@ -13,13 +13,21 @@
 #include <commctrl.h>
 #include <gdiplus.h>
 #include <shlwapi.h>
-#include "..\include\litehtml.h"
+#include <litehtml.h>
 #include <Wininet.h>
 
-#define TLB_USE_TXDIB
-#define TLB_USE_CAIRO
-#define TLB_NO_TLBPDK
-#define TLB_USE_HTTPREADER
+// include TxDIB project
+#include <TxDIB.h>
+#pragma comment(lib, "txdib.lib")
 
-// you can download tlbpdklib here https://code.google.com/p/tlb-pdk/
-#include <tlbpdklib.h>
+// include CAIRO project
+#include <cairo.h>
+#include <cairo-win32.h>
+#pragma comment(lib, "cairo.lib")
+
+// include SIMPLEDIB project
+#include <dib.h>
+#pragma comment(lib, "simpledib.lib")
+
+#pragma comment(lib, "shlwapi.lib")
+#pragma comment(lib, "Msimg32.lib")
