@@ -341,15 +341,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cairo_container.cpp"
+				RelativePath="..\containers\cairo\cairo_container.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\cairo_font.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\dib.cpp"
+				RelativePath="..\containers\cairo\cairo_font.cpp"
 				>
 			</File>
 			<File
@@ -357,7 +353,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\gdiplus_container.cpp"
+				RelativePath="containers\gdiplus\gdiplus_container.cpp"
 				>
 			</File>
 			<File
@@ -373,7 +369,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\containers\win32_container.cpp"
+				RelativePath="..\containers\win32\win32_container.cpp"
 				>
 			</File>
 		</Filter>
@@ -387,15 +383,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\cairo_container.h"
+				RelativePath="..\containers\cairo\cairo_container.h"
 				>
 			</File>
 			<File
-				RelativePath=".\cairo_font.h"
-				>
-			</File>
-			<File
-				RelativePath=".\dib.h"
+				RelativePath="..\containers\cairo\cairo_font.h"
 				>
 			</File>
 			<File
@@ -403,7 +395,7 @@
 				>
 			</File>
 			<File
-				RelativePath=".\gdiplus_container.h"
+				RelativePath="..\containers\gdiplus\gdiplus_container.h"
 				>
 			</File>
 			<File
@@ -431,7 +423,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\containers\win32_container.h"
+				RelativePath="..\containers\win32\win32_container.h"
 				>
 			</File>
 		</Filter>
