@@ -690,6 +690,11 @@ void cairo_container::clear_images()
 	m_images.clear();
 }
 
+const wchar_t* cairo_container::get_default_font_name()
+{
+	return L"Times New Roman";
+}
+
 //////////////////////////////////////////////////////////////////////////
 
 cairo_dev::cairo_dev( simpledib::dib* dib )
@@ -740,5 +745,6 @@ void cairo_dev::draw_image( CTxDIB* bmp, int x, int y, int cx, int cy )
 	cairo_paint(m_cr);
 
 	cairo_restore(m_cr);
+	cairo_surface_destroy(img);
 }
 

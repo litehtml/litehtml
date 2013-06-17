@@ -21,7 +21,8 @@ class cairo_dev
 public:
 	cairo_dev(simpledib::dib* dib);
 	~cairo_dev();
-	operator cairo_t*()	{	return m_cr;	}
+	operator cairo_t*()			{	return m_cr;		}
+	operator cairo_surface_t*()	{	return m_surface;	}
 	void set_color(litehtml::web_color color)
 	{
 		cairo_set_source_rgba(m_cr, color.red / 255.0, color.green / 255.0, color.blue / 255.0, color.alpha / 255.0);
@@ -49,6 +50,7 @@ public:
 	virtual void				fill_rect(litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius);
 	virtual int					pt_to_px(int pt);
 	virtual int					get_default_font_size();
+	virtual const wchar_t*		get_default_font_name();
 	virtual void				draw_list_marker(litehtml::uint_ptr hdc, litehtml::list_style_type marker_type, int x, int y, int height, const litehtml::web_color& color);
 	virtual void				load_image(const wchar_t* src, const wchar_t* baseurl);
 	virtual void				get_image_size(const wchar_t* src, const wchar_t* baseurl, litehtml::size& sz);

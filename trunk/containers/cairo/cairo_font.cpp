@@ -62,6 +62,10 @@ cairo_font::~cairo_font()
 	{
 		m_font_link->AddRef();
 	}
+	if(m_hFont)
+	{
+		DeleteObject(m_hFont);
+	}
 }
 
 void cairo_font::show_text( cairo_t* cr, int x, int y, LPCWSTR str )

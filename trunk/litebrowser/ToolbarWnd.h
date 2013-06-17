@@ -29,6 +29,7 @@ public:
 	}
 	int set_width(int width);
 
+	// cairo_container members
 	virtual void			make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
 	virtual CTxDIB*			get_image(LPCWSTR url);
 

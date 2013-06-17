@@ -439,11 +439,13 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 int litehtml::element::render( int x, int y, int max_width )
 {
-	if(m_tag == L"ul")
+/*
+	if(is_body())
 	{
 		int iii = 0;
 		iii++;
 	}
+*/
 
 	int parent_width = max_width;
 
@@ -503,13 +505,16 @@ int litehtml::element::render( int x, int y, int max_width )
 
 	if(!m_boxes.empty())
 	{
-		if(collapse_top_margin())
+		if(!is_body())
 		{
-			m_margins.top = max(m_boxes.front()->top_margin(), m_margins.top);
-		}
-		if(collapse_bottom_margin())
-		{
-			m_margins.bottom = max(m_boxes.back()->bottom_margin(), m_margins.bottom);
+			if(collapse_top_margin())
+			{
+				m_margins.top = max(m_boxes.front()->top_margin(), m_margins.top);
+			}
+			if(collapse_bottom_margin())
+			{
+				m_margins.bottom = max(m_boxes.back()->bottom_margin(), m_margins.bottom);
+			}
 		}
 		m_pos.height = m_boxes.back()->bottom() - m_boxes.back()->bottom_margin();
 	}
@@ -2262,7 +2267,7 @@ bool litehtml::element::in_normal_flow()  const
 
 bool litehtml::element::collapse_top_margin() const
 {
-	if(!m_borders.top && !m_padding.top && in_normal_flow() && m_float == float_none && m_margins.top >= 0 && m_parent)
+	if(!m_borders.top && !m_padding.top && in_normal_flow() && m_float == float_none && m_margins.top >= 0/* && !is_body()*/ /*m_parent*/)
 	{
 		return true;
 	}
@@ -2271,7 +2276,7 @@ bool litehtml::element::collapse_top_margin() const
 
 bool litehtml::element::collapse_bottom_margin() const
 {
-	if(!m_borders.bottom && !m_padding.bottom && in_normal_flow() && m_float == float_none && m_margins.bottom >= 0 && m_parent)
+	if(!m_borders.bottom && !m_padding.bottom && in_normal_flow() && m_float == float_none && m_margins.bottom >= 0/* &&  !is_body()*/ /*m_parent*/)
 	{
 		return true;
 	}
