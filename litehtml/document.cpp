@@ -32,12 +32,18 @@ const wchar_t* g_empty_tags[] =
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
 	m_container	= objContainer;
-	m_font_name	= L"Times New Roman";
 	m_context	= ctx;
 }
 
 litehtml::document::~document()
 {
+	if(m_container)
+	{
+		for(fonts_map::iterator f = m_fonts.begin(); f != m_fonts.end(); f++)
+		{
+			m_container->delete_font(f->second.font);
+		}
+	}
 }
 
 litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx)
@@ -106,7 +112,7 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, 
 
 	if(!name || name && !_wcsicmp(name, L"inherit"))
 	{
-		name = m_font_name.c_str();
+		name = m_container->get_default_font_name();
 	}
 
 	if(!size)
@@ -195,7 +201,7 @@ litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, int size, 
 {
 	if(!name || name && !_wcsicmp(name, L"inherit"))
 	{
-		name = m_font_name.c_str();
+		name = m_container->get_default_font_name();
 	}
 
 	if(!size)
@@ -539,6 +545,11 @@ void litehtml::document::parse_attribute( const wchar_t* attr_name, const wchar_
 
 void litehtml::document::parse_word( const wchar_t* val )
 {
+	if(!_wcsicmp(m_parse_stack.back()->get_tagName(), L"html"))
+	{
+		parse_push_element(create_element(L"body"));
+	}
+
 	parse_pop_empty_element();
 
 	if(!m_parse_stack.empty())
