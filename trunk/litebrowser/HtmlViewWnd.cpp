@@ -142,12 +142,23 @@ void CHTMLViewWnd::OnPaint( simpledib::dib* dib, LPRECT rcDraw )
 {
 	if(m_doc)
 	{
-		cairo_dev cr(dib);
+		cairo_surface_t* surface = cairo_image_surface_create_for_data((unsigned char*) dib->bits(), CAIRO_FORMAT_ARGB32, dib->width(), dib->height(), dib->width() * 4);
+		cairo_t* cr = cairo_create(surface);
+
+		POINT pt;
+		GetWindowOrgEx(dib->hdc(), &pt);
+		if(pt.x != 0 || pt.y != 0)
+		{
+			cairo_translate(cr, -pt.x, -pt.y);
+		}
 		cairo_set_source_rgb(cr, 1, 1, 1);
 		cairo_paint(cr);
 
 		litehtml::position clip(rcDraw->left, rcDraw->top, rcDraw->right - rcDraw->left, rcDraw->bottom - rcDraw->top);
-		m_doc->draw((litehtml::uint_ptr) dib, -m_left, -m_top, &clip);
+		m_doc->draw((litehtml::uint_ptr) cr, -m_left, -m_top, &clip);
+
+		cairo_destroy(cr);
+		cairo_surface_destroy(surface);
 	}
 }
 
