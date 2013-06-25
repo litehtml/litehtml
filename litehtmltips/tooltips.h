@@ -25,7 +25,7 @@ namespace litehtml
 	class tooltips_callback
 	{
 	public:
-		virtual CTxDIB* ttcb_get_image(LPCWSTR url) = 0;
+		virtual CTxDIB* ttcb_get_image(unsigned int id, LPCWSTR url) = 0;
 		virtual void ttcb_get_text(unsigned int id, std::wstring& text) = 0;
 	};
 
@@ -37,6 +37,8 @@ namespace litehtml
 		int		height;
 		int		content_x;
 		int		content_y;
+		int		content_height;
+		int		content_width;
 		int		anchor_x;
 		int		anchor_y;
 		UINT	align;
@@ -88,13 +90,16 @@ namespace litehtml
 
 	class tooltips : public cairo_container
 	{
+		simpledib::dib				m_dib;
+		cairo_t*					m_cr;
+		cairo_surface_t*			m_surface;
+
 		HINSTANCE					m_hInst;
 		HWND						m_hWnd;
 		HWND						m_hWndParent;
 		tooltips_callback*			m_callback;
 		tool::map					m_tools;
 		litehtml::document::ptr		m_html;
-		simpledib::dib				m_dib;
 		litehtml::context*			m_html_context;
 		int							m_max_width;
 		int							m_show_time;
@@ -107,6 +112,8 @@ namespace litehtml
 		int							m_def_font_size;
 		bool						m_disabled;
 		BYTE						m_alpha;
+		tip_layout					m_layout;
+		int							m_top;
 	public:
 		tooltips(HINSTANCE hInst, litehtml::context* html_context);
 		virtual ~tooltips(void);
@@ -114,7 +121,8 @@ namespace litehtml
 		void add_tool(unsigned int id, const wchar_t* text, HWND ctl, LPCRECT rc_tool, UINT options);
 		void clear();
 		void create(HWND parent);
-		void show(unsigned int id);
+		void show(unsigned int id, int top = 0);
+
 		void hide();
 		void set_style(tips_style style)			{ m_style = style;		}
 		void disable(bool val);
@@ -159,5 +167,9 @@ namespace litehtml
 		void				fastbluralpha(LPRGBQUAD pixels, int width, int height, int radius);
 		void				finish_shadow(simpledib::dib& dib);
 		void				init_def_font();
+		void				create_dib(int width, int height);
+		void				draw_window(BOOL clr = FALSE);
+		BOOL				scroll(int dx);
+		BOOL				can_scroll();
 	};
 }

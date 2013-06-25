@@ -35,7 +35,8 @@ class cairo_container :	public litehtml::document_container
 	typedef std::map<std::wstring, CTxDIB*>	images_map;
 
 protected:
-	simpledib::dib				m_temp_dib;
+	cairo_surface_t*			m_temp_surface;
+	cairo_t*					m_temp_cr;
 	images_map					m_images;
 	litehtml::position::vector	m_clips;
 	IMLangFontLink2*			m_font_link;
@@ -72,14 +73,17 @@ public:
 	virtual void				make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
 	virtual CTxDIB*				get_image(LPCWSTR url) = 0;
 	virtual void				get_client_rect(litehtml::position& client) = 0;
+	void						clear_images();
 
 protected:
-	virtual void				draw_ellipse(simpledib::dib* dib, int x, int y, int width, int height, const litehtml::web_color& color, int line_width);
-	virtual void				fill_ellipse(simpledib::dib* dib, int x, int y, int width, int height, const litehtml::web_color& color);
+	virtual void				draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width);
+	virtual void				fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color);
 
 private:
 	simpledib::dib*				get_dib(litehtml::uint_ptr hdc)	{ return (simpledib::dib*) hdc;				}
 	void						apply_clip(cairo_t* cr);
-	void						clear_images();
 	void						add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg);
+
+	void						set_color(cairo_t* cr, litehtml::web_color color)	{ cairo_set_source_rgba(cr, color.red / 255.0, color.green / 255.0, color.blue / 255.0, color.alpha / 255.0); }
+	void						draw_txdib(cairo_t* cr, CTxDIB* bmp, int x, int y, int cx, int cy);
 };
