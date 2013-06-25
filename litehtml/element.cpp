@@ -440,7 +440,7 @@ void litehtml::element::parse_styles(bool is_reparse)
 int litehtml::element::render( int x, int y, int max_width )
 {
 /*
-	if(is_body())
+	if(m_tag == L"div")
 	{
 		int iii = 0;
 		iii++;
@@ -2104,6 +2104,10 @@ int litehtml::element::place_element( element* el, int max_width )
 		}
 		add_float(el);
 		fix_line_width(max_width);
+
+		line_left	= get_line_left(line_top);
+		line_right	= get_line_right(line_top, max_width);
+
 		ret_width = line_left + (max_width - line_right);
 	} else
 	{
