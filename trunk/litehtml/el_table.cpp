@@ -314,7 +314,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 	m_pos.width		= table_width;
 	m_pos.height	= top;
 
-	return min_table_width;
+	return table_width;//min_table_width;
 }
 
 bool litehtml::el_table::appendChild( litehtml::element* el )

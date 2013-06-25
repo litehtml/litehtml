@@ -32,12 +32,18 @@ litehtml::tooltips::tooltips(HINSTANCE hInst, litehtml::context* html_context)
 	m_over_tool		= 0;
 	m_disabled		= false;
 	m_alpha			= 255;
+	m_cr			= NULL;
+	m_surface		= NULL;
 
 	init_def_font();
 }
 
 litehtml::tooltips::~tooltips(void)
 {
+	DestroyWindow(m_hWnd);
+	RemoveWindowSubclass(m_hWndParent, SubclassProc, (DWORD_PTR) this);
+	if(m_surface) cairo_surface_destroy(m_surface);
+	if(m_cr) cairo_destroy(m_cr);
 }
 
 void litehtml::tooltips::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
@@ -49,7 +55,7 @@ CTxDIB* litehtml::tooltips::get_image( LPCWSTR url )
 {
 	if(m_callback)
 	{
-		return m_callback->ttcb_get_image(url);
+		return m_callback->ttcb_get_image(m_show_tool, url);
 	}
 	return NULL;
 }
@@ -196,11 +202,13 @@ void litehtml::tooltips::create( HWND parent )
 	}
 }
 
-void litehtml::tooltips::show( unsigned int id )
+void litehtml::tooltips::show( unsigned int id, int top )
 {
 	tool::map::iterator ti = m_tools.find(id);
 	if(ti != m_tools.end())
 	{
+		m_show_tool = id;
+		clear_images();
 		if(m_html)
 		{
 			m_html = NULL;
@@ -222,42 +230,23 @@ void litehtml::tooltips::show( unsigned int id )
 		}
 
 		int w = m_html->render(m_max_width);
-		if(w != m_max_width)
+		if(w < m_max_width)
 		{
 			m_html->render(w);
 		}
 
-		tip_layout layout;
-		calc_layout(&ti->second, &layout);
+		calc_layout(&ti->second, &m_layout);
+		create_dib(m_layout.width, m_layout.height);
 
-		m_dib.clear();
-		m_dib.create(layout.width, layout.height, true);
+		m_top = top;
+		if(m_top)
+		{
+			scroll(0);
+		}
 
-		draw_background(&layout);
-
-		litehtml::position clip(0, 0, m_dib.width(), m_dib.height());
-		m_html->draw((litehtml::uint_ptr) &m_dib, layout.content_x, layout.content_y, NULL);
-
-		POINT ptDst;
-		POINT ptSrc	= {0, 0};
-		SIZE size;
-
-		BLENDFUNCTION bf;
-		bf.BlendOp				= AC_SRC_OVER;
-		bf.BlendFlags			= 0;
-		bf.AlphaFormat			= AC_SRC_ALPHA;
-		bf.SourceConstantAlpha	= 255;
-
-		ptDst.x = layout.x;
-		ptDst.y = layout.y;
-
-		size.cx	= m_dib.width();
-		size.cy	= m_dib.height();
-
-		UpdateLayeredWindow(m_hWnd, NULL, &ptDst, &size, m_dib.hdc(), &ptSrc, 0, &bf, ULW_ALPHA);
+		draw_window();
 		ShowWindow(m_hWnd, SW_SHOWNA);
 
-		m_show_tool = id;
 		if(m_hide_time)
 		{
 			SetTimer(m_hWnd, TIMER_HIDE_TIP, m_hide_time, NULL);
@@ -271,8 +260,8 @@ void litehtml::tooltips::hide()
 	{
 		m_show_tool = 0;
 		ShowWindow(m_hWnd, SW_HIDE);
-		stop_timers();
 	}
+	stop_timers();
 }
 
 LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM wParam, LPARAM lParam, UINT_PTR uIdSubclass, DWORD_PTR dwRefData )
@@ -281,6 +270,19 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 
 	switch(uMsg)
 	{
+	case WM_MOUSEWHEEL:
+		if(pThis->can_scroll())
+		{
+			if(pThis->scroll(-GET_WHEEL_DELTA_WPARAM(wParam) / WHEEL_DELTA * pThis->m_def_font_size * 5))
+			{
+				pThis->draw_window(TRUE);
+			}
+			return 0;
+		} else
+		{
+			pThis->hide();
+		}
+		break;
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONDBLCLK:
 	case WM_RBUTTONDOWN:
@@ -297,7 +299,6 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 	case WM_SYSKEYDOWN:
 	case WM_KILLFOCUS:
 	case WM_CLOSE:
-	case WM_MOUSEWHEEL:
 	case WM_MOUSELEAVE:
 		pThis->hide();
 		break;
@@ -344,7 +345,7 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 
 void litehtml::tooltips::draw_background(tip_layout* layout)
 {
-	cairo_dev cr(&m_dib);
+	cairo_save(m_cr);
 
 	COLORREF clr_bg		= GetSysColor(COLOR_INFOBK);
 	COLORREF clr_bdr	= GetSysColor(COLOR_INFOTEXT);
@@ -352,13 +353,13 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 	switch(m_style)
 	{
 	case tips_style_rounded:
-		rounded_rect(cr, 0, 0, m_dib.width() - 5, m_dib.height() - 5, 8, 1);
+		rounded_rect(m_cr, 0, 0, m_dib.width() - 5, m_dib.height() - 5, 8, 1);
 		break;
 	case tips_style_baloon:
-		baloon(cr, 0, 0, m_dib.width() - 5, m_dib.height() - 5, layout->anchor_x - layout->x, layout->anchor_y - layout->y, layout->align, 8, 1);
+		baloon(m_cr, 0, 0, m_dib.width() - 5, m_dib.height() - 5, layout->anchor_x - layout->x, layout->anchor_y - layout->y, layout->align, 8, 1);
 		break;
 	default:
-		cairo_rectangle(cr, 0.5, 0.5, m_dib.width() - 1 - 5, m_dib.height() - 1 - 5);
+		cairo_rectangle(m_cr, 0.5, 0.5, m_dib.width() - 1 - 5, m_dib.height() - 1 - 5);
 		break;
 	}
 
@@ -375,11 +376,11 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 		{
 			cairo_surface_t* bg_sf = cairo_image_surface_create_for_data((unsigned char*) dib_bg.bits(), CAIRO_FORMAT_ARGB32, dib_bg.width(), dib_bg.height(), dib_bg.width() * 4);
 
-			cairo_save(cr);
-			cairo_clip_preserve(cr);
-			cairo_set_source_surface(cr, bg_sf, 0, 0);
-			cairo_paint(cr);
-			cairo_restore(cr);
+			cairo_save(m_cr);
+			cairo_clip_preserve(m_cr);
+			cairo_set_source_surface(m_cr, bg_sf, 0, 0);
+			cairo_paint(m_cr);
+			cairo_restore(m_cr);
 
 			clr_bdr = RGB(dib_bg.bits()[0].rgbRed, dib_bg.bits()[0].rgbGreen, dib_bg.bits()[0].rgbBlue);
 
@@ -392,12 +393,12 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 
 	if(stdDraw)
 	{
-		cairo_set_source_rgb(cr, (double) GetRValue(clr_bg) / 255.0, (double) GetGValue(clr_bg) / 255.0, (double) GetBValue(clr_bg) / 255.0);
-		cairo_fill_preserve(cr);
+		cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bg) / 255.0, (double) GetGValue(clr_bg) / 255.0, (double) GetBValue(clr_bg) / 255.0);
+		cairo_fill_preserve(m_cr);
 	}
-	cairo_set_line_width(cr, 1);
-	cairo_set_source_rgb(cr, (double) GetRValue(clr_bdr) / 255.0, (double) GetGValue(clr_bdr) / 255.0, (double) GetBValue(clr_bdr) / 255.0);
-	cairo_stroke(cr);
+	cairo_set_line_width(m_cr, 1);
+	cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bdr) / 255.0, (double) GetGValue(clr_bdr) / 255.0, (double) GetBValue(clr_bdr) / 255.0);
+	cairo_stroke(m_cr);
 
 	int shadow_width	= 10;
 	int shadow_height	= 10;
@@ -431,7 +432,6 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 
 	for(int i=0; i < sz; i++)
 	{
-		//pixels[i].rgbReserved	= min(200, pixels[i].rgbReserved << 2);
 		pixels[i].rgbRed		= 0;
 		pixels[i].rgbGreen		= 0;
 		pixels[i].rgbBlue		= 0;
@@ -447,10 +447,10 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 	cairo_paint(cr_shadow);
 	fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
 
-	cairo_set_operator(cr, CAIRO_OPERATOR_DEST_OVER);
+	cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
 
-	cairo_set_source_surface(cr, cr_shadow, 0, 0);
-	cairo_paint(cr);
+	cairo_set_source_surface(m_cr, cr_shadow, 0, 0);
+	cairo_paint(m_cr);
 
 	cairo_surface_destroy(img_sf);
 
@@ -479,6 +479,7 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 		}
 	}
 
+	cairo_restore(m_cr);
 }
 
 int litehtml::tooltips::tip_width()
@@ -585,8 +586,10 @@ unsigned int litehtml::tooltips::find_tool( int x, int y )
 
 void litehtml::tooltips::calc_layout( tool* t, tip_layout* layout )
 {
-	layout->width	= m_html->width();
-	layout->height	= m_html->height();
+	layout->width			= m_html->width();
+	layout->height			= m_html->height();
+	layout->content_width	= m_html->width();
+	layout->content_height	= m_html->height();
 
 	switch(m_style)
 	{
@@ -614,6 +617,16 @@ void litehtml::tooltips::calc_layout( tool* t, tip_layout* layout )
 	MapWindowPoints(m_hWndParent, NULL, (LPPOINT) &rc_tool, 2);
 
 	calc_position(t->options & tool_opt_align_mask, &rc_tool, layout);
+
+	RECT rcDesktop;
+	GetDesktopRect(&rcDesktop, m_hWndParent);
+
+	if(layout->y + layout->height > rcDesktop.bottom)
+	{
+		int margin = layout->height - m_html->height();
+		layout->height = rcDesktop.bottom - layout->y;
+		layout->content_height = layout->height - margin;
+	}
 
 	switch(layout->align)
 	{
@@ -747,7 +760,7 @@ void litehtml::tooltips::calc_position( UINT align, LPRECT rc_tool, tip_layout* 
 					calc_position(tool_opt_align_bottom, rc_tool, layout, true);
 				} else
 				{
-					if(rcDesktop.left - rcDesktop.left > rcDesktop.right - rc_tool->right)
+					if(rc_tool->left - rcDesktop.left > rcDesktop.right - rc_tool->right)
 					{
 						calc_position(tool_opt_align_left, rc_tool, layout, true);
 					} else
@@ -782,7 +795,7 @@ void litehtml::tooltips::calc_position( UINT align, LPRECT rc_tool, tip_layout* 
 					calc_position(tool_opt_align_top, rc_tool, layout, true);
 				} else
 				{
-					if(rcDesktop.left - rcDesktop.left > rcDesktop.right - rc_tool->right)
+					if(rc_tool->left - rcDesktop.left > rcDesktop.right - rc_tool->right)
 					{
 						calc_position(tool_opt_align_left, rc_tool, layout, true);
 					} else
@@ -817,7 +830,7 @@ void litehtml::tooltips::calc_position( UINT align, LPRECT rc_tool, tip_layout* 
 					calc_position(tool_opt_align_right, rc_tool, layout, true);
 				} else
 				{
-					if(rcDesktop.top - rcDesktop.top > rcDesktop.bottom - rc_tool->bottom)
+					if(rc_tool->top - rcDesktop.top > rcDesktop.bottom - rc_tool->bottom)
 					{
 						calc_position(tool_opt_align_top, rc_tool, layout, true);
 					} else
@@ -852,7 +865,7 @@ void litehtml::tooltips::calc_position( UINT align, LPRECT rc_tool, tip_layout* 
 					calc_position(tool_opt_align_left, rc_tool, layout, true);
 				} else
 				{
-					if(rcDesktop.top - rcDesktop.top > rcDesktop.bottom - rc_tool->bottom)
+					if(rc_tool->top - rcDesktop.top > rcDesktop.bottom - rc_tool->bottom)
 					{
 						calc_position(tool_opt_align_top, rc_tool, layout, true);
 					} else
@@ -1177,6 +1190,90 @@ void litehtml::tooltips::update( unsigned int id )
 {
 	if(id == m_show_tool && IsWindowVisible(m_hWnd))
 	{
-		show(id);
+		show(id, m_top);
 	}
+}
+
+void litehtml::tooltips::create_dib( int width, int height )
+{
+	if(m_surface) cairo_surface_destroy(m_surface);
+	if(m_cr) cairo_destroy(m_cr);
+
+	m_dib.clear();
+	m_dib.create(width, height, true);
+
+	m_surface	= cairo_image_surface_create_for_data((unsigned char*) m_dib.bits(), CAIRO_FORMAT_ARGB32, m_dib.width(), m_dib.height(), m_dib.width() * 4);
+	m_cr		= cairo_create(m_surface);
+}
+
+void litehtml::tooltips::draw_window(BOOL clr)
+{
+	if(clr)
+	{
+		cairo_save(m_cr);
+
+		cairo_set_operator(m_cr, CAIRO_OPERATOR_SOURCE);
+		cairo_set_source_rgba(m_cr, 0, 0, 0, 0);
+		cairo_paint(m_cr);
+
+		cairo_restore(m_cr);
+	}
+
+	draw_background(&m_layout);
+
+	litehtml::position clip(m_layout.content_x, m_layout.content_y, m_html->width(), m_html->height());
+	cairo_save(m_cr);
+		cairo_rectangle(m_cr, m_layout.content_x, m_layout.content_y, m_layout.content_width, m_layout.content_height);
+		cairo_clip(m_cr);
+		m_html->draw((litehtml::uint_ptr) m_cr, m_layout.content_x, m_layout.content_y - m_top, &clip);
+	cairo_restore(m_cr);
+
+	POINT ptDst;
+	POINT ptSrc	= {0, 0};
+	SIZE size;
+
+	BLENDFUNCTION bf;
+	bf.BlendOp				= AC_SRC_OVER;
+	bf.BlendFlags			= 0;
+	bf.AlphaFormat			= AC_SRC_ALPHA;
+	bf.SourceConstantAlpha	= 255;
+
+	ptDst.x = m_layout.x;
+	ptDst.y = m_layout.y;
+
+	size.cx	= m_dib.width();
+	size.cy	= m_dib.height();
+
+	UpdateLayeredWindow(m_hWnd, NULL, &ptDst, &size, m_dib.hdc(), &ptSrc, 0, &bf, ULW_ALPHA);
+}
+
+BOOL litehtml::tooltips::scroll( int dx )
+{
+	if(IsWindow(m_hWnd) && IsWindowVisible(m_hWnd))
+	{
+		int new_top = m_top + dx;
+		if(new_top < 0) new_top = 0;
+		if(new_top > m_html->height() - m_layout.content_height)
+		{
+			new_top = m_html->height() - m_layout.content_height;
+		}
+		if(new_top != m_top)
+		{
+			m_top = new_top;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+BOOL litehtml::tooltips::can_scroll()
+{
+	if(IsWindow(m_hWnd) && IsWindowVisible(m_hWnd))
+	{
+		if(m_html->height() > m_layout.content_height)
+		{
+			return TRUE;
+		}
+	}
+	return FALSE;
 }
