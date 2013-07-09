@@ -108,6 +108,7 @@ namespace litehtml
 		POINT						m_mouse_pos;
 		unsigned int				m_over_tool;
 		unsigned int				m_show_tool;
+		unsigned int				m_last_shown_tool;
 		std::wstring				m_def_font_name;
 		int							m_def_font_size;
 		bool						m_disabled;
@@ -132,6 +133,7 @@ namespace litehtml
 		void set_callback(tooltips_callback* cb)	{ m_callback = cb;		}
 		void set_alpha(int alpha)					{ m_alpha = alpha;		}
 		void update(unsigned int id);
+		void set_def_font(const wchar_t* font_name, int font_size);
 
 	private:
 		// cairo_container members

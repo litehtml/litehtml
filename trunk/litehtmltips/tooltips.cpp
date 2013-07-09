@@ -22,18 +22,19 @@
 litehtml::tooltips::tooltips(HINSTANCE hInst, litehtml::context* html_context)
 {
 	registerClass(hInst);
-	m_hWnd			= NULL;
-	m_html_context	= html_context;
-	m_max_width		= 300;
-	m_show_time		= 500;
-	m_hide_time		= 0;
-	m_callback		= NULL;
-	m_style			= tips_style_square;
-	m_over_tool		= 0;
-	m_disabled		= false;
-	m_alpha			= 255;
-	m_cr			= NULL;
-	m_surface		= NULL;
+	m_hWnd				= NULL;
+	m_html_context		= html_context;
+	m_max_width			= 300;
+	m_show_time			= 500;
+	m_hide_time			= 0;
+	m_callback			= NULL;
+	m_style				= tips_style_square;
+	m_over_tool			= 0;
+	m_disabled			= false;
+	m_alpha				= 255;
+	m_cr				= NULL;
+	m_surface			= NULL;
+	m_last_shown_tool	= 0;
 
 	init_def_font();
 }
@@ -207,7 +208,8 @@ void litehtml::tooltips::show( unsigned int id, int top )
 	tool::map::iterator ti = m_tools.find(id);
 	if(ti != m_tools.end())
 	{
-		m_show_tool = id;
+		m_show_tool			= id;
+		m_last_shown_tool	= id;
 		clear_images();
 		if(m_html)
 		{
@@ -283,6 +285,10 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 			pThis->hide();
 		}
 		break;
+	case WM_MOUSELEAVE:
+		pThis->m_last_shown_tool = 0;
+		pThis->hide();
+		break;
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONDBLCLK:
 	case WM_RBUTTONDOWN:
@@ -299,7 +305,6 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 	case WM_SYSKEYDOWN:
 	case WM_KILLFOCUS:
 	case WM_CLOSE:
-	case WM_MOUSELEAVE:
 		pThis->hide();
 		break;
 	case WM_MOUSEMOVE:
@@ -313,7 +318,7 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 			{
 				pThis->stop_timers();
 				pThis->m_over_tool = over_id;
-				if(pThis->m_over_tool)
+				if(pThis->m_over_tool && pThis->m_last_shown_tool != over_id)
 				{
 					SetTimer(pThis->m_hWnd, TIMER_SHOW_TIP, pThis->m_show_time, NULL);
 				}
@@ -331,7 +336,7 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 						if(pThis->m_over_tool)
 						{
 							pThis->stop_timers();
-							SetTimer(pThis->m_hWnd, TIMER_SHOW_TIP, 0, NULL);
+							SetTimer(pThis->m_hWnd, TIMER_SHOW_TIP, pThis->m_show_time, NULL);
 						}
 					}
 				}
@@ -399,6 +404,17 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 	cairo_set_line_width(m_cr, 1);
 	cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bdr) / 255.0, (double) GetGValue(clr_bdr) / 255.0, (double) GetBValue(clr_bdr) / 255.0);
 	cairo_stroke(m_cr);
+
+	if(m_html->height() > layout->content_height)
+	{
+		double sb_ratio = (double) layout->content_height / (double) m_html->height();
+		double sb_height = layout->content_height * sb_ratio;
+		double sb_top = layout->content_y + m_top * sb_ratio;
+
+		rounded_rect(m_cr, layout->content_x + layout->content_width + 3, sb_top, 4, sb_height, 2, 0);
+		cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bdr) / 255.0, (double) GetGValue(clr_bdr) / 255.0, (double) GetBValue(clr_bdr) / 255.0);
+		cairo_fill(m_cr);
+	}
 
 	int shadow_width	= 10;
 	int shadow_height	= 10;
@@ -613,20 +629,25 @@ void litehtml::tooltips::calc_layout( tool* t, tip_layout* layout )
 		break;
 	}
 
+	RECT rcDesktop;
+	GetDesktopRect(&rcDesktop, m_hWndParent);
+
+	if(layout->height > rcDesktop.bottom - rcDesktop.top)
+	{
+		layout->width += 7;
+	}
+
 	RECT rc_tool = t->rc_tool;
 	MapWindowPoints(m_hWndParent, NULL, (LPPOINT) &rc_tool, 2);
 
 	calc_position(t->options & tool_opt_align_mask, &rc_tool, layout);
-
-	RECT rcDesktop;
-	GetDesktopRect(&rcDesktop, m_hWndParent);
 
 	if(layout->y + layout->height > rcDesktop.bottom)
 	{
 		int margin = layout->height - m_html->height();
 		layout->height = rcDesktop.bottom - layout->y;
 		layout->content_height = layout->height - margin;
-	}
+	} 
 
 	switch(layout->align)
 	{
@@ -1221,9 +1242,9 @@ void litehtml::tooltips::draw_window(BOOL clr)
 
 	draw_background(&m_layout);
 
-	litehtml::position clip(m_layout.content_x, m_layout.content_y, m_html->width(), m_html->height());
+	litehtml::position clip(m_layout.content_x, m_layout.content_y, m_layout.content_width, m_layout.content_height);
 	cairo_save(m_cr);
-		cairo_rectangle(m_cr, m_layout.content_x, m_layout.content_y, m_layout.content_width, m_layout.content_height);
+		cairo_rectangle(m_cr, clip.x, clip.y, clip.width, clip.height);
 		cairo_clip(m_cr);
 		m_html->draw((litehtml::uint_ptr) m_cr, m_layout.content_x, m_layout.content_y - m_top, &clip);
 	cairo_restore(m_cr);
@@ -1276,4 +1297,16 @@ BOOL litehtml::tooltips::can_scroll()
 		}
 	}
 	return FALSE;
+}
+
+void litehtml::tooltips::set_def_font( const wchar_t* font_name, int font_size )
+{
+	if(!font_name)
+	{
+		init_def_font();
+	} else
+	{
+		m_def_font_name = font_name;
+		m_def_font_size	= font_size;
+	}
 }
