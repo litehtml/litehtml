@@ -158,6 +158,17 @@ caption {
 	display: table-caption;
 }
 
+tt, code, kbd, samp {
+    font-family: monospace
+}
+
+pre, xmp, plaintext, listing {
+    display: block;
+    font-family: monospace;
+    white-space: pre;
+    margin: 1em 0
+}
+
 /***************** LISTS ********************/
 
 ul, menu, dir {
@@ -251,3 +262,4 @@ article, aside, footer, header, hgroup, nav, section
 {
 	display: block;
 }
+

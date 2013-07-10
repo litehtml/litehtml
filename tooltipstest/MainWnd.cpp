@@ -113,7 +113,7 @@ void CMainWnd::ttcb_get_text( unsigned int id, std::wstring& text )
 	}
 }
 
-CTxDIB* CMainWnd::ttcb_get_image( LPCWSTR url )
+CTxDIB* CMainWnd::ttcb_get_image( unsigned int id, LPCWSTR url )
 {
 	return NULL;
 }

@@ -18,7 +18,7 @@ public:
 	virtual void	preRegisterClass( WNDCLASSEX* wcex );
 	virtual LRESULT OnMessage( HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam );
 
-	virtual CTxDIB* ttcb_get_image(LPCWSTR url);
+	virtual CTxDIB* ttcb_get_image(unsigned int id, LPCWSTR url);
 	virtual void ttcb_get_text(unsigned int id, std::wstring& text);
 
 	BOOL	create();

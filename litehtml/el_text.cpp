@@ -26,14 +26,7 @@ void litehtml::el_text::draw_content( uint_ptr hdc, const litehtml::position& po
 {
 	uint_ptr font = m_parent->get_font();
 	litehtml::web_color color = m_parent->get_color(L"color", true, m_doc->get_def_color());
-
-	if(m_text_transform == text_transform_none)
-	{
-		m_doc->container()->draw_text(hdc, m_text.c_str(), font, color, pos);
-	} else
-	{
-		m_doc->container()->draw_text(hdc, m_transformed_text.c_str(), font, color, pos);
-	}
+	m_doc->container()->draw_text(hdc, m_transformed_text.c_str(), font, color, pos);
 }
 
 void litehtml::el_text::apply_stylesheet( const litehtml::css& stylesheet )
@@ -59,24 +52,26 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 {
 	m_text_transform	= (text_transform)	value_index(get_style_property(L"text-transform", true,	L"none"),	text_transform_strings,	text_transform_none);
 	m_white_space		= m_parent->get_white_space();
+	m_transformed_text	= m_text;
 	if(m_text_transform != text_transform_none)
 	{
 		switch(m_text_transform)
 		{
 		case text_transform_capitalize:
-			m_transformed_text = m_text;
 			if(!m_transformed_text.empty())
 			{
 				m_transformed_text[0] = m_doc->container()->toupper(m_transformed_text[0]);
 			}
 			break;
 		case text_transform_uppercase:
+			m_transformed_text = L"";
 			for(int i=0; i < m_text.length(); i++)
 			{
 				m_transformed_text += m_doc->container()->toupper(m_text[i]);
 			}
 			break;
 		case text_transform_lowercase:
+			m_transformed_text = L"";
 			for(int i=0; i < m_text.length(); i++)
 			{
 				m_transformed_text += m_doc->container()->tolower(m_text[i]);
@@ -85,14 +80,30 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 		}
 	}
 
-	font_metrics fm;
-	uint_ptr font = m_parent->get_font(&fm);
-	m_size.height	= fm.height;
-	if(m_text_transform == text_transform_none)
+	if(is_white_space())
 	{
-		m_size.width	= m_doc->container()->text_width(m_text.c_str(), font);
+		m_transformed_text = L" ";
 	} else
 	{
+		if(m_text == L"\t")
+		{
+			m_transformed_text = L"    ";
+		}
+		if(m_text == L"\n" || m_text == L"\r")
+		{
+			m_transformed_text = L"";
+		}
+	}
+
+	font_metrics fm;
+	uint_ptr font	= m_parent->get_font(&fm);
+	if(is_break())
+	{
+		m_size.height	= 0;
+		m_size.width	= 0;
+	} else
+	{
+		m_size.height	= fm.height;
 		m_size.width	= m_doc->container()->text_width(m_transformed_text.c_str(), font);
 	}
 

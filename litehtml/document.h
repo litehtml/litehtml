@@ -92,7 +92,7 @@ namespace litehtml
 		void parse_tag_end(const wchar_t* tag_name);
 		void parse_attribute(const wchar_t* attr_name, const wchar_t* attr_value);
 		void parse_word(const wchar_t* val);
-		void parse_space();
+		void parse_space(const wchar_t* val);
 		void parse_comment_start();
 		void parse_comment_end();
 		void parse_data(const wchar_t* val);

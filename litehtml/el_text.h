@@ -6,6 +6,7 @@ namespace litehtml
 {
 	class el_text : public element
 	{
+	protected:
 		std::wstring	m_text;
 		std::wstring	m_transformed_text;
 		size			m_size;
