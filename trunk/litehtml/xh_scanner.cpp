@@ -57,23 +57,29 @@ namespace litehtml
          c = scan_entity();
       else
          ws = is_whitespace(c);
-        
-      while(true) 
-      {
-        append_value(c);
-        c = input.get_char();
-        if(c == 0)  { push_back(c); break; }
-        if(c == '<') { push_back(c); break; }
-        if(c == '&') { push_back(c); break; }
-          
-        if(is_whitespace(c) != ws) 
-        {
-          push_back(c);
-          break;
-        }
+      if(!ws)
+	  {
+		  while(true) 
+		  {
+			  append_value(c);
+			  c = input.get_char();
+			  if(c == 0)  { push_back(c); break; }
+			  if(c == '<') { push_back(c); break; }
+			  if(c == '&') { push_back(c); break; }
 
-      }
-      return ws? TT_SPACE:TT_WORD;
+			  if(is_whitespace(c) != ws) 
+			  {
+				  push_back(c);
+				  break;
+			  }
+
+		  }
+	  } else
+	  {
+		  append_value(c);
+	  }
+
+      return ws ? TT_SPACE : TT_WORD;
     }
 
     scanner::token_type scanner::scan_head()

@@ -33,7 +33,7 @@ void litehtml::block_box::finish(bool last_box)
 	//m_element->m_pos.y = m_box_top + m_element->content_margins_top();
 }
 
-bool litehtml::block_box::can_hold( element* el )
+bool litehtml::block_box::can_hold( element* el, white_space ws )
 {
 	if(m_element || el->is_inline_box())
 	{
@@ -111,25 +111,16 @@ int litehtml::line_box::width()
 
 void litehtml::line_box::add_element( element* el )
 {
-	if(m_items.empty() && el->is_white_space())
+	el->m_skip = false;
+	if(m_items.empty() && el->is_white_space() || el->is_break())
 	{
 		el->m_skip = true;
-	} else
+	} else if(el->is_white_space())
 	{
 		element* ws = get_last_space();
-		if(ws && el->is_white_space() || el->is_break())
+		if(ws)
 		{
 			el->m_skip = true;
-		} else
-		{
-			el->m_skip = false;
-			if(ws && !el->is_white_space() && !is_empty())
-			{
-				ws->m_skip	= false;
-				ws->m_pos.x	= m_box_left + m_width;
-				ws->m_pos.y	= m_box_top;
-				m_width		+= ws->width();
-			}
 		}
 	}
 
@@ -252,13 +243,18 @@ void litehtml::line_box::finish(bool last_box)
 	m_baseline = (base_line - y1) - (m_height - line_height);
 }
 
-bool litehtml::line_box::can_hold( element* el )
+bool litehtml::line_box::can_hold( element* el, white_space ws )
 {
 	if(!el->is_inline_box()) return false;
 
 	if(el->is_break())
 	{
 		return false;
+	}
+
+	if(ws == white_space_nowrap || ws == white_space_pre)
+	{
+		return true;
 	}
 
 	if(m_box_left + m_width + el->width() > m_box_right)
@@ -274,9 +270,12 @@ litehtml::element* litehtml::line_box::get_last_space()
 	element* ret = 0;
 	for(std::vector<element*>::reverse_iterator i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
 	{
-		if((*i)->is_white_space() && (*i)->m_skip || (*i)->is_break())
+		if((*i)->is_white_space())
 		{
 			ret = (*i);
+		} else
+		{
+			break;
 		}
 	}
 	return ret;

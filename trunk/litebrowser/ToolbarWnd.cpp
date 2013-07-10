@@ -138,7 +138,7 @@ void CToolbarWnd::OnPaint( simpledib::dib* dib, LPRECT rcDraw )
 		cairo_paint(cr);
 
 		litehtml::position clip(rcDraw->left, rcDraw->top, rcDraw->right - rcDraw->left, rcDraw->bottom - rcDraw->top);
-		m_doc->draw((litehtml::uint_ptr) dib, 0, 0, &clip);
+		m_doc->draw((litehtml::uint_ptr) cr, 0, 0, &clip);
 
 		cairo_destroy(cr);
 		cairo_surface_destroy(surface);

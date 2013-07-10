@@ -24,7 +24,25 @@ cairo_font::cairo_font(IMLangFontLink2* fl, LPCWSTR facename, int size, int weig
 
 	LOGFONT lf;
 	ZeroMemory(&lf, sizeof(lf));
-	wcscpy_s(lf.lfFaceName, LF_FACESIZE, facename);
+	if(!lstrcmpi(facename, L"monospace"))
+	{
+		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Courier New");
+	} else if(!lstrcmpi(facename, L"serif"))
+	{
+		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Times New Roman");
+	} else if(!lstrcmpi(facename, L"sans-serif"))
+	{
+		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Tahoma");
+	} else if(!lstrcmpi(facename, L"fantasy"))
+	{
+		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Impact");
+	} else if(!lstrcmpi(facename, L"cursive"))
+	{
+		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Comic Sans MS");
+	} else
+	{
+		wcscpy_s(lf.lfFaceName, LF_FACESIZE, facename);
+	}
 
 	lf.lfHeight			= -size;
 	lf.lfWeight			= weight;

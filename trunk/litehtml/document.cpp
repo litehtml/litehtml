@@ -81,7 +81,7 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 			doc->parse_word(sc.get_value());
 			break;
 		case litehtml::scanner::TT_SPACE:
-			doc->parse_space();
+			doc->parse_space(sc.get_value());
 			break;
 		}
 	}
@@ -559,13 +559,13 @@ void litehtml::document::parse_word( const wchar_t* val )
 	}
 }
 
-void litehtml::document::parse_space()
+void litehtml::document::parse_space(const wchar_t* val)
 {
 	parse_pop_empty_element();
 
 	if(!m_parse_stack.empty())
 	{
-		element::ptr el = new litehtml::el_space(this);
+		element::ptr el = new litehtml::el_space(val, this);
 		m_parse_stack.back()->appendChild(el);
 	}
 }

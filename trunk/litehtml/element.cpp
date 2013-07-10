@@ -2136,7 +2136,7 @@ int litehtml::element::place_element( element* el, int max_width )
 		bool add_box = true;
 		if(!m_boxes.empty())
 		{
-			if(m_boxes.back()->can_hold(el))
+			if(m_boxes.back()->can_hold(el, m_white_space))
 			{
 				add_box = false;
 			}
