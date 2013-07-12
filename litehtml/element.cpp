@@ -1603,22 +1603,25 @@ void litehtml::element::get_inline_boxes( position::vector& boxes )
 	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
 	{
 		element* el = (*iter);
-		if(el->m_box)
+		if(!el->m_skip)
 		{
-			if(el->m_box != old_box)
+			if(el->m_box)
 			{
-				if(old_box)
+				if(el->m_box != old_box)
 				{
-					boxes.push_back(pos);
+					if(old_box)
+					{
+						boxes.push_back(pos);
+					}
+					old_box		= el->m_box;
+					pos.x		= el->left() + el->margin_left();
+					pos.y		= el->top() - m_padding.top - m_borders.top;
+					pos.width	= 0;
+					pos.height	= 0;
 				}
-				old_box		= el->m_box;
-				pos.x		= el->left() + el->margin_left();
-				pos.y		= el->top() - m_padding.top - m_borders.top;
-				pos.width	= 0;
-				pos.height	= 0;
+				pos.width	= el->right() - pos.x - el->margin_right() - el->margin_left();
+				pos.height	= max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom);
 			}
-			pos.width	= el->right() - pos.x - el->margin_right() - el->margin_left();
-			pos.height	= max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom);
 		}
 	}
 	if(pos.width || pos.height)

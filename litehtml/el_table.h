@@ -22,10 +22,10 @@ namespace litehtml
 		el_table(litehtml::document* doc);
 		virtual ~el_table();
 
-		virtual int		render(int x, int y, int max_width);
-		virtual bool	appendChild(litehtml::element* el);
-		virtual void	parse_styles(bool is_reparse = false);
-		virtual void	draw(uint_ptr hdc, int x, int y, const position* clip);
+		virtual int				render(int x, int y, int max_width);
+		virtual bool			appendChild(litehtml::element* el);
+		virtual void			parse_styles(bool is_reparse = false);
+		virtual void			draw(uint_ptr hdc, int x, int y, const position* clip);
 
 	protected:
 		virtual void	init();

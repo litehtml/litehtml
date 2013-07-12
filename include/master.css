@@ -158,6 +158,10 @@ caption {
 	display: table-caption;
 }
 
+td[nowrap], th[nowrap] {
+	white-space:nowrap;
+}
+
 tt, code, kbd, samp {
     font-family: monospace
 }
