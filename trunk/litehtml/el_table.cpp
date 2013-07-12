@@ -2,6 +2,7 @@
 #include "el_table.h"
 #include "document.h"
 #include "iterators.h"
+#include <algorithm>
 
 
 litehtml::el_table::el_table( litehtml::document* doc ) : element(doc)
