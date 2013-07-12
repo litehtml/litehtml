@@ -33,17 +33,32 @@ void litehtml::el_image::parse_styles(bool is_reparse)
 	if(!m_css_height.val())
 	{
 		m_css_height.fromString(get_attr(L"height", L"auto"), L"auto");
-		if(m_css_height.is_predefined())
-		{
-			m_css_height.set_value((float) sz.height, css_units_px);
-		}
 	}
 	if(!m_css_width.val())
 	{
 		m_css_width.fromString(get_attr(L"width", L"auto"), L"auto");
-		if(m_css_width.is_predefined())
+	}
+	if(m_css_height.is_predefined() && m_css_width.is_predefined())
+	{
+		m_css_height.set_value((float) sz.height, css_units_px);
+		m_css_width.set_value((float) sz.width, css_units_px);
+	} else if(!m_css_height.is_predefined() && m_css_width.is_predefined())
+	{
+		if(sz.height)
+		{
+			m_css_width.set_value((float) m_css_height.val() * (float)sz.width / (float)sz.height, css_units_px);
+		} else
 		{
 			m_css_width.set_value((float) sz.width, css_units_px);
+		}
+	} else if(m_css_height.is_predefined() && !m_css_width.is_predefined())
+	{
+		if(sz.width)
+		{
+			m_css_height.set_value((float) m_css_width.val() * (float) sz.height / (float)sz.width, css_units_px);
+		} else
+		{
+			m_css_height.set_value((float) sz.height, css_units_px);
 		}
 	}
 }
