@@ -411,7 +411,7 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 		double sb_height = layout->content_height * sb_ratio;
 		double sb_top = layout->content_y + m_top * sb_ratio;
 
-		rounded_rect(m_cr, layout->content_x + layout->content_width + 3, sb_top, 4, sb_height, 2, 0);
+		rounded_rect(m_cr, layout->content_x + layout->content_width + 3, (int) sb_top, 4, (int) sb_height, 2, 0);
 		cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bdr) / 255.0, (double) GetGValue(clr_bdr) / 255.0, (double) GetBValue(clr_bdr) / 255.0);
 		cairo_fill(m_cr);
 	}
@@ -654,10 +654,22 @@ void litehtml::tooltips::calc_layout( tool* t, tip_layout* layout )
 	case tool_opt_align_top:
 		layout->anchor_x = rc_tool.left + (rc_tool.right - rc_tool.left) / 2;
 		layout->anchor_y = rc_tool.top;
+		if(layout->y + layout->height > rc_tool.top)
+		{
+			layout->content_height	-= (layout->y + layout->height) - rc_tool.top;
+			layout->height			-= layout->y + layout->height - rc_tool.top;
+			layout->y				=  rc_tool.top - layout->height;
+		}
 		break;
 	case tool_opt_align_bottom:
 		layout->anchor_x = rc_tool.left + (rc_tool.right - rc_tool.left) / 2;
 		layout->anchor_y = rc_tool.bottom;
+		if(rc_tool.bottom > layout->y)
+		{
+			layout->content_height	-= rc_tool.bottom - layout->y;
+			layout->height			-= rc_tool.bottom - layout->y;
+			layout->y				=  rc_tool.bottom;
+		}
 		break;
 	case tool_opt_align_left:
 		layout->anchor_y = rc_tool.top + (rc_tool.bottom - rc_tool.top) / 2;
