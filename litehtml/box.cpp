@@ -329,7 +329,7 @@ bool litehtml::line_box::is_break_only()
 	bool ret = false;
 	if(m_items.front()->is_break())
 	{
-		for(std::vector<element*>::reverse_iterator i = m_items.rbegin() + 1; i != m_items.rend(); i++)
+		for(std::vector<element*>::iterator i = m_items.begin() + 1; i != m_items.end(); i++)
 		{
 			if(!(*i)->m_skip)
 			{

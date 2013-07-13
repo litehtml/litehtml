@@ -41,3 +41,12 @@ void litehtml::el_td::parse_styles(bool is_reparse)
 
 	element::parse_styles(is_reparse);
 }
+
+const wchar_t* litehtml::el_td::get_style_property( const wchar_t* name, bool inherited, const wchar_t* def /*= 0*/ )
+{
+	if(wcsstr(name, L"background"))
+	{
+		return element::get_style_property(name, true, def);
+	}
+	return element::get_style_property(name, inherited, def);
+}
