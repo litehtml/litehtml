@@ -221,14 +221,25 @@ void litehtml::tooltips::show( unsigned int id, int top )
 			{
 				std::wstring text;
 				m_callback->ttcb_get_text(ti->first, text);
-				m_html = litehtml::document::createFromString(text.c_str(), this, m_html_context);
+				if(!text.empty())
+				{
+					m_html = litehtml::document::createFromString(text.c_str(), this, m_html_context);
+				}
 			} else
 			{
 				return;
 			}
 		} else
 		{
-			m_html = litehtml::document::createFromString(ti->second.text.c_str(), this, m_html_context);
+			if(!ti->second.text.empty())
+			{
+				m_html = litehtml::document::createFromString(ti->second.text.c_str(), this, m_html_context);
+			}
+		}
+
+		if(!m_html)
+		{
+			return;
 		}
 
 		int w = m_html->render(m_max_width);
