@@ -101,6 +101,8 @@ void cairo_container::fill_rect( litehtml::uint_ptr hdc, const litehtml::positio
 		cairo_save(cr);
 		apply_clip(cr);
 
+		cairo_new_path(cr);
+
 		if(radius.top_left_x.val())
 		{
 			cairo_arc(cr, pos.left() + radius.top_left_x.val(), pos.top() + radius.top_left_x.val(), radius.top_left_x.val(), M_PI, M_PI * 3.0 / 2.0);
@@ -332,6 +334,8 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
+
+	cairo_new_path(cr);
 
 	int bdr_top		= 0;
 	int bdr_bottom	= 0;
@@ -673,6 +677,8 @@ void cairo_container::draw_ellipse( cairo_t* cr, int x, int y, int width, int he
 
 	apply_clip(cr);
 
+	cairo_new_path(cr);
+
 	cairo_translate (cr, x + width / 2.0, y + height / 2.0);
 	cairo_scale (cr, width / 2.0, height / 2.0);
 	cairo_arc (cr, 0, 0, 1, 0, 2 * M_PI);
@@ -690,6 +696,8 @@ void cairo_container::fill_ellipse( cairo_t* cr, int x, int y, int width, int he
 	cairo_save(cr);
 
 	apply_clip(cr);
+
+	cairo_new_path(cr);
 
 	cairo_translate (cr, x + width / 2.0, y + height / 2.0);
 	cairo_scale (cr, width / 2.0, height / 2.0);
