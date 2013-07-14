@@ -198,7 +198,7 @@ namespace litehtml
 		borderDouble
 	};
 
-#define  font_size_strings		L"xx-small;x-small;small;medium;x-large;xx-large;smaller;larger"
+#define  font_size_strings		L"xx-small;x-small;small;medium;large;x-large;xx-large;smaller;larger"
 
 	enum font_size
 	{

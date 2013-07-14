@@ -1613,6 +1613,9 @@ void litehtml::element::get_inline_boxes( position::vector& boxes )
 				}
 				pos.width	= el->right() - pos.x - el->margin_right() - el->margin_left();
 				pos.height	= max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom);
+			} else if(el->m_display == display_inline)
+			{
+				el->get_inline_boxes(boxes);
 			}
 		}
 	}
@@ -1854,6 +1857,19 @@ const wchar_t* litehtml::element::get_cursor()
 	return ret;
 }
 
+static const int font_size_table[8][7] =
+{
+	{ 9,    9,     9,     9,    11,    14,    18},
+	{ 9,    9,     9,    10,    12,    15,    20},
+	{ 9,    9,     9,    11,    13,    17,    22},
+	{ 9,    9,    10,    12,    14,    18,    24},
+	{ 9,    9,    10,    13,    16,    20,    26},
+	{ 9,    9,    11,    14,    17,    21,    28},
+	{ 9,   10,    12,    15,    17,    23,    30},
+	{ 9,   10,    13,    16,    18,    24,    32}
+};
+
+
 void litehtml::element::init_font()
 {
 	// initialize font size
@@ -1881,29 +1897,42 @@ void litehtml::element::init_font()
 		sz.fromString(str, font_size_strings);
 		if(sz.is_predefined())
 		{
-			switch(sz.predef())
+			int idx_in_table = doc_font_size - 9;
+			if(idx_in_table >= 0 && idx_in_table <= 7)
 			{
-			case fontSize_xx_small:
-				m_font_size = doc_font_size * 3 / 5;
-				break;
-			case fontSize_x_small:
-				m_font_size = doc_font_size * 3 / 4;
-				break;
-			case fontSize_small:
-				m_font_size = doc_font_size * 8 / 9;
-				break;
-			case fontSize_large:
-				m_font_size = doc_font_size * 6 / 5;
-				break;
-			case fontSize_x_large:
-				m_font_size = doc_font_size * 3 / 2;
-				break;
-			case fontSize_xx_large:
-				m_font_size = doc_font_size * 2;
-				break;
-			default:
-				m_font_size = doc_font_size;
-				break;
+				if(sz.predef() >= fontSize_xx_small && sz.predef() <= fontSize_xx_large)
+				{
+					m_font_size = font_size_table[idx_in_table][sz.predef()];
+				} else
+				{
+					m_font_size = doc_font_size;
+				}
+			} else			
+			{
+				switch(sz.predef())
+				{
+				case fontSize_xx_small:
+					m_font_size = doc_font_size * 3 / 5;
+					break;
+				case fontSize_x_small:
+					m_font_size = doc_font_size * 3 / 4;
+					break;
+				case fontSize_small:
+					m_font_size = doc_font_size * 8 / 9;
+					break;
+				case fontSize_large:
+					m_font_size = doc_font_size * 6 / 5;
+					break;
+				case fontSize_x_large:
+					m_font_size = doc_font_size * 3 / 2;
+					break;
+				case fontSize_xx_large:
+					m_font_size = doc_font_size * 2;
+					break;
+				default:
+					m_font_size = doc_font_size;
+					break;
+				}
 			}
 		} else
 		{

@@ -12,6 +12,8 @@
 #include "el_base.h"
 #include "el_anchor.h"
 #include "el_break.h"
+#include "el_div.h"
+#include "el_font.h"
 #include <math.h>
 
 const wchar_t* g_empty_tags[] =
@@ -443,6 +445,12 @@ litehtml::element::ptr litehtml::document::create_element( const wchar_t* tag_na
 	} else if(!_wcsicmp(tag_name, L"body"))
 	{
 		newTag = new litehtml::el_body(this);
+	} else if(!_wcsicmp(tag_name, L"div"))
+	{
+		newTag = new litehtml::el_div(this);
+	} else if(!_wcsicmp(tag_name, L"font"))
+	{
+		newTag = new litehtml::el_font(this);
 	} else
 	{
 		newTag = new litehtml::element(this);

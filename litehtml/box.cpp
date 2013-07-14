@@ -270,7 +270,7 @@ litehtml::element* litehtml::line_box::get_last_space()
 	element* ret = 0;
 	for(std::vector<element*>::reverse_iterator i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
 	{
-		if((*i)->is_white_space())
+		if((*i)->is_white_space() || (*i)->is_break())
 		{
 			ret = (*i);
 		} else

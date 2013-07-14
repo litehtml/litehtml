@@ -329,6 +329,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_div.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\el_font.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\el_image.cpp"
 				>
 			</File>
@@ -472,6 +480,14 @@
 			</File>
 			<File
 				RelativePath=".\el_comment.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_div.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_font.h"
 				>
 			</File>
 			<File
