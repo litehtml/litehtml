@@ -131,8 +131,10 @@ hr {
 /***************** TABLES ********************/
 
 table {
-	display:table;
-	border-spacing: 2px;
+    display: table;
+    border-collapse: separate;
+    border-spacing: 2px;
+    border-color: gray
 }
 
 tbody, tfoot, thead {
@@ -141,13 +143,14 @@ tbody, tfoot, thead {
 }
 
 tr {
-	display:table-row;
-	vertical-align: inherit;
+    display: table-row;
+    vertical-align: inherit;
+    border-color: inherit
 }
 
 td, th {
-	display:table-cell;
-	vertical-align: inherit;
+    display: table-cell;
+    vertical-align: inherit
 }
 
 th {
