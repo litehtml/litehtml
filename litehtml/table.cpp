@@ -23,10 +23,13 @@ void litehtml::table_grid::add_cell( element* el )
 }
 
 
-void litehtml::table_grid::begin_row()
+void litehtml::table_grid::begin_row(element* row)
 {
 	std::vector<table_cell> r;
 	m_cells.push_back(r);
+	
+	m_rows.push_back(table_row(0, row));
+
 }
 
 
@@ -71,11 +74,13 @@ void litehtml::table_grid::finish()
 		m_columns.push_back(table_column(0, 0));
 	}
 
+/*
 	m_rows.clear();
 	for(int i = 0; i < m_rows_count; i++)
 	{
 		m_rows.push_back(table_row());
 	}
+*/
 
 	for(int col = 0; col < m_cols_count; col++)
 	{

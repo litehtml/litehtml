@@ -45,6 +45,7 @@ void litehtml::el_td::parse_styles(bool is_reparse)
 const wchar_t* litehtml::el_td::get_style_property( const wchar_t* name, bool inherited, const wchar_t* def /*= 0*/ )
 {
 	const wchar_t* ret = element::get_style_property(name, inherited, def);
+/*
 	if(!ret)
 	{
 		if(m_parent && wcsstr(name, L"background"))
@@ -52,5 +53,6 @@ const wchar_t* litehtml::el_td::get_style_property( const wchar_t* name, bool in
 			return m_parent->get_style_property(name, inherited, def);
 		}
 	}
+*/
 	return ret;
 }

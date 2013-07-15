@@ -14,6 +14,7 @@
 #include "el_break.h"
 #include "el_div.h"
 #include "el_font.h"
+#include "el_tr.h"
 #include <math.h>
 
 const wchar_t* g_empty_tags[] =
@@ -435,7 +436,7 @@ litehtml::element::ptr litehtml::document::create_element( const wchar_t* tag_na
 		newTag = new litehtml::el_anchor(this);
 	} else if(!_wcsicmp(tag_name, L"tr"))
 	{
-		newTag = new litehtml::element(this);
+		newTag = new litehtml::el_tr(this);
 	} else if(!_wcsicmp(tag_name, L"style"))
 	{
 		newTag = new litehtml::el_style(this);

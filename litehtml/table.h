@@ -6,21 +6,25 @@ namespace litehtml
 	{
 		typedef std::vector<table_row>	vector;
 
-		int height;
+		int			height;
+		element*	el_row;
 
 		table_row()
 		{
 			height		= 0;
+			el_row		= 0;
 		}
 
-		table_row(int h)
+		table_row(int h, element* row)
 		{
 			height	= h;
+			el_row	= row;
 		}
 
 		table_row(const table_row& val)
 		{
 			height	= val.height;
+			el_row	= val.el_row;
 		}
 	};
 
@@ -140,7 +144,7 @@ namespace litehtml
 		}
 
 		void			clear();
-		void			begin_row();
+		void			begin_row(element* row);
 		void			add_cell(element* el);
 		bool			is_rowspanned(int r, int c);
 		void			finish();
