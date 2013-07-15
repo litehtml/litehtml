@@ -410,7 +410,7 @@ void litehtml::element::parse_styles(bool is_reparse)
 		m_lh_predefined = false;
 	} else
 	{
-		m_line_height =  m_doc->cvt_units(line_height,	m_font_size);
+		m_line_height =  m_doc->cvt_units(line_height,	m_font_size, m_font_size);
 		m_lh_predefined = false;
 	}
 
@@ -1676,7 +1676,7 @@ bool litehtml::element::find_styles_changes( position::vector& redraw_boxes, int
 
 	if(apply)
 	{
-		if(m_display == display_inline)
+		if(m_display == display_inline ||  m_display == display_table_row)
 		{
 			position::vector boxes;
 			get_inline_boxes(boxes);
@@ -1981,7 +1981,7 @@ void litehtml::element::draw_background( uint_ptr hdc, int x, int y, const posit
 	el_pos += m_padding;
 	el_pos += m_borders;
 
-	if(m_display != display_inline)
+	if(m_display != display_inline && m_display != display_table_row)
 	{
 		if(el_pos.does_intersect(clip))
 		{
@@ -2236,7 +2236,7 @@ int litehtml::element::place_element( element* el, int max_width )
 
 bool litehtml::element::is_point_inside( int x, int y )
 {
-	if(m_display != display_inline)
+	if(m_display != display_inline && m_display != display_table_row)
 	{
 		position pos = m_pos;
 		pos += m_padding;

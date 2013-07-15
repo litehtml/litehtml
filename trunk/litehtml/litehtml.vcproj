@@ -373,6 +373,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_tr.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\element.cpp"
 				>
 			</File>
@@ -524,6 +528,10 @@
 			</File>
 			<File
 				RelativePath=".\el_title.h"
+				>
+			</File>
+			<File
+				RelativePath=".\el_tr.h"
 				>
 			</File>
 			<File

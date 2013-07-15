@@ -181,7 +181,7 @@ namespace litehtml
 		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
 		virtual void				init();
-		void						get_inline_boxes(position::vector& boxes);
+		virtual void				get_inline_boxes(position::vector& boxes);
 
 	private:
 		bool						select_one(const std::wstring& selector);

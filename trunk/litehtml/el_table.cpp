@@ -383,7 +383,7 @@ void litehtml::el_table::init()
 	element* row = row_iter.next(false);
 	while(row)
 	{
-		m_grid.begin_row();
+		m_grid.begin_row(row);
 
 		elements_iterator cell_iter(row, &go_inside_table(), &table_cells_selector());
 		element* cell = cell_iter.next();
@@ -409,6 +409,7 @@ void litehtml::el_table::draw( uint_ptr hdc, int x, int y, const position* clip 
 
 	for(int row = 0; row < m_grid.rows_count(); row++)
 	{
+		m_grid.row(row).el_row->draw_background(hdc, pos.left(), pos.top(), clip);
 		for(int col = 0; col < m_grid.cols_count(); col++)
 		{
 			table_cell* cell = m_grid.cell(col, row);
