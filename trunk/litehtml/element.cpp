@@ -2091,7 +2091,13 @@ int litehtml::element::place_element( element* el, int max_width )
 		int line_top = 0;
 		if(!m_boxes.empty())
 		{
-			line_top = m_boxes.back()->top();
+			if(m_boxes.back()->get_type() == box_line)
+			{
+				line_top = m_boxes.back()->top();
+			} else
+			{
+				line_top = m_boxes.back()->bottom();
+			}
 		}
 		int line_left	= get_line_left(line_top);
 		int line_right	= get_line_right(line_top, max_width);
@@ -2111,7 +2117,13 @@ int litehtml::element::place_element( element* el, int max_width )
 		int line_top = 0;
 		if(!m_boxes.empty())
 		{
-			line_top = m_boxes.back()->top();
+			if(m_boxes.back()->get_type() == box_line)
+			{
+				line_top = m_boxes.back()->top();
+			} else
+			{
+				line_top = m_boxes.back()->bottom();
+			}
 		}
 		int line_left	= get_line_left(line_top);
 		int line_right	= get_line_right(line_top, max_width);
