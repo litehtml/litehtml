@@ -203,14 +203,17 @@ void litehtml::tooltips::create( HWND parent )
 	}
 }
 
-void litehtml::tooltips::show( unsigned int id, int top )
+void litehtml::tooltips::show( unsigned int id, int top, bool is_update )
 {
 	tool::map::iterator ti = m_tools.find(id);
 	if(ti != m_tools.end())
 	{
 		m_show_tool			= id;
 		m_last_shown_tool	= id;
-		clear_images();
+		if(!is_update)
+		{
+			clear_images();
+		}
 		if(m_html)
 		{
 			m_html = NULL;
@@ -448,7 +451,44 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 		}
 		break;
 	}
+
+	CTxDIB img;
+	img._copy(m_dib.bits(), m_dib.width(), m_dib.height(), TRUE);
+
+	RGBQUAD* pixels = img.getBits();
+	int sz = img.getWidth() * img.getHeight();
+
+	for(int i=0; i < sz; i++)
+	{
+		pixels[i].rgbRed		= 0;
+		pixels[i].rgbGreen		= 0;
+		pixels[i].rgbBlue		= 0;
+	}
+
+	// draw shadow at the right side
+	{
+		CTxDIB img_shadow;
+		img.crop(img.getWidth() - shadow_width, 0, img.getWidth(), img.getHeight(), &img_shadow);
+		img_shadow.resample(img_shadow.getWidth() - 5, img_shadow.getHeight() - 5);
+
+		cairo_surface_t* img_sf = cairo_image_surface_create_for_data((unsigned char*) img.getBits(), CAIRO_FORMAT_ARGB32, img.getWidth(), img.getHeight(), img.getWidth() * 4);
+
+		simpledib::dib shadow;
+		shadow.create(m_dib.width(), m_dib.height(), true);
+		cairo_dev cr_shadow(&shadow);
+		cairo_set_source_surface(cr_shadow, img_sf, 5, 5);
+		cairo_paint(cr_shadow);
+		fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
+
+		cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
+
+		cairo_set_source_surface(m_cr, cr_shadow, 0, 0);
+		cairo_paint(m_cr);
+
+		cairo_surface_destroy(img_sf);
+	}
 	
+/*
 	simpledib::dib shadow;
 
 	CTxDIB img;
@@ -480,6 +520,7 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 	cairo_paint(m_cr);
 
 	cairo_surface_destroy(img_sf);
+*/
 
 	if(m_alpha != 255)
 	{
@@ -1234,20 +1275,27 @@ void litehtml::tooltips::update( unsigned int id )
 {
 	if(id == m_show_tool && IsWindowVisible(m_hWnd))
 	{
-		show(id, m_top);
+		show(id, m_top, true);
 	}
 }
 
 void litehtml::tooltips::create_dib( int width, int height )
 {
-	if(m_surface) cairo_surface_destroy(m_surface);
-	if(m_cr) cairo_destroy(m_cr);
+	if(!m_cr || !m_dib.hdc() || m_dib.width() != width || m_dib.height() != height)
+	{
+		if(m_surface) cairo_surface_destroy(m_surface);
+		if(m_cr) cairo_destroy(m_cr);
 
-	m_dib.clear();
-	m_dib.create(width, height, true);
+		m_dib.clear();
+		m_dib.create(width, height, true);
 
-	m_surface	= cairo_image_surface_create_for_data((unsigned char*) m_dib.bits(), CAIRO_FORMAT_ARGB32, m_dib.width(), m_dib.height(), m_dib.width() * 4);
-	m_cr		= cairo_create(m_surface);
+		m_surface	= cairo_image_surface_create_for_data((unsigned char*) m_dib.bits(), CAIRO_FORMAT_ARGB32, m_dib.width(), m_dib.height(), m_dib.width() * 4);
+		m_cr		= cairo_create(m_surface);
+	} else
+	{
+		m_dib.clear();
+	}
+
 }
 
 void litehtml::tooltips::draw_window(BOOL clr)

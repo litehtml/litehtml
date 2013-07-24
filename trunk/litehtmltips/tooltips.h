@@ -122,7 +122,7 @@ namespace litehtml
 		void add_tool(unsigned int id, const wchar_t* text, HWND ctl, LPCRECT rc_tool, UINT options);
 		void clear();
 		void create(HWND parent);
-		void show(unsigned int id, int top = 0);
+		void show(unsigned int id, int top = 0, bool is_update = false);
 
 		void hide();
 		void set_style(tips_style style)			{ m_style = style;		}
