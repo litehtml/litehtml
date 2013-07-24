@@ -465,62 +465,52 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 		pixels[i].rgbBlue		= 0;
 	}
 
+	img.resample(img.getWidth() - 5, img.getHeight() - 5);
+	cairo_surface_t* img_sf = cairo_image_surface_create_for_data((unsigned char*) img.getBits(), CAIRO_FORMAT_ARGB32, img.getWidth(), img.getHeight(), img.getWidth() * 4);
+
 	// draw shadow at the right side
 	{
-		CTxDIB img_shadow;
-		img.crop(img.getWidth() - shadow_width, 0, img.getWidth(), img.getHeight(), &img_shadow);
-		img_shadow.resample(img_shadow.getWidth() - 5, img_shadow.getHeight() - 5);
-
-		cairo_surface_t* img_sf = cairo_image_surface_create_for_data((unsigned char*) img.getBits(), CAIRO_FORMAT_ARGB32, img.getWidth(), img.getHeight(), img.getWidth() * 4);
-
 		simpledib::dib shadow;
-		shadow.create(m_dib.width(), m_dib.height(), true);
+		shadow.create(shadow_width, m_dib.height(), true);
 		cairo_dev cr_shadow(&shadow);
-		cairo_set_source_surface(cr_shadow, img_sf, 5, 5);
+		cairo_set_source_surface(cr_shadow, img_sf, -m_dib.width() + shadow_width + 5, 5);
 		cairo_paint(cr_shadow);
 		fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
 
 		cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
 
-		cairo_set_source_surface(m_cr, cr_shadow, 0, 0);
+		cairo_save(m_cr);
+
+		cairo_rectangle(m_cr, m_dib.width() - shadow_width, 0, shadow_width, m_dib.height());
+		cairo_clip(m_cr);
+		cairo_set_source_surface(m_cr, cr_shadow, m_dib.width() - shadow.width(), 0);
 		cairo_paint(m_cr);
 
-		cairo_surface_destroy(img_sf);
+		cairo_restore(m_cr);
 	}
-	
-/*
-	simpledib::dib shadow;
 
-	CTxDIB img;
-	img._copy(m_dib.bits(), m_dib.width(), m_dib.height(), TRUE);
-	
-	RGBQUAD* pixels = img.getBits();
-	int sz = img.getWidth() * img.getHeight();
-
-	for(int i=0; i < sz; i++)
+	// draw shadow at the bottom side
 	{
-		pixels[i].rgbRed		= 0;
-		pixels[i].rgbGreen		= 0;
-		pixels[i].rgbBlue		= 0;
+		simpledib::dib shadow;
+		shadow.create(m_dib.width(), shadow_height, true);
+		cairo_dev cr_shadow(&shadow);
+		cairo_set_source_surface(cr_shadow, img_sf, 5, -m_dib.height() + shadow_height + 5);
+		cairo_paint(cr_shadow);
+		fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
+
+		cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
+
+		cairo_save(m_cr);
+
+		cairo_rectangle(m_cr, 0, 0, m_dib.width() - shadow_width, m_dib.height());
+		cairo_clip(m_cr);
+		cairo_set_source_surface(m_cr, cr_shadow, 0, m_dib.height() - shadow.height());
+		cairo_paint(m_cr);
+
+		cairo_restore(m_cr);
 	}
-
-
-	img.resample(m_dib.width() - 5, m_dib.height() - 5);
-	cairo_surface_t* img_sf = cairo_image_surface_create_for_data((unsigned char*) img.getBits(), CAIRO_FORMAT_ARGB32, img.getWidth(), img.getHeight(), img.getWidth() * 4);
-
-	shadow.create(m_dib.width(), m_dib.height(), true);
-	cairo_dev cr_shadow(&shadow);
-	cairo_set_source_surface(cr_shadow, img_sf, 5, 5);
-	cairo_paint(cr_shadow);
-	fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
-
-	cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
-
-	cairo_set_source_surface(m_cr, cr_shadow, 0, 0);
-	cairo_paint(m_cr);
 
 	cairo_surface_destroy(img_sf);
-*/
 
 	if(m_alpha != 255)
 	{
@@ -1117,8 +1107,8 @@ void litehtml::tooltips::fastbluralpha(LPRGBQUAD pixels, int width, int height, 
 		}
 		stackpointer = radius;
 
-		for (x=0; x < w; ++x) {
-
+		for (x=0; x < w; ++x) 
+		{
 			a[yi] = dv[asum];
 
 			asum -= aoutsum;
