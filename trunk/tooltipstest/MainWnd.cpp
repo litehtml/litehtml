@@ -31,7 +31,7 @@ CMainWnd::CMainWnd(HINSTANCE hInst) : m_tips(hInst, &m_html_context)
 		delete css;
 	}
 	m_tips.set_callback(this);
-	m_tips.set_alpha(200);
+	//m_tips.set_alpha(200);
 }
 
 CMainWnd::~CMainWnd(void)
@@ -52,8 +52,9 @@ struct
 	LPCWSTR		text;
 } g_tools[] =
 {
-	{1,	{10, 10,	110, 110}, 0,							L"<h1><span style=\"color: red\">Lite HTML</span> engine</h1><hr /><p>The <b>Lite HTML</b> engine is created for embedding into <i>applications</i>, to show the HTML code. Lite HTML supports most of the CSS2/CSS3 standards. The engine is written on C++ with STL (<b>MS Visual Studio 2008</b>) and was tested on Windows platform only.</p><h2>Embedding Lite HTML</h2><p>Firstly, the Lite HTML don't have the code for draw anything. You are free to use any draw engine. We've included the win32_container class as example to show how to implement the draw code.</p>" },
-	{2,	{10, 120,	110, 220}, litehtml::tool_opt_ask_text,	L"Simple text" },
+	{1,	{10, 10,	110, 110}, litehtml::tool_opt_align_left,	L"<h1><span style=\"color: red\">Lite HTML</span> engine</h1><hr /><p>The <b>Lite HTML</b> engine is created for embedding into <i>applications</i>, to show the HTML code. Lite HTML supports most of the CSS2/CSS3 standards. The engine is written on C++ with STL (<b>MS Visual Studio 2008</b>) and was tested on Windows platform only.</p><h2>Embedding Lite HTML</h2><p>Firstly, the Lite HTML don't have the code for draw anything. You are free to use any draw engine. We've included the win32_container class as example to show how to implement the draw code.</p>" },
+	{2,	{10, 120,	110, 220}, litehtml::tool_opt_ask_text | litehtml::tool_opt_align_left,	L"Simple text" },
+	{1,	{300, 300,	350, 350}, litehtml::tool_opt_align_top,							L"<h1><span style=\"color: red\">Lite HTML</span> engine</h1><hr /><p>The <b>Lite HTML</b> engine is created for embedding into <i>applications</i>, to show the HTML code. Lite HTML supports most of the CSS2/CSS3 standards. The engine is written on C++ with STL (<b>MS Visual Studio 2008</b>) and was tested on Windows platform only.</p><h2>Embedding Lite HTML</h2><p>Firstly, the Lite HTML don't have the code for draw anything. You are free to use any draw engine. We've included the win32_container class as example to show how to implement the draw code.</p>" },
 	{0,	{0, 0, 0, 0},	NULL },
 };
 
@@ -94,7 +95,7 @@ BOOL CMainWnd::create()
 
 	for(int i = 0; g_tools[i].id; i++)
 	{
-		m_tips.add_tool(g_tools[i].id, g_tools[i].text, NULL, &g_tools[i].rc, litehtml::tool_opt_align_top | g_tools[i].options);
+		m_tips.add_tool(g_tools[i].id, g_tools[i].text, NULL, &g_tools[i].rc, g_tools[i].options);
 	}
 
 	m_tips.create(m_hWnd);
