@@ -31,17 +31,18 @@ namespace litehtml
 
 	struct tip_layout
 	{
-		int		x;
-		int		y;
-		int		width;
-		int		height;
-		int		content_x;
-		int		content_y;
-		int		content_height;
-		int		content_width;
-		int		anchor_x;
-		int		anchor_y;
-		UINT	align;
+		int			x;
+		int			y;
+		int			width;
+		int			height;
+		int			content_x;
+		int			content_y;
+		int			content_height;
+		int			content_width;
+		int			anchor_x;
+		int			anchor_y;
+		UINT		align;
+		tips_style	style;
 	};
 
 	struct tool
@@ -88,11 +89,45 @@ namespace litehtml
 		}
 	};
 
+	struct tooltips_bg_cache
+	{
+		simpledib::dib		m_dib;
+		cairo_surface_t*	m_surface;
+		tip_layout			m_layout;
+		COLORREF			m_clr_border;
+		
+		tooltips_bg_cache()
+		{
+			ZeroMemory(&m_layout, sizeof(m_layout));
+			m_surface		= NULL;
+			m_clr_border	= 0;
+		}
+		~tooltips_bg_cache()
+		{
+			clear();
+		}
+
+		bool need_redraw(tip_layout* layout);
+		void draw(cairo_t* cr, tip_layout* layout, HWND hWnd, BYTE alpha);
+		void fastbluralpha(LPRGBQUAD pixels, int width, int height, int radius);
+
+		void clear()
+		{
+			if(m_surface)
+			{
+				cairo_surface_destroy(m_surface);
+				m_surface = NULL;
+			}
+			m_dib.clear();
+		}
+	};
+
 	class tooltips : public cairo_container
 	{
 		simpledib::dib				m_dib;
 		cairo_t*					m_cr;
 		cairo_surface_t*			m_surface;
+		tooltips_bg_cache			m_bg_cache;
 
 		HINSTANCE					m_hInst;
 		HWND						m_hWnd;
@@ -109,6 +144,7 @@ namespace litehtml
 		unsigned int				m_over_tool;
 		unsigned int				m_show_tool;
 		unsigned int				m_last_shown_tool;
+		unsigned int				m_cached_tool;
 		std::wstring				m_def_font_name;
 		int							m_def_font_size;
 		bool						m_disabled;
@@ -135,6 +171,9 @@ namespace litehtml
 		void update(unsigned int id);
 		void set_def_font(const wchar_t* font_name, int font_size);
 
+		static void	rounded_rect( cairo_t* cr, int x, int y, int width, int height, int radius, int line_width );
+		static void	baloon( cairo_t* cr, int x, int y, int width, int height, int ax, int ay, UINT align, int radius, int line_width );
+
 	private:
 		// cairo_container members
 		virtual void		make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
@@ -159,15 +198,11 @@ namespace litehtml
 		int					tip_height();
 		void				content_point(LPPOINT pt);
 		void				draw_background(tip_layout* layout);
-		void				rounded_rect( cairo_t* cr, int x, int y, int width, int height, int radius, int line_width );
-		void				baloon( cairo_t* cr, int x, int y, int width, int height, int ax, int ay, UINT align, int radius, int line_width );
 		void				stop_timers();
 		unsigned int		find_tool(int x, int y);
 		void				calc_layout(tool* t, tip_layout* layout);
 		void				calc_position(UINT align, LPRECT rc_tool, tip_layout* layout, bool second = false);
 		void				GetDesktopRect(RECT* rcDsk, HWND hWnd);
-		void				fastbluralpha(LPRGBQUAD pixels, int width, int height, int radius);
-		void				finish_shadow(simpledib::dib& dib);
 		void				init_def_font();
 		void				create_dib(int width, int height);
 		void				draw_window(BOOL clr = FALSE);

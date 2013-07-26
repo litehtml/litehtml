@@ -35,6 +35,7 @@ litehtml::tooltips::tooltips(HINSTANCE hInst, litehtml::context* html_context)
 	m_cr				= NULL;
 	m_surface			= NULL;
 	m_last_shown_tool	= 0;
+	m_cached_tool		= 0;
 
 	init_def_font();
 }
@@ -208,12 +209,12 @@ void litehtml::tooltips::show( unsigned int id, int top, bool is_update )
 	tool::map::iterator ti = m_tools.find(id);
 	if(ti != m_tools.end())
 	{
-		m_show_tool			= id;
-		m_last_shown_tool	= id;
-		if(!is_update)
+		if(!is_update && m_cached_tool != id)
 		{
 			clear_images();
 		}
+		m_show_tool			= id;
+		m_last_shown_tool	= id;
 		if(m_html)
 		{
 			m_html = NULL;
@@ -244,6 +245,7 @@ void litehtml::tooltips::show( unsigned int id, int top, bool is_update )
 		{
 			return;
 		}
+		m_cached_tool = id;
 
 		int w = m_html->render(m_max_width);
 		if(w < m_max_width)
@@ -364,60 +366,7 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 
 void litehtml::tooltips::draw_background(tip_layout* layout)
 {
-	cairo_save(m_cr);
-
-	COLORREF clr_bg		= GetSysColor(COLOR_INFOBK);
-	COLORREF clr_bdr	= GetSysColor(COLOR_INFOTEXT);
-
-	switch(m_style)
-	{
-	case tips_style_rounded:
-		rounded_rect(m_cr, 0, 0, m_dib.width() - 5, m_dib.height() - 5, 8, 1);
-		break;
-	case tips_style_baloon:
-		baloon(m_cr, 0, 0, m_dib.width() - 5, m_dib.height() - 5, layout->anchor_x - layout->x, layout->anchor_y - layout->y, layout->align, 8, 1);
-		break;
-	default:
-		cairo_rectangle(m_cr, 0.5, 0.5, m_dib.width() - 1 - 5, m_dib.height() - 1 - 5);
-		break;
-	}
-
-	BOOL stdDraw = TRUE;
-
-	HTHEME ttTheme = OpenThemeData(m_hWnd, VSCLASS_TOOLTIP);
-	if(ttTheme) 
-	{
-		simpledib::dib dib_bg;
-		dib_bg.create(m_dib.width(), m_dib.height(), true);
-		RECT rcDraw = {0, 0, m_dib.width(), m_dib.height()};
-
-		if(DrawThemeBackground(ttTheme, dib_bg, TTP_STANDARD, 0, &rcDraw, &rcDraw) == S_OK)
-		{
-			cairo_surface_t* bg_sf = cairo_image_surface_create_for_data((unsigned char*) dib_bg.bits(), CAIRO_FORMAT_ARGB32, dib_bg.width(), dib_bg.height(), dib_bg.width() * 4);
-
-			cairo_save(m_cr);
-			cairo_clip_preserve(m_cr);
-			cairo_set_source_surface(m_cr, bg_sf, 0, 0);
-			cairo_paint(m_cr);
-			cairo_restore(m_cr);
-
-			clr_bdr = RGB(dib_bg.bits()[0].rgbRed, dib_bg.bits()[0].rgbGreen, dib_bg.bits()[0].rgbBlue);
-
-			cairo_surface_destroy(bg_sf);
-
-			stdDraw = FALSE;
-		}
-		CloseThemeData(ttTheme);
-	}
-
-	if(stdDraw)
-	{
-		cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bg) / 255.0, (double) GetGValue(clr_bg) / 255.0, (double) GetBValue(clr_bg) / 255.0);
-		cairo_fill_preserve(m_cr);
-	}
-	cairo_set_line_width(m_cr, 1);
-	cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bdr) / 255.0, (double) GetGValue(clr_bdr) / 255.0, (double) GetBValue(clr_bdr) / 255.0);
-	cairo_stroke(m_cr);
+	m_bg_cache.draw(m_cr, layout, m_hWnd, m_alpha);
 
 	if(m_html->height() > layout->content_height)
 	{
@@ -426,118 +375,9 @@ void litehtml::tooltips::draw_background(tip_layout* layout)
 		double sb_top = layout->content_y + m_top * sb_ratio;
 
 		rounded_rect(m_cr, layout->content_x + layout->content_width + 3, (int) sb_top, 4, (int) sb_height, 2, 0);
-		cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bdr) / 255.0, (double) GetGValue(clr_bdr) / 255.0, (double) GetBValue(clr_bdr) / 255.0);
+		cairo_set_source_rgb(m_cr, (double) GetRValue(m_bg_cache.m_clr_border) / 255.0, (double) GetGValue(m_bg_cache.m_clr_border) / 255.0, (double) GetBValue(m_bg_cache.m_clr_border) / 255.0);
 		cairo_fill(m_cr);
 	}
-
-	int shadow_width	= 10;
-	int shadow_height	= 10;
-	switch(m_style)
-	{
-	case tips_style_rounded:
-		shadow_width	= 15;
-		shadow_height	= 15;
-		break;
-	case tips_style_baloon:
-		shadow_width	= 15;
-		shadow_height	= 15;
-		if(layout->align == tool_opt_align_top)
-		{
-			shadow_height += 8;
-		}
-		if(layout->align == tool_opt_align_left)
-		{
-			shadow_width += 8;
-		}
-		break;
-	}
-
-	CTxDIB img;
-	img._copy(m_dib.bits(), m_dib.width(), m_dib.height(), TRUE);
-
-	RGBQUAD* pixels = img.getBits();
-	int sz = img.getWidth() * img.getHeight();
-
-	for(int i=0; i < sz; i++)
-	{
-		pixels[i].rgbRed		= 0;
-		pixels[i].rgbGreen		= 0;
-		pixels[i].rgbBlue		= 0;
-	}
-
-	img.resample(img.getWidth() - 5, img.getHeight() - 5);
-	cairo_surface_t* img_sf = cairo_image_surface_create_for_data((unsigned char*) img.getBits(), CAIRO_FORMAT_ARGB32, img.getWidth(), img.getHeight(), img.getWidth() * 4);
-
-	// draw shadow at the right side
-	{
-		simpledib::dib shadow;
-		shadow.create(shadow_width, m_dib.height(), true);
-		cairo_dev cr_shadow(&shadow);
-		cairo_set_source_surface(cr_shadow, img_sf, -m_dib.width() + shadow_width + 5, 5);
-		cairo_paint(cr_shadow);
-		fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
-
-		cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
-
-		cairo_save(m_cr);
-
-		cairo_rectangle(m_cr, m_dib.width() - shadow_width, 0, shadow_width, m_dib.height());
-		cairo_clip(m_cr);
-		cairo_set_source_surface(m_cr, cr_shadow, m_dib.width() - shadow.width(), 0);
-		cairo_paint(m_cr);
-
-		cairo_restore(m_cr);
-	}
-
-	// draw shadow at the bottom side
-	{
-		simpledib::dib shadow;
-		shadow.create(m_dib.width(), shadow_height, true);
-		cairo_dev cr_shadow(&shadow);
-		cairo_set_source_surface(cr_shadow, img_sf, 5, -m_dib.height() + shadow_height + 5);
-		cairo_paint(cr_shadow);
-		fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
-
-		cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
-
-		cairo_save(m_cr);
-
-		cairo_rectangle(m_cr, 0, 0, m_dib.width() - shadow_width, m_dib.height());
-		cairo_clip(m_cr);
-		cairo_set_source_surface(m_cr, cr_shadow, 0, m_dib.height() - shadow.height());
-		cairo_paint(m_cr);
-
-		cairo_restore(m_cr);
-	}
-
-	cairo_surface_destroy(img_sf);
-
-	if(m_alpha != 255)
-	{
-		RGBQUAD* pixels = m_dib.bits();
-		int sz = m_dib.width() * m_dib.height();
-
-		int sub = 255 - m_alpha;
-
-		for(int i=0; i < sz; i++)
-		{
-			if(pixels[i].rgbReserved <= sub)
-			{
-				pixels[i].rgbReserved	= 0;
-				pixels[i].rgbRed		= 0;
-				pixels[i].rgbGreen		= 0;
-				pixels[i].rgbBlue		= 0;
-			} else
-			{
-				pixels[i].rgbReserved -= sub;
-				pixels[i].rgbRed		= (pixels[i].rgbRed		* pixels[i].rgbReserved) / 255;
-				pixels[i].rgbGreen		= (pixels[i].rgbGreen	* pixels[i].rgbReserved) / 255;
-				pixels[i].rgbBlue		= (pixels[i].rgbBlue	* pixels[i].rgbReserved) / 255;
-			}
-		}
-	}
-
-	cairo_restore(m_cr);
 }
 
 int litehtml::tooltips::tip_width()
@@ -644,6 +484,7 @@ unsigned int litehtml::tooltips::find_tool( int x, int y )
 
 void litehtml::tooltips::calc_layout( tool* t, tip_layout* layout )
 {
+	layout->style			= m_style;
 	layout->width			= m_html->width();
 	layout->height			= m_html->height();
 	layout->content_width	= m_html->width();
@@ -1044,8 +885,349 @@ void litehtml::tooltips::baloon( cairo_t* cr, int x, int y, int width, int heigh
 	cairo_close_path(cr);
 }
 
+int litehtml::tooltips::get_default_font_size()
+{
+	return m_def_font_size;
+}
 
-void litehtml::tooltips::fastbluralpha(LPRGBQUAD pixels, int width, int height, int radius)
+const wchar_t* litehtml::tooltips::get_default_font_name()
+{
+	return m_def_font_name.c_str();
+}
+
+void litehtml::tooltips::init_def_font()
+{
+	LOGFONT lf;
+	GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), (LPVOID) &lf);
+
+	m_def_font_name = lf.lfFaceName;
+
+	HDC hdc = GetDC(NULL);
+	HFONT old_font = (HFONT) SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
+	TEXTMETRIC tm;
+	GetTextMetrics(hdc, &tm);
+	SelectObject(hdc, old_font);
+	ReleaseDC(NULL, hdc);
+
+	m_def_font_size = tm.tmHeight;
+}
+
+void litehtml::tooltips::disable( bool val )
+{
+	m_disabled = val;
+	if(val)
+	{
+		hide();
+	}
+}
+
+void litehtml::tooltips::update( unsigned int id )
+{
+	if(id == m_show_tool && IsWindowVisible(m_hWnd))
+	{
+		show(id, m_top, true);
+	}
+}
+
+void litehtml::tooltips::create_dib( int width, int height )
+{
+	if(!m_cr || !m_dib.hdc() || m_dib.width() != width || m_dib.height() != height)
+	{
+		if(m_surface) cairo_surface_destroy(m_surface);
+		if(m_cr) cairo_destroy(m_cr);
+
+		m_dib.clear();
+		m_dib.create(width, height, true);
+
+		m_surface	= cairo_image_surface_create_for_data((unsigned char*) m_dib.bits(), CAIRO_FORMAT_ARGB32, m_dib.width(), m_dib.height(), m_dib.width() * 4);
+		m_cr		= cairo_create(m_surface);
+	} else
+	{
+		m_dib.clear();
+	}
+
+}
+
+void litehtml::tooltips::draw_window(BOOL clr)
+{
+	if(clr)
+	{
+		cairo_save(m_cr);
+
+		cairo_set_operator(m_cr, CAIRO_OPERATOR_SOURCE);
+		cairo_set_source_rgba(m_cr, 0, 0, 0, 0);
+		cairo_paint(m_cr);
+
+		cairo_restore(m_cr);
+	}
+
+	draw_background(&m_layout);
+
+	litehtml::position clip(m_layout.content_x, m_layout.content_y, m_layout.content_width, m_layout.content_height);
+	cairo_save(m_cr);
+		cairo_rectangle(m_cr, clip.x, clip.y, clip.width, clip.height);
+		cairo_clip(m_cr);
+		m_html->draw((litehtml::uint_ptr) m_cr, m_layout.content_x, m_layout.content_y - m_top, &clip);
+	cairo_restore(m_cr);
+
+	POINT ptDst;
+	POINT ptSrc	= {0, 0};
+	SIZE size;
+
+	BLENDFUNCTION bf;
+	bf.BlendOp				= AC_SRC_OVER;
+	bf.BlendFlags			= 0;
+	bf.AlphaFormat			= AC_SRC_ALPHA;
+	bf.SourceConstantAlpha	= 255;
+
+	ptDst.x = m_layout.x;
+	ptDst.y = m_layout.y;
+
+	size.cx	= m_dib.width();
+	size.cy	= m_dib.height();
+
+	UpdateLayeredWindow(m_hWnd, NULL, &ptDst, &size, m_dib.hdc(), &ptSrc, 0, &bf, ULW_ALPHA);
+}
+
+BOOL litehtml::tooltips::scroll( int dx )
+{
+	if(IsWindow(m_hWnd) && IsWindowVisible(m_hWnd))
+	{
+		int new_top = m_top + dx;
+		if(new_top < 0) new_top = 0;
+		if(new_top > m_html->height() - m_layout.content_height)
+		{
+			new_top = m_html->height() - m_layout.content_height;
+		}
+		if(new_top != m_top)
+		{
+			m_top = new_top;
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+BOOL litehtml::tooltips::can_scroll()
+{
+	if(IsWindow(m_hWnd) && IsWindowVisible(m_hWnd))
+	{
+		if(m_html->height() > m_layout.content_height)
+		{
+			return TRUE;
+		}
+	}
+	return FALSE;
+}
+
+void litehtml::tooltips::set_def_font( const wchar_t* font_name, int font_size )
+{
+	if(!font_name)
+	{
+		init_def_font();
+	} else
+	{
+		m_def_font_name = font_name;
+		m_def_font_size	= font_size;
+	}
+}
+
+
+bool litehtml::tooltips_bg_cache::need_redraw( tip_layout* layout )
+{
+	if(!m_surface) return true;
+
+	if(	layout->width		!= m_layout.width		||
+		layout->height		!= m_layout.height		||
+		layout->anchor_x	!= m_layout.anchor_x	||
+		layout->anchor_y	!= m_layout.anchor_y	||
+		layout->style		!= m_layout.style		||
+		layout->align		!= m_layout.align)
+	{
+		return true;
+	}
+	return false;
+}
+
+void litehtml::tooltips_bg_cache::draw( cairo_t* cr, tip_layout* layout, HWND hWnd, BYTE alpha )
+{
+	if(need_redraw(layout))
+	{
+		m_layout = *layout;
+		if(m_surface)
+		{
+			cairo_surface_destroy(m_surface);
+			m_surface = NULL;
+		}
+		if(m_dib.width() != m_layout.width || m_dib.height() != m_layout.height)
+		{
+			m_dib.create(m_layout.width, m_layout.height);
+		} else
+		{
+			m_dib.clear();
+		}
+		m_surface = cairo_image_surface_create_for_data((unsigned char*) m_dib.bits(), CAIRO_FORMAT_ARGB32, m_dib.width(), m_dib.height(), m_dib.width() * 4);
+
+		// begin draw background
+
+		cairo_t* m_cr = cairo_create(m_surface);
+
+		COLORREF clr_bg	= GetSysColor(COLOR_INFOBK);
+		m_clr_border	= GetSysColor(COLOR_INFOTEXT);
+
+		switch(m_layout.style)
+		{
+		case tips_style_rounded:
+			tooltips::rounded_rect(m_cr, 0, 0, m_dib.width() - 5, m_dib.height() - 5, 8, 1);
+			break;
+		case tips_style_baloon:
+			tooltips::baloon(m_cr, 0, 0, m_dib.width() - 5, m_dib.height() - 5, layout->anchor_x - layout->x, layout->anchor_y - layout->y, layout->align, 8, 1);
+			break;
+		default:
+			cairo_rectangle(m_cr, 0.5, 0.5, m_dib.width() - 1 - 5, m_dib.height() - 1 - 5);
+			break;
+		}
+
+		BOOL stdDraw = TRUE;
+
+		HTHEME ttTheme = OpenThemeData(hWnd, VSCLASS_TOOLTIP);
+		if(ttTheme) 
+		{
+			simpledib::dib dib_bg;
+			dib_bg.create(m_dib.width(), m_dib.height(), true);
+			RECT rcDraw = {0, 0, m_dib.width(), m_dib.height()};
+
+			if(DrawThemeBackground(ttTheme, dib_bg, TTP_STANDARD, 0, &rcDraw, &rcDraw) == S_OK)
+			{
+				cairo_surface_t* bg_sf = cairo_image_surface_create_for_data((unsigned char*) dib_bg.bits(), CAIRO_FORMAT_ARGB32, dib_bg.width(), dib_bg.height(), dib_bg.width() * 4);
+
+				cairo_save(m_cr);
+				cairo_clip_preserve(m_cr);
+				cairo_set_source_surface(m_cr, bg_sf, 0, 0);
+				cairo_paint(m_cr);
+				cairo_restore(m_cr);
+
+				m_clr_border = RGB(dib_bg.bits()[0].rgbRed, dib_bg.bits()[0].rgbGreen, dib_bg.bits()[0].rgbBlue);
+
+				cairo_surface_destroy(bg_sf);
+
+				stdDraw = FALSE;
+			}
+			CloseThemeData(ttTheme);
+		}
+
+		if(stdDraw)
+		{
+			cairo_set_source_rgb(m_cr, (double) GetRValue(clr_bg) / 255.0, (double) GetGValue(clr_bg) / 255.0, (double) GetBValue(clr_bg) / 255.0);
+			cairo_fill_preserve(m_cr);
+		}
+		cairo_set_line_width(m_cr, 1);
+		cairo_set_source_rgb(m_cr, (double) GetRValue(m_clr_border) / 255.0, (double) GetGValue(m_clr_border) / 255.0, (double) GetBValue(m_clr_border) / 255.0);
+		cairo_stroke(m_cr);
+
+		int shadow_width	= 10;
+		int shadow_height	= 10;
+		switch(m_layout.style)
+		{
+		case tips_style_rounded:
+			shadow_width	= 15;
+			shadow_height	= 15;
+			break;
+		case tips_style_baloon:
+			shadow_width	= 15;
+			shadow_height	= 15;
+			if(layout->align == tool_opt_align_top)
+			{
+				shadow_height += 8;
+			}
+			if(layout->align == tool_opt_align_left)
+			{
+				shadow_width += 8;
+			}
+			break;
+		}
+
+		CTxDIB img;
+		img._copy(m_dib.bits(), m_dib.width(), m_dib.height(), TRUE);
+
+		RGBQUAD* pixels = img.getBits();
+		int sz = img.getWidth() * img.getHeight();
+
+		for(int i=0; i < sz; i++)
+		{
+			pixels[i].rgbRed		= 0;
+			pixels[i].rgbGreen		= 0;
+			pixels[i].rgbBlue		= 0;
+		}
+
+		img.resample(img.getWidth() - 5, img.getHeight() - 5);
+		cairo_surface_t* img_sf = cairo_image_surface_create_for_data((unsigned char*) img.getBits(), CAIRO_FORMAT_ARGB32, img.getWidth(), img.getHeight(), img.getWidth() * 4);
+
+		// draw shadow at the right side
+		{
+			simpledib::dib shadow;
+			shadow.create(shadow_width, m_dib.height(), true);
+			cairo_dev cr_shadow(&shadow);
+			cairo_set_source_surface(cr_shadow, img_sf, -m_dib.width() + shadow_width + 5, 5);
+			cairo_paint(cr_shadow);
+			fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
+
+			cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
+
+			cairo_save(m_cr);
+
+			cairo_rectangle(m_cr, m_dib.width() - shadow_width, 0, shadow_width, m_dib.height());
+			cairo_clip(m_cr);
+			cairo_set_source_surface(m_cr, cr_shadow, m_dib.width() - shadow.width(), 0);
+			cairo_paint(m_cr);
+
+			cairo_restore(m_cr);
+		}
+
+		// draw shadow at the bottom side
+		{
+			simpledib::dib shadow;
+			shadow.create(m_dib.width(), shadow_height, true);
+			cairo_dev cr_shadow(&shadow);
+			cairo_set_source_surface(cr_shadow, img_sf, 5, -m_dib.height() + shadow_height + 5);
+			cairo_paint(cr_shadow);
+			fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
+
+			cairo_set_operator(m_cr, CAIRO_OPERATOR_DEST_OVER);
+
+			cairo_save(m_cr);
+
+			cairo_rectangle(m_cr, 0, 0, m_dib.width() - shadow_width, m_dib.height());
+			cairo_clip(m_cr);
+			cairo_set_source_surface(m_cr, cr_shadow, 0, m_dib.height() - shadow.height());
+			cairo_paint(m_cr);
+
+			cairo_restore(m_cr);
+		}
+
+		cairo_surface_destroy(img_sf);
+
+		cairo_destroy(m_cr);
+	}
+
+	if(m_surface)
+	{
+		cairo_save(cr);
+
+		cairo_set_source_surface(cr, m_surface, 0, 0);
+		if(alpha == 255)
+		{
+			cairo_paint(cr);
+		} else
+		{
+			cairo_paint_with_alpha(cr, (double) alpha / 255.0);
+		}
+
+		cairo_restore(cr);
+	}
+}
+
+void litehtml::tooltips_bg_cache::fastbluralpha(LPRGBQUAD pixels, int width, int height, int radius)
 {
 	if (radius < 1) {
 		return;
@@ -1209,165 +1391,4 @@ void litehtml::tooltips::fastbluralpha(LPRGBQUAD pixels, int width, int height, 
 	delete [] vmin;
 	delete [] dv;
 	delete stack;
-}
-
-void litehtml::tooltips::finish_shadow( simpledib::dib& dib )
-{
-	RGBQUAD* pixels = dib.bits();
-	int sz = dib.width() * dib.height();
-
-	for(int i=0; i < sz; i++)
-	{
-		pixels[i].rgbReserved	= min(200, pixels[i].rgbReserved << 2);
-		pixels[i].rgbRed		= 0;
-		pixels[i].rgbGreen		= 0;
-		pixels[i].rgbBlue		= 0;
-	}
-}
-
-int litehtml::tooltips::get_default_font_size()
-{
-	return m_def_font_size;
-}
-
-const wchar_t* litehtml::tooltips::get_default_font_name()
-{
-	return m_def_font_name.c_str();
-}
-
-void litehtml::tooltips::init_def_font()
-{
-	LOGFONT lf;
-	GetObject(GetStockObject(DEFAULT_GUI_FONT), sizeof(LOGFONT), (LPVOID) &lf);
-
-	m_def_font_name = lf.lfFaceName;
-
-	HDC hdc = GetDC(NULL);
-	HFONT old_font = (HFONT) SelectObject(hdc, GetStockObject(DEFAULT_GUI_FONT));
-	TEXTMETRIC tm;
-	GetTextMetrics(hdc, &tm);
-	SelectObject(hdc, old_font);
-	ReleaseDC(NULL, hdc);
-
-	m_def_font_size = tm.tmHeight;
-}
-
-void litehtml::tooltips::disable( bool val )
-{
-	m_disabled = val;
-	if(val)
-	{
-		hide();
-	}
-}
-
-void litehtml::tooltips::update( unsigned int id )
-{
-	if(id == m_show_tool && IsWindowVisible(m_hWnd))
-	{
-		show(id, m_top, true);
-	}
-}
-
-void litehtml::tooltips::create_dib( int width, int height )
-{
-	if(!m_cr || !m_dib.hdc() || m_dib.width() != width || m_dib.height() != height)
-	{
-		if(m_surface) cairo_surface_destroy(m_surface);
-		if(m_cr) cairo_destroy(m_cr);
-
-		m_dib.clear();
-		m_dib.create(width, height, true);
-
-		m_surface	= cairo_image_surface_create_for_data((unsigned char*) m_dib.bits(), CAIRO_FORMAT_ARGB32, m_dib.width(), m_dib.height(), m_dib.width() * 4);
-		m_cr		= cairo_create(m_surface);
-	} else
-	{
-		m_dib.clear();
-	}
-
-}
-
-void litehtml::tooltips::draw_window(BOOL clr)
-{
-	if(clr)
-	{
-		cairo_save(m_cr);
-
-		cairo_set_operator(m_cr, CAIRO_OPERATOR_SOURCE);
-		cairo_set_source_rgba(m_cr, 0, 0, 0, 0);
-		cairo_paint(m_cr);
-
-		cairo_restore(m_cr);
-	}
-
-	draw_background(&m_layout);
-
-	litehtml::position clip(m_layout.content_x, m_layout.content_y, m_layout.content_width, m_layout.content_height);
-	cairo_save(m_cr);
-		cairo_rectangle(m_cr, clip.x, clip.y, clip.width, clip.height);
-		cairo_clip(m_cr);
-		m_html->draw((litehtml::uint_ptr) m_cr, m_layout.content_x, m_layout.content_y - m_top, &clip);
-	cairo_restore(m_cr);
-
-	POINT ptDst;
-	POINT ptSrc	= {0, 0};
-	SIZE size;
-
-	BLENDFUNCTION bf;
-	bf.BlendOp				= AC_SRC_OVER;
-	bf.BlendFlags			= 0;
-	bf.AlphaFormat			= AC_SRC_ALPHA;
-	bf.SourceConstantAlpha	= 255;
-
-	ptDst.x = m_layout.x;
-	ptDst.y = m_layout.y;
-
-	size.cx	= m_dib.width();
-	size.cy	= m_dib.height();
-
-	UpdateLayeredWindow(m_hWnd, NULL, &ptDst, &size, m_dib.hdc(), &ptSrc, 0, &bf, ULW_ALPHA);
-}
-
-BOOL litehtml::tooltips::scroll( int dx )
-{
-	if(IsWindow(m_hWnd) && IsWindowVisible(m_hWnd))
-	{
-		int new_top = m_top + dx;
-		if(new_top < 0) new_top = 0;
-		if(new_top > m_html->height() - m_layout.content_height)
-		{
-			new_top = m_html->height() - m_layout.content_height;
-		}
-		if(new_top != m_top)
-		{
-			m_top = new_top;
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-BOOL litehtml::tooltips::can_scroll()
-{
-	if(IsWindow(m_hWnd) && IsWindowVisible(m_hWnd))
-	{
-		if(m_html->height() > m_layout.content_height)
-		{
-			return TRUE;
-		}
-	}
-	return FALSE;
-}
-
-void litehtml::tooltips::set_def_font( const wchar_t* font_name, int font_size )
-{
-	if(!font_name)
-	{
-		init_def_font();
-	} else
-	{
-		m_def_font_name = font_name;
-		m_def_font_size	= font_size;
-	}
 }
