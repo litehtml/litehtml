@@ -59,8 +59,6 @@ int litehtml::el_image::render( int x, int y, int max_width )
 	m_margins.bottom	= m_doc->cvt_units(m_css_margins.bottom,	m_font_size);
 
 	m_pos.move_to(x, y);
-	m_pos.x	+= content_margins_left();
-	m_pos.y += content_margins_top();
 	if(m_el_position == element_position_relative)
 	{
 		m_pos.x += m_css_left.calc_percent(parent_width);
@@ -78,7 +76,7 @@ int litehtml::el_image::render( int x, int y, int max_width )
 		m_pos.width		= sz.width;
 	} else if(!m_css_height.is_predefined() && m_css_width.is_predefined())
 	{
-		m_pos.height = m_css_height.val();
+		m_pos.height = (int) m_css_height.val();
 		if(sz.height)
 		{
 			m_pos.width = (int) (m_css_height.val() * (float)sz.width / (float)sz.height);
@@ -88,7 +86,7 @@ int litehtml::el_image::render( int x, int y, int max_width )
 		}
 	} else if(m_css_height.is_predefined() && !m_css_width.is_predefined())
 	{
-		m_pos.width = m_css_width.val();
+		m_pos.width = (int) m_css_width.val();
 		if(sz.width)
 		{
 			m_pos.height = (int) ((float) m_css_width.val() * (float) sz.height / (float)sz.width);
@@ -97,6 +95,11 @@ int litehtml::el_image::render( int x, int y, int max_width )
 			m_pos.height = sz.height;
 		}
 	}
+
+	calc_outlines(parent_width);
+
+	m_pos.x	+= content_margins_left();
+	m_pos.y += content_margins_top();
 
 	return m_pos.width + content_margins_left() + content_margins_right();
 }

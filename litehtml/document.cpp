@@ -359,8 +359,7 @@ bool litehtml::document::on_mouse_over( int x, int y, position::vector& redraw_b
 	m_container->set_cursor(cursor ? cursor : L"auto");
 	if(res)
 	{
-		m_root->find_styles_changes(redraw_boxes, 0, 0);
-		return true;
+		return m_root->find_styles_changes(redraw_boxes, 0, 0);
 	}
 	return false;
 }
@@ -373,8 +372,7 @@ bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
 	}
 	if(m_root->on_mouse_leave())
 	{
-		m_root->find_styles_changes(redraw_boxes, 0, 0);
-		return true;
+		return m_root->find_styles_changes(redraw_boxes, 0, 0);
 	}
 	return false;
 }
@@ -387,8 +385,7 @@ bool litehtml::document::on_lbutton_down( int x, int y, position::vector& redraw
 	}
 	if(m_root->on_lbutton_down(x, y))
 	{
-		m_root->find_styles_changes(redraw_boxes, 0, 0);
-		return true;
+		return m_root->find_styles_changes(redraw_boxes, 0, 0);
 	}
 	return false;
 }
@@ -401,8 +398,7 @@ bool litehtml::document::on_lbutton_up( int x, int y, position::vector& redraw_b
 	}
 	if(m_root->on_lbutton_up(x, y))
 	{
-		m_root->find_styles_changes(redraw_boxes, 0, 0);
-		return true;
+		return m_root->find_styles_changes(redraw_boxes, 0, 0);
 	}
 	return false;
 }
