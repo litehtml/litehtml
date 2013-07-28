@@ -368,12 +368,6 @@ void litehtml::element::parse_styles(bool is_reparse)
 	m_css_borders.radius.bottom_left_x.fromString(get_style_property(L"border-bottom-left-radius-x", false, L"0"));
 	m_css_borders.radius.bottom_left_y.fromString(get_style_property(L"border-bottom-left-radius-y", false, L"0"));
 
-	if(m_class == L"first")
-	{
-		int iii=0;
-		iii++;
-	}
-
 	m_doc->cvt_units(m_css_borders.radius.bottom_left_x,			m_font_size);
 	m_doc->cvt_units(m_css_borders.radius.bottom_left_y,			m_font_size);
 	m_doc->cvt_units(m_css_borders.radius.bottom_right_x,			m_font_size);
@@ -1705,7 +1699,7 @@ bool litehtml::element::find_styles_changes( position::vector& redraw_boxes, int
 				(*iter)->m_used = false;
 			}
 		}
-		parse_styles(true);
+		parse_styles(/*true*/);
 	}
 	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
@@ -2223,15 +2217,21 @@ int litehtml::element::place_element( element* el, int max_width )
 
 		switch(el->m_display)
 		{
+		case display_table:
 		case display_list_item:
 			ret_width = el->render(line_left, line_top, line_right - line_left);
 			break;
-		case display_table:
 		case display_block:
 		case display_table_cell:
 		case display_table_caption:
 		case display_table_row:
-			ret_width = el->render(0, line_top, max_width);
+			if(el->is_replaced())
+			{
+				ret_width = el->render(line_left, line_top, line_right - line_left);
+			} else
+			{
+				ret_width = el->render(0, line_top, max_width);
+			}
 			break;
 		}
 

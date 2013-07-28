@@ -143,6 +143,21 @@ void litehtml::line_box::finish(bool last_box)
 		return;
 	}
 
+	for(std::vector<element*>::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
+	{
+		if((*i)->is_white_space() || (*i)->is_break())
+		{
+			if(!(*i)->m_skip)
+			{
+				(*i)->m_skip = true;
+				m_width -= (*i)->width();
+			}
+		} else
+		{
+			break;
+		}
+	}
+
 	int base_line	= m_font_metrics.base_line();
 	int line_height = m_line_height;
 
