@@ -32,20 +32,20 @@ void litehtml::line::add_element( element* el )
 		if(last_space)
 		{
 			// add last space into the line
-			m_height			= max(last_space->height(), m_height);
-			m_padding_bottom	= max(m_padding_bottom, last_space->m_padding.bottom + last_space->m_borders.bottom);
-			m_padding_top		= max(m_padding_top, last_space->m_padding.top + last_space->m_borders.top);
-			m_top_margin		= max(last_space->margin_top(), m_top_margin);
-			m_bottom_margin		= max(last_space->margin_bottom(), m_bottom_margin);
+			m_height			= std::max(last_space->height(), m_height);
+			m_padding_bottom	= std::max(m_padding_bottom, last_space->m_padding.bottom + last_space->m_borders.bottom);
+			m_padding_top		= std::max(m_padding_top, last_space->m_padding.top + last_space->m_borders.top);
+			m_top_margin		= std::max(last_space->margin_top(), m_top_margin);
+			m_bottom_margin		= std::max(last_space->margin_bottom(), m_bottom_margin);
 			m_left += last_space->width();
 			last_space->m_skip = false;
 			el->m_pos.x += last_space->width();
 		}
-		m_height			= max(el->height(), m_height);
-		m_padding_bottom	= max(m_padding_bottom, el->m_padding.bottom + el->m_borders.bottom);
-		m_padding_top		= max(m_padding_top, el->m_padding.top + el->m_borders.top);
-		m_top_margin		= max(el->margin_top(), m_top_margin);
-		m_bottom_margin		= max(el->margin_bottom(), m_bottom_margin);
+		m_height			= std::max(el->height(), m_height);
+		m_padding_bottom	= std::max(m_padding_bottom, el->m_padding.bottom + el->m_borders.bottom);
+		m_padding_top		= std::max(m_padding_top, el->m_padding.top + el->m_borders.top);
+		m_top_margin		= std::max(el->margin_top(), m_top_margin);
+		m_bottom_margin		= std::max(el->margin_bottom(), m_bottom_margin);
 		m_left += el->width();
 
 		if(el->m_display == display_block || el->m_display == display_table || el->is_break())
@@ -92,7 +92,7 @@ void litehtml::line::set_top( int top, element* parent )
 				}
 				break;
 			case va_middle:
-				el->m_pos.y = top + max(m_height, m_min_height) / 2 - el->m_pos.height / 2;
+				el->m_pos.y = top + std::max(m_height, m_min_height) / 2 - el->m_pos.height / 2;
 				break;
 			default:
 				el->m_pos.y = top + el->content_margins_top() + add;
@@ -143,11 +143,11 @@ bool litehtml::line::finish(text_align align)
 		if(!el->m_skip)
 		{
 			ret = true;
-			m_height			= max(el->height(), m_height);
-			m_padding_bottom	= max(m_padding_bottom, el->m_padding.bottom + el->m_borders.bottom);
-			m_padding_top		= max(m_padding_top, el->m_padding.top + el->m_borders.top);
-			m_top_margin		= max(el->margin_top(), m_top_margin);
-			m_bottom_margin		= max(el->margin_bottom(), m_bottom_margin);
+			m_height			= std::max(el->height(), m_height);
+			m_padding_bottom	= std::max(m_padding_bottom, el->m_padding.bottom + el->m_borders.bottom);
+			m_padding_top		= std::max(m_padding_top, el->m_padding.top + el->m_borders.top);
+			m_top_margin		= std::max(el->margin_top(), m_top_margin);
+			m_bottom_margin		= std::max(el->margin_bottom(), m_bottom_margin);
 		}
 	}
 
@@ -155,7 +155,7 @@ bool litehtml::line::finish(text_align align)
 	{
 		if(!m_is_block)
 		{
-			m_height = max(m_min_height, m_height);
+			m_height = std::max(m_min_height, m_height);
 		}
 	} else
 	{

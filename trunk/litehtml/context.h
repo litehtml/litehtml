@@ -7,7 +7,7 @@ namespace litehtml
 	{
 		litehtml::css	m_master_css;
 	public:
-		void			load_master_stylesheet(const wchar_t* str);
+		void			load_master_stylesheet(const tchar_t* str);
 		litehtml::css&	master_css()
 		{
 			return m_master_css;

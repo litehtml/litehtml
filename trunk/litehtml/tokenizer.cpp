@@ -40,9 +40,9 @@ and must not be misrepresented as being the original software.
 
 using namespace std;
 
-void tokenize ( const wstring& str, vector<wstring>& result,
-			   const wstring& delimiters, const wstring& delimiters_preserve,
-			   const wstring& quote, const wstring& esc )
+void litehtml::tokenize ( const tstring& str, vector<tstring>& result,
+			   const tstring& delimiters, const tstring& delimiters_preserve,
+			   const tstring& quote, const tstring& esc )
 {
 	// clear the vector
 	if ( false == result.empty() )
@@ -50,17 +50,17 @@ void tokenize ( const wstring& str, vector<wstring>& result,
 		result.clear();
 	}
 
-	wstring::size_type pos = 0; // the current position (char) in the string
-	wchar_t ch = 0; // buffer for the current character
-	wchar_t delimiter = 0;	// the buffer for the delimiter char which
+	tstring::size_type pos = 0; // the current position (char) in the string
+	tchar_t ch = 0; // buffer for the current character
+	tchar_t delimiter = 0;	// the buffer for the delimiter char which
 							// will be added to the tokens if the delimiter
 							// is preserved
-	wchar_t current_quote = 0; // the char of the current open quote
+	tchar_t current_quote = 0; // the char of the current open quote
 	bool quoted = false; // indicator if there is an open quote
-	wstring token;  // string buffer for the token
+	tstring token;  // string buffer for the token
 	bool token_complete = false; // indicates if the current token is
 								 // read to be added to the result vector
-	wstring::size_type len = str.length();  // length of the input-string
+	tstring::size_type len = str.length();  // length of the input-string
 
 	// for every char in the input-string
 	while ( len > pos )
@@ -78,7 +78,7 @@ void tokenize ( const wstring& str, vector<wstring>& result,
 		bool escaped = false; // indicates if the next char is protected
 		if ( false == esc.empty() ) // check if esc-chars are  provided
 		{
-			if ( wstring::npos != esc.find_first_of(ch) )
+			if ( tstring::npos != esc.find_first_of(ch) )
 			{
 				// get the escaped char
 				++pos;
@@ -105,7 +105,7 @@ void tokenize ( const wstring& str, vector<wstring>& result,
 		if ( false == quote.empty() && false == escaped )
 		{
 			// if quote chars are provided and the char isn't protected
-			if ( wstring::npos != quote.find_first_of(ch) )
+			if ( tstring::npos != quote.find_first_of(ch) )
 			{
 				// if not quoted, set state to open quote and set
 				// the quote character
@@ -113,15 +113,15 @@ void tokenize ( const wstring& str, vector<wstring>& result,
 				{
 					quoted = true;
 					current_quote = ch;
-					if(current_quote == L'(')
+					if(current_quote == _t('('))
 					{
-						current_quote = L')';
-					} else if(current_quote == L'[')
+						current_quote = _t(')');
+					} else if(current_quote == _t('['))
 					{
-						current_quote = L']';
-					} else if(current_quote == L'{')
+						current_quote = _t(']');
+					} else if(current_quote == _t('{'))
 					{
-						current_quote = L'}';
+						current_quote = _t('}');
 					} else
 					{
 						// don't add the quote-char to the token
@@ -136,7 +136,7 @@ void tokenize ( const wstring& str, vector<wstring>& result,
 					{
 						// close quote and reset the quote character
 						quoted = false;
-						if(current_quote != L')' && current_quote != L']' && current_quote != L'}')
+						if(current_quote != _t(')') && current_quote != _t(']') && current_quote != _t('}'))
 						{
 							// don't add the quote-char to the token
 							add_char = false;
@@ -153,7 +153,7 @@ void tokenize ( const wstring& str, vector<wstring>& result,
 		{
 			// if a delimiter is provided and the char isn't protected by
 			// quote or escape char
-			if ( wstring::npos != delimiters.find_first_of(ch) )
+			if ( tstring::npos != delimiters.find_first_of(ch) )
 			{
 				// if ch is a delimiter and the token string isn't empty
 				// the token is complete
@@ -174,7 +174,7 @@ void tokenize ( const wstring& str, vector<wstring>& result,
 		{
 			// if a delimiter which will be preserved is provided and the
 			// char isn't protected by quote or escape char
-			if ( wstring::npos != delimiters_preserve.find_first_of(ch) )
+			if ( tstring::npos != delimiters_preserve.find_first_of(ch) )
 			{
 				// if ch is a delimiter and the token string isn't empty
 				// the token is complete
@@ -217,7 +217,7 @@ void tokenize ( const wstring& str, vector<wstring>& result,
 		if ( true == add_delimiter )
 		{
 			// the next token is the delimiter
-			wstring delim_token;
+			tstring delim_token;
 			delim_token.push_back( delimiter );
 			result.push_back( delim_token );
 

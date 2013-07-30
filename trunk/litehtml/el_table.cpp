@@ -74,8 +74,8 @@ int litehtml::el_table::render( int x, int y, int max_width )
 		{
 			if(m_grid.cell(col, row)->colspan <= 1)
 			{
-				m_grid.column(col).max_width = max(m_grid.column(col).max_width, m_grid.cell(col, row)->max_width);
-				m_grid.column(col).min_width = max(m_grid.column(col).min_width, m_grid.cell(col, row)->min_width);
+				m_grid.column(col).max_width = std::max(m_grid.column(col).max_width, m_grid.cell(col, row)->max_width);
+				m_grid.column(col).min_width = std::max(m_grid.column(col).min_width, m_grid.cell(col, row)->min_width);
 			}
 		}
 	}
@@ -130,7 +130,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 
 	if(!m_css_width.is_predefined())
 	{
-		table_width = max(min_table_width, max_width);
+		table_width = std::max(min_table_width, max_width);
 		if(table_width > min_table_width)
 		{
 			for(int col2 = 0; col2 < m_grid.cols_count(); col2++)
@@ -198,7 +198,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 				cell->el->m_pos.width = cell_width - cell->el->content_margins_left() - cell->el->content_margins_right();
 				if(cell->rowspan <= 1)
 				{
-					max_height = max(max_height, cell->el->height());
+					max_height = std::max(max_height, cell->el->height());
 				} else
 				{
 					row_span_found = true;
@@ -245,7 +245,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 							cell->el->m_pos.height = cell_height - cell->el->content_margins_top() - cell->el->content_margins_bottom();
 						} else
 						{
-							m_grid.row(min(row + cell->rowspan - 1, m_grid.rows_count() - 1)).height += cell->el->height() - cell_height;
+							m_grid.row(std::min(row + cell->rowspan - 1, m_grid.rows_count() - 1)).height += cell->el->height() - cell_height;
 							row_height_changed = true;
 						}
 					}
@@ -321,7 +321,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 bool litehtml::el_table::appendChild( litehtml::element* el )
 {
 	if(!el)	return false;
-	if(el->m_tag == L"tbody" || el->m_tag == L"thead" || el->m_tag == L"tfoot")
+	if(el->m_tag == _t("tbody") || el->m_tag == _t("thead") || el->m_tag == _t("tfoot"))
 	{
 		return element::appendChild(el);
 	}
@@ -330,43 +330,43 @@ bool litehtml::el_table::appendChild( litehtml::element* el )
 
 void litehtml::el_table::parse_styles(bool is_reparse)
 {
-	const wchar_t* str = get_attr(L"width");
+	const tchar_t* str = get_attr(_t("width"));
 	if(str)
 	{
-		m_style.add_property(L"width", str, 0, false);
+		m_style.add_property(_t("width"), str, 0, false);
 	}
 
-	str = get_attr(L"align");
+	str = get_attr(_t("align"));
 	if(str)
 	{
-		int align = value_index(str, L"left;center;right");
+		int align = value_index(str, _t("left;center;right"));
 		switch(align)
 		{
 		case 1:
-			m_style.add_property(L"margin-left", L"auto", 0, false);
-			m_style.add_property(L"margin-right", L"auto", 0, false);
+			m_style.add_property(_t("margin-left"), _t("auto"), 0, false);
+			m_style.add_property(_t("margin-right"), _t("auto"), 0, false);
 			break;
 		case 2:
-			m_style.add_property(L"margin-left", L"auto", 0, false);
-			m_style.add_property(L"margin-right", L"0", 0, false);
+			m_style.add_property(_t("margin-left"), _t("auto"), 0, false);
+			m_style.add_property(_t("margin-right"), _t("0"), 0, false);
 			break;
 		}
-		m_style.add_property(L"width", str, 0, false);
+		m_style.add_property(_t("width"), str, 0, false);
 	}
 
-	str = get_attr(L"cellspacing");
+	str = get_attr(_t("cellspacing"));
 	if(str)
 	{
-		std::wstring val = str;
-		val += L" ";
+		tstring val = str;
+		val += _t(" ");
 		val += str;
-		m_style.add_property(L"border-spacing", val.c_str(), 0, false);
+		m_style.add_property(_t("border-spacing"), val.c_str(), 0, false);
 	}
 
 	element::parse_styles(is_reparse);
 
-	m_css_border_spacing_x.fromString(get_style_property(L"-litehtml-border-spacing-x", true, L"0px"));
-	m_css_border_spacing_y.fromString(get_style_property(L"-litehtml-border-spacing-y", true, L"0px"));
+	m_css_border_spacing_x.fromString(get_style_property(_t("-litehtml-border-spacing-x"), true, _t("0px")));
+	m_css_border_spacing_y.fromString(get_style_property(_t("-litehtml-border-spacing-y"), true, _t("0px")));
 
 	int fntsz = get_font_size();
 	m_border_spacing_x = m_doc->cvt_units(m_css_border_spacing_x, fntsz);
@@ -378,14 +378,18 @@ void litehtml::el_table::init()
 {
 	m_grid.clear();
 
-	elements_iterator row_iter(this, &go_inside_table(), &table_rows_selector());
+	go_inside_table 		table_selector;
+	table_rows_selector		row_selector;
+	table_cells_selector	cell_selector;
+
+	elements_iterator row_iter(this, &table_selector, &row_selector);
 
 	element* row = row_iter.next(false);
 	while(row)
 	{
 		m_grid.begin_row(row);
 
-		elements_iterator cell_iter(row, &go_inside_table(), &table_cells_selector());
+		elements_iterator cell_iter(row, &table_selector, &cell_selector);
 		element* cell = cell_iter.next();
 		while(cell)
 		{

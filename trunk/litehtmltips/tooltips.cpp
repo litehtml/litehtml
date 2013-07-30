@@ -1167,7 +1167,10 @@ void litehtml::tooltips_bg_cache::draw( cairo_t* cr, tip_layout* layout, HWND hW
 		{
 			simpledib::dib shadow;
 			shadow.create(shadow_width, m_dib.height(), true);
-			cairo_dev cr_shadow(&shadow);
+
+			cairo_surface_t*	surface_shadow	= cairo_image_surface_create_for_data((unsigned char*) shadow.bits(), CAIRO_FORMAT_ARGB32, shadow.width(), shadow.height(), shadow.width() * 4);
+			cairo_t*			cr_shadow		= cairo_create(surface_shadow);
+
 			cairo_set_source_surface(cr_shadow, img_sf, -m_dib.width() + shadow_width + 5, 5);
 			cairo_paint(cr_shadow);
 			fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
@@ -1178,17 +1181,23 @@ void litehtml::tooltips_bg_cache::draw( cairo_t* cr, tip_layout* layout, HWND hW
 
 			cairo_rectangle(m_cr, m_dib.width() - shadow_width, 0, shadow_width, m_dib.height());
 			cairo_clip(m_cr);
-			cairo_set_source_surface(m_cr, cr_shadow, m_dib.width() - shadow.width(), 0);
+			cairo_set_source_surface(m_cr, surface_shadow, m_dib.width() - shadow.width(), 0);
 			cairo_paint(m_cr);
 
 			cairo_restore(m_cr);
+
+			cairo_destroy(cr_shadow);
+			cairo_surface_destroy(surface_shadow);
 		}
 
 		// draw shadow at the bottom side
 		{
 			simpledib::dib shadow;
 			shadow.create(m_dib.width(), shadow_height, true);
-			cairo_dev cr_shadow(&shadow);
+
+			cairo_surface_t*	surface_shadow	= cairo_image_surface_create_for_data((unsigned char*) shadow.bits(), CAIRO_FORMAT_ARGB32, shadow.width(), shadow.height(), shadow.width() * 4);
+			cairo_t*			cr_shadow		= cairo_create(surface_shadow);
+
 			cairo_set_source_surface(cr_shadow, img_sf, 5, -m_dib.height() + shadow_height + 5);
 			cairo_paint(cr_shadow);
 			fastbluralpha(shadow.bits(), shadow.width(), shadow.height(), 5);
@@ -1199,10 +1208,13 @@ void litehtml::tooltips_bg_cache::draw( cairo_t* cr, tip_layout* layout, HWND hW
 
 			cairo_rectangle(m_cr, 0, 0, m_dib.width() - shadow_width, m_dib.height());
 			cairo_clip(m_cr);
-			cairo_set_source_surface(m_cr, cr_shadow, 0, m_dib.height() - shadow.height());
+			cairo_set_source_surface(m_cr, surface_shadow, 0, m_dib.height() - shadow.height());
 			cairo_paint(m_cr);
 
 			cairo_restore(m_cr);
+
+			cairo_destroy(cr_shadow);
+			cairo_surface_destroy(surface_shadow);
 		}
 
 		cairo_surface_destroy(img_sf);

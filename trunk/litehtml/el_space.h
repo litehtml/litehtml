@@ -7,7 +7,7 @@ namespace litehtml
 	class el_space : public el_text
 	{
 	public:
-		el_space(const wchar_t* text, litehtml::document* doc);
+		el_space(const tchar_t* text, litehtml::document* doc);
 		virtual ~el_space();
 
 		virtual bool	is_white_space();

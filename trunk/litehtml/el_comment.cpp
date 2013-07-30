@@ -11,12 +11,12 @@ litehtml::el_comment::~el_comment()
 
 }
 
-void litehtml::el_comment::get_text( std::wstring& text )
+void litehtml::el_comment::get_text( tstring& text )
 {
 	text += m_text;
 }
 
-void litehtml::el_comment::set_data( const wchar_t* data )
+void litehtml::el_comment::set_data( const tchar_t* data )
 {
 	if(data)
 	{

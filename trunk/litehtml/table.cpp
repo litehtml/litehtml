@@ -6,8 +6,8 @@ void litehtml::table_grid::add_cell( element* el )
 {
 	table_cell cell;
 	cell.el = el;
-	cell.colspan = _wtoi(el->get_attr(L"colspan", L"1"));
-	cell.rowspan = _wtoi(el->get_attr(L"rowspan", L"1"));
+	cell.colspan = t_atoi(el->get_attr(_t("colspan"), _t("1")));
+	cell.rowspan = t_atoi(el->get_attr(_t("rowspan"), _t("1")));
 
 	while( is_rowspanned( (int) m_cells.size() - 1, (int) m_cells.back().size() ) )
 	{
@@ -57,7 +57,7 @@ void litehtml::table_grid::finish()
 	m_cols_count	= 0;
 	for(int i = 0; i < (int) m_cells.size(); i++)
 	{
-		m_cols_count = max(m_cols_count, (int) m_cells[i].size());
+		m_cols_count = std::max(m_cols_count, (int) m_cells[i].size());
 	}
 	for(int i = 0; i < (int) m_cells.size(); i++)
 	{
@@ -181,12 +181,14 @@ litehtml::table_cell* litehtml::table_grid::cell( int t_col, int t_row )
 
 void litehtml::table_grid::distribute_max_width( int width, int start, int end )
 {
-	distribute_width(width, start, end, &table_column_accessor_max_width());
+	table_column_accessor_max_width selector;
+	distribute_width(width, start, end, &selector);
 }
 
 void litehtml::table_grid::distribute_min_width( int width, int start, int end )
 {
-	distribute_width(width, start, end, &table_column_accessor_min_width());
+	table_column_accessor_min_width selector;
+	distribute_width(width, start, end, &selector);
 }
 
 void litehtml::table_grid::distribute_width( int width, int start, int end, table_column_accessor* acc )
@@ -382,14 +384,13 @@ int litehtml::table_grid::set_table_width( int new_width, int bs_x )
 		if(!m_columns[col].css_width.is_predefined())
 		{
 			m_columns[col].width = m_columns[col].css_width.calc_percent(new_width - bs_x * (m_cols_count + 1));
-			m_columns[col].width = max(m_columns[col].width, m_columns[col].min_width);
+			m_columns[col].width = std::max(m_columns[col].width, m_columns[col].min_width);
 		}
 		table_width += m_columns[col].width;
 	}
 
 	if(new_width != table_width)
 	{
-		int width = new_width - table_width;
 		distribute_width(new_width - table_width, 0, m_cols_count - 1);
 	}
 

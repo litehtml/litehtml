@@ -10,6 +10,5 @@ namespace litehtml
 		virtual ~el_td();
 
 		virtual void			parse_styles(bool is_reparse);
-		virtual const wchar_t*	get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
 	};
 }

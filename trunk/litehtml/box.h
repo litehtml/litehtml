@@ -15,7 +15,7 @@ namespace litehtml
 	{
 	public:
 		typedef litehtml::object_ptr<litehtml::box>					ptr;
-		typedef std::vector<litehtml::object_ptr<litehtml::box>>	vector;
+		typedef std::vector< litehtml::object_ptr<litehtml::box> >	vector;
 	protected:
 		int		m_box_top;
 		int		m_box_left;

@@ -186,9 +186,9 @@ void litehtml::line_box::finish(bool last_box)
 		{
 			font_metrics fm = {0};
 			m_items[i]->get_font(&fm);
-			base_line	= max(base_line,	fm.base_line());
-			line_height	= max(line_height,	m_items[i]->line_height());
-			m_height = max(m_height, fm.height);
+			base_line	= std::max(base_line,	fm.base_line());
+			line_height	= std::max(line_height,	m_items[i]->line_height());
+			m_height = std::max(m_height, fm.height);
 		}
 		m_items[i]->m_pos.x += add_x;
 	}
@@ -232,8 +232,8 @@ void litehtml::line_box::finish(bool last_box)
 				m_items[i]->m_pos.y = m_height - base_line + m_font_metrics.descent - m_items[i]->height() + m_items[i]->content_margins_top();
 				break;
 			}
-			y1 = min(y1, m_items[i]->top());
-			y2 = max(y2, m_items[i]->bottom());
+			y1 = std::min(y1, m_items[i]->top());
+			y2 = std::max(y2, m_items[i]->bottom());
 		}
 	}
 

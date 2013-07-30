@@ -4,8 +4,8 @@ namespace litehtml
 {
 	struct def_color
 	{
-		const wchar_t*	name;
-		const wchar_t*	rgb;
+		const tchar_t*	name;
+		const tchar_t*	rgb;
 	};
 
 	extern def_color g_def_colors[];
@@ -48,8 +48,8 @@ namespace litehtml
 			red		= val.red;
 			alpha	= val.alpha;
 		}
-		static web_color		from_string(const wchar_t* str);
-		static const wchar_t*	resolve_name(const wchar_t* name);
-		static bool				is_color(const wchar_t* str);
+		static web_color		from_string(const tchar_t* str);
+		static const tchar_t*	resolve_name(const tchar_t* name);
+		static bool				is_color(const tchar_t* str);
 	};
 }

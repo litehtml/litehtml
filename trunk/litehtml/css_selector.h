@@ -128,9 +128,9 @@ namespace litehtml
 
 	struct css_attribute_selector
 	{
-		typedef std::map<std::wstring, css_attribute_selector>	map;
+		typedef std::map<tstring, css_attribute_selector>	map;
 
-		std::wstring			val;
+		tstring			val;
 		attr_select_condition	condition;
 
 		css_attribute_selector()
@@ -150,7 +150,7 @@ namespace litehtml
 	class css_element_selector
 	{
 	public:
-		std::wstring				m_tag;
+		tstring				m_tag;
 		css_attribute_selector::map	m_attrs;
 	public:
 		css_element_selector()
@@ -164,7 +164,7 @@ namespace litehtml
 			m_attrs	= val.m_attrs;
 		}
 
-		void parse(const std::wstring& txt);
+		void parse(const tstring& txt);
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -217,7 +217,7 @@ namespace litehtml
 			m_order			= val.m_order;
 		}
 
-		bool parse(const std::wstring& text);
+		bool parse(const tstring& text);
 		void calc_specificity();
 	};
 

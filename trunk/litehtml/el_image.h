@@ -7,7 +7,7 @@ namespace litehtml
 
 	class el_image : public element
 	{
-		std::wstring	m_src;
+		tstring	m_src;
 	public:
 		el_image(litehtml::document* doc);
 		virtual ~el_image(void);

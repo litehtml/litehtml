@@ -37,6 +37,7 @@ freely, subject to the following restrictions:
 
 #include <vector>
 #include <string>
+#include "types.h"
 
 // Function to break up a string into tokens
 //
@@ -51,6 +52,8 @@ freely, subject to the following restrictions:
 // esc = characters to protect a single character
 //
 
-void tokenize ( const std::wstring& str, std::vector<std::wstring>& result,
-			const std::wstring& delimiters, const std::wstring& delimiters_preserve = L"",
-			const std::wstring& quote = L"\"", const std::wstring& esc = L"\\" );
+namespace litehtml
+{
+	extern void tokenize ( const tstring& str, std::vector<tstring>& result, const tstring& delimiters, const tstring& delimiters_preserve = _t(""), const tstring& quote = _t("\""), const tstring& esc = _t("\\") );
+}
+
