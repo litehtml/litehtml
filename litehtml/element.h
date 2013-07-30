@@ -27,9 +27,9 @@ namespace litehtml
 		litehtml::document*		m_doc;
 		elements_vector			m_children;
 		box::vector				m_boxes;
-		std::wstring			m_id;
-		std::wstring			m_class;
-		std::wstring			m_tag;
+		tstring			m_id;
+		tstring			m_class;
+		tstring			m_tag;
 		litehtml::style			m_style;
 		string_map				m_attrs;
 		position				m_pos;
@@ -89,12 +89,12 @@ namespace litehtml
 
 		virtual bool				appendChild(litehtml::element* el);
 		virtual element::ptr		parentElement() const;
-		virtual const wchar_t*		get_tagName() const;
-		virtual void				set_tagName(const wchar_t* tag);
-		virtual void				set_data(const wchar_t* data);
+		virtual const tchar_t*		get_tagName() const;
+		virtual void				set_tagName(const tchar_t* tag);
+		virtual void				set_data(const tchar_t* data);
 
-		virtual void				set_attr(const wchar_t* name, const wchar_t* val);
-		virtual const wchar_t*		get_attr(const wchar_t* name, const wchar_t* def = 0);
+		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
+		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual bool				is_white_space();
 		virtual bool				is_body() const;
@@ -107,10 +107,10 @@ namespace litehtml
 		virtual bool				on_lbutton_up(int x, int y);
 		virtual void				on_click(int x, int y);
 		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
-		virtual const wchar_t*		get_cursor();
+		virtual const tchar_t*		get_cursor();
 		virtual void				init_font();
 		virtual bool				is_point_inside(int x, int y);
-		virtual bool				set_pseudo_class(const wchar_t* pclass, bool add);
+		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add);
 		virtual bool				in_normal_flow() const;
 		virtual bool				is_replaced() const;
 		virtual int					line_height() const;
@@ -119,7 +119,7 @@ namespace litehtml
 		style_display				get_display() const;
 		elements_vector&			children();
 		
-		bool						select(const wchar_t* selectors);
+		bool						select(const tchar_t* selectors);
 
 		void						calc_outlines( int parent_width );
 		virtual void				parse_styles(bool is_reparse = false);
@@ -160,16 +160,16 @@ namespace litehtml
 		margins						get_borders()		const;
 		css_borders					get_css_borders()	const;
 
-		virtual const wchar_t*		get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
+		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
 
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
 		virtual int					get_font_size();
-		litehtml::web_color			get_color(const wchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
+		litehtml::web_color			get_color(const tchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		int							select(const css_selector& selector, bool apply_pseudo = true);
 		int							select(const css_element_selector& selector, bool apply_pseudo = true);
 		element*					find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		void						get_abs_position(position& pos, const element* root);
-		virtual void				get_text(std::wstring& text);
+		virtual void				get_text(tstring& text);
 		virtual void				finish();
 
 		bool						is_first_child(const element* el);
@@ -184,7 +184,7 @@ namespace litehtml
 		virtual void				get_inline_boxes(position::vector& boxes);
 
 	private:
-		bool						select_one(const std::wstring& selector);
+		bool						select_one(const tstring& selector);
 		int							get_floats_height() const;
 		int							get_left_floats_height() const;
 		int							get_right_floats_height() const;

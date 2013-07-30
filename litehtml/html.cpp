@@ -3,29 +3,29 @@
 #include "tokenizer.h"
 #include "element.h"
 
-void litehtml::trim(std::wstring &s) 
+void litehtml::trim(tstring &s) 
 {
-	std::wstring::size_type pos = s.find_first_not_of(L" \n\r\t");
-	if(pos != std::wstring::npos)
+	tstring::size_type pos = s.find_first_not_of(_t(" \n\r\t"));
+	if(pos != tstring::npos)
 	{
 		s.erase(s.begin(), s.begin() + pos);
 	}
-	pos = s.find_last_not_of(L" \n\r\t");
-	if(pos != std::wstring::npos)
+	pos = s.find_last_not_of(_t(" \n\r\t"));
+	if(pos != tstring::npos)
 	{
 		s.erase(s.begin() + pos + 1, s.end());
 	}
 }
 
-void litehtml::lcase(std::wstring &s) 
+void litehtml::lcase(tstring &s) 
 {
-	for(std::wstring::iterator i = s.begin(); i != s.end(); i++)
+	for(tstring::iterator i = s.begin(); i != s.end(); i++)
 	{
-		(*i) = towlower(*i);
+		(*i) = t_tolower(*i);
 	}
 }
 
-int litehtml::value_index( const wchar_t* val, const wchar_t* strings, int defValue, const wchar_t* delim )
+int litehtml::value_index( const tchar_t* val, const tchar_t* strings, int defValue, const tchar_t* delim )
 {
 	if(!val || !strings || !delim)
 	{
@@ -43,7 +43,7 @@ int litehtml::value_index( const wchar_t* val, const wchar_t* strings, int defVa
 	return defValue;
 }
 
-int litehtml::value_in_list( const wchar_t* val, const wchar_t* strings, const wchar_t* delim )
+int litehtml::value_in_list( const tchar_t* val, const tchar_t* strings, const tchar_t* delim )
 {
 	int idx = value_index(val, strings, -1, delim);
 	if(idx >= 0)

@@ -16,19 +16,20 @@
 #include "el_font.h"
 #include "el_tr.h"
 #include <math.h>
+#include <stdio.h>
 
-const wchar_t* g_empty_tags[] =
+const litehtml::tchar_t* g_empty_tags[] =
 {
-	L"base",
-	L"meta",
-	L"link",
-	L"br",
-	L"hr",
-	L"input",
-	L"button",
-	L"img",
-	L"param",
-	L"col",
+	_t("base"),
+	_t("meta"),
+	_t("link"),
+	_t("br"),
+	_t("hr"),
+	_t("input"),
+	_t("button"),
+	_t("img"),
+	_t("param"),
+	_t("col"),
 	0
 };
 
@@ -49,7 +50,7 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx)
+litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx)
 {
 	litehtml::document::ptr doc = new litehtml::document(objPainter, ctx);
 	str_istream si(str);
@@ -109,11 +110,11 @@ litehtml::document::ptr litehtml::document::createFromString( const wchar_t* str
 	return doc;
 }
 
-litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration, font_metrics* fm )
+litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm )
 {
 	uint_ptr ret = 0;
 
-	if(!name || name && !_wcsicmp(name, L"inherit"))
+	if(!name || name && !t_strcasecmp(name, _t("inherit")))
 	{
 		name = m_container->get_default_font_name();
 	}
@@ -123,17 +124,17 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, 
 		size = container()->get_default_font_size();
 	}
 
-	wchar_t strSize[20];
-	_itow_s(size, strSize, 20, 10);
+	tchar_t strSize[20];
+	t_snprintf(strSize, 20, _t("%d"), size);
 
-	std::wstring key = name;
-	key += L":";
+	tstring key = name;
+	key += _t(":");
 	key += strSize;
-	key += L":";
+	key += _t(":");
 	key += weight;
-	key += L":";
+	key += _t(":");
 	key += style;
-	key += L":";
+	key += _t(":");
 	key += decoration;
 
 	if(m_fonts.find(key) == m_fonts.end())
@@ -145,24 +146,24 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, 
 			switch(fw)
 			{
 			case litehtml::fontWeightBold:
-				fw = FW_BOLD;
+				fw = 700;
 				break;
 			case litehtml::fontWeightBolder:
-				fw = FW_SEMIBOLD;
+				fw = 600;
 				break;
 			case litehtml::fontWeightLighter:
-				fw = FW_LIGHT;
+				fw = 300;
 				break;
 			default:
-				fw = FW_NORMAL;
+				fw = 400;
 				break;
 			}
 		} else
 		{
-			fw = _wtoi(weight);
+			fw = t_atoi(weight);
 			if(fw < 100)
 			{
-				fw = FW_NORMAL;
+				fw = 400;
 			}
 		}
 
@@ -170,17 +171,17 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, 
 
 		if(decoration)
 		{
-			std::vector<std::wstring> tokens;
-			tokenize(decoration, tokens, L" ");
-			for(std::vector<std::wstring>::iterator i = tokens.begin(); i != tokens.end(); i++)
+			std::vector<tstring> tokens;
+			tokenize(decoration, tokens, _t(" "));
+			for(std::vector<tstring>::iterator i = tokens.begin(); i != tokens.end(); i++)
 			{
-				if(!_wcsicmp(i->c_str(), L"underline"))
+				if(!t_strcasecmp(i->c_str(), _t("underline")))
 				{
 					decor |= font_decoration_underline;
-				} else if(!_wcsicmp(i->c_str(), L"line-through"))
+				} else if(!t_strcasecmp(i->c_str(), _t("line-through")))
 				{
 					decor |= font_decoration_linethrough;
-				} else if(!_wcsicmp(i->c_str(), L"overline"))
+				} else if(!t_strcasecmp(i->c_str(), _t("overline")))
 				{
 					decor |= font_decoration_overline;
 				}
@@ -200,9 +201,9 @@ litehtml::uint_ptr litehtml::document::add_font( const wchar_t* name, int size, 
 	return ret;
 }
 
-litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, int size, const wchar_t* weight, const wchar_t* style, const wchar_t* decoration, font_metrics* fm )
+litehtml::uint_ptr litehtml::document::get_font( const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm )
 {
-	if(!name || name && !_wcsicmp(name, L"inherit"))
+	if(!name || name && !t_strcasecmp(name, _t("inherit")))
 	{
 		name = m_container->get_default_font_name();
 	}
@@ -212,17 +213,17 @@ litehtml::uint_ptr litehtml::document::get_font( const wchar_t* name, int size, 
 		size = container()->get_default_font_size();
 	}
 
-	wchar_t strSize[20];
-	_itow_s(size, strSize, 20, 10);
+	tchar_t strSize[20];
+	t_snprintf(strSize, 20, _t("%d"), size);
 
-	std::wstring key = name;
-	key += L":";
+	tstring key = name;
+	key += _t(":");
 	key += strSize;
-	key += L":";
+	key += _t(":");
 	key += weight;
-	key += L":";
+	key += _t(":");
 	key += style;
-	key += L":";
+	key += _t(":");
 	key += decoration;
 
 	fonts_map::iterator el = m_fonts.find(key);
@@ -244,7 +245,7 @@ litehtml::element* litehtml::document::add_root()
 	{
 		m_root = new element(this);
 		m_root->addRef();
-		m_root->set_tagName(L"html");
+		m_root->set_tagName(_t("html"));
 	}
 	return m_root;
 }
@@ -256,7 +257,7 @@ litehtml::element* litehtml::document::add_body()
 		add_root();
 	}
 	element* el = new el_body(this);
-	el->set_tagName(L"body");
+	el->set_tagName(_t("body"));
 	m_root->appendChild(el);
 	return el;
 }
@@ -278,7 +279,7 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 	}
 }
 
-int litehtml::document::cvt_units( const wchar_t* str, int fontSize, bool* is_percent/*= 0*/ ) const
+int litehtml::document::cvt_units( const tchar_t* str, int fontSize, bool* is_percent/*= 0*/ ) const
 {
 	if(!str)	return 0;
 	
@@ -340,7 +341,7 @@ int litehtml::document::height() const
 	return m_root ? m_root->height() : 0;
 }
 
-void litehtml::document::add_stylesheet( const wchar_t* str, const wchar_t* baseurl )
+void litehtml::document::add_stylesheet( const tchar_t* str, const tchar_t* baseurl )
 {
 	if(str && str[0])
 	{
@@ -355,8 +356,8 @@ bool litehtml::document::on_mouse_over( int x, int y, position::vector& redraw_b
 		return false;
 	}
 	bool res = m_root->on_mouse_over(x, y);
-	const wchar_t* cursor = m_root->get_cursor();
-	m_container->set_cursor(cursor ? cursor : L"auto");
+	const tchar_t* cursor = m_root->get_cursor();
+	m_container->set_cursor(cursor ? cursor : _t("auto"));
 	if(res)
 	{
 		return m_root->find_styles_changes(redraw_boxes, 0, 0);
@@ -403,49 +404,49 @@ bool litehtml::document::on_lbutton_up( int x, int y, position::vector& redraw_b
 	return false;
 }
 
-litehtml::element::ptr litehtml::document::create_element( const wchar_t* tag_name )
+litehtml::element::ptr litehtml::document::create_element( const tchar_t* tag_name )
 {
 	element::ptr newTag = NULL;
-	if(!_wcsicmp(tag_name, L"br"))
+	if(!t_strcasecmp(tag_name, _t("br")))
 	{
 		newTag = new litehtml::el_break(this);
-	} else if(!_wcsicmp(tag_name, L"p"))
+	} else if(!t_strcasecmp(tag_name, _t("p")))
 	{
 		newTag = new litehtml::el_para(this);
-	} else if(!_wcsicmp(tag_name, L"img"))
+	} else if(!t_strcasecmp(tag_name, _t("img")))
 	{
 		newTag = new litehtml::el_image(this);
-	} else if(!_wcsicmp(tag_name, L"table"))
+	} else if(!t_strcasecmp(tag_name, _t("table")))
 	{
 		newTag = new litehtml::el_table(this);
-	} else if(!_wcsicmp(tag_name, L"td") || !_wcsicmp(tag_name, L"th"))
+	} else if(!t_strcasecmp(tag_name, _t("td")) || !t_strcasecmp(tag_name, _t("th")))
 	{
 		newTag = new litehtml::el_td(this);
-	} else if(!_wcsicmp(tag_name, L"link"))
+	} else if(!t_strcasecmp(tag_name, _t("link")))
 	{
 		newTag = new litehtml::el_link(this);
-	} else if(!_wcsicmp(tag_name, L"title"))
+	} else if(!t_strcasecmp(tag_name, _t("title")))
 	{
 		newTag = new litehtml::el_title(this);
-	} else if(!_wcsicmp(tag_name, L"a"))
+	} else if(!t_strcasecmp(tag_name, _t("a")))
 	{
 		newTag = new litehtml::el_anchor(this);
-	} else if(!_wcsicmp(tag_name, L"tr"))
+	} else if(!t_strcasecmp(tag_name, _t("tr")))
 	{
 		newTag = new litehtml::el_tr(this);
-	} else if(!_wcsicmp(tag_name, L"style"))
+	} else if(!t_strcasecmp(tag_name, _t("style")))
 	{
 		newTag = new litehtml::el_style(this);
-	} else if(!_wcsicmp(tag_name, L"base"))
+	} else if(!t_strcasecmp(tag_name, _t("base")))
 	{
 		newTag = new litehtml::el_base(this);
-	} else if(!_wcsicmp(tag_name, L"body"))
+	} else if(!t_strcasecmp(tag_name, _t("body")))
 	{
 		newTag = new litehtml::el_body(this);
-	} else if(!_wcsicmp(tag_name, L"div"))
+	} else if(!t_strcasecmp(tag_name, _t("div")))
 	{
 		newTag = new litehtml::el_div(this);
-	} else if(!_wcsicmp(tag_name, L"font"))
+	} else if(!t_strcasecmp(tag_name, _t("font")))
 	{
 		newTag = new litehtml::el_font(this);
 	} else
@@ -461,12 +462,12 @@ litehtml::element::ptr litehtml::document::create_element( const wchar_t* tag_na
 	return newTag;
 }
 
-void litehtml::document::parse_tag_start( const wchar_t* tag_name )
+void litehtml::document::parse_tag_start( const tchar_t* tag_name )
 {
 	parse_pop_empty_element();
 
 	// We add the html(root) element before parsing
-	if(!_wcsicmp(tag_name, L"html"))
+	if(!t_strcasecmp(tag_name, _t("html")))
 	{
 		return;
 	}
@@ -474,35 +475,35 @@ void litehtml::document::parse_tag_start( const wchar_t* tag_name )
 	element::ptr el = create_element(tag_name);
 	if(el)
 	{
-		if(!_wcsicmp(m_parse_stack.back()->get_tagName(), L"html"))
+		if(!t_strcasecmp(m_parse_stack.back()->get_tagName(), _t("html")))
 		{
 			// if last element is root we have to add head or body
-			if(!value_in_list(tag_name, L"head;body"))
+			if(!value_in_list(tag_name, _t("head;body")))
 			{
-				parse_push_element(create_element(L"body"));
+				parse_push_element(create_element(_t("body")));
 			}
 		}
 
 		// fix <TD> and <TH>
-		if(value_in_list(tag_name, L"td;th"))
+		if(value_in_list(tag_name, _t("td;th")))
 		{
-			if(value_in_list(m_parse_stack.back()->get_tagName(), L"th;td"))
+			if(value_in_list(m_parse_stack.back()->get_tagName(), _t("th;td")))
 			{
 				parse_pop_element();
 			}
 
-			if(_wcsicmp(m_parse_stack.back()->get_tagName() ,L"tr"))
+			if(t_strcasecmp(m_parse_stack.back()->get_tagName() ,_t("tr")))
 			{
-				parse_push_element(create_element(L"tr"));
+				parse_push_element(create_element(_t("tr")));
 			}
 		}
 
 		// fix <TR>: add tbody into the table
-		if(!_wcsicmp(tag_name, L"tr"))
+		if(!t_strcasecmp(tag_name, _t("tr")))
 		{
-			if(!value_in_list(m_parse_stack.back()->get_tagName(), L"tbody;thead;tfoot"))
+			if(!value_in_list(m_parse_stack.back()->get_tagName(), _t("tbody;thead;tfoot")))
 			{
-				parse_push_element(create_element(L"tbody"));
+				parse_push_element(create_element(_t("tbody")));
 			}
 		}
 
@@ -511,11 +512,11 @@ void litehtml::document::parse_tag_start( const wchar_t* tag_name )
 }
 
 
-void litehtml::document::parse_tag_end( const wchar_t* tag_name )
+void litehtml::document::parse_tag_end( const tchar_t* tag_name )
 {
 	if(!m_parse_stack.empty())
 	{
-		if(!_wcsicmp(m_parse_stack.back()->get_tagName(), tag_name))
+		if(!t_strcasecmp(m_parse_stack.back()->get_tagName(), tag_name))
 		{
 			parse_pop_element();
 		} else
@@ -527,7 +528,7 @@ void litehtml::document::parse_tag_end( const wchar_t* tag_name )
 
 void litehtml::document::begin_parse()
 {
-	m_root = create_element(L"html");
+	m_root = create_element(_t("html"));
 	m_parse_stack.push_back(m_root);
 }
 
@@ -540,7 +541,7 @@ void litehtml::document::parse_push_element( element::ptr el )
 	}
 }
 
-void litehtml::document::parse_attribute( const wchar_t* attr_name, const wchar_t* attr_value )
+void litehtml::document::parse_attribute( const tchar_t* attr_name, const tchar_t* attr_value )
 {
 	if(!m_parse_stack.empty())
 	{
@@ -548,11 +549,11 @@ void litehtml::document::parse_attribute( const wchar_t* attr_name, const wchar_
 	}
 }
 
-void litehtml::document::parse_word( const wchar_t* val )
+void litehtml::document::parse_word( const tchar_t* val )
 {
-	if(!_wcsicmp(m_parse_stack.back()->get_tagName(), L"html"))
+	if(!t_strcasecmp(m_parse_stack.back()->get_tagName(), _t("html")))
 	{
-		parse_push_element(create_element(L"body"));
+		parse_push_element(create_element(_t("body")));
 	}
 
 	parse_pop_empty_element();
@@ -564,7 +565,7 @@ void litehtml::document::parse_word( const wchar_t* val )
 	}
 }
 
-void litehtml::document::parse_space(const wchar_t* val)
+void litehtml::document::parse_space(const tchar_t* val)
 {
 	parse_pop_empty_element();
 
@@ -586,7 +587,7 @@ void litehtml::document::parse_comment_end()
 	parse_pop_element();
 }
 
-void litehtml::document::parse_data( const wchar_t* val )
+void litehtml::document::parse_data( const tchar_t* val )
 {
 	if(!m_parse_stack.empty())
 	{
@@ -602,12 +603,12 @@ void litehtml::document::parse_pop_element()
 	}
 }
 
-void litehtml::document::parse_pop_element( const wchar_t* tag )
+void litehtml::document::parse_pop_element( const tchar_t* tag )
 {
 	bool found = false;
 	for(elements_vector::reverse_iterator iel = m_parse_stack.rbegin(); iel != m_parse_stack.rend(); iel++)
 	{
-		if(!_wcsicmp( (*iel)->get_tagName(), tag ))
+		if(!t_strcasecmp( (*iel)->get_tagName(), tag ))
 		{
 			found = true;
 		}
@@ -615,7 +616,7 @@ void litehtml::document::parse_pop_element( const wchar_t* tag )
 
 	while(found)
 	{
-		if(!_wcsicmp( m_parse_stack.back()->get_tagName(), tag ))
+		if(!t_strcasecmp( m_parse_stack.back()->get_tagName(), tag ))
 		{
 			found = false;
 		}
@@ -630,7 +631,7 @@ void litehtml::document::parse_pop_empty_element()
 		bool is_empty_tag = false;
 		for(int i=0; g_empty_tags[i]; i++)
 		{
-			if(!_wcsicmp(m_parse_stack.back()->get_tagName(), g_empty_tags[i]))
+			if(!t_strcasecmp(m_parse_stack.back()->get_tagName(), g_empty_tags[i]))
 			{
 				is_empty_tag = true;
 				break;

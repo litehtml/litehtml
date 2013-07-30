@@ -7,17 +7,17 @@ namespace litehtml
 	class el_text : public element
 	{
 	protected:
-		std::wstring	m_text;
-		std::wstring	m_transformed_text;
+		tstring	m_text;
+		tstring	m_transformed_text;
 		size			m_size;
 		text_transform	m_text_transform;
 	public:
-		el_text(const wchar_t* text, litehtml::document* doc);
+		el_text(const tchar_t* text, litehtml::document* doc);
 		virtual ~el_text();
 
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
-		virtual void				get_text(std::wstring& text);
-		virtual const wchar_t*		get_style_property(const wchar_t* name, bool inherited, const wchar_t* def = 0);
+		virtual void				get_text(tstring& text);
+		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
 		virtual void				parse_styles(bool is_reparse);
 		virtual int					get_base_line();
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);

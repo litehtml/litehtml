@@ -2,7 +2,7 @@
 #include "document.h"
 #include "el_space.h"
 
-litehtml::el_space::el_space( const wchar_t* text, litehtml::document* doc ) : el_text(text, doc)
+litehtml::el_space::el_space( const tchar_t* text, litehtml::document* doc ) : el_text(text, doc)
 {
 }
 
@@ -28,7 +28,7 @@ bool litehtml::el_space::is_break() const
 		m_white_space == white_space_pre_line ||
 		m_white_space == white_space_pre_wrap)
 	{
-		if(m_text == L"\n")
+		if(m_text == _t("\n"))
 		{
 			return true;
 		}

@@ -2,7 +2,7 @@
 #include "el_text.h"
 #include "document.h"
 
-litehtml::el_text::el_text( const wchar_t* text, litehtml::document* doc ) : element(doc)
+litehtml::el_text::el_text( const tchar_t* text, litehtml::document* doc ) : element(doc)
 {
 	if(text)
 	{
@@ -25,7 +25,7 @@ void litehtml::el_text::get_content_size( size& sz, int max_width )
 void litehtml::el_text::draw_content( uint_ptr hdc, const litehtml::position& pos )
 {
 	uint_ptr font = m_parent->get_font();
-	litehtml::web_color color = m_parent->get_color(L"color", true, m_doc->get_def_color());
+	litehtml::web_color color = m_parent->get_color(_t("color"), true, m_doc->get_def_color());
 	m_doc->container()->draw_text(hdc, m_transformed_text.c_str(), font, color, pos);
 }
 
@@ -34,12 +34,12 @@ void litehtml::el_text::apply_stylesheet( const litehtml::css& stylesheet )
 
 }
 
-void litehtml::el_text::get_text( std::wstring& text )
+void litehtml::el_text::get_text( tstring& text )
 {
 	text += m_text;
 }
 
-const wchar_t* litehtml::el_text::get_style_property( const wchar_t* name, bool inherited, const wchar_t* def /*= 0*/ )
+const litehtml::tchar_t* litehtml::el_text::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
 {
 	if(inherited)
 	{
@@ -50,7 +50,7 @@ const wchar_t* litehtml::el_text::get_style_property( const wchar_t* name, bool 
 
 void litehtml::el_text::parse_styles(bool is_reparse)
 {
-	m_text_transform	= (text_transform)	value_index(get_style_property(L"text-transform", true,	L"none"),	text_transform_strings,	text_transform_none);
+	m_text_transform	= (text_transform)	value_index(get_style_property(_t("text-transform"), true,	_t("none")),	text_transform_strings,	text_transform_none);
 	m_white_space		= m_parent->get_white_space();
 	m_transformed_text	= m_text;
 	if(m_text_transform != text_transform_none)
@@ -64,14 +64,14 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 			}
 			break;
 		case text_transform_uppercase:
-			m_transformed_text = L"";
+			m_transformed_text = _t("");
 			for(int i=0; i < m_text.length(); i++)
 			{
 				m_transformed_text += m_doc->container()->toupper(m_text[i]);
 			}
 			break;
 		case text_transform_lowercase:
-			m_transformed_text = L"";
+			m_transformed_text = _t("");
 			for(int i=0; i < m_text.length(); i++)
 			{
 				m_transformed_text += m_doc->container()->tolower(m_text[i]);
@@ -82,16 +82,16 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 
 	if(is_white_space())
 	{
-		m_transformed_text = L" ";
+		m_transformed_text = _t(" ");
 	} else
 	{
-		if(m_text == L"\t")
+		if(m_text == _t("\t"))
 		{
-			m_transformed_text = L"    ";
+			m_transformed_text = _t("    ");
 		}
-		if(m_text == L"\n" || m_text == L"\r")
+		if(m_text == _t("\n") || m_text == _t("\r"))
 		{
-			m_transformed_text = L"";
+			m_transformed_text = _t("");
 		}
 	}
 

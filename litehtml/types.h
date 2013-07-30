@@ -1,9 +1,62 @@
 #pragma once
 
 #include "object.h"
+#include <stdlib.h>
+#include <map>
+#include <vector>
 
 namespace litehtml
 {
+#ifdef UNICODE
+
+	typedef std::wstring	tstring;
+	typedef wchar_t			tchar_t;
+
+#define _t(quote)			L##quote
+
+#define t_strlen			wcslen
+#define t_strcmp			wcscmp
+#define t_strncmp			wcsncmp
+#define t_strcasecmp		_wcsicmp
+#define t_strncasecmp		_wcsnicmp
+#define t_strtol			wcstol
+#define t_atoi				_wtoi
+#define t_strtod			wcstod
+#define t_snprintf			swprintf
+#define t_strstr			wcsstr
+#define t_tolower			towlower
+#define t_isdigit			iswdigit
+
+#else
+
+	typedef std::string		tstring;
+	typedef char			tchar_t;
+
+#define _t(quote)			quote
+
+#define t_strlen			strlen
+#define t_strcmp			strcmp
+#define t_strncmp			strncmp
+
+#ifdef WIN32
+	#define t_strcasecmp		_stricmp
+	#define t_strncasecmp		_strnicmp
+	#define t_snprintf			_snprintf
+#else
+	#define t_strcasecmp		strcasecmp
+	#define t_strncasecmp		strncasecmp
+	#define t_snprintf			snprintf
+#endif
+
+#define t_strtol			strtol
+#define t_atoi				atoi
+#define t_strtod			strtod
+#define t_strstr			strstr
+#define t_tolower			tolower
+#define t_isdigit			isdigit
+
+#endif
+
 #if defined(_WIN64)
 	typedef unsigned __int64 uint_ptr;
 #else
@@ -13,10 +66,10 @@ namespace litehtml
 	class document;
 	class element;
 
-	typedef std::map<std::wstring, std::wstring>			string_map;
-	typedef std::vector<litehtml::object_ptr<litehtml::element>>	elements_vector;
+	typedef std::map<litehtml::tstring, litehtml::tstring>			string_map;
+	typedef std::vector< litehtml::object_ptr<litehtml::element> >	elements_vector;
 	typedef std::vector<int>								int_vector;
-	typedef std::vector<std::wstring>						string_vector;
+	typedef std::vector<litehtml::tstring>						string_vector;
 
 	const unsigned int font_decoration_none			= 0x00;
 	const unsigned int font_decoration_underline	= 0x01;
@@ -163,10 +216,10 @@ namespace litehtml
 		font_metrics	metrics;
 	};
 
-	typedef std::map<std::wstring, font_item>	fonts_map;
+	typedef std::map<tstring, font_item>	fonts_map;
 
 
-#define  style_display_strings		L"none;block;inline;inline-block;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group"
+#define  style_display_strings		_t("none;block;inline;inline-block;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group")
 
 	enum style_display
 	{
@@ -198,7 +251,7 @@ namespace litehtml
 		borderDouble
 	};
 
-#define  font_size_strings		L"xx-small;x-small;small;medium;large;x-large;xx-large;smaller;larger"
+#define  font_size_strings		_t("xx-small;x-small;small;medium;large;x-large;xx-large;smaller;larger")
 
 	enum font_size
 	{
@@ -213,7 +266,7 @@ namespace litehtml
 		fontSize_larger,
 	};
 
-#define  font_style_strings		L"normal;italic"
+#define  font_style_strings		_t("normal;italic")
 
 	enum font_style
 	{
@@ -221,7 +274,7 @@ namespace litehtml
 		fontStyleItalic
 	};
 
-#define  font_variant_strings		L"normal;small-caps"
+#define  font_variant_strings		_t("normal;small-caps")
 
 	enum font_variant
 	{
@@ -229,7 +282,7 @@ namespace litehtml
 		font_variant_italic
 	};
 
-#define  font_weight_strings	L"normal;bold;bolder;lighter100;200;300;400;500;600;700"
+#define  font_weight_strings	_t("normal;bold;bolder;lighter100;200;300;400;500;600;700")
 
 	enum font_weight
 	{
@@ -246,7 +299,7 @@ namespace litehtml
 		fontWeight700
 	};
 
-#define  list_style_type_strings	L"none;circle;disc;square"
+#define  list_style_type_strings	_t("none;circle;disc;square")
 
 	enum list_style_type
 	{
@@ -256,7 +309,7 @@ namespace litehtml
 		list_style_type_square
 	};
 
-#define  list_style_position_strings	L"inside;outside"
+#define  list_style_position_strings	_t("inside;outside")
 
 	enum list_style_position
 	{
@@ -264,7 +317,7 @@ namespace litehtml
 		list_style_position_outside
 	};
 
-#define  vertical_align_strings	L"baseline;sub;super;top;text-top;middle;bottom;text-bottom"
+#define  vertical_align_strings	_t("baseline;sub;super;top;text-top;middle;bottom;text-bottom")
 
 	enum vertical_align
 	{
@@ -278,7 +331,7 @@ namespace litehtml
 		va_text_bottom
 	};
 
-#define  border_width_strings	L"thin;medium;thick"
+#define  border_width_strings	_t("thin;medium;thick")
 
 	enum border_width
 	{
@@ -287,7 +340,7 @@ namespace litehtml
 		border_width_thick
 	};
 
-#define  border_style_strings	L"none;hidden;dotted;dashed;solid;double;groove;ridge;inset;outset"
+#define  border_style_strings	_t("none;hidden;dotted;dashed;solid;double;groove;ridge;inset;outset")
 
 	enum border_style
 	{
@@ -303,7 +356,7 @@ namespace litehtml
 		border_style_outset
 	};
 
-#define  element_float_strings	L"none;left;right"
+#define  element_float_strings	_t("none;left;right")
 
 	enum element_float
 	{
@@ -312,7 +365,7 @@ namespace litehtml
 		float_right
 	};
 
-#define  element_clear_strings	L"none;left;right;both"
+#define  element_clear_strings	_t("none;left;right;both")
 
 	enum element_clear
 	{
@@ -322,7 +375,7 @@ namespace litehtml
 		clear_both
 	};
 
-#define  css_units_strings	L"none;%;in;cm;mm;em;ex;pt;pc;px"
+#define  css_units_strings	_t("none;%;in;cm;mm;em;ex;pt;pc;px")
 
 	enum css_units
 	{
@@ -338,7 +391,7 @@ namespace litehtml
 		css_units_px
 	};
 
-#define  background_attachment_strings	L"scroll;fixed"
+#define  background_attachment_strings	_t("scroll;fixed")
 
 	enum background_attachment
 	{
@@ -346,7 +399,7 @@ namespace litehtml
 		background_attachment_fixed
 	};
 
-#define  background_repeat_strings	L"repeat;repeat-x;repeat-y;no-repeat"
+#define  background_repeat_strings	_t("repeat;repeat-x;repeat-y;no-repeat")
 
 	enum background_repeat
 	{
@@ -356,7 +409,7 @@ namespace litehtml
 		background_repeat_no_repeat
 	};
 
-#define  background_box_strings	L"border-box;padding-box;content-box"
+#define  background_box_strings	_t("border-box;padding-box;content-box")
 
 	enum background_box
 	{
@@ -365,7 +418,7 @@ namespace litehtml
 		background_box_content
 	};
 
-#define element_position_strings	L"static;absolute;fixed;relative"
+#define element_position_strings	_t("static;absolute;fixed;relative")
 
 	enum element_position
 	{
@@ -375,7 +428,7 @@ namespace litehtml
 		element_position_relative
 	};
 
-#define text_align_strings		L"left;right;center;justify"
+#define text_align_strings		_t("left;right;center;justify")
 
 	enum text_align
 	{
@@ -385,7 +438,7 @@ namespace litehtml
 		text_align_justify
 	};
 
-#define text_transform_strings		L"none;capitalize;uppercase;lowercase"
+#define text_transform_strings		_t("none;capitalize;uppercase;lowercase")
 
 	enum text_transform
 	{
@@ -395,7 +448,7 @@ namespace litehtml
 		text_transform_lowercase
 	};
 
-#define white_space_strings		L"normal;nowrap;pre;pre-line;pre-wrap"
+#define white_space_strings		_t("normal;nowrap;pre;pre-line;pre-wrap")
 
 	enum white_space
 	{
@@ -406,7 +459,7 @@ namespace litehtml
 		white_space_pre_wrap
 	};
 
-#define overflow_strings		L"visible;hidden;scroll;auto;no-display;no-content"
+#define overflow_strings		_t("visible;hidden;scroll;auto;no-display;no-content")
 
 	enum overflow
 	{

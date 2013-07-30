@@ -29,32 +29,4 @@ namespace litehtml
 			width	= 0;
 		}
 	};
-
-/*
-	struct attr_font
-	{
-		std::wstring	family;
-		font_size		size;
-		int				customSize;
-		font_style		fontStyle;
-		font_weight		fontWeight;
-
-		attr_font()
-		{
-			size		= fontSize_nope;
-			customSize	= 0;
-			fontStyle	= fontStyleNope;
-			fontWeight	= fontWeightNope;
-		}
-
-		void operator=(const attr_font& val)
-		{
-			family		= val.family;
-			size		= val.size;
-			customSize	= val.customSize;
-			fontStyle	= val.fontStyle;
-			fontWeight	= val.fontWeight;
-		}
-	};
-*/
 }

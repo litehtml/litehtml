@@ -7,14 +7,14 @@ namespace litehtml
 	class property_value
 	{
 	public:
-		std::wstring	m_value;
+		tstring	m_value;
 		bool			m_important;
 
 		property_value()
 		{
 			m_important = false;
 		}
-		property_value(const wchar_t* val, bool imp)
+		property_value(const tchar_t* val, bool imp)
 		{
 			m_important = imp;
 			m_value		= val;
@@ -32,7 +32,7 @@ namespace litehtml
 		}
 	};
 
-	typedef std::map<std::wstring, property_value>	props_map;
+	typedef std::map<tstring, property_value>	props_map;
 
 	class style : public object
 	{
@@ -51,14 +51,14 @@ namespace litehtml
 			m_properties = val.m_properties;
 		}
 
-		void add(const wchar_t* txt, const wchar_t* baseurl)
+		void add(const tchar_t* txt, const tchar_t* baseurl)
 		{
 			parse(txt, baseurl);
 		}
 
-		void add_property(const wchar_t* name, const wchar_t* val, const wchar_t* baseurl, bool important);
+		void add_property(const tchar_t* name, const tchar_t* val, const tchar_t* baseurl, bool important);
 
-		const wchar_t* get_property(const wchar_t* name) const
+		const tchar_t* get_property(const tchar_t* name) const
 		{
 			if(name)
 			{
@@ -78,12 +78,12 @@ namespace litehtml
 		}
 
 	private:
-		void parse_property(const std::wstring& txt, const wchar_t* baseurl);
-		void parse(const wchar_t* txt, const wchar_t* baseurl);
-		void parse_short_border(const std::wstring& prefix, const std::wstring& val, bool important);
-		void parse_short_background(const std::wstring& val, const wchar_t* baseurl, bool important);
-		void parse_short_font(const std::wstring& val, bool important);
-		void add_parsed_property(const std::wstring& name, const std::wstring& val, bool important);
+		void parse_property(const tstring& txt, const tchar_t* baseurl);
+		void parse(const tchar_t* txt, const tchar_t* baseurl);
+		void parse_short_border(const tstring& prefix, const tstring& val, bool important);
+		void parse_short_background(const tstring& val, const tchar_t* baseurl, bool important);
+		void parse_short_font(const tstring& val, bool important);
+		void add_parsed_property(const tstring& name, const tstring& val, bool important);
 	};
 
 /*

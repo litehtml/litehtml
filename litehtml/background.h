@@ -10,11 +10,11 @@ namespace litehtml
 	class background
 	{
 	public:
-		std::wstring			m_image;
-		std::wstring			m_baseurl;
+		tstring					m_image;
+		tstring					m_baseurl;
 		web_color				m_color;
 		background_attachment	m_attachment;
-		css_position		m_position;
+		css_position			m_position;
 		background_repeat		m_repeat;
 		background_box			m_clip;
 		background_box			m_origin;

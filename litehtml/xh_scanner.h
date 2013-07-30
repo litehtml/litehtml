@@ -7,16 +7,11 @@
 //| (C) Andrew Fedoniouk @ terrainformatica.com
 //|
 
-#include <stdlib.h> // wchar_t
-#include <string.h> // strcmp, etc.
-
 namespace litehtml 
 {
-  typedef wchar_t wchar;
-
   struct instream 
   {
-    virtual wchar get_char() = 0;
+    virtual tchar_t get_char() = 0;
   };
 
 
@@ -64,16 +59,16 @@ namespace litehtml
     token_type      get_token() { return (this->*c_scan)(); } 
     
     // get value of TT_WORD, TT_SPACE, TT_ATTR and TT_DATA
-    const wchar*    get_value();
+    const tchar_t*    get_value();
       
     // get attribute name
-    const wchar*    get_attr_name();
+    const tchar_t*    get_attr_name();
     
     // get tag name
-    const wchar*    get_tag_name();
+    const tchar_t*    get_tag_name();
     
     // should be overrided to resolve entities, e.g. &nbsp;
-    virtual wchar   resolve_entity(const wchar* buf, int buf_size);
+    virtual tchar_t   resolve_entity(const tchar_t* buf, int buf_size);
         
   private: /* methods */
 
@@ -91,17 +86,17 @@ namespace litehtml
 	token_type  scan_doctype_decl();
 	token_type  scan_raw_body();
 
-    wchar       skip_whitespace();
-    void        push_back(wchar c);
+    tchar_t       skip_whitespace();
+    void        push_back(tchar_t c);
   
-    wchar       get_char();
-    wchar       scan_entity();
+    tchar_t       get_char();
+    tchar_t       scan_entity();
 
-    bool        is_whitespace(wchar c);
+    bool        is_whitespace(tchar_t c);
       
-    void        append_value(wchar c);
-    void        append_attr_name(wchar c);
-    void        append_tag_name(wchar c);
+    void        append_value(tchar_t c);
+    void        append_attr_name(tchar_t c);
+    void        append_tag_name(tchar_t c);
 
   private: /* data */
 
@@ -109,17 +104,17 @@ namespace litehtml
     //state       where;
     token_type  token;
 
-    wchar       value[MAX_TOKEN_SIZE];
+    tchar_t       value[MAX_TOKEN_SIZE];
     int         value_length;
 
-    wchar       tag_name[MAX_NAME_SIZE];
+    tchar_t       tag_name[MAX_NAME_SIZE];
     int         tag_name_length;
 
-    wchar       attr_name[MAX_NAME_SIZE];
+    tchar_t       attr_name[MAX_NAME_SIZE];
     int         attr_name_length;
   
     instream&   input;
-    wchar       input_char; 
+    tchar_t       input_char; 
 
     bool        got_tail; // aux flag used in scan_comment, etc. 
 

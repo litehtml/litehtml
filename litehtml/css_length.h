@@ -103,6 +103,6 @@ namespace litehtml
 			return 0;
 		}
 
-		void	fromString(const std::wstring& str, const std::wstring& predefs = L"");
+		void	fromString(const tstring& str, const tstring& predefs = _t(""));
 	};
 }

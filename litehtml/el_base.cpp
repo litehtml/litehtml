@@ -14,5 +14,5 @@ litehtml::el_base::~el_base()
 
 void litehtml::el_base::finish()
 {
-	m_doc->container()->set_base_url(get_attr(L"href"));
+	m_doc->container()->set_base_url(get_attr(_t("href")));
 }

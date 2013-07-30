@@ -14,7 +14,7 @@ litehtml::el_title::~el_title()
 
 void litehtml::el_title::finish()
 {
-	std::wstring text;
+	tstring text;
 	get_text(text);
 	m_doc->container()->set_caption(text.c_str());
 }

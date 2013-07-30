@@ -2,72 +2,72 @@
 #include "css_selector.h"
 #include "tokenizer.h"
 
-void litehtml::css_element_selector::parse( const std::wstring& txt )
+void litehtml::css_element_selector::parse( const tstring& txt )
 {
-	std::wstring::size_type el_end = txt.find_first_of(L".#[:");
+	tstring::size_type el_end = txt.find_first_of(_t(".#[:"));
 	m_tag = txt.substr(0, el_end);
-	while(el_end != std::wstring::npos)
+	while(el_end != tstring::npos)
 	{
-		if(txt[el_end] == L'.')
+		if(txt[el_end] == _t('.'))
 		{
 			css_attribute_selector attribute;
 
-			std::wstring::size_type pos = txt.find_first_of(L".#[:", el_end + 1);
+			tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
 			attribute.condition	= select_equal;
-			m_attrs[L"class"] = attribute;
+			m_attrs[_t("class")] = attribute;
 			el_end = pos;
-		} else if(txt[el_end] == L':')
+		} else if(txt[el_end] == _t(':'))
 		{
 			css_attribute_selector attribute;
 
-			std::wstring::size_type pos = txt.find_first_of(L".#[:", el_end + 1);
+			tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
 			attribute.condition	= select_pseudo_class;
-			m_attrs[L"pseudo"] = attribute;
+			m_attrs[_t("pseudo")] = attribute;
 			el_end = pos;
-		} else if(txt[el_end] == L'#')
+		} else if(txt[el_end] == _t('#'))
 		{
 			css_attribute_selector attribute;
 
-			std::wstring::size_type pos = txt.find_first_of(L".#[:", el_end + 1);
+			tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
 			attribute.condition	= select_equal;
-			m_attrs[L"id"] = attribute;
+			m_attrs[_t("id")] = attribute;
 			el_end = pos;
-		} else if(txt[el_end] == L'[')
+		} else if(txt[el_end] == _t('['))
 		{
 			css_attribute_selector attribute;
 
-			std::wstring::size_type pos = txt.find_first_of(L"]~=|$*^", el_end + 1);
-			std::wstring attr = txt.substr(el_end + 1, pos - el_end - 1);
+			tstring::size_type pos = txt.find_first_of(_t("]~=|$*^"), el_end + 1);
+			tstring attr = txt.substr(el_end + 1, pos - el_end - 1);
 			trim(attr);
-			if(pos != std::wstring::npos)
+			if(pos != tstring::npos)
 			{
-				if(txt[pos] == L']')
+				if(txt[pos] == _t(']'))
 				{
 					attribute.condition = select_exists;
-				} else if(txt[pos] == L'=')
+				} else if(txt[pos] == _t('='))
 				{
 					attribute.condition = select_equal;
 					pos++;
-				} else if(txt.substr(pos, 2) == L"~=")
+				} else if(txt.substr(pos, 2) == _t("~="))
 				{
 					attribute.condition = select_contain_str;
 					pos += 2;
-				} else if(txt.substr(pos, 2) == L"|=")
+				} else if(txt.substr(pos, 2) == _t("|="))
 				{
 					attribute.condition = select_start_str;
 					pos += 2;
-				} else if(txt.substr(pos, 2) == L"^=")
+				} else if(txt.substr(pos, 2) == _t("^="))
 				{
 					attribute.condition = select_start_str;
 					pos += 2;
-				} else if(txt.substr(pos, 2) == L"$=")
+				} else if(txt.substr(pos, 2) == _t("$="))
 				{
 					attribute.condition = select_end_str;
 					pos += 2;
-				} else if(txt.substr(pos, 2) == L"*=")
+				} else if(txt.substr(pos, 2) == _t("*="))
 				{
 					attribute.condition = select_contain_str;
 					pos += 2;
@@ -76,22 +76,22 @@ void litehtml::css_element_selector::parse( const std::wstring& txt )
 					attribute.condition = select_exists;
 					pos += 1;
 				}
-				pos = txt.find_first_not_of(L" \t", pos);
-				if(pos != std::wstring::npos)
+				pos = txt.find_first_not_of(_t(" \t"), pos);
+				if(pos != tstring::npos)
 				{
-					if(txt[pos] == L'"')
+					if(txt[pos] == _t('"'))
 					{
-						std::wstring::size_type pos2 = txt.find_first_of(L"\"", pos + 1);
-						attribute.val = txt.substr(pos + 1, pos2 == std::wstring::npos ? pos2 : (pos2 - pos - 2));
-						pos = pos2 == std::wstring::npos ? pos2 : (pos2 + 1);
-					} else if(txt[pos] == L']')
+						tstring::size_type pos2 = txt.find_first_of(_t("\""), pos + 1);
+						attribute.val = txt.substr(pos + 1, pos2 == tstring::npos ? pos2 : (pos2 - pos - 2));
+						pos = pos2 == tstring::npos ? pos2 : (pos2 + 1);
+					} else if(txt[pos] == _t(']'))
 					{
 						pos ++;
 					} else
 					{
-						std::wstring::size_type pos2 = txt.find_first_of(L"]", pos + 1);
-						attribute.val = txt.substr(pos, pos2 == std::wstring::npos ? pos2 : (pos2 - pos));
-						pos = pos2 == std::wstring::npos ? pos2 : (pos2 + 1);
+						tstring::size_type pos2 = txt.find_first_of(_t("]"), pos + 1);
+						attribute.val = txt.substr(pos, pos2 == tstring::npos ? pos2 : (pos2 - pos));
+						pos = pos2 == tstring::npos ? pos2 : (pos2 + 1);
 					}
 				}
 			} else
@@ -104,33 +104,33 @@ void litehtml::css_element_selector::parse( const std::wstring& txt )
 		{
 			el_end++;
 		}
-		el_end = txt.find_first_of(L".#[:", el_end);
+		el_end = txt.find_first_of(_t(".#[:"), el_end);
 	}
 }
 
 
-bool litehtml::css_selector::parse( const std::wstring& text )
+bool litehtml::css_selector::parse( const tstring& text )
 {
 	if(text.empty())
 	{
 		return false;
 	}
 	string_vector tokens;
-	tokenize(text, tokens, L"", L" \t>+~");
+	tokenize(text, tokens, _t(""), _t(" \t>+~"));
 
 	if(tokens.empty())
 	{
 		return false;
 	}
 
-	std::wstring left;
-	std::wstring right = tokens.back();
-	wchar_t combinator = 0;
+	tstring left;
+	tstring right = tokens.back();
+	tchar_t combinator = 0;
 
 	tokens.pop_back();
-	while(!tokens.empty() && (tokens.back() == L" " || tokens.back() == L"\t" || tokens.back() == L"+" || tokens.back() == L"~" || tokens.back() == L">"))
+	while(!tokens.empty() && (tokens.back() == _t(" ") || tokens.back() == _t("\t") || tokens.back() == _t("+") || tokens.back() == _t("~") || tokens.back() == _t(">")))
 	{
-		if(combinator == L' ' || combinator == 0)
+		if(combinator == _t(' ') || combinator == 0)
 		{
 			combinator = tokens.back()[0];
 		}
@@ -154,23 +154,24 @@ bool litehtml::css_selector::parse( const std::wstring& text )
 
 	switch(combinator)
 	{
-	case L'>':
+	case _t('>'):
 		m_combinator	= combinator_child;
 		break;
-	case L'+':
+	case _t('+'):
 		m_combinator	= combinator_adjacent_sibling;
 		break;
-	case L'~':
+	case _t('~'):
 		m_combinator	= combinator_adjacent_sibling;
 		break;
 	default:
 		m_combinator	= combinator_descendant;
+		break;
 	}
 
-	if(m_left)
+/*	if(m_left)
 	{
 		delete m_left;
-	}
+	}*/
 	m_left = 0;
 
 	if(!left.empty())
@@ -187,13 +188,13 @@ bool litehtml::css_selector::parse( const std::wstring& text )
 
 void litehtml::css_selector::calc_specificity()
 {
-	if(!m_right.m_tag.empty() && m_right.m_tag != L"*")
+	if(!m_right.m_tag.empty() && m_right.m_tag != _t("*"))
 	{
 		m_specificity.d = 1;
 	}
 	for(css_attribute_selector::map::iterator i = m_right.m_attrs.begin(); i != m_right.m_attrs.end(); i++)
 	{
-		if(i->first == L"id")
+		if(i->first == _t("id"))
 		{
 			m_specificity.b++;
 		} else

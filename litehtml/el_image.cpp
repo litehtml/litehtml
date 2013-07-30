@@ -25,16 +25,16 @@ void litehtml::el_image::draw_content( uint_ptr hdc, const litehtml::position& p
 void litehtml::el_image::parse_styles(bool is_reparse)
 {
 	element::parse_styles(is_reparse);
-	m_src = get_attr(L"src", L"");
+	m_src = get_attr(_t("src"), _t(""));
 	m_doc->container()->load_image(m_src.c_str(), NULL);
 
 	if(!m_css_height.val())
 	{
-		m_css_height.fromString(get_attr(L"height", L"auto"), L"auto");
+		m_css_height.fromString(get_attr(_t("height"), _t("auto")), _t("auto"));
 	}
 	if(!m_css_width.val())
 	{
-		m_css_width.fromString(get_attr(L"width", L"auto"), L"auto");
+		m_css_width.fromString(get_attr(_t("width"), _t("auto")), _t("auto"));
 	}
 }
 

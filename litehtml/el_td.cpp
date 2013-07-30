@@ -14,45 +14,31 @@ litehtml::el_td::~el_td()
 
 void litehtml::el_td::parse_styles(bool is_reparse)
 {
-	const wchar_t* str = get_attr(L"width");
+	const tchar_t* str = get_attr(_t("width"));
 	if(str)
 	{
-		m_style.add_property(L"width", str, 0, false);
+		m_style.add_property(_t("width"), str, 0, false);
 	}
-	str = get_attr(L"background");
+	str = get_attr(_t("background"));
 	if(str)
 	{
-		std::wstring url = L"url('";
+		tstring url = _t("url('");
 		url += str;
-		url += L"')";
-		m_style.add_property(L"background-image", url.c_str(), 0, false);
+		url += _t("')");
+		m_style.add_property(_t("background-image"), url.c_str(), 0, false);
 	}
-	str = get_attr(L"align");
+	str = get_attr(_t("align"));
 	if(str)
 	{
-		m_style.add_property(L"text-align", str, 0, false);
+		m_style.add_property(_t("text-align"), str, 0, false);
 	}
 
-	str = get_attr(L"valign");
+	str = get_attr(_t("valign"));
 	if(str)
 	{
-		m_style.add_property(L"vertical-align", str, 0, false);
+		m_style.add_property(_t("vertical-align"), str, 0, false);
 	}
 
 	element::parse_styles(is_reparse);
 }
 
-const wchar_t* litehtml::el_td::get_style_property( const wchar_t* name, bool inherited, const wchar_t* def /*= 0*/ )
-{
-	const wchar_t* ret = element::get_style_property(name, inherited, def);
-/*
-	if(!ret)
-	{
-		if(m_parent && wcsstr(name, L"background"))
-		{
-			return m_parent->get_style_property(name, inherited, def);
-		}
-	}
-*/
-	return ret;
-}

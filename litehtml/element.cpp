@@ -4,7 +4,6 @@
 #include "document.h"
 #include "iterators.h"
 #include "stylesheet.h"
-#include <string>
 #include "table.h"
 #include <algorithm>
 #include <locale>
@@ -29,6 +28,7 @@ litehtml::element::element(litehtml::document* doc)
 	m_font_size				= 0;
 	m_white_space			= white_space_normal;
 	m_lh_predefined			= false;
+	m_line_height			= 0;
 }
 
 litehtml::element::~element()
@@ -52,16 +52,16 @@ litehtml::element::ptr litehtml::element::parentElement() const
 	return m_parent;
 }
 
-const wchar_t* litehtml::element::get_tagName() const
+const litehtml::tchar_t* litehtml::element::get_tagName() const
 {
 	return m_tag.c_str();
 }
 
-void litehtml::element::set_attr( const wchar_t* name, const wchar_t* val )
+void litehtml::element::set_attr( const tchar_t* name, const tchar_t* val )
 {
 	if(name && val)
 	{
-		std::wstring s_val = name;
+		tstring s_val = name;
 		std::locale lc = std::locale::global(std::locale::classic());
 		for(size_t i = 0; i < s_val.length(); i++)
 		{
@@ -71,7 +71,7 @@ void litehtml::element::set_attr( const wchar_t* name, const wchar_t* val )
 	}
 }
 
-const wchar_t* litehtml::element::get_attr( const wchar_t* name, const wchar_t* def )
+const litehtml::tchar_t* litehtml::element::get_attr( const tchar_t* name, const tchar_t* def )
 {
 	string_map::const_iterator attr = m_attrs.find(name);
 	if(attr != m_attrs.end())
@@ -81,11 +81,11 @@ const wchar_t* litehtml::element::get_attr( const wchar_t* name, const wchar_t* 
 	return def;
 }
 
-bool litehtml::element::select( const wchar_t* selector )
+bool litehtml::element::select( const tchar_t* selector )
 {
-	std::vector<std::wstring> tokens;
-	tokenize(selector, tokens, L",");
-	for(std::vector<std::wstring>::iterator i = tokens.begin(); i != tokens.end(); i++)
+	std::vector<tstring> tokens;
+	tokenize(selector, tokens, _t(","));
+	for(std::vector<tstring>::iterator i = tokens.begin(); i != tokens.end(); i++)
 	{
 		trim(*i);
 		if(select_one(i->c_str()))
@@ -96,22 +96,22 @@ bool litehtml::element::select( const wchar_t* selector )
 	return false;
 }
 
-bool litehtml::element::select_one( const std::wstring& selector )
+bool litehtml::element::select_one( const tstring& selector )
 {
-	std::vector<std::wstring> tokens;
-	tokenize(selector, tokens, L" \t>+", L" \t>+", L"[]");
+	std::vector<tstring> tokens;
+	tokenize(selector, tokens, _t(" \t>+"), _t(" \t>+"), _t("[]"));
 
 	css_element_selector sel;
-	sel.parse(L"div.hello#rt[rel=none][title]");
+	sel.parse(_t("div.hello#rt[rel=none][title]"));
 
 
 /*
-	std::wstring::size_type pos = sel.find_first_of(L".#[");
+	tstring::size_type pos = sel.find_first_of(_t(".#["));
 
-	if(sel.substr(0, m_tag.length()) == m_tag || sel[0] == L'*' || !iswalpha(sel[0]))
+	if(sel.substr(0, m_tag.length()) == m_tag || sel[0] == _t('*') || !iswalpha(sel[0]))
 	{
 		std::find_first_of()
-		std::wstring::size_type pos = sel.find_first_not_of()
+		tstring::size_type pos = sel.find_first_not_of()
 		return true;
 	}
 */
@@ -123,7 +123,7 @@ void litehtml::element::apply_stylesheet( const litehtml::css& stylesheet )
 {
 	for(litehtml::css_selector::vector::const_iterator sel = stylesheet.selectors().begin(); sel != stylesheet.selectors().end(); sel++)
 	{
-		if((*sel)->m_combinator == combinator_child && m_tag == L"li")
+		if((*sel)->m_combinator == combinator_child && m_tag == _t("li"))
 		{
 			int iii=0;
 			iii++;
@@ -194,7 +194,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, const position* clip )
 		{
 			marker_x -= marker_height;
 		}
-		litehtml::web_color color = get_color(L"color", true, web_color(0, 0, 0));
+		litehtml::web_color color = get_color(_t("color"), true, web_color(0, 0, 0));
 		m_doc->container()->draw_list_marker(hdc, m_list_style_type, marker_x, pos.y, marker_height, color);
 	}
 
@@ -233,13 +233,13 @@ litehtml::uint_ptr litehtml::element::get_font(font_metrics* fm)
 	return m_font;
 }
 
-const wchar_t* litehtml::element::get_style_property( const wchar_t* name, bool inherited, const wchar_t* def /*= 0*/ )
+const litehtml::tchar_t* litehtml::element::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
 {
-	const wchar_t* ret = m_style.get_property(name);
+	const tchar_t* ret = m_style.get_property(name);
 	bool pass_parent = false;
 	if(m_parent)
 	{
-		if(ret && !_wcsicmp(ret, L"inherit"))
+		if(ret && !t_strcasecmp(ret, _t("inherit")))
 		{
 			pass_parent = true;
 		} else if(!ret && inherited)
@@ -260,9 +260,9 @@ const wchar_t* litehtml::element::get_style_property( const wchar_t* name, bool 
 	return ret;
 }
 
-litehtml::web_color litehtml::element::get_color( const wchar_t* prop_name, bool inherited, const litehtml::web_color& def_color )
+litehtml::web_color litehtml::element::get_color( const tchar_t* prop_name, bool inherited, const litehtml::web_color& def_color )
 {
-	const wchar_t* clrstr = get_style_property(prop_name, inherited, 0);
+	const tchar_t* clrstr = get_style_property(prop_name, inherited, 0);
 	if(!clrstr)
 	{
 		return def_color;
@@ -276,10 +276,10 @@ void litehtml::element::draw_content( uint_ptr hdc, const litehtml::position& po
 
 void litehtml::element::parse_styles(bool is_reparse)
 {
-	m_id	= get_attr(L"id", L"");
-	m_class	= get_attr(L"class", L"");
+	m_id	= get_attr(_t("id"), _t(""));
+	m_class	= get_attr(_t("class"), _t(""));
 
-	const wchar_t* style = get_attr(L"style");
+	const tchar_t* style = get_attr(_t("style"));
 
 	if(style)
 	{
@@ -288,85 +288,85 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 	init_font();
 
-	m_el_position	= (element_position)	value_index(get_style_property(L"position",		false,	L"static"),		element_position_strings,	element_position_fixed);
-	m_text_align	= (text_align)			value_index(get_style_property(L"text-align",	true,	L"left"),		text_align_strings,			text_align_left);
-	m_overflow		= (overflow)			value_index(get_style_property(L"overflow",		false,	L"visible"),	overflow_strings,			overflow_visible);
-	m_white_space	= (white_space)			value_index(get_style_property(L"white-space",	true,	L"normal"),		white_space_strings,		white_space_normal);
-	m_display		= (style_display)		value_index(get_style_property(L"display",		false,	L"inline"),		style_display_strings,		display_inline);
+	m_el_position	= (element_position)	value_index(get_style_property(_t("position"),		false,	_t("static")),		element_position_strings,	element_position_fixed);
+	m_text_align	= (text_align)			value_index(get_style_property(_t("text-align"),	true,	_t("left")),		text_align_strings,			text_align_left);
+	m_overflow		= (overflow)			value_index(get_style_property(_t("overflow"),		false,	_t("visible")),	overflow_strings,			overflow_visible);
+	m_white_space	= (white_space)			value_index(get_style_property(_t("white-space"),	true,	_t("normal")),		white_space_strings,		white_space_normal);
+	m_display		= (style_display)		value_index(get_style_property(_t("display"),		false,	_t("inline")),		style_display_strings,		display_inline);
 
-	const wchar_t* va	= get_style_property(L"vertical-align", true,	L"baseline");
+	const tchar_t* va	= get_style_property(_t("vertical-align"), true,	_t("baseline"));
 	m_vertical_align = (vertical_align) value_index(va, vertical_align_strings, va_baseline);
 
-	const wchar_t* fl	= get_style_property(L"float", false,	L"none");
+	const tchar_t* fl	= get_style_property(_t("float"), false,	_t("none"));
 	m_float = (element_float) value_index(fl, element_float_strings, float_none);
 
-	m_clear = (element_clear) value_index(get_style_property(L"clear", false, L"none"), element_clear_strings, clear_none);
+	m_clear = (element_clear) value_index(get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
 	if((m_el_position == element_position_absolute || m_float != float_none) && m_display != display_none)
 	{
 		m_display = display_block;
 	}
 
-	m_css_width.fromString(		get_style_property(L"width",			false,	L"auto"), L"auto");
-	m_css_height.fromString(	get_style_property(L"height",			false,	L"auto"), L"auto");
+	m_css_width.fromString(		get_style_property(_t("width"),			false,	_t("auto")), _t("auto"));
+	m_css_height.fromString(	get_style_property(_t("height"),			false,	_t("auto")), _t("auto"));
 
 	m_doc->cvt_units(m_css_width,	m_font_size);
 	m_doc->cvt_units(m_css_height,	m_font_size);
 
-	m_css_min_width.fromString(		get_style_property(L"min-width",	false,	L"0"));
-	m_css_min_height.fromString(	get_style_property(L"min-height",	false,	L"0"));
+	m_css_min_width.fromString(		get_style_property(_t("min-width"),	false,	_t("0")));
+	m_css_min_height.fromString(	get_style_property(_t("min-height"),	false,	_t("0")));
 
 	m_doc->cvt_units(m_css_min_width,	m_font_size);
 	m_doc->cvt_units(m_css_min_height,	m_font_size);
 
-	m_css_left.fromString(		get_style_property(L"left",				false,	L"auto"), L"auto");
-	m_css_right.fromString(		get_style_property(L"right",			false,	L"auto"), L"auto");
-	m_css_top.fromString(		get_style_property(L"top",				false,	L"auto"), L"auto");
-	m_css_bottom.fromString(	get_style_property(L"bottom",			false,	L"auto"), L"auto");
+	m_css_left.fromString(		get_style_property(_t("left"),				false,	_t("auto")), _t("auto"));
+	m_css_right.fromString(		get_style_property(_t("right"),			false,	_t("auto")), _t("auto"));
+	m_css_top.fromString(		get_style_property(_t("top"),				false,	_t("auto")), _t("auto"));
+	m_css_bottom.fromString(	get_style_property(_t("bottom"),			false,	_t("auto")), _t("auto"));
 
 	m_doc->cvt_units(m_css_left,	m_font_size);
 	m_doc->cvt_units(m_css_right,	m_font_size);
 	m_doc->cvt_units(m_css_top,		m_font_size);
 	m_doc->cvt_units(m_css_bottom,	m_font_size);
 
-	m_css_margins.left.fromString(		get_style_property(L"margin-left",			false,	L"0"), L"auto");
-	m_css_margins.right.fromString(		get_style_property(L"margin-right",			false,	L"0"), L"auto");
-	m_css_margins.top.fromString(		get_style_property(L"margin-top",			false,	L"0"), L"auto");
-	m_css_margins.bottom.fromString(	get_style_property(L"margin-bottom",		false,	L"0"), L"auto");
+	m_css_margins.left.fromString(		get_style_property(_t("margin-left"),			false,	_t("0")), _t("auto"));
+	m_css_margins.right.fromString(		get_style_property(_t("margin-right"),			false,	_t("0")), _t("auto"));
+	m_css_margins.top.fromString(		get_style_property(_t("margin-top"),			false,	_t("0")), _t("auto"));
+	m_css_margins.bottom.fromString(	get_style_property(_t("margin-bottom"),		false,	_t("0")), _t("auto"));
 
-	m_css_padding.left.fromString(		get_style_property(L"padding-left",			false,	L"0"), L"");
-	m_css_padding.right.fromString(		get_style_property(L"padding-right",		false,	L"0"), L"");
-	m_css_padding.top.fromString(		get_style_property(L"padding-top",			false,	L"0"), L"");
-	m_css_padding.bottom.fromString(	get_style_property(L"padding-bottom",		false,	L"0"), L"");
+	m_css_padding.left.fromString(		get_style_property(_t("padding-left"),			false,	_t("0")), _t(""));
+	m_css_padding.right.fromString(		get_style_property(_t("padding-right"),		false,	_t("0")), _t(""));
+	m_css_padding.top.fromString(		get_style_property(_t("padding-top"),			false,	_t("0")), _t(""));
+	m_css_padding.bottom.fromString(	get_style_property(_t("padding-bottom"),		false,	_t("0")), _t(""));
 
-	m_css_borders.left.width.fromString(	get_style_property(L"border-left-width",	false,	L"medium"), border_width_strings);
-	m_css_borders.right.width.fromString(	get_style_property(L"border-right-width",	false,	L"medium"), border_width_strings);
-	m_css_borders.top.width.fromString(		get_style_property(L"border-top-width",		false,	L"medium"), border_width_strings);
-	m_css_borders.bottom.width.fromString(	get_style_property(L"border-bottom-width",	false,	L"medium"), border_width_strings);
+	m_css_borders.left.width.fromString(	get_style_property(_t("border-left-width"),	false,	_t("medium")), border_width_strings);
+	m_css_borders.right.width.fromString(	get_style_property(_t("border-right-width"),	false,	_t("medium")), border_width_strings);
+	m_css_borders.top.width.fromString(		get_style_property(_t("border-top-width"),		false,	_t("medium")), border_width_strings);
+	m_css_borders.bottom.width.fromString(	get_style_property(_t("border-bottom-width"),	false,	_t("medium")), border_width_strings);
 
-	m_css_borders.left.color = web_color::from_string(get_style_property(L"border-left-color",	false,	L""));
-	m_css_borders.left.style = (border_style) value_index(get_style_property(L"border-left-style", false, L"none"), border_style_strings, border_style_none);
+	m_css_borders.left.color = web_color::from_string(get_style_property(_t("border-left-color"),	false,	_t("")));
+	m_css_borders.left.style = (border_style) value_index(get_style_property(_t("border-left-style"), false, _t("none")), border_style_strings, border_style_none);
 
-	m_css_borders.right.color = web_color::from_string(get_style_property(L"border-right-color",	false,	L""));
-	m_css_borders.right.style = (border_style) value_index(get_style_property(L"border-right-style", false, L"none"), border_style_strings, border_style_none);
+	m_css_borders.right.color = web_color::from_string(get_style_property(_t("border-right-color"),	false,	_t("")));
+	m_css_borders.right.style = (border_style) value_index(get_style_property(_t("border-right-style"), false, _t("none")), border_style_strings, border_style_none);
 
-	m_css_borders.top.color = web_color::from_string(get_style_property(L"border-top-color",	false,	L""));
-	m_css_borders.top.style = (border_style) value_index(get_style_property(L"border-top-style", false, L"none"), border_style_strings, border_style_none);
+	m_css_borders.top.color = web_color::from_string(get_style_property(_t("border-top-color"),	false,	_t("")));
+	m_css_borders.top.style = (border_style) value_index(get_style_property(_t("border-top-style"), false, _t("none")), border_style_strings, border_style_none);
 
-	m_css_borders.bottom.color = web_color::from_string(get_style_property(L"border-bottom-color",	false,	L""));
-	m_css_borders.bottom.style = (border_style) value_index(get_style_property(L"border-bottom-style", false, L"none"), border_style_strings, border_style_none);
+	m_css_borders.bottom.color = web_color::from_string(get_style_property(_t("border-bottom-color"),	false,	_t("")));
+	m_css_borders.bottom.style = (border_style) value_index(get_style_property(_t("border-bottom-style"), false, _t("none")), border_style_strings, border_style_none);
 
-	m_css_borders.radius.top_left_x.fromString(get_style_property(L"border-top-left-radius-x", false, L"0"));
-	m_css_borders.radius.top_left_y.fromString(get_style_property(L"border-top-left-radius-y", false, L"0"));
+	m_css_borders.radius.top_left_x.fromString(get_style_property(_t("border-top-left-radius-x"), false, _t("0")));
+	m_css_borders.radius.top_left_y.fromString(get_style_property(_t("border-top-left-radius-y"), false, _t("0")));
 
-	m_css_borders.radius.top_right_x.fromString(get_style_property(L"border-top-right-radius-x", false, L"0"));
-	m_css_borders.radius.top_right_y.fromString(get_style_property(L"border-top-right-radius-y", false, L"0"));
+	m_css_borders.radius.top_right_x.fromString(get_style_property(_t("border-top-right-radius-x"), false, _t("0")));
+	m_css_borders.radius.top_right_y.fromString(get_style_property(_t("border-top-right-radius-y"), false, _t("0")));
 
-	m_css_borders.radius.bottom_right_x.fromString(get_style_property(L"border-bottom-right-radius-x", false, L"0"));
-	m_css_borders.radius.bottom_right_y.fromString(get_style_property(L"border-bottom-right-radius-y", false, L"0"));
+	m_css_borders.radius.bottom_right_x.fromString(get_style_property(_t("border-bottom-right-radius-x"), false, _t("0")));
+	m_css_borders.radius.bottom_right_y.fromString(get_style_property(_t("border-bottom-right-radius-y"), false, _t("0")));
 
-	m_css_borders.radius.bottom_left_x.fromString(get_style_property(L"border-bottom-left-radius-x", false, L"0"));
-	m_css_borders.radius.bottom_left_y.fromString(get_style_property(L"border-bottom-left-radius-y", false, L"0"));
+	m_css_borders.radius.bottom_left_x.fromString(get_style_property(_t("border-bottom-left-radius-x"), false, _t("0")));
+	m_css_borders.radius.bottom_left_y.fromString(get_style_property(_t("border-bottom-left-radius-y"), false, _t("0")));
 
 	m_doc->cvt_units(m_css_borders.radius.bottom_left_x,			m_font_size);
 	m_doc->cvt_units(m_css_borders.radius.bottom_left_y,			m_font_size);
@@ -393,7 +393,7 @@ void litehtml::element::parse_styles(bool is_reparse)
 	m_borders.bottom	= m_doc->cvt_units(m_css_borders.bottom.width,	m_font_size);
 
 	css_length line_height;
-	line_height.fromString(get_style_property(L"line-height",	true,	L"normal"), L"normal");
+	line_height.fromString(get_style_property(_t("line-height"),	true,	_t("normal")), _t("normal"));
 	if(line_height.is_predefined())
 	{
 		m_line_height = m_font_metrics.height;
@@ -411,10 +411,10 @@ void litehtml::element::parse_styles(bool is_reparse)
 
 	if(m_display == display_list_item)
 	{
-		const wchar_t* list_type = get_style_property(L"list-style-type", true, L"disc");
+		const tchar_t* list_type = get_style_property(_t("list-style-type"), true, _t("disc"));
 		m_list_style_type = (list_style_type) value_index(list_type, list_style_type_strings, list_style_type_disc);
 
-		const wchar_t* list_pos = get_style_property(L"list-style-position", true, L"outside");
+		const tchar_t* list_pos = get_style_property(_t("list-style-position"), true, _t("outside"));
 		m_list_style_position = (list_style_position) value_index(list_pos, list_style_position_strings, list_style_position_outside);
 	}
 
@@ -495,11 +495,11 @@ int litehtml::element::render( int x, int y, int max_width )
 		{
 			if(collapse_top_margin())
 			{
-				m_margins.top = max(m_boxes.front()->top_margin(), m_margins.top);
+				m_margins.top = std::max(m_boxes.front()->top_margin(), m_margins.top);
 			}
 			if(collapse_bottom_margin())
 			{
-				m_margins.bottom = max(m_boxes.back()->bottom_margin(), m_margins.bottom);
+				m_margins.bottom = std::max(m_boxes.back()->bottom_margin(), m_margins.bottom);
 			}
 		}
 		m_pos.height = m_boxes.back()->bottom() - m_boxes.back()->bottom_margin();
@@ -945,7 +945,7 @@ int litehtml::element::select(const css_selector& selector, bool apply_pseudo)
 
 int litehtml::element::select(const css_element_selector& selector, bool apply_pseudo)
 {
-	if(!selector.m_tag.empty() && selector.m_tag != L"*")
+	if(!selector.m_tag.empty() && selector.m_tag != _t("*"))
 	{
 		if(selector.m_tag != m_tag)
 		{
@@ -957,7 +957,7 @@ int litehtml::element::select(const css_element_selector& selector, bool apply_p
 
 	for(css_attribute_selector::map::const_iterator i = selector.m_attrs.begin(); i != selector.m_attrs.end(); i++)
 	{
-		const wchar_t* attr_value = get_attr(i->first.c_str());
+		const tchar_t* attr_value = get_attr(i->first.c_str());
 		switch(i->second.condition)
 		{
 		case select_exists:
@@ -972,10 +972,10 @@ int litehtml::element::select(const css_element_selector& selector, bool apply_p
 				return 0;
 			} else 
 			{
-				if(i->first == L"class")
+				if(i->first == _t("class"))
 				{
 					string_vector tokens;
-					tokenize(attr_value, tokens, L" ");
+					tokenize(attr_value, tokens, _t(" "));
 					bool found = false;
 					for(string_vector::iterator str = tokens.begin(); str != tokens.end() && !found; str++)
 					{
@@ -1001,7 +1001,7 @@ int litehtml::element::select(const css_element_selector& selector, bool apply_p
 			if(!attr_value)
 			{
 				return 0;
-			} else if(!wcsstr(attr_value, i->second.val.c_str()))
+			} else if(!t_strstr(attr_value, i->second.val.c_str()))
 			{
 				return 0;
 			}
@@ -1010,7 +1010,7 @@ int litehtml::element::select(const css_element_selector& selector, bool apply_p
 			if(!attr_value)
 			{
 				return 0;
-			} else if(wcsncmp(attr_value, i->second.val.c_str(), i->second.val.length()))
+			} else if(t_strncmp(attr_value, i->second.val.c_str(), i->second.val.length()))
 			{
 				return 0;
 			}
@@ -1019,9 +1019,9 @@ int litehtml::element::select(const css_element_selector& selector, bool apply_p
 			if(!attr_value)
 			{
 				return 0;
-			} else if(wcsncmp(attr_value, i->second.val.c_str(), i->second.val.length()))
+			} else if(t_strncmp(attr_value, i->second.val.c_str(), i->second.val.length()))
 			{
-				const wchar_t* s = attr_value + wcslen(attr_value) - i->second.val.length() - 1;
+				const tchar_t* s = attr_value + t_strlen(attr_value) - i->second.val.length() - 1;
 				if(s < attr_value)
 				{
 					return 0;
@@ -1057,7 +1057,7 @@ litehtml::element* litehtml::element::find_ancestor( const css_selector& selecto
 {
 	if(!m_parent)
 	{
-		return false;
+		return 0;
 	}
 	int res = m_parent->select(selector, apply_pseudo);
 	if(res)
@@ -1094,7 +1094,7 @@ int litehtml::element::get_floats_height() const
 				el_pos += el->m_padding;
 				el_pos += el->m_borders;
 
-				h = max(h, el_pos.bottom());
+				h = std::max(h, el_pos.bottom());
 			}
 		}
 		return h;
@@ -1121,7 +1121,7 @@ int litehtml::element::get_left_floats_height() const
 					el_pos += el->m_padding;
 					el_pos += el->m_borders;
 
-					h = max(h, el_pos.bottom());
+					h = std::max(h, el_pos.bottom());
 				}
 			}
 		}
@@ -1149,7 +1149,7 @@ int litehtml::element::get_right_floats_height() const
 					el_pos += el->m_padding;
 					el_pos += el->m_borders;
 
-					h = max(h, el_pos.bottom());
+					h = std::max(h, el_pos.bottom());
 				}
 			}
 		}
@@ -1177,7 +1177,7 @@ int litehtml::element::get_line_left( int y ) const
 
 				if(y >= el_pos.top() && y < el_pos.bottom())
 				{
-					w = max(w, el_pos.right());
+					w = std::max(w, el_pos.right());
 				}
 			}
 		}
@@ -1209,7 +1209,7 @@ int litehtml::element::get_line_right( int y, int def_right ) const
 
 				if(y >= el_pos.top() && y < el_pos.bottom())
 				{
-					w = min(w, el_pos.left());
+					w = std::min(w, el_pos.left());
 				}
 			}
 		}
@@ -1331,53 +1331,53 @@ int litehtml::element::find_next_line_top( int top, int width, int def_right )
 void litehtml::element::parse_background()
 {
 	// parse background-color
-	m_bg.m_color		= get_color(L"background-color", false, web_color(0, 0, 0, 0));
+	m_bg.m_color		= get_color(_t("background-color"), false, web_color(0, 0, 0, 0));
 
 	// parse background-position
-	const wchar_t* str = get_style_property(L"background-position", false, L"0% 0%");
+	const tchar_t* str = get_style_property(_t("background-position"), false, _t("0% 0%"));
 	if(str)
 	{
 		string_vector res;
-		tokenize(str, res, L" \t");
+		tokenize(str, res, _t(" \t"));
 		if(res.size() > 0)
 		{
 			if(res.size() == 1)
 			{
-				if( value_in_list(res[0].c_str(), L"left;right;center") )
+				if( value_in_list(res[0].c_str(), _t("left;right;center")) )
 				{
-					m_bg.m_position.x.fromString(res[0], L"left;right;center");
+					m_bg.m_position.x.fromString(res[0], _t("left;right;center"));
 					m_bg.m_position.y.set_value(50, css_units_percentage);
-				} else if( value_in_list(res[0].c_str(), L"top;bottom;center") )
+				} else if( value_in_list(res[0].c_str(), _t("top;bottom;center")) )
 				{
-					m_bg.m_position.y.fromString(res[0], L"top;bottom;center");
+					m_bg.m_position.y.fromString(res[0], _t("top;bottom;center"));
 					m_bg.m_position.x.set_value(50, css_units_percentage);
 				} else
 				{
-					m_bg.m_position.x.fromString(res[0], L"left;right;center");
+					m_bg.m_position.x.fromString(res[0], _t("left;right;center"));
 					m_bg.m_position.y.set_value(50, css_units_percentage);
 				}
 			} else
 			{
-				if(value_in_list(res[0].c_str(), L"left;right"))
+				if(value_in_list(res[0].c_str(), _t("left;right")))
 				{
-					m_bg.m_position.x.fromString(res[0], L"left;right;center");
-					m_bg.m_position.y.fromString(res[1], L"top;bottom;center");
-				} else if(value_in_list(res[0].c_str(), L"top;bottom"))
+					m_bg.m_position.x.fromString(res[0], _t("left;right;center"));
+					m_bg.m_position.y.fromString(res[1], _t("top;bottom;center"));
+				} else if(value_in_list(res[0].c_str(), _t("top;bottom")))
 				{
-					m_bg.m_position.x.fromString(res[1], L"left;right;center");
-					m_bg.m_position.y.fromString(res[0], L"top;bottom;center");
-				} else if(value_in_list(res[1].c_str(), L"left;right"))
+					m_bg.m_position.x.fromString(res[1], _t("left;right;center"));
+					m_bg.m_position.y.fromString(res[0], _t("top;bottom;center"));
+				} else if(value_in_list(res[1].c_str(), _t("left;right")))
 				{
-					m_bg.m_position.x.fromString(res[1], L"left;right;center");
-					m_bg.m_position.y.fromString(res[0], L"top;bottom;center");
-				}else if(value_in_list(res[1].c_str(), L"top;bottom"))
+					m_bg.m_position.x.fromString(res[1], _t("left;right;center"));
+					m_bg.m_position.y.fromString(res[0], _t("top;bottom;center"));
+				}else if(value_in_list(res[1].c_str(), _t("top;bottom")))
 				{
-					m_bg.m_position.x.fromString(res[0], L"left;right;center");
-					m_bg.m_position.y.fromString(res[1], L"top;bottom;center");
+					m_bg.m_position.x.fromString(res[0], _t("left;right;center"));
+					m_bg.m_position.y.fromString(res[1], _t("top;bottom;center"));
 				} else
 				{
-					m_bg.m_position.x.fromString(res[0], L"left;right;center");
-					m_bg.m_position.y.fromString(res[1], L"top;bottom;center");
+					m_bg.m_position.x.fromString(res[0], _t("left;right;center"));
+					m_bg.m_position.y.fromString(res[1], _t("top;bottom;center"));
 				}
 			}
 
@@ -1424,31 +1424,31 @@ void litehtml::element::parse_background()
 
 	// parse background_attachment
 	m_bg.m_attachment = (background_attachment) value_index(
-		get_style_property(L"background-attachment", false, L"scroll"), 
+		get_style_property(_t("background-attachment"), false, _t("scroll")), 
 		background_attachment_strings, 
 		background_attachment_scroll);
 
 	// parse background_attachment
 	m_bg.m_repeat = (background_repeat) value_index(
-		get_style_property(L"background-repeat", false, L"repeat"), 
+		get_style_property(_t("background-repeat"), false, _t("repeat")), 
 		background_repeat_strings, 
 		background_repeat_repeat);
 
 	// parse background_clip
 	m_bg.m_clip = (background_box) value_index(
-		get_style_property(L"background-clip", false, L"border-box"), 
+		get_style_property(_t("background-clip"), false, _t("border-box")), 
 		background_box_strings, 
 		background_box_border);
 
 	// parse background_origin
 	m_bg.m_origin = (background_box) value_index(
-		get_style_property(L"background-origin", false, L"content-box"), 
+		get_style_property(_t("background-origin"), false, _t("content-box")), 
 		background_box_strings, 
 		background_box_content);
 
 	// parse background-image
-	css::parse_css_url(get_style_property(L"background-image", false, L""), m_bg.m_image);
-	m_bg.m_baseurl = get_style_property(L"background-image-baseurl", false, L"");
+	css::parse_css_url(get_style_property(_t("background-image"), false, _t("")), m_bg.m_image);
+	m_bg.m_baseurl = get_style_property(_t("background-image-baseurl"), false, _t(""));
 
 	if(!m_bg.m_image.empty())
 	{
@@ -1559,7 +1559,7 @@ void litehtml::element::finish()
 	}
 }
 
-void litehtml::element::get_text( std::wstring& text )
+void litehtml::element::get_text( tstring& text )
 {
 	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
@@ -1572,7 +1572,7 @@ bool litehtml::element::is_body()  const
 	return false;
 }
 
-void litehtml::element::set_data( const wchar_t* data )
+void litehtml::element::set_data( const tchar_t* data )
 {
 
 }
@@ -1606,7 +1606,7 @@ void litehtml::element::get_inline_boxes( position::vector& boxes )
 					pos.height	= 0;
 				}
 				pos.width	= el->right() - pos.x - el->margin_right() - el->margin_left();
-				pos.height	= max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom);
+				pos.height	= std::max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom);
 			} else if(el->m_display == display_inline)
 			{
 				el->get_inline_boxes(boxes);
@@ -1626,7 +1626,7 @@ bool litehtml::element::on_mouse_over( int x, int y )
 		return false;
 	}
 
-	bool ret = set_pseudo_class(L"hover", is_point_inside(x, y));
+	bool ret = set_pseudo_class(_t("hover"), is_point_inside(x, y));
 
 	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
 	{
@@ -1725,12 +1725,12 @@ bool litehtml::element::on_mouse_leave()
 {
 	bool ret = false;
 
-	if(set_pseudo_class(L"hover", false))
+	if(set_pseudo_class(_t("hover"), false))
 	{
 		ret = true;
 	}
 
-	if(set_pseudo_class(L"active", false))
+	if(set_pseudo_class(_t("active"), false))
 	{
 		ret = true;
 	}
@@ -1764,7 +1764,7 @@ bool litehtml::element::on_lbutton_down( int x, int y )
 		return false;
 	}
 
-	bool ret = set_pseudo_class(L"active", is_point_inside(x, y));
+	bool ret = set_pseudo_class(_t("active"), is_point_inside(x, y));
 
 	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
 	{
@@ -1797,7 +1797,7 @@ bool litehtml::element::on_lbutton_up( int x, int y )
 
 	bool ret = false;
 
-	if(set_pseudo_class(L"active", false))
+	if(set_pseudo_class(_t("active"), false))
 	{
 		ret = true;
 		on_click(x, y);
@@ -1830,18 +1830,18 @@ void litehtml::element::on_click( int x, int y )
 
 }
 
-const wchar_t* litehtml::element::get_cursor()
+const litehtml::tchar_t* litehtml::element::get_cursor()
 {
-	const wchar_t* ret = 0;
+	const tchar_t* ret = 0;
 
-	if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), L"hover") != m_pseudo_classes.end())
+	if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), _t("hover")) != m_pseudo_classes.end())
 	{
-		ret = get_style_property(L"cursor", true, 0);
+		ret = get_style_property(_t("cursor"), true, 0);
 	}
 
 	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
 	{
-		const wchar_t* cursor = (*iter)->get_cursor();
+		const tchar_t* cursor = (*iter)->get_cursor();
 		if(cursor)
 		{
 			ret = cursor;
@@ -1867,7 +1867,7 @@ static const int font_size_table[8][7] =
 void litehtml::element::init_font()
 {
 	// initialize font size
-	const wchar_t* str = get_style_property(L"font-size", false, 0);
+	const tchar_t* str = get_style_property(_t("font-size"), false, 0);
 
 	int parent_sz = 0;
 	int doc_font_size = m_doc->container()->get_default_font_size();
@@ -1941,10 +1941,10 @@ void litehtml::element::init_font()
 	}
 
 	// initialize font
-	const wchar_t* name			= get_style_property(L"font-family",		true,	L"inherit");
-	const wchar_t* weight		= get_style_property(L"font-weight",		true,	L"normal");
-	const wchar_t* style		= get_style_property(L"font-style",			true,	L"normal");
-	const wchar_t* decoration	= get_style_property(L"text-decoration",	true,	L"none");
+	const tchar_t* name			= get_style_property(_t("font-family"),		true,	_t("inherit"));
+	const tchar_t* weight		= get_style_property(_t("font-weight"),		true,	_t("normal"));
+	const tchar_t* style		= get_style_property(_t("font-style"),			true,	_t("normal"));
+	const tchar_t* decoration	= get_style_property(_t("text-decoration"),	true,	_t("none"));
 
 	m_font = m_doc->get_font(name, m_font_size, weight, style, decoration, &m_font_metrics);
 }
@@ -1954,9 +1954,9 @@ bool litehtml::element::is_break() const
 	return false;
 }
 
-void litehtml::element::set_tagName( const wchar_t* tag )
+void litehtml::element::set_tagName( const tchar_t* tag )
 {
-	std::wstring s_val = tag;
+	tstring s_val = tag;
 	std::locale lc = std::locale::global(std::locale::classic());
 	for(size_t i = 0; i < s_val.length(); i++)
 	{
@@ -2275,7 +2275,7 @@ bool litehtml::element::is_point_inside( int x, int y )
 	return false;
 }
 
-bool litehtml::element::set_pseudo_class( const wchar_t* pclass, bool add )
+bool litehtml::element::set_pseudo_class( const tchar_t* pclass, bool add )
 {
 	if(add)
 	{
