@@ -7,7 +7,7 @@
 
 namespace litehtml
 {
-#ifdef UNICODE
+#ifdef WIN32
 
 	typedef std::wstring	tstring;
 	typedef wchar_t			tchar_t;
@@ -27,10 +27,17 @@ namespace litehtml
 #define t_tolower			towlower
 #define t_isdigit			iswdigit
 
+#ifdef _WIN64
+	typedef unsigned __int64 uint_ptr;
+#else
+	typedef unsigned int uint_ptr;
+#endif
+
 #else
 
 	typedef std::string		tstring;
 	typedef char			tchar_t;
+	typedef void* uint_ptr;
 
 #define _t(quote)			quote
 
@@ -38,15 +45,9 @@ namespace litehtml
 #define t_strcmp			strcmp
 #define t_strncmp			strncmp
 
-#ifdef WIN32
-	#define t_strcasecmp		_stricmp
-	#define t_strncasecmp		_strnicmp
-	#define t_snprintf			_snprintf
-#else
-	#define t_strcasecmp		strcasecmp
-	#define t_strncasecmp		strncasecmp
-	#define t_snprintf			snprintf
-#endif
+#define t_strcasecmp		strcasecmp
+#define t_strncasecmp		strncasecmp
+#define t_snprintf			snprintf
 
 #define t_strtol			strtol
 #define t_atoi				atoi
@@ -57,19 +58,13 @@ namespace litehtml
 
 #endif
 
-#if defined(_WIN64)
-	typedef unsigned __int64 uint_ptr;
-#else
-	typedef unsigned int uint_ptr;
-#endif
-
 	class document;
 	class element;
 
 	typedef std::map<litehtml::tstring, litehtml::tstring>			string_map;
 	typedef std::vector< litehtml::object_ptr<litehtml::element> >	elements_vector;
-	typedef std::vector<int>								int_vector;
-	typedef std::vector<litehtml::tstring>						string_vector;
+	typedef std::vector<int>										int_vector;
+	typedef std::vector<litehtml::tstring>							string_vector;
 
 	const unsigned int font_decoration_none			= 0x00;
 	const unsigned int font_decoration_underline	= 0x01;
