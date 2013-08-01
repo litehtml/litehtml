@@ -1,5 +1,8 @@
 #include "html.h"
 #include "xh_scanner.h"
+#ifndef WIN32
+#include <iconv.h>
+#endif
 
 namespace litehtml 
 {
@@ -590,9 +593,124 @@ namespace litehtml
 		{ _t("&thetasym;"),	0x03D1},
 		{ _t("&upsih;"),	0x03D2},
 		{ _t("&piv;"),		0x03D6},
-		
+		{ _t("&ensp;"),		0x2002},
+		{ _t("&emsp;"),		0x2003},
+		{ _t("&thinsp;"),	0x2009},
+		{ _t("&zwnj;"),		0x200C},
+		{ _t("&zwj;"),		0x200D},
+		{ _t("&lrm;"),		0x200E},
+		{ _t("&rlm;"),		0x200F},
+		{ _t("&ndash;"),	0x2013},
+		{ _t("&mdash;"),	0x2014},
+		{ _t("&lsquo;"),	0x2018},
+		{ _t("&rsquo;"),	0x2019},
+		{ _t("&sbquo;"),	0x201A},
+		{ _t("&ldquo;"),	0x201C},
+		{ _t("&rdquo;"),	0x201D},
+		{ _t("&bdquo;"),	0x201E},
+		{ _t("&dagger;"),	0x2020},
+		{ _t("&Dagger;"),	0x2021},
+		{ _t("&bull;"),		0x2022},
+		{ _t("&hellip;"),	0x2026},
+		{ _t("&permil;"),	0x2030},
+		{ _t("&prime;"),	0x2032},
+		{ _t("&Prime;"),	0x2033},
+		{ _t("&lsaquo;"),	0x2039},
+		{ _t("&rsaquo;"),	0x203A},
+		{ _t("&oline;"),	0x203E},
+		{ _t("&frasl;"),	0x2044},
+		{ _t("&euro;"),		0x20AC},
+		{ _t("&image;"),	0x2111},
+		{ _t("&weierp;"),	0x2118},
+		{ _t("&real;"),		0x211C},
+		{ _t("&trade;"),	0x2122},
+		{ _t("&alefsym;"),	0x2135},
+		{ _t("&larr;"),		0x2190},
+		{ _t("&uarr;"),		0x2191},
+		{ _t("&rarr;"),		0x2192},
+		{ _t("&darr;"),		0x2193},
+		{ _t("&harr;"),		0x2194},
+		{ _t("&crarr;"),	0x21B5},
+		{ _t("&lArr;"),		0x21D0},
+		{ _t("&uArr;"),		0x21D1},
+		{ _t("&rArr;"),		0x21D2},
+		{ _t("&dArr;"),		0x21D3},
+		{ _t("&hArr;"),		0x21D4},
+		{ _t("&forall;"),	0x2200},
+		{ _t("&part;"),		0x2202},
+		{ _t("&exist;"),	0x2203},
+		{ _t("&empty;"),	0x2205},
+		{ _t("&nabla;"),	0x2207},
+		{ _t("&isin;"),		0x2208},
+		{ _t("&notin;"),	0x2209},
+		{ _t("&ni;"),		0x220B},
+		{ _t("&prod;"),		0x220F},
+		{ _t("&sum;"),		0x2211},
+		{ _t("&minus;"),	0x2212},
+		{ _t("&lowast;"),	0x2217},
+		{ _t("&radic;"),	0x221A},
+		{ _t("&prop;"),		0x221D},
+		{ _t("&infin;"),	0x221E},
+		{ _t("&ang;"),		0x2220},
+		{ _t("&and;"),		0x2227},
+		{ _t("&or;"),		0x2228},
+		{ _t("&cap;"),		0x2229},
+		{ _t("&cup;"),		0x222A},
+		{ _t("&int;"),		0x222B},
+		{ _t("&there4;"),	0x2234},
+		{ _t("&sim;"),		0x223C},
+		{ _t("&cong;"),		0x2245},
+		{ _t("&asymp;"),	0x2248},
+		{ _t("&ne;"),		0x2260},
+		{ _t("&equiv;"),	0x2261},
+		{ _t("&le;"),		0x2264},
+		{ _t("&ge;"),		0x2265},
+		{ _t("&sub;"),		0x2282},
+		{ _t("&sup;"),		0x2283},
+		{ _t("&nsub;"),		0x2284},
+		{ _t("&sube;"),		0x2286},
+		{ _t("&supe;"),		0x2287},
+		{ _t("&oplus;"),	0x2295},
+		{ _t("&otimes;"),	0x2297},
+		{ _t("&perp;"),		0x22A5},
+		{ _t("&sdot;"),		0x22C5},
+		{ _t("&lceil;"),	0x2308},
+		{ _t("&rceil;"),	0x2309},
+		{ _t("&lfloor;"),	0x230A},
+		{ _t("&rfloor;"),	0x230B},
+		{ _t("&lang;"),		0x2329},
+		{ _t("&rang;"),		0x232A},
+		{ _t("&loz;"),		0x25CA},
+		{ _t("&spades;"),	0x2660},
+		{ _t("&clubs;"),	0x2663},
+		{ _t("&hearts;"),	0x2665},
+		{ _t("&diams;"),	0x2666},
+
 		{_t(""),0}
 	};
+
+#ifndef WIN32
+
+	int wchar2utf8(wchar_t chr, char* out_buf, size_t out_len)
+	{
+		size_t ret = out_len;
+
+		char* in_buf = (char*) &chr;
+		size_t in_len = sizeof(chr);
+
+		iconv_t cvt = iconv_open("UTF-8", "WCHAR_T");
+		size_t cnt = iconv(cvt, &in_buf, &in_len, &out_buf, &out_len);
+		if(cnt < 0)
+		{
+			ret = 0;
+		} else
+		{
+			ret -= out_len;
+		}
+		return ret;
+	}
+
+#endif
 
 	litehtml::tchar_t scanner::resolve_entity( const tchar_t* buf, int buf_size )
 	{
@@ -619,13 +737,13 @@ namespace litehtml
 			}
 		}
 
-#ifdef UNICODE
+#ifdef WIN32
 		return wres;
 #else
 		if(!wres) return 0;
-		tchar_t mb_str[MB_LEN_MAX];
-		int cnt = wctomb(mb_str, wres);
-		if(cnt > 0 && cnt <= MB_LEN_MAX)
+		tchar_t mb_str[20];
+		int cnt = wchar2utf8(wres, mb_str, sizeof(mb_str));
+		if(cnt > 0 && cnt <= 20)
 		{
 			for(int i = 0; i < cnt - 1; i++)
 			{
