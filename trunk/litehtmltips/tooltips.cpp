@@ -204,7 +204,7 @@ void litehtml::tooltips::create( HWND parent )
 	}
 }
 
-void litehtml::tooltips::show( unsigned int id, int top, bool is_update )
+void litehtml::tooltips::show( unsigned int id, int top, bool is_update, bool re_render )
 {
 	tool::map::iterator ti = m_tools.find(id);
 	if(ti != m_tools.end())
@@ -215,29 +215,32 @@ void litehtml::tooltips::show( unsigned int id, int top, bool is_update )
 		}
 		m_show_tool			= id;
 		m_last_shown_tool	= id;
-		if(m_html)
+		if(!re_render && m_html || !m_html)
 		{
-			m_html = NULL;
-		}
-		if(ti->second.options & tool_opt_ask_text)
-		{
-			if(m_callback)
+			if(m_html)
 			{
-				std::wstring text;
-				m_callback->ttcb_get_text(ti->first, text);
-				if(!text.empty())
+				m_html = NULL;
+			}
+			if(ti->second.options & tool_opt_ask_text)
+			{
+				if(m_callback)
 				{
-					m_html = litehtml::document::createFromString(text.c_str(), this, m_html_context);
+					std::wstring text;
+					m_callback->ttcb_get_text(ti->first, text);
+					if(!text.empty())
+					{
+						m_html = litehtml::document::createFromString(text.c_str(), this, m_html_context);
+					}
+				} else
+				{
+					return;
 				}
 			} else
 			{
-				return;
-			}
-		} else
-		{
-			if(!ti->second.text.empty())
-			{
-				m_html = litehtml::document::createFromString(ti->second.text.c_str(), this, m_html_context);
+				if(!ti->second.text.empty())
+				{
+					m_html = litehtml::document::createFromString(ti->second.text.c_str(), this, m_html_context);
+				}
 			}
 		}
 
@@ -921,11 +924,11 @@ void litehtml::tooltips::disable( bool val )
 	}
 }
 
-void litehtml::tooltips::update( unsigned int id )
+void litehtml::tooltips::update( unsigned int id, bool re_render )
 {
 	if(id == m_show_tool && IsWindowVisible(m_hWnd))
 	{
-		show(id, m_top, true);
+		show(id, m_top, true, re_render);
 	}
 }
 
