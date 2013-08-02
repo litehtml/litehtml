@@ -158,7 +158,7 @@ namespace litehtml
 		void add_tool(unsigned int id, const wchar_t* text, HWND ctl, LPCRECT rc_tool, UINT options);
 		void clear();
 		void create(HWND parent);
-		void show(unsigned int id, int top = 0, bool is_update = false);
+		void show(unsigned int id, int top = 0, bool is_update = false, bool re_render = false);
 
 		void hide();
 		void set_style(tips_style style)			{ m_style = style;		}
@@ -168,7 +168,7 @@ namespace litehtml
 		void set_hide_time(int t)					{ m_hide_time = t;		}
 		void set_callback(tooltips_callback* cb)	{ m_callback = cb;		}
 		void set_alpha(int alpha)					{ m_alpha = alpha;		}
-		void update(unsigned int id);
+		void update(unsigned int id, bool re_render);
 		void set_def_font(const wchar_t* font_name, int font_size);
 
 		static void	rounded_rect( cairo_t* cr, int x, int y, int width, int height, int radius, int line_width );
