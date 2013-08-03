@@ -12,15 +12,14 @@ litehtml::el_tr::~el_tr()
 
 }
 
-void litehtml::el_tr::parse_styles(bool is_reparse)
+void litehtml::el_tr::finish()
 {
 	const tchar_t* str = get_attr(_t("align"));
 	if(str)
 	{
 		m_style.add_property(_t("text-align"), str, 0, false);
 	}
-
-	element::parse_styles(is_reparse);
+	element::finish();
 }
 
 void litehtml::el_tr::get_inline_boxes( position::vector& boxes )

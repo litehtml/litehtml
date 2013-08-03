@@ -25,17 +25,6 @@ void litehtml::el_image::draw_content( uint_ptr hdc, const litehtml::position& p
 void litehtml::el_image::parse_styles(bool is_reparse)
 {
 	element::parse_styles(is_reparse);
-	m_src = get_attr(_t("src"), _t(""));
-	m_doc->container()->load_image(m_src.c_str(), NULL);
-
-	if(!m_css_height.val())
-	{
-		m_css_height.fromString(get_attr(_t("height"), _t("auto")), _t("auto"));
-	}
-	if(!m_css_width.val())
-	{
-		m_css_width.fromString(get_attr(_t("width"), _t("auto")), _t("auto"));
-	}
 }
 
 int litehtml::el_image::line_height() const
@@ -74,42 +63,91 @@ int litehtml::el_image::render( int x, int y, int max_width )
 	{
 		m_pos.height	= sz.height;
 		m_pos.width		= sz.width;
+
+		// check for max-height
+		if(!m_css_max_height.is_predefined())
+		{
+			int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
+			if(m_pos.height > max_height)
+			{
+				m_pos.height = max_height;
+			}
+		}
+
+		// check for max-height
+		if(!m_css_max_width.is_predefined())
+		{
+			int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+			if(m_pos.width > max_width)
+			{
+				m_pos.width = max_width;
+			}
+		}
 	} else if(!m_css_height.is_predefined() && m_css_width.is_predefined())
 	{
 		m_pos.height = (int) m_css_height.val();
+
+		// check for max-height
+		if(!m_css_max_height.is_predefined())
+		{
+			int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
+			if(m_pos.height > max_height)
+			{
+				m_pos.height = max_height;
+			}
+		}
+
 		if(sz.height)
 		{
-			m_pos.width = (int) (m_css_height.val() * (float)sz.width / (float)sz.height);
+			m_pos.width = (int) (m_pos.height * (float)sz.width / (float)sz.height);
 		} else
 		{
 			m_pos.width = sz.width;
 		}
 	} else if(m_css_height.is_predefined() && !m_css_width.is_predefined())
 	{
-		m_pos.width = (int) m_css_width.val();
+		m_pos.width = (int) m_css_width.calc_percent(parent_width);
+
+		// check for max-width
+		if(!m_css_max_width.is_predefined())
+		{
+			int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+			if(m_pos.width > max_width)
+			{
+				m_pos.width = max_width;
+			}
+		}
+
 		if(sz.width)
 		{
-			m_pos.height = (int) ((float) m_css_width.val() * (float) sz.height / (float)sz.width);
+			m_pos.height = (int) ((float) m_pos.width * (float) sz.height / (float)sz.width);
 		} else
 		{
 			m_pos.height = sz.height;
 		}
-	}
+	} else
+	{
+		m_pos.width		= (int) m_css_width.calc_percent(parent_width);
+		m_pos.height	= (int) m_css_height.val();
 
-	if(!m_css_max_width.is_predefined())
-	{
-		int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
-		if(m_pos.width > max_width)
+		// check for max-height
+		if(!m_css_max_height.is_predefined())
 		{
-			m_pos.width = max_width;
+			int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
+			if(m_pos.height > max_height)
+			{
+				m_pos.height = max_height;
+			}
 		}
-	}
-	if(!m_css_max_height.is_predefined())
-	{
-		int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
-		if(m_pos.height > max_height)
+
+		// check for max-height
+		if(!m_css_max_width.is_predefined())
 		{
-			m_pos.height = max_height;
+			int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+			if(m_pos.width > max_width)
+			{
+				m_pos.width = max_width;
+			}
 		}
 	}
 
@@ -120,3 +158,21 @@ int litehtml::el_image::render( int x, int y, int max_width )
 
 	return m_pos.width + content_margins_left() + content_margins_right();
 }
+
+void litehtml::el_image::finish()
+{
+	m_src = get_attr(_t("src"), _t(""));
+	m_doc->container()->load_image(m_src.c_str(), NULL);
+
+	const tchar_t* attr_height = get_attr(_t("height"));
+	if(attr_height)
+	{
+		m_style.add_property(_t("height"), attr_height, 0, false);
+	}
+	const tchar_t* attr_width = get_attr(_t("width"));
+	if(attr_width)
+	{
+		m_style.add_property(_t("width"), attr_width, 0, false);
+	}
+}
+
