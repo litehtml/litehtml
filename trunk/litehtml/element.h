@@ -27,9 +27,9 @@ namespace litehtml
 		litehtml::document*		m_doc;
 		elements_vector			m_children;
 		box::vector				m_boxes;
-		tstring			m_id;
-		tstring			m_class;
-		tstring			m_tag;
+		tstring					m_id;
+		tstring					m_class;
+		tstring					m_tag;
 		litehtml::style			m_style;
 		string_map				m_attrs;
 		position				m_pos;
@@ -66,6 +66,8 @@ namespace litehtml
 		css_length				m_css_height;
 		css_length				m_css_min_width;
 		css_length				m_css_min_height;
+		css_length				m_css_max_width;
+		css_length				m_css_max_height;
 		css_length				m_css_left;
 		css_length				m_css_right;
 		css_length				m_css_top;

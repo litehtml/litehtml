@@ -313,14 +313,17 @@ void litehtml::element::parse_styles(bool is_reparse)
 	m_doc->cvt_units(m_css_width,	m_font_size);
 	m_doc->cvt_units(m_css_height,	m_font_size);
 
-	m_css_min_width.fromString(		get_style_property(_t("min-width"),	false,	_t("0")));
+	m_css_min_width.fromString(		get_style_property(_t("min-width"),		false,	_t("0")));
 	m_css_min_height.fromString(	get_style_property(_t("min-height"),	false,	_t("0")));
 
+	m_css_max_width.fromString(		get_style_property(_t("max-width"),		false,	_t("none")),	_t("none"));
+	m_css_max_height.fromString(	get_style_property(_t("max-height"),	false,	_t("none")),	_t("none"));
+	
 	m_doc->cvt_units(m_css_min_width,	m_font_size);
 	m_doc->cvt_units(m_css_min_height,	m_font_size);
 
 	m_css_left.fromString(		get_style_property(_t("left"),				false,	_t("auto")), _t("auto"));
-	m_css_right.fromString(		get_style_property(_t("right"),			false,	_t("auto")), _t("auto"));
+	m_css_right.fromString(		get_style_property(_t("right"),				false,	_t("auto")), _t("auto"));
 	m_css_top.fromString(		get_style_property(_t("top"),				false,	_t("auto")), _t("auto"));
 	m_css_bottom.fromString(	get_style_property(_t("bottom"),			false,	_t("auto")), _t("auto"));
 
