@@ -16,7 +16,7 @@ namespace litehtml
 		virtual int		line_height() const;
 		virtual bool	is_replaced() const;
 		virtual int		render(int x, int y, int max_width);
-
+		virtual void	finish();
 	protected:
 		virtual void	get_content_size(size& sz, int max_width);
 		virtual void	draw_content(uint_ptr hdc, const litehtml::position& pos);

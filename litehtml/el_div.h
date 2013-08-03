@@ -9,6 +9,6 @@ namespace litehtml
 		el_div(litehtml::document* doc);
 		virtual ~el_div();
 
-		virtual void parse_styles(bool is_reparse);
+		virtual void finish();
 	};
 }

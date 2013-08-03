@@ -330,39 +330,6 @@ bool litehtml::el_table::appendChild( litehtml::element* el )
 
 void litehtml::el_table::parse_styles(bool is_reparse)
 {
-	const tchar_t* str = get_attr(_t("width"));
-	if(str)
-	{
-		m_style.add_property(_t("width"), str, 0, false);
-	}
-
-	str = get_attr(_t("align"));
-	if(str)
-	{
-		int align = value_index(str, _t("left;center;right"));
-		switch(align)
-		{
-		case 1:
-			m_style.add_property(_t("margin-left"), _t("auto"), 0, false);
-			m_style.add_property(_t("margin-right"), _t("auto"), 0, false);
-			break;
-		case 2:
-			m_style.add_property(_t("margin-left"), _t("auto"), 0, false);
-			m_style.add_property(_t("margin-right"), _t("0"), 0, false);
-			break;
-		}
-		m_style.add_property(_t("width"), str, 0, false);
-	}
-
-	str = get_attr(_t("cellspacing"));
-	if(str)
-	{
-		tstring val = str;
-		val += _t(" ");
-		val += str;
-		m_style.add_property(_t("border-spacing"), val.c_str(), 0, false);
-	}
-
 	element::parse_styles(is_reparse);
 
 	m_css_border_spacing_x.fromString(get_style_property(_t("-litehtml-border-spacing-x"), true, _t("0px")));
@@ -423,4 +390,41 @@ void litehtml::el_table::draw( uint_ptr hdc, int x, int y, const position* clip 
 			}
 		}
 	}
+}
+
+void litehtml::el_table::finish()
+{
+	const tchar_t* str = get_attr(_t("width"));
+	if(str)
+	{
+		m_style.add_property(_t("width"), str, 0, false);
+	}
+
+	str = get_attr(_t("align"));
+	if(str)
+	{
+		int align = value_index(str, _t("left;center;right"));
+		switch(align)
+		{
+		case 1:
+			m_style.add_property(_t("margin-left"), _t("auto"), 0, false);
+			m_style.add_property(_t("margin-right"), _t("auto"), 0, false);
+			break;
+		case 2:
+			m_style.add_property(_t("margin-left"), _t("auto"), 0, false);
+			m_style.add_property(_t("margin-right"), _t("0"), 0, false);
+			break;
+		}
+		m_style.add_property(_t("width"), str, 0, false);
+	}
+
+	str = get_attr(_t("cellspacing"));
+	if(str)
+	{
+		tstring val = str;
+		val += _t(" ");
+		val += str;
+		m_style.add_property(_t("border-spacing"), val.c_str(), 0, false);
+	}
+	element::finish();
 }
