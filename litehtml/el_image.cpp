@@ -96,6 +96,23 @@ int litehtml::el_image::render( int x, int y, int max_width )
 		}
 	}
 
+	if(!m_css_max_width.is_predefined())
+	{
+		int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+		if(m_pos.width > max_width)
+		{
+			m_pos.width = max_width;
+		}
+	}
+	if(!m_css_max_height.is_predefined())
+	{
+		int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
+		if(m_pos.height > max_height)
+		{
+			m_pos.height = max_height;
+		}
+	}
+
 	calc_outlines(parent_width);
 
 	m_pos.x	+= content_margins_left();
