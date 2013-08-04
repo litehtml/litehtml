@@ -38,5 +38,6 @@ void litehtml::el_td::finish()
 	{
 		m_style.add_property(_t("vertical-align"), str, 0, false);
 	}
+	element::finish();
 }
 

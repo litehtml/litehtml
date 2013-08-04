@@ -65,6 +65,23 @@ int litehtml::el_image::render( int x, int y, int max_width )
 		m_pos.width		= sz.width;
 
 		// check for max-height
+		if(!m_css_max_width.is_predefined())
+		{
+			int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+			if(m_pos.width > max_width)
+			{
+				m_pos.width = max_width;
+			}
+			if(sz.width)
+			{
+				m_pos.height = (int) ((float) m_pos.width * (float) sz.height / (float)sz.width);
+			} else
+			{
+				m_pos.height = sz.height;
+			}
+		}
+
+		// check for max-height
 		if(!m_css_max_height.is_predefined())
 		{
 			int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
@@ -72,15 +89,12 @@ int litehtml::el_image::render( int x, int y, int max_width )
 			{
 				m_pos.height = max_height;
 			}
-		}
-
-		// check for max-height
-		if(!m_css_max_width.is_predefined())
-		{
-			int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
-			if(m_pos.width > max_width)
+			if(sz.height)
 			{
-				m_pos.width = max_width;
+				m_pos.width = (int) (m_pos.height * (float)sz.width / (float)sz.height);
+			} else
+			{
+				m_pos.width = sz.width;
 			}
 		}
 	} else if(!m_css_height.is_predefined() && m_css_width.is_predefined())
