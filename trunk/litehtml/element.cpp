@@ -181,7 +181,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, const position* clip )
 
 	draw_background(hdc, x, y, clip);
 
-	if(m_overflow == overflow_hidden)
+	if(m_overflow > overflow_visible)
 	{
 		m_doc->container()->set_clip(pos, true, true);
 	}
@@ -218,7 +218,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, const position* clip )
 		el->draw(hdc, pos.left(), pos.top(), clip);
 	}
 
-	if(m_overflow == overflow_hidden)
+	if(m_overflow > overflow_visible)
 	{
 		m_doc->container()->del_clip();
 	}
@@ -441,6 +441,16 @@ int litehtml::element::render( int x, int y, int max_width )
 	// restore margins after collapse
 	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		m_font_size);
 	m_margins.bottom	= m_doc->cvt_units(m_css_margins.bottom,	m_font_size);
+
+	// reset auto margins
+	if(m_css_margins.left.is_predefined())
+	{
+		m_margins.left = 0;
+	}
+	if(m_css_margins.right.is_predefined())
+	{
+		m_margins.right = 0;
+	}
 
 	m_pos.move_to(x, y);
 
@@ -2157,6 +2167,17 @@ int litehtml::element::place_element( element* el, int max_width )
 		case display_inline_block:
 			ret_width = el->render(line_left, line_top, line_right);
 			break;
+		case display_block:		
+			if(el->is_replaced() || el->is_floats_holder())
+			{
+				el->m_pos.width		= el->m_css_width.calc_percent(line_right - line_left);
+				el->m_pos.height	= el->m_css_height.calc_percent(0);
+				if(el->m_pos.width || el->m_pos.height)
+				{
+					el->calc_outlines(line_right - line_left);
+				}
+			}
+			break;
 		case display_inline_text:
 			{
 				litehtml::size sz;
@@ -2228,7 +2249,7 @@ int litehtml::element::place_element( element* el, int max_width )
 		case display_table_cell:
 		case display_table_caption:
 		case display_table_row:
-			if(el->is_replaced())
+			if(el->is_replaced() || el->is_floats_holder())
 			{
 				ret_width = el->render(line_left, line_top, line_right - line_left);
 			} else
@@ -2447,4 +2468,9 @@ litehtml::position litehtml::element::get_placement()
 		pos = m_pos;
 	}
 	return pos;
+}
+
+void litehtml::element::reset_size()
+{
+
 }
