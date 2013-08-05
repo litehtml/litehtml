@@ -2251,7 +2251,7 @@ int litehtml::element::place_element( element* el, int max_width )
 		case display_table_row:
 			if(el->is_replaced() || el->is_floats_holder())
 			{
-				ret_width = el->render(line_left, line_top, line_right - line_left);
+				ret_width = el->render(line_left, line_top, line_right - line_left) + line_left;
 			} else
 			{
 				ret_width = el->render(0, line_top, max_width);
