@@ -86,6 +86,8 @@ namespace litehtml
 		int							place_element( element* el, int max_width );
 
 		int							new_box( element* el, int max_width );
+
+		int							get_cleared_top( element_clear clear, int line_top );
 		int							finish_last_box(bool end_of_render = false);
 		virtual int					render_inline(litehtml::element* container, int max_width);
 
@@ -184,7 +186,6 @@ namespace litehtml
 		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
 		virtual void				init();
 		virtual void				get_inline_boxes(position::vector& boxes);
-		virtual void				reset_size();
 
 	private:
 		bool						select_one(const tstring& selector);

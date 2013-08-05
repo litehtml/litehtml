@@ -2106,6 +2106,7 @@ int litehtml::element::place_element( element* el, int max_width )
 				line_top = m_boxes.back()->bottom();
 			}
 		}
+		line_top		= get_cleared_top(el->m_clear, line_top);
 		int line_left	= get_line_left(line_top);
 		int line_right	= get_line_right(line_top, max_width);
 
@@ -2132,6 +2133,7 @@ int litehtml::element::place_element( element* el, int max_width )
 				line_top = m_boxes.back()->bottom();
 			}
 		}
+		line_top		= get_cleared_top(el->m_clear, line_top);
 		int line_left	= get_line_left(line_top);
 		int line_right	= get_line_right(line_top, max_width);
 
@@ -2392,38 +2394,7 @@ int litehtml::element::finish_last_box(bool end_of_render)
 
 int litehtml::element::new_box( element* el, int max_width )
 {
-	int line_top = finish_last_box();
-
-	switch(el->m_clear)
-	{
-	case clear_left:
-		{
-			int fh = get_left_floats_height();
-			if(fh && fh > line_top)
-			{
-				line_top = fh;
-			}
-		}
-		break;
-	case clear_right:
-		{
-			int fh = get_right_floats_height();
-			if(fh && fh > line_top)
-			{
-				line_top = fh;
-			}
-		}
-		break;
-	case clear_both:
-		{
-			int fh = get_floats_height();
-			if(fh && fh > line_top)
-			{
-				line_top = fh;
-			}
-		}
-		break;
-	}
+	int line_top	= get_cleared_top(el->m_clear, finish_last_box());
 
 	int line_left	= get_line_left(line_top);
 	int line_right	= get_line_right(line_top, max_width);
@@ -2470,7 +2441,37 @@ litehtml::position litehtml::element::get_placement()
 	return pos;
 }
 
-void litehtml::element::reset_size()
+int litehtml::element::get_cleared_top( element_clear clear, int line_top )
 {
-
+	switch(clear)
+	{
+	case clear_left:
+		{
+			int fh = get_left_floats_height();
+			if(fh && fh > line_top)
+			{
+				line_top = fh;
+			}
+		}
+		break;
+	case clear_right:
+		{
+			int fh = get_right_floats_height();
+			if(fh && fh > line_top)
+			{
+				line_top = fh;
+			}
+		}
+		break;
+	case clear_both:
+		{
+			int fh = get_floats_height();
+			if(fh && fh > line_top)
+			{
+				line_top = fh;
+			}
+		}
+		break;
+	}
+	return line_top;
 }
