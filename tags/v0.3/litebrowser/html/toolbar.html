@@ -1,0 +1,78 @@
+<html>
+    <head>
+        <style>
+            body { margin: 0; padding: 0; }
+            .toolbar { background: repeat-x url('toolbar-bg.png'); height: 30px; }
+            a.button { float: left; margin-left: 5px; display: block; height: 29px; width: 27px; }
+            a.button-right { float: right; margin-right: 5px; display: block; height: 29px; width: 27px; }
+            
+            #home           { background: no-repeat url('home-normal.png'); }
+            #home:hover     { background: no-repeat url('home-hover.png');  }
+            #home:active    { background: no-repeat url('home-active.png'); }
+
+            #back           { background: no-repeat url('back-normal.png'); }
+            #back:hover     { background: no-repeat url('back-hover.png');  }
+            #back:active    { background: no-repeat url('back-active.png'); }
+
+            #forward        { background: no-repeat url('forward-normal.png'); }
+            #forward:hover  { background: no-repeat url('forward-hover.png');  }
+            #forward:active { background: no-repeat url('forward-active.png'); }
+
+            #reload         { background: no-repeat url('reload-normal.png'); }
+            #reload:hover   { background: no-repeat url('reload-hover.png');  }
+            #reload:active  { background: no-repeat url('reload-active.png'); }
+
+            #settings           { background: no-repeat url('settings-normal.png'); }
+            #settings:hover     { background: no-repeat url('settings-hover.png');  }
+            #settings:active    { background: no-repeat url('settings-active.png'); }
+            .omni-box
+            {
+                height: 29px;
+                position: relative;
+                margin-left: 135px;
+                margin-right: 35px;
+            }
+            .addr-left
+            {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                width: 9px;
+                height: 29px;
+                background-image: url('addr-left.png');
+            }
+            .addr-right
+            {
+                position: absolute;
+                top: 0px;
+                right: 0px;
+                width: 9px;
+                height: 29px;
+                background-image: url('addr-right.png');
+            }
+            .addr-center
+            {
+                position: absolute;
+                top: 0px;
+                right: 9px;
+                left: 9px;
+                height: 29px;
+                background-image: url('addr-center.png');
+            }
+        </style>
+    </head>
+    <body>
+        <div class="toolbar">
+            <a href="back" class="button" id="back"></a>
+            <a href="forward" class="button" id="forward"></a>
+            <a href="reload" class="button" id="reload"></a>
+            <a href="home" class="button" id="home"></a>
+            <a href="settings" class="button-right" id="settings"></a>
+            <div class="omni-box">
+                <div class="addr-left"></div>
+                <div class="addr-center"></div>
+                <div class="addr-right"></div>
+            </div>
+        </div>
+    </body>
+</html>
