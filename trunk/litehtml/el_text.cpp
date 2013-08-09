@@ -8,7 +8,6 @@ litehtml::el_text::el_text( const tchar_t* text, litehtml::document* doc ) : ele
 	{
 		m_text = text;
 	}
-	m_display			= display_inline_text;
 	m_text_transform	= text_transform_none;
 }
 
@@ -51,7 +50,6 @@ const litehtml::tchar_t* litehtml::el_text::get_style_property( const tchar_t* n
 void litehtml::el_text::parse_styles(bool is_reparse)
 {
 	m_text_transform	= (text_transform)	value_index(get_style_property(_t("text-transform"), true,	_t("none")),	text_transform_strings,	text_transform_none);
-	m_white_space		= m_parent->get_white_space();
 	m_transformed_text	= m_text;
 	if(m_text_transform != text_transform_none)
 	{
@@ -147,4 +145,15 @@ int litehtml::el_text::line_height() const
 litehtml::uint_ptr litehtml::el_text::get_font( font_metrics* fm /*= 0*/ )
 {
 	return m_parent->get_font(fm);
+}
+
+litehtml::style_display litehtml::el_text::get_display() const
+{
+	return display_inline_text;
+}
+
+litehtml::white_space litehtml::el_text::get_white_space() const
+{
+	if(m_parent) return m_parent->get_white_space();
+	return white_space_normal;
 }

@@ -2,7 +2,7 @@
 #include "el_font.h"
 
 
-litehtml::el_font::el_font( litehtml::document* doc ) : element(doc)
+litehtml::el_font::el_font( litehtml::document* doc ) : html_tag(doc)
 {
 
 }
@@ -56,5 +56,5 @@ void litehtml::el_font::parse_styles(bool is_reparse)
 		}
 	}
 
-	element::parse_styles(is_reparse);
+	html_tag::parse_styles(is_reparse);
 }

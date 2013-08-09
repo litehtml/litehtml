@@ -1,9 +1,9 @@
 #pragma once
-#include "element.h"
+#include "html_tag.h"
 
 namespace litehtml
 {
-	class el_font : public element
+	class el_font : public html_tag
 	{
 	public:
 		el_font(litehtml::document* doc);

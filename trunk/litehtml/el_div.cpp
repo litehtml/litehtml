@@ -2,7 +2,7 @@
 #include "el_div.h"
 
 
-litehtml::el_div::el_div( litehtml::document* doc ) : element(doc)
+litehtml::el_div::el_div( litehtml::document* doc ) : html_tag(doc)
 {
 
 }
@@ -19,5 +19,5 @@ void litehtml::el_div::finish()
 	{
 		m_style.add_property(_t("text-align"), str, 0, false);
 	}
-	element::finish();
+	html_tag::finish();
 }

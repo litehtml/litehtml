@@ -1,6 +1,6 @@
 #pragma once
 
-#include "element.h"
+#include "html_tag.h"
 
 namespace litehtml
 {
@@ -23,6 +23,8 @@ namespace litehtml
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual int					line_height() const;
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
+		virtual style_display		get_display() const;
+		virtual white_space			get_white_space() const;
 
 	protected:
 		virtual void				get_content_size(size& sz, int max_width);

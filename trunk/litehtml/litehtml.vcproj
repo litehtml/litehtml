@@ -349,6 +349,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_script.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\el_space.cpp"
 				>
 			</File>
@@ -385,11 +389,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\iterators.cpp"
+				RelativePath=".\html_tag.cpp"
 				>
 			</File>
 			<File
-				RelativePath=".\line.cpp"
+				RelativePath=".\iterators.cpp"
 				>
 			</File>
 			<File
@@ -507,6 +511,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_script.h"
+				>
+			</File>
+			<File
 				RelativePath=".\el_space.h"
 				>
 			</File>
@@ -547,11 +555,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\iterators.h"
+				RelativePath=".\html_tag.h"
 				>
 			</File>
 			<File
-				RelativePath=".\line.h"
+				RelativePath=".\iterators.h"
 				>
 			</File>
 			<File

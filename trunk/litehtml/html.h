@@ -9,7 +9,7 @@
 #include "types.h"
 #include "background.h"
 #include "borders.h"
-#include "element.h"
+#include "html_tag.h"
 #include "web_color.h"
 #include "object.h"
 
@@ -42,8 +42,8 @@ namespace litehtml
 
 		virtual	void			set_caption(const tchar_t* caption)		= 0;
 		virtual	void			set_base_url(const tchar_t* base_url)	= 0;
-		virtual	void			link(litehtml::document* doc, litehtml::element::ptr el)	= 0;
-		virtual	void			on_anchor_click(const tchar_t* url, litehtml::element::ptr el)	= 0;
+		virtual void			link(litehtml::document* doc, litehtml::element::ptr el) = 0;
+		virtual void			on_anchor_click(const tchar_t* url, litehtml::element::ptr el) = 0;
 		virtual	void			set_cursor(const tchar_t* cursor)	= 0;
 		virtual	tchar_t			toupper(const tchar_t c) = 0;
 		virtual	tchar_t			tolower(const tchar_t c) = 0;

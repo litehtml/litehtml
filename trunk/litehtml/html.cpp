@@ -1,7 +1,7 @@
 #include "html.h"
 #include "types.h"
 #include "tokenizer.h"
-#include "element.h"
+#include "html_tag.h"
 
 void litehtml::trim(tstring &s) 
 {

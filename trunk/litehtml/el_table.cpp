@@ -5,7 +5,7 @@
 #include <algorithm>
 
 
-litehtml::el_table::el_table( litehtml::document* doc ) : element(doc)
+litehtml::el_table::el_table( litehtml::document* doc ) : html_tag(doc)
 {
 
 }
@@ -285,29 +285,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 			table_cell* cell = m_grid.cell(col, row);
 			if(cell->el)
 			{
-				if(!cell->el->m_boxes.empty())
-				{
-					int add = 0;
-					int content_height	= cell->el->m_boxes.back()->bottom();
-
-					if(cell->el->m_pos.height > content_height)
-					{
-						switch(cell->el->m_vertical_align)
-						{
-						case va_middle:
-							add = (cell->el->m_pos.height - content_height) / 2;
-							break;
-						case va_bottom:
-							add = cell->el->m_pos.height - content_height;
-							break;
-						}
-					}
-
-					for(size_t i = 0; i < cell->el->m_boxes.size(); i++)
-					{
-						cell->el->m_boxes[i]->y_shift(add);
-					}
-				}
+				cell->el->apply_vertical_align();
 			}
 		}
 	}
@@ -321,16 +299,16 @@ int litehtml::el_table::render( int x, int y, int max_width )
 bool litehtml::el_table::appendChild( litehtml::element* el )
 {
 	if(!el)	return false;
-	if(el->m_tag == _t("tbody") || el->m_tag == _t("thead") || el->m_tag == _t("tfoot"))
+	if(!t_strcasecmp(el->get_tagName(), _t("tbody")) || !t_strcasecmp(el->get_tagName(), _t("thead")) || !t_strcasecmp(el->get_tagName(), _t("tfoot")))
 	{
-		return element::appendChild(el);
+		return html_tag::appendChild(el);
 	}
 	return false;
 }
 
 void litehtml::el_table::parse_styles(bool is_reparse)
 {
-	element::parse_styles(is_reparse);
+	html_tag::parse_styles(is_reparse);
 
 	m_css_border_spacing_x.fromString(get_style_property(_t("-litehtml-border-spacing-x"), true, _t("0px")));
 	m_css_border_spacing_y.fromString(get_style_property(_t("-litehtml-border-spacing-y"), true, _t("0px")));
@@ -426,5 +404,5 @@ void litehtml::el_table::finish()
 		val += str;
 		m_style.add_property(_t("border-spacing"), val.c_str(), 0, false);
 	}
-	element::finish();
+	html_tag::finish();
 }

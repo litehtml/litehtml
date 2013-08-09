@@ -1,11 +1,11 @@
 #pragma once
 
-#include "element.h"
+#include "html_tag.h"
 
 namespace litehtml
 {
 
-	class el_image : public element
+	class el_image : public html_tag
 	{
 		tstring	m_src;
 	public:

@@ -2,7 +2,7 @@
 #include "el_image.h"
 #include "document.h"
 
-litehtml::el_image::el_image( litehtml::document* doc ) : element(doc)
+litehtml::el_image::el_image( litehtml::document* doc ) : html_tag(doc)
 {
 
 }
@@ -24,7 +24,7 @@ void litehtml::el_image::draw_content( uint_ptr hdc, const litehtml::position& p
 
 void litehtml::el_image::parse_styles(bool is_reparse)
 {
-	element::parse_styles(is_reparse);
+	html_tag::parse_styles(is_reparse);
 }
 
 int litehtml::el_image::line_height() const

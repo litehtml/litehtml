@@ -1,6 +1,6 @@
 #include "html.h"
 #include "table.h"
-#include "element.h"
+#include "html_tag.h"
 
 void litehtml::table_grid::add_cell( element* el )
 {
@@ -88,9 +88,9 @@ void litehtml::table_grid::finish()
 		{
 			if(cell(col, row)->el && cell(col, row)->colspan <= 1)
 			{
-				if(!cell(col, row)->el->m_css_width.is_predefined())
+				if(!cell(col, row)->el->get_css_width().is_predefined())
 				{
-					m_columns[col].css_width = cell(col, row)->el->m_css_width;
+					m_columns[col].css_width = cell(col, row)->el->get_css_width();
 					break;
 				}
 			}
@@ -103,7 +103,7 @@ void litehtml::table_grid::finish()
 		{
 			if(cell(col, row)->el)
 			{
-				cell(col, row)->el->m_css_width = m_columns[col].css_width;
+				cell(col, row)->el->set_css_width(m_columns[col].css_width);
 			}
 		}
 	}

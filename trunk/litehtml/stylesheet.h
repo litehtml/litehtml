@@ -1,5 +1,6 @@
 #pragma once
 #include "style.h"
+#include "css_selector.h"
 
 namespace litehtml
 {

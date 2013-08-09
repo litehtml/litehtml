@@ -8,6 +8,7 @@
 #include "el_link.h"
 #include "el_title.h"
 #include "el_style.h"
+#include "el_script.h"
 #include "el_comment.h"
 #include "el_base.h"
 #include "el_anchor.h"
@@ -243,7 +244,7 @@ litehtml::element* litehtml::document::add_root()
 {
 	if(!m_root)
 	{
-		m_root = new element(this);
+		m_root = new html_tag(this);
 		m_root->addRef();
 		m_root->set_tagName(_t("html"));
 	}
@@ -446,12 +447,15 @@ litehtml::element::ptr litehtml::document::create_element( const tchar_t* tag_na
 	} else if(!t_strcasecmp(tag_name, _t("div")))
 	{
 		newTag = new litehtml::el_div(this);
+	} else if(!t_strcasecmp(tag_name, _t("script")))
+	{
+		newTag = new litehtml::el_script(this);
 	} else if(!t_strcasecmp(tag_name, _t("font")))
 	{
 		newTag = new litehtml::el_font(this);
 	} else
 	{
-		newTag = new litehtml::element(this);
+		newTag = new litehtml::html_tag(this);
 	}
 
 	if(newTag)
