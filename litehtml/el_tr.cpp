@@ -2,7 +2,7 @@
 #include "el_tr.h"
 
 
-litehtml::el_tr::el_tr( litehtml::document* doc ) : element(doc)
+litehtml::el_tr::el_tr( litehtml::document* doc ) : html_tag(doc)
 {
 
 }
@@ -12,14 +12,19 @@ litehtml::el_tr::~el_tr()
 
 }
 
-void litehtml::el_tr::finish()
+void litehtml::el_tr::parse_styles(bool is_reparse)
 {
 	const tchar_t* str = get_attr(_t("align"));
 	if(str)
 	{
 		m_style.add_property(_t("text-align"), str, 0, false);
 	}
-	element::finish();
+	str = get_attr(_t("valign"));
+	if(str)
+	{
+		m_style.add_property(_t("vertical-align"), str, 0, false);
+	}
+	html_tag::parse_styles(is_reparse);
 }
 
 void litehtml::el_tr::get_inline_boxes( position::vector& boxes )

@@ -1,9 +1,9 @@
 #pragma once
-#include "element.h"
+#include "html_tag.h"
 
 namespace litehtml
 {
-	class el_comment : public element
+	class el_comment : public html_tag
 	{
 		tstring	m_text;
 	public:

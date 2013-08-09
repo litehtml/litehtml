@@ -3,12 +3,12 @@
 
 namespace litehtml
 {
-	class el_style : public element
+	class el_script : public element
 	{
 		tstring m_text;
 	public:
-		el_style(litehtml::document* doc);
-		virtual ~el_style();
+		el_script(litehtml::document* doc);
+		virtual ~el_script();
 
 		virtual void			finish();
 		virtual bool			appendChild(litehtml::element* el);

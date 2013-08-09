@@ -2,7 +2,7 @@
 #include "el_comment.h"
 
 
-litehtml::el_comment::el_comment( litehtml::document* doc ) : element(doc)
+litehtml::el_comment::el_comment( litehtml::document* doc ) : html_tag(doc)
 {
 	m_skip = true;
 }

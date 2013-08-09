@@ -13,9 +13,10 @@ litehtml::el_space::~el_space()
 
 bool litehtml::el_space::is_white_space()
 {
-	if(	m_white_space == white_space_normal || 
-		m_white_space == white_space_nowrap ||
-		m_white_space == white_space_pre_line )
+	white_space ws = get_white_space();
+	if(	ws == white_space_normal || 
+		ws == white_space_nowrap ||
+		ws == white_space_pre_line )
 	{
 		return true;
 	}
@@ -24,9 +25,10 @@ bool litehtml::el_space::is_white_space()
 
 bool litehtml::el_space::is_break() const
 {
-	if(	m_white_space == white_space_pre ||
-		m_white_space == white_space_pre_line ||
-		m_white_space == white_space_pre_wrap)
+	white_space ws = get_white_space();
+	if(	ws == white_space_pre ||
+		ws == white_space_pre_line ||
+		ws == white_space_pre_wrap)
 	{
 		if(m_text == _t("\n"))
 		{

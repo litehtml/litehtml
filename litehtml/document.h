@@ -42,7 +42,7 @@ namespace litehtml
 	};
 
 
-	class element;
+	class html_tag;
 
 	class document : public object
 	{

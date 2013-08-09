@@ -1,15 +1,15 @@
 #include "html.h"
 #include "iterators.h"
-#include "element.h"
+#include "html_tag.h"
 
 litehtml::element* litehtml::elements_iterator::next(bool ret_parent)
 {
 	next_idx();
 
-	while(m_idx < (int) m_el->children().size())
+	while(m_idx < (int) m_el->get_children_count())
 	{
-		element* el = m_el->children()[m_idx];
-		if(	el->children().size() && m_go_inside && m_go_inside->select(el) )
+		element::ptr el = m_el->get_child(m_idx);
+		if(	el->get_children_count() && m_go_inside && m_go_inside->select(el) )
 		{
 			stack_item si;
 			si.idx		= m_idx;
@@ -24,9 +24,9 @@ litehtml::element* litehtml::elements_iterator::next(bool ret_parent)
 			next_idx();
 		} else
 		{
-			if(!m_select || m_select && m_select->select(m_el->children()[m_idx]))
+			if(!m_select || m_select && m_select->select(m_el->get_child(m_idx)))
 			{
-				return m_el->children()[m_idx];
+				return m_el->get_child(m_idx);
 			} else
 			{
 				next_idx();
@@ -40,7 +40,7 @@ litehtml::element* litehtml::elements_iterator::next(bool ret_parent)
 void litehtml::elements_iterator::next_idx()
 {
 	m_idx++;
-	while(m_idx >= (int) m_el->children().size() && m_stack.size())
+	while(m_idx >= (int) m_el->get_children_count() && m_stack.size())
 	{
 		stack_item si = m_stack.back();
 		m_stack.pop_back();

@@ -1,5 +1,5 @@
 #pragma once
-#include "element.h"
+#include "html_tag.h"
 #include "table.h"
 
 namespace litehtml
@@ -11,7 +11,7 @@ namespace litehtml
 	};
 
 
-	class el_table : public element
+	class el_table : public html_tag
 	{
 		table_grid		m_grid;
 		css_length		m_css_border_spacing_x;

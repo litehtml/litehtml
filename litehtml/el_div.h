@@ -1,9 +1,9 @@
 #pragma once
-#include "element.h"
+#include "html_tag.h"
 
 namespace litehtml
 {
-	class el_div : public element
+	class el_div : public html_tag
 	{
 	public:
 		el_div(litehtml::document* doc);

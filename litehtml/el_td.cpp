@@ -2,7 +2,7 @@
 #include "el_td.h"
 
 
-litehtml::el_td::el_td( litehtml::document* doc ) : element(doc)
+litehtml::el_td::el_td( litehtml::document* doc ) : html_tag(doc)
 {
 
 }
@@ -12,7 +12,7 @@ litehtml::el_td::~el_td()
 
 }
 
-void litehtml::el_td::finish()
+void litehtml::el_td::parse_styles(bool is_reparse)
 {
 	const tchar_t* str = get_attr(_t("width"));
 	if(str)
@@ -38,6 +38,6 @@ void litehtml::el_td::finish()
 	{
 		m_style.add_property(_t("vertical-align"), str, 0, false);
 	}
-	element::finish();
+	html_tag::parse_styles(is_reparse);
 }
 

@@ -1,6 +1,6 @@
 #include "html.h"
 #include "box.h"
-#include "element.h"
+#include "html_tag.h"
 
 
 litehtml::box_type litehtml::block_box::get_type()
@@ -209,7 +209,7 @@ void litehtml::line_box::finish(bool last_box)
 			m_items[i]->m_pos.y = m_height - base_line - fm.ascent;
 		} else
 		{
-			switch(m_items[i]->m_vertical_align)
+			switch(m_items[i]->get_vertical_align())
 			{
 			case va_super:
 			case va_sub:
@@ -243,7 +243,7 @@ void litehtml::line_box::finish(bool last_box)
 		m_items[i]->m_pos.y += m_box_top;
 		if(m_items[i]->get_display() != display_inline_text)
 		{
-			switch(m_items[i]->m_vertical_align)
+			switch(m_items[i]->get_vertical_align())
 			{
 			case va_top:
 				m_items[i]->m_pos.y = m_box_top + m_items[i]->content_margins_top();

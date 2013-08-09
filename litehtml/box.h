@@ -3,7 +3,7 @@
 
 namespace litehtml
 {
-	class element;
+	class html_tag;
 
 	enum box_type
 	{

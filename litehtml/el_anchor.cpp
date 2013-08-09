@@ -2,7 +2,7 @@
 #include "el_anchor.h"
 #include "document.h"
 
-litehtml::el_anchor::el_anchor( litehtml::document* doc ) : element(doc)
+litehtml::el_anchor::el_anchor( litehtml::document* doc ) : html_tag(doc)
 {
 	m_pseudo_classes.push_back(_t("link"));
 }

@@ -1,14 +1,14 @@
 #pragma once
-#include "element.h"
+#include "html_tag.h"
 
 namespace litehtml
 {
-	class el_td : public element
+	class el_td : public html_tag
 	{
 	public:
 		el_td(litehtml::document* doc);
 		virtual ~el_td();
 
-		virtual void finish();
+		virtual void parse_styles(bool is_reparse = false);
 	};
 }

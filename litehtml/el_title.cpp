@@ -2,7 +2,7 @@
 #include "el_title.h"
 #include "document.h"
 
-litehtml::el_title::el_title( litehtml::document* doc ) : litehtml::element(doc)
+litehtml::el_title::el_title( litehtml::document* doc ) : litehtml::html_tag(doc)
 {
 
 }
