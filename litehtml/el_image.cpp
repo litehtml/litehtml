@@ -22,11 +22,6 @@ void litehtml::el_image::draw_content( uint_ptr hdc, const litehtml::position& p
 	m_doc->container()->draw_image(hdc, m_src.c_str(), 0, pos);
 }
 
-void litehtml::el_image::parse_styles(bool is_reparse)
-{
-	html_tag::parse_styles(is_reparse);
-}
-
 int litehtml::el_image::line_height() const
 {
 	return height();
@@ -39,7 +34,10 @@ bool litehtml::el_image::is_replaced() const
 
 int litehtml::el_image::render( int x, int y, int max_width )
 {
-	m_doc->container()->load_image(m_src.c_str(), NULL);
+	if(!m_src.empty())
+	{
+		m_doc->container()->load_image(m_src.c_str(), NULL);
+	}
 
 	int parent_width = max_width;
 
@@ -176,7 +174,10 @@ int litehtml::el_image::render( int x, int y, int max_width )
 void litehtml::el_image::finish()
 {
 	m_src = get_attr(_t("src"), _t(""));
-	m_doc->container()->load_image(m_src.c_str(), NULL);
+	if(!m_src.empty())
+	{
+		m_doc->container()->load_image(m_src.c_str(), NULL);
+	}
 
 	const tchar_t* attr_height = get_attr(_t("height"));
 	if(attr_height)

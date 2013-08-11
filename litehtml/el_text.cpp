@@ -28,11 +28,6 @@ void litehtml::el_text::draw_content( uint_ptr hdc, const litehtml::position& po
 	m_doc->container()->draw_text(hdc, m_transformed_text.c_str(), font, color, pos);
 }
 
-void litehtml::el_text::apply_stylesheet( const litehtml::css& stylesheet )
-{
-
-}
-
 void litehtml::el_text::get_text( tstring& text )
 {
 	text += m_text;

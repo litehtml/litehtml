@@ -9,6 +9,7 @@ namespace litehtml
 		el_break(litehtml::document* doc);
 		virtual ~el_break();
 
-		virtual bool				is_break() const;
+		virtual bool	is_break() const;
+		virtual void	finish();
 	};
 }

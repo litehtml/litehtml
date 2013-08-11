@@ -9,7 +9,7 @@ namespace litehtml
 		el_tr(litehtml::document* doc);
 		virtual ~el_tr();
 
-		virtual void	parse_styles(bool is_reparse = false);
+		virtual void	finish();
 		virtual void	get_inline_boxes(position::vector& boxes);
 	};
 }

@@ -92,6 +92,10 @@ void litehtml::block_box::y_shift( int shift )
 	}
 }
 
+void litehtml::block_box::new_width( int left, int right, elements_vector& els )
+{
+
+}
 //////////////////////////////////////////////////////////////////////////
 
 litehtml::box_type litehtml::line_box::get_type()
@@ -354,4 +358,36 @@ bool litehtml::line_box::is_break_only()
 		return true;
 	}
 	return false;
+}
+
+void litehtml::line_box::new_width( int left, int right, elements_vector& els )
+{
+	int add = left - m_box_left;
+	if(add)
+	{
+		m_box_left	= left;
+		m_box_right	= right;
+		m_width = 0;
+		std::vector<element*>::iterator remove_begin = m_items.end();
+		for(std::vector<element*>::iterator i = m_items.begin() + 1; i != m_items.end(); i++)
+		{
+			if(!(*i)->m_skip)
+			{
+				if(m_box_left + m_width + (*i)->width() > m_box_right)
+				{
+					remove_begin = i;
+					break;
+				} else
+				{
+					(*i)->m_pos.x += add;
+					m_width += (*i)->width();
+				}
+			}
+		}
+		if(remove_begin != m_items.end())
+		{
+			els.insert(els.begin(), remove_begin, m_items.end());
+			m_items.erase(remove_begin, m_items.end());
+		}
+	}
 }

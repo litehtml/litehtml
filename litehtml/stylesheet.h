@@ -31,6 +31,9 @@ namespace litehtml
 		void	sort_selectors();
 		static void	parse_css_url(const tstring& str, tstring& url);
 
+	private:
+		void	parse_atrule(const tstring& text, const tchar_t* baseurl, document_container* doc);
+
 	};
 
 	inline void litehtml::css::add_selector( css_selector::ptr selector )

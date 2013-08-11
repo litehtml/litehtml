@@ -12,7 +12,6 @@ namespace litehtml
 		el_image(litehtml::document* doc);
 		virtual ~el_image(void);
 
-		virtual void	parse_styles(bool is_reparse = false);
 		virtual int		line_height() const;
 		virtual bool	is_replaced() const;
 		virtual int		render(int x, int y, int max_width);
