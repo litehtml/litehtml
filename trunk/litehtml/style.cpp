@@ -66,11 +66,11 @@ void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl
 	}
 }
 
-void litehtml::style::combine( const litehtml::style& src )
+void litehtml::style::combine( const litehtml::style& src, bool is_master )
 {
 	for(props_map::const_iterator i = src.m_properties.begin(); i != src.m_properties.end(); i++)
 	{
-		add_parsed_property(i->first.c_str(), i->second.m_value.c_str(), i->second.m_important);
+		add_parsed_property(i->first.c_str(), i->second.m_value.c_str(), i->second.m_important, is_master);
 	}
 }
 
@@ -567,15 +567,18 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 	add_parsed_property(_t("font-family"), font_family, important);
 }
 
-void litehtml::style::add_parsed_property( const tstring& name, const tstring& val, bool important )
+void litehtml::style::add_parsed_property( const tstring& name, const tstring& val, bool important, bool is_master )
 {
 	props_map::iterator prop = m_properties.find(name);
 	if(prop != m_properties.end())
 	{
-		if(!prop->second.m_important || important && prop->second.m_important)
+		if(!is_master)
 		{
-			prop->second.m_value		= val;
-			prop->second.m_important	= important;
+			if(!prop->second.m_important || important && prop->second.m_important)
+			{
+				prop->second.m_value		= val;
+				prop->second.m_important	= important;
+			}
 		}
 	} else
 	{

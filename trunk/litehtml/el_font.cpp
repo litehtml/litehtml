@@ -12,7 +12,7 @@ litehtml::el_font::~el_font()
 
 }
 
-void litehtml::el_font::parse_styles(bool is_reparse)
+void litehtml::el_font::finish()
 {
 	const tchar_t* str = get_attr(_t("color"));
 	if(str)
@@ -56,5 +56,5 @@ void litehtml::el_font::parse_styles(bool is_reparse)
 		}
 	}
 
-	html_tag::parse_styles(is_reparse);
+	html_tag::finish();
 }

@@ -20,56 +20,43 @@ void litehtml::css::parse_stylesheet( const tchar_t* str, const tchar_t* baseurl
 	tstring::size_type pos = text.find_first_not_of(_t(" \n\r\t"));
 	while(pos != tstring::npos)
 	{
-		while(text[pos] == _t('@'))
+		while(pos != tstring::npos && text[pos] == _t('@'))
 		{
 			tstring::size_type sPos = pos;
-			pos = text.find(_t(";"), pos);
-
-			if(text.substr(sPos, 7) == _t("@import"))
+			pos = text.find_first_of(_t(";{"), pos);
+			if(pos != tstring::npos && text[pos] == _t('{'))
 			{
-				sPos += 7;
-				tstring iStr;
-				if(pos == tstring::npos)
+				int cnt = 1;
+				while(cnt && pos < text.length())
 				{
-					iStr = text.substr(sPos);
-				} else
-				{
-					iStr = text.substr(sPos, pos - sPos);
-				}
-				trim(iStr);
-				string_vector tokens;
-				tokenize(iStr, tokens, _t(","), _t(""), _t("()\""));
-				if(!tokens.empty())
-				{
-					tstring url;
-					parse_css_url(tokens.front(), url);
-					if(url.empty())
+					pos++;
+					switch(text[pos])
 					{
-						url = tokens.front();
-					}
-					tokens.erase(tokens.begin());
-					if(doc)
-					{
-						tstring css_text;
-						tstring css_baseurl;
-						if(baseurl)
-						{
-							css_baseurl = baseurl;
-						}
-						doc->import_css(css_text, url, css_baseurl, tokens);
-						if(!css_text.empty())
-						{
-							parse_stylesheet(css_text.c_str(), css_baseurl.c_str(), doc);
-						}
+					case _t('{'):
+						cnt++;
+						break;
+					case _t('}'):
+						cnt--;
+						break;
 					}
 				}
+				if(pos >= text.length())
+				{
+					pos = tstring::npos;
+				}
+			}
+			if(pos != tstring::npos)
+			{
+				parse_atrule(text.substr(sPos, pos - sPos + 1), baseurl, doc);
+			} else
+			{
+				parse_atrule(text.substr(sPos), baseurl, doc);
 			}
 
-			if(pos == tstring::npos)
+			if(pos != tstring::npos)
 			{
-				break;
+				pos = text.find_first_not_of(_t(" \n\r\t"), pos + 1);
 			}
-			pos++;
 		}
 
 		if(pos == tstring::npos)
@@ -145,4 +132,45 @@ void litehtml::css::parse_selectors( const tstring& txt, litehtml::style::ptr st
 void litehtml::css::sort_selectors()
 {
 	sort(m_selectors.begin(), m_selectors.end(), std::less<css_selector::ptr>( ));
+}
+
+void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, document_container* doc )
+{
+	if(text.substr(0, 7) == _t("@import"))
+	{
+		int sPos = 7;
+		tstring iStr;
+		iStr = text.substr(sPos);
+		if(iStr[iStr.length() - 1] == _t(';'))
+		{
+			iStr.erase(iStr.length() - 1);
+		}
+		trim(iStr);
+		string_vector tokens;
+		tokenize(iStr, tokens, _t(","), _t(""), _t("()\""));
+		if(!tokens.empty())
+		{
+			tstring url;
+			parse_css_url(tokens.front(), url);
+			if(url.empty())
+			{
+				url = tokens.front();
+			}
+			tokens.erase(tokens.begin());
+			if(doc)
+			{
+				tstring css_text;
+				tstring css_baseurl;
+				if(baseurl)
+				{
+					css_baseurl = baseurl;
+				}
+				doc->import_css(css_text, url, css_baseurl, tokens);
+				if(!css_text.empty())
+				{
+					parse_stylesheet(css_text.c_str(), css_baseurl.c_str(), doc);
+				}
+			}
+		}
+	}
 }

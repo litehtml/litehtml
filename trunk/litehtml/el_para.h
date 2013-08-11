@@ -9,7 +9,7 @@ namespace litehtml
 		el_para(litehtml::document* doc);
 		virtual ~el_para();
 
-		virtual void	parse_styles(bool is_reparse = false);
+		virtual void	finish();
 
 	};
 }

@@ -71,7 +71,7 @@ namespace litehtml
 			return 0;
 		}
 
-		void combine(const litehtml::style& src);
+		void combine(const litehtml::style& src, bool is_master = false);
 		void clear()
 		{
 			m_properties.clear();
@@ -83,7 +83,7 @@ namespace litehtml
 		void parse_short_border(const tstring& prefix, const tstring& val, bool important);
 		void parse_short_background(const tstring& val, const tchar_t* baseurl, bool important);
 		void parse_short_font(const tstring& val, bool important);
-		void add_parsed_property(const tstring& name, const tstring& val, bool important);
+		void add_parsed_property(const tstring& name, const tstring& val, bool important, bool is_master = false);
 	};
 
 /*

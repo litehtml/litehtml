@@ -9,6 +9,6 @@ namespace litehtml
 		el_font(litehtml::document* doc);
 		virtual ~el_font();
 
-		virtual void parse_styles(bool is_reparse);
+		virtual void finish();
 	};
 }

@@ -15,3 +15,14 @@ bool litehtml::el_break::is_break() const
 {
 	return true;
 }
+
+void litehtml::el_break::finish()
+{
+	const tchar_t* attr_clear = get_attr(_t("clear"));
+	if(attr_clear)
+	{
+		m_style.add_property(_t("clear"), attr_clear, 0, false);
+	}
+
+	html_tag::finish();
+}

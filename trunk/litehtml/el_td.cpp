@@ -12,7 +12,7 @@ litehtml::el_td::~el_td()
 
 }
 
-void litehtml::el_td::parse_styles(bool is_reparse)
+void litehtml::el_td::finish()
 {
 	const tchar_t* str = get_attr(_t("width"));
 	if(str)
@@ -38,6 +38,6 @@ void litehtml::el_td::parse_styles(bool is_reparse)
 	{
 		m_style.add_property(_t("vertical-align"), str, 0, false);
 	}
-	html_tag::parse_styles(is_reparse);
+	html_tag::finish();
 }
 

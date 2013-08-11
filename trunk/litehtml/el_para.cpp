@@ -11,7 +11,7 @@ litehtml::el_para::~el_para()
 
 }
 
-void litehtml::el_para::parse_styles( bool is_reparse /*= false*/ )
+void litehtml::el_para::finish()
 {
 	const tchar_t* str = get_attr(_t("align"));
 	if(str)
@@ -19,5 +19,5 @@ void litehtml::el_para::parse_styles( bool is_reparse /*= false*/ )
 		m_style.add_property(_t("text-align"), str, 0, false);
 	}
 
-	html_tag::parse_styles(is_reparse);
+	html_tag::finish();
 }

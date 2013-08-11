@@ -97,7 +97,7 @@ namespace litehtml
 
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
 		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
-		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
+		virtual void				apply_stylesheet(const litehtml::css& stylesheet, bool is_master);
 		virtual bool				is_white_space();
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;

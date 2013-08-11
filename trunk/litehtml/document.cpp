@@ -95,7 +95,7 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 	{
 		doc->m_root->finish();
 
-		doc->m_root->apply_stylesheet(ctx->master_css());
+		doc->m_root->apply_stylesheet(ctx->master_css(), true);
 
 		for(css_text::vector::iterator css = doc->m_css.begin(); css != doc->m_css.end(); css++)
 		{
@@ -103,7 +103,7 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 		}
 		doc->m_styles.sort_selectors();
 
-		doc->m_root->apply_stylesheet(doc->m_styles);
+		doc->m_root->apply_stylesheet(doc->m_styles, false);
 
 		doc->m_root->parse_styles();
 	}
