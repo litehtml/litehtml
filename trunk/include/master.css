@@ -117,6 +117,11 @@ img[align="right"]
 	float: right;
 }
 
+img[align="left"]
+{
+	float: left;
+}
+
 hr {
     display: block;
     margin-top: 0.5em;
