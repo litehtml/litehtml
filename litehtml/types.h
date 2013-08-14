@@ -466,4 +466,13 @@ namespace litehtml
 		overflow_no_content
 	};
 
+#define background_size_strings		_t("auto;cover;contain")
+
+	enum background_size
+	{
+		background_size_auto,
+		background_size_cover,
+		background_size_contain,
+	};
+
 }

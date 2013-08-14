@@ -11,6 +11,7 @@ namespace litehtml
 		tstring			m_transformed_text;
 		size			m_size;
 		text_transform	m_text_transform;
+		bool			m_use_transformed;
 	public:
 		el_text(const tchar_t* text, litehtml::document* doc);
 		virtual ~el_text();

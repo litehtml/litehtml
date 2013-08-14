@@ -637,211 +637,6 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 		}
 	}
 
-
-/*
-	line::ptr lline = last_line();
-
-	int ln_bottom = lline->get_top() + lline->get_height();
-	if(!m_padding.bottom && !m_borders.bottom)
-	{
-		if(lline->get_margin_bottom() >= 0)
-		{
-			ln_bottom -= lline->get_margin_bottom();
-		}
-	}
-
-
-	if(!m_lines.empty())
-	{
-		m_pos.height = ln_bottom;
-
-		if(m_display == display_table_cell || is_body())
-		{
-			// remove top and bottom margins in table cell
-
-			int add = m_lines.front()->get_margin_top();
-			//m_margins.top = 0;
-			if(add)
-			{
-				for(line::vector::iterator ln = m_lines.begin(); ln != m_lines.end(); ln++)
-				{
-					(*ln)->add_top(-add);
-				}
-
-				m_pos.height -= add;
-			}
-
-			//m_margins.bottom	= 0;
-			m_pos.height		-= m_lines.back()->get_margin_bottom();
-		} else
-		{
-			if(!m_padding.top && !m_borders.top && m_lines.front()->collapse_top_margin())
-			{
-				int add = m_lines.front()->get_margin_top();
-				if(add)
-				{
-					m_margins.top = max(m_margins.top,	m_lines.front()->get_margin_top());
-					for(line::vector::iterator ln = m_lines.begin(); ln != m_lines.end(); ln++)
-					{
-						(*ln)->add_top(-add);
-					}
-
-					m_pos.height -= add;
-				}
-			}
-
-			if(!m_padding.bottom && !m_borders.bottom && m_lines.back()->collapse_bottom_margin())
-			{
-				m_margins.bottom	= max(m_margins.bottom,	m_lines.back()->get_margin_bottom());
-				m_pos.height		-= m_lines.back()->get_margin_bottom();
-			}
-		}
-	} else
-	{
-		m_pos.height = ln_bottom;
-	}
-
-	if(is_floats_holder())
-	{
-		int floats_height = get_floats_height();
-		if(floats_height > m_pos.height)
-		{
-			m_pos.height = floats_height;
-		}
-	}
-
-
-	m_pos.move_to(x, y);
-	m_pos.x	+= content_margins_left();
-	m_pos.y += content_margins_top();
-	if(m_el_position == element_position_relative)
-	{
-		m_pos.x += m_css_left.calc_percent(parent_width);
-	}
-
-	// TODO: Percents are incorrect
-	int block_height = m_css_height.calc_percent(m_pos.height);
-
-	if(block_height)
-	{
-		m_pos.height = block_height;
-	}
-
-	int min_height = m_css_min_height.calc_percent(m_pos.height);
-	if(min_height > m_pos.height)
-	{
-		m_pos.height = min_height;
-	}
-
-	ret_width += content_margins_left() + content_margins_right();
-
-	if((	m_display == display_inline_block						|| 
-			(m_float != float_none && m_css_width.is_predefined())	|| 
-			m_el_position == element_position_absolute ) 
-			
-			&& ret_width < max_width && !m_second_pass)
-	{
-		m_second_pass = true;
-		render(x, y, ret_width);
-		m_second_pass = false;
-		m_pos.width = ret_width - (content_margins_left() + content_margins_right());
-	}
-
-	int min_width = m_css_min_width.calc_percent(parent_width);
-	if(min_width != 0)
-	{
-		if(min_width > m_pos.width)
-		{
-			m_pos.width = min_width;
-			ret_width	= min_width;
-		}
-	}
-
-	int abs_base_x	= 0;
-	int abs_base_y	= 0;
-
-	int abs_base_width	= m_pos.width;
-	int abs_base_height	= m_pos.height;
-
-	for(elements_vector::iterator abs_el = m_absolutes.begin(); abs_el != m_absolutes.end(); abs_el++)
-	{
-		element* el = (*abs_el);
-
-		int left	= el->m_css_left.calc_percent(abs_base_width);
-		int right	= m_pos.width - el->m_css_right.calc_percent(abs_base_width);
-		int top		= el->m_css_top.calc_percent(abs_base_height);
-		int bottom	= m_pos.height - el->m_css_bottom.calc_percent(abs_base_height);
-		el->render(left, top, right - left);
-		int add = 0;
-		if(el->m_css_top.is_predefined())
-		{
-			add = m_padding.top;
-		}
-		if(el->m_css_bottom.is_predefined())
-		{
-			add = m_padding.bottom;
-		}
-		if(m_pos.height + add < el->top() + el->height())
-		{
-			m_pos.height = el->top() + el->height() - add;
-		}
-	}
-
-	for(elements_vector::iterator abs_el = m_absolutes.begin(); abs_el != m_absolutes.end(); abs_el++)
-	{
-		element* el = (*abs_el);
-
-		position parent_pos;
-		el->m_parent->get_abs_position(parent_pos, this);
-
-		int left	= el->m_css_left.calc_percent(abs_base_width);
-		int right	= m_pos.width - el->m_css_right.calc_percent(abs_base_width);
-		int top		= el->m_css_top.calc_percent(abs_base_height);
-		int bottom	= m_pos.height - el->m_css_bottom.calc_percent(abs_base_height);
-
-		bool need_render = false;
-
-		if(el->m_css_left.is_predefined() && el->m_css_right.is_predefined())
-		{
-			el->m_pos.x = parent_pos.left() + el->content_margins_left();
-		} else if(!el->m_css_left.is_predefined() && el->m_css_right.is_predefined())
-		{
-			el->m_pos.x = left - m_padding.left + el->content_margins_left();
-		} else if(el->m_css_left.is_predefined() && !el->m_css_right.is_predefined())
-		{
-			el->m_pos.x = right - el->width() + el->content_margins_right() + m_padding.right;
-		} else
-		{
-			el->m_pos.x		= left - m_padding.left + el->content_margins_left();
-			el->m_pos.width	= (right + el->content_margins_right() + m_padding.right) - el->m_pos.x;
-			need_render = true;
-		}
-
-		if(el->m_css_top.is_predefined() && el->m_css_bottom.is_predefined())
-		{
-			el->m_pos.y = parent_pos.top() + el->content_margins_top();
-		} else if(!el->m_css_top.is_predefined() && el->m_css_bottom.is_predefined())
-		{
-			el->m_pos.y = top - m_padding.top + el->content_margins_top();
-		} else if(el->m_css_top.is_predefined() && !el->m_css_bottom.is_predefined())
-		{
-			el->m_pos.y = bottom - el->height() + el->content_margins_bottom() + m_padding.bottom;
-		} else
-		{
-			el->m_pos.y			= top - m_padding.top + el->content_margins_top();
-			el->m_pos.height	= (bottom + el->content_margins_bottom() + m_padding.bottom) - el->m_pos.y;
-			need_render = true;
-		}
-
-		if(need_render)
-		{
-			position pos = el->m_pos;
-			el->render(el->left(), el->right(), el->width());
-			el->m_pos = pos;
-		}
-	}
-*/
-
 	return ret_width;
 }
 
@@ -1423,6 +1218,33 @@ void litehtml::html_tag::parse_background()
 		m_bg.m_position.x.set_value(0, css_units_percentage);
 	}
 
+	str = get_style_property(_t("background-size"), false, _t("auto"));
+	if(str)
+	{
+		string_vector res;
+		tokenize(str, res, _t(" \t"));
+		if(!res.empty())
+		{
+			m_bg.m_position.width.fromString(res[0], background_size_strings);
+			if(res.size() > 1)
+			{
+				m_bg.m_position.height.fromString(res[1], background_size_strings);
+			} else
+			{
+				m_bg.m_position.height.predef(background_size_auto);
+			}
+		} else
+		{
+			m_bg.m_position.width.predef(background_size_auto);
+			m_bg.m_position.height.predef(background_size_auto);
+		}
+	}
+
+	m_doc->cvt_units(m_bg.m_position.x,			m_font_size);
+	m_doc->cvt_units(m_bg.m_position.y,			m_font_size);
+	m_doc->cvt_units(m_bg.m_position.width,		m_font_size);
+	m_doc->cvt_units(m_bg.m_position.height,	m_font_size);
+
 	// parse background_attachment
 	m_bg.m_attachment = (background_attachment) value_index(
 		get_style_property(_t("background-attachment"), false, _t("scroll")), 
@@ -1443,7 +1265,7 @@ void litehtml::html_tag::parse_background()
 
 	// parse background_origin
 	m_bg.m_origin = (background_box) value_index(
-		get_style_property(_t("background-origin"), false, _t("content-box")), 
+		get_style_property(_t("background-origin"), false, _t("padding-box")), 
 		background_box_strings, 
 		background_box_content);
 
@@ -1929,43 +1751,14 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 	{
 		if(el_pos.does_intersect(clip))
 		{
-			background bg = get_background();
-			position bg_draw_pos = pos;
-			switch(bg.m_clip)
-			{
-			case background_box_padding:
-				bg_draw_pos += m_padding;
-				break;
-			case background_box_border:
-				bg_draw_pos += m_padding;
-				bg_draw_pos += m_borders;
-				break;
-			}
+			background_paint bg_paint;
+			init_background_paint(pos, bg_paint);
 
-			if(bg.m_color.alpha)
-			{
-				m_doc->container()->fill_rect(hdc, bg_draw_pos, bg.m_color, m_css_borders.radius);
-			}
-			if(!bg.m_image.empty())
-			{
-				m_doc->container()->draw_background(hdc, 
-					bg.m_image.c_str(), 
-					bg.m_baseurl.c_str(), 
-					bg_draw_pos, 
-					bg.m_position,
-					bg.m_repeat, 
-					bg.m_attachment);
-			}
-
-			bg_draw_pos = pos;
-			bg_draw_pos += m_padding;
-			bg_draw_pos += m_borders;
-			m_doc->container()->draw_borders(hdc, m_css_borders, bg_draw_pos);
+			m_doc->container()->draw_background(hdc, bg_paint);
+			m_doc->container()->draw_borders(hdc, m_css_borders, bg_paint.border_box);
 		}
 	} else
 	{
-		background bg = get_background();
-
 		position::vector boxes;
 		get_inline_boxes(boxes);
 
@@ -1976,13 +1769,31 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 
 			if(box->does_intersect(clip))
 			{
-				position bg_pos = *box;
-				bg_pos -= m_borders;
+				background_paint bg_paint;
+				position content_box = *box;
+				content_box -= m_borders;
+				content_box -= m_padding;
 
-				if(bg.m_color.alpha)
+				init_background_paint(content_box, bg_paint);
+
+				bg_paint.border_radius	= css_border_radius();
+
+				if(box == boxes.begin())
 				{
-					m_doc->container()->fill_rect(hdc, bg_pos, bg.m_color, css_border_radius());
+					bg_paint.border_radius.bottom_left_x	= m_css_borders.radius.bottom_left_x;
+					bg_paint.border_radius.bottom_left_y	= m_css_borders.radius.bottom_left_y;
+					bg_paint.border_radius.top_left_x		= m_css_borders.radius.top_left_x;
+					bg_paint.border_radius.top_left_y		= m_css_borders.radius.top_left_y;
 				}
+				if(box == boxes.end() - 1)
+				{
+					bg_paint.border_radius.bottom_right_x	= m_css_borders.radius.bottom_right_x;
+					bg_paint.border_radius.bottom_right_y	= m_css_borders.radius.bottom_right_y;
+					bg_paint.border_radius.top_right_x		= m_css_borders.radius.top_right_x;
+					bg_paint.border_radius.top_right_y		= m_css_borders.radius.top_right_y;
+				}
+
+				m_doc->container()->draw_background(hdc, bg_paint);
 
 				css_borders bdr;
 				bdr.top		= m_css_borders.top;
@@ -1995,6 +1806,7 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 				{
 					bdr.right	= m_css_borders.right;
 				}
+				bdr.radius = bg_paint.border_radius;
 				m_doc->container()->draw_borders(hdc, bdr, *box);
 			}
 		}
@@ -2471,4 +2283,106 @@ void litehtml::html_tag::apply_vertical_align()
 litehtml::element_position litehtml::html_tag::get_element_position() const
 {
 	return m_el_position;
+}
+
+void litehtml::html_tag::init_background_paint( position pos, background_paint &bg_paint )
+{
+	bg_paint = m_bg;
+	position content_box	= pos;
+	position padding_box	= pos;
+	padding_box += m_padding;
+	position border_box		= padding_box;
+	border_box += m_borders;
+
+	switch(m_bg.m_clip)
+	{
+	case litehtml::background_box_padding:
+		bg_paint.clip_box = padding_box;
+		break;
+	case litehtml::background_box_content:
+		bg_paint.clip_box = content_box;
+		break;
+	default:
+		bg_paint.clip_box = border_box;
+		break;
+	}
+
+	switch(m_bg.m_origin)
+	{
+	case litehtml::background_box_border:
+		bg_paint.origin_box = border_box;
+		break;
+	case litehtml::background_box_content:
+		bg_paint.origin_box = content_box;
+		break;
+	default:
+		bg_paint.origin_box = padding_box;
+		break;
+	}
+
+	if(!bg_paint.image.empty())
+	{
+		m_doc->container()->get_image_size(bg_paint.image.c_str(), bg_paint.baseurl.c_str(), bg_paint.image_size);
+		if(bg_paint.image_size.width && bg_paint.image_size.height)
+		{
+			litehtml::size img_new_sz = bg_paint.image_size;
+			double img_ar_width		= (double) bg_paint.image_size.width / (double) bg_paint.image_size.height;
+			double img_ar_height	= (double) bg_paint.image_size.height / (double) bg_paint.image_size.width;
+
+
+			if(m_bg.m_position.width.is_predefined())
+			{
+				switch(m_bg.m_position.width.predef())
+				{
+				case litehtml::background_size_contain:
+					if( (int) ((double) bg_paint.origin_box.width * img_ar_height) <= bg_paint.origin_box.height )
+					{
+						img_new_sz.width = bg_paint.origin_box.width;
+						img_new_sz.height	= (int) ((double) bg_paint.origin_box.width * img_ar_height);
+					} else
+					{
+						img_new_sz.height = bg_paint.origin_box.height;
+						img_new_sz.width	= (int) ((double) bg_paint.origin_box.height * img_ar_width);
+					}
+					break;
+				case litehtml::background_size_cover:
+					if( (int) ((double) bg_paint.origin_box.width * img_ar_height) >= bg_paint.origin_box.height )
+					{
+						img_new_sz.width = bg_paint.origin_box.width;
+						img_new_sz.height	= (int) ((double) bg_paint.origin_box.width * img_ar_height);
+					} else
+					{
+						img_new_sz.height = bg_paint.origin_box.height;
+						img_new_sz.width	= (int) ((double) bg_paint.origin_box.height * img_ar_width);
+					}
+					break;
+					break;
+				case litehtml::background_size_auto:
+					if(!m_bg.m_position.height.is_predefined())
+					{
+						img_new_sz.height	= m_bg.m_position.height.calc_percent(bg_paint.origin_box.height);
+						img_new_sz.width	= (int) ((double) img_new_sz.height * img_ar_width);
+					}
+					break;
+				}
+			} else
+			{
+				img_new_sz.width = m_bg.m_position.width.calc_percent(bg_paint.origin_box.width);
+				if(m_bg.m_position.height.is_predefined())
+				{
+					img_new_sz.height = (int) ((double) img_new_sz.width * img_ar_height);
+				} else
+				{
+					img_new_sz.height = m_bg.m_position.height.calc_percent(bg_paint.origin_box.height);
+				}
+			}
+
+			bg_paint.image_size = img_new_sz;
+			bg_paint.position_x = bg_paint.origin_box.x + (int) m_bg.m_position.x.calc_percent(bg_paint.origin_box.width - bg_paint.image_size.width);
+			bg_paint.position_y = bg_paint.origin_box.y + (int) m_bg.m_position.y.calc_percent(bg_paint.origin_box.height - bg_paint.image_size.height);
+		}
+
+	}
+	bg_paint.border_radius	= m_css_borders.radius;
+	bg_paint.border_box		= border_box;
 }

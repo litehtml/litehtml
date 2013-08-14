@@ -88,7 +88,7 @@ namespace litehtml
 			return m_units;
 		}
 
-		int calc_percent(int width)
+		int calc_percent(int width) const
 		{
 			if(!is_predefined())
 			{
