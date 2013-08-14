@@ -370,7 +370,7 @@ void litehtml::el_table::draw( uint_ptr hdc, int x, int y, const position* clip 
 	}
 }
 
-void litehtml::el_table::finish()
+void litehtml::el_table::parse_attributes()
 {
 	const tchar_t* str = get_attr(_t("width"));
 	if(str)
@@ -404,5 +404,5 @@ void litehtml::el_table::finish()
 		val += str;
 		m_style.add_property(_t("border-spacing"), val.c_str(), 0, false);
 	}
-	html_tag::finish();
+	html_tag::parse_attributes();
 }

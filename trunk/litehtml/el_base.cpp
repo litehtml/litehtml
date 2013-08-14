@@ -12,7 +12,7 @@ litehtml::el_base::~el_base()
 
 }
 
-void litehtml::el_base::finish()
+void litehtml::el_base::parse_attributes()
 {
 	m_doc->container()->set_base_url(get_attr(_t("href")));
 }

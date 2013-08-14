@@ -26,7 +26,7 @@ namespace litehtml
 		virtual bool	appendChild(litehtml::element* el);
 		virtual void	parse_styles(bool is_reparse = false);
 		virtual void	draw(uint_ptr hdc, int x, int y, const position* clip);
-		virtual void	finish();
+		virtual void	parse_attributes();
 
 	protected:
 		virtual void	init();

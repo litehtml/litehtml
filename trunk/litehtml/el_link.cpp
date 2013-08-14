@@ -13,7 +13,7 @@ litehtml::el_link::~el_link()
 
 }
 
-void litehtml::el_link::finish()
+void litehtml::el_link::parse_attributes()
 {
 	m_doc->container()->link(m_doc, this);
 }

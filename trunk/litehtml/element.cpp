@@ -165,7 +165,7 @@ const litehtml::tchar_t* litehtml::element::get_tagName() const						LITEHTML_RE
 void litehtml::element::set_tagName( const tchar_t* tag )							LITEHTML_EMPTY_FUNC
 void litehtml::element::set_data( const tchar_t* data )								LITEHTML_EMPTY_FUNC
 void litehtml::element::set_attr( const tchar_t* name, const tchar_t* val )			LITEHTML_EMPTY_FUNC
-void litehtml::element::apply_stylesheet( const litehtml::css& stylesheet, bool is_master )			LITEHTML_EMPTY_FUNC
+void litehtml::element::apply_stylesheet( const litehtml::css& stylesheet )			LITEHTML_EMPTY_FUNC
 void litehtml::element::on_click( int x, int y )									LITEHTML_EMPTY_FUNC
 void litehtml::element::init_font()													LITEHTML_EMPTY_FUNC
 void litehtml::element::get_inline_boxes( position::vector& boxes )					LITEHTML_EMPTY_FUNC
@@ -194,7 +194,7 @@ const litehtml::tchar_t* litehtml::element::get_style_property( const tchar_t* n
 litehtml::uint_ptr litehtml::element::get_font( font_metrics* fm /*= 0*/ )			LITEHTML_RETURN_FUNC(0)
 int litehtml::element::get_font_size()												LITEHTML_RETURN_FUNC(0)
 void litehtml::element::get_text( tstring& text )									LITEHTML_EMPTY_FUNC
-void litehtml::element::finish()													LITEHTML_EMPTY_FUNC
+void litehtml::element::parse_attributes()											LITEHTML_EMPTY_FUNC
 int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(0)
 int litehtml::element::select( const css_element_selector& selector, bool apply_pseudo /*= true*/ )	LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::select( const tchar_t* selectors )								LITEHTML_RETURN_FUNC(false)
