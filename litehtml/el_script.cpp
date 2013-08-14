@@ -13,7 +13,7 @@ litehtml::el_script::~el_script()
 
 }
 
-void litehtml::el_script::finish()
+void litehtml::el_script::parse_attributes()
 {
 	//TODO: pass script text to document container
 }

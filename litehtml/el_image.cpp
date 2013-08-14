@@ -184,7 +184,7 @@ int litehtml::el_image::render( int x, int y, int max_width )
 	return m_pos.width + content_margins_left() + content_margins_right();
 }
 
-void litehtml::el_image::finish()
+void litehtml::el_image::parse_attributes()
 {
 	m_src = get_attr(_t("src"), _t(""));
 	if(!m_src.empty())

@@ -13,7 +13,7 @@ litehtml::el_style::~el_style()
 
 }
 
-void litehtml::el_style::finish()
+void litehtml::el_style::parse_attributes()
 {
 	m_doc->add_stylesheet(m_text.c_str(), 0);
 }

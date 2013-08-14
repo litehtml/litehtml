@@ -9,7 +9,7 @@ namespace litehtml
 		el_para(litehtml::document* doc);
 		virtual ~el_para();
 
-		virtual void	finish();
+		virtual void	parse_attributes();
 
 	};
 }

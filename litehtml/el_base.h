@@ -9,6 +9,6 @@ namespace litehtml
 		el_base(litehtml::document* doc);
 		virtual ~el_base();
 
-		virtual void	finish();
+		virtual void	parse_attributes();
 	};
 }

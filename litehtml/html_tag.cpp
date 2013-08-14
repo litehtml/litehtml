@@ -111,7 +111,7 @@ bool litehtml::html_tag::select_one( const tstring& selector )
 	return false;
 }
 
-void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet, bool is_master )
+void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 {
 	for(litehtml::css_selector::vector::const_iterator sel = stylesheet.selectors().begin(); sel != stylesheet.selectors().end(); sel++)
 	{
@@ -124,12 +124,12 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet, bool
 			{
 				if(select(*(*sel), true))
 				{
-					m_style.combine(*((*sel)->m_style), is_master);
+					m_style.combine(*((*sel)->m_style));
 					us->m_used = true;
 				}
 			} else
 			{
-				m_style.combine(*((*sel)->m_style), is_master);
+				m_style.combine(*((*sel)->m_style));
 				us->m_used = true;
 			}
 			m_used_styles.push_back(us);
@@ -138,7 +138,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet, bool
 
 	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
-		(*i)->apply_stylesheet(stylesheet, is_master);
+		(*i)->apply_stylesheet(stylesheet);
 	}
 }
 
@@ -1323,11 +1323,11 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 	}
 }
 
-void litehtml::html_tag::finish()
+void litehtml::html_tag::parse_attributes()
 {
 	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
-		(*i)->finish();
+		(*i)->parse_attributes();
 	}
 }
 

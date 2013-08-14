@@ -12,7 +12,7 @@ litehtml::el_title::~el_title()
 
 }
 
-void litehtml::el_title::finish()
+void litehtml::el_title::parse_attributes()
 {
 	tstring text;
 	get_text(text);

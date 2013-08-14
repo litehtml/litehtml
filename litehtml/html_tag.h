@@ -101,7 +101,7 @@ namespace litehtml
 
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
 		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
-		virtual void				apply_stylesheet(const litehtml::css& stylesheet, bool is_master);
+		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual bool				is_white_space();
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
@@ -136,7 +136,7 @@ namespace litehtml
 		virtual bool				select(const tchar_t* selectors);
 		virtual element*			find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual void				get_text(tstring& text);
-		virtual void				finish();
+		virtual void				parse_attributes();
 
 		virtual bool				is_first_child(const element* el);
 		virtual bool				is_last_child(const element* el);

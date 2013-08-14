@@ -10,7 +10,7 @@ namespace litehtml
 		el_script(litehtml::document* doc);
 		virtual ~el_script();
 
-		virtual void			finish();
+		virtual void			parse_attributes();
 		virtual bool			appendChild(litehtml::element* el);
 		virtual const tchar_t*	get_tagName() const;
 	};

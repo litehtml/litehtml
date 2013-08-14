@@ -12,7 +12,7 @@ litehtml::el_tr::~el_tr()
 
 }
 
-void litehtml::el_tr::finish()
+void litehtml::el_tr::parse_attributes()
 {
 	const tchar_t* str = get_attr(_t("align"));
 	if(str)
@@ -24,7 +24,7 @@ void litehtml::el_tr::finish()
 	{
 		m_style.add_property(_t("vertical-align"), str, 0, false);
 	}
-	html_tag::finish();
+	html_tag::parse_attributes();
 }
 
 void litehtml::el_tr::get_inline_boxes( position::vector& boxes )

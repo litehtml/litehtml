@@ -10,6 +10,6 @@ namespace litehtml
 		virtual ~el_title();
 
 	protected:
-		virtual void	finish();
+		virtual void	parse_attributes();
 	};
 }
