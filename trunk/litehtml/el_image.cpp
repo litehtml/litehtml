@@ -19,7 +19,20 @@ void litehtml::el_image::get_content_size( size& sz, int max_width )
 
 void litehtml::el_image::draw_content( uint_ptr hdc, const litehtml::position& pos )
 {
-	m_doc->container()->draw_image(hdc, m_src.c_str(), 0, pos);
+	background_paint bg;
+	bg.image				= m_src;
+	bg.clip_box				= pos;
+	bg.origin_box			= pos;
+	bg.border_box			= pos;
+	bg.border_box			+= m_padding;
+	bg.border_box			+= m_borders;
+	bg.repeat				= background_repeat_no_repeat;
+	bg.image_size.width		= pos.width;
+	bg.image_size.height	= pos.height;
+	bg.border_radius		= m_css_borders.radius;
+	bg.position_x			= pos.x;
+	bg.position_y			= pos.y;
+	m_doc->container()->draw_background(hdc, bg);
 }
 
 int litehtml::el_image::line_height() const

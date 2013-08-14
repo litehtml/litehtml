@@ -31,7 +31,7 @@ public:
 	virtual void						delete_font(litehtml::uint_ptr hFont);
 	virtual int							text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont);
 	virtual void						draw_text(litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos);
-	virtual void						fill_rect(litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius);
+
 	virtual int							pt_to_px(int pt);
 	virtual int							get_default_font_size();
 	virtual const litehtml::tchar_t*	get_default_font_name();
@@ -39,13 +39,7 @@ public:
 	virtual void						load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl);
 	virtual void						get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz);
 	virtual void						draw_image(litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos);
-	virtual void						draw_background(litehtml::uint_ptr hdc, 
-														const litehtml::tchar_t* image, 
-														const litehtml::tchar_t* baseurl, 
-														const litehtml::position& draw_pos,
-														const litehtml::css_position& bg_pos,
-														litehtml::background_repeat repeat, 
-														litehtml::background_attachment attachment);
+	virtual void						draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg);
 	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos);
 
 	virtual	litehtml::tchar_t			toupper(const litehtml::tchar_t c);
@@ -61,6 +55,7 @@ public:
 protected:
 	virtual void						draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width);
 	virtual void						fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color);
+	virtual void						rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &radius );
 
 private:
 	simpledib::dib*						get_dib(litehtml::uint_ptr hdc)	{ return (simpledib::dib*) hdc;				}

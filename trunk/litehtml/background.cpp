@@ -40,3 +40,19 @@ void litehtml::background::operator=( const background& val )
 	m_clip			= val.m_clip;
 	m_origin		= val.m_origin;
 }
+
+
+litehtml::background_paint::background_paint() : color(0, 0, 0, 0)
+{
+	position_x	= 0;
+	position_y	= 0;
+}
+
+void litehtml::background_paint::operator=( const background& val )
+{
+	attachment	= val.m_attachment;
+	baseurl		= val.m_baseurl;
+	image		= val.m_image;
+	repeat	= val.m_repeat;
+	color		= val.m_color;
+}

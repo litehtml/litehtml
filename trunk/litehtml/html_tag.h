@@ -123,6 +123,7 @@ namespace litehtml
 		virtual void				parse_styles(bool is_reparse = false);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
+
 		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
 		virtual int					get_font_size();
@@ -154,10 +155,11 @@ namespace litehtml
 		virtual int					find_next_line_top(int top, int width, int def_right);
 		virtual void				apply_vertical_align();
 
-	private:
+	protected:
 		bool						select_one(const tstring& selector);
 		void						fix_line_width(int max_width, element_float flt);
 		void						parse_background();
+		void						init_background_paint( position pos, background_paint &bg_paint );
 
 	private:
 		bool	m_second_pass;

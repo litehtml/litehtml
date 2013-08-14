@@ -93,51 +93,6 @@ void cairo_container::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
 	cairo_restore(cr);
 }
 
-void cairo_container::fill_rect( litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius )
-{
-	if(hdc)
-	{
-		cairo_t* cr = (cairo_t*) hdc;
-		cairo_save(cr);
-		apply_clip(cr);
-
-		cairo_new_path(cr);
-
-		if(radius.top_left_x.val())
-		{
-			cairo_arc(cr, pos.left() + radius.top_left_x.val(), pos.top() + radius.top_left_x.val(), radius.top_left_x.val(), M_PI, M_PI * 3.0 / 2.0);
-		} else
-		{
-			cairo_move_to(cr, pos.left(), pos.top());
-		}
-		
-		cairo_line_to(cr, pos.right() - radius.top_right_x.val(), pos.top());
-		
-		if(radius.top_right_x.val())
-		{
-			cairo_arc(cr, pos.right() - radius.top_right_x.val(), pos.top() + radius.top_right_x.val(), radius.top_right_x.val(), M_PI * 3.0 / 2.0, 2.0 * M_PI);
-		}
-
-		cairo_line_to(cr, pos.right(), pos.bottom() - radius.bottom_right_x.val());
-
-		if(radius.bottom_right_x.val())
-		{
-			cairo_arc(cr, pos.right() - radius.bottom_right_x.val(), pos.bottom() - radius.bottom_right_x.val(), radius.bottom_right_x.val(), 0, M_PI / 2.0);
-		}
-
-		cairo_line_to(cr, pos.left() - radius.bottom_left_x.val(), pos.bottom());
-		
-		if(radius.bottom_left_x.val())
-		{
-			cairo_arc(cr, pos.left() + radius.bottom_left_x.val(), pos.bottom() - radius.bottom_left_x.val(), radius.bottom_left_x.val(), M_PI / 2.0, M_PI);
-		}
-
-		set_color(cr, color);
-		cairo_fill(cr);
-		cairo_restore(cr);
-	}
-}
-
 int cairo_container::pt_to_px( int pt )
 {
 	HDC dc = GetDC(NULL);
@@ -173,8 +128,17 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, litehtml::list_s
 		}
 		break;
 	case litehtml::list_style_type_square:
+		if(hdc)
 		{
-			fill_rect(hdc, litehtml::position(draw_x, draw_y, draw_width, draw_height), color, litehtml::css_border_radius());
+			cairo_t* cr = (cairo_t*) hdc;
+			cairo_save(cr);
+
+			cairo_new_path(cr);
+			cairo_rectangle(cr, draw_x, draw_y, draw_width, draw_height);
+
+			set_color(cr, color);
+			cairo_fill(cr);
+			cairo_restore(cr);
 		}
 		break;
 	}
@@ -223,82 +187,81 @@ void cairo_container::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_
 	cairo_restore(cr);
 }
 
-void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::tchar_t* image, const litehtml::tchar_t* baseurl, const litehtml::position& draw_pos, const litehtml::css_position& bg_pos, litehtml::background_repeat repeat, litehtml::background_attachment attachment )
+void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::background_paint& bg )
 {
 	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
-	cairo_rectangle(cr, draw_pos.x, draw_pos.y, draw_pos.width, draw_pos.height);
+	rounded_rectangle(cr, bg.border_box, bg.border_radius);
 	cairo_clip(cr);
 
+	cairo_rectangle(cr, bg.clip_box.x, bg.clip_box.y, bg.clip_box.width, bg.clip_box.height);
+	cairo_clip(cr);
+
+	if(bg.color.alpha)
+	{
+		set_color(cr, bg.color);
+		cairo_paint(cr);
+	}
+
 	litehtml::tstring url;
-	make_url(image, baseurl, url);
+	make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
 
 	images_map::iterator img_i = m_images.find(url.c_str());
 	if(img_i != m_images.end())
 	{
 		CTxDIB* bgbmp = img_i->second;
 		
-		litehtml::size img_sz;
-		img_sz.width	= bgbmp->getWidth();
-		img_sz.height	= bgbmp->getHeight();
-
-		int bg_x = draw_pos.x;
-		int bg_y = draw_pos.y;
-
-
-		if(bg_pos.x.units() != litehtml::css_units_percentage)
+		CTxDIB* new_img = 0;
+		if(bg.image_size.width != bgbmp->getWidth() || bg.image_size.height != bgbmp->getHeight())
 		{
-			bg_x += (int) bg_pos.x.val();
-		} else
-		{
-			bg_x += (int) ((float) (draw_pos.width - img_sz.width) * bg_pos.x.val() / 100.0);
+			new_img = new CTxDIB;
+			bgbmp->resample(bg.image_size.width, bg.image_size.height, new_img);
+			bgbmp = new_img;
 		}
 
-		if(bg_pos.y.units() != litehtml::css_units_percentage)
-		{
-			bg_y += (int) bg_pos.y.val();
-		} else
-		{
-			bg_y += (int) ( (float) (draw_pos.height - img_sz.height) * bg_pos.y.val() / 100.0);
-		}
 
 		cairo_surface_t* img = cairo_image_surface_create_for_data((unsigned char*) bgbmp->getBits(), CAIRO_FORMAT_ARGB32, bgbmp->getWidth(), bgbmp->getHeight(), bgbmp->getWidth() * 4);
 		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(img);
 		cairo_matrix_t flib_m;
 		cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
-		cairo_matrix_translate(&flib_m, -bg_x, -bg_y);
+		cairo_matrix_translate(&flib_m, -bg.position_x, -bg.position_y);
 		cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
 		cairo_pattern_set_matrix (pattern, &flib_m);
 
-		switch(repeat)
+		switch(bg.repeat)
 		{
 		case litehtml::background_repeat_no_repeat:
-			draw_txdib(cr, bgbmp, bg_x, bg_y, bgbmp->getWidth(), bgbmp->getHeight());
+			draw_txdib(cr, bgbmp, bg.position_x, bg.position_y, bgbmp->getWidth(), bgbmp->getHeight());
 			break;
 
 		case litehtml::background_repeat_repeat_x:
 			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, draw_pos.left(), bg_y, draw_pos.width, bgbmp->getHeight());
+			cairo_rectangle(cr, bg.clip_box.left(), bg.position_y, bg.clip_box.width, bgbmp->getHeight());
 			cairo_fill(cr);
 			break;
 
 		case litehtml::background_repeat_repeat_y:
 			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, bg_x, draw_pos.top(), bgbmp->getWidth(), draw_pos.height);
+			cairo_rectangle(cr, bg.position_x, bg.clip_box.top(), bgbmp->getWidth(), bg.clip_box.height);
 			cairo_fill(cr);
 			break;
 
 		case litehtml::background_repeat_repeat:
 			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, draw_pos.left(), draw_pos.top(), draw_pos.width, draw_pos.height);
+			cairo_rectangle(cr, bg.clip_box.left(), bg.clip_box.top(), bg.clip_box.width, bg.clip_box.height);
 			cairo_fill(cr);
 			break;
 		}
 
 		cairo_pattern_destroy(pattern);
 		cairo_surface_destroy(img);
+
+		if(new_img)
+		{
+			delete new_img;
+		}
 	}
 	cairo_restore(cr);
 }
@@ -758,3 +721,35 @@ void cairo_container::draw_txdib( cairo_t* cr, CTxDIB* bmp, int x, int y, int cx
 	cairo_surface_destroy(img);
 }
 
+void cairo_container::rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &radius )
+{
+	cairo_new_path(cr);
+	if(radius.top_left_x.val())
+	{
+		cairo_arc(cr, pos.left() + radius.top_left_x.val(), pos.top() + radius.top_left_x.val(), radius.top_left_x.val(), M_PI, M_PI * 3.0 / 2.0);
+	} else
+	{
+		cairo_move_to(cr, pos.left(), pos.top());
+	}
+
+	cairo_line_to(cr, pos.right() - radius.top_right_x.val(), pos.top());
+
+	if(radius.top_right_x.val())
+	{
+		cairo_arc(cr, pos.right() - radius.top_right_x.val(), pos.top() + radius.top_right_x.val(), radius.top_right_x.val(), M_PI * 3.0 / 2.0, 2.0 * M_PI);
+	}
+
+	cairo_line_to(cr, pos.right(), pos.bottom() - radius.bottom_right_x.val());
+
+	if(radius.bottom_right_x.val())
+	{
+		cairo_arc(cr, pos.right() - radius.bottom_right_x.val(), pos.bottom() - radius.bottom_right_x.val(), radius.bottom_right_x.val(), 0, M_PI / 2.0);
+	}
+
+	cairo_line_to(cr, pos.left() - radius.bottom_left_x.val(), pos.bottom());
+
+	if(radius.bottom_left_x.val())
+	{
+		cairo_arc(cr, pos.left() + radius.bottom_left_x.val(), pos.bottom() - radius.bottom_left_x.val(), radius.bottom_left_x.val(), M_PI / 2.0, M_PI);
+	}
+}

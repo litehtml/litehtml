@@ -9,6 +9,7 @@ litehtml::el_text::el_text( const tchar_t* text, litehtml::document* doc ) : ele
 		m_text = text;
 	}
 	m_text_transform	= text_transform_none;
+	m_use_transformed	= false;
 }
 
 litehtml::el_text::~el_text()
@@ -25,7 +26,7 @@ void litehtml::el_text::draw_content( uint_ptr hdc, const litehtml::position& po
 {
 	uint_ptr font = m_parent->get_font();
 	litehtml::web_color color = m_parent->get_color(_t("color"), true, m_doc->get_def_color());
-	m_doc->container()->draw_text(hdc, m_transformed_text.c_str(), font, color, pos);
+	m_doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
 }
 
 void litehtml::el_text::get_text( tstring& text )
@@ -45,9 +46,10 @@ const litehtml::tchar_t* litehtml::el_text::get_style_property( const tchar_t* n
 void litehtml::el_text::parse_styles(bool is_reparse)
 {
 	m_text_transform	= (text_transform)	value_index(get_style_property(_t("text-transform"), true,	_t("none")),	text_transform_strings,	text_transform_none);
-	m_transformed_text	= m_text;
 	if(m_text_transform != text_transform_none)
 	{
+		m_transformed_text	= m_text;
+		m_use_transformed = true;
 		switch(m_text_transform)
 		{
 		case text_transform_capitalize:
@@ -76,15 +78,18 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 	if(is_white_space())
 	{
 		m_transformed_text = _t(" ");
+		m_use_transformed = true;
 	} else
 	{
 		if(m_text == _t("\t"))
 		{
 			m_transformed_text = _t("    ");
+			m_use_transformed = true;
 		}
 		if(m_text == _t("\n") || m_text == _t("\r"))
 		{
 			m_transformed_text = _t("");
+			m_use_transformed = true;
 		}
 	}
 
@@ -97,7 +102,7 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 	} else
 	{
 		m_size.height	= fm.height;
-		m_size.width	= m_doc->container()->text_width(m_transformed_text.c_str(), font);
+		m_size.width	= m_doc->container()->text_width(m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font);
 	}
 
 	if(m_parent->get_display() == display_inline)

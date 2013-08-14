@@ -23,7 +23,6 @@ namespace litehtml
 		virtual void			delete_font(uint_ptr hFont) = 0;
 		virtual int				text_width(const tchar_t* text, uint_ptr hFont) = 0;
 		virtual void			draw_text(uint_ptr hdc, const tchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;
-		virtual void			fill_rect(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius) = 0;
 		virtual int				pt_to_px(int pt) = 0;
 		virtual int				get_default_font_size() = 0;
 		virtual const tchar_t*	get_default_font_name() = 0;
@@ -31,13 +30,7 @@ namespace litehtml
 		virtual void			load_image(const tchar_t* src, const tchar_t* baseurl) = 0;
 		virtual void			get_image_size(const tchar_t* src, const tchar_t* baseurl, litehtml::size& sz) = 0;
 		virtual void			draw_image(uint_ptr hdc, const tchar_t* src, const tchar_t* baseurl, const litehtml::position& pos) = 0;
-		virtual void			draw_background(uint_ptr hdc, 
-											const tchar_t* image, 
-											const tchar_t* baseurl, 
-											const litehtml::position& draw_pos,
-											const litehtml::css_position& bg_pos,
-											litehtml::background_repeat repeat, 
-											litehtml::background_attachment attachment) = 0;
+		virtual void			draw_background(uint_ptr hdc, const litehtml::background_paint& bg) = 0;
 		virtual void			draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos) = 0;
 
 		virtual	void			set_caption(const tchar_t* caption)		= 0;
