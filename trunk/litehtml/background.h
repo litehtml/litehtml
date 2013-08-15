@@ -19,9 +19,6 @@ namespace litehtml
 		background_repeat		m_repeat;
 		background_box			m_clip;
 		background_box			m_origin;
-		position				m_padding_box;
-		position				m_border_box;
-		position				m_content_box;
 		css_border_radius		m_radius;
 
 	public:

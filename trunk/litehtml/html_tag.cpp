@@ -174,14 +174,49 @@ void litehtml::html_tag::draw( uint_ptr hdc, int x, int y, const position* clip 
 
 	if(m_display == display_list_item && m_list_style_type != list_style_type_none)
 	{
-		int marker_x		= pos.x;
-		int marker_height	= get_font_size();
+		list_marker lm;
+
+		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
+		size img_size;
+		if(list_image)
+		{
+			css::parse_css_url(list_image, lm.image);
+			lm.baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
+			m_doc->container()->get_image_size(lm.image.c_str(), lm.baseurl, img_size);
+		} else
+		{
+			lm.baseurl = 0;
+		}
+
+
+		int sz_font		= get_font_size();
+		lm.pos.x		= pos.x;
+		lm.pos.y		= pos.y		+ sz_font / 3;
+		lm.pos.width	= sz_font	- sz_font * 2 / 3;
+		lm.pos.height	= sz_font	- sz_font * 2 / 3;
+
+		if(img_size.width && img_size.height)
+		{
+			if(lm.pos.y + img_size.height > pos.y + pos.height)
+			{
+				lm.pos.y = pos.y + pos.height - img_size.height;
+			}
+			if(img_size.width > lm.pos.width)
+			{
+				lm.pos.x -= img_size.width - lm.pos.width;
+			}
+
+			lm.pos.width	= img_size.width;
+			lm.pos.height	= img_size.height;
+		}
 		if(m_list_style_position == list_style_position_outside)
 		{
-			marker_x -= marker_height;
+			lm.pos.x -= sz_font;
 		}
-		litehtml::web_color color = get_color(_t("color"), true, web_color(0, 0, 0));
-		m_doc->container()->draw_list_marker(hdc, m_list_style_type, marker_x, pos.y, marker_height, color);
+
+		lm.color = get_color(_t("color"), true, web_color(0, 0, 0));
+		lm.marker_type = m_list_style_type;
+		m_doc->container()->draw_list_marker(hdc, lm);
 	}
 
 	if(pos.does_intersect(clip))
@@ -395,6 +430,17 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 		const tchar_t* list_pos = get_style_property(_t("list-style-position"), true, _t("outside"));
 		m_list_style_position = (list_style_position) value_index(list_pos, list_style_position_strings, list_style_position_outside);
+
+		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
+		if(list_image)
+		{
+			tstring url;
+			css::parse_css_url(list_image, url);
+
+			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
+			m_doc->container()->load_image(url.c_str(), list_image_baseurl);
+		}
+
 	}
 
 	parse_background();
@@ -523,6 +569,26 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 	}
 
 	int min_height = m_css_min_height.calc_percent(m_pos.height);
+
+	if(m_display == display_list_item)
+	{
+		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
+		if(list_image)
+		{
+			tstring url;
+			css::parse_css_url(list_image, url);
+
+			size sz;
+			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
+			m_doc->container()->get_image_size(url.c_str(), list_image_baseurl, sz);
+			if(min_height < sz.height)
+			{
+				min_height = sz.height;
+			}
+		}
+
+	}
+
 	if(min_height > m_pos.height)
 	{
 		m_pos.height = min_height;

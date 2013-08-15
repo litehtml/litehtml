@@ -35,7 +35,7 @@ public:
 	virtual int							pt_to_px(int pt);
 	virtual int							get_default_font_size();
 	virtual const litehtml::tchar_t*	get_default_font_name();
-	virtual void						draw_list_marker(litehtml::uint_ptr hdc, litehtml::list_style_type marker_type, int x, int y, int height, const litehtml::web_color& color);
+	virtual void						draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker);
 	virtual void						load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl);
 	virtual void						get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz);
 	virtual void						draw_image(litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos);

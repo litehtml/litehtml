@@ -106,41 +106,48 @@ int cairo_container::get_default_font_size()
 	return 16;
 }
 
-void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, litehtml::list_style_type marker_type, int x, int y, int height, const litehtml::web_color& color )
+void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::list_marker& marker )
 {
-	int top_margin = height / 3;
-
-	int draw_x		= x;
-	int draw_y		= y + top_margin;
-	int draw_width	= height - top_margin * 2;
-	int draw_height	= height - top_margin * 2;
-
-	switch(marker_type)
+	if(!marker.image.empty())
 	{
-	case litehtml::list_style_type_circle:
-		{
-			draw_ellipse((cairo_t*) hdc, draw_x, draw_y, draw_width, draw_height, color, 1);
-		}
-		break;
-	case litehtml::list_style_type_disc:
-		{
-			fill_ellipse((cairo_t*) hdc, draw_x, draw_y, draw_width, draw_height, color);
-		}
-		break;
-	case litehtml::list_style_type_square:
-		if(hdc)
-		{
-			cairo_t* cr = (cairo_t*) hdc;
-			cairo_save(cr);
+		litehtml::tstring url;
+		make_url(marker.image.c_str(), marker.baseurl, url);
 
-			cairo_new_path(cr);
-			cairo_rectangle(cr, draw_x, draw_y, draw_width, draw_height);
-
-			set_color(cr, color);
-			cairo_fill(cr);
-			cairo_restore(cr);
+		images_map::iterator img_i = m_images.find(url.c_str());
+		if(img_i != m_images.end())
+		{
+			CTxDIB* bmp = img_i->second;
+			draw_txdib((cairo_t*) hdc, bmp, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
 		}
-		break;
+	} else
+	{
+		switch(marker.marker_type)
+		{
+		case litehtml::list_style_type_circle:
+			{
+				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 1);
+			}
+			break;
+		case litehtml::list_style_type_disc:
+			{
+				fill_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color);
+			}
+			break;
+		case litehtml::list_style_type_square:
+			if(hdc)
+			{
+				cairo_t* cr = (cairo_t*) hdc;
+				cairo_save(cr);
+
+				cairo_new_path(cr);
+				cairo_rectangle(cr, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
+
+				set_color(cr, marker.color);
+				cairo_fill(cr);
+				cairo_restore(cr);
+			}
+			break;
+		}
 	}
 }
 
