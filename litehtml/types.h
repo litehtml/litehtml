@@ -474,5 +474,4 @@ namespace litehtml
 		background_size_cover,
 		background_size_contain,
 	};
-
 }

@@ -329,10 +329,24 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 				} else if(!t_strncmp(val, _t("url"), 3))
 				{
 					add_parsed_property(_t("list-style-image"), val, important);
+					if(baseurl)
+					{
+						add_parsed_property(_t("list-style-image-baseurl"), baseurl, important);
+					}
 				}
 			}
 		}
 	} else 
+
+	// Add baseurl for background image 
+	if(	!t_strcmp(name, _t("list-style-image")))
+	{
+		add_parsed_property(name, val, important);
+		if(baseurl)
+		{
+			add_parsed_property(_t("list-style-image-baseurl"), baseurl, important);
+		}
+	} else
 		
 	// Parse background shorthand properties 
 	if(!t_strcmp(name, _t("background")))

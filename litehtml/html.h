@@ -15,6 +15,15 @@
 
 namespace litehtml
 {
+	struct list_marker
+	{
+		tstring			image;
+		const tchar_t*	baseurl;
+		list_style_type	marker_type;
+		web_color		color;
+		position		pos;
+	};
+
 	// call back interface to draw text, images and other elements
 	class document_container
 	{
@@ -26,10 +35,9 @@ namespace litehtml
 		virtual int				pt_to_px(int pt) = 0;
 		virtual int				get_default_font_size() = 0;
 		virtual const tchar_t*	get_default_font_name() = 0;
-		virtual void			draw_list_marker(uint_ptr hdc, list_style_type marker_type, int x, int y, int height, const web_color& color) = 0;
+		virtual void			draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker) = 0;
 		virtual void			load_image(const tchar_t* src, const tchar_t* baseurl) = 0;
 		virtual void			get_image_size(const tchar_t* src, const tchar_t* baseurl, litehtml::size& sz) = 0;
-		virtual void			draw_image(uint_ptr hdc, const tchar_t* src, const tchar_t* baseurl, const litehtml::position& pos) = 0;
 		virtual void			draw_background(uint_ptr hdc, const litehtml::background_paint& bg) = 0;
 		virtual void			draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos) = 0;
 

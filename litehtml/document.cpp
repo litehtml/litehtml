@@ -51,7 +51,7 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx)
+litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
 {
 	litehtml::document::ptr doc = new litehtml::document(objPainter, ctx);
 	str_istream si(str);
@@ -104,6 +104,11 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 		doc->m_styles.sort_selectors();
 
 		doc->m_root->apply_stylesheet(doc->m_styles);
+
+		if(user_styles)
+		{
+			doc->m_root->apply_stylesheet(*user_styles);
+		}
 
 		doc->m_root->parse_styles();
 	}
