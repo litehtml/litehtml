@@ -22,13 +22,6 @@ void litehtml::el_text::get_content_size( size& sz, int max_width )
 	sz = m_size;
 }
 
-void litehtml::el_text::draw_content( uint_ptr hdc, const litehtml::position& pos )
-{
-	uint_ptr font = m_parent->get_font();
-	litehtml::web_color color = m_parent->get_color(_t("color"), true, m_doc->get_def_color());
-	m_doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
-}
-
 void litehtml::el_text::get_text( tstring& text )
 {
 	text += m_text;
@@ -133,7 +126,9 @@ void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 
 	if(pos.does_intersect(clip))
 	{
-		draw_content(hdc, pos);
+		uint_ptr font = m_parent->get_font();
+		litehtml::web_color color = m_parent->get_color(_t("color"), true, m_doc->get_def_color());
+		m_doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
 	}
 }
 

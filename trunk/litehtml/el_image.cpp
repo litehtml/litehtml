@@ -17,24 +17,6 @@ void litehtml::el_image::get_content_size( size& sz, int max_width )
 	m_doc->container()->get_image_size(m_src.c_str(), 0, sz);
 }
 
-void litehtml::el_image::draw_content( uint_ptr hdc, const litehtml::position& pos )
-{
-	background_paint bg;
-	bg.image				= m_src;
-	bg.clip_box				= pos;
-	bg.origin_box			= pos;
-	bg.border_box			= pos;
-	bg.border_box			+= m_padding;
-	bg.border_box			+= m_borders;
-	bg.repeat				= background_repeat_no_repeat;
-	bg.image_size.width		= pos.width;
-	bg.image_size.height	= pos.height;
-	bg.border_radius		= m_css_borders.radius;
-	bg.position_x			= pos.x;
-	bg.position_y			= pos.y;
-	m_doc->container()->draw_background(hdc, bg);
-}
-
 int litehtml::el_image::line_height() const
 {
 	return height();
@@ -204,3 +186,29 @@ void litehtml::el_image::parse_attributes()
 	}
 }
 
+void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip )
+{
+	position pos = m_pos;
+	pos.x	+= x;
+	pos.y	+= y;
+
+	draw_background(hdc, x, y, clip);
+
+	if(pos.does_intersect(clip))
+	{
+		background_paint bg;
+		bg.image				= m_src;
+		bg.clip_box				= pos;
+		bg.origin_box			= pos;
+		bg.border_box			= pos;
+		bg.border_box			+= m_padding;
+		bg.border_box			+= m_borders;
+		bg.repeat				= background_repeat_no_repeat;
+		bg.image_size.width		= pos.width;
+		bg.image_size.height	= pos.height;
+		bg.border_radius		= m_css_borders.radius;
+		bg.position_x			= pos.x;
+		bg.position_y			= pos.y;
+		m_doc->container()->draw_background(hdc, bg);
+	}
+}

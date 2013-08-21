@@ -348,23 +348,17 @@ void litehtml::el_table::init()
 	m_grid.finish();
 }
 
-void litehtml::el_table::draw( uint_ptr hdc, int x, int y, const position* clip )
+void litehtml::el_table::draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag )
 {
-	position pos = m_pos;
-	pos.x	+= x;
-	pos.y	+= y;
-
-	draw_background(hdc, x, y, clip);
-
 	for(int row = 0; row < m_grid.rows_count(); row++)
 	{
-		m_grid.row(row).el_row->draw_background(hdc, pos.left(), pos.top(), clip);
+		m_grid.row(row).el_row->draw_background(hdc, x, y, clip);
 		for(int col = 0; col < m_grid.cols_count(); col++)
 		{
 			table_cell* cell = m_grid.cell(col, row);
 			if(cell->el)
 			{
-				cell->el->draw(hdc, pos.left(), pos.top(), clip);
+				cell->el->draw(hdc, x, y, clip);
 			}
 		}
 	}

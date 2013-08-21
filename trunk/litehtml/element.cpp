@@ -131,6 +131,13 @@ bool litehtml::element::collapse_bottom_margin() const
 	return false;
 }
 
+litehtml::overflow litehtml::element::get_overflow() const							LITEHTML_RETURN_FUNC(overflow_visible)
+void litehtml::element::draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex ) LITEHTML_EMPTY_FUNC
+void litehtml::element::draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned ) LITEHTML_EMPTY_FUNC
+void litehtml::element::render_absolutes()											LITEHTML_EMPTY_FUNC
+int litehtml::element::get_zindex() const											LITEHTML_RETURN_FUNC(0)
+bool litehtml::element::fetch_positioned()											LITEHTML_RETURN_FUNC(false)
+litehtml::visibility litehtml::element::get_visibility() const						LITEHTML_RETURN_FUNC(visibility_visible)
 void litehtml::element::apply_vertical_align()										LITEHTML_EMPTY_FUNC
 void litehtml::element::set_css_width( css_length& w )								LITEHTML_EMPTY_FUNC
 litehtml::element::ptr litehtml::element::get_child( int idx ) const				LITEHTML_RETURN_FUNC(0)
@@ -157,7 +164,6 @@ int litehtml::element::get_right_floats_height() const								LITEHTML_RETURN_FU
 int litehtml::element::get_floats_height() const									LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::is_floats_holder() const									LITEHTML_RETURN_FUNC(false)
 void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML_EMPTY_FUNC
-void litehtml::element::draw_content( uint_ptr hdc, const litehtml::position& pos )	LITEHTML_EMPTY_FUNC
 void litehtml::element::init()														LITEHTML_EMPTY_FUNC
 int litehtml::element::render( int x, int y, int max_width )						LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::appendChild( litehtml::element* el )						LITEHTML_RETURN_FUNC(false)
@@ -175,7 +181,6 @@ bool litehtml::element::is_white_space()											LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_body() const												LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_break() const											LITEHTML_RETURN_FUNC(false)
 int litehtml::element::get_base_line()												LITEHTML_RETURN_FUNC(0)
-litehtml::background litehtml::element::get_background()							LITEHTML_RETURN_FUNC(background())
 bool litehtml::element::on_mouse_over( int x, int y )								LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::on_mouse_leave()											LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::on_lbutton_down( int x, int y )								LITEHTML_RETURN_FUNC(false)
