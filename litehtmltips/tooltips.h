@@ -151,6 +151,7 @@ namespace litehtml
 		BYTE						m_alpha;
 		tip_layout					m_layout;
 		int							m_top;
+		bool						m_mouse_hover_on;
 	public:
 		tooltips(HINSTANCE hInst, litehtml::context* html_context);
 		virtual ~tooltips(void);
@@ -208,5 +209,6 @@ namespace litehtml
 		void				draw_window(BOOL clr = FALSE);
 		BOOL				scroll(int dx);
 		BOOL				can_scroll();
+		void				start_hover_tracking(bool start);
 	};
 }
