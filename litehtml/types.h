@@ -213,6 +213,14 @@ namespace litehtml
 
 	typedef std::map<tstring, font_item>	fonts_map;
 
+	enum draw_flag
+	{
+		draw_root,
+		draw_block,
+		draw_floats,
+		draw_inlines,
+		draw_positioned,
+	};
 
 #define  style_display_strings		_t("none;block;inline;inline-block;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group")
 
@@ -473,5 +481,14 @@ namespace litehtml
 		background_size_auto,
 		background_size_cover,
 		background_size_contain,
+	};
+
+#define visibility_strings		_t("visible;hidden;collapse")
+
+	enum visibility
+	{
+		visibility_visible,
+		visibility_hidden,
+		visibility_collapse,
 	};
 }

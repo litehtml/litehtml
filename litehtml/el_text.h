@@ -28,6 +28,5 @@ namespace litehtml
 
 	protected:
 		virtual void				get_content_size(size& sz, int max_width);
-		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
 	};
 }

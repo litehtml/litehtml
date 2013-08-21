@@ -64,17 +64,21 @@ namespace litehtml
 		position					get_placement()				const;
 		bool						collapse_top_margin()		const;
 		bool						collapse_bottom_margin()	const;
+		bool						is_positioned()				const;
 
 		bool						skip();
 		void						skip(bool val);
 		element*					parent();
 		void						parent(element* par);
+		bool						is_visible() const;
 
 		virtual int					render(int x, int y, int max_width);
 		virtual int					render_inline(element* container, int max_width);
 		virtual int					place_element(element* el, int max_width);
 		virtual void				calc_outlines( int parent_width );
 		virtual void				apply_vertical_align();
+		virtual bool				fetch_positioned();
+		virtual void				render_absolutes();
 
 		virtual bool				appendChild(litehtml::element* el);
 
@@ -86,6 +90,7 @@ namespace litehtml
 		virtual element_clear		get_clear() const;
 		virtual size_t				get_children_count() const;
 		virtual element::ptr		get_child(int idx) const;
+		virtual overflow			get_overflow() const;
 
 		virtual css_length			get_css_left() const;
 		virtual css_length			get_css_right() const;
@@ -102,7 +107,6 @@ namespace litehtml
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
 		virtual int					get_base_line();
-		virtual background			get_background();
 		virtual bool				on_mouse_over(int x, int y);
 		virtual bool				on_mouse_leave();
 		virtual bool				on_lbutton_down(int x, int y);
@@ -117,6 +121,7 @@ namespace litehtml
 		virtual int					line_height() const;
 		virtual white_space			get_white_space() const;
 		virtual style_display		get_display() const;
+		virtual visibility			get_visibility() const;
 		virtual element_position	get_element_position() const;
 		virtual void				get_inline_boxes(position::vector& boxes);
 		virtual void				parse_styles(bool is_reparse = false);
@@ -134,7 +139,6 @@ namespace litehtml
 		virtual bool				is_first_child(const element* el);
 		virtual bool				is_last_child(const element* el);
 		virtual void				get_content_size(size& sz, int max_width);
-		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
 		virtual void				init();
 		virtual bool				is_floats_holder() const;
 		virtual int					get_floats_height() const;
@@ -145,6 +149,9 @@ namespace litehtml
 		virtual void				add_float(element* el);
 		virtual void				add_absolute(element* el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
+		virtual int					get_zindex() const;
+		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
+		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -309,6 +316,16 @@ namespace litehtml
 		ret.bottom	= margin_bottom();
 
 		return ret;
+	}
+
+	inline bool litehtml::element::is_positioned()	const
+	{
+		return (get_element_position() != element_position_static);
+	}
+
+	inline bool litehtml::element::is_visible() const
+	{
+		return !(m_skip || get_display() == display_none || get_visibility() != visibility_visible);
 	}
 
 }

@@ -38,7 +38,7 @@ namespace litehtml
 		element_float			m_float;
 		element_clear			m_clear;
 		elements_vector			m_floats;
-		elements_vector			m_absolutes;
+		elements_vector			m_positioned;
 		background				m_bg;
 		element_position		m_el_position;
 		int						m_line_height;
@@ -65,6 +65,8 @@ namespace litehtml
 		css_length				m_css_bottom;
 
 		overflow				m_overflow;
+		visibility				m_visibility;
+		int						m_z_index;
 
 	public:
 		html_tag(litehtml::document* doc);
@@ -73,8 +75,11 @@ namespace litehtml
 		/* render functions */
 
 		virtual int					render(int x, int y, int max_width);
+
 		virtual int					render_inline(element* container, int max_width);
 		virtual int					place_element(element* el, int max_width);
+		virtual bool				fetch_positioned();
+		virtual void				render_absolutes();
 
 		int							new_box( element* el, int max_width );
 
@@ -98,6 +103,7 @@ namespace litehtml
 		virtual size_t				get_children_count() const;
 		virtual element::ptr		get_child(int idx) const;
 		virtual element_position	get_element_position() const;
+		virtual overflow			get_overflow() const;
 
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
 		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
@@ -106,7 +112,6 @@ namespace litehtml
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
 		virtual int					get_base_line();
-		virtual background			get_background();
 		virtual bool				on_mouse_over(int x, int y);
 		virtual bool				on_mouse_leave();
 		virtual bool				on_lbutton_down(int x, int y);
@@ -120,6 +125,7 @@ namespace litehtml
 		virtual int					line_height() const;
 		virtual white_space			get_white_space() const;
 		virtual style_display		get_display() const;
+		virtual visibility			get_visibility() const;
 		virtual void				parse_styles(bool is_reparse = false);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
@@ -141,7 +147,6 @@ namespace litehtml
 		virtual bool				is_first_child(const element* el);
 		virtual bool				is_last_child(const element* el);
 		virtual void				get_content_size(size& sz, int max_width);
-		virtual void				draw_content(uint_ptr hdc, const litehtml::position& pos);
 		virtual void				init();
 		virtual void				get_inline_boxes(position::vector& boxes);
 		virtual bool				is_floats_holder() const;
@@ -154,12 +159,16 @@ namespace litehtml
 		virtual void				add_absolute(element* el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
 		virtual void				apply_vertical_align();
+		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
+		virtual int					get_zindex() const;
+		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
 
 	protected:
 		bool						select_one(const tstring& selector);
 		void						fix_line_width(int max_width, element_float flt);
 		void						parse_background();
 		void						init_background_paint( position pos, background_paint &bg_paint );
+		void						draw_list_marker( uint_ptr hdc, const position &pos );
 
 	private:
 		bool	m_second_pass;

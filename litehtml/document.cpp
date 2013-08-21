@@ -270,9 +270,14 @@ litehtml::element* litehtml::document::add_body()
 
 int litehtml::document::render( int max_width )
 {
+	int ret = 0;
 	if(m_root)
 	{
-		return m_root->render(0, 0, max_width);
+		ret = m_root->render(0, 0, max_width);
+		if(m_root->fetch_positioned())
+		{
+			m_root->render_absolutes();
+		}
 	}
 	return 0;
 }
@@ -281,7 +286,7 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 {
 	if(m_root)
 	{
-		m_root->draw(hdc, x, y, clip);
+		m_root->draw_stacking_context(hdc, x, y, clip, true);
 	}
 }
 
