@@ -36,6 +36,7 @@ litehtml::tooltips::tooltips(HINSTANCE hInst, litehtml::context* html_context)
 	m_surface			= NULL;
 	m_last_shown_tool	= 0;
 	m_cached_tool		= 0;
+	m_mouse_hover_on	= false;
 
 	init_def_font();
 }
@@ -307,6 +308,7 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 	case WM_MOUSELEAVE:
 		pThis->m_last_shown_tool = 0;
 		pThis->hide();
+		pThis->start_hover_tracking(false);
 		break;
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONDBLCLK:
@@ -326,9 +328,39 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 	case WM_CLOSE:
 		pThis->hide();
 		break;
+	case WM_MOUSEHOVER:
+		{
+			pThis->m_mouse_hover_on = false;
+			if(!pThis->m_disabled)
+			{
+				unsigned int over_id = pThis->find_tool(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+				if(over_id)
+				{
+					pThis->show(over_id);
+				}
+			}
+		}
+		break;
 	case WM_MOUSEMOVE:
 		if(!pThis->m_disabled)
 		{
+			unsigned int over_id = pThis->find_tool(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+			if(over_id != pThis->m_last_shown_tool)
+			{
+				pThis->m_last_shown_tool = 0;
+			}
+
+			if(over_id != pThis->m_show_tool)
+			{
+				pThis->hide();
+			}
+
+			if(!pThis->m_show_tool && !pThis->m_last_shown_tool)
+			{
+				pThis->start_hover_tracking(true);
+			}
+/*
+
 			pThis->m_mouse_pos.x = GET_X_LPARAM(lParam);
 			pThis->m_mouse_pos.y = GET_Y_LPARAM(lParam);
 			unsigned int over_id = pThis->find_tool(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
@@ -360,6 +392,7 @@ LRESULT CALLBACK litehtml::tooltips::SubclassProc( HWND hWnd, UINT uMsg, WPARAM 
 					}
 				}
 			}
+*/
 		}
 		break;
 	}
@@ -1035,6 +1068,34 @@ void litehtml::tooltips::set_def_font( const wchar_t* font_name, int font_size )
 	}
 }
 
+void litehtml::tooltips::start_hover_tracking( bool start )
+{
+	if(start)
+	{
+		if(!m_mouse_hover_on)
+		{
+			TRACKMOUSEEVENT tm;
+			tm.cbSize		= sizeof(TRACKMOUSEEVENT);
+			tm.dwFlags		= TME_HOVER;
+			tm.hwndTrack	= m_hWndParent;
+			tm.dwHoverTime	= m_show_time;
+			TrackMouseEvent(&tm);
+			m_mouse_hover_on = true;
+		}
+	} else
+	{
+		if(m_mouse_hover_on)
+		{
+			TRACKMOUSEEVENT tm;
+			tm.cbSize		= sizeof(TRACKMOUSEEVENT);
+			tm.dwFlags		= TME_HOVER | TME_CANCEL;
+			tm.hwndTrack	= m_hWndParent;
+			tm.dwHoverTime	= m_show_time;
+			TrackMouseEvent(&tm);
+			m_mouse_hover_on = false;
+		}
+	}
+}
 
 bool litehtml::tooltips_bg_cache::need_redraw( tip_layout* layout )
 {
@@ -1110,7 +1171,9 @@ void litehtml::tooltips_bg_cache::draw( cairo_t* cr, tip_layout* layout, HWND hW
 				cairo_paint(m_cr);
 				cairo_restore(m_cr);
 
-				m_clr_border = RGB(dib_bg.bits()[0].rgbRed, dib_bg.bits()[0].rgbGreen, dib_bg.bits()[0].rgbBlue);
+				int border_idx = dib_bg.width() / 2;
+
+				m_clr_border = RGB(dib_bg.bits()[border_idx].rgbRed, dib_bg.bits()[border_idx].rgbGreen, dib_bg.bits()[border_idx].rgbBlue);
 
 				cairo_surface_destroy(bg_sf);
 
