@@ -279,7 +279,7 @@ int litehtml::document::render( int max_width )
 			m_root->render_absolutes();
 		}
 	}
-	return 0;
+	return ret;
 }
 
 void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip )
