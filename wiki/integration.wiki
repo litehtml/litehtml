@@ -266,4 +266,4 @@ All functions returns the *bool* to indicate that you have to redraw the rectang
 
 =Images=
 
-litehtml does not cache the images. So if you want to increase the performance, you have to create your own images cache. Also you can implement the delayed images loading. Start image downloading in [integration#load_image load_image] If the image is not loaded curre
+litehtml does not cache the images. So if you want to increase the performance, you have to create your own images cache. Also you can implement the delayed images loading. Start image downloading in [#load_image load_image] If the image is not loaded curre
