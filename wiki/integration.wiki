@@ -76,3 +76,128 @@ virtual void draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker)
 }}}
 
 Draws the list marker. Use the parameter *marker* to find the marker type and position.
+
+== load_image ==
+{{{
+virtual void load_image(const tchar_t* src, const tchar_t* baseurl);
+}}}
+
+You can preload image in this function. litehtml does not cache the images, so you have to create own images cache if you need it.
+
+== get_image_size ==
+{{{
+virtual void get_image_size(const tchar_t* src, const tchar_t* baseurl, litehtml::size& sz);
+}}}
+
+Fill the *sz* parameter with image width and height.
+
+== draw_background ==
+{{{
+virtual void draw_background(uint_ptr hdc, const litehtml::background_paint& bg);
+}}}
+
+Draw the background in this function. The parameter *bg* describes the element background. Note the <img> html element are drawn as background.
+
+== draw_borders ==
+{{{
+virtual void draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos);
+}}}
+
+Draw the element borders here. 
+
+== set_caption ==
+{{{
+virtual	void set_caption(const tchar_t* caption);
+}}}
+
+litehtml calls this function with `<`title`>` html tag text. You can use the *caption* parameter to set the window caption text into the html page title.
+
+== set_base_url ==
+{{{
+virtual	void set_base_url(const tchar_t* base_url);
+}}}
+
+litehtml calls this function for the `<`base`>` html tag to set the base url. Save this string for future use in the functions that get the _baseurl_ parameter. 
+
+== link ==
+{{{
+virtual void link(litehtml::document* doc, litehtml::element::ptr el);
+}}}
+
+This function is used to process the `<`link`>` html tags. You must to read the element attributes and apply CSS styles manually.
+
+Below is the code from litebrowser:
+{{{
+void CHTMLViewWnd::link( litehtml::document* doc, litehtml::element::ptr el )
+{
+	const wchar_t* rel = el->get_attr(L"rel");
+	if(rel && !wcscmp(rel, L"stylesheet"))
+	{
+		const wchar_t* media = el->get_attr(L"media", L"screen");
+		if(media && (wcsstr(media, L"screen") || wcsstr(media, L"all")))
+		{
+			const wchar_t* href = el->get_attr(L"href");
+			if(href)
+			{
+				std::wstring url;
+				make_url(href, NULL, url);
+				LPWSTR css = load_text_file(url.c_str());
+				if(css)
+				{
+					doc->add_stylesheet(css, url.c_str());
+					delete css;
+				}
+			}
+		}
+	}
+}
+}}}
+
+== on_anchor_click ==
+{{{
+virtual void on_anchor_click(const tchar_t* url, litehtml::element::ptr el);
+}}}
+
+litehtml calls this function on anchor element click. You can open new website or do something other here.
+
+== set_cursor ==
+{{{
+virtual	void set_cursor(const tchar_t* cursor);
+}}}
+
+Define this function to handle the CSS cursor property.
+
+== toupper ==
+{{{
+virtual	tchar_t toupper(const tchar_t c);
+}}}
+
+Convert char to upper case.
+
+== tolower ==
+{{{
+virtual	tchar_t tolower(const tchar_t c);
+}}}
+
+Convert char to lower case.
+
+== import_css ==
+{{{
+virtual void import_css(tstring& text, const tstring& url, tstring& baseurl, const string_vector& media);
+}}}
+
+This function handle the CSS at-rule @import. You have to download CSS and copy it into *text* parameter.
+
+== set_clip ==
+{{{
+virtual void set_clip(const litehtml::position& pos, bool valid_x, bool valid_y);
+}}}
+
+Set the painting clip rectangle here. *valid_x* and *valid_y* are ignored. Please note, litehtml can set some clip rects. You have to save the clip positions and apply clipping on draw something.
+
+== del_clip ==
+{{{
+virtual void del_clip();
+}}}
+
+Deletes the last clipping.
