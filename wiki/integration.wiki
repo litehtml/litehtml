@@ -1,0 +1,78 @@
+#Integration litehtml into application
+
+= Implementing litehtml::document_container =
+
+The first stem to integrate litehtml into your application is implementing abstract class litehtml::document_container. This class draw the HTML elements and perform some actions depended of the platform.
+
+Below is the list of member function you have to implement.
+
+== create_font ==
+
+{{{
+virtual uint_ptr create_font(const tchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration, litehtml::font_metrics* fm);
+}}}
+
+This function called by litehtml to create the font. create_font returns uint_ptr that identify the created font. 
+Parameters:
+  * *faceName* - the face name for the font. *Note*: _faceName_ can contain some fonts as described in CSS specifications. You have to select the proper font.
+  * *size* - font size in pixels.
+  * *weight* - Defines from thin to thick characters. 400 is the same as normal, and 700 is the same as bold.
+  * *decoration* - one or more flags:
+    * const unsigned int font_decoration_none = 0x00;
+    * const unsigned int font_decoration_underline = 0x01;
+    * const unsigned int font_decoration_linethrough = 0x02;
+    * const unsigned int font_decoration_overline = 0x04;
+  * *fm* - you have to fill this structure with the font metrics:
+    * *height* - the recommended vertical distance between baselines when setting consecutive lines of text with the font. This is greater than ascent+descent by a quantity known as the line spacing or external leading. When space is at a premium, most fonts can be set with only a distance of ascent+descent between lines.
+    * *ascent* - the distance that the font extends above the baseline. Note that this is not always exactly equal to the maximum of the extents of all the glyphs in the font, but rather is picked to express the font designer's intent as to how the font should align with elements above it.
+    * *descent* - the distance that the font extends below the baseline. This value is positive for typical fonts that include portions below the baseline. Note that this is not always exactly equal to the maximum of the extents of all the glyphs in the font, but rather is picked to express the font designer's intent as to how the font should align with elements below it.
+    * *x_height* - height of the 'x' char (used for internal calculations).
+
+== delete_font ==
+{{{
+virtual void delete_font(uint_ptr hFont);
+}}}
+
+delete the font created in *create_font* function
+
+== text_width ==
+{{{
+virtual int text_width(const tchar_t* text, uint_ptr hFont);
+}}}
+
+Returns the text width.
+
+== draw_text ==
+{{{
+virtual void draw_text(uint_ptr hdc, const tchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos);
+}}}
+
+This function draw the text string.
+
+== pt_to_px ==
+{{{
+virtual int pt_to_px(int pt);
+}}}
+
+Convert _points_ into _pixels_.
+
+== get_default_font_size ==
+{{{
+virtual int get_default_font_size();
+}}}
+
+Returns the default font size in pixels.
+
+== get_default_font_name ==
+{{{
+virtual const tchar_t* get_default_font_name();
+}}}
+
+Returns the default font face name.
+
+== draw_list_marker ==
+{{{
+virtual void draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker);
+}}}
+
+Draws the list marker. Use the parameter *marker* to find the marker type and position.
