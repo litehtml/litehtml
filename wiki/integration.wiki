@@ -1,8 +1,16 @@
 #Integration litehtml into application
 
+= Basics =
+
+To use litehtml you need some easy steps:
+
+  # Implement litehtml::document_container class.
+  # Prepare and load the master CSS.
+  # Call some functions from litehtml::document to parse, render and draw HTML text.
+
 = Implementing litehtml::document_container =
 
-The first stem to integrate litehtml into your application is implementing abstract class litehtml::document_container. This class draw the HTML elements and perform some actions depended of the platform.
+The first step to integrate litehtml into your application is implementing abstract class litehtml::document_container. This class draw the HTML elements and perform some actions depended of the platform.
 
 Below is the list of member function you have to implement.
 
@@ -201,3 +209,55 @@ virtual void del_clip();
 }}}
 
 Deletes the last clipping.
+
+= Load and draw HTML page =
+
+First you have to create *litehtml::context* object and load master CSS with litehtml::context::load_master_stylesheet function. Master CSS must contain the default styles for all HTML elements. See the master.css and example.
+
+Then load HTML page into memory and convert it into 2-bytes unicode (WCHAR) on Windows or UTF-8 on Linux.
+
+Now call the litehtml::document::createFromString:
+{{{
+static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
+}}}
+
+  * *str* - HTML code
+  * *objPainter* - your implementation of litehtml::document_container
+  * *ctx* - HTML context with master CSS
+  * *user_styles* - optional user CSS (applied after all other styles)
+
+*createFromString* return the litehtml::document pointer. Call litehtml::document::render(max_width) to render HTML elements:
+{{{
+m_doc->render(max_width);
+}}}
+
+The parameter *max_width* usually the browser window width. Also *render* returns the optimal width for HTML text. You can use the returned value to render elements into the optimal width. This can be useful for tooltips.
+
+Use *height* and *width* litehtml::document functions to find the width and height of the rendered document:
+{{{
+m_doc->height()
+m_doc->width()
+}}}
+
+Now call *draw* function:
+{{{
+m_doc->draw(hdc, m_left, m_top, &clip);
+}}}
+
+draw accepts 4 parameters:
+  * *uint_ptr hdc* - usually device context or something where to draw. For example HDC in windows. This parameter will be passed into all draw functions of litehtml::document_container.
+  * *int x, int y* - position where to draw HTML.
+  * *const position`*` clip* - clipping area. litehtml does not draw the elements that don't intersect the clipping rectangle. But note, you have to set your own clipping if you want to clip HTML content.
+
+That's all! Your HTML page is painted!
+
+= Handling the mouse =
+If you want to handle the mouse you have call some functions from litehtml::document:
+{{{
+bool litehtml::document::on_mouse_over( int x, int y, position::vector& redraw_boxes );
+bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes );
+bool litehtml::document::on_lbutton_down( int x, int y, position::vector& redraw_boxes );
+bool litehtml::document::on_lbutton_up( int x, int y, position::vector& redraw_boxes );
+}}}
+
+All functions returns the *bool* to indicate that you have to redraw the rectangles from *redraw_boxes* vector. Also note the *x* and *y* are relative to the HTML layout. So *0,0* is the top-left corner.
