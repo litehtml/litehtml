@@ -1,5 +1,7 @@
 #Integration litehtml into application
 
+<wiki:toc />
+
 = Basics =
 
 To use litehtml you need some easy steps:
