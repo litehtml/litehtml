@@ -1895,7 +1895,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 		case display_table_row:
 			if(el->is_replaced() || el->is_floats_holder())
 			{
-				ret_width = el->render(line_left, line_top, line_right - line_left) + line_left;
+				ret_width = el->render(line_left, line_top, line_right - line_left) + line_left + (max_width - line_right);
 			} else
 			{
 				ret_width = el->render(0, line_top, max_width);
@@ -1907,7 +1907,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 
 		if(el->is_inline_box() && !el->skip())
 		{
-			ret_width = el->right();
+			ret_width = el->right() + (max_width - line_right);
 		}
 	}
 
