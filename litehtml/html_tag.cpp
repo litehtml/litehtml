@@ -674,14 +674,24 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			{
 				if(i->first == _t("class"))
 				{
-					string_vector tokens;
-					tokenize(attr_value, tokens, _t(" "));
-					bool found = false;
-					for(string_vector::iterator str = tokens.begin(); str != tokens.end() && !found; str++)
+					string_vector tokens1;
+					tokenize(attr_value, tokens1, _t(" "));
+					string_vector tokens2;
+					tokenize(i->second.val, tokens2, _t(" "));
+					bool found = true;
+					for(string_vector::iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
 					{
-						if(*str == i->second.val)
+						bool f = false;
+						for(string_vector::iterator str2 = tokens1.begin(); str2 != tokens1.end() && !f; str2++)
 						{
-							found = true;
+							if((*str1) == (*str2))
+							{
+								f = true;
+							}
+						}
+						if(!f)
+						{
+							found = false;
 						}
 					}
 					if(!found)
@@ -735,7 +745,55 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		case select_pseudo_class:
 			if(apply_pseudo)
 			{
-				if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), i->second.val) == m_pseudo_classes.end())
+				if(i->second.val == _t("first-child"))
+				{
+					if( !m_parent->is_nth_child(this, 0, 1) )
+					{
+						return 0;
+					}
+				} else if(i->second.val == _t("last-child"))
+				{
+					if( !m_parent->is_nth_last_child(this, 0, 1) )
+					{
+						return 0;
+					}
+				} else if(!t_strncmp(i->second.val.c_str(), _t("nth-child"), 9))
+				{
+					tstring::size_type begin	= i->second.val.find_first_of(_t('('));
+					tstring::size_type end		= i->second.val.find_first_of(_t(')'));
+					if(begin == tstring::npos || end == tstring::npos) return 0;
+
+					tstring param = i->second.val.substr(begin + 1, end - begin - 1);
+
+					int num = 0;
+					int off = 0;
+
+					parse_nth_child_params(param, num, off);
+					if(!num && !off) return 0;
+
+					if( !m_parent->is_nth_child(this, num, off) )
+					{
+						return 0;
+					}
+				} else if(!t_strncmp(i->second.val.c_str(), _t("nth-last-child"), 14))
+				{
+					tstring::size_type begin	= i->second.val.find_first_of(_t('('));
+					tstring::size_type end		= i->second.val.find_first_of(_t(')'));
+					if(begin == tstring::npos || end == tstring::npos) return 0;
+
+					tstring param = i->second.val.substr(begin + 1, end - begin - 1);
+
+					int num = 0;
+					int off = 0;
+
+					parse_nth_child_params(param, num, off);
+					if(!num && !off) return 0;
+
+					if( !m_parent->is_nth_last_child(this, num, off) )
+					{
+						return 0;
+					}
+				} else if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), i->second.val) == m_pseudo_classes.end())
 				{
 					return 0;
 				}
@@ -2579,4 +2637,97 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 litehtml::overflow litehtml::html_tag::get_overflow() const
 {
 	return m_overflow;
+}
+
+bool litehtml::html_tag::is_nth_child( element* el, int num, int off )
+{
+	int idx = 1;
+	for(elements_vector::iterator child = m_children.begin(); child != m_children.end(); child++)
+	{
+		if((*child)->get_display() != display_inline_text)
+		{
+			if(el == (*child))
+			{
+				if(num != 0)
+				{
+					if((idx - off) >= 0 && (idx - off) % num == 0)
+					{
+						return true;
+					}
+					
+				} else if(idx == off)
+				{
+					return true;
+				}
+				return false;
+			}
+			idx++;
+		}
+	}
+	return false;
+}
+
+bool litehtml::html_tag::is_nth_last_child( element* el, int num, int off )
+{
+	int idx = 1;
+	for(elements_vector::reverse_iterator child = m_children.rbegin(); child != m_children.rend(); child++)
+	{
+		if((*child)->get_display() != display_inline_text)
+		{
+			if(el == (*child))
+			{
+				if(num != 0)
+				{
+					if((idx - off) >= 0 && (idx - off) % num == 0)
+					{
+						return true;
+					}
+
+				} else if(idx == off)
+				{
+					return true;
+				}
+				return false;
+			}
+			idx++;
+		}
+	}
+	return false;
+}
+
+void litehtml::html_tag::parse_nth_child_params( tstring param, int &num, int &off )
+{
+	if(param == _t("odd"))
+	{
+		num = 2;
+		off = 1;
+	} else if(param == _t("even"))
+	{
+		num = 2;
+		off = 0;
+	} else
+	{
+		string_vector tokens;
+		tokenize(param, tokens, _t(" n"), _t("n"));
+
+		tstring s_num;
+		tstring s_off;
+
+		tstring s_int;
+		for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+		{
+			if((*tok) == _t("n"))
+			{
+				s_num = s_int;
+				s_int.clear();
+			} else
+			{
+				s_int += (*tok);
+			}
+		}
+		s_off = s_int;
+
+		num = t_atoi(s_num.c_str());
+		off = t_atoi(s_off.c_str());
+	}
 }
