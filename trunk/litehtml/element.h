@@ -152,6 +152,8 @@ namespace litehtml
 		virtual int					get_zindex() const;
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
 		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
+		virtual bool				is_nth_child(element* el, int num, int off);
+		virtual bool				is_nth_last_child(element* el, int num, int off);
 	};
 
 	//////////////////////////////////////////////////////////////////////////

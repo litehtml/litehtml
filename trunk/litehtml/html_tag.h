@@ -140,6 +140,7 @@ namespace litehtml
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
 		virtual bool				select(const tchar_t* selectors);
+
 		virtual element*			find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual void				get_text(tstring& text);
 		virtual void				parse_attributes();
@@ -163,12 +164,16 @@ namespace litehtml
 		virtual int					get_zindex() const;
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
 
+		virtual bool				is_nth_child(element* el, int num, int off);
+		virtual bool				is_nth_last_child(element* el, int num, int off);
+
 	protected:
 		bool						select_one(const tstring& selector);
 		void						fix_line_width(int max_width, element_float flt);
 		void						parse_background();
 		void						init_background_paint( position pos, background_paint &bg_paint );
 		void						draw_list_marker( uint_ptr hdc, const position &pos );
+		void						parse_nth_child_params( tstring param, int &num, int &off );
 
 	private:
 		bool	m_second_pass;

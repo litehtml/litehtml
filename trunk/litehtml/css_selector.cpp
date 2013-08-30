@@ -15,7 +15,15 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 			tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
 			attribute.condition	= select_equal;
-			m_attrs[_t("class")] = attribute;
+			css_attribute_selector::map::iterator i = m_attrs.find(_t("class"));
+			if(i == m_attrs.end())
+			{
+				m_attrs[_t("class")] = attribute;
+			} else
+			{
+				i->second.val += _t(" ");
+				i->second.val += attribute.val;
+			}
 			el_end = pos;
 		} else if(txt[el_end] == _t(':'))
 		{
@@ -116,7 +124,7 @@ bool litehtml::css_selector::parse( const tstring& text )
 		return false;
 	}
 	string_vector tokens;
-	tokenize(text, tokens, _t(""), _t(" \t>+~"));
+	tokenize(text, tokens, _t(""), _t(" \t>+~"), _t("()"));
 
 	if(tokens.empty())
 	{
@@ -199,7 +207,15 @@ void litehtml::css_selector::calc_specificity()
 			m_specificity.b++;
 		} else
 		{
-			m_specificity.c++;
+			if(i->first == _t("class"))
+			{
+				string_vector tokens;
+				tokenize(i->second.val, tokens, _t(" "));
+				m_specificity.c += (int) tokens.size();
+			} else
+			{
+				m_specificity.c++;
+			}
 		}	
 	}
 	if(m_left)
