@@ -278,6 +278,9 @@ int litehtml::document::render( int max_width )
 		{
 			m_root->render_absolutes();
 		}
+		m_size.width	= 0;
+		m_size.height	= 0;
+		m_root->calc_document_size(m_size);
 	}
 	return ret;
 }
@@ -344,12 +347,12 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 
 int litehtml::document::width() const
 {
-	return m_root ? m_root->width() : 0;
+	return m_size.width;
 }
 
 int litehtml::document::height() const
 {
-	return m_root ? m_root->height() : 0;
+	return m_size.height;
 }
 
 void litehtml::document::add_stylesheet( const tchar_t* str, const tchar_t* baseurl )
