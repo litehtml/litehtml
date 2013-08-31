@@ -56,6 +56,7 @@ namespace litehtml
 		litehtml::css			m_styles;
 		litehtml::web_color		m_def_color;
 		litehtml::context*		m_context;
+		litehtml::size			m_size;
 
 		elements_vector			m_parse_stack;
 	public:

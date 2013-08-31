@@ -129,7 +129,7 @@ namespace litehtml
 		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
 		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
-		virtual int					get_font_size();
+		virtual int					get_font_size() const;
 		virtual void				get_text(tstring& text);
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
@@ -154,6 +154,8 @@ namespace litehtml
 		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
 		virtual bool				is_nth_child(element* el, int num, int off);
 		virtual bool				is_nth_last_child(element* el, int num, int off);
+		virtual int					get_predefined_height() const;
+		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 	};
 
 	//////////////////////////////////////////////////////////////////////////

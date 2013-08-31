@@ -51,6 +51,7 @@ namespace litehtml
 		virtual void			import_css(tstring& text, const tstring& url, tstring& baseurl, const string_vector& media) = 0;
 		virtual void			set_clip(const litehtml::position& pos, bool valid_x, bool valid_y) = 0;
 		virtual void			del_clip() = 0;
+		virtual void			get_client_rect(litehtml::position& client) = 0;
 	};
 
 	void trim(tstring &s);

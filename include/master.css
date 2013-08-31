@@ -48,6 +48,12 @@ i, em {
 	font-style:italic;
 }
 
+center 
+{
+	text-align:center;
+	display:block;
+}
+
 a
 {
 	text-decoration: underline;

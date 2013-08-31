@@ -1,5 +1,6 @@
 #include "html.h"
 #include "element.h"
+#include "document.h"
 
 #define LITEHTML_EMPTY_FUNC			{}
 #define LITEHTML_RETURN_FUNC(ret)	{return ret;}
@@ -131,6 +132,35 @@ bool litehtml::element::collapse_bottom_margin() const
 	return false;
 }
 
+int litehtml::element::get_predefined_height() const
+{
+	css_length h = get_css_height();
+	if(h.is_predefined())
+	{
+		return m_pos.height;
+	}
+	if(h.units() == css_units_percentage)
+	{
+		if(!m_parent)
+		{
+			position client_pos;
+			m_doc->container()->get_client_rect(client_pos);
+			return h.calc_percent(client_pos.height);
+		} else
+		{
+			int ph = m_parent->get_predefined_height();
+			return h.calc_percent(ph);
+		}
+	}
+	return 	m_doc->cvt_units(h, get_font_size());
+}
+
+void litehtml::element::calc_document_size( litehtml::size& sz, int x /*= 0*/, int y /*= 0*/ )
+{
+	sz.width	= std::max(sz.width,	x + right());
+	sz.height	= std::max(sz.height,	y + bottom());
+}
+
 bool litehtml::element::is_nth_last_child( element* el, int num, int off )			LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_nth_child( element* el, int num, int off )				LITEHTML_RETURN_FUNC(false)
 litehtml::overflow litehtml::element::get_overflow() const							LITEHTML_RETURN_FUNC(overflow_visible)
@@ -199,7 +229,7 @@ void litehtml::element::draw( uint_ptr hdc, int x, int y, const position* clip )
 void litehtml::element::draw_background( uint_ptr hdc, int x, int y, const position* clip )	LITEHTML_EMPTY_FUNC
 const litehtml::tchar_t* litehtml::element::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )	LITEHTML_RETURN_FUNC(0)
 litehtml::uint_ptr litehtml::element::get_font( font_metrics* fm /*= 0*/ )			LITEHTML_RETURN_FUNC(0)
-int litehtml::element::get_font_size()												LITEHTML_RETURN_FUNC(0)
+int litehtml::element::get_font_size()	const										LITEHTML_RETURN_FUNC(0)
 void litehtml::element::get_text( tstring& text )									LITEHTML_EMPTY_FUNC
 void litehtml::element::parse_attributes()											LITEHTML_EMPTY_FUNC
 int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(0)

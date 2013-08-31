@@ -132,7 +132,7 @@ namespace litehtml
 
 		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
-		virtual int					get_font_size();
+		virtual int					get_font_size() const;
 
 		elements_vector&			children();
 		virtual void				calc_outlines( int parent_width );
@@ -163,6 +163,7 @@ namespace litehtml
 		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
 		virtual int					get_zindex() const;
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
+		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 
 		virtual bool				is_nth_child(element* el, int num, int off);
 		virtual bool				is_nth_last_child(element* el, int num, int off);

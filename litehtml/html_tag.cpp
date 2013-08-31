@@ -402,8 +402,8 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 	int parent_width = max_width;
 
 	// restore margins after collapse
-	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		m_font_size);
-	m_margins.bottom	= m_doc->cvt_units(m_css_margins.bottom,	m_font_size);
+	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		m_font_size, max_width);
+	m_margins.bottom	= m_doc->cvt_units(m_css_margins.bottom,	m_font_size, max_width);
 
 	// reset auto margins
 	if(m_css_margins.left.is_predefined())
@@ -501,15 +501,20 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 		m_pos.x += m_doc->cvt_units(m_css_left, m_font_size, parent_width);
 	}
 
-	// TODO: Percents are incorrect
-	int block_height = m_css_height.calc_percent(m_pos.height);
-
+	int block_height = get_predefined_height();
 	if(block_height)
 	{
 		m_pos.height = block_height;
 	}
 
-	int min_height = m_css_min_height.calc_percent(m_pos.height);
+	int min_height = 0;
+	if(!m_css_min_height.is_predefined() && m_css_min_height.units() == css_units_percentage)
+	{
+		min_height = m_css_min_height.calc_percent(m_parent->get_predefined_height());
+	} else
+	{
+		min_height = (int) m_css_min_height.val();
+	}
 
 	if(m_display == display_list_item)
 	{
@@ -568,7 +573,7 @@ bool litehtml::html_tag::is_white_space()
 	return false;
 }
 
-int litehtml::html_tag::get_font_size()
+int litehtml::html_tag::get_font_size() const
 {
 	return m_font_size;
 }
@@ -1275,8 +1280,11 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 	m_margins.left	= m_css_margins.left.calc_percent(parent_width);
 	m_margins.right	= m_css_margins.right.calc_percent(parent_width);
 
-	m_margins.top		= m_css_margins.top.calc_percent(0);
-	m_margins.bottom	= m_css_margins.bottom.calc_percent(0);
+	m_margins.top		= m_css_margins.top.calc_percent(parent_width);
+	m_margins.bottom	= m_css_margins.bottom.calc_percent(parent_width);
+
+	m_padding.top		= m_css_padding.top.calc_percent(parent_width);
+	m_padding.bottom	= m_css_padding.bottom.calc_percent(parent_width);
 
 	if(m_display == display_block)
 	{
@@ -2518,44 +2526,75 @@ void litehtml::html_tag::render_absolutes()
 
 		if(el->get_display() != display_none && el->get_element_position() == element_position_absolute)
 		{
-			int left	= el->get_css_left().calc_percent(m_pos.width);
-			int right	= m_pos.width	- el->get_css_right().calc_percent(m_pos.width);
-			int top		= el->get_css_top().calc_percent(m_pos.height);
-			int bottom	= m_pos.height	- el->get_css_bottom().calc_percent(m_pos.height);
+			int parent_height	= 0;
+			int parent_width	= 0;
+			if(el->parent())
+			{
+				parent_height	= el->parent()->height() - el->parent()->content_margins_bottom() - el->parent()->content_margins_top();
+				parent_width	= el->parent()->width() - el->parent()->content_margins_left() - el->parent()->content_margins_right();
+			}
+
+			css_length	css_left	= el->get_css_left();
+			css_length	css_right	= el->get_css_right();
+			css_length	css_top		= el->get_css_top();
+			css_length	css_bottom	= el->get_css_bottom();
 
 			bool need_render = false;
+
+			css_length el_w = el->get_css_width();
+			css_length el_h = el->get_css_height();
+			if(el_w.units() == css_units_percentage && parent_width)
+			{
+				int w = el_w.calc_percent(parent_width);
+				if(el->m_pos.width != w)
+				{
+					need_render = true;
+					el->m_pos.width = w;
+				}
+			}
+
+			if(el_h.units() == css_units_percentage && parent_height)
+			{
+				int h = el_h.calc_percent(parent_height);
+				if(el->m_pos.height != h)
+				{
+					need_render = true;
+					el->m_pos.height = h;
+				}
+			}
+
 			bool cvt_x = false;
 			bool cvt_y = false;
 
-			if(!el->get_css_left().is_predefined() || !el->get_css_right().is_predefined())
+			if(!css_left.is_predefined() || !css_right.is_predefined())
 			{
-				if(!el->get_css_left().is_predefined() && el->get_css_right().is_predefined())
+				if(!css_left.is_predefined() && css_right.is_predefined())
 				{
-					el->m_pos.x = left - m_padding.left + el->content_margins_left();
-				} else if(el->get_css_left().is_predefined() && !el->get_css_right().is_predefined())
+					el->m_pos.x = css_left.calc_percent(parent_width) + el->content_margins_left() - m_padding.left;
+				} else if(css_left.is_predefined() && !css_right.is_predefined())
 				{
-					el->m_pos.x = right - el->width() + el->content_margins_right() + m_padding.right;
+					el->m_pos.x = m_pos.width + m_padding.right - css_right.calc_percent(parent_width) - el->m_pos.width - el->content_margins_right();
 				} else
 				{
-					el->m_pos.x		= left - m_padding.left + el->content_margins_left();
-					el->m_pos.width	= (right + el->content_margins_right() + m_padding.right) - el->m_pos.x;
+					el->m_pos.x		= css_left.calc_percent(parent_width) + el->content_margins_left() - m_padding.left;
+					el->m_pos.width	= m_pos.width + m_padding.left + m_padding.right - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_margins_left() + el->content_margins_right());
 					need_render = true;
 				}
 				cvt_x = true;
 			}
 
-			if(!el->get_css_top().is_predefined() || !el->get_css_bottom().is_predefined())
+			if(!css_top.is_predefined() || !css_bottom.is_predefined())
 			{
-				if(!el->get_css_top().is_predefined() && el->get_css_bottom().is_predefined())
+				if(!css_top.is_predefined() && css_bottom.is_predefined())
 				{
-					el->m_pos.y = top - m_padding.top + el->content_margins_top();
-				} else if(el->get_css_top().is_predefined() && !el->get_css_bottom().is_predefined())
+					el->m_pos.y = css_top.calc_percent(parent_height) + el->content_margins_top() - m_padding.top;
+				} else if(css_top.is_predefined() && !css_bottom.is_predefined())
 				{
-					el->m_pos.y = bottom - el->height() + el->content_margins_bottom() + m_padding.bottom;
+					el->m_pos.y = m_pos.height + m_padding.bottom - css_bottom.calc_percent(parent_height) - el->m_pos.height - el->content_margins_bottom();
 				} else
 				{
-					el->m_pos.y			= top - m_padding.top + el->content_margins_top();
-					el->m_pos.height	= (bottom + el->content_margins_bottom() + m_padding.bottom) - el->m_pos.y;
+					el->m_pos.y			= css_top.calc_percent(parent_height) + el->content_margins_top() - m_padding.top;
+					el->m_pos.height	= m_pos.height + m_padding.top + m_padding.bottom - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_margins_top() + el->content_margins_bottom());
 					need_render = true;
 				}
 				cvt_y = true;
@@ -2729,5 +2768,22 @@ void litehtml::html_tag::parse_nth_child_params( tstring param, int &num, int &o
 
 		num = t_atoi(s_num.c_str());
 		off = t_atoi(s_off.c_str());
+	}
+}
+
+void litehtml::html_tag::calc_document_size( litehtml::size& sz, int x /*= 0*/, int y /*= 0*/ )
+{
+	element::calc_document_size(sz, x, y);
+
+	if(m_overflow == overflow_visible)
+	{
+		position pos = m_pos;
+		pos.x	+= x;
+		pos.y	+= y;
+
+		for(elements_vector::iterator el = m_children.begin(); el != m_children.end(); el++)
+		{
+			(*el)->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
+		}
 	}
 }
