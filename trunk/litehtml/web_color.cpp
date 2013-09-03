@@ -212,7 +212,7 @@ litehtml::web_color litehtml::web_color::from_string( const tchar_t* str )
 		if(tokens.size() >= 1)	clr.red		= (byte) t_atoi(tokens[0].c_str());
 		if(tokens.size() >= 2)	clr.green	= (byte) t_atoi(tokens[1].c_str());
 		if(tokens.size() >= 3)	clr.blue	= (byte) t_atoi(tokens[2].c_str());
-		if(tokens.size() >= 4)	clr.alpha	= (byte) t_atoi(tokens[3].c_str());
+		if(tokens.size() >= 4)	clr.alpha	= (byte) (t_strtod(tokens[3].c_str(), 0) * 255.0);
 
 		return clr;
 	} else

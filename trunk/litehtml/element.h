@@ -141,7 +141,7 @@ namespace litehtml
 		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				init();
 		virtual bool				is_floats_holder() const;
-		virtual int					get_floats_height() const;
+		virtual int					get_floats_height(element_float el_float = float_none) const;
 		virtual int					get_left_floats_height() const;
 		virtual int					get_right_floats_height() const;
 		virtual int					get_line_left(int y) const;
@@ -189,7 +189,7 @@ namespace litehtml
 
 	inline int litehtml::element::width() const
 	{
-		return m_pos.width + margin_left() + margin_right() + m_padding.width() + m_borders.height();
+		return m_pos.width + margin_left() + margin_right() + m_padding.width() + m_borders.width();
 	}
 
 	inline int litehtml::element::content_margins_top() const
