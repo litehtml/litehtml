@@ -840,29 +840,57 @@ litehtml::element* litehtml::html_tag::find_ancestor( const css_selector& select
 	return m_parent->find_ancestor(selector, apply_pseudo, is_pseudo);
 }
 
-int litehtml::html_tag::get_floats_height() const
+int litehtml::html_tag::get_floats_height(element_float el_float) const
 {
 	if(is_floats_holder())
 	{
 		int h = 0;
 		if(!m_floats.empty())
 		{
+			bool process = false;
 			for(elements_vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
 			{
 				element::ptr el = (*i);
+				process = false;
+				switch(el_float)
+				{
+				case float_none:
+					process = true;
+					break;
+				case float_left:
+					if(el->get_clear() == clear_left || el->get_clear() == clear_both)
+					{
+						process = true;
+					}
+					break;
+				case float_right:
+					if(el->get_clear() == clear_right || el->get_clear() == clear_both)
+					{
+						process = true;
+					}
+					break;
+				}
+				if(process)
+				{
+					position el_pos;
+					el->get_abs_position(el_pos, this);
+					el_pos += el->m_margins;
+					el_pos += el->m_padding;
+					el_pos += el->m_borders;
 
-				position el_pos;
-				el->get_abs_position(el_pos, this);
-				el_pos += el->m_margins;
-				el_pos += el->m_padding;
-				el_pos += el->m_borders;
-
-				h = std::max(h, el_pos.bottom());
+					if(el_float == float_none)
+					{
+						h = std::max(h, el_pos.bottom());
+					} else
+					{
+						h = std::max(h, el_pos.top());
+					}
+				}
 			}
 		}
 		return h;
 	}
-	int h = m_parent->get_floats_height();
+	int h = m_parent->get_floats_height(el_float);
 	return h - m_pos.y;
 }
 
@@ -1814,7 +1842,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 				line_top = m_boxes.back()->bottom();
 			}
 		}
-		line_top		= get_cleared_top(el->get_clear(), line_top);
+		line_top		= get_cleared_top(el, line_top);
 		int line_left	= get_line_left(line_top);
 		int line_right	= get_line_right(line_top, max_width);
 
@@ -1841,7 +1869,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 				line_top = m_boxes.back()->bottom();
 			}
 		}
-		line_top		= get_cleared_top(el->get_clear(), line_top);
+		line_top		= get_cleared_top(el, line_top);
 		int line_left	= get_line_left(line_top);
 		int line_right	= get_line_right(line_top, max_width);
 
@@ -2035,7 +2063,7 @@ int litehtml::html_tag::finish_last_box(bool end_of_render)
 
 int litehtml::html_tag::new_box( element* el, int max_width )
 {
-	int line_top	= get_cleared_top(el->get_clear(), finish_last_box());
+	int line_top	= get_cleared_top(el, finish_last_box());
 
 	int line_left	= get_line_left(line_top);
 	int line_right	= get_line_right(line_top, max_width);
@@ -2065,9 +2093,9 @@ int litehtml::html_tag::new_box( element* el, int max_width )
 	return line_top;
 }
 
-int litehtml::html_tag::get_cleared_top( element_clear clear, int line_top )
+int litehtml::html_tag::get_cleared_top( element* el, int line_top )
 {
-	switch(clear)
+	switch(el->get_clear())
 	{
 	case clear_left:
 		{
@@ -2090,6 +2118,16 @@ int litehtml::html_tag::get_cleared_top( element_clear clear, int line_top )
 	case clear_both:
 		{
 			int fh = get_floats_height();
+			if(fh && fh > line_top)
+			{
+				line_top = fh;
+			}
+		}
+		break;
+	default:
+		if(el->get_float() != float_none)
+		{
+			int fh = get_floats_height(el->get_float());
 			if(fh && fh > line_top)
 			{
 				line_top = fh;

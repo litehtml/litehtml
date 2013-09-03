@@ -83,7 +83,7 @@ namespace litehtml
 
 		int							new_box( element* el, int max_width );
 
-		int							get_cleared_top( element_clear clear, int line_top );
+		int							get_cleared_top( element* el, int line_top );
 		int							finish_last_box(bool end_of_render = false);
 
 		virtual bool				appendChild(litehtml::element* el);
@@ -151,7 +151,7 @@ namespace litehtml
 		virtual void				init();
 		virtual void				get_inline_boxes(position::vector& boxes);
 		virtual bool				is_floats_holder() const;
-		virtual int					get_floats_height() const;
+		virtual int					get_floats_height(element_float el_float = float_none) const;
 		virtual int					get_left_floats_height() const;
 		virtual int					get_right_floats_height() const;
 		virtual int					get_line_left(int y) const;

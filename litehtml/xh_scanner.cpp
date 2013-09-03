@@ -242,13 +242,20 @@ namespace litehtml
         if(t == 0) return TT_EOF;
 		if( !isalnum(t) && t != '#' )
         {
-          push_back(t);
+          //push_back(t);
           break; // appears a erroneous entity token.
                  // but we try to use it.
         }
         buf[i] = char(t); 
       }
       buf[i] = 0;
+	  if(t != ';' /*&& get_token() == TT_ATTR*/)
+	  {
+		  append_value('&');
+		  for(int n = 0; n < i; ++n)
+			  append_value(buf[n]);
+		  return t;
+	  }
       if(i == 2)  
       {
         if(equal(buf,_t("gt"),2)) return '>';
@@ -261,13 +268,21 @@ namespace litehtml
         if(equal(buf,_t("apos"),4)) return '\'';
         if(equal(buf,_t("quot"),4)) return '\"';
       }
-      t = resolve_entity(buf,i);
-      if(t) return t;
+      tchar_t entity = resolve_entity(buf,i);
+      if(entity)
+	  {
+		  if(t = ';')
+		  {
+			  return entity;
+		  }
+		  append_value(entity);
+		  return t;
+	  }
       // no luck ...
       append_value('&');
       for(int n = 0; n < i; ++n)
         append_value(buf[n]);
-      return ';';
+	  return t;
     }
 
     bool scanner::is_whitespace(tchar_t c)

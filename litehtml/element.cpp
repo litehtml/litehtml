@@ -193,7 +193,7 @@ int litehtml::element::get_line_left( int y ) const									LITEHTML_RETURN_FUNC
 int litehtml::element::get_line_right( int y, int def_right ) const					LITEHTML_RETURN_FUNC(def_right)
 int litehtml::element::get_left_floats_height() const								LITEHTML_RETURN_FUNC(0)
 int litehtml::element::get_right_floats_height() const								LITEHTML_RETURN_FUNC(0)
-int litehtml::element::get_floats_height() const									LITEHTML_RETURN_FUNC(0)
+int litehtml::element::get_floats_height(element_float el_float) const				LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::is_floats_holder() const									LITEHTML_RETURN_FUNC(false)
 void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML_EMPTY_FUNC
 void litehtml::element::init()														LITEHTML_EMPTY_FUNC
