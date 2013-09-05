@@ -1,11 +1,15 @@
 #pragma once
+#include "TxThread.h"
 #include "../containers/cairo/cairo_container.h"
 
 #define HTMLVIEWWND_CLASS	L"HTMLVIEW_WINDOW"
 
+#define WM_IMAGE_LOADED		(WM_USER + 1000)
+
 using namespace litehtml;
 
-class CHTMLViewWnd : public cairo_container
+class CHTMLViewWnd :	public cairo_container,
+						public CTxThread
 {
 	HWND					m_hWnd;
 	HINSTANCE				m_hInst;
@@ -21,6 +25,9 @@ class CHTMLViewWnd : public cairo_container
 	litehtml::string_vector	m_history_back;
 	litehtml::string_vector	m_history_forward;
 	std::wstring			m_cursor;
+	litehtml::string_vector	m_images_queue;
+	CRITICAL_SECTION		m_images_queue_sync;
+	HANDLE					m_hImageAdded;
 public:
 	CHTMLViewWnd(HINSTANCE	hInst, litehtml::context* ctx);
 	virtual ~CHTMLViewWnd(void);
@@ -39,6 +46,9 @@ public:
 	virtual void		import_css(std::wstring& text, const std::wstring& url, std::wstring& baseurl, const string_vector& media);
 	virtual	void		on_anchor_click(const wchar_t* url, litehtml::element::ptr el);
 	virtual	void		set_cursor(const wchar_t* cursor);
+	void				render(BOOL calc_time = FALSE);
+
+	virtual DWORD		ThreadProc();
 
 protected:
 	virtual void		OnCreate();
@@ -53,7 +63,6 @@ protected:
 	virtual void		OnLButtonUp(int x, int y);
 	virtual void		OnMouseLeave();
 	
-	void				render();
 	void				redraw(LPRECT rcDraw, BOOL update);
 	void				update_scroll();
 	void				update_cursor();
@@ -64,4 +73,13 @@ protected:
 
 private:
 	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
+
+	void lock_images_queue()
+	{
+		EnterCriticalSection(&m_images_queue_sync);
+	}
+	void unlock_images_queue()
+	{
+		LeaveCriticalSection(&m_images_queue_sync);
+	}
 };

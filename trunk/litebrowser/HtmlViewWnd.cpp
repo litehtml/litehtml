@@ -17,6 +17,9 @@ CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 	m_context	= ctx;
 	m_cursor	= L"auto";
 
+	m_hImageAdded = CreateEvent(NULL, FALSE, FALSE, NULL);
+	InitializeCriticalSection(&m_images_queue_sync);
+
 	WNDCLASS wc;
 	if(!GetClassInfo(m_hInst, HTMLVIEWWND_CLASS, &wc))
 	{
@@ -38,6 +41,9 @@ CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 
 CHTMLViewWnd::~CHTMLViewWnd(void)
 {
+	DeleteCriticalSection(&m_images_queue_sync);
+	CTxThread::Stop();
+	CloseHandle(m_hImageAdded);
 }
 
 LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam )
@@ -56,6 +62,9 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 	{
 		switch (uMessage)
 		{
+		case WM_IMAGE_LOADED:
+			pThis->render();
+			break;
 		case WM_SETCURSOR:
 			pThis->update_cursor();
 			break;
@@ -165,7 +174,6 @@ void CHTMLViewWnd::OnPaint( simpledib::dib* dib, LPRECT rcDraw )
 void CHTMLViewWnd::OnSize( int width, int height )
 {
 	render();
-	update_scroll();
 }
 
 void CHTMLViewWnd::OnDestroy()
@@ -176,6 +184,7 @@ void CHTMLViewWnd::OnDestroy()
 void CHTMLViewWnd::create( int x, int y, int width, int height, HWND parent )
 {
 	m_hWnd = CreateWindow(HTMLVIEWWND_CLASS, L"htmlview", WS_CHILD | WS_VISIBLE, x, y, width, height, parent, NULL, m_hInst, (LPVOID) this);
+	CTxThread::Run();
 }
 
 void CHTMLViewWnd::open( LPCWSTR path )
@@ -200,10 +209,9 @@ void CHTMLViewWnd::open( LPCWSTR path )
 	m_top	= 0;
 	m_left	= 0;
 	render();
-	update_scroll();
 }
 
-void CHTMLViewWnd::render()
+void CHTMLViewWnd::render(BOOL calc_time)
 {
 	if(!m_hWnd || !m_doc)
 	{
@@ -216,7 +224,18 @@ void CHTMLViewWnd::render()
 	int width	= rcClient.right - rcClient.left;
 	int height	= rcClient.bottom - rcClient.top;
 
-	m_doc->render(width);
+	if(calc_time)
+	{
+		DWORD tic1 = GetTickCount();
+		m_doc->render(width);
+		DWORD tic2 = GetTickCount();
+		WCHAR msg[255];
+		wsprintf(msg, L"Render time: %d msec", tic2 - tic1);
+		MessageBox(m_hWnd, msg, L"litebrowser", MB_ICONINFORMATION | MB_OK);
+	} else
+	{
+		m_doc->render(width);
+	}
 
 	m_max_top = m_doc->height() - height;
 	if(m_max_top < 0) m_max_top = 0;
@@ -224,6 +243,7 @@ void CHTMLViewWnd::render()
 	m_max_left = m_doc->width() - width;
 	if(m_max_left < 0) m_max_left = 0;
 
+	update_scroll();
 	redraw(NULL, FALSE);
 }
 
@@ -479,41 +499,13 @@ void CHTMLViewWnd::OnMouseMove( int x, int y )
 
 CTxDIB* CHTMLViewWnd::get_image( LPCWSTR url )
 {
-	CTxDIB* img = NULL;
+	lock_images_queue();
+	m_images_queue.push_back(url);
+	unlock_images_queue();
 
-	CRemotedFile rf;
+	SetEvent(m_hImageAdded);
 
-	HANDLE hFile = rf.Open(url);
-	if(hFile != INVALID_HANDLE_VALUE)
-	{
-		DWORD szHigh;
-		DWORD szLow = GetFileSize(hFile, &szHigh);
-		HANDLE hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, szHigh, szLow, NULL);
-		if(hMapping)
-		{
-			SIZE_T memSize;
-			if(szHigh)
-			{
-				memSize = MAXDWORD;
-			} else
-			{
-				memSize = szLow;
-			}
-			LPVOID data = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, memSize);
-
-			img = new CTxDIB;
-			if(!img->load((LPBYTE) data, (DWORD) memSize))
-			{
-				delete img;
-				img = NULL;
-			}
-
-			UnmapViewOfFile(data);
-			CloseHandle(hMapping);
-		}
-	}
-
-	return img;
+	return NULL;
 
 /*
 	Gdiplus::Bitmap* img = NULL;
@@ -723,3 +715,63 @@ void CHTMLViewWnd::get_client_rect( litehtml::position& client )
 	client.height	= rcClient.bottom - rcClient.top;
 }
 
+DWORD CHTMLViewWnd::ThreadProc()
+{
+	bool update = false;
+	while(CTxThread::WaitForStop2(m_hImageAdded, INFINITE) == WAIT_OBJECT_0 + 1)
+	{
+		update = false;
+		while(!m_images_queue.empty())
+		{
+			litehtml::tstring url;
+
+			lock_images_queue();
+
+				url = m_images_queue[0];
+				m_images_queue.erase(m_images_queue.begin());
+
+			unlock_images_queue();
+
+			CTxDIB* img = NULL;
+
+			CRemotedFile rf;
+
+			HANDLE hFile = rf.Open(url.c_str());
+			if(hFile != INVALID_HANDLE_VALUE)
+			{
+				DWORD szHigh;
+				DWORD szLow = GetFileSize(hFile, &szHigh);
+				HANDLE hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, szHigh, szLow, NULL);
+				if(hMapping)
+				{
+					SIZE_T memSize;
+					if(szHigh)
+					{
+						memSize = MAXDWORD;
+					} else
+					{
+						memSize = szLow;
+					}
+					LPVOID data = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, memSize);
+
+					img = new CTxDIB;
+					if(!img->load((LPBYTE) data, (DWORD) memSize))
+					{
+						delete img;
+						img = NULL;
+					}
+
+					UnmapViewOfFile(data);
+					CloseHandle(hMapping);
+				}
+			}
+			if(img)
+			{
+				cairo_container::add_image(url, img);
+				PostMessage(m_hWnd, WM_IMAGE_LOADED, 0, 0);
+			}
+		}
+	}
+
+	return 0;
+}

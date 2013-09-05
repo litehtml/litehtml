@@ -115,7 +115,9 @@ int litehtml::line_box::width()
 
 void litehtml::line_box::add_element( element* el )
 {
-	el->m_skip = false;
+	el->m_skip	= false;
+	el->m_box	= 0;
+	bool add	= true;
 	if(m_items.empty() && el->is_white_space() || el->is_break())
 	{
 		el->m_skip = true;
@@ -124,18 +126,22 @@ void litehtml::line_box::add_element( element* el )
 		element* ws = get_last_space();
 		if(ws)
 		{
+			add = false;
 			el->m_skip = true;
 		}
 	}
 
-	el->m_box = this;
-	m_items.push_back(el);
-
-	if(!el->m_skip)
+	if(add)
 	{
-		el->m_pos.x	= m_box_left + m_width + el->content_margins_left();
-		el->m_pos.y	= m_box_top;
-		m_width		+= el->width();
+		el->m_box = this;
+		m_items.push_back(el);
+
+		if(!el->m_skip)
+		{
+			el->m_pos.x	= m_box_left + m_width + el->content_margins_left();
+			el->m_pos.y	= m_box_top;
+			m_width		+= el->width();
+		}
 	}
 }
 

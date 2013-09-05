@@ -188,9 +188,9 @@ int litehtml::element::render_inline( element* container, int max_width )			LITE
 void litehtml::element::add_absolute( element* el )									LITEHTML_EMPTY_FUNC
 int litehtml::element::find_next_line_top( int top, int width, int def_right )		LITEHTML_RETURN_FUNC(0)
 litehtml::element_float litehtml::element::get_float() const						LITEHTML_RETURN_FUNC(float_none)
-void litehtml::element::add_float( element* el )									LITEHTML_EMPTY_FUNC
-int litehtml::element::get_line_left( int y ) const									LITEHTML_RETURN_FUNC(0)
-int litehtml::element::get_line_right( int y, int def_right ) const					LITEHTML_RETURN_FUNC(def_right)
+void litehtml::element::add_float( element* el, int x, int y )						LITEHTML_EMPTY_FUNC
+int litehtml::element::get_line_left( int y )										LITEHTML_RETURN_FUNC(0)
+int litehtml::element::get_line_right( int y, int def_right )						LITEHTML_RETURN_FUNC(def_right)
 int litehtml::element::get_left_floats_height() const								LITEHTML_RETURN_FUNC(0)
 int litehtml::element::get_right_floats_height() const								LITEHTML_RETURN_FUNC(0)
 int litehtml::element::get_floats_height(element_float el_float) const				LITEHTML_RETURN_FUNC(0)

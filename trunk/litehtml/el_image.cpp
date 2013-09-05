@@ -29,11 +29,6 @@ bool litehtml::el_image::is_replaced() const
 
 int litehtml::el_image::render( int x, int y, int max_width )
 {
-	if(!m_src.empty())
-	{
-		m_doc->container()->load_image(m_src.c_str(), NULL);
-	}
-
 	int parent_width = max_width;
 
 	// restore margins after collapse

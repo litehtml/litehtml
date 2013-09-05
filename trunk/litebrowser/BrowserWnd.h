@@ -24,6 +24,7 @@ public:
 	void back();
 	void forward();
 	void reload();
+	void calc_time();
 
 protected:
 	virtual void OnCreate();

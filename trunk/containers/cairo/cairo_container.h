@@ -23,6 +23,7 @@ protected:
 	images_map					m_images;
 	litehtml::position::vector	m_clips;
 	IMLangFontLink2*			m_font_link;
+	CRITICAL_SECTION			m_img_sync;
 public:
 	cairo_container(void);
 	virtual ~cairo_container(void);
@@ -51,6 +52,7 @@ public:
 	virtual CTxDIB*						get_image(LPCWSTR url) = 0;
 	virtual void						get_client_rect(litehtml::position& client) = 0;
 	void								clear_images();
+	void								add_image(litehtml::tstring& url, CTxDIB* img);
 
 protected:
 	virtual void						draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width);
@@ -64,4 +66,6 @@ private:
 
 	void								set_color(cairo_t* cr, litehtml::web_color color)	{ cairo_set_source_rgba(cr, color.red / 255.0, color.green / 255.0, color.blue / 255.0, color.alpha / 255.0); }
 	void								draw_txdib(cairo_t* cr, CTxDIB* bmp, int x, int y, int cx, int cy);
+	void								lock_images_cache();
+	void								unlock_images_cache();
 };

@@ -144,9 +144,9 @@ namespace litehtml
 		virtual int					get_floats_height(element_float el_float = float_none) const;
 		virtual int					get_left_floats_height() const;
 		virtual int					get_right_floats_height() const;
-		virtual int					get_line_left(int y) const;
-		virtual int					get_line_right(int y, int def_right) const;
-		virtual void				add_float(element* el);
+		virtual int					get_line_left(int y);
+		virtual int					get_line_right(int y, int def_right);
+		virtual void				add_float(element* el, int x = 0, int y = 0);
 		virtual void				add_absolute(element* el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
 		virtual int					get_zindex() const;
