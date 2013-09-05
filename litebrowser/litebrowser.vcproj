@@ -44,7 +44,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib"
+				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib;curl/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -120,7 +120,7 @@
 				Name="VCCLCompilerTool"
 				AdditionalOptions="/MP"
 				Optimization="0"
-				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib"
+				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib;curl/include"
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS;NO_TOOLBAR"
 				MinimalRebuild="false"
 				BasicRuntimeChecks="3"
@@ -198,7 +198,7 @@
 				AdditionalOptions="/MP"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib"
+				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib;curl/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -277,7 +277,7 @@
 				AdditionalOptions="/MP"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib"
+				AdditionalIncludeDirectories="../include;libs/cairo/src;libs/txdib;libs/simpledib;curl/include"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
@@ -370,6 +370,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\TxThread.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\containers\win32\win32_container.cpp"
 				>
 			</File>
@@ -421,6 +425,10 @@
 			</File>
 			<File
 				RelativePath=".\ToolbarWnd.h"
+				>
+			</File>
+			<File
+				RelativePath=".\TxThread.h"
 				>
 			</File>
 			<File

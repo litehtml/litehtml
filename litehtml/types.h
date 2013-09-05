@@ -491,4 +491,37 @@ namespace litehtml
 		visibility_hidden,
 		visibility_collapse,
 	};
+
+	struct floated_box 
+	{
+		typedef std::vector<floated_box>	vector;
+
+		position		pos;
+		element_float	float_side;
+		element_clear	clear_floats;
+	};
+
+	struct int_int_cache
+	{
+		int		hash;
+		int		val;
+		bool	is_valid;
+
+		int_int_cache()
+		{
+			hash		= 0;
+			val			= 0;
+			is_valid	= false;
+		}
+		void invalidate()
+		{
+			is_valid = false;
+		}
+		void set_value(int vHash, int vVal)
+		{
+			hash		= vHash;
+			val			= vVal;
+			is_valid	= true;
+		}
+	};
 }

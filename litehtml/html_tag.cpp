@@ -447,6 +447,8 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 
 	m_floats.clear();
 	m_boxes.clear();
+	m_cahe_line_left.invalidate();
+	m_cahe_line_right.invalidate();
 
 	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
@@ -594,6 +596,22 @@ int litehtml::html_tag::get_base_line()
 
 void litehtml::html_tag::init()
 {
+	//remove white white spaces
+	elements_vector::iterator i = m_children.begin();
+	while(i != m_children.end())
+	{
+		if((*i)->is_white_space())
+		{
+			i++;
+			while(i != m_children.end() && (*i)->is_white_space())
+			{
+				i = m_children.erase(i);
+			}
+		} else
+		{
+			i++;
+		}
+	}
 }
 
 int litehtml::html_tag::select(const css_selector& selector, bool apply_pseudo)
@@ -848,9 +866,8 @@ int litehtml::html_tag::get_floats_height(element_float el_float) const
 		if(!m_floats.empty())
 		{
 			bool process = false;
-			for(elements_vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
+			for(floated_box::vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
 			{
-				element::ptr el = (*i);
 				process = false;
 				switch(el_float)
 				{
@@ -858,13 +875,13 @@ int litehtml::html_tag::get_floats_height(element_float el_float) const
 					process = true;
 					break;
 				case float_left:
-					if(el->get_clear() == clear_left || el->get_clear() == clear_both)
+					if(i->clear_floats == clear_left || i->clear_floats == clear_both)
 					{
 						process = true;
 					}
 					break;
 				case float_right:
-					if(el->get_clear() == clear_right || el->get_clear() == clear_both)
+					if(i->clear_floats == clear_right || i->clear_floats == clear_both)
 					{
 						process = true;
 					}
@@ -872,18 +889,20 @@ int litehtml::html_tag::get_floats_height(element_float el_float) const
 				}
 				if(process)
 				{
+/*
 					position el_pos;
 					el->get_abs_position(el_pos, this);
 					el_pos += el->m_margins;
 					el_pos += el->m_padding;
 					el_pos += el->m_borders;
+*/
 
 					if(el_float == float_none)
 					{
-						h = std::max(h, el_pos.bottom());
+						h = std::max(h, i->pos.bottom());
 					} else
 					{
-						h = std::max(h, el_pos.top());
+						h = std::max(h, i->pos.top());
 					}
 				}
 			}
@@ -901,18 +920,11 @@ int litehtml::html_tag::get_left_floats_height() const
 		int h = 0;
 		if(!m_floats.empty())
 		{
-			for(elements_vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
+			for(floated_box::vector::const_iterator el = m_floats.begin(); el != m_floats.end(); el++)
 			{
-				element::ptr el = (*i);
-				if(el->get_float() == float_left)
+				if(el->float_side == float_left)
 				{
-					position el_pos;
-					el->get_abs_position(el_pos, this);
-					el_pos += el->m_margins;
-					el_pos += el->m_padding;
-					el_pos += el->m_borders;
-
-					h = std::max(h, el_pos.bottom());
+					h = std::max(h, el->pos.bottom());
 				}
 			}
 		}
@@ -929,18 +941,11 @@ int litehtml::html_tag::get_right_floats_height() const
 		int h = 0;
 		if(!m_floats.empty())
 		{
-			for(elements_vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
+			for(floated_box::vector::const_iterator el = m_floats.begin(); el != m_floats.end(); el++)
 			{
-				element::ptr el = (*i);
-				if(el->get_float() == float_right)
+				if(el->float_side == float_right)
 				{
-					position el_pos;
-					el->get_abs_position(el_pos, this);
-					el_pos += el->m_margins;
-					el_pos += el->m_padding;
-					el_pos += el->m_borders;
-
-					h = std::max(h, el_pos.bottom());
+					h = std::max(h, el->pos.bottom());
 				}
 			}
 		}
@@ -950,28 +955,27 @@ int litehtml::html_tag::get_right_floats_height() const
 	return h - m_pos.y;
 }
 
-int litehtml::html_tag::get_line_left( int y ) const
+int litehtml::html_tag::get_line_left( int y )
 {
 	if(is_floats_holder())
 	{
-		int w = 0;
-		for(elements_vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
+		if(m_cahe_line_left.is_valid && m_cahe_line_left.hash == y)
 		{
-			element::ptr el = (*i);
-			if(el->get_float() == float_left)
-			{
-				position el_pos;
-				el->get_abs_position(el_pos, this);
-				el_pos += el->m_margins;
-				el_pos += el->m_padding;
-				el_pos += el->m_borders;
+			return m_cahe_line_left.val;
+		}
 
-				if(y >= el_pos.top() && y < el_pos.bottom())
+		int w = 0;
+		for(floated_box::vector::const_iterator el = m_floats.begin(); el != m_floats.end(); el++)
+		{
+			if(el->float_side == float_left)
+			{
+				if(y >= el->pos.top() && y < el->pos.bottom())
 				{
-					w = std::max(w, el_pos.right());
+					w = std::max(w, el->pos.right());
 				}
 			}
 		}
+		m_cahe_line_left.set_value(y, w);
 		return w;
 	}
 	int w = m_parent->get_line_left(y + m_pos.y);
@@ -982,28 +986,27 @@ int litehtml::html_tag::get_line_left( int y ) const
 	return w - (w ? m_pos.x : 0);
 }
 
-int litehtml::html_tag::get_line_right( int y, int def_right ) const
+int litehtml::html_tag::get_line_right( int y, int def_right )
 {
 	if(is_floats_holder())
 	{
-		int w = def_right;
-		for(elements_vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
+		if(m_cahe_line_right.is_valid && m_cahe_line_right.hash == y)
 		{
-			element::ptr el = (*i);
-			if(el->get_float() == float_right)
-			{
-				position el_pos;
-				el->get_abs_position(el_pos, this);
-				el_pos += el->m_margins;
-				el_pos += el->m_padding;
-				el_pos += el->m_borders;
+			return m_cahe_line_right.val;
+		}
 
-				if(y >= el_pos.top() && y < el_pos.bottom())
+		int w = def_right;
+		for(floated_box::vector::const_iterator el = m_floats.begin(); el != m_floats.end(); el++)
+		{
+			if(el->float_side == float_right)
+			{
+				if(y >= el->pos.top() && y < el->pos.bottom())
 				{
-					w = std::min(w, el_pos.left());
+					w = std::min(w, el->pos.left());
 				}
 			}
 		}
+		m_cahe_line_right.set_value(y, w);
 		return w;
 	}
 	int w = m_parent->get_line_right(y + m_pos.y, def_right + m_pos.x);
@@ -1063,18 +1066,29 @@ void litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 	}
 }
 
-void litehtml::html_tag::add_float( element* el )
+void litehtml::html_tag::add_float( element* el, int x, int y )
 {
 	if(is_floats_holder())
 	{
-		element_float fl = el->get_float();
-		if(fl == float_left || fl == float_right)
+		floated_box fb;
+		fb.pos		= el->m_pos;
+		fb.pos.x	+= x;
+		fb.pos.y	+= y;
+		fb.pos		+= el->m_margins;
+		fb.pos		+= el->m_borders;
+		fb.pos		+= el->m_padding;
+		fb.float_side	= el->get_float();
+		fb.clear_floats	= el->get_clear();
+
+		if(fb.float_side == float_left || fb.float_side == float_right)
 		{
-			m_floats.push_back(el);
+			m_floats.push_back(fb);
+			m_cahe_line_left.invalidate();
+			m_cahe_line_right.invalidate();
 		}
 	} else
 	{
-		m_parent->add_float(el);
+		m_parent->add_float(el, x + m_pos.x, y + m_pos.y);
 	}
 }
 
@@ -1085,27 +1099,20 @@ int litehtml::html_tag::find_next_line_top( int top, int width, int def_right )
 		int new_top = top;
 		int_vector points;
 
-		for(elements_vector::const_iterator i = m_floats.begin(); i != m_floats.end(); i++)
+		for(floated_box::vector::const_iterator el = m_floats.begin(); el != m_floats.end(); el++)
 		{
-			element::ptr el = (*i);
-			position el_pos;
-			el->get_abs_position(el_pos, this);
-			el_pos += el->m_margins;
-			el_pos += el->m_padding;
-			el_pos += el->m_borders;
-
-			if(el_pos.top() >= top)
+			if(el->pos.top() >= top)
 			{
-				if(find(points.begin(), points.end(), el_pos.top()) == points.end())
+				if(find(points.begin(), points.end(), el->pos.top()) == points.end())
 				{
-					points.push_back(el_pos.top());
+					points.push_back(el->pos.top());
 				}
 			}
-			if(el_pos.bottom() >= top)
+			if(el->pos.bottom() >= top)
 			{
-				if(find(points.begin(), points.end(), el_pos.bottom()) == points.end())
+				if(find(points.begin(), points.end(), el->pos.bottom()) == points.end())
 				{
-					points.push_back(el_pos.bottom());
+					points.push_back(el->pos.bottom());
 				}
 			}
 		}

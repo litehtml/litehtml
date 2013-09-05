@@ -187,3 +187,11 @@ void CBrowserWnd::reload()
 		m_view->refresh();
 	}
 }
+
+void CBrowserWnd::calc_time()
+{
+	if(m_view)
+	{
+		m_view->render(TRUE);
+	}
+}

@@ -311,7 +311,10 @@ void CToolbarWnd::OnLButtonUp( int x, int y )
 
 void CToolbarWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el )
 {
-	if(!wcscmp(url, L"back"))
+	if(!wcscmp(url, L"time"))
+	{
+		m_parent->calc_time();
+	} else if(!wcscmp(url, L"back"))
 	{
 		m_parent->back();
 	} else if(!wcscmp(url, L"forward"))
