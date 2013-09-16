@@ -813,3 +813,18 @@ void cairo_container::unlock_images_cache()
 {
 	LeaveCriticalSection(&m_img_sync);
 }
+
+bool cairo_container::is_media_valid( const litehtml::tstring& media )
+{
+	litehtml::string_vector medias;
+	litehtml::tokenize(media, medias, L",");
+	for(litehtml::string_vector::iterator i = medias.begin(); i != medias.end(); i++)
+	{
+		litehtml::trim((*i));
+		if(i->substr(0, 3) == L"all" || i->substr(0, 6) == L"screen")
+		{
+			return true;
+		}
+	}
+	return false;
+}

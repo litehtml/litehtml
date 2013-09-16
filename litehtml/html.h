@@ -52,6 +52,7 @@ namespace litehtml
 		virtual void			set_clip(const litehtml::position& pos, bool valid_x, bool valid_y) = 0;
 		virtual void			del_clip() = 0;
 		virtual void			get_client_rect(litehtml::position& client) = 0;
+		virtual bool			is_media_valid(const litehtml::tstring& media) = 0;
 	};
 
 	void trim(tstring &s);
