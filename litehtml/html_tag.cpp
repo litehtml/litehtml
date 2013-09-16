@@ -126,21 +126,11 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 			{
 				if(select(*(*sel), true))
 				{
-					if(m_tag == L"li")
-					{
-						int i = 0;
-						i++;
-					}
 					m_style.combine(*((*sel)->m_style));
 					us->m_used = true;
 				}
 			} else
 			{
-				if(m_tag == L"li")
-				{
-					int i = 0;
-					i++;
-				}
 				m_style.combine(*((*sel)->m_style));
 				us->m_used = true;
 			}
