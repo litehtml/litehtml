@@ -126,11 +126,21 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 			{
 				if(select(*(*sel), true))
 				{
+					if(m_tag == L"li")
+					{
+						int i = 0;
+						i++;
+					}
 					m_style.combine(*((*sel)->m_style));
 					us->m_used = true;
 				}
 			} else
 			{
+				if(m_tag == L"li")
+				{
+					int i = 0;
+					i++;
+				}
 				m_style.combine(*((*sel)->m_style));
 				us->m_used = true;
 			}
@@ -415,6 +425,7 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 		m_margins.right = 0;
 	}
 
+	m_pos.clear();
 	m_pos.move_to(x, y);
 
 	m_pos.x	+= content_margins_left();
@@ -660,7 +671,40 @@ int litehtml::html_tag::select(const css_selector& selector, bool apply_pseudo)
 				}
 			}
 			break;
-// TODO: add combinator_adjacent_sibling and combinator_general_sibling handling
+		case combinator_adjacent_sibling:
+			{
+				bool is_pseudo = false;
+				element* res =  m_parent->find_adjacent_sibling(this, *selector.m_left, apply_pseudo, &is_pseudo);
+				if(!res)
+				{
+					return 0;
+				} else
+				{
+					if(is_pseudo)
+					{
+						right_res = 2;
+					}
+				}
+			}
+			break;
+		case combinator_general_sibling:
+			{
+				bool is_pseudo = false;
+				element* res =  m_parent->find_sibling(this, *selector.m_left, apply_pseudo, &is_pseudo);
+				if(!res)
+				{
+					return 0;
+				} else
+				{
+					if(is_pseudo)
+					{
+						right_res = 2;
+					}
+				}
+			}
+			break;
+		default:
+			right_res = false;
 		}
 	}
 	return right_res;
@@ -2831,4 +2875,76 @@ void litehtml::html_tag::calc_document_size( litehtml::size& sz, int x /*= 0*/, 
 			(*el)->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
 		}
 	}
+}
+
+litehtml::element* litehtml::html_tag::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ )
+{
+	element* ret = 0;
+	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		element* e = (*i);
+		if(e->get_display() != display_inline_text)
+		{
+			if(e == el)
+			{
+				if(ret)
+				{
+					int res = ret->select(selector, apply_pseudo);
+					if(res)
+					{
+						if(is_pseudo)
+						{
+							if(res == 2)
+							{
+								*is_pseudo = true;
+							} else
+							{
+								*is_pseudo = false;
+							}
+						}
+						return ret;
+					}
+				}
+				return 0;
+			} else
+			{
+				ret = e;
+			}
+		}
+	}
+	return 0;
+}
+
+litehtml::element* litehtml::html_tag::find_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ )
+{
+	element* ret = 0;
+	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		element* e = (*i);
+		if(e->get_display() != display_inline_text)
+		{
+			if(e == el)
+			{
+				return ret;
+			} else if(!ret)
+			{
+				int res = e->select(selector, apply_pseudo);
+				if(res)
+				{
+					if(is_pseudo)
+					{
+						if(res == 2)
+						{
+							*is_pseudo = true;
+						} else
+						{
+							*is_pseudo = false;
+						}
+					}
+					ret = e;
+				}
+			}
+		}
+	}
+	return 0;
 }

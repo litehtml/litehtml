@@ -144,6 +144,8 @@ namespace litehtml
 		virtual bool				select(const tchar_t* selectors);
 
 		virtual element*			find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element*			find_adjacent_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element*			find_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual void				get_text(tstring& text);
 		virtual void				parse_attributes();
 

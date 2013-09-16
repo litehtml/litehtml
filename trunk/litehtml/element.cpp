@@ -161,6 +161,8 @@ void litehtml::element::calc_document_size( litehtml::size& sz, int x /*= 0*/, i
 	sz.height	= std::max(sz.height,	y + bottom());
 }
 
+litehtml::element* litehtml::element::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
+litehtml::element* litehtml::element::find_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::is_nth_last_child( element* el, int num, int off )			LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_nth_child( element* el, int num, int off )				LITEHTML_RETURN_FUNC(false)
 litehtml::overflow litehtml::element::get_overflow() const							LITEHTML_RETURN_FUNC(overflow_visible)

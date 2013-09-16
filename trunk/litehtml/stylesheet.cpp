@@ -172,5 +172,26 @@ void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, d
 				}
 			}
 		}
+	} else if(text.substr(0, 6) == _t("@media"))
+	{
+		tstring::size_type b1 = text.find_first_of(_t('{'));
+		tstring::size_type b2 = text.find_last_of(_t('}'));
+		if(b1 != tstring::npos)
+		{
+			tstring media_type = text.substr(6, b1 - 6);
+			trim(media_type);
+			if(doc && doc->is_media_valid(media_type))
+			{
+				tstring media_style;
+				if(b2 != tstring::npos)
+				{
+					media_style = text.substr(b1 + 1, b2 - b1 - 1);
+				} else
+				{
+					media_style = text.substr(b1 + 1);
+				}
+				parse_stylesheet(media_style.c_str(), baseurl, doc);
+			}
+		}
 	}
 }

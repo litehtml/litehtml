@@ -169,7 +169,7 @@ bool litehtml::css_selector::parse( const tstring& text )
 		m_combinator	= combinator_adjacent_sibling;
 		break;
 	case _t('~'):
-		m_combinator	= combinator_adjacent_sibling;
+		m_combinator	= combinator_general_sibling;
 		break;
 	default:
 		m_combinator	= combinator_descendant;

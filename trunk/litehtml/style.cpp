@@ -469,6 +469,14 @@ void litehtml::style::parse_short_border( const tstring& prefix, const tstring& 
 
 void litehtml::style::parse_short_background( const tstring& val, const tchar_t* baseurl, bool important )
 {
+	if(val == _t("none"))
+	{
+		add_parsed_property(_t("background-color"),			_t("transparent"),	important);
+		add_parsed_property(_t("background-image"),			_t(""),				important);
+		add_parsed_property(_t("background-image-baseurl"), _t(""),				important);
+		return;
+	}
+
 	string_vector tokens;
 	tokenize(val, tokens, _t(" "), _t(""), _t("()"));
 	bool origin_found = false;
@@ -597,3 +605,14 @@ void litehtml::style::add_parsed_property( const tstring& name, const tstring& v
 	}
 }
 
+void litehtml::style::remove_property( const tstring& name, bool important )
+{
+	props_map::iterator prop = m_properties.find(name);
+	if(prop != m_properties.end())
+	{
+		if(!prop->second.m_important || important && prop->second.m_important)
+		{
+			m_properties.erase(prop);
+		}
+	}
+}
