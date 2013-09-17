@@ -543,6 +543,19 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 		m_pos.height = min_height;
 	}
 
+	int min_width = m_css_min_width.calc_percent(parent_width);
+	if(min_width != 0)
+	{
+		if(min_width > m_pos.width)
+		{
+			m_pos.width = min_width;
+		}
+		if(min_width >ret_width)
+		{
+			ret_width	= min_width;
+		}
+	}
+
 	ret_width += content_margins_left() + content_margins_right();
 
 	// re-render the inline-block with new width
@@ -550,22 +563,12 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 			(m_float != float_none && m_css_width.is_predefined())	|| 
 			m_el_position == element_position_absolute ) 
 
-			&& ret_width < max_width && !m_second_pass)
+			&& ret_width < max_width && !m_second_pass && m_parent)
 	{
 		m_second_pass = true;
 		render(x, y, ret_width);
 		m_second_pass = false;
 		m_pos.width = ret_width - (content_margins_left() + content_margins_right());
-	}
-
-	int min_width = m_css_min_width.calc_percent(parent_width);
-	if(min_width != 0)
-	{
-		if(min_width > m_pos.width)
-		{
-			m_pos.width = min_width;
-			ret_width	= min_width;
-		}
 	}
 
 	return ret_width;
@@ -798,6 +801,10 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 					return 0;
 				}
 			}
+			break;
+		case select_pseudo_element:
+			// TODO: Process pseudo elements
+			return 0;
 			break;
 		case select_pseudo_class:
 			if(apply_pseudo)

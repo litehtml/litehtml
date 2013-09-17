@@ -122,6 +122,7 @@ namespace litehtml
 		select_start_str,
 		select_end_str,
 		select_pseudo_class,
+		select_pseudo_element,
 	};
 
 	//////////////////////////////////////////////////////////////////////////

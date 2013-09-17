@@ -421,54 +421,61 @@ bool litehtml::document::on_lbutton_up( int x, int y, position::vector& redraw_b
 litehtml::element::ptr litehtml::document::create_element( const tchar_t* tag_name )
 {
 	element::ptr newTag = NULL;
-	if(!t_strcasecmp(tag_name, _t("br")))
+	if(m_container)
 	{
-		newTag = new litehtml::el_break(this);
-	} else if(!t_strcasecmp(tag_name, _t("p")))
+		newTag = m_container->create_element(tag_name);
+	}
+	if(!newTag)
 	{
-		newTag = new litehtml::el_para(this);
-	} else if(!t_strcasecmp(tag_name, _t("img")))
-	{
-		newTag = new litehtml::el_image(this);
-	} else if(!t_strcasecmp(tag_name, _t("table")))
-	{
-		newTag = new litehtml::el_table(this);
-	} else if(!t_strcasecmp(tag_name, _t("td")) || !t_strcasecmp(tag_name, _t("th")))
-	{
-		newTag = new litehtml::el_td(this);
-	} else if(!t_strcasecmp(tag_name, _t("link")))
-	{
-		newTag = new litehtml::el_link(this);
-	} else if(!t_strcasecmp(tag_name, _t("title")))
-	{
-		newTag = new litehtml::el_title(this);
-	} else if(!t_strcasecmp(tag_name, _t("a")))
-	{
-		newTag = new litehtml::el_anchor(this);
-	} else if(!t_strcasecmp(tag_name, _t("tr")))
-	{
-		newTag = new litehtml::el_tr(this);
-	} else if(!t_strcasecmp(tag_name, _t("style")))
-	{
-		newTag = new litehtml::el_style(this);
-	} else if(!t_strcasecmp(tag_name, _t("base")))
-	{
-		newTag = new litehtml::el_base(this);
-	} else if(!t_strcasecmp(tag_name, _t("body")))
-	{
-		newTag = new litehtml::el_body(this);
-	} else if(!t_strcasecmp(tag_name, _t("div")))
-	{
-		newTag = new litehtml::el_div(this);
-	} else if(!t_strcasecmp(tag_name, _t("script")))
-	{
-		newTag = new litehtml::el_script(this);
-	} else if(!t_strcasecmp(tag_name, _t("font")))
-	{
-		newTag = new litehtml::el_font(this);
-	} else
-	{
-		newTag = new litehtml::html_tag(this);
+		if(!t_strcasecmp(tag_name, _t("br")))
+		{
+			newTag = new litehtml::el_break(this);
+		} else if(!t_strcasecmp(tag_name, _t("p")))
+		{
+			newTag = new litehtml::el_para(this);
+		} else if(!t_strcasecmp(tag_name, _t("img")))
+		{
+			newTag = new litehtml::el_image(this);
+		} else if(!t_strcasecmp(tag_name, _t("table")))
+		{
+			newTag = new litehtml::el_table(this);
+		} else if(!t_strcasecmp(tag_name, _t("td")) || !t_strcasecmp(tag_name, _t("th")))
+		{
+			newTag = new litehtml::el_td(this);
+		} else if(!t_strcasecmp(tag_name, _t("link")))
+		{
+			newTag = new litehtml::el_link(this);
+		} else if(!t_strcasecmp(tag_name, _t("title")))
+		{
+			newTag = new litehtml::el_title(this);
+		} else if(!t_strcasecmp(tag_name, _t("a")))
+		{
+			newTag = new litehtml::el_anchor(this);
+		} else if(!t_strcasecmp(tag_name, _t("tr")))
+		{
+			newTag = new litehtml::el_tr(this);
+		} else if(!t_strcasecmp(tag_name, _t("style")))
+		{
+			newTag = new litehtml::el_style(this);
+		} else if(!t_strcasecmp(tag_name, _t("base")))
+		{
+			newTag = new litehtml::el_base(this);
+		} else if(!t_strcasecmp(tag_name, _t("body")))
+		{
+			newTag = new litehtml::el_body(this);
+		} else if(!t_strcasecmp(tag_name, _t("div")))
+		{
+			newTag = new litehtml::el_div(this);
+		} else if(!t_strcasecmp(tag_name, _t("script")))
+		{
+			newTag = new litehtml::el_script(this);
+		} else if(!t_strcasecmp(tag_name, _t("font")))
+		{
+			newTag = new litehtml::el_font(this);
+		} else
+		{
+			newTag = new litehtml::html_tag(this);
+		}
 	}
 
 	if(newTag)
