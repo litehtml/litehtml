@@ -29,11 +29,21 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 		{
 			css_attribute_selector attribute;
 
-			tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
-			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
-			attribute.condition	= select_pseudo_class;
-			m_attrs[_t("pseudo")] = attribute;
-			el_end = pos;
+			if(txt[el_end + 1] == _t(':'))
+			{
+				tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 2);
+				attribute.val		= txt.substr(el_end + 2, pos - el_end - 2);
+				attribute.condition	= select_pseudo_element;
+				m_attrs[_t("pseudo-el")] = attribute;
+				el_end = pos;
+			} else
+			{
+				tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
+				attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
+				attribute.condition	= select_pseudo_class;
+				m_attrs[_t("pseudo")] = attribute;
+				el_end = pos;
+			}
 		} else if(txt[el_end] == _t('#'))
 		{
 			css_attribute_selector attribute;

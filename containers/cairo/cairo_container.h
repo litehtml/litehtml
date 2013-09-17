@@ -48,6 +48,7 @@ public:
 	virtual void						set_clip(const litehtml::position& pos, bool valid_x, bool valid_y);
 	virtual void						del_clip();
 	virtual bool						is_media_valid(const litehtml::tstring& media);
+	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name);
 
 	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, litehtml::tstring& out ) = 0;
 	virtual CTxDIB*						get_image(LPCWSTR url) = 0;

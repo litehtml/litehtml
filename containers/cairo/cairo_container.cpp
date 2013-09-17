@@ -828,3 +828,8 @@ bool cairo_container::is_media_valid( const litehtml::tstring& media )
 	}
 	return false;
 }
+
+litehtml::element* cairo_container::create_element( const litehtml::tchar_t* tag_name )
+{
+	return 0;
+}
