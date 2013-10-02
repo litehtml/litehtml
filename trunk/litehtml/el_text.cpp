@@ -53,14 +53,14 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 			break;
 		case text_transform_uppercase:
 			m_transformed_text = _t("");
-			for(int i=0; i < m_text.length(); i++)
+			for(tstring::size_type i=0; i < m_text.length(); i++)
 			{
 				m_transformed_text += m_doc->container()->toupper(m_text[i]);
 			}
 			break;
 		case text_transform_lowercase:
 			m_transformed_text = _t("");
-			for(int i=0; i < m_text.length(); i++)
+			for(tstring::size_type i=0; i < m_text.length(); i++)
 			{
 				m_transformed_text += m_doc->container()->tolower(m_text[i]);
 			}

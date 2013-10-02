@@ -351,7 +351,7 @@ void litehtml::line_box::y_shift( int shift )
 bool litehtml::line_box::is_break_only()
 {
 	if(m_items.empty()) return true;
-	bool ret = false;
+
 	if(m_items.front()->is_break())
 	{
 		for(std::vector<element*>::iterator i = m_items.begin() + 1; i != m_items.end(); i++)

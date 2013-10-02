@@ -75,42 +75,30 @@ const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, cons
 	return def;
 }
 
-bool litehtml::html_tag::select( const tchar_t* selector )
+litehtml::element::ptr litehtml::html_tag::select_one( const tstring& selector )
 {
-	std::vector<tstring> tokens;
-	tokenize(selector, tokens, _t(","));
-	for(std::vector<tstring>::iterator i = tokens.begin(); i != tokens.end(); i++)
-	{
-		trim(*i);
-		if(select_one(i->c_str()))
-		{
-			return true;
-		}
-	}
-	return false;
+	css_element_selector sel;
+	sel.parse(selector);
+
+	return select_one(sel);
 }
 
-bool litehtml::html_tag::select_one( const tstring& selector )
+litehtml::element::ptr litehtml::html_tag::select_one( const css_element_selector& selector )
 {
-	std::vector<tstring> tokens;
-	tokenize(selector, tokens, _t(" \t>+"), _t(" \t>+"), _t("[]"));
-
-	css_element_selector sel;
-	sel.parse(_t("div.hello#rt[rel=none][title]"));
-
-
-/*
-	tstring::size_type pos = sel.find_first_of(_t(".#["));
-
-	if(sel.substr(0, m_tag.length()) == m_tag || sel[0] == _t('*') || !iswalpha(sel[0]))
+	if(select(selector))
 	{
-		std::find_first_of()
-		tstring::size_type pos = sel.find_first_not_of()
-		return true;
+		return this;
 	}
-*/
 
-	return false;
+	for(elements_vector::iterator el = m_children.begin(); el != m_children.end(); el++)
+	{
+		element::ptr res = (*el)->select_one(selector);
+		if(res)
+		{
+			return res;
+		}
+	}
+	return 0;
 }
 
 void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
@@ -930,14 +918,6 @@ int litehtml::html_tag::get_floats_height(element_float el_float) const
 				}
 				if(process)
 				{
-/*
-					position el_pos;
-					el->get_abs_position(el_pos, this);
-					el_pos += el->m_margins;
-					el_pos += el->m_padding;
-					el_pos += el->m_borders;
-*/
-
 					if(el_float == float_none)
 					{
 						h = std::max(h, i->pos.bottom());

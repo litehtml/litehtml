@@ -48,7 +48,7 @@
 				PreprocessorDefinitions="WIN32;_DEBUG;_WINDOWS"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
-				RuntimeLibrary="3"
+				RuntimeLibrary="1"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="4"
@@ -64,6 +64,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="uxtheme.lib"
 				LinkIncremental="2"
 				AdditionalLibraryDirectories="..\litebrowser\libs\cairo\32;..\litebrowser\libs\freeimage\32"
 				GenerateDebugInformation="true"
@@ -196,7 +197,7 @@
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="../include;../litebrowser/libs/cairo/src;../litebrowser/libs/txdib;../litebrowser/libs/simpledib;../litehtmltips;../containers/cairo"
 				PreprocessorDefinitions="WIN32;NDEBUG;_WINDOWS"
-				RuntimeLibrary="2"
+				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
@@ -213,6 +214,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
+				AdditionalDependencies="uxtheme.lib"
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="..\litebrowser\libs\cairo\32;..\litebrowser\libs\freeimage\32"
 				GenerateDebugInformation="true"

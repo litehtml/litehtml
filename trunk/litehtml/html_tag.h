@@ -141,7 +141,9 @@ namespace litehtml
 
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
-		virtual bool				select(const tchar_t* selectors);
+
+		virtual element::ptr		select_one(const tstring& selector);
+		virtual element::ptr		select_one(const css_element_selector& selector);
 
 		virtual element*			find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual element*			find_adjacent_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
@@ -173,7 +175,6 @@ namespace litehtml
 		virtual bool				is_nth_last_child(element* el, int num, int off);
 
 	protected:
-		bool						select_one(const tstring& selector);
 		void						fix_line_width(int max_width, element_float flt);
 		void						parse_background();
 		void						init_background_paint( position pos, background_paint &bg_paint );

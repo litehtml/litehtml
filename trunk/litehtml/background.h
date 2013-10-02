@@ -26,7 +26,7 @@ namespace litehtml
 		background(const background& val);
 		~background(void);
 
-		void operator=(const background& val);
+		background& operator=(const background& val);
 	};
 
 	class background_paint

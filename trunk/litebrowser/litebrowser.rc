@@ -69,7 +69,7 @@ IDI_LITEBROWSER         ICON                    "litebrowser.ico"
 // CSS
 //
 
-master.css              CSS                     "D:\\WORK\\drawhtml\\include\\master.css"
+master.css              CSS                     "..\\include\\master.css"
 
 /////////////////////////////////////////////////////////////////////////////
 //

@@ -1,6 +1,6 @@
 #include "html.h"
 #include "xh_scanner.h"
-#ifndef WIN32
+#if !defined(WIN32) && !defined(WINCE)
 #include <iconv.h>
 #endif
 
@@ -704,7 +704,7 @@ namespace litehtml
 		{_t(""),0}
 	};
 
-#ifndef WIN32
+#if !defined(WIN32) && !defined(WINCE)
 
 	int wchar2utf8(wchar_t chr, char* out_buf, size_t out_len)
 	{
@@ -752,7 +752,7 @@ namespace litehtml
 			}
 		}
 
-#ifdef WIN32
+#if defined(WIN32) || defined(WINCE)
 		return wres;
 #else
 		if(!wres) return 0;

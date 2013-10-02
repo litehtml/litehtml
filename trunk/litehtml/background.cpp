@@ -29,7 +29,7 @@ litehtml::background::~background(void)
 {
 }
 
-void litehtml::background::operator=( const background& val )
+litehtml::background& litehtml::background::operator=( const background& val )
 {
 	m_image			= val.m_image;
 	m_baseurl		= val.m_baseurl;
@@ -39,6 +39,7 @@ void litehtml::background::operator=( const background& val )
 	m_repeat		= val.m_repeat;
 	m_clip			= val.m_clip;
 	m_origin		= val.m_origin;
+	return *this;
 }
 
 
