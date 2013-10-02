@@ -7,211 +7,13 @@
 
 To use litehtml you need some easy steps:
 
-  # Implement litehtml::document_container class.
+  # Implement [document_container#litehtml__document_container litehtml::document_container] class.
   # Prepare and load the master CSS.
   # Call some functions from litehtml::document to parse, render and draw HTML text.
 
 =Implementing litehtml::document_container=
 
-The first step to integrate litehtml into your application is implementing abstract class litehtml::document_container. This class draw the HTML elements and perform some actions depended of the platform.
-
-Below is the list of member function you have to implement.
-
-==create_font==
-
-{{{
-virtual uint_ptr create_font(const tchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration, litehtml::font_metrics* fm);
-}}}
-
-This function called by litehtml to create the font. create_font returns uint_ptr that identify the created font. 
-Parameters:
-  * *faceName* - the face name for the font. *Note*: _faceName_ can contain some fonts as described in CSS specifications. You have to select the proper font.
-  * *size* - font size in pixels.
-  * *weight* - Defines from thin to thick characters. 400 is the same as normal, and 700 is the same as bold.
-  * *decoration* - one or more flags:
-    * const unsigned int font_decoration_none=0x00;
-    * const unsigned int font_decoration_underline=0x01;
-    * const unsigned int font_decoration_linethrough=0x02;
-    * const unsigned int font_decoration_overline=0x04;
-  * *fm* - you have to fill this structure with the font metrics:
-    * *height* - the recommended vertical distance between baselines when setting consecutive lines of text with the font. This is greater than ascent+descent by a quantity known as the line spacing or external leading. When space is at a premium, most fonts can be set with only a distance of ascent+descent between lines.
-    * *ascent* - the distance that the font extends above the baseline. Note that this is not always exactly equal to the maximum of the extents of all the glyphs in the font, but rather is picked to express the font designer's intent as to how the font should align with elements above it.
-    * *descent* - the distance that the font extends below the baseline. This value is positive for typical fonts that include portions below the baseline. Note that this is not always exactly equal to the maximum of the extents of all the glyphs in the font, but rather is picked to express the font designer's intent as to how the font should align with elements below it.
-    * *x_height* - height of the 'x' char (used for internal calculations).
-
-==delete_font==
-{{{
-virtual void delete_font(uint_ptr hFont);
-}}}
-
-delete the font created in *create_font* function
-
-==text_width==
-{{{
-virtual int text_width(const tchar_t* text, uint_ptr hFont);
-}}}
-
-Returns the text width.
-
-==draw_text==
-{{{
-virtual void draw_text(uint_ptr hdc, const tchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos);
-}}}
-
-This function draw the text string.
-
-==pt_to_px==
-{{{
-virtual int pt_to_px(int pt);
-}}}
-
-Convert _points_ into _pixels_.
-
-==get_default_font_size==
-{{{
-virtual int get_default_font_size();
-}}}
-
-Returns the default font size in pixels.
-
-==get_default_font_name==
-{{{
-virtual const tchar_t* get_default_font_name();
-}}}
-
-Returns the default font face name.
-
-==draw_list_marker==
-{{{
-virtual void draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker);
-}}}
-
-Draws the list marker. Use the parameter *marker* to find the marker type and position.
-
-==load_image==
-{{{
-virtual void load_image(const tchar_t* src, const tchar_t* baseurl);
-}}}
-
-You can preload image in this function. litehtml does not cache the images, so you have to create own images cache if you need it.
-
-==get_image_size==
-{{{
-virtual void get_image_size(const tchar_t* src, const tchar_t* baseurl, litehtml::size& sz);
-}}}
-
-Fill the *sz* parameter with image width and height.
-
-==draw_background==
-{{{
-virtual void draw_background(uint_ptr hdc, const litehtml::background_paint& bg);
-}}}
-
-Draw the background in this function. The parameter *bg* describes the element background. Note the <img> html element are drawn as background.
-
-==draw_borders==
-{{{
-virtual void draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos);
-}}}
-
-Draw the element borders here. 
-
-==set_caption==
-{{{
-virtual	void set_caption(const tchar_t* caption);
-}}}
-
-litehtml calls this function with `<`title`>` html tag text. You can use the *caption* parameter to set the window caption text into the html page title.
-
-==set_base_url==
-{{{
-virtual	void set_base_url(const tchar_t* base_url);
-}}}
-
-litehtml calls this function for the `<`base`>` html tag to set the base url. Save this string for future use in the functions that get the _baseurl_ parameter. 
-
-==link==
-{{{
-virtual void link(litehtml::document* doc, litehtml::element::ptr el);
-}}}
-
-This function is used to process the `<`link`>` html tags. You must to read the element attributes and apply CSS styles manually.
-
-Below is the code from litebrowser:
-{{{
-void CHTMLViewWnd::link( litehtml::document* doc, litehtml::element::ptr el )
-{
-	const wchar_t* rel=el->get_attr(L"rel");
-	if(rel && !wcscmp(rel, L"stylesheet"))
-	{
-		const wchar_t* media=el->get_attr(L"media", L"screen");
-		if(media && (wcsstr(media, L"screen") || wcsstr(media, L"all")))
-		{
-			const wchar_t* href=el->get_attr(L"href");
-			if(href)
-			{
-				std::wstring url;
-				make_url(href, NULL, url);
-				LPWSTR css=load_text_file(url.c_str());
-				if(css)
-				{
-					doc->add_stylesheet(css, url.c_str());
-					delete css;
-				}
-			}
-		}
-	}
-}
-}}}
-
-==on_anchor_click==
-{{{
-virtual void on_anchor_click(const tchar_t* url, litehtml::element::ptr el);
-}}}
-
-litehtml calls this function on anchor element click. You can open new website or do something other here.
-
-==set_cursor==
-{{{
-virtual	void set_cursor(const tchar_t* cursor);
-}}}
-
-Define this function to handle the CSS cursor property.
-
-==toupper==
-{{{
-virtual	tchar_t toupper(const tchar_t c);
-}}}
-
-Convert char to upper case.
-
-==tolower==
-{{{
-virtual	tchar_t tolower(const tchar_t c);
-}}}
-
-Convert char to lower case.
-
-==import_css==
-{{{
-virtual void import_css(tstring& text, const tstring& url, tstring& baseurl, const string_vector& media);
-}}}
-
-This function handle the CSS at-rule @import. You have to download CSS and copy it into *text* parameter.
-
-==set_clip==
-{{{
-virtual void set_clip(const litehtml::position& pos, bool valid_x, bool valid_y);
-}}}
-
-Set the painting clip rectangle here. *valid_x* and *valid_y* are ignored. Please note, litehtml can set some clip rects. You have to save the clip positions and apply clipping on draw something.
-
-==del_clip==
-{{{
-virtual void del_clip();
-}}}
-
-Deletes the last clipping.
+The first step to integrate litehtml into your application is implementing abstract class [document_container#litehtml__document_container litehtml::document_container]. This class draw the HTML elements and perform some actions depended of the platform.
 
 =Load and draw HTML page=
 
@@ -225,7 +27,7 @@ static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::do
 }}}
 
   * *str* - HTML code
-  * *objPainter* - your implementation of litehtml::document_container
+  * *objPainter* - your implementation of [document_container#litehtml__document_container litehtml::document_container]
   * *ctx* - HTML context with master CSS
   * *user_styles* - optional user CSS (applied after all other styles)
 
@@ -248,11 +50,20 @@ m_doc->draw(hdc, m_left, m_top, &clip);
 }}}
 
 draw accepts 4 parameters:
-  * *uint_ptr hdc* - usually device context or something where to draw. For example HDC in windows. This parameter will be passed into all draw functions of litehtml::document_container.
+  * *uint_ptr hdc* - usually device context or something where to draw. For example HDC in windows. This parameter will be passed into all draw functions of [document_container#litehtml__document_container litehtml::document_container].
   * *int x, int y* - position where to draw HTML.
   * *const position`*` clip* - clipping area. litehtml does not draw the elements that don't intersect the clipping rectangle. But note, you have to set your own clipping if you want to clip HTML content.
 
 That's all! Your HTML page is painted!
+
+=Scrolling and Clipping=
+
+Scrolling of html document is released via x,y parameters of the document::draw function. For example, if you want to scroll document on 50px horizontally and 100px vertically:
+{{{
+m_doc->draw(hdc, -50, -100, litehtml::position(50, 100, window_width, window_height));
+}}}
+
+Note, the *x* and *y* parameters are screen relative. The *clip* parameter is always document relative. Also note, defining *clip* parameter in *draw* does not guarantee the valid clipping. Some elements can be drawn out off the clipping area. litehtml just checks if the element's bounding rectangle is intersected with clipping rectangle to draw elements. So you must implement your own clipping.
 
 =Handling the mouse=
 If you want to handle the mouse you have call some functions from litehtml::document:
@@ -264,6 +75,41 @@ bool litehtml::document::on_lbutton_up( int x, int y, position::vector& redraw_b
 }}}
 
 All functions returns the *bool* to indicate that you have to redraw the rectangles from *redraw_boxes* vector. Also note the *x* and *y* are relative to the HTML layout. So *0,0* is the top-left corner.
+
+=Processing anchor click=
+
+If you process the mouse, the clicking on anchor tag will calls the function [document_container#on_anchor_click document_container::on_anchor_click]. This function gets the url of the anchor as parameter and pointer to litehtml::element. You can open the new document at this point.
+
+*NOTE:* Don't delete the document inside [document_container#on_anchor_click document_container::on_anchor_click], this will cause the crash. The *document_container::on_anchor_click* is generated by *document::on_lbutton_up*, so it is safe to delete old document and show new one after *document::on_lbutton_up* is finished.
+
+=Processing named anchors=
+
+litehtml does not have the special handling of the named anchors. But it is easy to process the named anchors manually. You get the url with the anchor name into [document_container#on_anchor_click document_container::on_anchor_click]. Just find the hash char (#) and extract the name. In the example below, the variable *anchor_name* contains the anchor name:
+{{{
+if(!anchor_name.empty())
+{
+	if(m_doc)
+	{
+		WCHAR selector[255];
+		StringCchPrintf(selector, 255, L"#%s", anchor_name.c_str());
+		element::ptr el = m_doc->root()->select_one(selector);
+		if(!el)
+		{
+			StringCchPrintf(selector, 255, L"[name=%s]", anchor_name.c_str());
+			el = m_doc->root()->select_one(selector);
+		}
+		if(el)
+		{
+			litehtml::position pos = el->get_placement();
+			m_top = pos.y;
+		}
+	}
+}
+}}}
+
+The function *element::select_one* returns the first element for the CSS selector. So *select_one("#name")* return the element with attribute *id="name"*. *el->get_placement()* returns the absolute position of the element (document relative coordinates).
+
+So, you have the position of the named anchor and now you can scroll your document into this position.
 
 =Images=
 
