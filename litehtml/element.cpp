@@ -58,46 +58,15 @@ litehtml::web_color litehtml::element::get_color( const tchar_t* prop_name, bool
 	return web_color::from_string(clrstr);
 }
 
-void litehtml::element::get_abs_position( position& pos, const element* root )
-{
-	if(root == this)
-	{
-		return;
-	}
-
-	element* non_inline_parent = m_parent;
-
-	while(non_inline_parent && non_inline_parent->get_display() == display_inline)
-	{
-		non_inline_parent = non_inline_parent->m_parent;
-	}
-
-	if(root == non_inline_parent || !non_inline_parent)
-	{
-		pos = m_pos;
-	} else
-	{
-		position parent_pos;
-		non_inline_parent->get_abs_position(parent_pos, root);
-		pos = m_pos;
-		pos.x += parent_pos.x;
-		pos.y += parent_pos.y;
-	}
-}
-
 litehtml::position litehtml::element::get_placement() const
 {
-	litehtml::position pos;
-	if(m_parent)
+	litehtml::position pos = m_pos;
+	element* cur_el = parent();
+	while(cur_el)
 	{
-		pos			= m_parent->get_placement();
-		pos.x		+= m_pos.x;
-		pos.y		+= m_pos.y;
-		pos.width	= m_pos.width;
-		pos.height	= m_pos.height;
-	} else
-	{
-		pos = m_pos;
+		pos.x += cur_el->m_pos.x;
+		pos.y += cur_el->m_pos.y;
+		cur_el = cur_el->parent();
 	}
 	return pos;
 }
@@ -161,6 +130,8 @@ void litehtml::element::calc_document_size( litehtml::size& sz, int x /*= 0*/, i
 	sz.height	= std::max(sz.height,	y + bottom());
 }
 
+litehtml::element::ptr litehtml::element::select_one( const css_element_selector& selector ) LITEHTML_RETURN_FUNC(0)
+litehtml::element::ptr litehtml::element::select_one( const tstring& selector )		LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::is_nth_last_child( element* el, int num, int off )			LITEHTML_RETURN_FUNC(false)
@@ -236,7 +207,6 @@ void litehtml::element::get_text( tstring& text )									LITEHTML_EMPTY_FUNC
 void litehtml::element::parse_attributes()											LITEHTML_EMPTY_FUNC
 int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(0)
 int litehtml::element::select( const css_element_selector& selector, bool apply_pseudo /*= true*/ )	LITEHTML_RETURN_FUNC(0)
-bool litehtml::element::select( const tchar_t* selectors )								LITEHTML_RETURN_FUNC(false)
 litehtml::element* litehtml::element::find_ancestor( const css_selector& selector, bool apply_pseudo, bool* is_pseudo)	LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::is_first_child( const element* el )						LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_last_child( const element* el )							LITEHTML_RETURN_FUNC(false)

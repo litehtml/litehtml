@@ -59,7 +59,6 @@ namespace litehtml
 
 		bool						in_normal_flow()			const;
 		litehtml::web_color			get_color(const tchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
-		void						get_abs_position(position& pos, const element* root);
 		bool						is_inline_box();
 		position					get_placement()				const;
 		bool						collapse_top_margin()		const;
@@ -68,9 +67,12 @@ namespace litehtml
 
 		bool						skip();
 		void						skip(bool val);
-		element*					parent();
+		element*					parent() const;
 		void						parent(element* par);
 		bool						is_visible() const;
+
+		virtual element::ptr		select_one(const tstring& selector);
+		virtual element::ptr		select_one(const css_element_selector& selector);
 
 		virtual int					render(int x, int y, int max_width);
 		virtual int					render_inline(element* container, int max_width);
@@ -134,7 +136,6 @@ namespace litehtml
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
-		virtual bool				select(const tchar_t* selectors);
 		virtual element*			find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual element*			find_adjacent_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual element*			find_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
@@ -283,7 +284,7 @@ namespace litehtml
 		m_skip = val;
 	}
 
-	inline element* litehtml::element::parent()
+	inline element* litehtml::element::parent() const
 	{
 		return m_parent;
 	}

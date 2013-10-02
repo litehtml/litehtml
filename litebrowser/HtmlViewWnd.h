@@ -46,7 +46,7 @@ public:
 	virtual void		import_css(std::wstring& text, const std::wstring& url, std::wstring& baseurl, const string_vector& media);
 	virtual	void		on_anchor_click(const wchar_t* url, litehtml::element::ptr el);
 	virtual	void		set_cursor(const wchar_t* cursor);
-	void				render(BOOL calc_time = FALSE);
+	void				render(BOOL calc_time = FALSE, BOOL do_redraw = TRUE);
 
 	virtual DWORD		ThreadProc();
 

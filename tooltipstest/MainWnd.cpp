@@ -77,7 +77,7 @@ LRESULT CMainWnd::OnMessage( HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lPa
 		return 0;
 	case WM_TIMER:
 		m_counter++;
-		m_tips.update(2);
+		m_tips.update(2, true);
 		return 0;
 	}
 	return CTxWnd::OnMessage(hWnd, uMessage, wParam, lParam);

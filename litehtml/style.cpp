@@ -3,7 +3,9 @@
 #include "tokenizer.h"
 #include <functional>
 #include <algorithm>
+#ifndef WINCE
 #include <locale>
+#endif
 
 litehtml::style::style()
 {

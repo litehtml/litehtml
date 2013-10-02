@@ -4,6 +4,7 @@
 #include "downloader.h"
 #include <WindowsX.h>
 #include <algorithm>
+#include <strsafe.h>
 
 CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 {
@@ -193,25 +194,62 @@ void CHTMLViewWnd::open( LPCWSTR path )
 	{
 		m_history_back.push_back(m_doc_path);
 	}
-	make_url(path, NULL, m_doc_path);
+	std::wstring hash;
+	std::wstring s_path = path;
 
-	m_doc		= NULL;
-	m_base_path = m_doc_path;
+	make_url(path, NULL, s_path);
 
-	LPWSTR html_text = load_text_file(m_doc_path.c_str(), true);
-	if(html_text)
+	std::wstring::size_type hash_pos = s_path.find_first_of(L'#');
+	if(hash_pos != std::wstring::npos)
 	{
-		m_doc = litehtml::document::createFromString(html_text, this, m_context);
-		delete html_text;
+		hash = s_path.substr(hash_pos + 1);
+		s_path.erase(hash_pos);
 	}
 
+	if(s_path != m_doc_path)
+	{
+		make_url(path, NULL, m_doc_path);
+
+		m_doc		= NULL;
+		m_base_path = m_doc_path;
+
+		LPWSTR html_text = load_text_file(m_doc_path.c_str(), true);
+		if(html_text)
+		{
+			m_doc = litehtml::document::createFromString(html_text, this, m_context);
+			delete html_text;
+		}
+		render(FALSE, FALSE);
+	}
 
 	m_top	= 0;
 	m_left	= 0;
-	render();
+
+	if(!hash.empty())
+	{
+		if(m_doc)
+		{
+			WCHAR selector[255];
+			StringCchPrintf(selector, 255, L"#%s", hash.c_str());
+			element::ptr el = m_doc->root()->select_one(selector);
+			if(!el)
+			{
+				StringCchPrintf(selector, 255, L"[name=%s]", hash.c_str());
+				el = m_doc->root()->select_one(selector);
+			}
+			if(el)
+			{
+				litehtml::position pos = el->get_placement();
+				m_top = pos.y;
+			}
+		}
+	}
+
+	update_scroll();
+	redraw(NULL, FALSE);
 }
 
-void CHTMLViewWnd::render(BOOL calc_time)
+void CHTMLViewWnd::render(BOOL calc_time, BOOL do_redraw)
 {
 	if(!m_hWnd || !m_doc)
 	{
@@ -230,7 +268,7 @@ void CHTMLViewWnd::render(BOOL calc_time)
 		m_doc->render(width);
 		DWORD tic2 = GetTickCount();
 		WCHAR msg[255];
-		wsprintf(msg, L"Render time: %d msec", tic2 - tic1);
+		StringCchPrintf(msg, 255, L"Render time: %d msec", tic2 - tic1);
 		MessageBox(m_hWnd, msg, L"litebrowser", MB_ICONINFORMATION | MB_OK);
 	} else
 	{
@@ -243,8 +281,11 @@ void CHTMLViewWnd::render(BOOL calc_time)
 	m_max_left = m_doc->width() - width;
 	if(m_max_left < 0) m_max_left = 0;
 
-	update_scroll();
-	redraw(NULL, FALSE);
+	if(do_redraw)
+	{
+		update_scroll();
+		redraw(NULL, FALSE);
+	}
 }
 
 void CHTMLViewWnd::redraw(LPRECT rcDraw, BOOL update)

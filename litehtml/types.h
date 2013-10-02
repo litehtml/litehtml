@@ -7,7 +7,7 @@
 
 namespace litehtml
 {
-#ifdef WIN32
+#if defined( WIN32 ) || defined( WINCE )
 
 	typedef std::wstring	tstring;
 	typedef wchar_t			tchar_t;
@@ -22,7 +22,17 @@ namespace litehtml
 #define t_strtol			wcstol
 #define t_atoi				_wtoi
 #define t_strtod			wcstod
+
+#ifdef WINCE
+
+#define t_snprintf			_snwprintf
+
+#else
+
 #define t_snprintf			swprintf
+
+#endif
+
 #define t_strstr			wcsstr
 #define t_tolower			towlower
 #define t_isdigit			iswdigit
@@ -30,14 +40,14 @@ namespace litehtml
 #ifdef _WIN64
 	typedef unsigned __int64 uint_ptr;
 #else
-	typedef unsigned int uint_ptr;
+	typedef unsigned int	uint_ptr;
 #endif
 
 #else
 
 	typedef std::string		tstring;
 	typedef char			tchar_t;
-	typedef void* uint_ptr;
+	typedef void*			uint_ptr;
 
 #define _t(quote)			quote
 

@@ -41,12 +41,13 @@ namespace litehtml
 			alpha	= val.alpha;
 		}
 
-		void operator=(const web_color& val)
+		web_color& operator=(const web_color& val)
 		{
 			blue	= val.blue;
 			green	= val.green;
 			red		= val.red;
 			alpha	= val.alpha;
+			return *this;
 		}
 		static web_color		from_string(const tchar_t* str);
 		static const tchar_t*	resolve_name(const tchar_t* name);

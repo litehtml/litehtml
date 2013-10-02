@@ -23,12 +23,13 @@ namespace litehtml
 			bottom	= val.bottom;
 		}
 
-		void operator=(const css_margins& val)
+		css_margins& operator=(const css_margins& val)
 		{
 			left	= val.left;
 			right	= val.right;
 			top		= val.top;
 			bottom	= val.bottom;
+			return *this;
 		}
 	};
 }

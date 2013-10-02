@@ -34,7 +34,7 @@ namespace litehtml
 			m_is_predefined	= val.m_is_predefined;
 		}
 
-		void	operator=(const css_length& val)
+		css_length&	operator=(const css_length& val)
 		{
 			if(val.is_predefined())
 			{
@@ -45,6 +45,7 @@ namespace litehtml
 			}
 			m_units			= val.m_units;
 			m_is_predefined	= val.m_is_predefined;
+			return *this;
 		}
 
 		bool	is_predefined()	const	

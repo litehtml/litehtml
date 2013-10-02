@@ -78,6 +78,7 @@ namespace litehtml
 		bool							on_lbutton_up(int x, int y, position::vector& redraw_boxes);
 		bool							on_mouse_leave(position::vector& redraw_boxes);
 		litehtml::element::ptr			create_element(const tchar_t* tag_name);
+		element::ptr					root();
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
 	
@@ -102,4 +103,10 @@ namespace litehtml
 		void parse_pop_element(const tchar_t* tag);
 		void parse_pop_empty_element();
 	};
+
+	inline element::ptr document::root()
+	{
+		return m_root;
+	}
+
 }

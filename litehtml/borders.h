@@ -22,11 +22,12 @@ namespace litehtml
 			color	= val.color;
 		}
 
-		void operator=(const css_border& val)
+		css_border& operator=(const css_border& val)
 		{
 			width	= val.width;
 			style	= val.style;
 			color	= val.color;
+			return *this;
 		}
 	};
 
@@ -61,7 +62,7 @@ namespace litehtml
 			bottom_right_y	= val.bottom_right_y;
 		}
 
-		void operator=(const css_border_radius& val)
+		css_border_radius& operator=(const css_border_radius& val)
 		{
 			top_left_x		= val.top_left_x;
 			top_left_y		= val.top_left_y;
@@ -71,6 +72,7 @@ namespace litehtml
 			bottom_left_y	= val.bottom_left_y;
 			bottom_right_x	= val.bottom_right_x;
 			bottom_right_y	= val.bottom_right_y;
+			return *this;
 		}
 	};
 

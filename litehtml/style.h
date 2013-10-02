@@ -25,10 +25,11 @@ namespace litehtml
 			m_important	= val.m_important;
 		}
 
-		void operator=(const property_value& val)
+		property_value& operator=(const property_value& val)
 		{
 			m_value		= val.m_value;
 			m_important	= val.m_important;
+			return *this;
 		}
 	};
 
