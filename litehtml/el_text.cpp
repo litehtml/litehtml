@@ -10,6 +10,7 @@ litehtml::el_text::el_text( const tchar_t* text, litehtml::document* doc ) : ele
 	}
 	m_text_transform	= text_transform_none;
 	m_use_transformed	= false;
+	m_draw_spaces		= true;
 }
 
 litehtml::el_text::~el_text()
@@ -97,6 +98,7 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 		m_size.height	= fm.height;
 		m_size.width	= m_doc->container()->text_width(m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font);
 	}
+	m_draw_spaces = fm.draw_spaces;
 
 	if(m_parent->get_display() == display_inline)
 	{
@@ -120,6 +122,11 @@ int litehtml::el_text::get_base_line()
 
 void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 {
+	if(is_white_space() && !m_draw_spaces)
+	{
+		return;
+	}
+
 	position pos = m_pos;
 	pos.x	+= x;
 	pos.y	+= y;

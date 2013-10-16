@@ -64,7 +64,13 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 		switch (uMessage)
 		{
 		case WM_IMAGE_LOADED:
-			pThis->render();
+			if(wParam)
+			{
+				pThis->redraw(NULL, FALSE);
+			} else
+			{
+				pThis->render();
+			}
 			break;
 		case WM_SETCURSOR:
 			pThis->update_cursor();
@@ -188,7 +194,7 @@ void CHTMLViewWnd::create( int x, int y, int width, int height, HWND parent )
 	CTxThread::Run();
 }
 
-void CHTMLViewWnd::open( LPCWSTR path )
+void CHTMLViewWnd::open( LPCWSTR path, bool reload )
 {
 	if(!m_doc_path.empty())
 	{
@@ -206,7 +212,7 @@ void CHTMLViewWnd::open( LPCWSTR path )
 		s_path.erase(hash_pos);
 	}
 
-	if(s_path != m_doc_path)
+	if(s_path != m_doc_path || reload)
 	{
 		make_url(path, NULL, m_doc_path);
 
@@ -428,7 +434,7 @@ void CHTMLViewWnd::OnKeyDown( UINT vKey )
 
 void CHTMLViewWnd::refresh()
 {
-	open(m_doc_path.c_str());
+	open(m_doc_path.c_str(), true);
 	redraw(NULL, TRUE);
 }
 
@@ -538,66 +544,15 @@ void CHTMLViewWnd::OnMouseMove( int x, int y )
 	}
 }
 
-CTxDIB* CHTMLViewWnd::get_image( LPCWSTR url )
+CTxDIB* CHTMLViewWnd::get_image( LPCWSTR url, bool redraw_on_ready )
 {
 	lock_images_queue();
-	m_images_queue.push_back(url);
+	m_images_queue.push_back(image_queue_item(url, redraw_on_ready));
 	unlock_images_queue();
 
 	SetEvent(m_hImageAdded);
 
 	return NULL;
-
-/*
-	Gdiplus::Bitmap* img = NULL;
-
-	CRemotedFile rf;
-
-	HANDLE hFile = rf.Open(url);
-	if(hFile != INVALID_HANDLE_VALUE)
-	{
-		DWORD szHigh;
-		DWORD szLow = GetFileSize(hFile, &szHigh);
-		HANDLE hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, szHigh, szLow, NULL);
-		if(hMapping)
-		{
-			SIZE_T memSize;
-			if(szHigh)
-			{
-				memSize = MAXDWORD;
-			} else
-			{
-				memSize = szLow;
-			}
-			LPVOID data = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, memSize);
-
-			HGLOBAL hGlobal = GlobalAlloc(GMEM_MOVEABLE, memSize);
-			LPVOID hgData = GlobalLock(hGlobal);
-			CopyMemory(hgData, data, memSize);
-			GlobalUnlock(hGlobal);
-
-			UnmapViewOfFile(data);
-			CloseHandle(hMapping);
-
-			IStream* pStream = NULL;
-			if (::CreateStreamOnHGlobal(hGlobal, TRUE, &pStream) == S_OK)
-			{
-				img = Gdiplus::Bitmap::FromStream(pStream);
-				pStream->Release();
-				if(img)
-				{ 
-					if (img->GetLastStatus() != Gdiplus::Ok)
-					{
-						delete img;
-						img = NULL;
-					}
-				}
-			}
-		}
-	}
-
-	return (uint_ptr) img;
-*/
 }
 
 void CHTMLViewWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el )
@@ -674,7 +629,7 @@ void CHTMLViewWnd::OnLButtonUp( int x, int y )
 		}
 		if(!m_anchor.empty())
 		{
-			open(m_anchor.c_str());
+			open(m_anchor.c_str(), false);
 		}
 	}
 }
@@ -690,7 +645,7 @@ void CHTMLViewWnd::back()
 		std::wstring url = m_history_back.back();
 		m_history_back.pop_back();
 		m_doc_path = L"";
-		open(url.c_str());
+		open(url.c_str(), false);
 	}
 }
 
@@ -705,7 +660,7 @@ void CHTMLViewWnd::forward()
 		std::wstring url = m_history_forward.back();
 		m_history_forward.pop_back();
 		m_doc_path = L"";
-		open(url.c_str());
+		open(url.c_str(), false);
 	}
 }
 
@@ -762,13 +717,16 @@ DWORD CHTMLViewWnd::ThreadProc()
 	while(CTxThread::WaitForStop2(m_hImageAdded, INFINITE) == WAIT_OBJECT_0 + 1)
 	{
 		update = false;
+		bool re_render = false;
 		while(!m_images_queue.empty())
 		{
 			litehtml::tstring url;
+			bool redraw_on_ready;
 
 			lock_images_queue();
 
-				url = m_images_queue[0];
+				redraw_on_ready = m_images_queue[0].redraw_on_ready;
+				url				= m_images_queue[0].url;
 				m_images_queue.erase(m_images_queue.begin());
 
 			unlock_images_queue();
@@ -809,8 +767,18 @@ DWORD CHTMLViewWnd::ThreadProc()
 			if(img)
 			{
 				cairo_container::add_image(url, img);
-				PostMessage(m_hWnd, WM_IMAGE_LOADED, 0, 0);
+				if(redraw_on_ready)
+				{
+					PostMessage(m_hWnd, WM_IMAGE_LOADED, (WPARAM) 1, 0);
+				} else
+				{
+					re_render = true;
+				}
 			}
+		}
+		if(re_render)
+		{
+			PostMessage(m_hWnd, WM_IMAGE_LOADED, (WPARAM) 0, 0);
 		}
 	}
 

@@ -37,7 +37,7 @@ public:
 	virtual int							get_default_font_size();
 	virtual const litehtml::tchar_t*	get_default_font_name();
 	virtual void						draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker);
-	virtual void						load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl);
+	virtual void						load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready);
 	virtual void						get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz);
 	virtual void						draw_image(litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos);
 	virtual void						draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg);
@@ -51,7 +51,7 @@ public:
 	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name);
 
 	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, litehtml::tstring& out ) = 0;
-	virtual CTxDIB*						get_image(LPCWSTR url) = 0;
+	virtual CTxDIB*						get_image(LPCWSTR url, bool redraw_on_ready) = 0;
 	virtual void						get_client_rect(litehtml::position& client) = 0;
 	void								clear_images();
 	void								add_image(litehtml::tstring& url, CTxDIB* img);

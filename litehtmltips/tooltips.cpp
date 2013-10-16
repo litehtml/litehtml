@@ -54,7 +54,7 @@ void litehtml::tooltips::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& 
 	out = url;
 }
 
-CTxDIB* litehtml::tooltips::get_image( LPCWSTR url )
+CTxDIB* litehtml::tooltips::get_image( LPCWSTR url, bool redraw_on_ready )
 {
 	if(m_callback)
 	{

@@ -367,7 +367,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 			css::parse_css_url(list_image, url);
 
 			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
-			m_doc->container()->load_image(url.c_str(), list_image_baseurl);
+			m_doc->container()->load_image(url.c_str(), list_image_baseurl, true);
 		}
 
 	}
@@ -1013,7 +1013,7 @@ int litehtml::html_tag::get_line_right( int y, int def_right )
 	{
 		if(m_cahe_line_right.is_valid && m_cahe_line_right.hash == y)
 		{
-			return m_cahe_line_right.val;
+			return std::min(m_cahe_line_right.val, def_right);
 		}
 
 		int w = def_right;
@@ -1310,7 +1310,7 @@ void litehtml::html_tag::parse_background()
 
 	if(!m_bg.m_image.empty())
 	{
-		m_doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.empty() ? 0 : m_bg.m_baseurl.c_str());
+		m_doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.empty() ? 0 : m_bg.m_baseurl.c_str(), true);
 	}
 }
 
@@ -1709,7 +1709,7 @@ void litehtml::html_tag::init_font()
 	// initialize font
 	const tchar_t* name			= get_style_property(_t("font-family"),		true,	_t("inherit"));
 	const tchar_t* weight		= get_style_property(_t("font-weight"),		true,	_t("normal"));
-	const tchar_t* style		= get_style_property(_t("font-style"),			true,	_t("normal"));
+	const tchar_t* style		= get_style_property(_t("font-style"),		true,	_t("normal"));
 	const tchar_t* decoration	= get_style_property(_t("text-decoration"),	true,	_t("none"));
 
 	m_font = m_doc->get_font(name, m_font_size, weight, style, decoration, &m_font_metrics);
@@ -2108,7 +2108,7 @@ int litehtml::html_tag::new_box( element* el, int max_width )
 
 	if(el->is_inline_box())
 	{
-		font_metrics fm = {0};
+		font_metrics fm;
 		get_font(&fm);
 		line_box* lb = new line_box(line_top, line_left, line_right, line_height(), fm, m_text_align);
 		m_boxes.push_back(lb);

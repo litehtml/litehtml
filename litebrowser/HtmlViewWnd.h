@@ -8,6 +8,32 @@
 
 using namespace litehtml;
 
+struct image_queue_item
+{
+	typedef std::vector<image_queue_item>	vector;
+
+	litehtml::tstring	url;
+	bool				redraw_on_ready;
+	
+	image_queue_item()
+	{
+		redraw_on_ready = false;
+	}
+
+	image_queue_item(const litehtml::tchar_t* u, bool ror)
+	{
+		url = u ? u : 0;
+		ror	= ror;
+	}
+
+	image_queue_item& operator=(const image_queue_item& val)
+	{
+		url				= val.url;
+		redraw_on_ready	= val.redraw_on_ready;
+		return *this;
+	}
+};
+
 class CHTMLViewWnd :	public cairo_container,
 						public CTxThread
 {
@@ -25,7 +51,7 @@ class CHTMLViewWnd :	public cairo_container,
 	litehtml::string_vector	m_history_back;
 	litehtml::string_vector	m_history_forward;
 	std::wstring			m_cursor;
-	litehtml::string_vector	m_images_queue;
+	image_queue_item::vector	m_images_queue;
 	CRITICAL_SECTION		m_images_queue_sync;
 	HANDLE					m_hImageAdded;
 public:
@@ -33,7 +59,7 @@ public:
 	virtual ~CHTMLViewWnd(void);
 
 	void				create(int x, int y, int width, int height, HWND parent);
-	void				open(LPCWSTR path);
+	void				open(LPCWSTR path, bool reload);
 	HWND				wnd()	{ return m_hWnd;	}
 	void				refresh();
 	void				back();
@@ -68,7 +94,7 @@ protected:
 	void				update_cursor();
 	
 	virtual void		make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
-	virtual CTxDIB*		get_image(LPCWSTR url);
+	virtual CTxDIB*		get_image(LPCWSTR url, bool redraw_on_ready);
 	void				get_client_rect(litehtml::position& client);
 
 private:

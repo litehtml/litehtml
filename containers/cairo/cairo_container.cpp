@@ -49,6 +49,13 @@ litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceNa
 		fm->descent		= cfm.descent;
 		fm->height		= cfm.height;
 		fm->x_height	= cfm.x_height;
+		if(italic == litehtml::fontStyleItalic || decoration)
+		{
+			fm->draw_spaces = true;
+		} else
+		{
+			fm->draw_spaces = false;
+		}
 
 		cairo_restore(m_temp_cr);
 	}
@@ -157,7 +164,7 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 	}
 }
 
-void cairo_container::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl )
+void cairo_container::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready )
 {
 	litehtml::tstring url;
 	make_url(src, baseurl, url);
@@ -165,7 +172,7 @@ void cairo_container::load_image( const litehtml::tchar_t* src, const litehtml::
 	if(m_images.find(url.c_str()) == m_images.end())
 	{
 		unlock_images_cache();
-		CTxDIB* img = get_image(url.c_str());
+		CTxDIB* img = get_image(url.c_str(), redraw_on_ready);
 		lock_images_cache();
 		m_images[url] = img;
 		unlock_images_cache();

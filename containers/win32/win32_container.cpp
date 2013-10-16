@@ -159,7 +159,7 @@ void litehtml::win32_container::draw_list_marker( uint_ptr hdc, list_style_type 
 	release_clip((HDC) hdc);
 }
 
-void litehtml::win32_container::load_image( const wchar_t* src, const wchar_t* baseurl )
+void litehtml::win32_container::load_image( const wchar_t* src, const wchar_t* baseurl, bool redraw_on_ready )
 {
 	std::wstring url;
 	make_url(src, baseurl, url);

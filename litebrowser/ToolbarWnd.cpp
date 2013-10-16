@@ -187,7 +187,7 @@ void CToolbarWnd::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
 	out = url;
 }
 
-CTxDIB* CToolbarWnd::get_image( LPCWSTR url )
+CTxDIB* CToolbarWnd::get_image( LPCWSTR url, bool redraw_on_ready )
 {
 	CTxDIB* img = new CTxDIB;
 	if(!img->load(FindResource(m_hInst, url, RT_HTML), m_hInst))

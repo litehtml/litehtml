@@ -194,7 +194,7 @@ void litehtml::line_box::finish(bool last_box)
 	{
 		if(m_items[i]->get_display() == display_inline_text)
 		{
-			font_metrics fm = {0};
+			font_metrics fm;
 			m_items[i]->get_font(&fm);
 			base_line	= std::max(base_line,	fm.base_line());
 			line_height	= std::max(line_height,	m_items[i]->line_height());
@@ -214,7 +214,7 @@ void litehtml::line_box::finish(bool last_box)
 	{
 		if(m_items[i]->get_display() == display_inline_text)
 		{
-			font_metrics fm = {0};
+			font_metrics fm;
 			m_items[i]->get_font(&fm);
 			m_items[i]->m_pos.y = m_height - base_line - fm.ascent;
 		} else

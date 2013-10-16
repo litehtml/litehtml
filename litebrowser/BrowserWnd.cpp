@@ -160,7 +160,7 @@ void CBrowserWnd::open( LPCWSTR path )
 {
 	if(m_view)
 	{
-		m_view->open(path);
+		m_view->open(path, true);
 	}
 }
 
