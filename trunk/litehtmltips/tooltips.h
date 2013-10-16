@@ -178,7 +178,7 @@ namespace litehtml
 	private:
 		// cairo_container members
 		virtual void		make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
-		virtual CTxDIB*		get_image(LPCWSTR url);
+		virtual CTxDIB*		get_image(LPCWSTR url, bool redraw_on_ready);
 
 		// litehtml::document_container members
 		virtual	void		set_caption(const wchar_t* caption);

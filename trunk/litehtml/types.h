@@ -211,7 +211,16 @@ namespace litehtml
 		int		ascent;
 		int		descent;
 		int		x_height;
+		bool	draw_spaces;
 
+		font_metrics()
+		{
+			height			= 0;
+			ascent			= 0;
+			descent			= 0;
+			x_height		= 0;
+			draw_spaces		= true;
+		}
 		int base_line()	{ return descent; }
 	};
 

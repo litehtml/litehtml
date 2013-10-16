@@ -26,7 +26,7 @@ LANGUAGE LANG_NEUTRAL, SUBLANG_NEUTRAL
 // CSS
 //
 
-master.css              CSS                     "D:\\WORK\\drawhtml\\include\\master.css"
+master.css              CSS                     "..\\include\\master.css"
 #endif    // Neutral resources
 /////////////////////////////////////////////////////////////////////////////
 

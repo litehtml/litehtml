@@ -164,10 +164,6 @@ int litehtml::el_image::render( int x, int y, int max_width )
 void litehtml::el_image::parse_attributes()
 {
 	m_src = get_attr(_t("src"), _t(""));
-	if(!m_src.empty())
-	{
-		m_doc->container()->load_image(m_src.c_str(), NULL);
-	}
 
 	const tchar_t* attr_height = get_attr(_t("height"));
 	if(attr_height)
@@ -205,5 +201,21 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		bg.position_x			= pos.x;
 		bg.position_y			= pos.y;
 		m_doc->container()->draw_background(hdc, bg);
+	}
+}
+
+void litehtml::el_image::parse_styles( bool is_reparse /*= false*/ )
+{
+	html_tag::parse_styles(is_reparse);
+
+	if(!m_src.empty())
+	{
+		if(!m_css_height.is_predefined() && !m_css_width.is_predefined())
+		{
+			m_doc->container()->load_image(m_src.c_str(), 0, true);
+		} else
+		{
+			m_doc->container()->load_image(m_src.c_str(), 0, false);
+		}
 	}
 }

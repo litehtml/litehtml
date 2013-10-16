@@ -30,7 +30,7 @@ namespace litehtml
 		virtual void		release_temp_dc(uint_ptr hdc);
 		virtual int			pt_to_px(int pt);
 		virtual void		draw_list_marker(uint_ptr hdc, list_style_type marker_type, int x, int y, int height, const web_color& color);
-		virtual void		load_image(const wchar_t* src, const wchar_t* baseurl);
+		virtual void		load_image(const wchar_t* src, const wchar_t* baseurl, bool redraw_on_ready);
 		virtual void		get_image_size(const wchar_t* src, const wchar_t* baseurl, litehtml::size& sz);
 		virtual void		draw_image(uint_ptr hdc, const wchar_t* src, const wchar_t* baseurl, const litehtml::position& pos);
 		virtual void		draw_background(uint_ptr hdc, 
