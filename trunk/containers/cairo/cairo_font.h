@@ -55,6 +55,10 @@ class cairo_font
 	BOOL				m_bUnderline;
 	BOOL				m_bStrikeOut;
 public:
+	// fonts are not thread safe :(
+	// you have to declare and initialize cairo_font::m_sync before the first using.
+	static CRITICAL_SECTION	m_sync;
+
 	cairo_font(IMLangFontLink2* fl, HFONT hFont, int size);
 	cairo_font(IMLangFontLink2* fl, LPCWSTR facename, int size, int weight, BOOL italic, BOOL strikeout, BOOL underline);
 
@@ -71,4 +75,16 @@ private:
 	void				set_font(HFONT hFont);
 	void				clear();
 	int					text_width(cairo_t* cr, text_chunk::vector& chunks);
+	void				lock();
+	void				unlock();
 };
+
+inline void cairo_font::lock()
+{
+	EnterCriticalSection(&m_sync);
+}
+
+inline void cairo_font::unlock()
+{
+	LeaveCriticalSection(&m_sync);
+}

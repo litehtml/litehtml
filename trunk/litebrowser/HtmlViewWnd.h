@@ -1,80 +1,49 @@
 #pragma once
-#include "TxThread.h"
-#include "../containers/cairo/cairo_container.h"
+#include "web_page.h"
+#include "web_history.h"
 
 #define HTMLVIEWWND_CLASS	L"HTMLVIEW_WINDOW"
 
 #define WM_IMAGE_LOADED		(WM_USER + 1000)
+#define WM_PAGE_LOADED		(WM_USER + 1001)
 
 using namespace litehtml;
 
-struct image_queue_item
+class CHTMLViewWnd
 {
-	typedef std::vector<image_queue_item>	vector;
-
-	litehtml::tstring	url;
-	bool				redraw_on_ready;
-	
-	image_queue_item()
-	{
-		redraw_on_ready = false;
-	}
-
-	image_queue_item(const litehtml::tchar_t* u, bool ror)
-	{
-		url = u ? u : 0;
-		ror	= ror;
-	}
-
-	image_queue_item& operator=(const image_queue_item& val)
-	{
-		url				= val.url;
-		redraw_on_ready	= val.redraw_on_ready;
-		return *this;
-	}
-};
-
-class CHTMLViewWnd :	public cairo_container,
-						public CTxThread
-{
-	HWND					m_hWnd;
-	HINSTANCE				m_hInst;
-	litehtml::document::ptr	m_doc;
-	int						m_top;
-	int						m_left;
-	int						m_max_top;
-	int						m_max_left;
-	std::wstring			m_base_path;
-	std::wstring			m_doc_path;
-	litehtml::context*		m_context;
-	std::wstring			m_anchor;
-	litehtml::string_vector	m_history_back;
-	litehtml::string_vector	m_history_forward;
-	std::wstring			m_cursor;
-	image_queue_item::vector	m_images_queue;
-	CRITICAL_SECTION		m_images_queue_sync;
-	HANDLE					m_hImageAdded;
+	HWND						m_hWnd;
+	HINSTANCE					m_hInst;
+	int							m_top;
+	int							m_left;
+	int							m_max_top;
+	int							m_max_left;
+	litehtml::context*			m_context;
+	web_history					m_history;
+	web_page*					m_page;
+	web_page*					m_page_next;
+	CRITICAL_SECTION			m_sync;
 public:
 	CHTMLViewWnd(HINSTANCE	hInst, litehtml::context* ctx);
 	virtual ~CHTMLViewWnd(void);
 
 	void				create(int x, int y, int width, int height, HWND parent);
-	void				open(LPCWSTR path, bool reload);
+	void				open(LPCWSTR url, bool reload = FALSE);
 	HWND				wnd()	{ return m_hWnd;	}
 	void				refresh();
 	void				back();
 	void				forward();
 
-	// litehtml::document_container members
-	virtual	void		set_caption(const wchar_t* caption);
-	virtual	void		set_base_url(const wchar_t* base_url);
-	virtual	void		link(litehtml::document* doc, litehtml::element::ptr el);
-	virtual void		import_css(std::wstring& text, const std::wstring& url, std::wstring& baseurl, const string_vector& media);
-	virtual	void		on_anchor_click(const wchar_t* url, litehtml::element::ptr el);
-	virtual	void		set_cursor(const wchar_t* cursor);
-	void				render(BOOL calc_time = FALSE, BOOL do_redraw = TRUE);
+	litehtml::context*	get_html_context();
+	void				set_caption();
+	void				lock();
+	void				unlock();
+	bool				is_valid_page(bool with_lock = true);
+	web_page*			get_page(bool with_lock = true);
 
-	virtual DWORD		ThreadProc();
+	void				render(BOOL calc_time = FALSE, BOOL do_redraw = TRUE);
+	void				get_client_rect(litehtml::position& client);
+	void				show_hash(std::wstring& hash);
+	void				update_history();
 
 protected:
 	virtual void		OnCreate();
@@ -88,24 +57,28 @@ protected:
 	virtual void		OnLButtonDown(int x, int y);
 	virtual void		OnLButtonUp(int x, int y);
 	virtual void		OnMouseLeave();
+	virtual void		OnPageReady();
 	
 	void				redraw(LPRECT rcDraw, BOOL update);
 	void				update_scroll();
 	void				update_cursor();
 	
-	virtual void		make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out);
-	virtual CTxDIB*		get_image(LPCWSTR url, bool redraw_on_ready);
-	void				get_client_rect(litehtml::position& client);
 
 private:
-	static LRESULT CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
-
-	void lock_images_queue()
-	{
-		EnterCriticalSection(&m_images_queue_sync);
-	}
-	void unlock_images_queue()
-	{
-		LeaveCriticalSection(&m_images_queue_sync);
-	}
+	static LRESULT	CALLBACK WndProc(HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam);
 };
+
+inline litehtml::context* CHTMLViewWnd::get_html_context()
+{
+	return m_context;
+}
+
+inline void CHTMLViewWnd::lock()
+{
+	EnterCriticalSection(&m_sync);
+}
+
+inline void CHTMLViewWnd::unlock()
+{
+	LeaveCriticalSection(&m_sync);
+}

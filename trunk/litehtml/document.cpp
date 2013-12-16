@@ -411,11 +411,12 @@ bool litehtml::document::on_lbutton_up( int x, int y, position::vector& redraw_b
 	{
 		return false;
 	}
+	bool ret_val = false;
 	if(m_root->on_lbutton_up(x, y))
 	{
-		return m_root->find_styles_changes(redraw_boxes, 0, 0);
+		ret_val = m_root->find_styles_changes(redraw_boxes, 0, 0);
 	}
-	return false;
+	return ret_val;
 }
 
 litehtml::element::ptr litehtml::document::create_element( const tchar_t* tag_name )

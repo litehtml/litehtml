@@ -130,6 +130,29 @@ void litehtml::element::calc_document_size( litehtml::size& sz, int x /*= 0*/, i
 	sz.height	= std::max(sz.height,	y + bottom());
 }
 
+int litehtml::element::calc_width(int defVal) const
+{
+	css_length w = get_css_width();
+	if(w.is_predefined())
+	{
+		return defVal;
+	}
+	if(w.units() == css_units_percentage)
+	{
+		if(!m_parent)
+		{
+			position client_pos;
+			m_doc->container()->get_client_rect(client_pos);
+			return w.calc_percent(client_pos.width);
+		} else
+		{
+			int pw = m_parent->calc_width(defVal);
+			return w.calc_percent(pw);
+		}
+	}
+	return 	m_doc->cvt_units(w, get_font_size());
+}
+
 litehtml::element::ptr litehtml::element::select_one( const css_element_selector& selector ) LITEHTML_RETURN_FUNC(0)
 litehtml::element::ptr litehtml::element::select_one( const tstring& selector )		LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)

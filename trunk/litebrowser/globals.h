@@ -14,7 +14,8 @@
 #include <gdiplus.h>
 #include <shlwapi.h>
 #include <litehtml.h>
-#include <Wininet.h>
+#include <winhttp.h>
+#include <algorithm>
 
 // include TxDIB project
 #include <TxDIB.h>

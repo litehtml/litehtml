@@ -567,6 +567,10 @@
 				>
 			</File>
 			<File
+				RelativePath=".\os_types.h"
+				>
+			</File>
+			<File
 				RelativePath=".\style.h"
 				>
 			</File>

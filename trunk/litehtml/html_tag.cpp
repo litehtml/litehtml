@@ -388,6 +388,12 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 int litehtml::html_tag::render( int x, int y, int max_width )
 {
 	int parent_width = max_width;
+/*
+	if(m_parent)
+	{
+		parent_width = m_parent->get_predefined_width(max_width);
+	}
+*/
 
 	// restore margins after collapse
 	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		m_font_size, max_width);
@@ -418,9 +424,9 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 
 	int block_width = 0;
 
-	if(m_display != display_table_cell)
+	if(m_display != display_table_cell && !m_css_width.is_predefined())
 	{
-		block_width = m_css_width.calc_percent(parent_width);
+		block_width = calc_width(parent_width); //m_css_width.calc_percent(parent_width);
 	}
 
 	if(block_width)
@@ -993,10 +999,10 @@ int litehtml::html_tag::get_line_left( int y )
 				if(y >= el->pos.top() && y < el->pos.bottom())
 				{
 					w = std::max(w, el->pos.right());
+					m_cahe_line_left.set_value(y, w);
 				}
 			}
 		}
-		m_cahe_line_left.set_value(y, w);
 		return w;
 	}
 	int w = m_parent->get_line_left(y + m_pos.y);
@@ -1024,10 +1030,10 @@ int litehtml::html_tag::get_line_right( int y, int def_right )
 				if(y >= el->pos.top() && y < el->pos.bottom())
 				{
 					w = std::min(w, el->pos.left());
+					m_cahe_line_right.set_value(y, w);
 				}
 			}
 		}
-		m_cahe_line_right.set_value(y, w);
 		return w;
 	}
 	int w = m_parent->get_line_right(y + m_pos.y, def_right + m_pos.x);
@@ -1905,7 +1911,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 		if(line_left + el->width() > line_right)
 		{
 			int new_top = find_next_line_top(el->top(), el->width(), max_width);
-			el->m_pos.x = get_line_right(new_top, line_right) - (el->width() - el->content_margins_left());
+			el->m_pos.x = get_line_right(new_top, max_width) - (el->width() - el->content_margins_left());
 			el->m_pos.y = new_top + el->content_margins_top();
 		} else
 		{

@@ -1,11 +1,14 @@
 #include "globals.h"
 #include "litebrowser.h"
 #include "BrowserWnd.h"
+#include "..\containers\cairo\cairo_font.h"
 
 #pragma comment( lib, "gdiplus.lib" )
 #pragma comment( lib, "shlwapi.lib" )
 
 using namespace Gdiplus;
+
+CRITICAL_SECTION cairo_font::m_sync;
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
                      HINSTANCE hPrevInstance,
@@ -14,6 +17,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 {
 	CoInitialize(NULL);
 	InitCommonControls();
+
+	InitializeCriticalSectionAndSpinCount(&cairo_font::m_sync, 1000);
 
 	GdiplusStartupInput gdiplusStartupInput;
 	ULONG_PTR gdiplusToken;

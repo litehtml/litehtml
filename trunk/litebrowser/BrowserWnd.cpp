@@ -2,7 +2,6 @@
 #include "BrowserWnd.h"
 #include "HtmlViewWnd.h"
 #include "ToolbarWnd.h"
-#include "downloader.h"
 
 CBrowserWnd::CBrowserWnd(HINSTANCE hInst)
 {

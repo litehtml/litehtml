@@ -1,11 +1,13 @@
 #pragma once
 
+#include "os_types.h"
+
 namespace litehtml
 {
 	class object
 	{
 	protected:
-		unsigned long volatile	m_refCount;
+		int	m_refCount;
 	public:
 		object()
 		{ 
