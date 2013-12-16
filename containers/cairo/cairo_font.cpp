@@ -88,6 +88,7 @@ cairo_font::~cairo_font()
 
 void cairo_font::show_text( cairo_t* cr, int x, int y, LPCWSTR str )
 {
+	lock();
 	text_chunk::vector chunks;
 	split_text(str, chunks);
 	cairo_set_font_size(cr, m_size);
@@ -103,15 +104,18 @@ void cairo_font::show_text( cairo_t* cr, int x, int y, LPCWSTR str )
 		}
 		cairo_show_text(cr, chunks[i]->text);
 	}
+	unlock();
 
 	if(m_bUnderline)
 	{
 		int tw = text_width(cr, chunks);
 
+		lock();
 		cairo_set_line_width(cr, 1);
 		cairo_move_to(cr, x, y + 1.5);
 		cairo_line_to(cr, x + tw, y + 1.5);
 		cairo_stroke(cr);
+		unlock();
 	}
 	if(m_bStrikeOut)
 	{
@@ -122,10 +126,12 @@ void cairo_font::show_text( cairo_t* cr, int x, int y, LPCWSTR str )
 
 		int ln_y = y - fm.x_height / 2;
 
+		lock();
 		cairo_set_line_width(cr, 1);
 		cairo_move_to(cr, x, (double) ln_y - 0.5);
 		cairo_line_to(cr, x + tw, (double) ln_y - 0.5);
 		cairo_stroke(cr);
+		unlock();
 	}
 
 	free_text_chunks(chunks);
@@ -236,6 +242,7 @@ int cairo_font::text_width( cairo_t* cr, LPCWSTR str )
 
 int cairo_font::text_width( cairo_t* cr, text_chunk::vector& chunks )
 {
+	lock();
 	cairo_set_font_size(cr, m_size);
 	double ret = 0;
 	for(size_t i = 0; i < chunks.size(); i++)
@@ -251,12 +258,14 @@ int cairo_font::text_width( cairo_t* cr, text_chunk::vector& chunks )
 		cairo_text_extents(cr, chunks[i]->text, &ext);
 		ret += ext.x_advance;
 	}
+	unlock();
 
 	return (int) ret;
 }
 
 void cairo_font::get_metrics(cairo_t* cr, cairo_font_metrics* fm )
 {
+	lock();
 	cairo_set_font_face(cr, m_font_face);
 	cairo_set_font_size(cr, m_size);
 	cairo_font_extents_t ext;
@@ -269,6 +278,7 @@ void cairo_font::get_metrics(cairo_t* cr, cairo_font_metrics* fm )
 	fm->descent		= (int) ext.descent;
 	fm->height		= (int) (ext.ascent + ext.descent);
 	fm->x_height	= (int) tex.height;
+	unlock();
 }
 
 void cairo_font::set_font( HFONT hFont )

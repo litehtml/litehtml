@@ -70,6 +70,7 @@ namespace litehtml
 		element*					parent() const;
 		void						parent(element* par);
 		bool						is_visible() const;
+		int							calc_width(int defVal) const;
 
 		virtual element::ptr		select_one(const tstring& selector);
 		virtual element::ptr		select_one(const css_element_selector& selector);

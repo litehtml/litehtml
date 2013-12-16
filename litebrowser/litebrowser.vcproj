@@ -350,14 +350,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\downloader.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\containers\gdiplus\gdiplus_container.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\HtmlViewWnd.cpp"
 				>
 			</File>
@@ -370,11 +362,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TxThread.cpp"
+				RelativePath=".\tordexhttp.cpp"
 				>
 			</File>
 			<File
-				RelativePath="..\containers\win32\win32_container.cpp"
+				RelativePath=".\web_history.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\web_page.cpp"
 				>
 			</File>
 		</Filter>
@@ -393,14 +389,6 @@
 			</File>
 			<File
 				RelativePath="..\containers\cairo\cairo_font.h"
-				>
-			</File>
-			<File
-				RelativePath=".\downloader.h"
-				>
-			</File>
-			<File
-				RelativePath="..\containers\gdiplus\gdiplus_container.h"
 				>
 			</File>
 			<File
@@ -428,11 +416,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\TxThread.h"
+				RelativePath=".\tordexhttp.h"
 				>
 			</File>
 			<File
-				RelativePath="..\containers\win32\win32_container.h"
+				RelativePath=".\web_history.h"
+				>
+			</File>
+			<File
+				RelativePath=".\web_page.h"
 				>
 			</File>
 		</Filter>

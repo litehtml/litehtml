@@ -1,25 +1,23 @@
 #include "globals.h"
 #include "HtmlViewWnd.h"
 #include "..\litehtml\tokenizer.h"
-#include "downloader.h"
 #include <WindowsX.h>
 #include <algorithm>
 #include <strsafe.h>
 
 CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 {
-	m_hInst		= hInst;
-	m_hWnd		= NULL;
-	m_doc		= NULL;
-	m_top		= 0;
-	m_left		= 0;
-	m_max_top	= 0;
-	m_max_left	= 0;
-	m_context	= ctx;
-	m_cursor	= L"auto";
+	m_hInst			= hInst;
+	m_hWnd			= NULL;
+	m_top			= 0;
+	m_left			= 0;
+	m_max_top		= 0;
+	m_max_left		= 0;
+	m_context		= ctx;
+	m_page			= NULL;
+	m_page_next		= NULL;
 
-	m_hImageAdded = CreateEvent(NULL, FALSE, FALSE, NULL);
-	InitializeCriticalSection(&m_images_queue_sync);
+	InitializeCriticalSection(&m_sync);
 
 	WNDCLASS wc;
 	if(!GetClassInfo(m_hInst, HTMLVIEWWND_CLASS, &wc))
@@ -31,7 +29,7 @@ CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 		wc.cbWndExtra     = 0;
 		wc.hInstance      = m_hInst;
 		wc.hIcon          = NULL;
-		wc.hCursor        = NULL/*LoadCursor(NULL, IDC_ARROW)*/;
+		wc.hCursor        = NULL;
 		wc.hbrBackground  = NULL;
 		wc.lpszMenuName   = NULL;
 		wc.lpszClassName  = HTMLVIEWWND_CLASS;
@@ -42,9 +40,7 @@ CHTMLViewWnd::CHTMLViewWnd(HINSTANCE hInst, litehtml::context* ctx)
 
 CHTMLViewWnd::~CHTMLViewWnd(void)
 {
-	DeleteCriticalSection(&m_images_queue_sync);
-	CTxThread::Stop();
-	CloseHandle(m_hImageAdded);
+	DeleteCriticalSection(&m_sync);
 }
 
 LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam, LPARAM lParam )
@@ -63,6 +59,9 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 	{
 		switch (uMessage)
 		{
+		case WM_PAGE_LOADED:
+			pThis->OnPageReady();
+			return 0;
 		case WM_IMAGE_LOADED:
 			if(wParam)
 			{
@@ -156,26 +155,35 @@ void CHTMLViewWnd::OnCreate()
 
 void CHTMLViewWnd::OnPaint( simpledib::dib* dib, LPRECT rcDraw )
 {
-	if(m_doc)
-	{
-		cairo_surface_t* surface = cairo_image_surface_create_for_data((unsigned char*) dib->bits(), CAIRO_FORMAT_ARGB32, dib->width(), dib->height(), dib->width() * 4);
-		cairo_t* cr = cairo_create(surface);
+	cairo_surface_t* surface = cairo_image_surface_create_for_data((unsigned char*) dib->bits(), CAIRO_FORMAT_ARGB32, dib->width(), dib->height(), dib->width() * 4);
+	cairo_t* cr = cairo_create(surface);
 
-		POINT pt;
-		GetWindowOrgEx(dib->hdc(), &pt);
-		if(pt.x != 0 || pt.y != 0)
-		{
-			cairo_translate(cr, -pt.x, -pt.y);
-		}
-		cairo_set_source_rgb(cr, 1, 1, 1);
-		cairo_paint(cr);
+	POINT pt;
+	GetWindowOrgEx(dib->hdc(), &pt);
+	if(pt.x != 0 || pt.y != 0)
+	{
+		cairo_translate(cr, -pt.x, -pt.y);
+	}
+	cairo_set_source_rgb(cr, 1, 1, 1);
+	cairo_paint(cr);
+
+	lock();
+
+	web_page* page = get_page(false);
+
+	if(page)
+	{
 
 		litehtml::position clip(rcDraw->left, rcDraw->top, rcDraw->right - rcDraw->left, rcDraw->bottom - rcDraw->top);
-		m_doc->draw((litehtml::uint_ptr) cr, -m_left, -m_top, &clip);
+		page->m_doc->draw((litehtml::uint_ptr) cr, -m_left, -m_top, &clip);
 
-		cairo_destroy(cr);
-		cairo_surface_destroy(surface);
+		page->release();
 	}
+
+	unlock();
+
+	cairo_destroy(cr);
+	cairo_surface_destroy(surface);
 }
 
 void CHTMLViewWnd::OnSize( int width, int height )
@@ -191,106 +199,100 @@ void CHTMLViewWnd::OnDestroy()
 void CHTMLViewWnd::create( int x, int y, int width, int height, HWND parent )
 {
 	m_hWnd = CreateWindow(HTMLVIEWWND_CLASS, L"htmlview", WS_CHILD | WS_VISIBLE, x, y, width, height, parent, NULL, m_hInst, (LPVOID) this);
-	CTxThread::Run();
 }
 
-void CHTMLViewWnd::open( LPCWSTR path, bool reload )
+void CHTMLViewWnd::open( LPCWSTR url, bool reload )
 {
-	if(!m_doc_path.empty())
-	{
-		m_history_back.push_back(m_doc_path);
-	}
 	std::wstring hash;
-	std::wstring s_path = path;
+	std::wstring s_url = url;
 
-	make_url(path, NULL, s_path);
-
-	std::wstring::size_type hash_pos = s_path.find_first_of(L'#');
+	std::wstring::size_type hash_pos = s_url.find_first_of(L'#');
 	if(hash_pos != std::wstring::npos)
 	{
-		hash = s_path.substr(hash_pos + 1);
-		s_path.erase(hash_pos);
+		hash = s_url.substr(hash_pos + 1);
+		s_url.erase(hash_pos);
 	}
 
-	if(s_path != m_doc_path || reload)
+	bool open_hash_only = false;
+
+	lock();
+
+	if(m_page)
 	{
-		make_url(path, NULL, m_doc_path);
-
-		m_doc		= NULL;
-		m_base_path = m_doc_path;
-
-		LPWSTR html_text = load_text_file(m_doc_path.c_str(), true);
-		if(html_text)
+		if(m_page->m_url == s_url && !reload)
 		{
-			m_doc = litehtml::document::createFromString(html_text, this, m_context);
-			delete html_text;
-		}
-		render(FALSE, FALSE);
-	}
-
-	m_top	= 0;
-	m_left	= 0;
-
-	if(!hash.empty())
-	{
-		if(m_doc)
+			open_hash_only = true;
+		} else
 		{
-			WCHAR selector[255];
-			StringCchPrintf(selector, 255, L"#%s", hash.c_str());
-			element::ptr el = m_doc->root()->select_one(selector);
-			if(!el)
-			{
-				StringCchPrintf(selector, 255, L"[name=%s]", hash.c_str());
-				el = m_doc->root()->select_one(selector);
-			}
-			if(el)
-			{
-				litehtml::position pos = el->get_placement();
-				m_top = pos.y;
-			}
+			m_page->m_http.stop();
 		}
 	}
+	if(!open_hash_only)
+	{
+		if(m_page_next)
+		{
+			m_page_next->m_http.stop();
+			m_page_next->release();
+		}
+		m_page_next = new web_page(this);
+		m_page_next->m_hash	= hash;
+		m_page_next->load(s_url.c_str());
+	}
+	
+	unlock();
 
-	update_scroll();
-	redraw(NULL, FALSE);
+	if(open_hash_only)
+	{
+		show_hash(hash);
+		update_scroll();
+		redraw(NULL, FALSE);
+		update_history();
+	}
 }
 
 void CHTMLViewWnd::render(BOOL calc_time, BOOL do_redraw)
 {
-	if(!m_hWnd || !m_doc)
+	if(!m_hWnd)
 	{
 		return;
 	}
 
-	RECT rcClient;
-	GetClientRect(m_hWnd, &rcClient);
+	web_page* page = get_page();
 
-	int width	= rcClient.right - rcClient.left;
-	int height	= rcClient.bottom - rcClient.top;
-
-	if(calc_time)
+	if(page)
 	{
-		DWORD tic1 = GetTickCount();
-		m_doc->render(width);
-		DWORD tic2 = GetTickCount();
-		WCHAR msg[255];
-		StringCchPrintf(msg, 255, L"Render time: %d msec", tic2 - tic1);
-		MessageBox(m_hWnd, msg, L"litebrowser", MB_ICONINFORMATION | MB_OK);
-	} else
-	{
-		m_doc->render(width);
-	}
+		RECT rcClient;
+		GetClientRect(m_hWnd, &rcClient);
 
-	m_max_top = m_doc->height() - height;
-	if(m_max_top < 0) m_max_top = 0;
+		int width	= rcClient.right - rcClient.left;
+		int height	= rcClient.bottom - rcClient.top;
 
-	m_max_left = m_doc->width() - width;
-	if(m_max_left < 0) m_max_left = 0;
+		if(calc_time)
+		{
+			DWORD tic1 = GetTickCount();
+			page->m_doc->render(width);
+			DWORD tic2 = GetTickCount();
+			WCHAR msg[255];
+			StringCchPrintf(msg, 255, L"Render time: %d msec", tic2 - tic1);
+			MessageBox(m_hWnd, msg, L"litebrowser", MB_ICONINFORMATION | MB_OK);
+		} else
+		{
+			page->m_doc->render(width);
+		}
 
-	if(do_redraw)
-	{
-		update_scroll();
-		redraw(NULL, FALSE);
+		m_max_top = page->m_doc->height() - height;
+		if(m_max_top < 0) m_max_top = 0;
+
+		m_max_left = page->m_doc->width() - width;
+		if(m_max_left < 0) m_max_left = 0;
+
+		if(do_redraw)
+		{
+			update_scroll();
+			redraw(NULL, FALSE);
+		}
+
+		page->release();
 	}
 }
 
@@ -308,7 +310,7 @@ void CHTMLViewWnd::redraw(LPRECT rcDraw, BOOL update)
 
 void CHTMLViewWnd::update_scroll()
 {
-	if(!m_doc)
+	if(!is_valid_page())
 	{
 		ShowScrollBar(m_hWnd, SB_BOTH, FALSE);
 		return;
@@ -434,98 +436,37 @@ void CHTMLViewWnd::OnKeyDown( UINT vKey )
 
 void CHTMLViewWnd::refresh()
 {
-	open(m_doc_path.c_str(), true);
-	redraw(NULL, TRUE);
-}
+	web_page* page = get_page();
 
-void CHTMLViewWnd::set_caption( const wchar_t* caption )
-{
-	if(caption)
+	if(page)
 	{
-		SetWindowText(GetParent(m_hWnd), caption);
+		open(page->m_url.c_str(), true);
+
+		page->release();
 	}
 }
 
-void CHTMLViewWnd::link( litehtml::document* doc, litehtml::element::ptr el )
+void CHTMLViewWnd::set_caption()
 {
-	const wchar_t* rel = el->get_attr(L"rel");
-	if(rel && !wcscmp(rel, L"stylesheet"))
-	{
-		const wchar_t* media = el->get_attr(L"media", L"screen");
-		if(media && (wcsstr(media, L"screen") || wcsstr(media, L"all")))
-		{
-			const wchar_t* href = el->get_attr(L"href");
-			if(href)
-			{
-				std::wstring url;
-				make_url(href, NULL, url);
-				LPWSTR css = load_text_file(url.c_str());
-				if(css)
-				{
-					doc->add_stylesheet(css, url.c_str());
-					delete css;
-				}
-			}
-		}
-	}
-}
+	web_page* page = get_page();
 
-void CHTMLViewWnd::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
-{
-	if(PathIsRelative(url) && !PathIsURL(url))
+	if(!page)
 	{
-		WCHAR abs_url[512];
-		DWORD dl = 512;
-		if(basepath && basepath[0])
-		{
-			UrlCombine(basepath, url, abs_url, &dl, 0);
-		} else
-		{
-			UrlCombine(m_base_path.c_str(), url, abs_url, &dl, 0);
-		}
-		out = abs_url;
+		SetWindowText(GetParent(m_hWnd), L"litebrowser");
 	} else
 	{
-		if(PathIsURL(url))
-		{
-			out = url;
-		} else
-		{
-			WCHAR abs_url[512];
-			DWORD dl = 512;
-			UrlCreateFromPath(url, abs_url, &dl, 0);
-			out = abs_url;
-		}
-	}
-	if(out.substr(0, 8) == L"file:///")
-	{
-		out.erase(5, 1);
-	}
-}
-
-void CHTMLViewWnd::set_base_url( const wchar_t* base_url )
-{
-	if(base_url)
-	{
-		if(PathIsRelative(base_url) && !PathIsURL(base_url))
-		{
-			make_url(base_url, NULL, m_base_path);
-		} else
-		{
-			m_base_path = base_url;
-		}
-	} else
-	{
-		m_base_path = m_doc_path;
+		SetWindowText(GetParent(m_hWnd), page->m_caption.c_str());
+		page->release();
 	}
 }
 
 void CHTMLViewWnd::OnMouseMove( int x, int y )
 {
-	if(m_doc)
+	web_page* page = get_page();
+	if(page)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(m_doc->on_mouse_over(x + m_left, y + m_top, redraw_boxes))
+		if(page->m_doc->on_mouse_over(x + m_left, y + m_top, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -541,31 +482,19 @@ void CHTMLViewWnd::OnMouseMove( int x, int y )
 			UpdateWindow(m_hWnd);
 			update_cursor();
 		}
+		page->release();
 	}
-}
-
-CTxDIB* CHTMLViewWnd::get_image( LPCWSTR url, bool redraw_on_ready )
-{
-	lock_images_queue();
-	m_images_queue.push_back(image_queue_item(url, redraw_on_ready));
-	unlock_images_queue();
-
-	SetEvent(m_hImageAdded);
-
-	return NULL;
-}
-
-void CHTMLViewWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el )
-{
-	make_url(url, NULL, m_anchor);
+	unlock();
 }
 
 void CHTMLViewWnd::OnMouseLeave()
 {
-	if(m_doc)
+	web_page* page = get_page();
+
+	if(page)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(m_doc->on_mouse_leave(redraw_boxes))
+		if(page->m_doc->on_mouse_leave(redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -580,15 +509,19 @@ void CHTMLViewWnd::OnMouseLeave()
 			}
 			UpdateWindow(m_hWnd);
 		}
+
+		page->release();
 	}
 }
 
 void CHTMLViewWnd::OnLButtonDown( int x, int y )
 {
-	if(m_doc)
+	web_page* page = get_page();
+
+	if(page)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(m_doc->on_lbutton_down(x + m_left, y + m_top, redraw_boxes))
+		if(page->m_doc->on_lbutton_down(x + m_left, y + m_top, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -603,16 +536,19 @@ void CHTMLViewWnd::OnLButtonDown( int x, int y )
 			}
 			UpdateWindow(m_hWnd);
 		}
+
+		page->release();
 	}
 }
 
 void CHTMLViewWnd::OnLButtonUp( int x, int y )
 {
-	if(m_doc)
+	web_page* page = get_page();
+
+	if(page)
 	{
-		m_anchor = L"";
 		litehtml::position::vector redraw_boxes;
-		if(m_doc->on_lbutton_up(x + m_left, y + m_top, redraw_boxes))
+		if(page->m_doc->on_lbutton_up(x + m_left, y + m_top, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -627,77 +563,48 @@ void CHTMLViewWnd::OnLButtonUp( int x, int y )
 			}
 			UpdateWindow(m_hWnd);
 		}
-		if(!m_anchor.empty())
-		{
-			open(m_anchor.c_str(), false);
-		}
+
+		page->release();
 	}
 }
 
 void CHTMLViewWnd::back()
 {
-	if(!m_history_back.empty())
+	std::wstring url;
+	if(m_history.back(url))
 	{
-		if(!m_doc_path.empty())
-		{
-			m_history_forward.push_back(m_doc_path);
-		}
-		std::wstring url = m_history_back.back();
-		m_history_back.pop_back();
-		m_doc_path = L"";
 		open(url.c_str(), false);
 	}
 }
 
 void CHTMLViewWnd::forward()
 {
-	if(!m_history_forward.empty())
+	std::wstring url;
+	if(m_history.forward(url))
 	{
-		if(!m_doc_path.empty())
-		{
-			m_history_back.push_back(m_doc_path);
-		}
-		std::wstring url = m_history_forward.back();
-		m_history_forward.pop_back();
-		m_doc_path = L"";
 		open(url.c_str(), false);
-	}
-}
-
-void CHTMLViewWnd::set_cursor( const wchar_t* cursor )
-{
-	m_cursor = cursor;
-	if(m_cursor != L"auto")
-	{
-		int i = 0;
-		i++;
 	}
 }
 
 void CHTMLViewWnd::update_cursor()
 {
-	if(m_cursor == L"pointer")
+	LPCWSTR defArrow = m_page_next ? IDC_APPSTARTING : IDC_ARROW;
+
+	web_page* page = get_page();
+
+	if(!page)
 	{
-		SetCursor(LoadCursor(NULL, IDC_HAND));
+		SetCursor(LoadCursor(NULL, defArrow));
 	} else
 	{
-		SetCursor(LoadCursor(NULL, IDC_ARROW));
-	}
-}
-
-void CHTMLViewWnd::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl, const string_vector& media )
-{
-	if(media.empty() || std::find(media.begin(), media.end(), std::wstring(L"all")) != media.end() || std::find(media.begin(), media.end(), std::wstring(L"screen")) != media.end())
-	{
-		std::wstring css_url;
-		make_url(url.c_str(), baseurl.c_str(), css_url);
-		LPWSTR css = load_text_file(css_url.c_str());
-		if(css)
+		if(page->m_cursor == L"pointer")
 		{
-			baseurl = css_url;
-			text = css;
-			delete css;
+			SetCursor(LoadCursor(NULL, IDC_HAND));
+		} else
+		{
+			SetCursor(LoadCursor(NULL, defArrow));
 		}
+		page->release();
 	}
 }
 
@@ -711,76 +618,130 @@ void CHTMLViewWnd::get_client_rect( litehtml::position& client )
 	client.height	= rcClient.bottom - rcClient.top;
 }
 
-DWORD CHTMLViewWnd::ThreadProc()
+bool CHTMLViewWnd::is_valid_page(bool with_lock)
 {
-	bool update = false;
-	while(CTxThread::WaitForStop2(m_hImageAdded, INFINITE) == WAIT_OBJECT_0 + 1)
+	bool ret_val = true;
+
+	if(with_lock)
 	{
-		update = false;
-		bool re_render = false;
-		while(!m_images_queue.empty())
-		{
-			litehtml::tstring url;
-			bool redraw_on_ready;
-
-			lock_images_queue();
-
-				redraw_on_ready = m_images_queue[0].redraw_on_ready;
-				url				= m_images_queue[0].url;
-				m_images_queue.erase(m_images_queue.begin());
-
-			unlock_images_queue();
-
-			CTxDIB* img = NULL;
-
-			CRemotedFile rf;
-
-			HANDLE hFile = rf.Open(url.c_str());
-			if(hFile != INVALID_HANDLE_VALUE)
-			{
-				DWORD szHigh;
-				DWORD szLow = GetFileSize(hFile, &szHigh);
-				HANDLE hMapping = CreateFileMapping(hFile, NULL, PAGE_READONLY, szHigh, szLow, NULL);
-				if(hMapping)
-				{
-					SIZE_T memSize;
-					if(szHigh)
-					{
-						memSize = MAXDWORD;
-					} else
-					{
-						memSize = szLow;
-					}
-					LPVOID data = MapViewOfFile(hMapping, FILE_MAP_READ, 0, 0, memSize);
-
-					img = new CTxDIB;
-					if(!img->load((LPBYTE) data, (DWORD) memSize))
-					{
-						delete img;
-						img = NULL;
-					}
-
-					UnmapViewOfFile(data);
-					CloseHandle(hMapping);
-				}
-			}
-			if(img)
-			{
-				cairo_container::add_image(url, img);
-				if(redraw_on_ready)
-				{
-					PostMessage(m_hWnd, WM_IMAGE_LOADED, (WPARAM) 1, 0);
-				} else
-				{
-					re_render = true;
-				}
-			}
-		}
-		if(re_render)
-		{
-			PostMessage(m_hWnd, WM_IMAGE_LOADED, (WPARAM) 0, 0);
-		}
+		lock();
 	}
 
-	return 0;
+	if(!m_page || m_page && !m_page->m_doc)
+	{
+		ret_val = false;
+	}
+
+	if(with_lock)
+	{
+		unlock();
+	}
+
+	return ret_val;
+}
+
+web_page* CHTMLViewWnd::get_page(bool with_lock)
+{
+	web_page* ret_val = NULL;
+	if(with_lock)
+	{
+		lock();
+	}
+	if(is_valid_page(false))
+	{
+		ret_val = m_page;
+		ret_val->add_ref();
+	}
+	if(with_lock)
+	{
+		unlock();
+	}
+
+	return ret_val;
+}
+
+void CHTMLViewWnd::OnPageReady()
+{
+	lock();
+	web_page* page = m_page_next;
+	unlock();
+
+	std::wstring hash;
+
+	bool is_ok = false;
+
+	lock();
+
+	if(m_page_next)
+	{
+		if(m_page)
+		{
+			m_page->release();
+		}
+		m_page = m_page_next;
+		m_page_next = NULL;
+		is_ok = true;
+		hash = m_page->m_hash;
+	}
+
+	unlock();
+
+	if(is_ok)
+	{
+		render(FALSE, FALSE);
+		m_top	= 0;
+		m_left	= 0;
+		show_hash(hash);
+		update_scroll();
+		redraw(NULL, FALSE);
+		set_caption();
+		update_history();
+	}
+}
+
+void CHTMLViewWnd::show_hash(std::wstring& hash)
+{
+	web_page* page = get_page();
+	if(page)
+	{
+		if(!hash.empty())
+		{
+			WCHAR selector[255];
+			StringCchPrintf(selector, 255, L"#%s", hash.c_str());
+			element::ptr el = page->m_doc->root()->select_one(selector);
+			if(!el)
+			{
+				StringCchPrintf(selector, 255, L"[name=%s]", hash.c_str());
+				el = page->m_doc->root()->select_one(selector);
+			}
+			if(el)
+			{
+				litehtml::position pos = el->get_placement();
+				m_top = pos.y;
+			}
+		} else
+		{
+			m_top = 0;
+		}
+		if(page->m_hash != hash)
+		{
+			page->m_hash = hash;
+		}
+		page->release();
+	}
+}
+
+void CHTMLViewWnd::update_history()
+{
+	web_page* page = get_page();
+
+	if(page)
+	{
+		std::wstring url;
+		page->get_url(url);
+		
+		m_history.url_opened(url);
+
+		page->release();
+	}
 }

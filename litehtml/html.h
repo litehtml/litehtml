@@ -7,11 +7,12 @@
 #include <map>
 #include <cstring>
 #include "types.h"
+#include "os_types.h"
+#include "object.h"
 #include "background.h"
 #include "borders.h"
 #include "html_tag.h"
 #include "web_color.h"
-#include "object.h"
 
 namespace litehtml
 {
