@@ -317,91 +317,99 @@ void litehtml::table_grid::distribute_width( int width, int start, int end )
 			width -= added_width;
 		}
 	}
-
-
-/*
-	int cols_width = 0;
-	int cols_width2 = 0;
-	int first_predef_width = -1;
-	for(int col = start; col <= end; col++)
-	{
-		cols_width2 += m_columns[col].max_width;
-		if(m_columns[col].css_width.is_predefined() || !m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage)
-		{
-			if(first_predef_width < 0)
-			{
-				first_predef_width	= col;
-			}
-			cols_width	+= m_columns[col].max_width;
-		}
-	}
-
-	if(first_predef_width < 0)
-	{
-		cols_width = cols_width2;
-	}
-
-
-	int add = width / (end - start + 1);
-	int added_width = 0;
-	for(int col = start; col <= end; col++)
-	{
-		if((m_columns[col].css_width.is_predefined() || !m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage) || first_predef_width < 0)
-		{
-			if(cols_width)
-			{
-				add = round_f( (float) width * ((float) m_columns[col].max_width / (float) cols_width) );
-			}
-			added_width				+= add;
-			if(m_columns[col].width + add >= m_columns[col].min_width)
-			{
-				m_columns[col].width += add;
-			} else
-			{
-				m_columns[col].width = m_columns[col].min_width;
-			}
-		}
-	}
-	if(added_width < width)
-	{
-		if(first_predef_width >= 0)
-		{
-			m_columns[first_predef_width].width += width - added_width;
-		} else
-		{
-			m_columns[start].width += width - added_width;
-		}
-	}
-*/
 }
 
-int litehtml::table_grid::set_table_width( int new_width, int bs_x )
+int litehtml::table_grid::calc_table_width( int block_width, bool is_auto )
 {
-	int table_width = bs_x * (m_cols_count + 1);
+	int table_width = 0;
+
+	int min_table_width = 0; // MIN
+	int max_table_width = 0; // MAX
+
+	int cur_width = 0;
+	int max_w = 0;
+	int min_w = 0;
 
 	for(int col = 0; col < m_cols_count; col++)
 	{
+		min_table_width += m_columns[col].min_width;
+		max_table_width += m_columns[col].max_width;
+
 		if(!m_columns[col].css_width.is_predefined())
 		{
-			m_columns[col].width = m_columns[col].css_width.calc_percent(new_width - bs_x * (m_cols_count + 1));
+			m_columns[col].width = m_columns[col].css_width.calc_percent(block_width);
 			m_columns[col].width = std::max(m_columns[col].width, m_columns[col].min_width);
+		} else
+		{
+			m_columns[col].width = m_columns[col].min_width;
+			max_w += m_columns[col].max_width;
+			min_w += m_columns[col].min_width;
 		}
-		table_width += m_columns[col].width;
+
+		cur_width += m_columns[col].width;
 	}
 
-	if(new_width != table_width)
+	if(cur_width == block_width)
 	{
-		distribute_width(new_width - table_width, 0, m_cols_count - 1);
+		return cur_width;
 	}
 
-	table_width = bs_x * (m_cols_count + 1);
-
-	for(int col = 0; col < m_cols_count; col++)
+	if(cur_width < block_width)
 	{
-		table_width += m_columns[col].width;
+		if(cur_width - min_w + max_w <= block_width)
+		{
+			cur_width = 0;
+			for(int col = 0; col < m_cols_count; col++)
+			{
+				if(m_columns[col].css_width.is_predefined())
+				{
+					m_columns[col].width = m_columns[col].max_width;
+				}
+				cur_width += m_columns[col].width;
+			}
+			if(cur_width == block_width || is_auto)
+			{
+				return cur_width;
+			}
+		}
+		distribute_width(block_width - cur_width, 0, m_cols_count - 1);
+		cur_width = 0;
+		for(int col = 0; col < m_cols_count; col++)
+		{
+			cur_width += m_columns[col].width;
+		}
+	} else
+	{
+		int fixed_width = 0;
+		float percent = 0;
+		for(int col = 0; col < m_cols_count; col++)
+		{
+			if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage)
+			{
+				percent += m_columns[col].css_width.val();
+			} else
+			{
+				fixed_width += m_columns[col].width;
+			}
+		}
+		float scale = (float) (100.0 / percent);
+		cur_width = 0;
+		for(int col = 0; col < m_cols_count; col++)
+		{
+			if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage)
+			{
+				css_length w;
+				w.set_value(m_columns[col].css_width.val() * scale, css_units_percentage);
+				m_columns[col].width = w.calc_percent(block_width - fixed_width);
+				if(m_columns[col].width < m_columns[col].min_width)
+				{
+					m_columns[col].width = m_columns[col].min_width;
+				}
+			}
+			cur_width += m_columns[col].width;
+		}
 	}
-
-	return table_width;
+	return cur_width;
 }
 
 void litehtml::table_grid::clear()

@@ -1,5 +1,8 @@
 #include "globals.h"
 #include "MainWnd.h"
+#include "..\containers\cairo\cairo_font.h"
+
+CRITICAL_SECTION cairo_font::m_sync;
 
 int APIENTRY _tWinMain(HINSTANCE hInstance,
 					   HINSTANCE hPrevInstance,
@@ -8,6 +11,8 @@ int APIENTRY _tWinMain(HINSTANCE hInstance,
 {
 	CoInitialize(NULL);
 	InitCommonControls();
+
+	InitializeCriticalSectionAndSpinCount(&cairo_font::m_sync, 1000);
 
 	{
 		CMainWnd wnd(hInstance);

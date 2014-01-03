@@ -159,6 +159,6 @@ namespace litehtml
 		void			distribute_min_width(int width, int start, int end);
 		void			distribute_width(int width, int start, int end);
 		void			distribute_width(int width, int start, int end, table_column_accessor* acc);
-		int				set_table_width(int width, int bs_x);
+		int				calc_table_width(int block_width, bool is_auto);
 	};
 }

@@ -309,12 +309,28 @@ void CToolbarWnd::OnLButtonUp( int x, int y )
 	}
 }
 
+struct
+{
+	LPCWSTR	name;
+	LPCWSTR	url;
+} g_bookmarks[] = 
+{
+	{L"DMOZ",					L"http://www.dmoz.org/"},
+	{L"litehtml project",		L"https://code.google.com/p/litehtml/"},
+	{L"litehtml website",		L"http://www.litehtml.com/"},
+	{L"True Launch Bar",		L"http://www.truelaunchbar.com/"},
+	{L"Tordex",					L"http://www.tordex.com/"},
+	{L"True Paste",				L"http://www.truepaste.com/"},
+	{L"Text Accelerator",		L"http://www.textaccelerator.com/"},
+	{L"Wiki: Web Browser",		L"http://en.wikipedia.org/wiki/Web_browser"},
+	{L"Wiki: Obama",			L"http://en.wikipedia.org/wiki/Obama"},
+
+	{NULL,						NULL},
+};
+
 void CToolbarWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el )
 {
-	if(!wcscmp(url, L"time"))
-	{
-		m_parent->calc_time();
-	} else if(!wcscmp(url, L"back"))
+	if(!wcscmp(url, L"back"))
 	{
 		m_parent->back();
 	} else if(!wcscmp(url, L"forward"))
@@ -323,6 +339,28 @@ void CToolbarWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el
 	} else if(!wcscmp(url, L"reload"))
 	{
 		m_parent->reload();
+	} else if(!wcscmp(url, L"bookmarks"))
+	{
+		litehtml::position pos = el->get_placement();
+		POINT pt;
+		pt.x	= pos.right();
+		pt.y	= pos.bottom();
+		MapWindowPoints(m_hWnd, NULL, &pt, 1);
+
+		HMENU hMenu = CreatePopupMenu();
+
+		for(int i = 0; g_bookmarks[i].url; i++)
+		{
+			InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING, i + 1, g_bookmarks[i].name);
+		}
+
+		int ret = TrackPopupMenu(hMenu, TPM_RIGHTALIGN | TPM_TOPALIGN | TPM_NONOTIFY | TPM_RETURNCMD, pt.x, pt.y, 0, m_hWnd, NULL);
+		DestroyMenu(hMenu);
+
+		if(ret)
+		{
+			m_parent->open(g_bookmarks[ret - 1].url);
+		}
 	} else if(!wcscmp(url, L"settings"))
 	{
 		litehtml::position pos = el->get_placement();
@@ -333,13 +371,7 @@ void CToolbarWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el
 
 		HMENU hMenu = CreatePopupMenu();
 
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	6, L"DMOZ");
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	7, L"litehtml project");
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, L"");
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	1, L"True Launch Bar");
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	3, L"Tordex");
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	4, L"True Paste");
-		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	5, L"Text Accelerator");
+		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	1, L"Calculate Render Time");
 		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_SEPARATOR, 0, L"");
 		InsertMenu(hMenu, -1, MF_BYPOSITION | MF_STRING,	2, L"Exit");
 
@@ -352,22 +384,7 @@ void CToolbarWnd::on_anchor_click( const wchar_t* url, litehtml::element::ptr el
 			PostQuitMessage(0);
 			break;
 		case 1:
-			m_parent->open(L"http://www.truelaunchbar.com/");
-			break;
-		case 3:
-			m_parent->open(L"http://www.tordex.com/");
-			break;
-		case 4:
-			m_parent->open(L"http://www.truepaste.com/");
-			break;
-		case 5:
-			m_parent->open(L"http://www.textaccelerator.com/");
-			break;
-		case 6:
-			m_parent->open(L"http://www.dmoz.org/");
-			break;
-		case 7:
-			m_parent->open(L"https://code.google.com/p/litehtml/");
+			m_parent->calc_time();
 			break;
 		}
 	}
