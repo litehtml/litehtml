@@ -426,7 +426,7 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 
 	if(m_display != display_table_cell && !m_css_width.is_predefined())
 	{
-		block_width = calc_width(parent_width); //m_css_width.calc_percent(parent_width);
+		block_width = calc_width(parent_width);
 	}
 
 	if(block_width)
@@ -444,6 +444,8 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 	m_boxes.clear();
 	m_cahe_line_left.invalidate();
 	m_cahe_line_right.invalidate();
+
+	calc_outlines(parent_width);
 
 	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
@@ -1115,6 +1117,7 @@ void litehtml::html_tag::add_float( element* el, int x, int y )
 		}
 	} else
 	{
+		
 		m_parent->add_float(el, x + m_pos.x, y + m_pos.y);
 	}
 }
@@ -1962,7 +1965,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 		bool add_box = true;
 		if(!m_boxes.empty())
 		{
-			if(m_boxes.back()->can_hold(el, m_white_space))
+			if(m_boxes.back()->can_hold(el, m_white_space /*el->parent()->get_white_space()*/))
 			{
 				add_box = false;
 			}
@@ -1982,7 +1985,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 		{
 			if(m_boxes.size() == 1)
 			{
-				if(collapse_top_margin())
+				if(!is_body() && collapse_top_margin())
 				{
 					int shift = el->margin_top();
 					if(shift >= 0)

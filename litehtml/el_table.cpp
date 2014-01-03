@@ -117,64 +117,18 @@ int litehtml::el_table::render( int x, int y, int max_width )
 	// CAPMIN, and MIN. However, if either CAPMIN or the maximum width required by the columns plus cell spacing or borders (MAX) is 
 	// less than that of the containing block, use max(MAX, CAPMIN).
 
-	int min_table_width = m_border_spacing_x * (m_grid.cols_count() + 1); // MIN
-	int max_table_width = m_border_spacing_x * (m_grid.cols_count() + 1); // MAX
-
-	for(int col = 0; col < m_grid.cols_count(); col++)
-	{
-		min_table_width += m_grid.column(col).min_width;
-		max_table_width += m_grid.column(col).max_width;
-	}
 
 	int table_width = 0;
 
 	if(!m_css_width.is_predefined())
 	{
-		table_width = std::max(min_table_width, max_width);
-		if(table_width > min_table_width)
-		{
-			for(int col2 = 0; col2 < m_grid.cols_count(); col2++)
-			{
-				m_grid.column(col2).width	= m_grid.column(col2).min_width;
-			}
-			m_grid.distribute_width(table_width - min_table_width, 0, m_grid.cols_count() - 1/*, &table_column_accessor_width()*/);
-		} else
-		{
-			for(int col2 = 0; col2 < m_grid.cols_count(); col2++)
-			{
-				m_grid.column(col2).width	= m_grid.column(col2).min_width;
-			}
-		}
+		table_width = m_grid.calc_table_width(block_width - m_border_spacing_x * (m_grid.cols_count() + 1), false);
 	} else
 	{
-		if(max_table_width < max_width)
-		{
-			table_width = max_table_width;
-			for(int col2 = 0; col2 < m_grid.cols_count(); col2++)
-			{
-				m_grid.column(col2).width	= m_grid.column(col2).max_width;
-			}
-		} else if(min_table_width >= max_width)
-		{
-			table_width = min_table_width;
-			for(int col2 = 0; col2 < m_grid.cols_count(); col2++)
-			{
-				m_grid.column(col2).width	= m_grid.column(col2).min_width;
-			}
-		} else
-		{
-			table_width = max_width;
-			for(int col2 = 0; col2 < m_grid.cols_count(); col2++)
-			{
-				m_grid.column(col2).width	= m_grid.column(col2).min_width;
-			}
-			m_grid.distribute_width(table_width - min_table_width, 0, m_grid.cols_count() - 1/*, &table_column_accessor_width()*/);
-		}
+		table_width = m_grid.calc_table_width(max_width - m_border_spacing_x * (m_grid.cols_count() + 1), true);
 	}
 
-	// now we have the columns widths and the table width
-
-	table_width = m_grid.set_table_width(table_width, m_border_spacing_x);
+	table_width += m_border_spacing_x * (m_grid.cols_count() + 1);
 
 	// render cells with computed width
 	int top		= m_border_spacing_y;
@@ -397,7 +351,6 @@ void litehtml::el_table::parse_attributes()
 			m_style.add_property(_t("margin-right"), _t("0"), 0, false);
 			break;
 		}
-		m_style.add_property(_t("width"), str, 0, false);
 	}
 
 	str = get_attr(_t("cellspacing"));

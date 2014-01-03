@@ -85,19 +85,23 @@ bool litehtml::element::is_inline_box()
 
 bool litehtml::element::collapse_top_margin() const
 {
+/*
 	if(!m_borders.top && !m_padding.top && in_normal_flow() && get_float() == float_none && m_margins.top >= 0)
 	{
 		return true;
 	}
+*/
 	return false;
 }
 
 bool litehtml::element::collapse_bottom_margin() const
 {
+/*
 	if(!m_borders.bottom && !m_padding.bottom && in_normal_flow() && get_float() == float_none && m_margins.bottom >= 0)
 	{
 		return true;
 	}
+*/
 	return false;
 }
 
