@@ -6,8 +6,9 @@ void litehtml::table_grid::add_cell( element* el )
 {
 	table_cell cell;
 	cell.el = el;
-	cell.colspan = t_atoi(el->get_attr(_t("colspan"), _t("1")));
-	cell.rowspan = t_atoi(el->get_attr(_t("rowspan"), _t("1")));
+	cell.colspan	= t_atoi(el->get_attr(_t("colspan"), _t("1")));
+	cell.rowspan	= t_atoi(el->get_attr(_t("rowspan"), _t("1")));
+	cell.borders	= el->get_borders();
 
 	while( is_rowspanned( (int) m_cells.size() - 1, (int) m_cells.back().size() ) )
 	{
@@ -74,18 +75,46 @@ void litehtml::table_grid::finish()
 		m_columns.push_back(table_column(0, 0));
 	}
 
-/*
-	m_rows.clear();
-	for(int i = 0; i < m_rows_count; i++)
-	{
-		m_rows.push_back(table_row());
-	}
-*/
-
 	for(int col = 0; col < m_cols_count; col++)
 	{
 		for(int row = 0; row < m_rows_count; row++)
 		{
+			if(cell(col, row)->el)
+			{
+				// find minimum left border width
+				if(m_columns[col].border_left)
+				{
+					m_columns[col].border_left = std::min(m_columns[col].border_left, cell(col, row)->borders.left);
+				} else
+				{
+					m_columns[col].border_left = cell(col, row)->borders.left;
+				}
+				// find minimum right border width
+				if(m_columns[col].border_right)
+				{
+					m_columns[col].border_right = std::min(m_columns[col].border_right, cell(col, row)->borders.right);
+				} else
+				{
+					m_columns[col].border_right = cell(col, row)->borders.right;
+				}
+				// find minimum top border width
+				if(m_rows[row].border_top)
+				{
+					m_rows[row].border_top = std::min(m_rows[row].border_top, cell(col, row)->borders.top);
+				} else
+				{
+					m_rows[row].border_top = cell(col, row)->borders.top;
+				}
+				// find minimum bottom border width
+				if(m_rows[row].border_bottom)
+				{
+					m_rows[row].border_bottom = std::min(m_rows[row].border_bottom, cell(col, row)->borders.bottom);
+				} else
+				{
+					m_rows[row].border_bottom = cell(col, row)->borders.bottom;
+				}
+			}
+
 			if(cell(col, row)->el && cell(col, row)->colspan <= 1)
 			{
 				if(!cell(col, row)->el->get_css_width().is_predefined())
@@ -107,67 +136,6 @@ void litehtml::table_grid::finish()
 			}
 		}
 	}
-
-/*
-	// find css width
-	for(int c = 0; c < m_cols_count; c++)
-	{
-		table_cell* cell0 = table_grid::cell(c, 0);
-		for(int r = 1; r < m_rows_count; r++)
-		{
-			table_cell* cell = table_grid::cell(c, r);
-			if(cell && cell->el)
-			{
-				if(!cell->el->m_css_width.predef())
-				{
-					cell0->css_width = cell->el->m_css_width;
-					break;
-				}
-			}
-		}
-		if(!cell0->css_width.is_predefined())
-		{
-			for(int r = 1; r < m_rows_count; r++)
-			{
-				table_cell* cell = table_grid::cell(c, r);
-				if(cell)
-				{
-					cell->css_width = cell0->css_width;
-				}
-			}
-		}
-	}
-
-
-	// find css height
-	for(int r = 0; r < m_rows_count; r++)
-	{
-		table_cell* cell0 = table_grid::cell(0, r);
-		for(int c = 1; c < m_cols_count; c++)
-		{
-			table_cell* cell = table_grid::cell(c, r);
-			if(cell && cell->el)
-			{
-				if(!cell->el->m_css_height.predef())
-				{
-					cell0->css_height = cell->el->m_css_height;
-					break;
-				}
-			}
-		}
-		if(!cell0->css_height.is_predefined())
-		{
-			for(int c = 1; c < m_cols_count; c++)
-			{
-				table_cell* cell = table_grid::cell(c, r);
-				if(cell)
-				{
-					cell->css_height = cell0->css_height;
-				}
-			}
-		}
-	}
-*/
 }
 
 litehtml::table_cell* litehtml::table_grid::cell( int t_col, int t_row )
@@ -419,6 +387,70 @@ void litehtml::table_grid::clear()
 	m_cells.clear();
 	m_columns.clear();
 	m_rows.clear();
+}
+
+void litehtml::table_grid::calc_horizontal_positions( margins& table_borders, border_collapse bc, int bdr_space_x)
+{
+	if(bc == border_collapse_separate)
+	{
+		int left = bdr_space_x;
+		for(int i = 0; i < m_cols_count; i++)
+		{
+			m_columns[i].left	= left;
+			m_columns[i].right	= m_columns[i].left + m_columns[i].width;
+			left = m_columns[i].right + bdr_space_x;
+		}
+	} else
+	{
+		int left = 0;
+		if(m_cols_count)
+		{
+			left -= std::min(table_borders.left, m_columns[0].border_left);
+		}
+		for(int i = 0; i < m_cols_count; i++)
+		{
+			if(i > 0)
+			{
+				left -= std::min(m_columns[i - 1].border_right, m_columns[i].border_left);
+			}
+
+			m_columns[i].left	= left;
+			m_columns[i].right	= m_columns[i].left + m_columns[i].width;
+			left = m_columns[i].right;
+		}
+	}
+}
+
+void litehtml::table_grid::calc_vertical_positions( margins& table_borders, border_collapse bc, int bdr_space_y )
+{
+	if(bc == border_collapse_separate)
+	{
+		int top = bdr_space_y;
+		for(int i = 0; i < m_rows_count; i++)
+		{
+			m_rows[i].top		= top;
+			m_rows[i].bottom	= m_rows[i].top + m_rows[i].height;
+			top = m_rows[i].bottom + bdr_space_y;
+		}
+	} else
+	{
+		int top = 0;
+		if(m_rows_count)
+		{
+			top -= std::min(table_borders.top, m_rows[0].border_top);
+		}
+		for(int i = 0; i < m_rows_count; i++)
+		{
+			if(i > 0)
+			{
+				top -= std::min(m_rows[i - 1].border_bottom, m_rows[i].border_top);
+			}
+
+			m_rows[i].top		= top;
+			m_rows[i].bottom	= m_rows[i].top + m_rows[i].height;
+			top = m_rows[i].bottom;
+		}
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////

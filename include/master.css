@@ -145,7 +145,10 @@ table {
     display: table;
     border-collapse: separate;
     border-spacing: 2px;
-    border-color: gray
+    border-top-color:gray;
+    border-left-color:gray;
+    border-bottom-color:black;
+    border-right-color:black;
 }
 
 tbody, tfoot, thead {
@@ -156,16 +159,38 @@ tbody, tfoot, thead {
 tr {
     display: table-row;
     vertical-align: inherit;
-    border-color: inherit
+    border-color: inherit;
 }
 
 td, th {
     display: table-cell;
-    vertical-align: inherit
+    vertical-align: inherit;
+    border-width:1px;
+    padding:1px;
 }
 
 th {
 	font-weight: bold;
+}
+
+table[border] {
+    border-style:solid;
+}
+
+table[border|=0] {
+    border-style:none;
+}
+
+table[border] td, table[border] th {
+    border-style:solid;
+    border-top-color:black;
+    border-left-color:black;
+    border-bottom-color:gray;
+    border-right-color:gray;
+}
+
+table[border|=0] td, table[border|=0] th {
+    border-style:none;
 }
 
 caption {

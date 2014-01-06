@@ -318,9 +318,6 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 	case css_units_percentage:
 		ret = val.calc_percent(size);
 		break;
-	case css_units_px:
-		ret = (int) val.val();
-		break;
 	case css_units_em:
 		ret = round_f(val.val() * fontSize);
 		val.set_value((float) ret, css_units_px);
@@ -340,6 +337,9 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 	case css_units_mm:
 		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
 		val.set_value((float) ret, css_units_px);
+		break;
+	default:
+		ret = (int) val.val();
 		break;
 	}
 	return ret;
