@@ -77,6 +77,7 @@ private:
 	int					text_width(cairo_t* cr, text_chunk::vector& chunks);
 	void				lock();
 	void				unlock();
+	int					round_d(double val);
 };
 
 inline void cairo_font::lock()
@@ -87,4 +88,14 @@ inline void cairo_font::lock()
 inline void cairo_font::unlock()
 {
 	LeaveCriticalSection(&m_sync);
+}
+
+inline int cairo_font::round_d(double val)
+{
+	int int_val = (int) val;
+	if(val - int_val >= 0.5)
+	{
+		int_val++;
+	}
+	return int_val;
 }

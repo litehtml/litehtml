@@ -1351,7 +1351,7 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 	m_padding.top		= m_css_padding.top.calc_percent(parent_width);
 	m_padding.bottom	= m_css_padding.bottom.calc_percent(parent_width);
 
-	if(m_display == display_block)
+	if(m_display == display_block || m_display == display_table)
 	{
 		if(m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
@@ -1708,6 +1708,9 @@ void litehtml::html_tag::init_font()
 			if(sz.units() == css_units_percentage)
 			{
 				m_font_size = sz.calc_percent(parent_sz);
+			} else if(sz.units() == css_units_none)
+			{
+				m_font_size = parent_sz;
 			} else
 			{
 				m_font_size = m_doc->cvt_units(sz, parent_sz);

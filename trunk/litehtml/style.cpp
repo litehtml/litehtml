@@ -321,16 +321,16 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 			int idx = value_index(tok->c_str(), list_style_type_strings, -1);
 			if(idx >= 0)
 			{
-				add_parsed_property(_t("list-style-type"), val, important);
+				add_parsed_property(_t("list-style-type"), *tok, important);
 			} else
 			{
 				idx = value_index(tok->c_str(), list_style_position_strings, -1);
 				if(idx >= 0)
 				{
-					add_parsed_property(_t("list-style-position"), val, important);
+					add_parsed_property(_t("list-style-position"), *tok, important);
 				} else if(!t_strncmp(val, _t("url"), 3))
 				{
-					add_parsed_property(_t("list-style-image"), val, important);
+					add_parsed_property(_t("list-style-image"), *tok, important);
 					if(baseurl)
 					{
 						add_parsed_property(_t("list-style-image-baseurl"), baseurl, important);

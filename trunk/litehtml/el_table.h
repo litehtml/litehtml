@@ -18,6 +18,7 @@ namespace litehtml
 		css_length		m_css_border_spacing_y;
 		int				m_border_spacing_x;
 		int				m_border_spacing_y;
+		border_collapse	m_border_collapse;
 	public:
 		el_table(litehtml::document* doc);
 		virtual ~el_table();

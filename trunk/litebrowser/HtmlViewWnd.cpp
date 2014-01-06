@@ -484,7 +484,6 @@ void CHTMLViewWnd::OnMouseMove( int x, int y )
 		}
 		page->release();
 	}
-	unlock();
 }
 
 void CHTMLViewWnd::OnMouseLeave()

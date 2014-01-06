@@ -260,14 +260,31 @@ namespace litehtml
 		fontWeight700
 	};
 
-#define  list_style_type_strings	_t("none;circle;disc;square")
+#define  list_style_type_strings	_t("none;circle;disc;square;armenian;cjk-ideographic;decimal;decimal-leading-zero;georgian;hebrew;hiragana;hiragana-iroha;katakana;katakana-iroha;lower-alpha;lower-greek;lower-latin;lower-roman;upper-alpha;upper-latin;upper-roman")
 
 	enum list_style_type
 	{
 		list_style_type_none,
 		list_style_type_circle,
 		list_style_type_disc,
-		list_style_type_square
+		list_style_type_square,
+		list_style_type_armenian,
+		list_style_type_cjk_ideographic,
+		list_style_type_decimal,
+		list_style_type_decimal_leading_zero,
+		list_style_type_georgian,
+		list_style_type_hebrew,
+		list_style_type_hiragana,
+		list_style_type_hiragana_iroha,
+		list_style_type_katakana,
+		list_style_type_katakana_iroha,
+		list_style_type_lower_alpha,
+		list_style_type_lower_greek,
+		list_style_type_lower_latin,
+		list_style_type_lower_roman,
+		list_style_type_upper_alpha,
+		list_style_type_upper_latin,
+		list_style_type_upper_roman,
 	};
 
 #define  list_style_position_strings	_t("inside;outside")
@@ -448,6 +465,14 @@ namespace litehtml
 		visibility_visible,
 		visibility_hidden,
 		visibility_collapse,
+	};
+
+#define border_collapse_strings		_t("collapse;separate")
+
+	enum border_collapse
+	{
+		border_collapse_collapse,
+		border_collapse_separate,
 	};
 
 	struct floated_box 
