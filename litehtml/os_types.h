@@ -19,9 +19,9 @@ namespace litehtml
 	#define t_strtod			wcstod
 
 	#ifdef WINCE
-		#define t_snprintf					_snwprintf
+		#define t_snprintf		_snwprintf
 	#else
-		#define t_snprintf					swprintf
+		#define t_snprintf		swprintf
 	#endif
 
 	#define t_strstr			wcsstr
@@ -36,9 +36,9 @@ namespace litehtml
 
 #else
 
-	typedef std::string		tstring;
-	typedef char			tchar_t;
-	typedef void*			uint_ptr;
+	typedef std::string			tstring;
+	typedef char				tchar_t;
+	typedef void*				uint_ptr;
 
 	#define _t(quote)			quote
 

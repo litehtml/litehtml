@@ -64,7 +64,7 @@ namespace litehtml
 		  while(true) 
 		  {
 			  append_value(c);
-			  c = input.get_char();
+			  c = get_char();
 			  if(c == 0)  { push_back(c); break; }
 			  if(c == '<') { push_back(c); break; }
 			  if(c == '&') { push_back(c); break; }
@@ -242,20 +242,23 @@ namespace litehtml
         if(t == 0) return TT_EOF;
 		if( !isalnum(t) && t != '#' )
         {
-          //push_back(t);
+          push_back(t);
+		  t = 0;
           break; // appears a erroneous entity token.
                  // but we try to use it.
         }
         buf[i] = char(t); 
       }
       buf[i] = 0;
-	  if(t != ';' /*&& get_token() == TT_ATTR*/)
+/*
+	  if(t != ';')
 	  {
 		  append_value('&');
 		  for(int n = 0; n < i; ++n)
 			  append_value(buf[n]);
 		  return t;
 	  }
+*/
       if(i == 2)  
       {
         if(equal(buf,_t("gt"),2)) return '>';
@@ -271,18 +274,14 @@ namespace litehtml
       tchar_t entity = resolve_entity(buf,i);
       if(entity)
 	  {
-		  if(t = ';')
-		  {
-			  return entity;
-		  }
-		  append_value(entity);
-		  return t;
+		  return entity;
 	  }
       // no luck ...
       append_value('&');
       for(int n = 0; n < i; ++n)
         append_value(buf[n]);
-	  return t;
+	  if(t) return t;
+	  return get_char();
     }
 
     bool scanner::is_whitespace(tchar_t c)
@@ -742,9 +741,12 @@ namespace litehtml
 			}
 		} else
 		{
-			for(int i=0; g_HTMLCodes[i].szCode[0]; i++)
+			tstring str = _t("&");
+			str.append(buf, buf_size);
+			str += _t(";");
+			for(int i = 0; g_HTMLCodes[i].szCode[0]; i++)
 			{
-				if(!t_strncasecmp(g_HTMLCodes[i].szCode + 1, buf, buf_size))
+				if(!t_strcasecmp(g_HTMLCodes[i].szCode, str.c_str()))
 				{
 					wres = g_HTMLCodes[i].Code;
 					break;
