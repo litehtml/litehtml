@@ -35,7 +35,7 @@ int litehtml::value_index( const tchar_t* val, const tchar_t* strings, int defVa
 	tokenize(strings, tokens, delim);
 	for(size_t i = 0; i < tokens.size(); i++)
 	{
-		if(tokens[i] == val)
+		if(!t_strcmp(tokens[i].c_str(), val))
 		{
 			return (int) i;
 		}

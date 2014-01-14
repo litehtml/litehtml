@@ -60,6 +60,7 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 	doc->begin_parse();
 
 	int t = 0;
+	tstring tmp_str;
 	while((t = sc.get_token()) != litehtml::scanner::TT_EOF && !doc->m_parse_stack.empty())
 	{
 		switch(t)
@@ -74,13 +75,25 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 			doc->parse_data(sc.get_value());
 			break;
 		case litehtml::scanner::TT_TAG_START:
-			doc->parse_tag_start(sc.get_tag_name());
+			{
+				tmp_str = sc.get_tag_name();
+				litehtml::lcase(tmp_str);
+				doc->parse_tag_start(tmp_str.c_str());
+			}
 			break;
 		case litehtml::scanner::TT_TAG_END:
-			doc->parse_tag_end(sc.get_tag_name());
+			{
+				tmp_str = sc.get_tag_name();
+				litehtml::lcase(tmp_str);
+				doc->parse_tag_end(tmp_str.c_str());
+			}
 			break;
 		case litehtml::scanner::TT_ATTR:
-			doc->parse_attribute(sc.get_attr_name(), sc.get_value());
+			{
+				tmp_str = sc.get_attr_name();
+				litehtml::lcase(tmp_str);
+				doc->parse_attribute(tmp_str.c_str(), sc.get_value());
+			}
 			break;
 		case litehtml::scanner::TT_WORD: 
 			doc->parse_word(sc.get_value());
@@ -428,49 +441,49 @@ litehtml::element::ptr litehtml::document::create_element( const tchar_t* tag_na
 	}
 	if(!newTag)
 	{
-		if(!t_strcasecmp(tag_name, _t("br")))
+		if(!t_strcmp(tag_name, _t("br")))
 		{
 			newTag = new litehtml::el_break(this);
-		} else if(!t_strcasecmp(tag_name, _t("p")))
+		} else if(!t_strcmp(tag_name, _t("p")))
 		{
 			newTag = new litehtml::el_para(this);
-		} else if(!t_strcasecmp(tag_name, _t("img")))
+		} else if(!t_strcmp(tag_name, _t("img")))
 		{
 			newTag = new litehtml::el_image(this);
-		} else if(!t_strcasecmp(tag_name, _t("table")))
+		} else if(!t_strcmp(tag_name, _t("table")))
 		{
 			newTag = new litehtml::el_table(this);
-		} else if(!t_strcasecmp(tag_name, _t("td")) || !t_strcasecmp(tag_name, _t("th")))
+		} else if(!t_strcmp(tag_name, _t("td")) || !t_strcmp(tag_name, _t("th")))
 		{
 			newTag = new litehtml::el_td(this);
-		} else if(!t_strcasecmp(tag_name, _t("link")))
+		} else if(!t_strcmp(tag_name, _t("link")))
 		{
 			newTag = new litehtml::el_link(this);
-		} else if(!t_strcasecmp(tag_name, _t("title")))
+		} else if(!t_strcmp(tag_name, _t("title")))
 		{
 			newTag = new litehtml::el_title(this);
-		} else if(!t_strcasecmp(tag_name, _t("a")))
+		} else if(!t_strcmp(tag_name, _t("a")))
 		{
 			newTag = new litehtml::el_anchor(this);
-		} else if(!t_strcasecmp(tag_name, _t("tr")))
+		} else if(!t_strcmp(tag_name, _t("tr")))
 		{
 			newTag = new litehtml::el_tr(this);
-		} else if(!t_strcasecmp(tag_name, _t("style")))
+		} else if(!t_strcmp(tag_name, _t("style")))
 		{
 			newTag = new litehtml::el_style(this);
-		} else if(!t_strcasecmp(tag_name, _t("base")))
+		} else if(!t_strcmp(tag_name, _t("base")))
 		{
 			newTag = new litehtml::el_base(this);
-		} else if(!t_strcasecmp(tag_name, _t("body")))
+		} else if(!t_strcmp(tag_name, _t("body")))
 		{
 			newTag = new litehtml::el_body(this);
-		} else if(!t_strcasecmp(tag_name, _t("div")))
+		} else if(!t_strcmp(tag_name, _t("div")))
 		{
 			newTag = new litehtml::el_div(this);
-		} else if(!t_strcasecmp(tag_name, _t("script")))
+		} else if(!t_strcmp(tag_name, _t("script")))
 		{
 			newTag = new litehtml::el_script(this);
-		} else if(!t_strcasecmp(tag_name, _t("font")))
+		} else if(!t_strcmp(tag_name, _t("font")))
 		{
 			newTag = new litehtml::el_font(this);
 		} else
@@ -492,7 +505,7 @@ void litehtml::document::parse_tag_start( const tchar_t* tag_name )
 	parse_pop_empty_element();
 
 	// We add the html(root) element before parsing
-	if(!t_strcasecmp(tag_name, _t("html")))
+	if(!t_strcmp(tag_name, _t("html")))
 	{
 		return;
 	}
@@ -500,7 +513,7 @@ void litehtml::document::parse_tag_start( const tchar_t* tag_name )
 	element::ptr el = create_element(tag_name);
 	if(el)
 	{
-		if(!t_strcasecmp(m_parse_stack.back()->get_tagName(), _t("html")))
+		if(!t_strcmp(m_parse_stack.back()->get_tagName(), _t("html")))
 		{
 			// if last element is root we have to add head or body
 			if(!value_in_list(tag_name, _t("head;body")))
@@ -517,16 +530,23 @@ void litehtml::document::parse_tag_start( const tchar_t* tag_name )
 				parse_pop_element();
 			}
 
-			if(t_strcasecmp(m_parse_stack.back()->get_tagName() ,_t("tr")))
+			if(t_strcmp(m_parse_stack.back()->get_tagName() ,_t("tr")))
 			{
 				parse_push_element(create_element(_t("tr")));
 			}
 		}
 
 		// fix <TR>: add tbody into the table
-		if(!t_strcasecmp(tag_name, _t("tr")))
+		if(!t_strcmp(tag_name, _t("tr")))
 		{
-			if(!value_in_list(m_parse_stack.back()->get_tagName(), _t("tbody;thead;tfoot")))
+			if(!t_strcmp(m_parse_stack.back()->get_tagName() ,_t("td")))
+			{
+				parse_pop_element();
+				if(!t_strcmp(m_parse_stack.back()->get_tagName() ,_t("tr")))
+				{
+					parse_pop_element();
+				}
+			} else if(!value_in_list(m_parse_stack.back()->get_tagName(), _t("tbody;thead;tfoot")))
 			{
 				parse_push_element(create_element(_t("tbody")));
 			}
@@ -541,7 +561,7 @@ void litehtml::document::parse_tag_end( const tchar_t* tag_name )
 {
 	if(!m_parse_stack.empty())
 	{
-		if(!t_strcasecmp(m_parse_stack.back()->get_tagName(), tag_name))
+		if(!t_strcmp(m_parse_stack.back()->get_tagName(), tag_name))
 		{
 			parse_pop_element();
 		} else
@@ -576,7 +596,7 @@ void litehtml::document::parse_attribute( const tchar_t* attr_name, const tchar_
 
 void litehtml::document::parse_word( const tchar_t* val )
 {
-	if(!t_strcasecmp(m_parse_stack.back()->get_tagName(), _t("html")))
+	if(!t_strcmp(m_parse_stack.back()->get_tagName(), _t("html")))
 	{
 		parse_push_element(create_element(_t("body")));
 	}
@@ -633,7 +653,7 @@ void litehtml::document::parse_pop_element( const tchar_t* tag )
 	bool found = false;
 	for(elements_vector::reverse_iterator iel = m_parse_stack.rbegin(); iel != m_parse_stack.rend(); iel++)
 	{
-		if(!t_strcasecmp( (*iel)->get_tagName(), tag ))
+		if(!t_strcmp( (*iel)->get_tagName(), tag ))
 		{
 			found = true;
 		}
@@ -641,7 +661,7 @@ void litehtml::document::parse_pop_element( const tchar_t* tag )
 
 	while(found)
 	{
-		if(!t_strcasecmp( m_parse_stack.back()->get_tagName(), tag ))
+		if(!t_strcmp( m_parse_stack.back()->get_tagName(), tag ))
 		{
 			found = false;
 		}
@@ -656,7 +676,7 @@ void litehtml::document::parse_pop_empty_element()
 		bool is_empty_tag = false;
 		for(int i=0; g_empty_tags[i]; i++)
 		{
-			if(!t_strcasecmp(m_parse_stack.back()->get_tagName(), g_empty_tags[i]))
+			if(!t_strcmp(m_parse_stack.back()->get_tagName(), g_empty_tags[i]))
 			{
 				is_empty_tag = true;
 				break;

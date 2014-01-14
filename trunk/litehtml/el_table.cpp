@@ -267,7 +267,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 bool litehtml::el_table::appendChild( litehtml::element* el )
 {
 	if(!el)	return false;
-	if(!t_strcasecmp(el->get_tagName(), _t("tbody")) || !t_strcasecmp(el->get_tagName(), _t("thead")) || !t_strcasecmp(el->get_tagName(), _t("tfoot")))
+	if(!t_strcmp(el->get_tagName(), _t("tbody")) || !t_strcmp(el->get_tagName(), _t("thead")) || !t_strcmp(el->get_tagName(), _t("tfoot")))
 	{
 		return html_tag::appendChild(el);
 	}
