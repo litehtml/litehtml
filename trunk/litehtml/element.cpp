@@ -161,8 +161,9 @@ litehtml::element::ptr litehtml::element::select_one( const css_element_selector
 litehtml::element::ptr litehtml::element::select_one( const tstring& selector )		LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
-bool litehtml::element::is_nth_last_child( element* el, int num, int off )			LITEHTML_RETURN_FUNC(false)
-bool litehtml::element::is_nth_child( element* el, int num, int off )				LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::is_nth_last_child( element* el, int num, int off, bool of_type )			LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::is_nth_child( element* el, int num, int off, bool of_type )				LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::is_only_child(element* el, bool of_type)					LITEHTML_RETURN_FUNC(false)
 litehtml::overflow litehtml::element::get_overflow() const							LITEHTML_RETURN_FUNC(overflow_visible)
 void litehtml::element::draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex ) LITEHTML_EMPTY_FUNC
 void litehtml::element::draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned ) LITEHTML_EMPTY_FUNC

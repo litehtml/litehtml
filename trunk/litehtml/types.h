@@ -458,7 +458,7 @@ namespace litehtml
 		background_size_contain,
 	};
 
-#define visibility_strings		_t("visible;hidden;collapse")
+#define visibility_strings			_t("visible;hidden;collapse")
 
 	enum visibility
 	{
@@ -474,6 +474,25 @@ namespace litehtml
 		border_collapse_collapse,
 		border_collapse_separate,
 	};
+
+
+#define pseudo_class_strings		_t("only-child;only-of-type;first-child;first-of-type;last-child;last-of-type;nth-child;nth-of-type;nth-last-child;nth-last-of-type;not")
+
+	enum pseudo_class
+	{
+		pseudo_class_only_child,
+		pseudo_class_only_of_type,
+		pseudo_class_first_child,
+		pseudo_class_first_of_type,
+		pseudo_class_last_child,
+		pseudo_class_last_of_type,
+		pseudo_class_nth_child,
+		pseudo_class_nth_of_type,
+		pseudo_class_nth_last_child,
+		pseudo_class_nth_last_of_type,
+		pseudo_class_not,
+	};
+
 
 	struct floated_box 
 	{

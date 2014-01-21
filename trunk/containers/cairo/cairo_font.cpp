@@ -32,7 +32,7 @@ cairo_font::cairo_font(IMLangFontLink2* fl, LPCWSTR facename, int size, int weig
 		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Times New Roman");
 	} else if(!lstrcmpi(facename, L"sans-serif"))
 	{
-		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Tahoma");
+		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Arial");
 	} else if(!lstrcmpi(facename, L"fantasy"))
 	{
 		wcscpy_s(lf.lfFaceName, LF_FACESIZE, L"Impact");
