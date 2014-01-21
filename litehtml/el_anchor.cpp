@@ -4,7 +4,6 @@
 
 litehtml::el_anchor::el_anchor( litehtml::document* doc ) : html_tag(doc)
 {
-	m_pseudo_classes.push_back(_t("link"));
 }
 
 litehtml::el_anchor::~el_anchor()
@@ -14,5 +13,19 @@ litehtml::el_anchor::~el_anchor()
 
 void litehtml::el_anchor::on_click( int x, int y )
 {
-	m_doc->container()->on_anchor_click(get_attr(_t("href"), _t("")), this);
+	const tchar_t* href = get_attr(_t("href"));
+
+	if(href)
+	{
+		m_doc->container()->on_anchor_click(href, this);
+	}
+}
+
+void litehtml::el_anchor::apply_stylesheet( const litehtml::css& stylesheet )
+{
+	if( get_attr(_t("href")) )
+	{
+		m_pseudo_classes.push_back(_t("link"));
+	}
+	html_tag::apply_stylesheet(stylesheet);
 }

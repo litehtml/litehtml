@@ -9,6 +9,7 @@ namespace litehtml
 		el_anchor(litehtml::document* doc);
 		virtual ~el_anchor();
 
-		virtual void on_click(int x, int y);
+		virtual void	on_click(int x, int y);
+		virtual void	apply_stylesheet(const litehtml::css& stylesheet);
 	};
 }

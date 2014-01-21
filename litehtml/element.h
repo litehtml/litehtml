@@ -156,8 +156,9 @@ namespace litehtml
 		virtual int					get_zindex() const;
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
 		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
-		virtual bool				is_nth_child(element* el, int num, int off);
-		virtual bool				is_nth_last_child(element* el, int num, int off);
+		virtual bool				is_nth_child(element* el, int num, int off, bool of_type);
+		virtual bool				is_nth_last_child(element* el, int num, int off, bool of_type);
+		virtual bool				is_only_child(element* el, bool of_type);
 		virtual int					get_predefined_height() const;
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 	};

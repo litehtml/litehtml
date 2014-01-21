@@ -740,7 +740,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 						bool f = false;
 						for(string_vector::iterator str2 = tokens1.begin(); str2 != tokens1.end() && !f; str2++)
 						{
-							if((*str1) == (*str2))
+							if( !t_strcasecmp(str1->c_str(), str2->c_str()) )
 							{
 								f = true;
 							}
@@ -756,7 +756,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 					}
 				} else
 				{
-					if(i->second.val != attr_value)
+					if( t_strcasecmp(i->second.val.c_str(), attr_value) )
 					{
 						return 0;
 					}
@@ -805,57 +805,124 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		case select_pseudo_class:
 			if(apply_pseudo)
 			{
-				if(i->second.val == _t("first-child"))
+				if(!m_parent) return 0;
+
+				tstring selector_param;
+				tstring	selector_name;
+
+				tstring::size_type begin	= i->second.val.find_first_of(_t('('));
+				tstring::size_type end		= i->second.val.find_last_of(_t(')'));
+				if(begin != tstring::npos && end != tstring::npos)
 				{
-					if( !m_parent->is_nth_child(this, 0, 1) )
+					selector_param = i->second.val.substr(begin + 1, end - begin - 1);
+				}
+				if(begin != tstring::npos)
+				{
+					selector_name = i->second.val.substr(0, begin);
+					litehtml::trim(selector_name);
+				} else
+				{
+					selector_name = i->second.val;
+				}
+
+				int selector = value_index(selector_name.c_str(), pseudo_class_strings);
+				
+				switch(selector)
+				{
+				case pseudo_class_only_child:
+					if( !m_parent->is_only_child(this, false) )
 					{
 						return 0;
 					}
-				} else if(i->second.val == _t("last-child"))
-				{
-					if( !m_parent->is_nth_last_child(this, 0, 1) )
+					break;
+				case pseudo_class_only_of_type:
+					if( !m_parent->is_only_child(this, true) )
 					{
 						return 0;
 					}
-				} else if(!t_strncmp(i->second.val.c_str(), _t("nth-child"), 9))
-				{
-					tstring::size_type begin	= i->second.val.find_first_of(_t('('));
-					tstring::size_type end		= i->second.val.find_first_of(_t(')'));
-					if(begin == tstring::npos || end == tstring::npos) return 0;
-
-					tstring param = i->second.val.substr(begin + 1, end - begin - 1);
-
-					int num = 0;
-					int off = 0;
-
-					parse_nth_child_params(param, num, off);
-					if(!num && !off) return 0;
-
-					if( !m_parent->is_nth_child(this, num, off) )
+					break;
+				case pseudo_class_first_child:
+					if( !m_parent->is_nth_child(this, 0, 1, false) )
 					{
 						return 0;
 					}
-				} else if(!t_strncmp(i->second.val.c_str(), _t("nth-last-child"), 14))
-				{
-					tstring::size_type begin	= i->second.val.find_first_of(_t('('));
-					tstring::size_type end		= i->second.val.find_first_of(_t(')'));
-					if(begin == tstring::npos || end == tstring::npos) return 0;
-
-					tstring param = i->second.val.substr(begin + 1, end - begin - 1);
-
-					int num = 0;
-					int off = 0;
-
-					parse_nth_child_params(param, num, off);
-					if(!num && !off) return 0;
-
-					if( !m_parent->is_nth_last_child(this, num, off) )
+					break;
+				case pseudo_class_first_of_type:
+					if( !m_parent->is_nth_child(this, 0, 1, true) )
 					{
 						return 0;
 					}
-				} else if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), i->second.val) == m_pseudo_classes.end())
-				{
-					return 0;
+					break;
+				case pseudo_class_last_child:
+					if( !m_parent->is_nth_last_child(this, 0, 1, false) )
+					{
+						return 0;
+					}
+					break;
+				case pseudo_class_last_of_type:
+					if( !m_parent->is_nth_last_child(this, 0, 1, true) )
+					{
+						return 0;
+					}
+					break;
+				case pseudo_class_nth_child:
+				case pseudo_class_nth_of_type:
+				case pseudo_class_nth_last_child:
+				case pseudo_class_nth_last_of_type:
+					{
+						if(selector_param.empty()) return 0;
+
+						int num = 0;
+						int off = 0;
+
+						parse_nth_child_params(selector_param, num, off);
+						if(!num && !off) return 0;
+						switch(selector)
+						{
+						case pseudo_class_nth_child:
+							if( !m_parent->is_nth_child(this, num, off, false) )
+							{
+								return 0;
+							}
+							break;
+						case pseudo_class_nth_of_type:
+							if( !m_parent->is_nth_child(this, num, off, true) )
+							{
+								return 0;
+							}
+							break;
+						case pseudo_class_nth_last_child:
+							if( !m_parent->is_nth_last_child(this, num, off, false) )
+							{
+								return 0;
+							}
+							break;
+						case pseudo_class_nth_last_of_type:
+							if( !m_parent->is_nth_last_child(this, num, off, true) )
+							{
+								return 0;
+							}
+							break;
+						}
+
+					}
+					break;
+				case pseudo_class_not:
+					{
+						css_element_selector sel;
+						sel.parse(selector_param);
+						if(select(sel, apply_pseudo))
+						{
+							return 0;
+						}
+					}
+					break;
+				default:
+					if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), i->second.val) == m_pseudo_classes.end())
+					{
+						return 0;
+					}
+					break;
 				}
 			} else
 			{
@@ -2118,11 +2185,18 @@ int litehtml::html_tag::new_box( element* el, int max_width )
 		}
 	}
 
+	int first_line_margin = 0;
+	if(m_boxes.empty() && m_list_style_type != list_style_type_none && m_list_style_position == list_style_position_inside)
+	{
+		int sz_font = get_font_size();
+		first_line_margin = sz_font;
+	}
+
 	if(el->is_inline_box())
 	{
 		font_metrics fm;
 		get_font(&fm);
-		line_box* lb = new line_box(line_top, line_left, line_right, line_height(), fm, m_text_align);
+		line_box* lb = new line_box(line_top, line_left + first_line_margin, line_right, line_height(), fm, m_text_align);
 		m_boxes.push_back(lb);
 	} else
 	{
@@ -2446,11 +2520,12 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 	}
 
 
+	int ln_height	= line_height();
 	int sz_font		= get_font_size();
 	lm.pos.x		= pos.x;
-	lm.pos.y		= pos.y		+ sz_font / 3;
 	lm.pos.width	= sz_font	- sz_font * 2 / 3;
 	lm.pos.height	= sz_font	- sz_font * 2 / 3;
+	lm.pos.y		= pos.y		+ ln_height / 2 - lm.pos.height / 2;
 
 	if(img_size.width && img_size.height)
 	{
@@ -2756,57 +2831,65 @@ litehtml::overflow litehtml::html_tag::get_overflow() const
 	return m_overflow;
 }
 
-bool litehtml::html_tag::is_nth_child( element* el, int num, int off )
+bool litehtml::html_tag::is_nth_child( element* el, int num, int off, bool of_type )
 {
 	int idx = 1;
 	for(elements_vector::iterator child = m_children.begin(); child != m_children.end(); child++)
 	{
 		if((*child)->get_display() != display_inline_text)
 		{
-			if(el == (*child))
+			if(!of_type || of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName()))
 			{
-				if(num != 0)
+				if(el == (*child))
 				{
-					if((idx - off) >= 0 && (idx - off) % num == 0)
+					if(num != 0)
+					{
+						if((idx - off) >= 0 && (idx - off) % num == 0)
+						{
+							return true;
+						}
+
+					} else if(idx == off)
 					{
 						return true;
 					}
-					
-				} else if(idx == off)
-				{
-					return true;
+					return false;
 				}
-				return false;
+				idx++;
 			}
-			idx++;
+			if(el == (*child)) break;
 		}
 	}
 	return false;
 }
 
-bool litehtml::html_tag::is_nth_last_child( element* el, int num, int off )
+bool litehtml::html_tag::is_nth_last_child( element* el, int num, int off, bool of_type )
 {
 	int idx = 1;
 	for(elements_vector::reverse_iterator child = m_children.rbegin(); child != m_children.rend(); child++)
 	{
 		if((*child)->get_display() != display_inline_text)
 		{
-			if(el == (*child))
+			if(!of_type || of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName()))
 			{
-				if(num != 0)
+				if(el == (*child))
 				{
-					if((idx - off) >= 0 && (idx - off) % num == 0)
+					if(num != 0)
+					{
+						if((idx - off) >= 0 && (idx - off) % num == 0)
+						{
+							return true;
+						}
+
+					} else if(idx == off)
 					{
 						return true;
 					}
-
-				} else if(idx == off)
-				{
-					return true;
+					return false;
 				}
-				return false;
+				idx++;
 			}
-			idx++;
+			if(el == (*child)) break;
 		}
 	}
 	return false;
@@ -2936,4 +3019,25 @@ litehtml::element* litehtml::html_tag::find_sibling( element* el, const css_sele
 		}
 	}
 	return 0;
+}
+
+bool litehtml::html_tag::is_only_child( element* el, bool of_type )
+{
+	int child_count = 0;
+	for(elements_vector::iterator child = m_children.begin(); child != m_children.end(); child++)
+	{
+		if((*child)->get_display() != display_inline_text)
+		{
+			if(!of_type || of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName()))
+			{
+				child_count++;
+			}
+			if(child_count > 1) break;
+		}
+	}
+	if(child_count > 1)
+	{
+		return false;
+	}
+	return true;
 }

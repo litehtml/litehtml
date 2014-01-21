@@ -54,7 +54,7 @@ center
 	display:block;
 }
 
-a
+a:link
 {
 	text-decoration: underline;
 	color: #00f;

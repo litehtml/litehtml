@@ -6,6 +6,7 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 {
 	tstring::size_type el_end = txt.find_first_of(_t(".#[:"));
 	m_tag = txt.substr(0, el_end);
+	litehtml::lcase(m_tag);
 	while(el_end != tstring::npos)
 	{
 		if(txt[el_end] == _t('.'))
@@ -34,13 +35,19 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 				tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 2);
 				attribute.val		= txt.substr(el_end + 2, pos - el_end - 2);
 				attribute.condition	= select_pseudo_element;
+				litehtml::lcase(attribute.val);
 				m_attrs[_t("pseudo-el")] = attribute;
 				el_end = pos;
 			} else
 			{
-				tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
+				tstring::size_type pos = txt.find_first_of(_t(".#[:("), el_end + 1);
+				if(pos != tstring::npos && txt.at(pos) == _t('('))
+				{
+					pos = txt.find_last_of(_t(")"), pos + 1);
+				}
 				attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
 				attribute.condition	= select_pseudo_class;
+				litehtml::lcase(attribute.val);
 				m_attrs[_t("pseudo")] = attribute;
 				el_end = pos;
 			}
@@ -60,6 +67,7 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 			tstring::size_type pos = txt.find_first_of(_t("]~=|$*^"), el_end + 1);
 			tstring attr = txt.substr(el_end + 1, pos - el_end - 1);
 			trim(attr);
+			litehtml::lcase(attr);
 			if(pos != tstring::npos)
 			{
 				if(txt[pos] == _t(']'))
@@ -186,10 +194,6 @@ bool litehtml::css_selector::parse( const tstring& text )
 		break;
 	}
 
-/*	if(m_left)
-	{
-		delete m_left;
-	}*/
 	m_left = 0;
 
 	if(!left.empty())
