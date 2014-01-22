@@ -470,7 +470,12 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 		{
 			if(collapse_top_margin())
 			{
+				int old_top = m_margins.top;
 				m_margins.top = std::max(m_boxes.front()->top_margin(), m_margins.top);
+				if(m_margins.top != old_top)
+				{
+					update_floats(m_margins.top - old_top, this);
+				}
 			}
 			if(collapse_bottom_margin())
 			{
@@ -1167,14 +1172,15 @@ void litehtml::html_tag::add_float( element* el, int x, int y )
 	if(is_floats_holder())
 	{
 		floated_box fb;
-		fb.pos		= el->m_pos;
-		fb.pos.x	+= x;
-		fb.pos.y	+= y;
-		fb.pos		+= el->m_margins;
-		fb.pos		+= el->m_borders;
-		fb.pos		+= el->m_padding;
+		fb.pos			= el->m_pos;
+		fb.pos.x		+= x;
+		fb.pos.y		+= y;
+		fb.pos			+= el->m_margins;
+		fb.pos			+= el->m_borders;
+		fb.pos			+= el->m_padding;
 		fb.float_side	= el->get_float();
 		fb.clear_floats	= el->get_clear();
+		fb.el			= el;
 
 		if(fb.float_side == float_left || fb.float_side == float_right)
 		{
@@ -1184,7 +1190,6 @@ void litehtml::html_tag::add_float( element* el, int x, int y )
 		}
 	} else
 	{
-		
 		m_parent->add_float(el, x + m_pos.x, y + m_pos.y);
 	}
 }
@@ -1960,7 +1965,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 			el->m_pos.x = get_line_left(new_top) + el->content_margins_left();
 			el->m_pos.y = new_top + el->content_margins_top();
 		}
-		add_float(el);
+		add_float(el, 0, 0);
 		fix_line_width(max_width, float_left);
 		ret_width = el->right();
 	} else if(el->get_float() == float_right)
@@ -1990,7 +1995,7 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 		{
 			el->m_pos.x = line_right - el->width();
 		}
-		add_float(el);
+		add_float(el, 0, 0);
 		fix_line_width(max_width, float_right);
 
 		line_left	= get_line_left(line_top);
@@ -3040,4 +3045,28 @@ bool litehtml::html_tag::is_only_child( element* el, bool of_type )
 		return false;
 	}
 	return true;
+}
+
+void litehtml::html_tag::update_floats( int dy, element* parent )
+{
+	if(is_floats_holder())
+	{
+		bool reset_cache = false;
+		for(floated_box::vector::reverse_iterator fb = m_floats.rbegin(); fb != m_floats.rend(); fb++)
+		{
+			if(fb->el->is_ancestor(parent))
+			{
+				reset_cache	= true;
+				fb->pos.y	+= dy;
+			}
+		}
+		if(reset_cache)
+		{
+			m_cahe_line_left.invalidate();
+			m_cahe_line_right.invalidate();
+		}
+	} else
+	{
+		m_parent->update_floats(dy, parent);
+	}
 }

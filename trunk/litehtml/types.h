@@ -501,6 +501,7 @@ namespace litehtml
 		position		pos;
 		element_float	float_side;
 		element_clear	clear_floats;
+		element*		el;
 	};
 
 	struct int_int_cache
