@@ -138,6 +138,7 @@ namespace litehtml
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
 		virtual element*			find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual bool				is_ancestor(element* el);
 		virtual element*			find_adjacent_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual element*			find_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual bool				is_first_child(const element* el);
@@ -150,7 +151,8 @@ namespace litehtml
 		virtual int					get_right_floats_height() const;
 		virtual int					get_line_left(int y);
 		virtual int					get_line_right(int y, int def_right);
-		virtual void				add_float(element* el, int x = 0, int y = 0);
+		virtual void				add_float(element* el, int x, int y);
+		virtual void				update_floats(int dy, element* parent);
 		virtual void				add_absolute(element* el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
 		virtual int					get_zindex() const;

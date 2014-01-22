@@ -85,23 +85,19 @@ bool litehtml::element::is_inline_box()
 
 bool litehtml::element::collapse_top_margin() const
 {
-/*
 	if(!m_borders.top && !m_padding.top && in_normal_flow() && get_float() == float_none && m_margins.top >= 0)
 	{
 		return true;
 	}
-*/
 	return false;
 }
 
 bool litehtml::element::collapse_bottom_margin() const
 {
-/*
 	if(!m_borders.bottom && !m_padding.bottom && in_normal_flow() && get_float() == float_none && m_margins.bottom >= 0)
 	{
 		return true;
 	}
-*/
 	return false;
 }
 
@@ -157,6 +153,20 @@ int litehtml::element::calc_width(int defVal) const
 	return 	m_doc->cvt_units(w, get_font_size());
 }
 
+bool litehtml::element::is_ancestor( element* el )
+{
+	element* el_parent = parent();
+	while(el_parent && el_parent != el)
+	{
+		el_parent = el_parent->parent();
+	}
+	if(el_parent)
+	{
+		return true;
+	}
+	return false;
+}
+
 litehtml::element::ptr litehtml::element::select_one( const css_element_selector& selector ) LITEHTML_RETURN_FUNC(0)
 litehtml::element::ptr litehtml::element::select_one( const tstring& selector )		LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
@@ -190,6 +200,7 @@ void litehtml::element::add_absolute( element* el )									LITEHTML_EMPTY_FUNC
 int litehtml::element::find_next_line_top( int top, int width, int def_right )		LITEHTML_RETURN_FUNC(0)
 litehtml::element_float litehtml::element::get_float() const						LITEHTML_RETURN_FUNC(float_none)
 void litehtml::element::add_float( element* el, int x, int y )						LITEHTML_EMPTY_FUNC
+void litehtml::element::update_floats( int dy, element* parent )					LITEHTML_EMPTY_FUNC
 int litehtml::element::get_line_left( int y )										LITEHTML_RETURN_FUNC(0)
 int litehtml::element::get_line_right( int y, int def_right )						LITEHTML_RETURN_FUNC(def_right)
 int litehtml::element::get_left_floats_height() const								LITEHTML_RETURN_FUNC(0)
