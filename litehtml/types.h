@@ -493,6 +493,18 @@ namespace litehtml
 		pseudo_class_not,
 	};
 
+#define content_property_string		_t("none;normal;open-quote;close-quote;no-open-quote;no-close-quote")
+
+	enum content_property
+	{
+		content_property_none,
+		content_property_normal,
+		content_property_open_quote,
+		content_property_close_quote,
+		content_property_no_open_quote,
+		content_property_no_close_quote,
+	};
+
 
 	struct floated_box 
 	{
@@ -526,5 +538,14 @@ namespace litehtml
 			val			= vVal;
 			is_valid	= true;
 		}
+	};
+
+	enum select_result
+	{
+		select_no_match				= 0x00,
+		select_match				= 0x01,
+		select_match_pseudo_class	= 0x02,
+		select_match_with_before	= 0x10,
+		select_match_with_after		= 0x20,
 	};
 }

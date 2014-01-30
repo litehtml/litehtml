@@ -46,8 +46,14 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 					pos = txt.find_last_of(_t(")"), pos + 1);
 				}
 				attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
-				attribute.condition	= select_pseudo_class;
 				litehtml::lcase(attribute.val);
+				if(attribute.val == _t("after") || attribute.val == _t("before"))
+				{
+					attribute.condition	= select_pseudo_element;
+				} else
+				{
+					attribute.condition	= select_pseudo_class;
+				}
 				m_attrs[_t("pseudo")] = attribute;
 				el_end = pos;
 			}

@@ -37,7 +37,8 @@ namespace litehtml
 		white_space				m_white_space;
 		element_float			m_float;
 		element_clear			m_clear;
-		floated_box::vector		m_floats;
+		floated_box::vector		m_floats_left;
+		floated_box::vector		m_floats_right;
 		elements_vector			m_positioned;
 		background				m_bg;
 		element_position		m_el_position;
@@ -110,6 +111,7 @@ namespace litehtml
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
 		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
+
 		virtual bool				is_white_space();
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
@@ -162,6 +164,7 @@ namespace litehtml
 		virtual int					get_right_floats_height() const;
 		virtual int					get_line_left(int y);
 		virtual int					get_line_right(int y, int def_right);
+		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right);
 		virtual void				add_float(element* el, int x, int y);
 		virtual void				update_floats(int dy, element* parent);
 		virtual void				add_absolute(element* el);
@@ -171,6 +174,7 @@ namespace litehtml
 		virtual int					get_zindex() const;
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
+		virtual void				add_style(litehtml::style::ptr st);
 
 		virtual bool				is_nth_child(element* el, int num, int off, bool of_type);
 		virtual bool				is_nth_last_child(element* el, int num, int off, bool of_type);
@@ -182,6 +186,9 @@ namespace litehtml
 		void						init_background_paint( position pos, background_paint &bg_paint );
 		void						draw_list_marker( uint_ptr hdc, const position &pos );
 		void						parse_nth_child_params( tstring param, int &num, int &off );
+		void						remove_before_after();
+		litehtml::element*			get_element_before();
+		litehtml::element*			get_element_after();
 
 	private:
 		bool	m_second_pass;

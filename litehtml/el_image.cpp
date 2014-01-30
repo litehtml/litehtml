@@ -4,7 +4,7 @@
 
 litehtml::el_image::el_image( litehtml::document* doc ) : html_tag(doc)
 {
-
+	m_display = display_inline_block;
 }
 
 litehtml::el_image::~el_image( void )
