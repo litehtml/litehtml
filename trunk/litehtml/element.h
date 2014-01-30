@@ -151,6 +151,7 @@ namespace litehtml
 		virtual int					get_right_floats_height() const;
 		virtual int					get_line_left(int y);
 		virtual int					get_line_right(int y, int def_right);
+		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right);
 		virtual void				add_float(element* el, int x, int y);
 		virtual void				update_floats(int dy, element* parent);
 		virtual void				add_absolute(element* el);
@@ -163,6 +164,7 @@ namespace litehtml
 		virtual bool				is_only_child(element* el, bool of_type);
 		virtual int					get_predefined_height() const;
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
+		virtual void				add_style(litehtml::style::ptr st);
 	};
 
 	//////////////////////////////////////////////////////////////////////////

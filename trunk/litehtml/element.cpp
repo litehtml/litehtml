@@ -167,6 +167,8 @@ bool litehtml::element::is_ancestor( element* el )
 	return false;
 }
 
+void litehtml::element::get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) LITEHTML_EMPTY_FUNC
+void litehtml::element::add_style( litehtml::style::ptr st )						LITEHTML_EMPTY_FUNC
 litehtml::element::ptr litehtml::element::select_one( const css_element_selector& selector ) LITEHTML_RETURN_FUNC(0)
 litehtml::element::ptr litehtml::element::select_one( const tstring& selector )		LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
@@ -244,8 +246,8 @@ litehtml::uint_ptr litehtml::element::get_font( font_metrics* fm /*= 0*/ )			LIT
 int litehtml::element::get_font_size()	const										LITEHTML_RETURN_FUNC(0)
 void litehtml::element::get_text( tstring& text )									LITEHTML_EMPTY_FUNC
 void litehtml::element::parse_attributes()											LITEHTML_EMPTY_FUNC
-int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(0)
-int litehtml::element::select( const css_element_selector& selector, bool apply_pseudo /*= true*/ )	LITEHTML_RETURN_FUNC(0)
+int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(select_no_match)
+int litehtml::element::select( const css_element_selector& selector, bool apply_pseudo /*= true*/ )	LITEHTML_RETURN_FUNC(select_no_match)
 litehtml::element* litehtml::element::find_ancestor( const css_selector& selector, bool apply_pseudo, bool* is_pseudo)	LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::is_first_child( const element* el )						LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_last_child( const element* el )							LITEHTML_RETURN_FUNC(false)

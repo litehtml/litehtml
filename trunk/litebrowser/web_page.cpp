@@ -68,6 +68,10 @@ void web_page::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
 	{
 		out.erase(5, 1);
 	}
+	if(out.substr(0, 7) == L"file://")
+	{
+		out.erase(0, 7);
+	}
 }
 
 void web_page::link( litehtml::document* doc, litehtml::element::ptr el )
@@ -131,6 +135,7 @@ void web_page::set_cursor( const wchar_t* cursor )
 
 CTxDIB* web_page::get_image( LPCWSTR url, bool redraw_on_ready )
 {
+	CTxDIB* img = NULL;
 	if(PathIsURL(url))
 	{
 		if(redraw_on_ready)
@@ -142,9 +147,14 @@ CTxDIB* web_page::get_image( LPCWSTR url, bool redraw_on_ready )
 		}
 	} else
 	{
-		on_image_loaded(url, url, redraw_on_ready); 
+		img = new CTxDIB;
+		if(!img->load(url))
+		{
+			delete img;
+			img = NULL;
+		}
 	}
-	return NULL;
+	return img;
 }
 
 void web_page::load( LPCWSTR url )
