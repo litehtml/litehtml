@@ -81,25 +81,47 @@ void litehtml::el_before_after_base::add_style( litehtml::style::ptr st )
 void litehtml::el_before_after_base::add_text( const tstring& txt )
 {
 	tstring word;
+	tstring esc;
 	for(tstring::size_type i = 0; i < txt.length(); i++)
 	{
-		if(txt.at(i) == _t(' ') || txt.at(i) == _t('\t'))
+		if(txt.at(i) == _t(' ') || txt.at(i) == _t('\t') || txt.at(i) == _t('\\') && !esc.empty())
 		{
-			if(!word.empty())
+			if(esc.empty())
 			{
-				element* el = new el_text(word.c_str(), m_doc);
-				appendChild(el);
-				word.clear();
-			}
+				if(!word.empty())
+				{
+					element* el = new el_text(word.c_str(), m_doc);
+					appendChild(el);
+					word.clear();
+				}
 
-			element* el = new el_space(txt.substr(i, 1).c_str(), m_doc);
-			appendChild(el);
+				element* el = new el_space(txt.substr(i, 1).c_str(), m_doc);
+				appendChild(el);
+			} else
+			{
+				word += convert_escape(esc.c_str() + 1);
+				esc.clear();
+				if(txt.at(i) == _t('\\'))
+				{
+					esc += txt.at(i);
+				}
+			}
 		} else
 		{
-			word += txt.at(i);
+			if(!esc.empty() || txt.at(i) == _t('\\'))
+			{
+				esc += txt.at(i);
+			} else
+			{
+				word += txt.at(i);
+			}
 		}
 	}
 
+	if(!esc.empty())
+	{
+		word += convert_escape(esc.c_str() + 1);
+	}
 	if(!word.empty())
 	{
 		element* el = new el_text(word.c_str(), m_doc);
@@ -160,4 +182,15 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 		}
 		break;
 	}
+}
+
+litehtml::tchar_t litehtml::el_before_after_base::convert_escape( const tchar_t* txt )
+{
+	tchar_t* sss = 0;
+	return (tchar_t) t_strtol(txt, &sss, 16);
+}
+
+void litehtml::el_before_after_base::apply_stylesheet( const litehtml::css& stylesheet )
+{
+
 }

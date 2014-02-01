@@ -22,6 +22,17 @@ int litehtml::el_table::render( int x, int y, int max_width )
 {
 	int parent_width = max_width;
 
+	// reset auto margins
+	if(m_css_margins.left.is_predefined())
+	{
+		m_margins.left = 0;
+	}
+	if(m_css_margins.right.is_predefined())
+	{
+		m_margins.right = 0;
+	}
+
+	m_pos.clear();
 	m_pos.move_to(x, y);
 
 	m_pos.x	+= content_margins_left();
@@ -42,6 +53,7 @@ int litehtml::el_table::render( int x, int y, int max_width )
 		}
 	}
 
+	calc_outlines(parent_width);
 
 	// Calculate the minimum content width (MCW) of each cell: the formatted content may span any number of lines but may not overflow the cell box. 
 	// If the specified 'width' (W) of the cell is greater than MCW, W is the minimum cell width. A value of 'auto' means that MCW is the minimum 

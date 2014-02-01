@@ -27,7 +27,7 @@ namespace litehtml
                       //     ^-- happens here
       TT_TAG_END,     // </tag>
                       //       ^-- happens here 
-                      // <tag ... />
+	  TT_TAG_END_EMPTY, // <tag ... />
                       //            ^-- or here 
       TT_ATTR,        // <tag attr="value" >      
                       //                  ^-- happens here   

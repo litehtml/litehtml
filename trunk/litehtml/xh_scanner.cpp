@@ -104,7 +104,7 @@ namespace litehtml
       if(c == '/')
       {
          tchar_t t = get_char();
-         if(t == '>')   { c_scan = &scanner::scan_body; return TT_TAG_END; }
+         if(t == '>')   { c_scan = &scanner::scan_body; return TT_TAG_END_EMPTY; }
          else { push_back(t); return TT_ERROR; } // erroneous situtation - standalone '/'
       }
 

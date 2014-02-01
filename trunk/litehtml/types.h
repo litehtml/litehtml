@@ -521,16 +521,19 @@ namespace litehtml
 		int		hash;
 		int		val;
 		bool	is_valid;
+		bool	is_default;
 
 		int_int_cache()
 		{
 			hash		= 0;
 			val			= 0;
 			is_valid	= false;
+			is_default	= false;
 		}
 		void invalidate()
 		{
-			is_valid = false;
+			is_valid	= false;
+			is_default	= false;
 		}
 		void set_value(int vHash, int vVal)
 		{

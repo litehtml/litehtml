@@ -18,6 +18,7 @@
 #include "el_tr.h"
 #include <math.h>
 #include <stdio.h>
+#include <algorithm>
 
 const litehtml::tchar_t* g_empty_tags[] =
 {
@@ -32,6 +33,25 @@ const litehtml::tchar_t* g_empty_tags[] =
 	_t("param"),
 	_t("col"),
 	0
+};
+
+struct 
+{
+	const litehtml::tchar_t*	tag;
+	const litehtml::tchar_t*	parents;
+	const litehtml::tchar_t*	stop_parent;
+} g_tags_table[] =
+{
+	{ _t("li"),		_t("ul;ol"),			_t("body")		},
+	{ _t("body"),	_t("html"),				_t("html")		},
+	{ _t("head"),	_t("html"),				_t("html")		},
+	{ _t("td"),		_t("tr"),				_t("table")		},
+	{ _t("th"),		_t("tr"),				_t("table")		},
+	{ _t("tr"),		_t("tbody;thead;tfoot"),_t("table")		},
+	{ _t("tbody"),	_t("table"),			_t("table")		},
+	{ _t("thead"),	_t("table"),			_t("table")		},
+	{ _t("tfoot"),	_t("table"),			_t("table")		},
+	{ 0,	0	},
 };
 
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
@@ -79,6 +99,16 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 				tmp_str = sc.get_tag_name();
 				litehtml::lcase(tmp_str);
 				doc->parse_tag_start(tmp_str.c_str());
+			}
+			break;
+		case litehtml::scanner::TT_TAG_END_EMPTY:
+			{
+				tmp_str = sc.get_tag_name();
+				litehtml::lcase(tmp_str);
+				if( value_in_list(tmp_str.c_str(), _t("area;base;br;col;command;embed;hr;img;input;keygen;link;meta;param;source;track;wbr")) )
+				{
+					doc->parse_tag_end(tmp_str.c_str());
+				}
 			}
 			break;
 		case litehtml::scanner::TT_TAG_END:
@@ -522,33 +552,13 @@ void litehtml::document::parse_tag_start( const tchar_t* tag_name )
 			}
 		}
 
-		// fix <TD> and <TH>
-		if(value_in_list(tag_name, _t("td;th")))
-		{
-			if(value_in_list(m_parse_stack.back()->get_tagName(), _t("th;td")))
-			{
-				parse_pop_element();
-			}
 
-			if(t_strcmp(m_parse_stack.back()->get_tagName() ,_t("tr")))
-			{
-				parse_push_element(create_element(_t("tr")));
-			}
-		}
-
-		// fix <TR>: add tbody into the table
-		if(!t_strcmp(tag_name, _t("tr")))
+		for(int i = 0; g_tags_table[i].tag; i++)
 		{
-			if(!t_strcmp(m_parse_stack.back()->get_tagName() ,_t("td")))
+			if(!t_strcmp(tag_name, g_tags_table[i].tag))
 			{
-				parse_pop_element();
-				if(!t_strcmp(m_parse_stack.back()->get_tagName() ,_t("tr")))
-				{
-					parse_pop_element();
-				}
-			} else if(!value_in_list(m_parse_stack.back()->get_tagName(), _t("tbody;thead;tfoot")))
-			{
-				parse_push_element(create_element(_t("tbody")));
+				parse_pop_to_parent(g_tags_table[i].parents, g_tags_table[i].stop_parent);
+				break;
 			}
 		}
 
@@ -566,7 +576,16 @@ void litehtml::document::parse_tag_end( const tchar_t* tag_name )
 			parse_pop_element();
 		} else
 		{
-			parse_pop_element(tag_name);
+			const tchar_t* stop_tag = _t("");
+			for(int i = 0; g_tags_table[i].tag; i++)
+			{
+				if(!t_strcmp(tag_name, g_tags_table[i].tag))
+				{
+					stop_tag = g_tags_table[i].stop_parent;
+					break;
+				}
+			}
+			parse_pop_element(tag_name, stop_tag);
 		}
 	}
 }
@@ -640,15 +659,17 @@ void litehtml::document::parse_data( const tchar_t* val )
 	}
 }
 
-void litehtml::document::parse_pop_element()
+bool litehtml::document::parse_pop_element()
 {
 	if(!m_parse_stack.empty())
 	{
 		m_parse_stack.pop_back();
+		return true;
 	}
+	return false;
 }
 
-void litehtml::document::parse_pop_element( const tchar_t* tag )
+bool litehtml::document::parse_pop_element( const tchar_t* tag, const tchar_t* stop_tags )
 {
 	bool found = false;
 	for(elements_vector::reverse_iterator iel = m_parse_stack.rbegin(); iel != m_parse_stack.rend(); iel++)
@@ -656,8 +677,12 @@ void litehtml::document::parse_pop_element( const tchar_t* tag )
 		if(!t_strcmp( (*iel)->get_tagName(), tag ))
 		{
 			found = true;
+			break;
 		}
+		if(stop_tags && value_in_list((*iel)->get_tagName(), stop_tags)) break;
 	}
+
+	if(!found) return false;
 
 	while(found)
 	{
@@ -667,6 +692,7 @@ void litehtml::document::parse_pop_element( const tchar_t* tag )
 		}
 		parse_pop_element();
 	}
+	return true;
 }
 
 void litehtml::document::parse_pop_empty_element()
@@ -688,4 +714,33 @@ void litehtml::document::parse_pop_empty_element()
 		}
 	}
 }
+
+void litehtml::document::parse_pop_to_parent( const tchar_t* parents, const tchar_t* stop_parent )
+{
+	elements_vector::size_type parent = 0;
+	bool found = false;
+	string_vector p;
+	tokenize(parents, p, _t(";"));
+
+	for(int i = (int) m_parse_stack.size() - 1; i >= 0 && !found; i--)
+	{
+		if(std::find(p.begin(), p.end(), m_parse_stack[i]->get_tagName()) != p.end())
+		{
+			found	= true;
+			parent	= i;
+		}
+		if(!t_strcmp(stop_parent, m_parse_stack[i]->get_tagName()))
+		{
+			break;
+		}
+	}
+	if(found)
+	{
+		m_parse_stack.erase(m_parse_stack.begin() + parent + 1, m_parse_stack.end());
+	} else
+	{
+		parse_tag_start(p.front().c_str());
+	}
+}
+
 
