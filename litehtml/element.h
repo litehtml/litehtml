@@ -162,7 +162,7 @@ namespace litehtml
 		virtual bool				is_nth_child(element* el, int num, int off, bool of_type);
 		virtual bool				is_nth_last_child(element* el, int num, int off, bool of_type);
 		virtual bool				is_only_child(element* el, bool of_type);
-		virtual int					get_predefined_height() const;
+		virtual bool				get_predefined_height(int& p_height) const;
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 		virtual void				add_style(litehtml::style::ptr st);
 	};

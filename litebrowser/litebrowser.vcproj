@@ -69,6 +69,7 @@
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
+				Profile="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -220,10 +221,13 @@
 				LinkIncremental="1"
 				AdditionalLibraryDirectories="libs\cairo\32;libs\freeimage\32"
 				GenerateDebugInformation="true"
+				GenerateMapFile="false"
+				MapFileName="$(TargetDir)$(TargetName).map"
 				SubSystem="2"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="1"
+				Profile="true"
 			/>
 			<Tool
 				Name="VCALinkTool"
@@ -304,6 +308,7 @@
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
 				TargetMachine="17"
+				Profile="false"
 			/>
 			<Tool
 				Name="VCALinkTool"

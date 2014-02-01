@@ -101,12 +101,13 @@ bool litehtml::element::collapse_bottom_margin() const
 	return false;
 }
 
-int litehtml::element::get_predefined_height() const
+bool litehtml::element::get_predefined_height(int& p_height) const
 {
 	css_length h = get_css_height();
 	if(h.is_predefined())
 	{
-		return m_pos.height;
+		p_height = m_pos.height;
+		return false;
 	}
 	if(h.units() == css_units_percentage)
 	{
@@ -114,14 +115,24 @@ int litehtml::element::get_predefined_height() const
 		{
 			position client_pos;
 			m_doc->container()->get_client_rect(client_pos);
-			return h.calc_percent(client_pos.height);
+			p_height = h.calc_percent(client_pos.height);
+			return true;
 		} else
 		{
-			int ph = m_parent->get_predefined_height();
-			return h.calc_percent(ph);
+			int ph = 0;
+			if(m_parent->get_predefined_height(ph))
+			{
+				p_height = h.calc_percent(ph);
+				return true;
+			} else
+			{
+				p_height = m_pos.height;
+				return false;
+			}
 		}
 	}
-	return 	m_doc->cvt_units(h, get_font_size());
+	p_height = m_doc->cvt_units(h, get_font_size());
+	return true;
 }
 
 void litehtml::element::calc_document_size( litehtml::size& sz, int x /*= 0*/, int y /*= 0*/ )

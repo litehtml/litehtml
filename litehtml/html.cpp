@@ -25,12 +25,43 @@ void litehtml::lcase(tstring &s)
 	}
 }
 
-int litehtml::value_index( const tchar_t* val, const tchar_t* strings, int defValue, const tchar_t* delim )
+int litehtml::value_index( const tstring& val, const tstring& strings, int defValue, tchar_t delim )
 {
-	if(!val || !strings || !delim)
+	if(val.empty() || strings.empty() || !delim)
 	{
 		return defValue;
 	}
+
+	int idx = 0;
+	tstring::size_type delim_start	= 0;
+	tstring::size_type delim_end	= strings.find(delim, delim_start);
+	tstring::size_type item_len = 0;
+	while(true)
+	{
+		if(delim_end == tstring::npos)
+		{
+			item_len = strings.length() - delim_start;
+		} else
+		{
+			item_len = delim_end - delim_start;
+		}
+		if(item_len == val.length())
+		{
+			if(val == strings.substr(delim_start, item_len))
+			{
+				return idx;
+			}
+		}
+		idx++;
+		delim_start = delim_end;
+		if(delim_start == tstring::npos) break;
+		delim_start++;
+		if(delim_start == strings.length()) break;
+		delim_end = strings.find(delim, delim_start);
+	}
+	return defValue;
+
+/*
 	string_vector tokens;
 	tokenize(strings, tokens, delim);
 	for(size_t i = 0; i < tokens.size(); i++)
@@ -41,9 +72,10 @@ int litehtml::value_index( const tchar_t* val, const tchar_t* strings, int defVa
 		}
 	}
 	return defValue;
+*/
 }
 
-int litehtml::value_in_list( const tchar_t* val, const tchar_t* strings, const tchar_t* delim )
+int litehtml::value_in_list( const tstring& val, const tstring& strings, tchar_t delim )
 {
 	int idx = value_index(val, strings, -1, delim);
 	if(idx >= 0)

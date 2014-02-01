@@ -99,9 +99,10 @@ namespace litehtml
 		void parse_comment_end();
 		void parse_data(const tchar_t* val);
 		void parse_push_element(element::ptr el);
-		void parse_pop_element();
-		void parse_pop_element(const tchar_t* tag);
+		bool parse_pop_element();
+		bool parse_pop_element(const tchar_t* tag, const tchar_t* stop_tags = _t(""));
 		void parse_pop_empty_element();
+		void parse_pop_to_parent(const tchar_t* parents, const tchar_t* stop_parent);
 	};
 
 	inline element::ptr document::root()

@@ -10,9 +10,11 @@ namespace litehtml
 		virtual ~el_before_after_base();
 
 		virtual void add_style(litehtml::style::ptr st);
+		virtual void apply_stylesheet(const litehtml::css& stylesheet);
 	private:
-		void add_text(const tstring& txt);
-		void add_function(const tstring& fnc, const tstring& params);
+		void	add_text(const tstring& txt);
+		void	add_function(const tstring& fnc, const tstring& params);
+		tchar_t convert_escape(const tchar_t* txt);
 	};
 
 	class el_before : public el_before_after_base
