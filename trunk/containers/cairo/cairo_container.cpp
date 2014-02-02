@@ -138,7 +138,7 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 		{
 		case litehtml::list_style_type_circle:
 			{
-				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 1);
+				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 0.5);
 			}
 			break;
 		case litehtml::list_style_type_disc:
@@ -673,7 +673,7 @@ void cairo_container::apply_clip( cairo_t* cr )
 	}
 }
 
-void cairo_container::draw_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width )
+void cairo_container::draw_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, double line_width )
 {
 	if(!cr) return;
 	cairo_save(cr);
