@@ -57,7 +57,7 @@ public:
 	void								add_image(litehtml::tstring& url, CTxDIB* img);
 
 protected:
-	virtual void						draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width);
+	virtual void						draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, double line_width);
 	virtual void						fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color);
 	virtual void						rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &radius );
 

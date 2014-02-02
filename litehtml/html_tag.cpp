@@ -252,6 +252,12 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 		}
 	}
 
+	// support for fixed element will be added later
+	if(m_el_position == element_position_fixed)
+	{
+		m_el_position = element_position_absolute;
+	}
+
 	const tchar_t* va	= get_style_property(_t("vertical-align"), true,	_t("baseline"));
 	m_vertical_align = (vertical_align) value_index(va, vertical_align_strings, va_baseline);
 
@@ -1277,12 +1283,10 @@ void litehtml::html_tag::add_float( element* el, int x, int y )
 	if(is_floats_holder())
 	{
 		floated_box fb;
-		fb.pos			= el->m_pos;
-		fb.pos.x		+= x;
-		fb.pos.y		+= y;
-		fb.pos			+= el->m_margins;
-		fb.pos			+= el->m_borders;
-		fb.pos			+= el->m_padding;
+		fb.pos.x		= el->left() + x;
+		fb.pos.y		= el->top()  + y;
+		fb.pos.width	= el->width();
+		fb.pos.height	= el->height();
 		fb.float_side	= el->get_float();
 		fb.clear_floats	= el->get_clear();
 		fb.el			= el;
@@ -1727,7 +1731,11 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 			}
 		} else
 		{
-			position pos(x + left(), y + top(), width(), height());
+			position pos = m_pos;
+			pos.x += x;
+			pos.y += y;
+			pos += m_padding;
+			pos += m_borders;
 			redraw_boxes.push_back(pos);
 		}
 
@@ -2159,14 +2167,15 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 			get_line_left_right(line_top, max_width, line_left, line_right);
 
 			el->render(0, line_top, line_right);
+
 			if(line_left + el->width() > line_right)
 			{
 				int new_top = find_next_line_top(el->top(), el->width(), max_width);
-				el->m_pos.x = get_line_right(new_top, max_width) - (el->width() - el->content_margins_left());
+				el->m_pos.x = get_line_right(new_top, max_width) - el->width() + el->content_margins_left();
 				el->m_pos.y = new_top + el->content_margins_top();
 			} else
 			{
-				el->m_pos.x = line_right - el->width();
+				el->m_pos.x = line_right - el->width() + el->content_margins_left();
 			}
 			add_float(el, 0, 0);
 			fix_line_width(max_width, float_right);
