@@ -555,9 +555,12 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 	int min_height = 0;
 	if(!m_css_min_height.is_predefined() && m_css_min_height.units() == css_units_percentage)
 	{
-		if(m_parent->get_predefined_height(block_height))
+		if(m_parent)
 		{
-			min_height = m_css_min_height.calc_percent(block_height);
+			if(m_parent->get_predefined_height(block_height))
+			{
+				min_height = m_css_min_height.calc_percent(block_height);
+			}
 		}
 	} else
 	{

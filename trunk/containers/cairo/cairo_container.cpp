@@ -26,12 +26,18 @@ cairo_container::~cairo_container(void)
 
 litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
+	litehtml::tstring fnt_name = _t("sans-serif");
+
 	litehtml::string_vector fonts;
 	litehtml::tokenize(faceName, fonts, L",");
-	litehtml::trim(fonts[0]);
+	if(!fonts.empty())
+	{
+		fnt_name = fonts[0];
+		litehtml::trim(fnt_name);
+	}
 
 	cairo_font* fnt = new cairo_font(	m_font_link,
-										fonts[0].c_str(), 
+										fnt_name.c_str(), 
 										size, 
 										weight, 
 										(italic == litehtml::fontStyleItalic) ? TRUE : FALSE,
