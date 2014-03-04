@@ -137,8 +137,11 @@ bool litehtml::element::get_predefined_height(int& p_height) const
 
 void litehtml::element::calc_document_size( litehtml::size& sz, int x /*= 0*/, int y /*= 0*/ )
 {
-	sz.width	= std::max(sz.width,	x + right());
-	sz.height	= std::max(sz.height,	y + bottom());
+	if(is_visible())
+	{
+		sz.width	= std::max(sz.width,	x + right());
+		sz.height	= std::max(sz.height,	y + bottom());
+	}
 }
 
 int litehtml::element::calc_width(int defVal) const
@@ -180,7 +183,7 @@ bool litehtml::element::is_ancestor( element* el )
 
 void litehtml::element::get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) LITEHTML_EMPTY_FUNC
 void litehtml::element::add_style( litehtml::style::ptr st )						LITEHTML_EMPTY_FUNC
-litehtml::element::ptr litehtml::element::select_one( const css_element_selector& selector ) LITEHTML_RETURN_FUNC(0)
+litehtml::element::ptr litehtml::element::select_one( const css_selector& selector ) LITEHTML_RETURN_FUNC(0)
 litehtml::element::ptr litehtml::element::select_one( const tstring& selector )		LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
