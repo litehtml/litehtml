@@ -73,7 +73,7 @@ namespace litehtml
 		int							calc_width(int defVal) const;
 
 		virtual element::ptr		select_one(const tstring& selector);
-		virtual element::ptr		select_one(const css_element_selector& selector);
+		virtual element::ptr		select_one(const css_selector& selector);
 
 		virtual int					render(int x, int y, int max_width);
 		virtual int					render_inline(element* container, int max_width);

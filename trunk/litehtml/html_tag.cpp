@@ -78,13 +78,13 @@ const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, cons
 
 litehtml::element::ptr litehtml::html_tag::select_one( const tstring& selector )
 {
-	css_element_selector sel;
+	css_selector sel;
 	sel.parse(selector);
 
 	return select_one(sel);
 }
 
-litehtml::element::ptr litehtml::html_tag::select_one( const css_element_selector& selector )
+litehtml::element::ptr litehtml::html_tag::select_one( const css_selector& selector )
 {
 	if(select(selector))
 	{
@@ -3133,17 +3133,20 @@ void litehtml::html_tag::parse_nth_child_params( tstring param, int &num, int &o
 
 void litehtml::html_tag::calc_document_size( litehtml::size& sz, int x /*= 0*/, int y /*= 0*/ )
 {
-	element::calc_document_size(sz, x, y);
-
-	if(m_overflow == overflow_visible)
+	if(is_visible())
 	{
-		position pos = m_pos;
-		pos.x	+= x;
-		pos.y	+= y;
+		element::calc_document_size(sz, x, y);
 
-		for(elements_vector::iterator el = m_children.begin(); el != m_children.end(); el++)
+		if(m_overflow == overflow_visible)
 		{
-			(*el)->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
+			position pos = m_pos;
+			pos.x	+= x;
+			pos.y	+= y;
+
+			for(elements_vector::iterator el = m_children.begin(); el != m_children.end(); el++)
+			{
+				(*el)->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
+			}
 		}
 	}
 }
