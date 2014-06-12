@@ -51,6 +51,7 @@ protected:
 	virtual void		OnSize(int width, int height);
 	virtual void		OnDestroy();
 	virtual void		OnVScroll(int pos, int flags);
+	virtual void		OnHScroll(int pos, int flags);
 	virtual void		OnMouseWheel(int delta);
 	virtual void		OnKeyDown(UINT vKey);
 	virtual void		OnMouseMove(int x, int y);

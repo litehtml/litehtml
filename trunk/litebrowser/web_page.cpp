@@ -83,7 +83,7 @@ void web_page::link( litehtml::document* doc, litehtml::element::ptr el )
 		if(media && (wcsstr(media, L"screen") || wcsstr(media, L"all")))
 		{
 			const wchar_t* href = el->get_attr(L"href");
-			if(href)
+			if(href && href[0])
 			{
 				std::wstring url;
 				make_url(href, NULL, url);

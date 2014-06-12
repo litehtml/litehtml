@@ -110,6 +110,9 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 		case WM_VSCROLL:
 			pThis->OnVScroll(HIWORD(wParam), LOWORD(wParam));
 			return 0;
+		case WM_HSCROLL:
+			pThis->OnHScroll(HIWORD(wParam), LOWORD(wParam));
+			return 0;
 		case WM_MOUSEWHEEL:
 			pThis->OnMouseWheel(GET_WHEEL_DELTA_WPARAM(wParam));
 			return 0;
@@ -335,6 +338,26 @@ void CHTMLViewWnd::update_scroll()
 	{
 		ShowScrollBar(m_hWnd, SB_VERT, FALSE);
 	}
+
+	if(m_max_left > 0)
+	{
+		ShowScrollBar(m_hWnd, SB_HORZ, TRUE);
+
+		RECT rcClient;
+		GetClientRect(m_hWnd, &rcClient);
+
+		SCROLLINFO si;
+		si.cbSize	= sizeof(SCROLLINFO);
+		si.fMask	= SIF_ALL;
+		si.nMin		= 0;
+		si.nMax		= m_max_left + (rcClient.right - rcClient.left);
+		si.nPos		= m_left;
+		si.nPage	= rcClient.right - rcClient.left;
+		SetScrollInfo(m_hWnd, SB_HORZ, &si, TRUE);
+	} else
+	{
+		ShowScrollBar(m_hWnd, SB_HORZ, FALSE);
+	}
 }
 
 void CHTMLViewWnd::OnVScroll( int pos, int flags )
@@ -396,6 +419,69 @@ void CHTMLViewWnd::OnVScroll( int pos, int flags )
 		ScrollWindowEx(m_hWnd, 0, m_top - newTop, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
 		m_top  = newTop;
 		SetScrollPos(m_hWnd, SB_VERT, m_top, TRUE);
+		UpdateWindow(m_hWnd);
+	}
+}
+
+void CHTMLViewWnd::OnHScroll( int pos, int flags )
+{
+	RECT rcClient;
+	GetClientRect(m_hWnd, &rcClient);
+
+	int lineWidth	= 16;
+	int pageWidth	= rcClient.right - rcClient.left - lineWidth;
+
+	int newLeft = m_left;
+
+	switch(flags)
+	{
+	case SB_LINERIGHT:
+		newLeft = m_left + lineWidth;
+		if(newLeft > m_max_left)
+		{
+			newLeft = m_max_left;
+		}
+		break;
+	case SB_PAGERIGHT:
+		newLeft = m_left + pageWidth;
+		if(newLeft > m_max_left)
+		{
+			newLeft = m_max_left;
+		}
+		break;
+	case SB_LINELEFT:
+		newLeft = m_left - lineWidth;
+		if(newLeft < 0)
+		{
+			newLeft = 0;
+		}
+		break;
+	case SB_PAGELEFT:
+		newLeft = m_left - pageWidth;
+		if(newLeft < 0)
+		{
+			newLeft = 0;
+		}
+		break;
+	case SB_THUMBPOSITION:
+	case SB_THUMBTRACK:
+		newLeft  = pos;
+		if(newLeft < 0)
+		{
+			newLeft = 0;
+		}
+		if(newLeft > m_max_left)
+		{
+			newLeft = m_max_left;
+		}
+		break;
+	}
+
+	if(newLeft != m_left)
+	{
+		ScrollWindowEx(m_hWnd, m_left - newLeft, 0, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
+		m_left  = newLeft;
+		SetScrollPos(m_hWnd, SB_HORZ, m_left, TRUE);
 		UpdateWindow(m_hWnd);
 	}
 }
