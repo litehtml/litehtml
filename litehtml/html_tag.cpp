@@ -1602,16 +1602,25 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 		if(m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
 			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right;
-			m_margins.left	= (parent_width - el_width) / 2;
-			m_margins.right	= (parent_width - el_width) - m_margins.left;
+			if(el_width <= parent_width)
+			{
+				m_margins.left	= (parent_width - el_width) / 2;
+				m_margins.right	= (parent_width - el_width) - m_margins.left;
+			} else
+			{
+				m_margins.left	= 0;
+				m_margins.right	= 0;
+			}
 		} else if(m_css_margins.left.is_predefined() && !m_css_margins.right.is_predefined())
 		{
 			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.right;
 			m_margins.left	= parent_width - el_width;
+			if(m_margins.left < 0) m_margins.left = 0;
 		} else if(!m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
 			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.left;
 			m_margins.right	= parent_width - el_width;
+			if(m_margins.right < 0) m_margins.right = 0;
 		}
 	}
 }
