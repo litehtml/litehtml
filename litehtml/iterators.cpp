@@ -24,7 +24,7 @@ litehtml::element* litehtml::elements_iterator::next(bool ret_parent)
 			next_idx();
 		} else
 		{
-			if(!m_select || m_select && m_select->select(m_el->get_child(m_idx)))
+			if( !m_select || (m_select && m_select->select(m_el->get_child(m_idx))) )
 			{
 				return m_el->get_child(m_idx);
 			} else

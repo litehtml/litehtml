@@ -14,6 +14,11 @@ namespace litehtml
     virtual tchar_t get_char() = 0;
   };
 
+	struct html_entities
+	{
+		tchar_t		szCode[20];
+		wchar_t 	Code;
+	};
 
   class scanner
   {
@@ -48,11 +53,12 @@ namespace litehtml
   public:
   
     scanner(instream& is): 
-        input(is), 
-        input_char(0), 
+    	token(TT_EOF),
         value_length(0), 
         tag_name_length(0), 
         attr_name_length(0),
+        input(is),
+        input_char(0),
 		got_tail(false) { c_scan = &scanner::scan_body; }
 
     // get next token
@@ -67,7 +73,7 @@ namespace litehtml
     // get tag name
     const tchar_t*    get_tag_name();
     
-    // should be overrided to resolve entities, e.g. &nbsp;
+    // should be override to resolve entities, e.g. &nbsp;
     virtual tchar_t   resolve_entity(const tchar_t* buf, int buf_size);
         
   private: /* methods */
@@ -104,19 +110,21 @@ namespace litehtml
     //state       where;
     token_type  token;
 
-    tchar_t       value[MAX_TOKEN_SIZE];
-    int         value_length;
+    tchar_t		value[MAX_TOKEN_SIZE];
+    int			value_length;
 
-    tchar_t       tag_name[MAX_NAME_SIZE];
-    int         tag_name_length;
+    tchar_t		tag_name[MAX_NAME_SIZE];
+    int			tag_name_length;
 
-    tchar_t       attr_name[MAX_NAME_SIZE];
+    tchar_t		attr_name[MAX_NAME_SIZE];
     int         attr_name_length;
   
     instream&   input;
-    tchar_t       input_char; 
+    tchar_t		input_char;
 
     bool        got_tail; // aux flag used in scan_comment, etc. 
+
+    static html_entities m_HTMLCodes[];
 
   };
 }

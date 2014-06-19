@@ -38,13 +38,11 @@ int litehtml::el_table::render( int x, int y, int max_width )
 	m_pos.x	+= content_margins_left();
 	m_pos.y += content_margins_top();
 
-	int ret_width = 0;
-
 	int block_width = m_css_width.calc_percent(parent_width);
 
 	if(block_width)
 	{
-		ret_width = max_width = block_width -= content_margins_left() + content_margins_right();
+		max_width = block_width -= content_margins_left() + content_margins_right();
 	} else
 	{
 		if(max_width)

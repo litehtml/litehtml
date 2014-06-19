@@ -1,16 +1,6 @@
-/*
- * browser_wnd.h
- *
- *  Created on: Aug 1, 2013
- *      Author: tordex
- */
+#pragma once
 
-#ifndef BROWSER_WND_H_
-#define BROWSER_WND_H_
-
-#include <gtkmm/window.h>
 #include "html_widget.h"
-#include <litehtml.h>
 
 class browser_window : public Gtk::Window
 {
@@ -18,9 +8,16 @@ public:
 	browser_window(litehtml::context* html_context);
 	virtual ~browser_window();
 
+private:
+    void on_go_clicked();
+    bool on_address_key_press(GdkEventKey* event);
+
 protected:
-	html_widget		m_html;
+	html_widget			m_html;
+	Gtk::Entry			m_address_bar;
+	Gtk::Button			m_go_button;
+	Gtk::VBox			m_vbox;
+	Gtk::HBox			m_hbox;
+	Gtk::ScrolledWindow	m_scrolled_wnd;
 };
 
-
-#endif /* BROWSER_WND_H_ */

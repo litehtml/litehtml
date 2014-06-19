@@ -131,14 +131,14 @@ namespace litehtml
       // attribute value...
       
       if(c == '\"')
-        while(c = get_char())
+        while( (c = get_char()) )
         {
             if(c == '\"') return TT_ATTR;
             if(c == '&') c = scan_entity();
             append_value(c);
         }
       else if(c == '\'') // allowed in html
-        while(c = get_char())
+        while( (c = get_char()) )
         {
             if(c == '\'') return TT_ATTR;
             if(c == '&') c = scan_entity();
@@ -153,7 +153,7 @@ namespace litehtml
             if( c == '&' ) c = scan_entity();*/
             if( c == '>' ) { push_back(c); return TT_ATTR; }
             append_value(c);
-        } while(c = get_char());
+        } while( (c = get_char()) );
 
       return TT_ERROR;
     }
@@ -438,11 +438,7 @@ namespace litehtml
 		return TT_DATA;
 	}
 
-	struct
-	{
-		tchar_t szCode[20];
-		wchar_t Code;
-	} g_HTMLCodes[] = 
+	litehtml::html_entities  scanner::m_HTMLCodes[] =
 	{
 
 		{ _t("&quot;"),		0x0022},
@@ -744,11 +740,11 @@ namespace litehtml
 			tstring str = _t("&");
 			str.append(buf, buf_size);
 			str += _t(";");
-			for(int i = 0; g_HTMLCodes[i].szCode[0]; i++)
+			for(int i = 0; m_HTMLCodes[i].szCode[0]; i++)
 			{
-				if(!t_strcasecmp(g_HTMLCodes[i].szCode, str.c_str()))
+				if(!t_strcasecmp(m_HTMLCodes[i].szCode, str.c_str()))
 				{
-					wres = g_HTMLCodes[i].Code;
+					wres = m_HTMLCodes[i].Code;
 					break;
 				}
 			}

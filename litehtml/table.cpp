@@ -289,7 +289,7 @@ void litehtml::table_grid::distribute_width( int width, int start, int end )
 
 int litehtml::table_grid::calc_table_width( int block_width, bool is_auto )
 {
-	int table_width = 0;
+	//int table_width = 0;
 
 	int min_table_width = 0; // MIN
 	int max_table_width = 0; // MAX
