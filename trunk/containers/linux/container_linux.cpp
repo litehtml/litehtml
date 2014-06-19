@@ -1,27 +1,22 @@
-#include "cairo_container_linux.h"
+#include "container_linux.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
-#include <ft2build.h>
-#include FT_FREETYPE_H
-#include <fontconfig/fontconfig.h>
-#include <cairo.h>
-#include <cairo-ft.h>
-#include <gdk/gdk.h>
 
-cairo_container_linux::cairo_container_linux(void)
+
+container_linux::container_linux(void)
 {
 	m_temp_surface	= cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 2, 2);
 	m_temp_cr		= cairo_create(m_temp_surface);
 }
 
-cairo_container_linux::~cairo_container_linux(void)
+container_linux::~container_linux(void)
 {
 	clear_images();
 	cairo_surface_destroy(m_temp_surface);
 	cairo_destroy(m_temp_cr);
 }
 
-litehtml::uint_ptr cairo_container_linux::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
+litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
 	litehtml::string_vector fonts;
 	litehtml::tokenize(faceName, fonts, ",");
@@ -48,7 +43,19 @@ litehtml::uint_ptr cairo_container_linux::create_font( const litehtml::tchar_t* 
 		{
 			FcPatternAddInteger (pattern, FC_SLANT, FC_SLANT_ROMAN);
 		}
-		FcPatternAddInteger (pattern, FC_WEIGHT, weight);
+
+		int fc_weight = FC_WEIGHT_NORMAL;
+		if(weight >= 0 && weight < 150)			fc_weight = FC_WEIGHT_THIN;
+		else if(weight >= 150 && weight < 250)	fc_weight = FC_WEIGHT_EXTRALIGHT;
+		else if(weight >= 250 && weight < 350)	fc_weight = FC_WEIGHT_LIGHT;
+		else if(weight >= 350 && weight < 450)	fc_weight = FC_WEIGHT_NORMAL;
+		else if(weight >= 450 && weight < 550)	fc_weight = FC_WEIGHT_MEDIUM;
+		else if(weight >= 550 && weight < 650)	fc_weight = FC_WEIGHT_SEMIBOLD;
+		else if(weight >= 650 && weight < 750)	fc_weight = FC_WEIGHT_BOLD;
+		else if(weight >= 750 && weight < 850)	fc_weight = FC_WEIGHT_EXTRABOLD;
+		else if(weight >= 950)					fc_weight = FC_WEIGHT_BLACK;
+
+		FcPatternAddInteger (pattern, FC_WEIGHT, fc_weight);
 
 		fnt = cairo_ft_font_face_create_for_pattern(pattern);
 	}
@@ -77,14 +84,17 @@ litehtml::uint_ptr cairo_container_linux::create_font( const litehtml::tchar_t* 
 		cairo_restore(m_temp_cr);
 
 		ret = new cairo_font;
-		ret->font	= fnt;
-		ret->size	= size;
+		ret->font		= fnt;
+		ret->size		= size;
+		ret->strikeout 	= (decoration & litehtml::font_decoration_linethrough) ? true : false;
+		ret->underline	= (decoration & litehtml::font_decoration_underline) ? true : false;
+
 	}
 
 	return (litehtml::uint_ptr) ret;
 }
 
-void cairo_container_linux::delete_font( litehtml::uint_ptr hFont )
+void container_linux::delete_font( litehtml::uint_ptr hFont )
 {
 	cairo_font* fnt = (cairo_font*) hFont;
 	if(fnt)
@@ -94,7 +104,7 @@ void cairo_container_linux::delete_font( litehtml::uint_ptr hFont )
 	}
 }
 
-int cairo_container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_ptr hFont )
+int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_ptr hFont )
 {
 	cairo_font* fnt = (cairo_font*) hFont;
 
@@ -110,7 +120,7 @@ int cairo_container_linux::text_width( const litehtml::tchar_t* text, litehtml::
 	return (int) ext.x_advance;
 }
 
-void cairo_container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
+void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
 	cairo_font* fnt = (cairo_font*) hFont;
 	cairo_t* cr		= (cairo_t*) hdc;
@@ -161,7 +171,7 @@ void cairo_container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::t
 	cairo_restore(cr);
 }
 
-void cairo_container_linux::fill_rect( litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius )
+void container_linux::fill_rect( litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius )
 {
 	if(hdc)
 	{
@@ -206,7 +216,7 @@ void cairo_container_linux::fill_rect( litehtml::uint_ptr hdc, const litehtml::p
 	}
 }
 
-int cairo_container_linux::pt_to_px( int pt )
+int container_linux::pt_to_px( int pt )
 {
 	GdkScreen* screen = gdk_screen_get_default();
 	double dpi = gdk_screen_get_resolution(screen);
@@ -214,74 +224,97 @@ int cairo_container_linux::pt_to_px( int pt )
 	return (int) ((double) pt * dpi / 72.0);
 }
 
-int cairo_container_linux::get_default_font_size()
+int container_linux::get_default_font_size()
 {
 	return 16;
 }
 
-void cairo_container_linux::draw_list_marker( litehtml::uint_ptr hdc, litehtml::list_style_type marker_type, int x, int y, int height, const litehtml::web_color& color )
+void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::list_marker& marker )
 {
-	int top_margin = height / 3;
-
-	int draw_x		= x;
-	int draw_y		= y + top_margin;
-	int draw_width	= height - top_margin * 2;
-	int draw_height	= height - top_margin * 2;
-
-	switch(marker_type)
+	if(!marker.image.empty())
 	{
-	case litehtml::list_style_type_circle:
+		/*litehtml::tstring url;
+		make_url(marker.image.c_str(), marker.baseurl, url);
+
+		lock_images_cache();
+		images_map::iterator img_i = m_images.find(url.c_str());
+		if(img_i != m_images.end())
 		{
-			draw_ellipse((cairo_t*) hdc, draw_x, draw_y, draw_width, draw_height, color, 1);
+			if(img_i->second)
+			{
+				draw_txdib((cairo_t*) hdc, img_i->second, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
+			}
 		}
-		break;
-	case litehtml::list_style_type_disc:
+		unlock_images_cache();*/
+	} else
+	{
+		switch(marker.marker_type)
 		{
-			fill_ellipse((cairo_t*) hdc, draw_x, draw_y, draw_width, draw_height, color);
+		case litehtml::list_style_type_circle:
+			{
+				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 0.5);
+			}
+			break;
+		case litehtml::list_style_type_disc:
+			{
+				fill_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color);
+			}
+			break;
+		case litehtml::list_style_type_square:
+			if(hdc)
+			{
+				cairo_t* cr = (cairo_t*) hdc;
+				cairo_save(cr);
+
+				cairo_new_path(cr);
+				cairo_rectangle(cr, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
+
+				set_color(cr, marker.color);
+				cairo_fill(cr);
+				cairo_restore(cr);
+			}
+			break;
+		default:
+			/*do nothing*/
+			break;
 		}
-		break;
-	case litehtml::list_style_type_square:
-		{
-			fill_rect(hdc, litehtml::position(draw_x, draw_y, draw_width, draw_height), color, litehtml::css_border_radius());
-		}
-		break;
 	}
 }
 
-void cairo_container_linux::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl )
+void container_linux::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready )
 {
-/*	litehtml::tstring url;
+	litehtml::tstring url;
 	make_url(src, baseurl, url);
 	if(m_images.find(url.c_str()) == m_images.end())
 	{
-		CTxDIB* img = get_image(url.c_str());
+		Glib::RefPtr<Gdk::Pixbuf> img = get_image(url.c_str(), true);
 		if(img)
 		{
 			m_images[url.c_str()] = img;
 		}
 	}
-*/
 }
 
-void cairo_container_linux::get_image_size( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz )
+void container_linux::get_image_size( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz )
 {
-/*	litehtml::tstring url;
+	litehtml::tstring url;
 	make_url(src, baseurl, url);
 
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
-		sz.width	= img->second->getWidth();
-		sz.height	= img->second->getHeight();
+		sz.width	= img->second->get_width();
+		sz.height	= img->second->get_height();
+	} else
+	{
+		sz.width	= 0;
+		sz.height	= 0;
 	}
-*/
-	sz.width	= 0;
-	sz.height	= 0;
 }
 
-void cairo_container_linux::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos )
+void container_linux::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos )
 {
-/*	cairo_t* cr = (cairo_t*) hdc;
+	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
@@ -290,94 +323,93 @@ void cairo_container_linux::draw_image( litehtml::uint_ptr hdc, const litehtml::
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
 	{
-		draw_txdib(cr, img->second, pos.x, pos.y, pos.width, pos.height);
+		draw_pixbuf(cr, img->second, pos.x, pos.y, pos.width, pos.height);
 	}
 	cairo_restore(cr);
-*/
+
 }
 
-void cairo_container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::tchar_t* image, const litehtml::tchar_t* baseurl, const litehtml::position& draw_pos, const litehtml::css_position& bg_pos, litehtml::background_repeat repeat, litehtml::background_attachment attachment )
+void container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::background_paint& bg )
 {
-/*	cairo_t* cr = (cairo_t*) hdc;
+	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
-	cairo_rectangle(cr, draw_pos.x, draw_pos.y, draw_pos.width, draw_pos.height);
+	rounded_rectangle(cr, bg.border_box, bg.border_radius);
 	cairo_clip(cr);
 
-	litehtml::tstring url;
-	make_url(image, baseurl, url);
+	cairo_rectangle(cr, bg.clip_box.x, bg.clip_box.y, bg.clip_box.width, bg.clip_box.height);
+	cairo_clip(cr);
 
-	images_map::iterator img_i = m_images.find(url.c_str());
-	if(img_i != m_images.end())
+	if(bg.color.alpha)
 	{
-		CTxDIB* bgbmp = img_i->second;
+		set_color(cr, bg.color);
+		cairo_paint(cr);
+	}
 
-		litehtml::size img_sz;
-		img_sz.width	= bgbmp->getWidth();
-		img_sz.height	= bgbmp->getHeight();
+	litehtml::tstring url;
+	make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
 
-		int bg_x = draw_pos.x;
-		int bg_y = draw_pos.y;
+	//lock_images_cache();
+	images_map::iterator img_i = m_images.find(url.c_str());
+	if(img_i != m_images.end() && img_i->second)
+	{
+		Glib::RefPtr<Gdk::Pixbuf> bgbmp = img_i->second;
 
-
-		if(bg_pos.x.units() != litehtml::css_units_percentage)
+		Glib::RefPtr<Gdk::Pixbuf> new_img;
+		if(bg.image_size.width != bgbmp->get_width() || bg.image_size.height != bgbmp->get_height())
 		{
-			bg_x += (int) bg_pos.x.val();
-		} else
-		{
-			bg_x += (int) ((float) (draw_pos.width - img_sz.width) * bg_pos.x.val() / 100.0);
+			new_img = bgbmp->scale_simple(bg.image_size.width, bg.image_size.height, Gdk::INTERP_BILINEAR);
+			bgbmp = new_img;
 		}
 
-		if(bg_pos.y.units() != litehtml::css_units_percentage)
-		{
-			bg_y += (int) bg_pos.y.val();
-		} else
-		{
-			bg_y += (int) ( (float) (draw_pos.height - img_sz.height) * bg_pos.y.val() / 100.0);
-		}
-
-		cairo_surface_t* img = cairo_image_surface_create_for_data((unsigned char*) bgbmp->getBits(), CAIRO_FORMAT_ARGB32, bgbmp->getWidth(), bgbmp->getHeight(), bgbmp->getWidth() * 4);
+		cairo_surface_t* img = surface_from_pixbuf(bgbmp);
 		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(img);
 		cairo_matrix_t flib_m;
-		cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
-		cairo_matrix_translate(&flib_m, -bg_x, -bg_y);
+		cairo_matrix_init_identity(&flib_m);
+		cairo_matrix_translate(&flib_m, -bg.position_x, -bg.position_y);
 		cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
 		cairo_pattern_set_matrix (pattern, &flib_m);
 
-		switch(repeat)
+		switch(bg.repeat)
 		{
 		case litehtml::background_repeat_no_repeat:
-			draw_txdib(cr, bgbmp, bg_x, bg_y, bgbmp->getWidth(), bgbmp->getHeight());
+			draw_pixbuf(cr, bgbmp, bg.position_x, bg.position_y, bgbmp->get_width(), bgbmp->get_height());
 			break;
 
 		case litehtml::background_repeat_repeat_x:
 			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, draw_pos.left(), bg_y, draw_pos.width, bgbmp->getHeight());
+			cairo_rectangle(cr, bg.clip_box.left(), bg.position_y, bg.clip_box.width, bgbmp->get_height());
 			cairo_fill(cr);
 			break;
 
 		case litehtml::background_repeat_repeat_y:
 			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, bg_x, draw_pos.top(), bgbmp->getWidth(), draw_pos.height);
+			cairo_rectangle(cr, bg.position_x, bg.clip_box.top(), bgbmp->get_width(), bg.clip_box.height);
 			cairo_fill(cr);
 			break;
 
 		case litehtml::background_repeat_repeat:
 			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, draw_pos.left(), draw_pos.top(), draw_pos.width, draw_pos.height);
+			cairo_rectangle(cr, bg.clip_box.left(), bg.clip_box.top(), bg.clip_box.width, bg.clip_box.height);
 			cairo_fill(cr);
 			break;
 		}
 
 		cairo_pattern_destroy(pattern);
 		cairo_surface_destroy(img);
+
 	}
+//	unlock_images_cache();
 	cairo_restore(cr);
-*/
 }
 
-void cairo_container_linux::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg)
+void container_linux::make_url(const litehtml::tchar_t* url,	const litehtml::tchar_t* basepath, litehtml::tstring& out)
+{
+	out = url;
+}
+
+void container_linux::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg)
 {
 	if(rx > 0 && ry > 0)
 	{
@@ -403,7 +435,7 @@ void cairo_container_linux::add_path_arc(cairo_t* cr, double x, double y, double
 	}
 }
 
-void cairo_container_linux::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos )
+void container_linux::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos )
 {
 	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
@@ -695,17 +727,17 @@ void cairo_container_linux::draw_borders( litehtml::uint_ptr hdc, const litehtml
 	cairo_restore(cr);
 }
 
-litehtml::tchar_t cairo_container_linux::toupper( const litehtml::tchar_t c )
+litehtml::tchar_t container_linux::toupper( const litehtml::tchar_t c )
 {
 	return (litehtml::tchar_t) c;
 }
 
-litehtml::tchar_t cairo_container_linux::tolower( const litehtml::tchar_t c )
+litehtml::tchar_t container_linux::tolower( const litehtml::tchar_t c )
 {
 	return (litehtml::tchar_t) c;
 }
 
-void cairo_container_linux::set_clip( const litehtml::position& pos, bool valid_x, bool valid_y )
+void container_linux::set_clip( const litehtml::position& pos, bool valid_x, bool valid_y )
 {
 	litehtml::position clip_pos = pos;
 	litehtml::position client_pos;
@@ -723,19 +755,15 @@ void cairo_container_linux::set_clip( const litehtml::position& pos, bool valid_
 	m_clips.push_back(clip_pos);
 }
 
-void cairo_container_linux::del_clip()
+void container_linux::del_clip()
 {
 	if(!m_clips.empty())
 	{
 		m_clips.pop_back();
-		if(!m_clips.empty())
-		{
-			litehtml::position clip_pos = m_clips.back();
-		}
 	}
 }
 
-void cairo_container_linux::apply_clip( cairo_t* cr )
+void container_linux::apply_clip( cairo_t* cr )
 {
 	for(litehtml::position::vector::iterator iter = m_clips.begin(); iter != m_clips.end(); iter++)
 	{
@@ -744,7 +772,7 @@ void cairo_container_linux::apply_clip( cairo_t* cr )
 	}
 }
 
-void cairo_container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width )
+void container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width )
 {
 	if(!cr) return;
 	cairo_save(cr);
@@ -764,7 +792,7 @@ void cairo_container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, 
 	cairo_restore(cr);
 }
 
-void cairo_container_linux::fill_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color )
+void container_linux::fill_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color )
 {
 	if(!cr) return;
 	cairo_save(cr);
@@ -783,7 +811,7 @@ void cairo_container_linux::fill_ellipse( cairo_t* cr, int x, int y, int width, 
 	cairo_restore(cr);
 }
 
-void cairo_container_linux::clear_images()
+void container_linux::clear_images()
 {
 /*	for(images_map::iterator i = m_images.begin(); i != m_images.end(); i++)
 	{
@@ -796,9 +824,29 @@ void cairo_container_linux::clear_images()
 */
 }
 
-const litehtml::tchar_t* cairo_container_linux::get_default_font_name()
+const litehtml::tchar_t* container_linux::get_default_font_name()
 {
 	return "Times New Roman";
+}
+
+bool container_linux::is_media_valid(const litehtml::tstring& media)
+{
+	litehtml::string_vector medias;
+	litehtml::tokenize(media, medias, ",");
+	for(litehtml::string_vector::iterator i = medias.begin(); i != medias.end(); i++)
+	{
+		litehtml::trim((*i));
+		if(i->substr(0, 3) == "all" || i->substr(0, 6) == "screen")
+		{
+			return true;
+		}
+	}
+	return false;
+}
+
+litehtml::element* container_linux::create_element(const litehtml::tchar_t* tag_name)
+{
+	return 0;
 }
 
 /*void cairo_container_linux::draw_txdib( cairo_t* cr, CTxDIB* bmp, int x, int y, int cx, int cy )
@@ -833,3 +881,81 @@ const litehtml::tchar_t* cairo_container_linux::get_default_font_name()
 	cairo_surface_destroy(img);
 }
 */
+
+void container_linux::rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &radius )
+{
+	cairo_new_path(cr);
+	if(radius.top_left_x.val())
+	{
+		cairo_arc(cr, pos.left() + radius.top_left_x.val(), pos.top() + radius.top_left_x.val(), radius.top_left_x.val(), M_PI, M_PI * 3.0 / 2.0);
+	} else
+	{
+		cairo_move_to(cr, pos.left(), pos.top());
+	}
+
+	cairo_line_to(cr, pos.right() - radius.top_right_x.val(), pos.top());
+
+	if(radius.top_right_x.val())
+	{
+		cairo_arc(cr, pos.right() - radius.top_right_x.val(), pos.top() + radius.top_right_x.val(), radius.top_right_x.val(), M_PI * 3.0 / 2.0, 2.0 * M_PI);
+	}
+
+	cairo_line_to(cr, pos.right(), pos.bottom() - radius.bottom_right_x.val());
+
+	if(radius.bottom_right_x.val())
+	{
+		cairo_arc(cr, pos.right() - radius.bottom_right_x.val(), pos.bottom() - radius.bottom_right_x.val(), radius.bottom_right_x.val(), 0, M_PI / 2.0);
+	}
+
+	cairo_line_to(cr, pos.left() - radius.bottom_left_x.val(), pos.bottom());
+
+	if(radius.bottom_left_x.val())
+	{
+		cairo_arc(cr, pos.left() + radius.bottom_left_x.val(), pos.bottom() - radius.bottom_left_x.val(), radius.bottom_left_x.val(), M_PI / 2.0, M_PI);
+	}
+}
+
+void container_linux::draw_pixbuf(cairo_t* cr, const Glib::RefPtr<Gdk::Pixbuf>& bmp, int x,	int y, int cx, int cy)
+{
+	cairo_save(cr);
+
+	{
+		Cairo::RefPtr<Cairo::Context> crobj(new Cairo::Context(cr, false));
+
+		cairo_matrix_t flib_m;
+		cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
+
+		if(cx != bmp->get_width() || cy != bmp->get_height())
+		{
+			Glib::RefPtr<Gdk::Pixbuf> new_img = bmp->scale_simple(cx, cy, Gdk::INTERP_BILINEAR);;
+			Gdk::Cairo::set_source_pixbuf(crobj, new_img, x, y);
+			crobj->paint();
+		} else
+		{
+			Gdk::Cairo::set_source_pixbuf(crobj, bmp, x, y);
+			crobj->paint();
+		}
+	}
+
+	cairo_restore(cr);
+}
+
+cairo_surface_t* container_linux::surface_from_pixbuf(const Glib::RefPtr<Gdk::Pixbuf>& bmp)
+{
+	cairo_surface_t* ret = NULL;
+
+	if(bmp->get_has_alpha())
+	{
+		ret = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, bmp->get_width(), bmp->get_height());
+	} else
+	{
+		ret = cairo_image_surface_create(CAIRO_FORMAT_RGB24, bmp->get_width(), bmp->get_height());
+	}
+
+	Cairo::RefPtr<Cairo::Surface> surface(new Cairo::Surface(ret, false));
+	Cairo::RefPtr<Cairo::Context> ctx = Cairo::Context::create(surface);
+	Gdk::Cairo::set_source_pixbuf(ctx, bmp, 0.0, 0.0);
+	ctx->paint();
+
+	return ret;
+}

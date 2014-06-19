@@ -118,7 +118,7 @@ void litehtml::line_box::add_element( element* el )
 	el->m_skip	= false;
 	el->m_box	= 0;
 	bool add	= true;
-	if(m_items.empty() && el->is_white_space() || el->is_break())
+	if( (m_items.empty() && el->is_white_space()) || el->is_break() )
 	{
 		el->m_skip = true;
 	} else if(el->is_white_space())
@@ -147,7 +147,7 @@ void litehtml::line_box::add_element( element* el )
 
 void litehtml::line_box::finish(bool last_box)
 {
-	if(is_empty() || !is_empty() && last_box && is_break_only())
+	if( is_empty() || (!is_empty() && last_box && is_break_only()) )
 	{
 		m_height = 0;
 		return;
@@ -186,6 +186,8 @@ void litehtml::line_box::finish(bool last_box)
 			add_x = ((m_box_right - m_box_left) - m_width) / 2;
 		}
 		break;
+	default:
+		add_x = 0;
 	}
 
 	m_height = 0;
@@ -260,6 +262,24 @@ void litehtml::line_box::finish(bool last_box)
 				break;
 			case va_bottom:
 				m_items[i]->m_pos.y = m_box_top + (y2 - y1) - m_items[i]->height() + m_items[i]->content_margins_top();
+				break;
+			case va_baseline:
+				//TODO: process vertical align "baseline"
+				break;
+			case va_middle:
+				//TODO: process vertical align "middle"
+				break;
+			case va_sub:
+				//TODO: process vertical align "sub"
+				break;
+			case va_super:
+				//TODO: process vertical align "super"
+				break;
+			case va_text_bottom:
+				//TODO: process vertical align "text-bottom"
+				break;
+			case va_text_top:
+				//TODO: process vertical align "text-top"
 				break;
 			}
 		}

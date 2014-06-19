@@ -66,6 +66,9 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 				m_transformed_text += m_doc->container()->tolower(m_text[i]);
 			}
 			break;
+		default:
+			/*do nothing*/
+			break;
 		}
 	}
 

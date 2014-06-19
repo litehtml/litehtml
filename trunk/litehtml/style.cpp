@@ -596,7 +596,7 @@ void litehtml::style::add_parsed_property( const tstring& name, const tstring& v
 	props_map::iterator prop = m_properties.find(name);
 	if(prop != m_properties.end())
 	{
-		if(!prop->second.m_important || important && prop->second.m_important)
+		if( !prop->second.m_important || (important && prop->second.m_important) )
 		{
 			prop->second.m_value		= val;
 			prop->second.m_important	= important;
@@ -612,7 +612,7 @@ void litehtml::style::remove_property( const tstring& name, bool important )
 	props_map::iterator prop = m_properties.find(name);
 	if(prop != m_properties.end())
 	{
-		if(!prop->second.m_important || important && prop->second.m_important)
+		if( !prop->second.m_important || (important && prop->second.m_important) )
 		{
 			m_properties.erase(prop);
 		}

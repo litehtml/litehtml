@@ -12,7 +12,7 @@ namespace litehtml
 
 		css_border()
 		{
-
+			style = border_style_none;
 		}
 
 		css_border(const css_border& val)

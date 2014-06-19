@@ -35,12 +35,7 @@ const litehtml::tchar_t* g_empty_tags[] =
 	0
 };
 
-struct 
-{
-	const litehtml::tchar_t*	tag;
-	const litehtml::tchar_t*	parents;
-	const litehtml::tchar_t*	stop_parent;
-} g_tags_table[] =
+litehtml::tags_parse_data litehtml::document::m_tags_table[] =
 {
 	{ _t("li"),		_t("ul;ol"),			_t("body")		},
 	{ _t("body"),	_t("html"),				_t("html")		},
@@ -163,7 +158,7 @@ litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, 
 {
 	uint_ptr ret = 0;
 
-	if(!name || name && !t_strcasecmp(name, _t("inherit")))
+	if( !name || (name && !t_strcasecmp(name, _t("inherit"))) )
 	{
 		name = m_container->get_default_font_name();
 	}
@@ -252,7 +247,7 @@ litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, 
 
 litehtml::uint_ptr litehtml::document::get_font( const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm )
 {
-	if(!name || name && !t_strcasecmp(name, _t("inherit")))
+	if( !name || (name && !t_strcasecmp(name, _t("inherit"))) )
 	{
 		name = m_container->get_default_font_name();
 	}
@@ -553,11 +548,11 @@ void litehtml::document::parse_tag_start( const tchar_t* tag_name )
 		}
 
 
-		for(int i = 0; g_tags_table[i].tag; i++)
+		for(int i = 0; m_tags_table[i].tag; i++)
 		{
-			if(!t_strcmp(tag_name, g_tags_table[i].tag))
+			if(!t_strcmp(tag_name, m_tags_table[i].tag))
 			{
-				parse_pop_to_parent(g_tags_table[i].parents, g_tags_table[i].stop_parent);
+				parse_pop_to_parent(m_tags_table[i].parents, m_tags_table[i].stop_parent);
 				break;
 			}
 		}
@@ -577,11 +572,11 @@ void litehtml::document::parse_tag_end( const tchar_t* tag_name )
 		} else
 		{
 			const tchar_t* stop_tag = _t("");
-			for(int i = 0; g_tags_table[i].tag; i++)
+			for(int i = 0; m_tags_table[i].tag; i++)
 			{
-				if(!t_strcmp(tag_name, g_tags_table[i].tag))
+				if(!t_strcmp(tag_name, m_tags_table[i].tag))
 				{
-					stop_tag = g_tags_table[i].stop_parent;
+					stop_tag = m_tags_table[i].stop_parent;
 					break;
 				}
 			}

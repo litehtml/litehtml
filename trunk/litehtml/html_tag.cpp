@@ -1240,8 +1240,8 @@ void litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 				was_cleared = true;
 			} else
 			{
-				if(	flt == float_left	&& els.front()->get_clear() == clear_left ||
-					flt == float_right	&& els.front()->get_clear() == clear_right)
+				if(	(flt == float_left	&& els.front()->get_clear() == clear_left) ||
+					(flt == float_right	&& els.front()->get_clear() == clear_right) )
 				{
 					was_cleared = true;
 				}
@@ -1571,7 +1571,7 @@ void litehtml::html_tag::parse_background()
 
 void litehtml::html_tag::add_absolute( element* el )
 {
-	if(m_display != display_inline && m_el_position != element_position_static || !m_parent)
+	if( (m_display != display_inline && m_el_position != element_position_static) || (!m_parent) )
 	{
 		m_positioned.push_back(el);
 	} else
@@ -1723,7 +1723,7 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 	for (used_selector::vector::iterator iter = m_used_styles.begin(); iter != m_used_styles.end() && !apply; iter++)
 	{
 		int res = select(*((*iter)->m_selector), true);
-		if(!(res && (*iter)->m_used || !res && !(*iter)->m_used))
+		if( (!(res && (*iter)->m_used) || (!res && !(*iter)->m_used)) )
 		{
 			apply = true;
 		}
@@ -2233,6 +2233,9 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 					el->m_pos = sz;
 				}
 				break;
+			default:
+				ret_width = 0;
+				break;
 			}
 
 			bool add_box = true;
@@ -2305,6 +2308,9 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 				{
 					ret_width = el->render(0, line_top, max_width);
 				}
+				break;
+			default:
+				ret_width = 0;
 				break;
 			}
 
@@ -2586,6 +2592,9 @@ void litehtml::html_tag::apply_vertical_align()
 			case va_bottom:
 				add = m_pos.height - content_height;
 				break;
+			default:
+				add = 0;
+				break;
 			}
 		}
 
@@ -2810,6 +2819,8 @@ void litehtml::html_tag::draw_children( uint_ptr hdc, int x, int y, const positi
 						el = 0;
 					}
 				}
+				break;
+			default:
 				break;
 			}
 
@@ -3046,7 +3057,7 @@ bool litehtml::html_tag::is_nth_child( element* el, int num, int off, bool of_ty
 	{
 		if((*child)->get_display() != display_inline_text)
 		{
-			if(!of_type || of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName()))
+			if( (!of_type) || (of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName())) )
 			{
 				if(el == (*child))
 				{
@@ -3078,7 +3089,7 @@ bool litehtml::html_tag::is_nth_last_child( element* el, int num, int off, bool 
 	{
 		if((*child)->get_display() != display_inline_text)
 		{
-			if(!of_type || of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName()))
+			if( !of_type || (of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName())) )
 			{
 				if(el == (*child))
 				{
@@ -3239,7 +3250,7 @@ bool litehtml::html_tag::is_only_child( element* el, bool of_type )
 	{
 		if((*child)->get_display() != display_inline_text)
 		{
-			if(!of_type || of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName()))
+			if( !of_type || (of_type && !t_strcmp(el->get_tagName(), (*child)->get_tagName())) )
 			{
 				child_count++;
 			}

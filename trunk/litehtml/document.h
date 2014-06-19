@@ -41,6 +41,12 @@ namespace litehtml
 		}
 	};
 
+	struct tags_parse_data
+	{
+		const litehtml::tchar_t*	tag;
+		const litehtml::tchar_t*	parents;
+		const litehtml::tchar_t*	stop_parent;
+	};
 
 	class html_tag;
 
@@ -49,16 +55,16 @@ namespace litehtml
 	public:
 		typedef object_ptr<document>	ptr;
 	private:
-		element::ptr			m_root;
-		document_container*		m_container;
-		fonts_map				m_fonts;
-		css_text::vector		m_css;
-		litehtml::css			m_styles;
-		litehtml::web_color		m_def_color;
-		litehtml::context*		m_context;
-		litehtml::size			m_size;
-
-		elements_vector			m_parse_stack;
+		element::ptr						m_root;
+		document_container*					m_container;
+		fonts_map							m_fonts;
+		css_text::vector					m_css;
+		litehtml::css						m_styles;
+		litehtml::web_color					m_def_color;
+		litehtml::context*					m_context;
+		litehtml::size						m_size;
+		static litehtml::tags_parse_data 	m_tags_table[];
+		elements_vector						m_parse_stack;
 	public:
 		document(litehtml::document_container* objContainer, litehtml::context* ctx);
 		virtual ~document();

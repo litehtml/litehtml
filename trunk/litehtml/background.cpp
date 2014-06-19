@@ -47,6 +47,8 @@ litehtml::background_paint::background_paint() : color(0, 0, 0, 0)
 {
 	position_x	= 0;
 	position_y	= 0;
+	attachment	= background_attachment_scroll;
+	repeat		= background_repeat_repeat;
 }
 
 void litehtml::background_paint::operator=( const background& val )

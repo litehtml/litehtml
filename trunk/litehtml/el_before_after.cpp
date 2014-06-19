@@ -84,7 +84,7 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 	tstring esc;
 	for(tstring::size_type i = 0; i < txt.length(); i++)
 	{
-		if(txt.at(i) == _t(' ') || txt.at(i) == _t('\t') || txt.at(i) == _t('\\') && !esc.empty())
+		if( (txt.at(i) == _t(' ')) || (txt.at(i) == _t('\t')) || (txt.at(i) == _t('\\') && !esc.empty()) )
 		{
 			if(esc.empty())
 			{
