@@ -181,6 +181,61 @@ bool litehtml::element::is_ancestor( element* el )
 	return false;
 }
 
+int litehtml::element::get_inline_shift_left()
+{
+	int ret = 0;
+
+	if(m_parent->get_display() == display_inline)
+	{
+		style_display disp = get_display();
+
+		if(disp == display_inline_text || disp == display_inline_block)
+		{
+			element* parent = m_parent;
+			element* el = this;
+			while(parent && parent->get_display() == display_inline)
+			{
+				if( parent->is_first_child_inline(el) )
+				{
+					ret += parent->padding_left() + parent->border_left() + parent->margin_left();
+				}
+				el = parent;
+				parent = parent->m_parent;
+			}
+		}
+	}
+
+	return ret;
+}
+
+int litehtml::element::get_inline_shift_right()
+{
+	int ret = 0;
+
+	if(m_parent->get_display() == display_inline)
+	{
+		style_display disp = get_display();
+
+		if(disp == display_inline_text || disp == display_inline_block)
+		{
+			element* parent = m_parent;
+			element* el = this;
+			while(parent && parent->get_display() == display_inline)
+			{
+				if( parent->is_last_child_inline(el) )
+				{
+					ret += parent->padding_right() + parent->border_right() + parent->margin_right();
+				}
+				el = parent;
+				parent = parent->m_parent;
+			}
+		}
+	}
+
+	return ret;
+}
+
+
 void litehtml::element::get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) LITEHTML_EMPTY_FUNC
 void litehtml::element::add_style( litehtml::style::ptr st )						LITEHTML_EMPTY_FUNC
 litehtml::element::ptr litehtml::element::select_one( const css_selector& selector ) LITEHTML_RETURN_FUNC(0)
@@ -263,5 +318,6 @@ void litehtml::element::parse_attributes()											LITEHTML_EMPTY_FUNC
 int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(select_no_match)
 int litehtml::element::select( const css_element_selector& selector, bool apply_pseudo /*= true*/ )	LITEHTML_RETURN_FUNC(select_no_match)
 litehtml::element* litehtml::element::find_ancestor( const css_selector& selector, bool apply_pseudo, bool* is_pseudo)	LITEHTML_RETURN_FUNC(0)
-bool litehtml::element::is_first_child( const element* el )						LITEHTML_RETURN_FUNC(false)
-bool litehtml::element::is_last_child( const element* el )							LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::is_first_child_inline( const element* el )					LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::is_last_child_inline( const element* el )					LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::have_inline_child()											LITEHTML_RETURN_FUNC(false)

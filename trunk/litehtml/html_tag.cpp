@@ -1666,6 +1666,11 @@ void litehtml::html_tag::get_inline_boxes( position::vector& boxes )
 				{
 					if(old_box)
 					{
+						if(boxes.empty())
+						{
+							pos.x		-= m_padding.left + m_borders.left;
+							pos.width	+= m_padding.left + m_borders.left;
+						}
 						boxes.push_back(pos);
 					}
 					old_box		= el->m_box;
@@ -1678,13 +1683,47 @@ void litehtml::html_tag::get_inline_boxes( position::vector& boxes )
 				pos.height	= std::max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom);
 			} else if(el->get_display() == display_inline)
 			{
-				el->get_inline_boxes(boxes);
+				position::vector sub_boxes;
+				el->get_inline_boxes(sub_boxes);
+				if(!sub_boxes.empty())
+				{
+					sub_boxes.rbegin()->width += el->margin_right();
+					if(boxes.empty())
+					{
+						if(m_padding.left + m_borders.left > 0)
+						{
+							position padding_box = (*sub_boxes.begin());
+							padding_box.x		-= m_padding.left + m_borders.left + el->margin_left();
+							padding_box.width	= m_padding.left + m_borders.left + el->margin_left();
+							boxes.push_back(padding_box);
+						}
+					}
+
+					sub_boxes.rbegin()->width += el->margin_right();
+
+					boxes.insert(boxes.end(), sub_boxes.begin(), sub_boxes.end());
+				}
 			}
 		}
 	}
 	if(pos.width || pos.height)
 	{
+		if(boxes.empty())
+		{
+			pos.x		-= m_padding.left + m_borders.left;
+			pos.width	+= m_padding.left + m_borders.left;
+		}
 		boxes.push_back(pos);
+	}
+	if(!boxes.empty())
+	{
+		if(m_padding.right + m_borders.right > 0)
+		{
+			position padding_box = (*boxes.rbegin());
+			padding_box.x		+= padding_box.width;
+			padding_box.width	= m_padding.right + m_borders.right;
+			boxes.push_back(padding_box);
+		}
 	}
 }
 
@@ -1723,7 +1762,7 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 	for (used_selector::vector::iterator iter = m_used_styles.begin(); iter != m_used_styles.end() && !apply; iter++)
 	{
 		int res = select(*((*iter)->m_selector), true);
-		if( (!(res && (*iter)->m_used) || (!res && !(*iter)->m_used)) )
+		if( (res == select_no_match && (*iter)->m_used) || (res == select_match && !(*iter)->m_used) )
 		{
 			apply = true;
 		}
@@ -2491,25 +2530,57 @@ bool litehtml::html_tag::is_floats_holder() const
 	return false;
 }
 
-bool litehtml::html_tag::is_first_child( const element* el )
+bool litehtml::html_tag::is_first_child_inline( const element* el )
 {
 	if(!m_children.empty())
 	{
-		if(el == m_children.front())
+		for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
 		{
-			return true;
+			if(!(*iter)->is_white_space())
+			{
+				if(el == (*iter))
+				{
+					return true;
+				}
+				if((*iter)->get_display() == display_inline)
+				{
+					if((*iter)->have_inline_child())
+					{
+						return false;
+					}
+				} else
+				{
+					return false;
+				}
+			}
 		}
 	}
 	return false;
 }
 
-bool litehtml::html_tag::is_last_child( const element* el )
+bool litehtml::html_tag::is_last_child_inline( const element* el )
 {
 	if(!m_children.empty())
 	{
-		if(el == m_children.back())
+		for(elements_vector::reverse_iterator iter = m_children.rbegin(); iter != m_children.rend(); iter++)
 		{
-			return true;
+			if(!(*iter)->is_white_space())
+			{
+				if(el == (*iter))
+				{
+					return true;
+				}
+				if((*iter)->get_display() == display_inline)
+				{
+					if((*iter)->have_inline_child())
+					{
+						return false;
+					}
+				} else
+				{
+					return false;
+				}
+			}
 		}
 	}
 	return false;
@@ -3351,4 +3422,19 @@ litehtml::element* litehtml::html_tag::get_element_after()
 void litehtml::html_tag::add_style( litehtml::style::ptr st )
 {
 	m_style.combine(*st);
+}
+
+bool litehtml::html_tag::have_inline_child()
+{
+	if(!m_children.empty())
+	{
+		for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
+		{
+			if(!(*iter)->is_white_space())
+			{
+				return true;
+			}
+		}
+	}
+	return false;
 }

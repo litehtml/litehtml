@@ -138,9 +138,12 @@ void litehtml::line_box::add_element( element* el )
 
 		if(!el->m_skip)
 		{
-			el->m_pos.x	= m_box_left + m_width + el->content_margins_left();
+			int el_shift_left	= el->get_inline_shift_left();
+			int el_shift_right	= el->get_inline_shift_right();
+
+			el->m_pos.x	= m_box_left + m_width + el_shift_left;
 			el->m_pos.y	= m_box_top;
-			m_width		+= el->width();
+			m_width		+= el->width() + el_shift_left + el_shift_right;
 		}
 	}
 }
@@ -302,7 +305,7 @@ bool litehtml::line_box::can_hold( element* el, white_space ws )
 		return true;
 	}
 
-	if(m_box_left + m_width + el->width() > m_box_right)
+	if(m_box_left + m_width + el->width() + el->get_inline_shift_left() + el->get_inline_shift_right() > m_box_right)
 	{
 		return false;
 	}
@@ -397,16 +400,18 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
 		std::vector<element*>::iterator remove_begin = m_items.end();
 		for(std::vector<element*>::iterator i = m_items.begin() + 1; i != m_items.end(); i++)
 		{
-			if(!(*i)->m_skip)
+			element* el = (*i);
+
+			if(!el->m_skip)
 			{
-				if(m_box_left + m_width + (*i)->width() > m_box_right)
+				if(m_box_left + m_width + el->width() + el->get_inline_shift_right() + el->get_inline_shift_left() > m_box_right)
 				{
 					remove_begin = i;
 					break;
 				} else
 				{
-					(*i)->m_pos.x += add;
-					m_width += (*i)->width();
+					el->m_pos.x += add;
+					m_width += el->width() + el->get_inline_shift_right() + el->get_inline_shift_left();
 				}
 			}
 		}
@@ -414,6 +419,11 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
 		{
 			els.insert(els.begin(), remove_begin, m_items.end());
 			m_items.erase(remove_begin, m_items.end());
+			
+			for(elements_vector::iterator i = els.begin(); i != els.end(); i++)
+			{
+				(*i)->m_box = 0;
+			}
 		}
 	}
 }

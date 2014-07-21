@@ -153,8 +153,9 @@ namespace litehtml
 		virtual void				get_text(tstring& text);
 		virtual void				parse_attributes();
 
-		virtual bool				is_first_child(const element* el);
-		virtual bool				is_last_child(const element* el);
+		virtual bool				is_first_child_inline(const element* el);
+		virtual bool				is_last_child_inline(const element* el);
+		virtual bool				have_inline_child();
 		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				init();
 		virtual void				get_inline_boxes(position::vector& boxes);
