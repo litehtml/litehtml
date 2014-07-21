@@ -71,6 +71,8 @@ namespace litehtml
 		void						parent(element* par);
 		bool						is_visible() const;
 		int							calc_width(int defVal) const;
+		int							get_inline_shift_left();
+		int							get_inline_shift_right();
 
 		virtual element::ptr		select_one(const tstring& selector);
 		virtual element::ptr		select_one(const css_selector& selector);
@@ -141,8 +143,9 @@ namespace litehtml
 		virtual bool				is_ancestor(element* el);
 		virtual element*			find_adjacent_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual element*			find_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual bool				is_first_child(const element* el);
-		virtual bool				is_last_child(const element* el);
+		virtual bool				is_first_child_inline(const element* el);
+		virtual bool				is_last_child_inline(const element* el);
+		virtual bool				have_inline_child();
 		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				init();
 		virtual bool				is_floats_holder() const;

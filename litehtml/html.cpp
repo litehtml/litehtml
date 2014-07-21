@@ -35,7 +35,7 @@ int litehtml::value_index( const tstring& val, const tstring& strings, int defVa
 	int idx = 0;
 	tstring::size_type delim_start	= 0;
 	tstring::size_type delim_end	= strings.find(delim, delim_start);
-	tstring::size_type item_len = 0;
+	tstring::size_type item_len		= 0;
 	while(true)
 	{
 		if(delim_end == tstring::npos)
@@ -60,19 +60,6 @@ int litehtml::value_index( const tstring& val, const tstring& strings, int defVa
 		delim_end = strings.find(delim, delim_start);
 	}
 	return defValue;
-
-/*
-	string_vector tokens;
-	tokenize(strings, tokens, delim);
-	for(size_t i = 0; i < tokens.size(); i++)
-	{
-		if(!t_strcmp(tokens[i].c_str(), val))
-		{
-			return (int) i;
-		}
-	}
-	return defValue;
-*/
 }
 
 int litehtml::value_in_list( const tstring& val, const tstring& strings, tchar_t delim )

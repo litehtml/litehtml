@@ -204,6 +204,12 @@ LPWSTR web_page::load_text_file( LPCWSTR path, bool is_html, LPCWSTR defEncoding
 		str[cbRead] = 0;
 		CloseHandle(fl);
 
+		int bom = 0;
+		if(str[0] == '\xEF' && str[1] == '\xBB' && str[2] == '\xBF')
+		{
+			bom = 3;
+		}
+
 		if(is_html)
 		{
 			std::wstring encoding;
@@ -260,12 +266,13 @@ LPWSTR web_page::load_text_file( LPCWSTR path, bool is_html, LPCWSTR defEncoding
 				UINT  szDst = (UINT) strlen(str) * 4;
 				LPSTR dst = new char[szDst];
 
-				if(ml->ConvertString(&dwMode, charset_src.uiInternetEncoding, charset_dst.uiInternetEncoding, (LPBYTE) str, NULL, (LPBYTE) dst, &szDst) == S_OK)
+				if(ml->ConvertString(&dwMode, charset_src.uiInternetEncoding, charset_dst.uiInternetEncoding, (LPBYTE) str + bom, NULL, (LPBYTE) dst, &szDst) == S_OK)
 				{
 					dst[szDst] = 0;
 					cbRead = szDst;
 					delete str;
 					str = dst;
+					bom = 0;
 				} else
 				{
 					delete dst;
@@ -276,7 +283,7 @@ LPWSTR web_page::load_text_file( LPCWSTR path, bool is_html, LPCWSTR defEncoding
 		if(!strW)
 		{
 			strW = new WCHAR[cbRead + 1];
-			MultiByteToWideChar(CP_UTF8, 0, str, -1, strW, cbRead + 1);
+			MultiByteToWideChar(CP_UTF8, 0, str + bom, -1, strW, cbRead + 1);
 		}
 
 		free(str);

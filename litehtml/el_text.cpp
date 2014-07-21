@@ -102,20 +102,6 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 		m_size.width	= m_doc->container()->text_width(m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font);
 	}
 	m_draw_spaces = fm.draw_spaces;
-
-	if(m_parent->get_display() == display_inline)
-	{
-		if(m_parent->is_first_child(this))
-		{
-			m_margins.left	= m_parent->margin_left();
-			m_padding.left	= m_parent->padding_left() + m_parent->border_left();
-		}
-		if(m_parent->is_last_child(this))
-		{
-			m_margins.right = m_parent->margin_right();
-			m_padding.right	= m_parent->padding_right() + m_parent->border_right();
-		}
-	}
 }
 
 int litehtml::el_text::get_base_line()

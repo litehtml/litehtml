@@ -314,6 +314,11 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 	// Parse list-style shorthand properties 
 	if(!t_strcmp(name, _t("list-style")))
 	{
+		add_parsed_property(_t("list-style-type"),			_t("disc"),		important);
+		add_parsed_property(_t("list-style-position"),		_t("outside"),	important);
+		add_parsed_property(_t("list-style-image"),			_t(""),			important);
+		add_parsed_property(_t("list-style-image-baseurl"),	_t(""),			important);
+
 		string_vector tokens;
 		tokenize(val, tokens, _t(" "), _t(""), _t("()"));
 		for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
@@ -411,25 +416,25 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		tokenize(val, tokens, _t(" "));
 		if(tokens.size() >= 4)
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")	+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
 			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
 			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[2], important);
 			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[3], important);
 		} else if(tokens.size() == 3)
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")	+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
 			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
 			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[1], important);
 			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[2], important);
 		} else if(tokens.size() == 2)
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")	+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
 			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[0], important);
 			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
 			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[1], important);
 		} else if(tokens.size() == 1)
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")	+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
 			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[0], important);
 			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[0], important);
 			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[0], important);
@@ -471,11 +476,16 @@ void litehtml::style::parse_short_border( const tstring& prefix, const tstring& 
 
 void litehtml::style::parse_short_background( const tstring& val, const tchar_t* baseurl, bool important )
 {
+	add_parsed_property(_t("background-color"),			_t("transparent"),	important);
+	add_parsed_property(_t("background-image"),			_t(""),				important);
+	add_parsed_property(_t("background-image-baseurl"), _t(""),				important);
+	add_parsed_property(_t("background-repeat"),		_t("repeat"),		important);
+	add_parsed_property(_t("background-origin"),		_t("padding-box"),	important);
+	add_parsed_property(_t("background-clip"),			_t("border-box"),	important);
+	add_parsed_property(_t("background-attachment"),	_t("scroll"),		important);
+
 	if(val == _t("none"))
 	{
-		add_parsed_property(_t("background-color"),			_t("transparent"),	important);
-		add_parsed_property(_t("background-image"),			_t(""),				important);
-		add_parsed_property(_t("background-image-baseurl"), _t(""),				important);
 		return;
 	}
 
@@ -530,6 +540,12 @@ void litehtml::style::parse_short_background( const tstring& val, const tchar_t*
 
 void litehtml::style::parse_short_font( const tstring& val, bool important )
 {
+	add_parsed_property(_t("font-style"),			_t("normal"),	important);
+	add_parsed_property(_t("font-variant"),			_t("normal"),	important);
+	add_parsed_property(_t("font-weight"),			_t("normal"),	important);
+	add_parsed_property(_t("font-size"),			_t("medium"),	important);
+	add_parsed_property(_t("line-height"),			_t("normal"),	important);
+
 	string_vector tokens;
 	tokenize(val, tokens, _t(" "), _t(""), _t("\""));
 
@@ -547,7 +563,7 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 				if(idx == 0 && !was_normal)
 				{
 					add_parsed_property(_t("font-weight"),		*tok, important);
-					add_parsed_property(_t("font-variant"),	*tok, important);
+					add_parsed_property(_t("font-variant"),		*tok, important);
 					add_parsed_property(_t("font-style"),		*tok, important);
 				} else
 				{
