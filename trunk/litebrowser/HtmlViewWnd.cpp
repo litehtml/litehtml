@@ -416,10 +416,11 @@ void CHTMLViewWnd::OnVScroll( int pos, int flags )
 
 	if(newTop != m_top)
 	{
-		ScrollWindowEx(m_hWnd, 0, m_top - newTop, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
+		//ScrollWindowEx(m_hWnd, 0, m_top - newTop, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
 		m_top  = newTop;
 		SetScrollPos(m_hWnd, SB_VERT, m_top, TRUE);
-		UpdateWindow(m_hWnd);
+		//UpdateWindow(m_hWnd);
+		redraw(NULL, TRUE);
 	}
 }
 
@@ -479,10 +480,11 @@ void CHTMLViewWnd::OnHScroll( int pos, int flags )
 
 	if(newLeft != m_left)
 	{
-		ScrollWindowEx(m_hWnd, m_left - newLeft, 0, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
+		//ScrollWindowEx(m_hWnd, m_left - newLeft, 0, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
 		m_left  = newLeft;
 		SetScrollPos(m_hWnd, SB_HORZ, m_left, TRUE);
-		UpdateWindow(m_hWnd);
+		//UpdateWindow(m_hWnd);
+		redraw(NULL, TRUE);
 	}
 }
 
@@ -503,10 +505,11 @@ void CHTMLViewWnd::OnMouseWheel( int delta )
 
 	if(newTop != m_top)
 	{
-		ScrollWindowEx(m_hWnd, 0, m_top - newTop, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
+		//ScrollWindowEx(m_hWnd, 0, m_top - newTop, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
 		m_top  = newTop;
 		SetScrollPos(m_hWnd, SB_VERT, m_top, TRUE);
-		UpdateWindow(m_hWnd);
+		//UpdateWindow(m_hWnd);
+		redraw(NULL, TRUE);
 	}
 }
 

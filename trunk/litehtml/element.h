@@ -83,7 +83,7 @@ namespace litehtml
 		virtual void				calc_outlines( int parent_width );
 		virtual void				apply_vertical_align();
 		virtual bool				fetch_positioned();
-		virtual void				render_absolutes();
+		virtual void				render_positioned();
 
 		virtual bool				appendChild(litehtml::element* el);
 
@@ -157,7 +157,7 @@ namespace litehtml
 		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right);
 		virtual void				add_float(element* el, int x, int y);
 		virtual void				update_floats(int dy, element* parent);
-		virtual void				add_absolute(element* el);
+		virtual void				add_positioned(element* el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
 		virtual int					get_zindex() const;
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);

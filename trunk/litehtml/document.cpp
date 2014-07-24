@@ -314,7 +314,7 @@ int litehtml::document::render( int max_width )
 		ret = m_root->render(0, 0, max_width);
 		if(m_root->fetch_positioned())
 		{
-			m_root->render_absolutes();
+			m_root->render_positioned();
 		}
 		m_size.width	= 0;
 		m_size.height	= 0;

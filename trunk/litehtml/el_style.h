@@ -5,7 +5,7 @@ namespace litehtml
 {
 	class el_style : public element
 	{
-		tstring m_text;
+		elements_vector		m_children;
 	public:
 		el_style(litehtml::document* doc);
 		virtual ~el_style();

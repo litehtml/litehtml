@@ -248,7 +248,7 @@ bool litehtml::element::is_only_child(element* el, bool of_type)					LITEHTML_RE
 litehtml::overflow litehtml::element::get_overflow() const							LITEHTML_RETURN_FUNC(overflow_visible)
 void litehtml::element::draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex ) LITEHTML_EMPTY_FUNC
 void litehtml::element::draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned ) LITEHTML_EMPTY_FUNC
-void litehtml::element::render_absolutes()											LITEHTML_EMPTY_FUNC
+void litehtml::element::render_positioned()											LITEHTML_EMPTY_FUNC
 int litehtml::element::get_zindex() const											LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::fetch_positioned()											LITEHTML_RETURN_FUNC(false)
 litehtml::visibility litehtml::element::get_visibility() const						LITEHTML_RETURN_FUNC(visibility_visible)
@@ -267,7 +267,7 @@ litehtml::css_length litehtml::element::get_css_bottom() const						LITEHTML_RET
 litehtml::vertical_align litehtml::element::get_vertical_align() const				LITEHTML_RETURN_FUNC(va_baseline)
 int litehtml::element::place_element( element* el, int max_width )					LITEHTML_RETURN_FUNC(0)
 int litehtml::element::render_inline( element* container, int max_width )			LITEHTML_RETURN_FUNC(0)
-void litehtml::element::add_absolute( element* el )									LITEHTML_EMPTY_FUNC
+void litehtml::element::add_positioned( element* el )									LITEHTML_EMPTY_FUNC
 int litehtml::element::find_next_line_top( int top, int width, int def_right )		LITEHTML_RETURN_FUNC(0)
 litehtml::element_float litehtml::element::get_float() const						LITEHTML_RETURN_FUNC(float_none)
 void litehtml::element::add_float( element* el, int x, int y )						LITEHTML_EMPTY_FUNC

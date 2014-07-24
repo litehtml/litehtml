@@ -20,6 +20,6 @@ void litehtml::el_comment::set_data( const tchar_t* data )
 {
 	if(data)
 	{
-		m_text = data;
+		m_text += data;
 	}
 }
