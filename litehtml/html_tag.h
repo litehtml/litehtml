@@ -64,6 +64,7 @@ namespace litehtml
 		css_length				m_css_right;
 		css_length				m_css_top;
 		css_length				m_css_bottom;
+		css_length				m_css_text_indent;
 
 		overflow				m_overflow;
 		visibility				m_visibility;
@@ -82,7 +83,7 @@ namespace litehtml
 		virtual int					render_inline(element* container, int max_width);
 		virtual int					place_element(element* el, int max_width);
 		virtual bool				fetch_positioned();
-		virtual void				render_absolutes();
+		virtual void				render_positioned();
 
 		int							new_box( element* el, int max_width );
 
@@ -168,7 +169,7 @@ namespace litehtml
 		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right);
 		virtual void				add_float(element* el, int x, int y);
 		virtual void				update_floats(int dy, element* parent);
-		virtual void				add_absolute(element* el);
+		virtual void				add_positioned(element* el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
 		virtual void				apply_vertical_align();
 		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
