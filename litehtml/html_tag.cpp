@@ -422,12 +422,6 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 int litehtml::html_tag::render( int x, int y, int max_width )
 {
 	int parent_width = max_width;
-/*
-	if(m_parent)
-	{
-		parent_width = m_parent->get_predefined_width(max_width);
-	}
-*/
 
 	// restore margins after collapse
 	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		m_font_size, max_width);
@@ -619,7 +613,8 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 	// re-render the inline-block with new width
 	if((	m_display == display_inline_block						|| 
 			(m_float != float_none && m_css_width.is_predefined())	|| 
-			m_el_position == element_position_absolute ) 
+			m_el_position == element_position_absolute ||
+			m_el_position == element_position_fixed) 
 
 			&& ret_width < max_width && !m_second_pass && m_parent)
 	{
@@ -1764,24 +1759,40 @@ void litehtml::html_tag::get_inline_boxes( position::vector& boxes )
 	}
 }
 
-bool litehtml::html_tag::on_mouse_over( int x, int y )
+bool litehtml::html_tag::on_mouse_over( int x, int y, bool* is_inside )
 {
-	if(m_display == display_inline_text)
+	if(m_display == display_inline_text || !is_visible())
 	{
 		return false;
 	}
 
-	bool ret = set_pseudo_class(_t("hover"), is_point_inside(x, y));
+	bool is_hover = false;
+
+	bool ret = false;
 
 	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
 	{
 		if(!(*iter)->skip())
 		{
-			if((*iter)->on_mouse_over(x - m_pos.x, y - m_pos.y))
+			if((*iter)->on_mouse_over(x - m_pos.x, y - m_pos.y, &is_hover))
 			{
 				ret = true;
 			}
 		}
+	}
+
+	if(!is_hover)
+	{
+		is_hover = is_point_inside(x, y);
+	}
+
+	if(is_hover && is_inside)
+	{
+		*is_inside = true;
+	}
+	if(set_pseudo_class(_t("hover"), is_hover))
+	{
+		ret = true;
 	}
 
 	return ret;
@@ -1885,7 +1896,7 @@ bool litehtml::html_tag::on_mouse_leave()
 
 bool litehtml::html_tag::on_lbutton_down( int x, int y )
 {
-	if(m_display == display_inline_text)
+	if(m_display == display_inline_text || !is_visible())
 	{
 		return false;
 	}
@@ -1908,7 +1919,7 @@ bool litehtml::html_tag::on_lbutton_down( int x, int y )
 
 bool litehtml::html_tag::on_lbutton_up( int x, int y )
 {
-	if(m_display == display_inline_text)
+	if(m_display == display_inline_text || !is_visible())
 	{
 		return false;
 	}
@@ -2180,25 +2191,28 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 
 	if(el->get_element_position() == element_position_absolute || el->get_element_position() == element_position_fixed)
 	{
-		int line_top = 0;
-		if(!m_boxes.empty())
+		if(!m_second_pass)
 		{
-			if(m_boxes.back()->get_type() == box_line)
+			int line_top = 0;
+			if(!m_boxes.empty())
 			{
-				line_top = m_boxes.back()->top();
-				if(!m_boxes.back()->is_empty())
+				if(m_boxes.back()->get_type() == box_line)
 				{
-					line_top += line_height();
+					line_top = m_boxes.back()->top();
+					if(!m_boxes.back()->is_empty())
+					{
+						line_top += line_height();
+					}
+				} else
+				{
+					line_top = m_boxes.back()->bottom();
 				}
-			} else
-			{
-				line_top = m_boxes.back()->bottom();
 			}
-		}
 
-		el->render(0, line_top, max_width);
-		el->m_pos.x	+= el->content_margins_left();
-		el->m_pos.y	+= el->content_margins_top();
+			el->render(0, line_top, max_width);
+			el->m_pos.x	+= el->content_margins_left();
+			el->m_pos.y	+= el->content_margins_top();
+		}
 		return 0;
 	}
 
@@ -2405,12 +2419,13 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 
 bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 {
+	bool ret = false;
 	if(add)
 	{
 		if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass) == m_pseudo_classes.end())
 		{
 			m_pseudo_classes.push_back(pclass);
-			return true;
+			ret = true;
 		}
 	} else
 	{
@@ -2418,10 +2433,10 @@ bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 		if(pi != m_pseudo_classes.end())
 		{
 			m_pseudo_classes.erase(pi);
-			return true;
+			ret = true;
 		}
 	}
-	return false;
+	return ret;
 }
 
 int litehtml::html_tag::line_height() const
