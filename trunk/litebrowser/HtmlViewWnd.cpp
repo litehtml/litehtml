@@ -87,14 +87,18 @@ LRESULT CALLBACK CHTMLViewWnd::WndProc( HWND hWnd, UINT uMessage, WPARAM wParam,
 			break;
 		case WM_PAINT:
 			{
+				RECT rcClient;
+				GetClientRect(hWnd, &rcClient);
+				pThis->create_dib(rcClient.right - rcClient.left, rcClient.bottom - rcClient.top);
+
 				PAINTSTRUCT ps;
 				HDC hdc = BeginPaint(hWnd, &ps);
 
-				simpledib::dib dib;
+				pThis->OnPaint(&pThis->m_dib, &ps.rcPaint);
 
-				dib.beginPaint(hdc, &ps.rcPaint);
-				pThis->OnPaint(&dib, &ps.rcPaint);
-				dib.endPaint();
+				BitBlt(hdc, ps.rcPaint.left, ps.rcPaint.top,
+					ps.rcPaint.right - ps.rcPaint.left,
+					ps.rcPaint.bottom - ps.rcPaint.top, pThis->m_dib, ps.rcPaint.left, ps.rcPaint.top, SRCCOPY);
 
 				EndPaint(hWnd, &ps);
 			}
@@ -831,5 +835,17 @@ void CHTMLViewWnd::update_history()
 		m_history.url_opened(url);
 
 		page->release();
+	}
+}
+
+void CHTMLViewWnd::create_dib( int width, int height )
+{
+	if(m_dib.width() < width || m_dib.height() < height)
+	{
+		m_dib.destroy();
+		m_dib.create(width, height, true);
+	} else
+	{
+		m_dib.clear();
 	}
 }

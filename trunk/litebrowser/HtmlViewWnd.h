@@ -22,6 +22,7 @@ class CHTMLViewWnd
 	web_page*					m_page;
 	web_page*					m_page_next;
 	CRITICAL_SECTION			m_sync;
+	simpledib::dib				m_dib;
 public:
 	CHTMLViewWnd(HINSTANCE	hInst, litehtml::context* ctx);
 	virtual ~CHTMLViewWnd(void);
@@ -63,6 +64,7 @@ protected:
 	void				redraw(LPRECT rcDraw, BOOL update);
 	void				update_scroll();
 	void				update_cursor();
+	void				create_dib(int width, int height);
 	
 
 private:

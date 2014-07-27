@@ -112,7 +112,7 @@ namespace litehtml
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
 		virtual int					get_base_line();
-		virtual bool				on_mouse_over(int x, int y);
+		virtual bool				on_mouse_over(int x, int y, bool* is_inside = 0);
 		virtual bool				on_mouse_leave();
 		virtual bool				on_lbutton_down(int x, int y);
 		virtual bool				on_lbutton_up(int x, int y);
