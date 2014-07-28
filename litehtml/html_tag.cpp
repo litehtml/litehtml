@@ -454,18 +454,19 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 
 	if(m_display != display_table_cell && !m_css_width.is_predefined())
 	{
-		block_width = calc_width(parent_width);
-	}
-
-	if(!block_width.is_default())
-	{
-		ret_width = max_width = block_width;
+		ret_width = max_width = block_width = calc_width(parent_width - content_margins_left() + content_margins_right());
 	} else
 	{
 		if(max_width)
 		{
 			max_width -= content_margins_left() + content_margins_right();
 		}
+	}
+
+	// we force re-render with new width here
+	if(m_css_width.units() == css_units_percentage)
+	{
+		ret_width = 0;
 	}
 
 	// check for max-width
@@ -610,18 +611,23 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 
 	ret_width += content_margins_left() + content_margins_right();
 
-	// re-render the inline-block with new width
-	if((	m_display == display_inline_block						|| 
-			(m_float != float_none && m_css_width.is_predefined())	|| 
-			m_el_position == element_position_absolute ||
-			m_el_position == element_position_fixed) 
-
-			&& ret_width < max_width && !m_second_pass && m_parent)
+	// re-render with new width
+	if(ret_width < max_width && !m_second_pass && m_parent)
 	{
-		m_second_pass = true;
-		render(x, y, ret_width);
-		m_second_pass = false;
-		m_pos.width = ret_width - (content_margins_left() + content_margins_right());
+		if(	m_display == display_inline_block ||
+			m_css_width.is_predefined() && 
+			(	m_float != float_none || 
+				m_display == display_table ||
+				m_el_position == element_position_absolute || 
+				m_el_position == element_position_fixed
+			) 
+		  )
+		{
+			m_second_pass = true;
+			render(x, y, ret_width);
+			m_second_pass = false;
+			m_pos.width = ret_width - (content_margins_left() + content_margins_right());
+		}
 	}
 
 	return ret_width;

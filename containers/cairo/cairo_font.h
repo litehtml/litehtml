@@ -54,6 +54,7 @@ class cairo_font
 	int					m_size;
 	BOOL				m_bUnderline;
 	BOOL				m_bStrikeOut;
+	cairo_font_metrics	m_metrics;
 public:
 	// fonts are not thread safe :(
 	// you have to declare and initialize cairo_font::m_sync before the first using.
@@ -67,7 +68,8 @@ public:
 
 	void				show_text(cairo_t* cr, int x, int y, LPCWSTR str);
 	int					text_width(cairo_t* cr, LPCWSTR str);
-	void				get_metrics(cairo_t* cr, cairo_font_metrics* fm);
+	void				load_metrics(cairo_t* cr);
+	cairo_font_metrics&	metrics();
 private:
 	void				split_text(LPCWSTR str, text_chunk::vector& chunks);
 	void				free_text_chunks(text_chunk::vector& chunks);
@@ -78,6 +80,7 @@ private:
 	void				lock();
 	void				unlock();
 	int					round_d(double val);
+	void				get_metrics(cairo_t* cr, cairo_font_metrics* fm);
 };
 
 inline void cairo_font::lock()
@@ -98,4 +101,14 @@ inline int cairo_font::round_d(double val)
 		int_val++;
 	}
 	return int_val;
+}
+
+inline cairo_font_metrics& cairo_font::metrics()
+{ 
+	return m_metrics; 
+}
+
+inline void cairo_font::load_metrics(cairo_t* cr)
+{
+	get_metrics(cr, &m_metrics);
 }

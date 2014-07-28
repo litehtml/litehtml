@@ -44,17 +44,15 @@ litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceNa
 										(decoration & litehtml::font_decoration_linethrough) ? TRUE : FALSE,
 										(decoration & litehtml::font_decoration_underline) ? TRUE : FALSE);
 
+	cairo_save(m_temp_cr);
+	fnt->load_metrics(m_temp_cr);
+
 	if(fm)
 	{
-		cairo_save(m_temp_cr);
-
-		cairo_font_metrics cfm;
-		fnt->get_metrics(m_temp_cr, &cfm);
-
-		fm->ascent		= cfm.ascent;
-		fm->descent		= cfm.descent;
-		fm->height		= cfm.height;
-		fm->x_height	= cfm.x_height;
+		fm->ascent		= fnt->metrics().ascent;
+		fm->descent		= fnt->metrics().descent;
+		fm->height		= fnt->metrics().height;
+		fm->x_height	= fnt->metrics().x_height;
 		if(italic == litehtml::fontStyleItalic || decoration)
 		{
 			fm->draw_spaces = true;
@@ -62,9 +60,9 @@ litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceNa
 		{
 			fm->draw_spaces = false;
 		}
-
-		cairo_restore(m_temp_cr);
 	}
+
+	cairo_restore(m_temp_cr);
 
 	return (litehtml::uint_ptr) fnt;
 }
@@ -90,22 +88,22 @@ int cairo_container::text_width( const litehtml::tchar_t* text, litehtml::uint_p
 
 void cairo_container::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
-	cairo_font* fnt = (cairo_font*) hFont;
-	cairo_t* cr		= (cairo_t*) hdc;
-	cairo_save(cr);
+	if(hFont)
+	{
+		cairo_font* fnt = (cairo_font*) hFont;
+		cairo_t* cr		= (cairo_t*) hdc;
+		cairo_save(cr);
 
-	apply_clip(cr);
+		apply_clip(cr);
 
-	cairo_font_metrics cfm;
-	fnt->get_metrics(cr, &cfm);
+		int x = pos.left();
+		int y = pos.bottom() - fnt->metrics().descent;
 
-	int x = pos.left();
-	int y = pos.bottom()	- cfm.descent;
+		set_color(cr, color);
+		fnt->show_text(cr, x, y, text);
 
-	set_color(cr, color);
-	fnt->show_text(cr, x, y, text);
-
-	cairo_restore(cr);
+		cairo_restore(cr);
+	}
 }
 
 int cairo_container::pt_to_px( int pt )
