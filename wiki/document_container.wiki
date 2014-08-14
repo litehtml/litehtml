@@ -126,34 +126,7 @@ litehtml calls this function for the `<`base`>` html tag to set the base url. Sa
 virtual void link(litehtml::document* doc, litehtml::element::ptr el);
 }}}
 
-This function is used to process the `<`link`>` html tags. You must to read the element attributes and apply CSS styles manually.
-
-Below is the code from litebrowser:
-{{{
-void CHTMLViewWnd::link( litehtml::document* doc, litehtml::element::ptr el )
-{
-	const wchar_t* rel=el->get_attr(L"rel");
-	if(rel && !wcscmp(rel, L"stylesheet"))
-	{
-		const wchar_t* media=el->get_attr(L"media", L"screen");
-		if(media && (wcsstr(media, L"screen") || wcsstr(media, L"all")))
-		{
-			const wchar_t* href=el->get_attr(L"href");
-			if(href)
-			{
-				std::wstring url;
-				make_url(href, NULL, url);
-				LPWSTR css=load_text_file(url.c_str());
-				if(css)
-				{
-					doc->add_stylesheet(css, url.c_str());
-					delete css;
-				}
-			}
-		}
-	}
-}
-}}}
+This function is used to process the `<`link`>` html tags. Note, litehtml processes the stylesheets references automatically and calls import_css function to load CSS file.
 
 ==on_anchor_click==
 {{{
@@ -185,10 +158,10 @@ Convert char to lower case.
 
 ==import_css==
 {{{
-virtual void import_css(tstring& text, const tstring& url, tstring& baseurl, const string_vector& media);
+virtual void import_css(tstring& text, const tstring& url, tstring& baseurl);
 }}}
 
-This function handle the CSS at-rule @import. You have to download CSS and copy it into *text* parameter.
+litehtml calls this function to load stylesheet. You have to download CSS file referred by *url* and *baseurl* parameters and copy content into *text* parameter.
 
 ==set_clip==
 {{{
@@ -211,16 +184,16 @@ virtual void get_client_rect(litehtml::position& client);
 
 Fill the parameter *client* with the viewport position and size. Usually this is the size of the client rectangle of the window where you want to draw html.
 
-==is_media_valid==
-{{{
-virtual bool is_media_valid(const litehtml::tstring& media);
-}}}
-
-litehtml calls this function during parsing of the CSS at-rule @media. The string parameter *media* is the same as in CSS - litehtml does not parse or check this parameter. You have to return *true* if the @media block must be processed and *false* to ignore styles from the @media block.
-
 ==create_element==
 {{{
 virtual litehtml::element* create_element(const tchar_t* tag_name);
 }}}
 
 Using this function you can process custom tags. Just make your own litehtml::element and return is from this function. Parameter *tag_name* is the HTML tag (a, p, table etc.).
+
+==get_media_features==
+{{{
+virtual void get_media_features(litehtml::media_features& media)
+}}}
+
+Fill the *media* with the parameters of media where you render HTML. litehtml process stylesheets using the media features. Call document::media_changed function when any media feature is changed (for example user is changed the window size).
