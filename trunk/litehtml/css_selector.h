@@ -1,5 +1,6 @@
 #pragma once
 #include "style.h"
+#include "media_query.h"
 
 namespace litehtml
 {
@@ -192,9 +193,11 @@ namespace litehtml
 		css_combinator			m_combinator;
 		style::ptr				m_style;
 		int						m_order;
+		media_query_list::ptr	m_media_query;
 	public:
-		css_selector()
+		css_selector(media_query_list::ptr media)
 		{
+			m_media_query	= media;
 			m_combinator	= combinator_descendant;
 			m_order			= 0;
 		}
@@ -216,11 +219,24 @@ namespace litehtml
 			m_combinator	= val.m_combinator;
 			m_specificity	= val.m_specificity;
 			m_order			= val.m_order;
+			m_media_query	= val.m_media_query;
 		}
 
 		bool parse(const tstring& text);
 		void calc_specificity();
+		bool is_media_valid() const;
+		void add_media_to_doc(document* doc) const;
 	};
+
+	inline bool css_selector::is_media_valid() const
+	{
+		if(!m_media_query)
+		{
+			return true;
+		}
+		return m_media_query->is_used();
+	}
+
 
 	//////////////////////////////////////////////////////////////////////////
 

@@ -177,6 +177,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="2"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="1"
@@ -242,6 +243,7 @@
 				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
 				RuntimeLibrary="0"
 				EnableFunctionLevelLinking="true"
+				EnableEnhancedInstructionSet="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="3"
 				DebugInformationFormat="3"
@@ -398,6 +400,10 @@
 			</File>
 			<File
 				RelativePath=".\iterators.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\media_query.cpp"
 				>
 			</File>
 			<File
@@ -568,6 +574,10 @@
 			</File>
 			<File
 				RelativePath=".\iterators.h"
+				>
+			</File>
+			<File
+				RelativePath=".\media_query.h"
 				>
 			</File>
 			<File

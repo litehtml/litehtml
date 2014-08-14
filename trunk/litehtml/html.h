@@ -6,6 +6,7 @@
 #include <vector>
 #include <map>
 #include <cstring>
+#include <algorithm>
 #include "types.h"
 #include "os_types.h"
 #include "object.h"
@@ -13,6 +14,7 @@
 #include "borders.h"
 #include "html_tag.h"
 #include "web_color.h"
+#include "media_query.h"
 
 namespace litehtml
 {
@@ -49,12 +51,12 @@ namespace litehtml
 		virtual	void				set_cursor(const tchar_t* cursor)	= 0;
 		virtual	tchar_t				toupper(const tchar_t c) = 0;
 		virtual	tchar_t				tolower(const tchar_t c) = 0;
-		virtual void				import_css(tstring& text, const tstring& url, tstring& baseurl, const string_vector& media) = 0;
+		virtual void				import_css(tstring& text, const tstring& url, tstring& baseurl) = 0;
 		virtual void				set_clip(const litehtml::position& pos, bool valid_x, bool valid_y) = 0;
 		virtual void				del_clip() = 0;
 		virtual void				get_client_rect(litehtml::position& client) = 0;
-		virtual bool				is_media_valid(const litehtml::tstring& media) = 0;
 		virtual litehtml::element*	create_element(const tchar_t* tag_name) = 0;
+		virtual void				get_media_features(litehtml::media_features& media) = 0;
 	};
 
 	void trim(tstring &s);

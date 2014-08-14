@@ -11,7 +11,7 @@ litehtml::el_anchor::~el_anchor()
 
 }
 
-void litehtml::el_anchor::on_click( int x, int y )
+void litehtml::el_anchor::on_click()
 {
 	const tchar_t* href = get_attr(_t("href"));
 

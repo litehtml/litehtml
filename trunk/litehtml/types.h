@@ -353,7 +353,7 @@ namespace litehtml
 		clear_both
 	};
 
-#define  css_units_strings	_t("none;%;in;cm;mm;em;ex;pt;pc;px")
+#define  css_units_strings	_t("none;%;in;cm;mm;em;ex;pt;pc;px;dpi;dpcm")
 
 	enum css_units
 	{
@@ -366,7 +366,9 @@ namespace litehtml
 		css_units_ex,
 		css_units_pt,
 		css_units_pc,
-		css_units_px
+		css_units_px,
+		css_units_dpi,
+		css_units_dpcm,
 	};
 
 #define  background_attachment_strings	_t("scroll;fixed")
@@ -583,4 +585,93 @@ namespace litehtml
 			return m_val;
 		}
 	};
+
+
+#define media_orientation_strings		_t("portrait;landscape")
+
+	enum media_orientation
+	{
+		media_orientation_portrait,
+		media_orientation_landscape,
+	};
+
+#define media_feature_strings		_t("none;width;min-width;max-width;height;min-height;max-height;device-width;min-device-width;max-device-width;device-height;min-device-height;max-device-height;orientation;aspect-ratio;min-aspect-ratio;max-aspect-ratio;device-aspect-ratio;min-device-aspect-ratio;max-device-aspect-ratio;color;min-color;max-color;color-index;min-color-index;max-color-index;monochrome;min-monochrome;max-monochrome;resolution;min-resolution;max-resolution")
+
+	enum media_feature
+	{
+		media_feature_none,
+
+		media_feature_width,
+		media_feature_min_width,
+		media_feature_max_width,
+
+		media_feature_height,
+		media_feature_min_height,
+		media_feature_max_height,
+
+		media_feature_device_width,
+		media_feature_min_device_width,
+		media_feature_max_device_width,
+
+		media_feature_device_height,
+		media_feature_min_device_height,
+		media_feature_max_device_height,
+
+		media_feature_orientation,
+
+		media_feature_aspect_ratio,
+		media_feature_min_aspect_ratio,
+		media_feature_max_aspect_ratio,
+
+		media_feature_device_aspect_ratio,
+		media_feature_min_device_aspect_ratio,
+		media_feature_max_device_aspect_ratio,
+
+		media_feature_color,
+		media_feature_min_color,
+		media_feature_max_color,
+
+		media_feature_color_index,
+		media_feature_min_color_index,
+		media_feature_max_color_index,
+
+		media_feature_monochrome,
+		media_feature_min_monochrome,
+		media_feature_max_monochrome,
+
+		media_feature_resolution,
+		media_feature_min_resolution,
+		media_feature_max_resolution,
+	};
+
+#define media_type_strings		_t("none;all;screen;print;braille;embossed;handheld;projection;speech;tty;tv")
+
+	enum media_type
+	{
+		media_type_none,
+		media_type_all,
+		media_type_screen,
+		media_type_print,
+		media_type_braille,
+		media_type_embossed,
+		media_type_handheld,
+		media_type_projection,
+		media_type_speech,
+		media_type_tty,
+		media_type_tv,
+	};
+
+	struct media_features
+	{
+		media_type	type;
+		int			width;			// (pixels) For continuous media, this is the width of the viewport including the size of a rendered scroll bar (if any). For paged media, this is the width of the page box.
+		int			height;			// (pixels) The height of the targeted display area of the output device. For continuous media, this is the height of the viewport including the size of a rendered scroll bar (if any). For paged media, this is the height of the page box.
+		int			device_width;	// (pixels) The width of the rendering surface of the output device. For continuous media, this is the width of the screen. For paged media, this is the width of the page sheet size.
+		int			device_height;	// (pixels) The height of the rendering surface of the output device. For continuous media, this is the height of the screen. For paged media, this is the height of the page sheet size.
+		int			color;			// The number of bits per color component of the output device. If the device is not a color device, the value is zero.
+		int			color_index;	// The number of entries in the color lookup table of the output device. If the device does not use a color lookup table, the value is zero.
+		int			monochrome;		// The number of bits per pixel in a monochrome frame buffer. If the device is not a monochrome device, the output device value will be 0.
+		int			resolution;		// The resolution of the output device (in DPI)
+	};
+
 }

@@ -235,7 +235,8 @@ int litehtml::element::get_inline_shift_right()
 	return ret;
 }
 
-
+litehtml::element* litehtml::element::get_element_by_point( int x, int y, int client_x, int client_y )	LITEHTML_RETURN_FUNC(0)
+litehtml::element* litehtml::element::get_child_by_point( int x, int y, int client_x, int client_y, draw_flag flag, int zindex ) LITEHTML_RETURN_FUNC(0)
 void litehtml::element::get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) LITEHTML_EMPTY_FUNC
 void litehtml::element::add_style( litehtml::style::ptr st )						LITEHTML_EMPTY_FUNC
 litehtml::element::ptr litehtml::element::select_one( const css_selector& selector ) LITEHTML_RETURN_FUNC(0)
@@ -287,7 +288,8 @@ void litehtml::element::set_tagName( const tchar_t* tag )							LITEHTML_EMPTY_F
 void litehtml::element::set_data( const tchar_t* data )								LITEHTML_EMPTY_FUNC
 void litehtml::element::set_attr( const tchar_t* name, const tchar_t* val )			LITEHTML_EMPTY_FUNC
 void litehtml::element::apply_stylesheet( const litehtml::css& stylesheet )			LITEHTML_EMPTY_FUNC
-void litehtml::element::on_click( int x, int y )									LITEHTML_EMPTY_FUNC
+void litehtml::element::refresh_styles()											LITEHTML_EMPTY_FUNC
+void litehtml::element::on_click()													LITEHTML_EMPTY_FUNC
 void litehtml::element::init_font()													LITEHTML_EMPTY_FUNC
 void litehtml::element::get_inline_boxes( position::vector& boxes )					LITEHTML_EMPTY_FUNC
 void litehtml::element::parse_styles( bool is_reparse /*= false*/ )					LITEHTML_EMPTY_FUNC
@@ -296,10 +298,10 @@ bool litehtml::element::is_white_space()											LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_body() const												LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_break() const											LITEHTML_RETURN_FUNC(false)
 int litehtml::element::get_base_line()												LITEHTML_RETURN_FUNC(0)
-bool litehtml::element::on_mouse_over( int x, int y, bool* is_inside )				LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::on_mouse_over()												LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::on_mouse_leave()											LITEHTML_RETURN_FUNC(false)
-bool litehtml::element::on_lbutton_down( int x, int y )								LITEHTML_RETURN_FUNC(false)
-bool litehtml::element::on_lbutton_up( int x, int y )								LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::on_lbutton_down()											LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::on_lbutton_up()												LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::find_styles_changes( position::vector& redraw_boxes, int x, int y )	LITEHTML_RETURN_FUNC(false)
 const litehtml::tchar_t* litehtml::element::get_cursor()							LITEHTML_RETURN_FUNC(0)
 litehtml::white_space litehtml::element::get_white_space() const					LITEHTML_RETURN_FUNC(white_space_normal)

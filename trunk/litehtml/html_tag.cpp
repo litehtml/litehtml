@@ -78,7 +78,7 @@ const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, cons
 
 litehtml::element::ptr litehtml::html_tag::select_one( const tstring& selector )
 {
-	css_selector sel;
+	css_selector sel(media_query_list::ptr(0));
 	sel.parse(selector);
 
 	return select_one(sel);
@@ -113,40 +113,46 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 		if(apply != select_no_match)
 		{
 			used_selector::ptr us = new used_selector((*sel), false);
-			if(apply & select_match_pseudo_class)
+			m_used_styles.push_back(us);
+
+			if((*sel)->is_media_valid())
 			{
-				if(select(*(*sel), true))
+				if(apply & select_match_pseudo_class)
 				{
-					m_style.combine(*((*sel)->m_style));
+					if(select(*(*sel), true))
+					{
+						add_style((*sel)->m_style);
+						us->m_used = true;
+					}
+				} else if(apply & select_match_with_after)
+				{
+					element* el = get_element_after();
+					if(el)
+					{
+						el->add_style((*sel)->m_style);
+					}
+				} else if(apply & select_match_with_before)
+				{
+					element* el = get_element_before();
+					if(el)
+					{
+						el->add_style((*sel)->m_style);
+					}
+				} else
+				{
+					add_style((*sel)->m_style);
 					us->m_used = true;
 				}
-				m_used_styles.push_back(us);
-			} else if(apply & select_match_with_after)
-			{
-				element* el = get_element_after();
-				if(el)
-				{
-					el->add_style((*sel)->m_style);
-				}
-			} else if(apply & select_match_with_before)
-			{
-				element* el = get_element_before();
-				if(el)
-				{
-					el->add_style((*sel)->m_style);
-				}
-			} else
-			{
-				m_style.combine(*((*sel)->m_style));
-				us->m_used = true;
-				m_used_styles.push_back(us);
 			}
 		}
 	}
 
 	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
-		(*i)->apply_stylesheet(stylesheet);
+		if((*i)->get_display() != display_inline_text)
+		{
+			(*i)->apply_stylesheet(stylesheet);
+		}
 	}
 }
 
@@ -1765,40 +1771,18 @@ void litehtml::html_tag::get_inline_boxes( position::vector& boxes )
 	}
 }
 
-bool litehtml::html_tag::on_mouse_over( int x, int y, bool* is_inside )
+bool litehtml::html_tag::on_mouse_over()
 {
-	if(m_display == display_inline_text || !is_visible())
-	{
-		return false;
-	}
-
-	bool is_hover = false;
-
 	bool ret = false;
 
-	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
+	element* el = this;
+	while(el)
 	{
-		if(!(*iter)->skip())
+		if(el->set_pseudo_class(_t("hover"), true))
 		{
-			if((*iter)->on_mouse_over(x - m_pos.x, y - m_pos.y, &is_hover))
-			{
-				ret = true;
-			}
+			ret = true;
 		}
-	}
-
-	if(!is_hover)
-	{
-		is_hover = is_point_inside(x, y);
-	}
-
-	if(is_hover && is_inside)
-	{
-		*is_inside = true;
-	}
-	if(set_pseudo_class(_t("hover"), is_hover))
-	{
-		ret = true;
+		el = el->parent();
 	}
 
 	return ret;
@@ -1815,10 +1799,13 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 	bool apply = false;
 	for (used_selector::vector::iterator iter = m_used_styles.begin(); iter != m_used_styles.end() && !apply; iter++)
 	{
-		int res = select(*((*iter)->m_selector), true);
-		if( (res == select_no_match && (*iter)->m_used) || (res == select_match && !(*iter)->m_used) )
+		if((*iter)->m_selector->is_media_valid())
 		{
-			apply = true;
+			int res = select(*((*iter)->m_selector), true);
+			if( (res == select_no_match && (*iter)->m_used) || (res == select_match && !(*iter)->m_used) )
+			{
+				apply = true;
+			}
 		}
 	}
 
@@ -1837,35 +1824,36 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 		} else
 		{
 			position pos = m_pos;
-			pos.x += x;
-			pos.y += y;
+			if(m_el_position != element_position_fixed)
+			{
+				pos.x += x;
+				pos.y += y;
+			}
 			pos += m_padding;
 			pos += m_borders;
 			redraw_boxes.push_back(pos);
 		}
 
 		ret = true;
-		m_style.clear();
-		for (used_selector::vector::iterator iter = m_used_styles.begin(); iter != m_used_styles.end(); iter++)
-		{
-			if(select(*(*iter)->m_selector, true))
-			{
-				(*iter)->m_used = true;
-				m_style.combine(*((*iter)->m_selector->m_style));
-			} else
-			{
-				(*iter)->m_used = false;
-			}
-		}
-		parse_styles(/*true*/);
+		refresh_styles();
+		parse_styles();
 	}
 	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
 		if(!(*i)->skip())
 		{
-			if((*i)->find_styles_changes(redraw_boxes, x + m_pos.x, y + m_pos.y))
+			if(m_el_position != element_position_fixed)
 			{
-				ret = true;
+				if((*i)->find_styles_changes(redraw_boxes, x + m_pos.x, y + m_pos.y))
+				{
+					ret = true;
+				}
+			} else
+			{
+				if((*i)->find_styles_changes(redraw_boxes, m_pos.x, m_pos.y))
+				{
+					ret = true;
+				}
 			}
 		}
 	}
@@ -1876,106 +1864,52 @@ bool litehtml::html_tag::on_mouse_leave()
 {
 	bool ret = false;
 
-	if(set_pseudo_class(_t("hover"), false))
+	element* el = this;
+	while(el)
 	{
-		ret = true;
-	}
-
-	if(set_pseudo_class(_t("active"), false))
-	{
-		ret = true;
-	}
-
-	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
-	{
-		if(!(*iter)->skip())
+		if(el->set_pseudo_class(_t("hover"), false))
 		{
-			if((*iter)->on_mouse_leave())
-			{
-				ret = true;
-			}
+			ret = true;
 		}
+		if(el->set_pseudo_class(_t("active"), false))
+		{
+			ret = true;
+		}
+		el = el->parent();
 	}
 
 	return ret;
 }
 
-bool litehtml::html_tag::on_lbutton_down( int x, int y )
+bool litehtml::html_tag::on_lbutton_down()
 {
-	if(m_display == display_inline_text || !is_visible())
-	{
-		return false;
-	}
-
-	bool ret = set_pseudo_class(_t("active"), is_point_inside(x, y));
-
-	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
-	{
-		if(!(*iter)->skip())
-		{
-			if((*iter)->on_lbutton_down(x - m_pos.x, y - m_pos.y))
-			{
-				ret = true;
-			}
-		}
-	}
-
-	return ret;
+	return set_pseudo_class(_t("active"), true);
 }
 
-bool litehtml::html_tag::on_lbutton_up( int x, int y )
+bool litehtml::html_tag::on_lbutton_up()
 {
-	if(m_display == display_inline_text || !is_visible())
-	{
-		return false;
-	}
-
 	bool ret = false;
 
 	if(set_pseudo_class(_t("active"), false))
 	{
 		ret = true;
-		on_click(x, y);
-	}
-
-	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
-	{
-		if(!(*iter)->skip())
-		{
-			if((*iter)->on_lbutton_up(x, y))
-			{
-				ret = true;
-			}
-		}
+		on_click();
 	}
 
 	return ret;
 }
 
-void litehtml::html_tag::on_click( int x, int y )
+void litehtml::html_tag::on_click()
 {
-
+	if(parent())
+	{
+		parent()->on_click();
+	}
 }
 
 const litehtml::tchar_t* litehtml::html_tag::get_cursor()
 {
-	const tchar_t* ret = 0;
-
-	if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), _t("hover")) != m_pseudo_classes.end())
-	{
-		ret = get_style_property(_t("cursor"), true, 0);
-	}
-
-	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
-	{
-		const tchar_t* cursor = (*iter)->get_cursor();
-		if(cursor)
-		{
-			ret = cursor;
-		}
-	}
-
-	return ret;
+	return get_style_property(_t("cursor"), true, 0);
 }
 
 static const int font_size_table[8][7] =
@@ -3050,6 +2984,9 @@ int litehtml::html_tag::get_zindex() const
 
 void litehtml::html_tag::render_positioned()
 {
+	position wnd_position;
+	m_doc->container()->get_client_rect(wnd_position);
+
 	element_position el_position;
 	element* el;
 	for(elements_vector::iterator abs_el = m_positioned.begin(); abs_el != m_positioned.end(); abs_el++)
@@ -3065,8 +3002,6 @@ void litehtml::html_tag::render_positioned()
 			int client_y		= 0;
 			if(el_position == element_position_fixed)
 			{
-				position wnd_position;
-				m_doc->container()->get_client_rect(wnd_position);
 				parent_height	= wnd_position.height;
 				parent_width	= wnd_position.width;
 				client_x		= wnd_position.left();
@@ -3200,8 +3135,16 @@ void litehtml::html_tag::render_positioned()
 			if(need_render)
 			{
 				position pos = el->m_pos;
-				el->render(el->left(), el->right(), el->width());
+				el->render(el->left(), el->top(), el->width());
 				el->m_pos = pos;
+			}
+
+			if(el_position == element_position_fixed)
+			{
+				position fixed_pos = el->m_pos;
+				fixed_pos += el->m_padding;
+				fixed_pos += el->m_borders;
+				m_doc->add_fixed_box(fixed_pos);
 			}
 		}
 
@@ -3576,4 +3519,238 @@ bool litehtml::html_tag::have_inline_child()
 		}
 	}
 	return false;
+}
+
+void litehtml::html_tag::refresh_styles()
+{
+	remove_before_after();
+	m_style.clear();
+
+	for(litehtml::used_selector::vector::iterator sel = m_used_styles.begin(); sel != m_used_styles.end(); sel++)
+	{
+		used_selector* usel = (*sel);
+		usel->m_used = false;
+
+		if(usel->m_selector->is_media_valid())
+		{
+			int apply = select(*usel->m_selector, false);
+
+			if(apply != select_no_match)
+			{
+				if(apply & select_match_pseudo_class)
+				{
+					if(select(*usel->m_selector, true))
+					{
+						add_style(usel->m_selector->m_style);
+						usel->m_used = true;
+					}
+				} else if(apply & select_match_with_after)
+				{
+					element* el = get_element_after();
+					if(el)
+					{
+						el->add_style(usel->m_selector->m_style);
+					}
+				} else if(apply & select_match_with_before)
+				{
+					element* el = get_element_before();
+					if(el)
+					{
+						el->add_style(usel->m_selector->m_style);
+					}
+				} else
+				{
+					add_style(usel->m_selector->m_style);
+					usel->m_used = true;
+				}
+			}
+		}
+	}
+
+	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		if((*i)->get_display() != display_inline_text)
+		{
+			(*i)->refresh_styles();
+		}
+	}
+}
+
+litehtml::element* litehtml::html_tag::get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex)
+{
+	element* ret = 0;
+
+	if(m_overflow > overflow_visible)
+	{
+		if(!m_pos.is_point_inside(x, y))
+		{
+			return ret;
+		}
+	}
+
+	position pos = m_pos;
+	pos.x	= x - pos.x;
+	pos.y	= y - pos.y;
+
+	for(elements_vector::iterator i = m_children.begin(); i != m_children.end() && !ret; i++)
+	{
+		element* el = (*i);
+
+		if(el->is_visible() && el->get_display() != display_inline_text)
+		{
+			switch(flag)
+			{
+			case draw_positioned:
+				if(el->is_positioned() && el->get_zindex() == zindex)
+				{
+					if(el->get_element_position() == element_position_fixed)
+					{
+						ret = el->get_element_by_point(client_x, client_y, client_x, client_y);
+						if(!ret && (*i)->is_point_inside(client_x, client_y))
+						{
+							ret = (*i);
+						}
+					} else
+					{
+						ret = el->get_element_by_point(pos.x, pos.y, client_x, client_y);
+						if(!ret && (*i)->is_point_inside(pos.x, pos.y))
+						{
+							ret = (*i);
+						}
+					}
+					el = 0;
+				}
+				break;
+			case draw_block:
+				if(!el->is_inline_box() && el->get_float() == float_none && !el->is_positioned())
+				{
+					if(el->is_point_inside(pos.x, pos.y))
+					{
+						ret = el;
+					}
+				}
+				break;
+			case draw_floats:
+				if(el->get_float() != float_none && !el->is_positioned())
+				{
+					ret = el->get_element_by_point(pos.x, pos.y, client_x, client_y);
+
+					if(!ret && (*i)->is_point_inside(pos.x, pos.y))
+					{
+						ret = (*i);
+					}
+					el = 0;
+				}
+				break;
+			case draw_inlines:
+				if(el->is_inline_box() && el->get_float() == float_none && !el->is_positioned())
+				{
+					if(el->get_display() == display_inline_block)
+					{
+						ret = el->get_element_by_point(pos.x, pos.y, client_x, client_y);
+						el = 0;
+					}
+					if(!ret && (*i)->is_point_inside(pos.x, pos.y))
+					{
+						ret = (*i);
+					}
+				}
+				break;
+			default:
+				break;
+			}
+
+			if(el && !el->is_positioned())
+			{
+				if(flag == draw_positioned)
+				{
+					element* child = el->get_child_by_point(pos.x, pos.y, client_x, client_y, flag, zindex);
+					if(child)
+					{
+						ret = child;
+					}
+				} else
+				{
+					if(	el->get_float() == float_none &&
+						el->get_display() != display_inline_block)
+					{
+						element* child = el->get_child_by_point(pos.x, pos.y, client_x, client_y, flag, zindex);
+						if(child)
+						{
+							ret = child;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	return ret;
+}
+
+litehtml::element* litehtml::html_tag::get_element_by_point( int x, int y, int client_x, int client_y )
+{
+	element* ret = 0;
+
+	element* child = 0;
+
+	std::map<int, bool> zindexes;
+
+	for(elements_vector::iterator i = m_positioned.begin(); i != m_positioned.end(); i++)
+	{
+		zindexes[(*i)->get_zindex()];
+	}
+
+	for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end() && !ret; idx++)
+	{
+		if(idx->first > 0)
+		{
+			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
+		}
+	}
+	if(ret) return ret;
+
+	for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end() && !ret; idx++)
+	{
+		if(idx->first == 0)
+		{
+			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
+		}
+	}
+	if(ret) return ret;
+
+	ret = get_child_by_point(x, y, client_x, client_y, draw_inlines, 0);
+	if(ret) return ret;
+
+	ret = get_child_by_point(x, y, client_x, client_y, draw_floats, 0);
+	if(ret) return ret;
+
+	ret = get_child_by_point(x, y, client_x, client_y, draw_block, 0);
+	if(ret) return ret;
+
+
+	for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end() && !ret; idx++)
+	{
+		if(idx->first < 0)
+		{
+			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
+		}
+	}
+	if(ret) return ret;
+
+	if(m_el_position == element_position_fixed)
+	{
+		if(is_point_inside(client_x, client_y))
+		{
+			ret = this;
+		}
+	} else
+	{
+		if(is_point_inside(x, y))
+		{
+			ret = this;
+		}
+	}
+
+	return ret;
 }
