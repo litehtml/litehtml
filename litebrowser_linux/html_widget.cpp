@@ -57,17 +57,14 @@ void html_widget::set_cursor(const litehtml::tchar_t* cursor)
 
 }
 
-void html_widget::import_css(litehtml::tstring& text, const litehtml::tstring& url, litehtml::tstring& baseurl, const litehtml::string_vector& media)
+void html_widget::import_css(litehtml::tstring& text, const litehtml::tstring& url, litehtml::tstring& baseurl)
 {
-	if(media.empty() || std::find(media.begin(), media.end(), std::string("all")) != media.end() || std::find(media.begin(), media.end(), std::string("screen")) != media.end())
+	std::string css_url;
+	make_url(url.c_str(), baseurl.c_str(), css_url);
+	load_text_file(css_url, text);
+	if(!text.empty())
 	{
-		std::string css_url;
-		make_url(url.c_str(), baseurl.c_str(), css_url);
-		load_text_file(css_url, text);
-		if(!text.empty())
-		{
-			baseurl = css_url;
-		}
+		baseurl = css_url;
 	}
 }
 
@@ -92,26 +89,6 @@ void html_widget::set_base_url(const litehtml::tchar_t* base_url)
 
 void html_widget::link(litehtml::document* doc, litehtml::element::ptr el)
 {
-	const litehtml::tchar_t* rel = el->get_attr("rel");
-	if(rel && !strcmp(rel, "stylesheet"))
-	{
-		const litehtml::tchar_t* media = el->get_attr("media", "screen");
-		if(media && (strstr(media, "screen") || strstr(media, "all")))
-		{
-			const litehtml::tchar_t* href = el->get_attr("href");
-			if(href && href[0])
-			{
-				std::string url;
-				make_url(href, NULL, url);
-				std::string css;
-				load_text_file(url, css);
-				if(!css.empty())
-				{
-					doc->add_stylesheet(css.c_str(), url.c_str());
-				}
-			}
-		}
-	}
 }
 
 Glib::RefPtr<Gdk::Pixbuf> html_widget::get_image(const litehtml::tchar_t* url, bool redraw_on_ready)

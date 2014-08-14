@@ -401,7 +401,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 		m_list_style_position = (list_style_position) value_index(list_pos, list_style_position_strings, list_style_position_outside);
 
 		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
-		if(list_image)
+		if(list_image && list_image[0])
 		{
 			tstring url;
 			css::parse_css_url(list_image, url);
@@ -3691,8 +3691,6 @@ litehtml::element* litehtml::html_tag::get_child_by_point(int x, int y, int clie
 litehtml::element* litehtml::html_tag::get_element_by_point( int x, int y, int client_x, int client_y )
 {
 	element* ret = 0;
-
-	element* child = 0;
 
 	std::map<int, bool> zindexes;
 

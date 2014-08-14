@@ -39,8 +39,9 @@ public:
 	virtual void						draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg);
 	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos);
 	virtual void 						draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker);
-	virtual bool						is_media_valid(const litehtml::tstring& media);
 	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name);
+	virtual void						get_media_features(litehtml::media_features& media);
+
 
 	virtual	litehtml::tchar_t			toupper(const litehtml::tchar_t c);
 	virtual	litehtml::tchar_t			tolower(const litehtml::tchar_t c);

@@ -17,11 +17,11 @@ void litehtml::el_link::parse_attributes()
 {
 	bool processed = false;
 
-	const wchar_t* rel = get_attr(_t("rel"));
+	const tchar_t* rel = get_attr(_t("rel"));
 	if(rel && !t_strcmp(rel, _t("stylesheet")))
 	{
-		const wchar_t* media	= get_attr(_t("media"));
-		const wchar_t* href		= get_attr(_t("href"));
+		const tchar_t* media	= get_attr(_t("media"));
+		const tchar_t* href		= get_attr(_t("href"));
 		if(href && href[0])
 		{
 			tstring css_text;

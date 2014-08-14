@@ -287,10 +287,17 @@ void container_linux::load_image( const litehtml::tchar_t* src, const litehtml::
 	make_url(src, baseurl, url);
 	if(m_images.find(url.c_str()) == m_images.end())
 	{
-		Glib::RefPtr<Gdk::Pixbuf> img = get_image(url.c_str(), true);
-		if(img)
+		try
 		{
-			m_images[url.c_str()] = img;
+			Glib::RefPtr<Gdk::Pixbuf> img = get_image(url.c_str(), true);
+			if(img)
+			{
+				m_images[url.c_str()] = img;
+			}
+		} catch(...)
+		{
+			int iii=0;
+			iii++;
 		}
 	}
 }
@@ -829,58 +836,10 @@ const litehtml::tchar_t* container_linux::get_default_font_name()
 	return "Times New Roman";
 }
 
-bool container_linux::is_media_valid(const litehtml::tstring& media)
-{
-	litehtml::string_vector medias;
-	litehtml::tokenize(media, medias, ",");
-	for(litehtml::string_vector::iterator i = medias.begin(); i != medias.end(); i++)
-	{
-		litehtml::trim((*i));
-		if(i->substr(0, 3) == "all" || i->substr(0, 6) == "screen")
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 litehtml::element* container_linux::create_element(const litehtml::tchar_t* tag_name)
 {
 	return 0;
 }
-
-/*void cairo_container_linux::draw_txdib( cairo_t* cr, CTxDIB* bmp, int x, int y, int cx, int cy )
-{
-	cairo_save(cr);
-
-	cairo_matrix_t flib_m;
-	cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
-
-	cairo_surface_t* img = NULL;
-
-	CTxDIB rbmp;
-
-	if(cx != bmp->getWidth() || cy != bmp->getHeight())
-	{
-		bmp->resample(cx, cy, &rbmp);
-		img = cairo_image_surface_create_for_data((unsigned char*) rbmp.getBits(), CAIRO_FORMAT_ARGB32, rbmp.getWidth(), rbmp.getHeight(), rbmp.getWidth() * 4);
-		cairo_matrix_translate(&flib_m, 0, -rbmp.getHeight());
-		cairo_matrix_translate(&flib_m, x, -y);
-	} else
-	{
-		img = cairo_image_surface_create_for_data((unsigned char*) bmp->getBits(), CAIRO_FORMAT_ARGB32, bmp->getWidth(), bmp->getHeight(), bmp->getWidth() * 4);
-		cairo_matrix_translate(&flib_m, 0, -bmp->getHeight());
-		cairo_matrix_translate(&flib_m, x, -y);
-	}
-
-	cairo_transform(cr, &flib_m);
-	cairo_set_source_surface(cr, img, 0, 0);
-	cairo_paint(cr);
-
-	cairo_restore(cr);
-	cairo_surface_destroy(img);
-}
-*/
 
 void container_linux::rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &radius )
 {
@@ -958,4 +917,18 @@ cairo_surface_t* container_linux::surface_from_pixbuf(const Glib::RefPtr<Gdk::Pi
 	ctx->paint();
 
 	return ret;
+}
+
+void container_linux::get_media_features(litehtml::media_features& media)
+{
+	litehtml::position client;
+	media.type			= litehtml::media_type_screen;
+	media.width			= client.width;
+	media.height		= client.height;
+	media.device_width	= Gdk::screen_width();
+	media.device_height	= Gdk::screen_height();
+	media.color			= 8;
+	media.monochrome	= 0;
+	media.color_index	= 256;
+	media.resolution	= 96;
 }
