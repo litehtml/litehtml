@@ -230,7 +230,7 @@ void CToolbarWnd::OnMouseMove( int x, int y )
 	if(m_doc)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(m_doc->on_mouse_over(x, y, redraw_boxes))
+		if(m_doc->on_mouse_over(x, y, x, y, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -272,7 +272,7 @@ void CToolbarWnd::OnLButtonDown( int x, int y )
 	if(m_doc)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(m_doc->on_lbutton_down(x, y, redraw_boxes))
+		if(m_doc->on_lbutton_down(x, y, x, y, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -293,7 +293,7 @@ void CToolbarWnd::OnLButtonUp( int x, int y )
 	if(m_doc)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(m_doc->on_lbutton_up(x, y, redraw_boxes))
+		if(m_doc->on_lbutton_up(x, y, x, y, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -395,7 +395,7 @@ void CToolbarWnd::set_cursor( const wchar_t* cursor )
 
 }
 
-void CToolbarWnd::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl, const litehtml::string_vector& media )
+void CToolbarWnd::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl )
 {
 
 }

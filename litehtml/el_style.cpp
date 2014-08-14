@@ -21,7 +21,7 @@ void litehtml::el_style::parse_attributes()
 	{
 		(*iter)->get_text(text);
 	}
-	m_doc->add_stylesheet(text.c_str(), 0);
+	m_doc->add_stylesheet( text.c_str(), 0, get_attr(_t("media")) );
 }
 
 bool litehtml::el_style::appendChild( litehtml::element* el )

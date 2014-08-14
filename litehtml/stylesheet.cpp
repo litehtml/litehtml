@@ -2,9 +2,10 @@
 #include "stylesheet.h"
 #include "tokenizer.h"
 #include <algorithm>
+#include "document.h"
 
 
-void litehtml::css::parse_stylesheet( const tchar_t* str, const tchar_t* baseurl, document_container* doc )
+void litehtml::css::parse_stylesheet( const tchar_t* str, const tchar_t* baseurl, document* doc, media_query_list::ptr& media )
 {
 	tstring text = str;
 
@@ -47,10 +48,10 @@ void litehtml::css::parse_stylesheet( const tchar_t* str, const tchar_t* baseurl
 			}
 			if(pos != tstring::npos)
 			{
-				parse_atrule(text.substr(sPos, pos - sPos + 1), baseurl, doc);
+				parse_atrule(text.substr(sPos, pos - sPos + 1), baseurl, doc, media);
 			} else
 			{
-				parse_atrule(text.substr(sPos), baseurl, doc);
+				parse_atrule(text.substr(sPos), baseurl, doc, media);
 			}
 
 			if(pos != tstring::npos)
@@ -71,7 +72,12 @@ void litehtml::css::parse_stylesheet( const tchar_t* str, const tchar_t* baseurl
 			style::ptr st = new style;
 			st->add(text.substr(style_start + 1, style_end - style_start - 1).c_str(), baseurl);
 
-			parse_selectors(text.substr(pos, style_start - pos), st);
+			parse_selectors(text.substr(pos, style_start - pos), st, media);
+
+			if(media && doc)
+			{
+				doc->add_media_list(media);
+			}
 
 			pos = style_end + 1;
 		} else
@@ -111,22 +117,29 @@ void litehtml::css::parse_css_url( const tstring& str, tstring& url )
 	}
 }
 
-void litehtml::css::parse_selectors( const tstring& txt, litehtml::style::ptr styles )
+bool litehtml::css::parse_selectors( const tstring& txt, litehtml::style::ptr styles, media_query_list::ptr& media )
 {
 	tstring selector = txt;
 	trim(selector);
 	string_vector tokens;
 	tokenize(selector, tokens, _t(","));
 
+	bool added_something = false;
+
 	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
 	{
-		css_selector::ptr selector = new css_selector;
+		css_selector::ptr selector = new css_selector(media);
 		selector->m_style = styles;
 		trim(*tok);
-		selector->parse(*tok);
-		selector->calc_specificity();
-		add_selector(selector);
+		if(selector->parse(*tok))
+		{
+			selector->calc_specificity();
+			add_selector(selector);
+			added_something = true;
+		}
 	}
+
+	return added_something;
 }
 
 void litehtml::css::sort_selectors()
@@ -134,7 +147,7 @@ void litehtml::css::sort_selectors()
 	sort(m_selectors.begin(), m_selectors.end(), std::less<css_selector::ptr>( ));
 }
 
-void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, document_container* doc )
+void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, document* doc, media_query_list::ptr& media )
 {
 	if(text.substr(0, 7) == _t("@import"))
 	{
@@ -147,7 +160,7 @@ void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, d
 		}
 		trim(iStr);
 		string_vector tokens;
-		tokenize(iStr, tokens, _t(","), _t(""), _t("()\""));
+		tokenize(iStr, tokens, _t(" "), _t(""), _t("()\""));
 		if(!tokens.empty())
 		{
 			tstring url;
@@ -159,16 +172,38 @@ void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, d
 			tokens.erase(tokens.begin());
 			if(doc)
 			{
-				tstring css_text;
-				tstring css_baseurl;
-				if(baseurl)
+				document_container* doc_cont = doc->container();
+				if(doc_cont)
 				{
-					css_baseurl = baseurl;
-				}
-				doc->import_css(css_text, url, css_baseurl, tokens);
-				if(!css_text.empty())
-				{
-					parse_stylesheet(css_text.c_str(), css_baseurl.c_str(), doc);
+					tstring css_text;
+					tstring css_baseurl;
+					if(baseurl)
+					{
+						css_baseurl = baseurl;
+					}
+					doc_cont->import_css(css_text, url, css_baseurl);
+					if(!css_text.empty())
+					{
+						media_query_list::ptr new_media = media;
+						if(!tokens.empty())
+						{
+							tstring media_str;
+							for(string_vector::iterator iter = tokens.begin(); iter != tokens.end(); iter++)
+							{
+								if(iter != tokens.begin())
+								{
+									media_str += _t(" ");
+								}
+								media_str += (*iter);
+							}
+							new_media = media_query_list::create_from_string(media_str, doc);
+							if(!new_media)
+							{
+								new_media = media;
+							}
+						}
+						parse_stylesheet(css_text.c_str(), css_baseurl.c_str(), doc, new_media);
+					}
 				}
 			}
 		}
@@ -180,18 +215,18 @@ void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, d
 		{
 			tstring media_type = text.substr(6, b1 - 6);
 			trim(media_type);
-			if(doc && doc->is_media_valid(media_type))
+			media_query_list::ptr new_media = media_query_list::create_from_string(media_type, doc);
+
+			tstring media_style;
+			if(b2 != tstring::npos)
 			{
-				tstring media_style;
-				if(b2 != tstring::npos)
-				{
-					media_style = text.substr(b1 + 1, b2 - b1 - 1);
-				} else
-				{
-					media_style = text.substr(b1 + 1);
-				}
-				parse_stylesheet(media_style.c_str(), baseurl, doc);
+				media_style = text.substr(b1 + 1, b2 - b1 - 1);
+			} else
+			{
+				media_style = text.substr(b1 + 1);
 			}
+
+			parse_stylesheet(media_style.c_str(), baseurl, doc, new_media);
 		}
 	}
 }

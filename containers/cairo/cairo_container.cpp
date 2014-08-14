@@ -825,22 +825,26 @@ void cairo_container::unlock_images_cache()
 	LeaveCriticalSection(&m_img_sync);
 }
 
-bool cairo_container::is_media_valid( const litehtml::tstring& media )
-{
-	litehtml::string_vector medias;
-	litehtml::tokenize(media, medias, L",");
-	for(litehtml::string_vector::iterator i = medias.begin(); i != medias.end(); i++)
-	{
-		litehtml::trim((*i));
-		if(i->substr(0, 3) == L"all" || i->substr(0, 6) == L"screen")
-		{
-			return true;
-		}
-	}
-	return false;
-}
-
 litehtml::element* cairo_container::create_element( const litehtml::tchar_t* tag_name )
 {
 	return 0;
+}
+
+void cairo_container::get_media_features( litehtml::media_features& media )
+{
+	litehtml::position client;
+	get_client_rect(client);
+	HDC hdc = GetDC(NULL);
+
+	media.type			= litehtml::media_type_screen;
+	media.width			= client.width;
+	media.height		= client.height;
+	media.color			= 8;
+	media.monochrome	= 0;
+	media.color_index	= 256;
+	media.resolution	= GetDeviceCaps(hdc, LOGPIXELSX);
+	media.device_width	= GetDeviceCaps(hdc, HORZRES);
+	media.device_height	= GetDeviceCaps(hdc, VERTRES);
+
+	ReleaseDC(NULL, hdc);
 }

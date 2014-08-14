@@ -76,6 +76,7 @@ void web_page::make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out )
 
 void web_page::link( litehtml::document* doc, litehtml::element::ptr el )
 {
+/*
 	const wchar_t* rel = el->get_attr(L"rel");
 	if(rel && !wcscmp(rel, L"stylesheet"))
 	{
@@ -99,24 +100,22 @@ void web_page::link( litehtml::document* doc, litehtml::element::ptr el )
 			}
 		}
 	}
+*/
 }
 
-void web_page::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl, const litehtml::string_vector& media )
+void web_page::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl )
 {
-	if(media.empty() || std::find(media.begin(), media.end(), std::wstring(L"all")) != media.end() || std::find(media.begin(), media.end(), std::wstring(L"screen")) != media.end())
-	{
-		std::wstring css_url;
-		make_url(url.c_str(), baseurl.c_str(), css_url);
+	std::wstring css_url;
+	make_url(url.c_str(), baseurl.c_str(), css_url);
 
-		if(download_and_wait(url.c_str()))
+	if(download_and_wait(css_url.c_str()))
+	{
+		LPWSTR css = load_text_file(m_waited_file.c_str(), L"UTF-8");
+		if(css)
 		{
-			LPWSTR css = load_text_file(m_waited_file.c_str(), L"UTF-8");
-			if(css)
-			{
-				baseurl = css_url;
-				text = css;
-				delete css;
-			}
+			baseurl = css_url;
+			text = css;
+			delete css;
 		}
 	}
 }

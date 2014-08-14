@@ -65,6 +65,7 @@ protected:
 	void				update_scroll();
 	void				update_cursor();
 	void				create_dib(int width, int height);
+	void				scroll_to(int new_left, int new_top);
 	
 
 private:

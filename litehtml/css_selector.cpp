@@ -1,6 +1,7 @@
 #include "html.h"
 #include "css_selector.h"
 #include "tokenizer.h"
+#include "document.h"
 
 void litehtml::css_element_selector::parse( const tstring& txt )
 {
@@ -204,7 +205,7 @@ bool litehtml::css_selector::parse( const tstring& text )
 
 	if(!left.empty())
 	{
-		m_left = new css_selector;
+		m_left = new css_selector(media_query_list::ptr(0));
 		if(!m_left->parse(left))
 		{
 			return false;
@@ -242,5 +243,13 @@ void litehtml::css_selector::calc_specificity()
 	{
 		m_left->calc_specificity();
 		m_specificity += m_left->m_specificity;
+	}
+}
+
+void litehtml::css_selector::add_media_to_doc( document* doc ) const
+{
+	if(m_media_query && doc)
+	{
+		doc->add_media_list(m_media_query);
 	}
 }

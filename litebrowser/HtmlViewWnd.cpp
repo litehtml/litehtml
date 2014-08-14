@@ -165,12 +165,9 @@ void CHTMLViewWnd::OnPaint( simpledib::dib* dib, LPRECT rcDraw )
 	cairo_surface_t* surface = cairo_image_surface_create_for_data((unsigned char*) dib->bits(), CAIRO_FORMAT_ARGB32, dib->width(), dib->height(), dib->width() * 4);
 	cairo_t* cr = cairo_create(surface);
 
-	POINT pt;
-	GetWindowOrgEx(dib->hdc(), &pt);
-	if(pt.x != 0 || pt.y != 0)
-	{
-		cairo_translate(cr, -pt.x, -pt.y);
-	}
+	cairo_rectangle(cr, rcDraw->left, rcDraw->top, rcDraw->right - rcDraw->left, rcDraw->bottom - rcDraw->top);
+	cairo_clip(cr);
+
 	cairo_set_source_rgb(cr, 1, 1, 1);
 	cairo_paint(cr);
 
@@ -195,6 +192,16 @@ void CHTMLViewWnd::OnPaint( simpledib::dib* dib, LPRECT rcDraw )
 
 void CHTMLViewWnd::OnSize( int width, int height )
 {
+	lock();
+	web_page* page = get_page(false);
+	unlock();
+
+	if(page)
+	{
+		page->m_doc->media_changed();
+		page->release();
+	}
+
 	render();
 }
 
@@ -418,14 +425,7 @@ void CHTMLViewWnd::OnVScroll( int pos, int flags )
 		break;
 	}
 
-	if(newTop != m_top)
-	{
-		//ScrollWindowEx(m_hWnd, 0, m_top - newTop, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
-		m_top  = newTop;
-		SetScrollPos(m_hWnd, SB_VERT, m_top, TRUE);
-		//UpdateWindow(m_hWnd);
-		redraw(NULL, TRUE);
-	}
+	scroll_to(m_left, newTop);
 }
 
 void CHTMLViewWnd::OnHScroll( int pos, int flags )
@@ -482,14 +482,7 @@ void CHTMLViewWnd::OnHScroll( int pos, int flags )
 		break;
 	}
 
-	if(newLeft != m_left)
-	{
-		//ScrollWindowEx(m_hWnd, m_left - newLeft, 0, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
-		m_left  = newLeft;
-		SetScrollPos(m_hWnd, SB_HORZ, m_left, TRUE);
-		//UpdateWindow(m_hWnd);
-		redraw(NULL, TRUE);
-	}
+	scroll_to(newLeft, m_top);
 }
 
 void CHTMLViewWnd::OnMouseWheel( int delta )
@@ -509,11 +502,7 @@ void CHTMLViewWnd::OnMouseWheel( int delta )
 
 	if(newTop != m_top)
 	{
-		//ScrollWindowEx(m_hWnd, 0, m_top - newTop, NULL, NULL, NULL, NULL, SW_INVALIDATE | SW_ERASE);
-		m_top  = newTop;
-		SetScrollPos(m_hWnd, SB_VERT, m_top, TRUE);
-		//UpdateWindow(m_hWnd);
-		redraw(NULL, TRUE);
+		scroll_to(m_left, newTop);
 	}
 }
 
@@ -559,7 +548,7 @@ void CHTMLViewWnd::OnMouseMove( int x, int y )
 	if(page)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(page->m_doc->on_mouse_over(x + m_left, y + m_top, redraw_boxes))
+		if(page->m_doc->on_mouse_over(x + m_left, y + m_top, x, y, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -613,7 +602,7 @@ void CHTMLViewWnd::OnLButtonDown( int x, int y )
 	if(page)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(page->m_doc->on_lbutton_down(x + m_left, y + m_top, redraw_boxes))
+		if(page->m_doc->on_lbutton_down(x + m_left, y + m_top, x, y, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -640,7 +629,7 @@ void CHTMLViewWnd::OnLButtonUp( int x, int y )
 	if(page)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(page->m_doc->on_lbutton_up(x + m_left, y + m_top, redraw_boxes))
+		if(page->m_doc->on_lbutton_up(x + m_left, y + m_top, x, y, redraw_boxes))
 		{
 			for(litehtml::position::vector::iterator box = redraw_boxes.begin(); box != redraw_boxes.end(); box++)
 			{
@@ -844,8 +833,118 @@ void CHTMLViewWnd::create_dib( int width, int height )
 	{
 		m_dib.destroy();
 		m_dib.create(width, height, true);
-	} else
+	}
+}
+
+void CHTMLViewWnd::scroll_to( int new_left, int new_top )
+{
+	litehtml::position client;
+	get_client_rect(client);
+
+	bool need_redraw = false;
+	if(new_top != m_top)
 	{
-		m_dib.clear();
+		if(std::abs(new_top - m_top) < client.height - client.height / 4 )
+		{
+			RECT rcRedraw;
+			if(new_top > m_top)
+			{
+				int lines_count		= new_top - m_top;
+				int rgba_to_scroll	= m_dib.width() * lines_count;
+				int rgba_total		= m_dib.width() * client.height;
+
+				memmove( m_dib.bits(), m_dib.bits() + rgba_to_scroll, (rgba_total - rgba_to_scroll) * sizeof(RGBQUAD) );
+				rcRedraw.left	= client.left();
+				rcRedraw.right	= client.right();
+				rcRedraw.top	= client.height - lines_count;
+				rcRedraw.bottom	= client.height;
+			} else
+			{
+				int lines_count		= m_top - new_top;
+				int rgba_to_scroll	= m_dib.width() * lines_count;
+				int rgba_total		= m_dib.width() * client.height;
+
+				memmove( m_dib.bits() + rgba_to_scroll, m_dib.bits(), (rgba_total - rgba_to_scroll) * sizeof(RGBQUAD) );
+				rcRedraw.left	= client.left();
+				rcRedraw.right	= client.right();
+				rcRedraw.top	= client.top();
+				rcRedraw.bottom	= lines_count;
+			}
+
+			int old_top = m_top;
+			m_top  = new_top;
+			OnPaint(&m_dib, &rcRedraw);
+
+			litehtml::position::vector fixed_boxes;
+
+			lock();
+			web_page* page = get_page(false);
+			if(page)
+			{
+				page->m_doc->get_fixed_boxes(fixed_boxes);
+				page->release();
+			}
+			unlock();
+
+			if(!fixed_boxes.empty())
+			{
+				RECT rcFixed;
+				RECT rcClient;
+				rcClient.left	= client.left();
+				rcClient.right	= client.right();
+				rcClient.top	= client.top();
+				rcClient.bottom	= client.bottom();
+
+				for(litehtml::position::vector::iterator iter = fixed_boxes.begin(); iter != fixed_boxes.end(); iter++)
+				{
+					rcRedraw.left	= iter->left();
+					rcRedraw.right	= iter->right();
+					rcRedraw.top	= iter->top();
+					rcRedraw.bottom	= iter->bottom();
+					if(IntersectRect(&rcFixed, &rcRedraw, &rcClient))
+					{
+						OnPaint(&m_dib, &rcFixed);
+					}
+
+					rcRedraw.left	= iter->left();
+					rcRedraw.right	= iter->right();
+					rcRedraw.top	= iter->top() + (old_top - m_top);
+					rcRedraw.bottom	= iter->bottom() + (old_top - m_top);
+
+					if(IntersectRect(&rcFixed, &rcRedraw, &rcClient))
+					{
+						OnPaint(&m_dib, &rcFixed);
+					}
+				}
+			}
+
+			HDC hdc = GetDC(m_hWnd);
+
+			BitBlt(hdc, client.left(), client.top(),
+				client.width,
+				client.height, m_dib, 0, 0, SRCCOPY);
+
+			ReleaseDC(m_hWnd, hdc);
+
+		} else
+		{
+			need_redraw = true;
+		}
+
+		m_top  = new_top;
+		SetScrollPos(m_hWnd, SB_VERT, m_top, TRUE);
+	}
+
+
+	if(new_left != m_left)
+	{
+		m_left  = new_left;
+		SetScrollPos(m_hWnd, SB_HORZ, m_left, TRUE);
+		need_redraw = true;
+	}
+
+	if(need_redraw)
+	{
+		redraw(NULL, TRUE);
 	}
 }

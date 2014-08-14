@@ -3,6 +3,14 @@
 
 void litehtml::css_length::fromString( const tstring& str, const tstring& predefs )
 {
+	// TODO: Make support for calc
+	if(str.substr(0, 4) == _t("calc"))
+	{
+		m_is_predefined = true;
+		m_predef		= 0;
+		return;
+	}
+
 	int predef = value_index(str.c_str(), predefs.c_str(), -1);
 	if(predef >= 0)
 	{

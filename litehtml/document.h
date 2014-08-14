@@ -23,21 +23,24 @@ namespace litehtml
 
 		tstring	text;
 		tstring	baseurl;
+		tstring	media;
 		
 		css_text()
 		{
 		}
 
-		css_text(const tchar_t* txt, const tchar_t* url)
+		css_text(const tchar_t* txt, const tchar_t* url, const tchar_t* media_str)
 		{
 			text	= txt ? txt : _t("");
 			baseurl	= url ? url : _t("");
+			media	= media_str ? media_str : _t("");
 		}
 
 		css_text(const css_text& val)
 		{
 			text	= val.text;
 			baseurl	= val.baseurl;
+			media	= val.media;
 		}
 	};
 
@@ -65,6 +68,9 @@ namespace litehtml
 		litehtml::size						m_size;
 		static litehtml::tags_parse_data 	m_tags_table[];
 		elements_vector						m_parse_stack;
+		position::vector					m_fixed_boxes;
+		media_query_list::vector			m_media_lists;
+		element::ptr						m_over_element;
 	public:
 		document(litehtml::document_container* objContainer, litehtml::context* ctx);
 		virtual ~document();
@@ -78,13 +84,17 @@ namespace litehtml
 		int								cvt_units(css_length& val, int fontSize, int size = 0) const;
 		int								width() const;
 		int								height() const;
-		void							add_stylesheet(const tchar_t* str, const tchar_t* baseurl);
-		bool							on_mouse_over(int x, int y, position::vector& redraw_boxes);
-		bool							on_lbutton_down(int x, int y, position::vector& redraw_boxes);
-		bool							on_lbutton_up(int x, int y, position::vector& redraw_boxes);
+		void							add_stylesheet(const tchar_t* str, const tchar_t* baseurl, const tchar_t* media);
+		bool							on_mouse_over(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
+		bool							on_lbutton_down(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
+		bool							on_lbutton_up(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
 		bool							on_mouse_leave(position::vector& redraw_boxes);
 		litehtml::element::ptr			create_element(const tchar_t* tag_name);
 		element::ptr					root();
+		void							get_fixed_boxes(position::vector& fixed_boxes);
+		void							add_fixed_box(const position& pos);
+		void							add_media_list(media_query_list::ptr list);
+		bool							media_changed();
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
 	
@@ -109,11 +119,11 @@ namespace litehtml
 		bool parse_pop_element(const tchar_t* tag, const tchar_t* stop_tags = _t(""));
 		void parse_pop_empty_element();
 		void parse_pop_to_parent(const tchar_t* parents, const tchar_t* stop_parent);
+		bool update_media_lists(const media_features& features);
 	};
 
 	inline element::ptr document::root()
 	{
 		return m_root;
 	}
-
 }

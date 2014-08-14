@@ -112,16 +112,17 @@ namespace litehtml
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
 		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
+		virtual void				refresh_styles();
 
 		virtual bool				is_white_space();
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
 		virtual int					get_base_line();
-		virtual bool				on_mouse_over(int x, int y, bool* is_inside = 0);
+		virtual bool				on_mouse_over();
 		virtual bool				on_mouse_leave();
-		virtual bool				on_lbutton_down(int x, int y);
-		virtual bool				on_lbutton_up(int x, int y);
-		virtual void				on_click(int x, int y);
+		virtual bool				on_lbutton_down();
+		virtual bool				on_lbutton_up();
+		virtual void				on_click();
 		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
 		virtual const tchar_t*		get_cursor();
 		virtual void				init_font();
@@ -177,6 +178,8 @@ namespace litehtml
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 		virtual void				add_style(litehtml::style::ptr st);
+		virtual element*			get_element_by_point(int x, int y, int client_x, int client_y);
+		virtual element*			get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 
 		virtual bool				is_nth_child(element* el, int num, int off, bool of_type);
 		virtual bool				is_nth_last_child(element* el, int num, int off, bool of_type);

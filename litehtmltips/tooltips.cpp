@@ -78,7 +78,7 @@ void litehtml::tooltips::link( litehtml::document* doc, litehtml::element::ptr e
 
 }
 
-void litehtml::tooltips::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl, const litehtml::string_vector& media )
+void litehtml::tooltips::import_css( std::wstring& text, const std::wstring& url, std::wstring& baseurl )
 {
 
 }
