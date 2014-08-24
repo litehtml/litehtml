@@ -15,7 +15,7 @@
 #include <gtkmm.h>
 #include <gtkmm/application.h>
 #include <gtkmm/window.h>
-#include "../include/litehtml.h"
+#include "../../include/litehtml.h"
 #include <ft2build.h>
 #include FT_FREETYPE_H
 #include <fontconfig/fontconfig.h>
