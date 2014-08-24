@@ -9,7 +9,7 @@
 #define HTML_WIDGET_H_
 
 #include <gtkmm/drawingarea.h>
-#include "../containers/linux/container_linux.h"
+#include "../../containers/linux/container_linux.h"
 
 
 class html_widget :		public Gtk::DrawingArea,
