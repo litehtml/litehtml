@@ -1,0 +1,88 @@
+<html>
+    <head>
+        <style>
+            body { margin: 0; padding: 0; }
+            .toolbar { background: repeat-x url('toolbar-bg.png'); height: 30px; padding-left:4px; padding-right:2px }
+            a.button { float: left; display: block; height: 29px; width: 29px; }
+            a.button-right { float: right; display: block; height: 29px; width: 29px; }
+            
+            #home               { background: no-repeat url('buttons.png') 0px 0px; overflow:hidden; }
+            #home:hover         { background: no-repeat url('buttons.png') -29px 0px; overflow:hidden; }
+            #home:active        { background: no-repeat url('buttons.png') -58px 0px; overflow:hidden; }
+
+            #back               { background: no-repeat url('buttons.png') 0px -29px; overflow:hidden; }
+            #back:hover         { background: no-repeat url('buttons.png') -29px -29px; overflow:hidden; }
+            #back:active        { background: no-repeat url('buttons.png') -58px -29px; overflow:hidden; }
+
+            #forward            { background: no-repeat url('buttons.png') 0px -58px; overflow:hidden; }
+            #forward:hover      { background: no-repeat url('buttons.png') -29px -58px; overflow:hidden; }
+            #forward:active     { background: no-repeat url('buttons.png') -58px -58px; overflow:hidden; }
+
+            #reload             { background: no-repeat url('buttons.png') 0px -87px; overflow:hidden; }
+            #reload:hover       { background: no-repeat url('buttons.png') -29px -87px; overflow:hidden; }
+            #reload:active      { background: no-repeat url('buttons.png') -58px -87px; overflow:hidden; }
+            
+            #time               { background: no-repeat url('buttons.png') 0px -145px; overflow:hidden; }
+            #time:hover         { background: no-repeat url('buttons.png') -29px -145; overflow:hidden; }
+            #time:active        { background: no-repeat url('buttons.png') -58px -145px; overflow:hidden; }
+
+            #settings           { background: no-repeat url('buttons.png') 0px -174px; overflow:hidden; }
+            #settings:hover     { background: no-repeat url('buttons.png') -29px -174; overflow:hidden; }
+            #settings:active    { background: no-repeat url('buttons.png') -58px -174px; overflow:hidden; }
+
+            #bookmarks          { background: no-repeat url('buttons.png') 0px -203px; overflow:hidden; }
+            #bookmarks:hover    { background: no-repeat url('buttons.png') -29px -203; overflow:hidden; }
+            #bookmarks:active   { background: no-repeat url('buttons.png') -58px -203px; overflow:hidden; }
+
+            .omni-box
+            {
+                height: 29px;
+                position: relative;
+                margin-left: 120px;
+                margin-right: 62px;
+            }
+            .addr-left
+            {
+                position: absolute;
+                top: 0px;
+                left: 0px;
+                width: 9px;
+                height: 29px;
+                background-image: url('addr-left.png');
+            }
+            .addr-right
+            {
+                position: absolute;
+                top: 0px;
+                right: 0px;
+                width: 9px;
+                height: 29px;
+                background-image: url('addr-right.png');
+            }
+            .addr-center
+            {
+                position: absolute;
+                top: 0px;
+                right: 9px;
+                left: 9px;
+                height: 29px;
+                background-image: url('addr-center.png');
+            }
+        </style>
+    </head>
+    <body>
+        <div class="toolbar">
+            <a href="back" class="button" id="back"></a>
+            <a href="forward" class="button" id="forward"></a>
+            <a href="reload" class="button" id="reload"></a>
+            <a href="home" class="button" id="home"></a>
+            <a href="settings" class="button-right" id="settings"></a>
+            <a href="bookmarks" class="button-right" id="bookmarks"></a>
+            <div class="omni-box">
+                <div class="addr-left"></div>
+                <div class="addr-center"></div>
+                <div class="addr-right"></div>
+            </div>
+        </div>
+    </body>
+</html>

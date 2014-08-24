@@ -1,24 +1,24 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 10.00
 # Visual Studio 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "litehtml", "litehtml\litehtml.vcproj", "{5EEE68E7-3CB0-4ADB-AF72-4C0BB01F0B18}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "litehtml", "src\litehtml.vcproj", "{5EEE68E7-3CB0-4ADB-AF72-4C0BB01F0B18}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "litebrowser", "litebrowser\litebrowser.vcproj", "{54AB6A6E-4B83-4B33-965F-DB8455C8C292}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "litebrowser", "examples\litebrowser\litebrowser.vcproj", "{54AB6A6E-4B83-4B33-965F-DB8455C8C292}"
 	ProjectSection(ProjectDependencies) = postProject
 		{23740D61-AB4D-4F6B-8E5B-64D42A19173C} = {23740D61-AB4D-4F6B-8E5B-64D42A19173C}
 		{5EEE68E7-3CB0-4ADB-AF72-4C0BB01F0B18} = {5EEE68E7-3CB0-4ADB-AF72-4C0BB01F0B18}
 		{E94EC1FA-DBB9-4D02-B190-F549BD3E1EC9} = {E94EC1FA-DBB9-4D02-B190-F549BD3E1EC9}
 	EndProjectSection
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simpledib", "litebrowser\libs\simpledib\simpledib.vcproj", "{23740D61-AB4D-4F6B-8E5B-64D42A19173C}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "simpledib", "examples\litebrowser\libs\simpledib\simpledib.vcproj", "{23740D61-AB4D-4F6B-8E5B-64D42A19173C}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TxDIB", "litebrowser\libs\txdib\TxDIBlib.vcproj", "{E94EC1FA-DBB9-4D02-B190-F549BD3E1EC9}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "TxDIB", "examples\litebrowser\libs\txdib\TxDIBlib.vcproj", "{E94EC1FA-DBB9-4D02-B190-F549BD3E1EC9}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "browser", "browser", "{0F9D6AE0-D88F-40D6-8362-2AA5C3949003}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "litehtmltips", "litehtmltips\litehtmltips.vcproj", "{33CB076D-3897-4733-96F2-25160F4476C7}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "litehtmltips", "examples\litehtmltips\litehtmltips.vcproj", "{33CB076D-3897-4733-96F2-25160F4476C7}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tooltipstest", "tooltipstest\tooltipstest.vcproj", "{E9B3BCB1-F224-470C-8DC0-FCBD22C8B364}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "tooltipstest", "examples\tooltipstest\tooltipstest.vcproj", "{E9B3BCB1-F224-470C-8DC0-FCBD22C8B364}"
 	ProjectSection(ProjectDependencies) = postProject
 		{23740D61-AB4D-4F6B-8E5B-64D42A19173C} = {23740D61-AB4D-4F6B-8E5B-64D42A19173C}
 		{33CB076D-3897-4733-96F2-25160F4476C7} = {33CB076D-3897-4733-96F2-25160F4476C7}
