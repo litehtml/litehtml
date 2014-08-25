@@ -6,7 +6,7 @@ The **litehtml** engine is created for embedding into applications, to show the 
 
 ##License
 
-**litehtml is distributed under [New BSD License](http://opensource.org/licenses/BSD-3-Clause)
+**litehtml** is distributed under [New BSD License](http://opensource.org/licenses/BSD-3-Clause).
 
 ##Compatibility
 
