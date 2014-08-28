@@ -18,7 +18,11 @@ First **litehtml** was developed on Windows (MS Visual Studio 2008) and for Wind
 
 ##Testing litehtml
 
-You can [download the simple browser](http://www.litehtml.com/download.html) (**litebrowser**) to test the **litehtml** rendering engine.
+You can [download the simple browser](http://www.litehtml.com/download.html) (**litebrowser**) to test the **litehtml** rendering engine. 
+
+The litebrowser source codes are available on GitHub:
+  * For Windows: https://github.com/tordex/litebrowser
+  * For Linux: https://github.com/tordex/litebrowser_linux
 
 ##Support litehtml project
 
