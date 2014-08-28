@@ -22,7 +22,7 @@ You can [download the simple browser](http://www.litehtml.com/download.html) (**
 
 The litebrowser source codes are available on GitHub:
   * For Windows: https://github.com/tordex/litebrowser
-  * For Linux: https://github.com/tordex/litebrowser_linux
+  * For Linux: https://github.com/tordex/litebrowser-linux
 
 ##Support litehtml project
 
