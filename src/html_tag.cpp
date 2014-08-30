@@ -497,12 +497,6 @@ int litehtml::html_tag::render( int x, int y, int max_width )
 
 	finish_last_box(true);
 
-	// add the floats width to the returned width
-	if(is_floats_holder())
-	{
-		ret_width += get_floats_width();
-	}
-
 	if(block_width.is_default() && is_inline_box())
 	{
 		m_pos.width		= ret_width;
@@ -1028,51 +1022,6 @@ litehtml::element* litehtml::html_tag::find_ancestor( const css_selector& select
 	return m_parent->find_ancestor(selector, apply_pseudo, is_pseudo);
 }
 
-int litehtml::html_tag::get_floats_width() const
-{
-	int ret_width = 0;
-
-	if(!m_floats_left.empty())
-	{
-		int left	= m_floats_left.front().pos.left();
-		int right	= m_floats_left.front().pos.right();
-		for(floated_box::vector::const_iterator i = m_floats_left.begin() + 1; i != m_floats_left.end(); i++)
-		{
-			if(left > i->pos.left())
-			{
-				left = i->pos.left();
-			}
-			if(right < i->pos.right())
-			{
-				right = i->pos.right();
-			}
-		}
-
-		ret_width += right - left;
-	}
-
-	if(!m_floats_right.empty())
-	{
-		int left	= m_floats_right.front().pos.left();
-		int right	= m_floats_right.front().pos.right();
-		for(floated_box::vector::const_iterator i = m_floats_right.begin() + 1; i != m_floats_right.end(); i++)
-		{
-			if(left > i->pos.left())
-			{
-				left = i->pos.left();
-			}
-			if(right < i->pos.right())
-			{
-				right = i->pos.right();
-			}
-		}
-
-		ret_width += right - left;
-	}
-
-	return ret_width;
-}
-
 int litehtml::html_tag::get_floats_height(element_float el_float) const
 {
 	if(is_floats_holder())
@@ -1280,8 +1229,9 @@ void litehtml::html_tag::get_line_left_right( int y, int def_right, int& ln_left
 	}
 }
 
-void litehtml::html_tag::fix_line_width( int max_width, element_float flt )
+int litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 {
+	int ret_width = 0;
 	if(!m_boxes.empty())
 	{
 		elements_vector els;
@@ -1308,7 +1258,11 @@ void litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 
 			for(elements_vector::iterator i = els.begin(); i != els.end(); i++)
 			{
-				place_element((*i), max_width);
+				int rw = place_element((*i), max_width);
+				if(rw > ret_width)
+				{
+					ret_width = rw;
+				}
 			}
 		} else
 		{
@@ -1356,10 +1310,16 @@ void litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 			m_boxes.back()->new_width(line_left, line_right, els);
 			for(elements_vector::iterator i = els.begin(); i != els.end(); i++)
 			{
-				place_element((*i), max_width);
+				int rw = place_element((*i), max_width);
+				if(rw > ret_width)
+				{
+					ret_width = rw;
+				}
 			}
 		}
 	}
+
+	return ret_width;
 }
 
 void litehtml::html_tag::add_float( element* el, int x, int y )
@@ -2225,8 +2185,11 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 				el->m_pos.y = new_top + el->content_margins_top();
 			}
 			add_float(el, 0, 0);
-			fix_line_width(max_width, float_left);
-			//ret_width = el->right();
+			ret_width = fix_line_width(max_width, float_left);
+			if(!ret_width)
+			{
+				ret_width = el->right();
+			}
 		}
 		break;
 	case float_right:
@@ -2259,13 +2222,16 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 				el->m_pos.x = line_right - el->width() + el->content_margins_left();
 			}
 			add_float(el, 0, 0);
-			fix_line_width(max_width, float_right);
+			ret_width = fix_line_width(max_width, float_right);
 
-			line_left	= 0;
-			line_right	= max_width;
-			get_line_left_right(line_top, max_width, line_left, line_right);
+			if(!ret_width)
+			{
+				line_left	= 0;
+				line_right	= max_width;
+				get_line_left_right(line_top, max_width, line_left, line_right);
 
-			//ret_width = line_left + (max_width - line_right);
+				ret_width = ret_width + (max_width - line_right);
+			}
 		}
 		break;
 	default:

@@ -161,7 +161,6 @@ namespace litehtml
 		virtual void				get_inline_boxes(position::vector& boxes);
 		virtual bool				is_floats_holder() const;
 		virtual int					get_floats_height(element_float el_float = float_none) const;
-		virtual int					get_floats_width() const;
 		virtual int					get_left_floats_height() const;
 		virtual int					get_right_floats_height() const;
 		virtual int					get_line_left(int y);
@@ -185,7 +184,7 @@ namespace litehtml
 		virtual bool				is_only_child(element* el, bool of_type);
 
 	protected:
-		void						fix_line_width(int max_width, element_float flt);
+		int							fix_line_width(int max_width, element_float flt);
 		void						parse_background();
 		void						init_background_paint( position pos, background_paint &bg_paint );
 		void						draw_list_marker( uint_ptr hdc, const position &pos );
