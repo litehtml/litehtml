@@ -742,7 +742,7 @@ namespace litehtml
 			str += _t(";");
 			for(int i = 0; m_HTMLCodes[i].szCode[0]; i++)
 			{
-				if(!t_strcasecmp(m_HTMLCodes[i].szCode, str.c_str()))
+				if(!t_strcmp(m_HTMLCodes[i].szCode, str.c_str()))
 				{
 					wres = m_HTMLCodes[i].Code;
 					break;
