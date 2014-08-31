@@ -37,7 +37,6 @@ const litehtml::tchar_t* g_empty_tags[] =
 
 litehtml::tags_parse_data litehtml::document::m_tags_table[] =
 {
-	{ _t("li"),		_t("ul;ol"),			_t("body")		},
 	{ _t("body"),	_t("html"),				_t("html")		},
 	{ _t("head"),	_t("html"),				_t("html")		},
 	{ _t("td"),		_t("tr"),				_t("table")		},
