@@ -344,6 +344,7 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 {
 	if(m_root)
 	{
+		m_root->draw(hdc, x, y, clip);
 		m_root->draw_stacking_context(hdc, x, y, clip, true);
 	}
 }

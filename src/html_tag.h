@@ -182,11 +182,12 @@ namespace litehtml
 		virtual bool				is_nth_child(element* el, int num, int off, bool of_type);
 		virtual bool				is_nth_last_child(element* el, int num, int off, bool of_type);
 		virtual bool				is_only_child(element* el, bool of_type);
+		virtual background*			get_background(bool own_only = false);
 
 	protected:
 		int							fix_line_width(int max_width, element_float flt);
 		void						parse_background();
-		void						init_background_paint( position pos, background_paint &bg_paint );
+		void						init_background_paint( position pos, background_paint &bg_paint, background* bg );
 		void						draw_list_marker( uint_ptr hdc, const position &pos );
 		void						parse_nth_child_params( tstring param, int &num, int &off );
 		void						remove_before_after();

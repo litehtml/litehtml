@@ -173,6 +173,7 @@ namespace litehtml
 		virtual void				add_style(litehtml::style::ptr st);
 		virtual element*			get_element_by_point(int x, int y, int client_x, int client_y);
 		virtual element*			get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
+		virtual background*			get_background(bool own_only = false);
 	};
 
 	//////////////////////////////////////////////////////////////////////////

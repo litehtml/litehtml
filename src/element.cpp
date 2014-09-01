@@ -85,7 +85,7 @@ bool litehtml::element::is_inline_box() const
 
 bool litehtml::element::collapse_top_margin() const
 {
-	if(!m_borders.top && !m_padding.top && in_normal_flow() && get_float() == float_none && m_margins.top >= 0)
+	if(!m_borders.top && !m_padding.top && in_normal_flow() && get_float() == float_none && m_margins.top >= 0 && parent())
 	{
 		return true;
 	}
@@ -94,7 +94,7 @@ bool litehtml::element::collapse_top_margin() const
 
 bool litehtml::element::collapse_bottom_margin() const
 {
-	if(!m_borders.bottom && !m_padding.bottom && in_normal_flow() && get_float() == float_none && m_margins.bottom >= 0)
+	if(!m_borders.bottom && !m_padding.bottom && in_normal_flow() && get_float() == float_none && m_margins.bottom >= 0 && parent())
 	{
 		return true;
 	}
@@ -235,6 +235,7 @@ int litehtml::element::get_inline_shift_right()
 	return ret;
 }
 
+litehtml::background* litehtml::element::get_background(bool own_only)				LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::get_element_by_point( int x, int y, int client_x, int client_y )	LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::get_child_by_point( int x, int y, int client_x, int client_y, draw_flag flag, int zindex ) LITEHTML_RETURN_FUNC(0)
 void litehtml::element::get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) LITEHTML_EMPTY_FUNC
