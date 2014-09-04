@@ -322,20 +322,27 @@ litehtml::element* litehtml::document::add_body()
 	return el;
 }
 
-int litehtml::document::render( int max_width )
+int litehtml::document::render( int max_width, render_type rt )
 {
 	int ret = 0;
 	if(m_root)
 	{
-		ret = m_root->render(0, 0, max_width);
-		if(m_root->fetch_positioned())
+		if(rt == render_fixed_only)
 		{
 			m_fixed_boxes.clear();
-			m_root->render_positioned();
+			m_root->render_positioned(rt);
+		} else
+		{
+			ret = m_root->render(0, 0, max_width);
+			if(m_root->fetch_positioned())
+			{
+				m_fixed_boxes.clear();
+				m_root->render_positioned(rt);
+			}
+			m_size.width	= 0;
+			m_size.height	= 0;
+			m_root->calc_document_size(m_size);
 		}
-		m_size.width	= 0;
-		m_size.height	= 0;
-		m_root->calc_document_size(m_size);
 	}
 	return ret;
 }

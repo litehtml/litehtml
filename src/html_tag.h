@@ -80,7 +80,7 @@ namespace litehtml
 		virtual int					render_inline(element* container, int max_width);
 		virtual int					place_element(element* el, int max_width);
 		virtual bool				fetch_positioned();
-		virtual void				render_positioned();
+		virtual void				render_positioned(render_type rt = render_all);
 
 		int							new_box( element* el, int max_width );
 

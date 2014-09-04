@@ -250,7 +250,7 @@ bool litehtml::element::is_only_child(element* el, bool of_type)					LITEHTML_RE
 litehtml::overflow litehtml::element::get_overflow() const							LITEHTML_RETURN_FUNC(overflow_visible)
 void litehtml::element::draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex ) LITEHTML_EMPTY_FUNC
 void litehtml::element::draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned ) LITEHTML_EMPTY_FUNC
-void litehtml::element::render_positioned()											LITEHTML_EMPTY_FUNC
+void litehtml::element::render_positioned(render_type rt)							LITEHTML_EMPTY_FUNC
 int litehtml::element::get_zindex() const											LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::fetch_positioned()											LITEHTML_RETURN_FUNC(false)
 litehtml::visibility litehtml::element::get_visibility() const						LITEHTML_RETURN_FUNC(visibility_visible)

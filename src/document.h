@@ -77,7 +77,7 @@ namespace litehtml
 
 		litehtml::document_container*	container()	{ return m_container; }
 		uint_ptr						get_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);
-		int								render(int max_width);
+		int								render(int max_width, render_type rt = render_all);
 		void							draw(uint_ptr hdc, int x, int y, const position* clip);
 		web_color						get_def_color()	{ return m_def_color; }
 		int								cvt_units(const tchar_t* str, int fontSize, bool* is_percent = 0) const;

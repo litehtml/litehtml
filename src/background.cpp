@@ -45,10 +45,28 @@ litehtml::background& litehtml::background::operator=( const background& val )
 
 litehtml::background_paint::background_paint() : color(0, 0, 0, 0)
 {
-	position_x	= 0;
-	position_y	= 0;
-	attachment	= background_attachment_scroll;
-	repeat		= background_repeat_repeat;
+	position_x		= 0;
+	position_y		= 0;
+	attachment		= background_attachment_scroll;
+	repeat			= background_repeat_repeat;
+	is_root			= false;
+}
+
+litehtml::background_paint::background_paint( const background_paint& val )
+{
+	image			= val.image;
+	baseurl			= val.baseurl;
+	attachment		= val.attachment;
+	repeat			= val.repeat;
+	color			= val.color;
+	clip_box		= val.clip_box;
+	origin_box		= val.origin_box;
+	border_box		= val.border_box;
+	border_radius	= val.border_radius;
+	image_size		= val.image_size;
+	position_x		= val.position_x;
+	position_y		= val.position_y;
+	is_root			= val.is_root;
 }
 
 void litehtml::background_paint::operator=( const background& val )
@@ -56,6 +74,6 @@ void litehtml::background_paint::operator=( const background& val )
 	attachment	= val.m_attachment;
 	baseurl		= val.m_baseurl;
 	image		= val.m_image;
-	repeat	= val.m_repeat;
+	repeat		= val.m_repeat;
 	color		= val.m_color;
 }

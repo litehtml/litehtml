@@ -2834,6 +2834,7 @@ void litehtml::html_tag::init_background_paint( position pos, background_paint &
 	}
 	bg_paint.border_radius	= m_css_borders.radius;
 	bg_paint.border_box		= border_box;
+	bg_paint.is_root		= parent() ? false : true;
 }
 
 litehtml::visibility litehtml::html_tag::get_visibility() const
@@ -3021,19 +3022,38 @@ int litehtml::html_tag::get_zindex() const
 	return m_z_index;
 }
 
-void litehtml::html_tag::render_positioned()
+void litehtml::html_tag::render_positioned(render_type rt)
 {
 	position wnd_position;
 	m_doc->container()->get_client_rect(wnd_position);
 
 	element_position el_position;
 	element* el;
+	bool process;
 	for(elements_vector::iterator abs_el = m_positioned.begin(); abs_el != m_positioned.end(); abs_el++)
 	{
 		el = (*abs_el);
 		el_position = el->get_element_position();
 
-		if(el->get_display() != display_none && (el_position == element_position_absolute || el_position == element_position_fixed))
+		process = false;
+		if(el->get_display() != display_none)
+		{
+			if(el_position == element_position_absolute)
+			{
+				if(rt != render_fixed_only)
+				{
+					process = true;
+				}
+			} else if(el_position == element_position_fixed)
+			{
+				if(rt != render_no_fixed)
+				{
+					process = true;
+				}
+			}
+		}
+
+		if(process)
 		{
 			int parent_height	= 0;
 			int parent_width	= 0;

@@ -674,4 +674,11 @@ namespace litehtml
 		int			resolution;		// The resolution of the output device (in DPI)
 	};
 
+	enum render_type
+	{
+		render_all,
+		render_no_fixed,
+		render_fixed_only,
+	};
+
 }

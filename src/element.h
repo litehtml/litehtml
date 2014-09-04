@@ -84,7 +84,7 @@ namespace litehtml
 		virtual void				calc_outlines( int parent_width );
 		virtual void				apply_vertical_align();
 		virtual bool				fetch_positioned();
-		virtual void				render_positioned();
+		virtual void				render_positioned(render_type rt = render_all);
 
 		virtual bool				appendChild(litehtml::element* el);
 

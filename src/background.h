@@ -44,8 +44,10 @@ namespace litehtml
 		size					image_size;
 		int						position_x;
 		int						position_y;
+		bool					is_root;
 	public:
 		background_paint();
+		background_paint(const background_paint& val);
 		void operator=(const background& val);
 	};
 
