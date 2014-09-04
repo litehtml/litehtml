@@ -336,7 +336,7 @@ void cairo_container::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 	}
 }
 
-void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos )
+void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos, bool root )
 {
 	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);

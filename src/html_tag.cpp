@@ -2051,7 +2051,7 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 			position border_box = pos;
 			border_box += m_padding;
 			border_box += m_borders;
-			m_doc->container()->draw_borders(hdc, m_css_borders, border_box);
+			m_doc->container()->draw_borders(hdc, m_css_borders, border_box, parent() ? false : true);
 		}
 	} else
 	{
@@ -2118,7 +2118,7 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 					m_doc->container()->draw_background(hdc, bg_paint);
 				}
 
-				m_doc->container()->draw_borders(hdc, bdr, *box);
+				m_doc->container()->draw_borders(hdc, bdr, *box, false);
 			}
 		}
 	}
