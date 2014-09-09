@@ -240,7 +240,10 @@ void litehtml::line_box::finish(bool last_box)
 		m_items[i]->m_pos.x += add_x;
 	}
 
-	base_line += (line_height - m_height) / 2;
+	if(m_height)
+	{
+		base_line += (line_height - m_height) / 2;
+	}
 
 	m_height = line_height;
 
