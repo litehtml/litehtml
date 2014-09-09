@@ -78,7 +78,7 @@ namespace litehtml
 		virtual element::ptr		select_one(const tstring& selector);
 		virtual element::ptr		select_one(const css_selector& selector);
 
-		virtual int					render(int x, int y, int max_width);
+		virtual int					render(int x, int y, int max_width, bool second_pass = false);
 		virtual int					render_inline(element* container, int max_width);
 		virtual int					place_element(element* el, int max_width);
 		virtual void				calc_outlines( int parent_width );

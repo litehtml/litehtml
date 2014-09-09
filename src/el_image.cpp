@@ -27,7 +27,7 @@ bool litehtml::el_image::is_replaced() const
 	return true;
 }
 
-int litehtml::el_image::render( int x, int y, int max_width )
+int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 {
 	int parent_width = max_width;
 

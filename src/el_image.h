@@ -14,7 +14,7 @@ namespace litehtml
 
 		virtual int		line_height() const;
 		virtual bool	is_replaced() const;
-		virtual int		render(int x, int y, int max_width);
+		virtual int		render(int x, int y, int max_width, bool second_pass = false);
 		virtual void	parse_attributes();
 		virtual void	parse_styles(bool is_reparse = false);
 		virtual void	draw(uint_ptr hdc, int x, int y, const position* clip);

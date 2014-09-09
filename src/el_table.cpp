@@ -18,7 +18,7 @@ litehtml::el_table::~el_table()
 
 }
 
-int litehtml::el_table::render( int x, int y, int max_width )
+int litehtml::el_table::render( int x, int y, int max_width, bool second_pass )
 {
 	int parent_width = max_width;
 

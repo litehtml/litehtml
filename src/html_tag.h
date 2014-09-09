@@ -75,7 +75,7 @@ namespace litehtml
 
 		/* render functions */
 
-		virtual int					render(int x, int y, int max_width);
+		virtual int					render(int x, int y, int max_width, bool second_pass = false);
 
 		virtual int					render_inline(element* container, int max_width);
 		virtual int					place_element(element* el, int max_width);
@@ -193,9 +193,6 @@ namespace litehtml
 		void						remove_before_after();
 		litehtml::element*			get_element_before();
 		litehtml::element*			get_element_after();
-
-	private:
-		bool	m_second_pass;
 	};
 
 	/************************************************************************/
