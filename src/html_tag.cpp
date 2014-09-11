@@ -3116,11 +3116,11 @@ void litehtml::html_tag::render_positioned(render_type rt)
 						el->m_pos.x = css_left.calc_percent(parent_width) + el->content_margins_left();
 					} else if(css_left.is_predefined() && !css_right.is_predefined())
 					{
-						el->m_pos.x = client_x + parent_width - css_right.calc_percent(parent_width) - el->m_pos.width - el->content_margins_right();
+						el->m_pos.x = parent_width - css_right.calc_percent(parent_width) - el->m_pos.width - el->content_margins_right();
 					} else
 					{
 						el->m_pos.x		= css_left.calc_percent(parent_width) + el->content_margins_left();
-						el->m_pos.width	= client_x + parent_width - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_margins_left() + el->content_margins_right());
+						el->m_pos.width	= parent_width - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_margins_left() + el->content_margins_right());
 						need_render = true;
 					}
 				}
@@ -3132,11 +3132,11 @@ void litehtml::html_tag::render_positioned(render_type rt)
 						el->m_pos.y = css_top.calc_percent(parent_height) + el->content_margins_top();
 					} else if(css_top.is_predefined() && !css_bottom.is_predefined())
 					{
-						el->m_pos.y = client_y + parent_height - css_bottom.calc_percent(parent_height) - el->m_pos.height - el->content_margins_bottom();
+						el->m_pos.y = parent_height - css_bottom.calc_percent(parent_height) - el->m_pos.height - el->content_margins_bottom();
 					} else
 					{
 						el->m_pos.y			= css_top.calc_percent(parent_height) + el->content_margins_top();
-						el->m_pos.height	= client_y + parent_height - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_margins_top() + el->content_margins_bottom());
+						el->m_pos.height	= parent_height - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_margins_top() + el->content_margins_bottom());
 						need_render = true;
 					}
 				}
