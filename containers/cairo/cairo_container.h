@@ -13,9 +13,15 @@
 #include <dib.h>
 #include <txdib.h>
 
+#ifdef LITEHTML_UTF8
+#define t_make_url	make_url_utf8
+#else
+#define t_make_url	make_url
+#endif
+
 class cairo_container :	public litehtml::document_container
 {
-	typedef std::map<litehtml::tstring, CTxDIB*>	images_map;
+	typedef std::map<std::wstring, CTxDIB*>	images_map;
 
 protected:
 	cairo_surface_t*			m_temp_surface;
@@ -43,18 +49,18 @@ public:
 	virtual void						draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg);
 	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos, bool root);
 
-	virtual	litehtml::tchar_t			toupper(const litehtml::tchar_t c);
-	virtual	litehtml::tchar_t			tolower(const litehtml::tchar_t c);
+	virtual	void						transform_text(litehtml::tstring& text, litehtml::text_transform tt);
 	virtual void						set_clip(const litehtml::position& pos, bool valid_x, bool valid_y);
 	virtual void						del_clip();
 	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name);
 	virtual void						get_media_features(litehtml::media_features& media);
 
-	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, litehtml::tstring& out ) = 0;
+	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
 	virtual CTxDIB*						get_image(LPCWSTR url, bool redraw_on_ready) = 0;
 	virtual void						get_client_rect(litehtml::position& client) = 0;
 	void								clear_images();
-	void								add_image(litehtml::tstring& url, CTxDIB* img);
+	void								add_image(std::wstring& url, CTxDIB* img);
+	void								make_url_utf8( const char* url, const char* basepath, std::wstring& out );
 
 protected:
 	virtual void						draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, double line_width);

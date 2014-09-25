@@ -66,11 +66,10 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
+litehtml::document::ptr litehtml::document::createFromStream(litehtml::instream& str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
 {
 	litehtml::document::ptr doc = new litehtml::document(objPainter, ctx);
-	str_istream si(str);
-	litehtml::scanner sc(si);
+	litehtml::scanner sc(str);
 
 	doc->begin_parse();
 
@@ -170,6 +169,22 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 	return doc;
 }
 
+litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
+{
+#ifdef LITEHTML_UTF8
+	utf8_instream si((const byte*) str);
+#else
+	str_instream si(str);
+#endif
+	return createFromStream(si, objPainter, ctx, user_styles);
+}
+
+litehtml::document::ptr litehtml::document::createFromUTF8(const byte* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
+{
+	utf8_instream si(str);
+	return createFromStream(si, objPainter, ctx, user_styles);
+}
+
 litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm )
 {
 	uint_ptr ret = 0;
@@ -185,7 +200,7 @@ litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, 
 	}
 
 	tchar_t strSize[20];
-	t_snprintf(strSize, 20, _t("%d"), size);
+	t_itoa(size, strSize, 20, 10);
 
 	tstring key = name;
 	key += _t(":");
@@ -274,7 +289,7 @@ litehtml::uint_ptr litehtml::document::get_font( const tchar_t* name, int size, 
 	}
 
 	tchar_t strSize[20];
-	t_snprintf(strSize, 20, _t("%d"), size);
+	t_itoa(size, strSize, 20, 10);
 
 	tstring key = name;
 	key += _t(":");

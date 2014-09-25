@@ -7,16 +7,6 @@
 
 namespace litehtml
 {
-
-	struct str_istream: public litehtml::instream
-	{
-		const tchar_t* p;
-		const tchar_t* end;
-
-		str_istream(const tchar_t* src): p(src), end(src + t_strlen(src)) {}
-		virtual tchar_t get_char() { return p < end? *p++: 0; }
-	};
-
 	struct css_text
 	{
 		typedef std::vector<css_text>	vector;
@@ -97,6 +87,8 @@ namespace litehtml
 		bool							media_changed();
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
+		static litehtml::document::ptr createFromUTF8(const byte* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
+		static litehtml::document::ptr createFromStream(litehtml::instream& str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
 	
 	private:
 		//void			load_default_styles();

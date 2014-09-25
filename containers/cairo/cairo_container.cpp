@@ -26,14 +26,20 @@ cairo_container::~cairo_container(void)
 
 litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
-	litehtml::tstring fnt_name = _t("sans-serif");
+	std::wstring fnt_name = L"sans-serif";
 
 	litehtml::string_vector fonts;
-	litehtml::tokenize(faceName, fonts, L",");
+	litehtml::tokenize(faceName, fonts, _t(","));
 	if(!fonts.empty())
 	{
+		litehtml::trim(fonts[0]);
+#ifdef LITEHTML_UTF8
+		wchar_t* f = cairo_font::utf8_to_wchar(fonts[0].c_str());
+		fnt_name = f;
+		delete f;
+#else
 		fnt_name = fonts[0];
-		litehtml::trim(fnt_name);
+#endif
 	}
 
 	cairo_font* fnt = new cairo_font(	m_font_link,
@@ -123,8 +129,8 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 {
 	if(!marker.image.empty())
 	{
-		litehtml::tstring url;
-		make_url(marker.image.c_str(), marker.baseurl, url);
+		std::wstring url;
+		t_make_url(marker.image.c_str(), marker.baseurl, url);
 
 		lock_images_cache();
 		images_map::iterator img_i = m_images.find(url.c_str());
@@ -170,8 +176,8 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 
 void cairo_container::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready )
 {
-	litehtml::tstring url;
-	make_url(src, baseurl, url);
+	std::wstring url;
+	t_make_url(src, baseurl, url);
 	lock_images_cache();
 	if(m_images.find(url.c_str()) == m_images.end())
 	{
@@ -189,8 +195,8 @@ void cairo_container::load_image( const litehtml::tchar_t* src, const litehtml::
 
 void cairo_container::get_image_size( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz )
 {
-	litehtml::tstring url;
-	make_url(src, baseurl, url);
+	std::wstring url;
+	t_make_url(src, baseurl, url);
 
 	sz.width	= 0;
 	sz.height	= 0;
@@ -214,8 +220,8 @@ void cairo_container::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_
 	cairo_save(cr);
 	apply_clip(cr);
 
-	litehtml::tstring url;
-	make_url(src, baseurl, url);
+	std::wstring url;
+	t_make_url(src, baseurl, url);
 	lock_images_cache();
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
@@ -247,8 +253,8 @@ void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 		cairo_paint(cr);
 	}
 
-	litehtml::tstring url;
-	make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
+	std::wstring url;
+	t_make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
 
 	lock_images_cache();
 	images_map::iterator img_i = m_images.find(url.c_str());
@@ -628,16 +634,6 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 	cairo_restore(cr);
 }
 
-litehtml::tchar_t cairo_container::toupper( const litehtml::tchar_t c )
-{
-	return (litehtml::tchar_t) CharUpper((LPWSTR) c);
-}
-
-litehtml::tchar_t cairo_container::tolower( const litehtml::tchar_t c )
-{
-	return (litehtml::tchar_t) CharLower((LPWSTR) c);
-}
-
 void cairo_container::set_clip( const litehtml::position& pos, bool valid_x, bool valid_y )
 {
 	litehtml::position clip_pos = pos;
@@ -732,7 +728,7 @@ void cairo_container::clear_images()
 
 const litehtml::tchar_t* cairo_container::get_default_font_name()
 {
-	return L"Times New Roman";
+	return _t("Times New Roman");
 }
 
 void cairo_container::draw_txdib( cairo_t* cr, CTxDIB* bmp, int x, int y, int cx, int cy )
@@ -800,7 +796,7 @@ void cairo_container::rounded_rectangle( cairo_t* cr, const litehtml::position &
 	}
 }
 
-void cairo_container::add_image( litehtml::tstring& url, CTxDIB* img )
+void cairo_container::add_image( std::wstring& url, CTxDIB* img )
 {
 	lock_images_cache();
 	images_map::iterator i = m_images.find(url);
@@ -847,4 +843,61 @@ void cairo_container::get_media_features( litehtml::media_features& media )
 	media.device_height	= GetDeviceCaps(hdc, VERTRES);
 
 	ReleaseDC(NULL, hdc);
+}
+
+void cairo_container::make_url_utf8( const char* url, const char* basepath, std::wstring& out )
+{
+	wchar_t* urlW = cairo_font::utf8_to_wchar(url);
+	wchar_t* basepathW = cairo_font::utf8_to_wchar(basepath);
+	make_url(urlW, basepathW, out);
+
+	if(urlW) delete urlW;
+	if(basepathW) delete basepathW;
+}
+
+void cairo_container::transform_text( litehtml::tstring& text, litehtml::text_transform tt )
+{
+	if(text.empty()) return;
+
+#ifndef LITEHTML_UTF8
+	switch(tt)
+	{
+	case litehtml::text_transform_capitalize:
+		if(!text.empty())
+		{
+			text[0] = (WCHAR) CharUpper((LPWSTR) text[0]);
+		}
+		break;
+	case litehtml::text_transform_uppercase:
+		for(size_t i = 0; i < text.length(); i++)
+		{
+			text[i] = (WCHAR) CharUpper((LPWSTR) text[i]);
+		}
+		break;
+	case litehtml::text_transform_lowercase:
+		for(size_t i = 0; i < text.length(); i++)
+		{
+			text[i] = (WCHAR) CharLower((LPWSTR) text[i]);
+		}
+		break;
+	}
+#else
+	LPWSTR txt = cairo_font::utf8_to_wchar(text.c_str());
+	switch(tt)
+	{
+	case litehtml::text_transform_capitalize:
+		CharUpperBuff(txt, 1);
+		break;
+	case litehtml::text_transform_uppercase:
+		CharUpperBuff(txt, lstrlen(txt));
+		break;
+	case litehtml::text_transform_lowercase:
+		CharLowerBuff(txt, lstrlen(txt));
+		break;
+	}
+	LPSTR txtA = cairo_font::wchar_to_utf8(txt);
+	text = txtA;
+	delete txtA;
+	delete txt;
+#endif
 }

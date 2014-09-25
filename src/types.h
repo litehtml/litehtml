@@ -21,6 +21,7 @@ namespace litehtml
 	const unsigned int font_decoration_overline		= 0x04;
 
 	typedef unsigned char	byte;
+	typedef unsigned int	ucode_t;
 
 	struct margins
 	{

@@ -44,32 +44,7 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 	{
 		m_transformed_text	= m_text;
 		m_use_transformed = true;
-		switch(m_text_transform)
-		{
-		case text_transform_capitalize:
-			if(!m_transformed_text.empty())
-			{
-				m_transformed_text[0] = m_doc->container()->toupper(m_transformed_text[0]);
-			}
-			break;
-		case text_transform_uppercase:
-			m_transformed_text = _t("");
-			for(tstring::size_type i=0; i < m_text.length(); i++)
-			{
-				m_transformed_text += m_doc->container()->toupper(m_text[i]);
-			}
-			break;
-		case text_transform_lowercase:
-			m_transformed_text = _t("");
-			for(tstring::size_type i=0; i < m_text.length(); i++)
-			{
-				m_transformed_text += m_doc->container()->tolower(m_text[i]);
-			}
-			break;
-		default:
-			/*do nothing*/
-			break;
-		}
+		m_doc->container()->transform_text(m_transformed_text, m_text_transform);
 	}
 
 	if(is_white_space())

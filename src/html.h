@@ -7,8 +7,8 @@
 #include <map>
 #include <cstring>
 #include <algorithm>
-#include "types.h"
 #include "os_types.h"
+#include "types.h"
 #include "object.h"
 #include "background.h"
 #include "borders.h"
@@ -49,8 +49,7 @@ namespace litehtml
 		virtual void				link(litehtml::document* doc, litehtml::element::ptr el) = 0;
 		virtual void				on_anchor_click(const tchar_t* url, litehtml::element::ptr el) = 0;
 		virtual	void				set_cursor(const tchar_t* cursor)	= 0;
-		virtual	tchar_t				toupper(const tchar_t c) = 0;
-		virtual	tchar_t				tolower(const tchar_t c) = 0;
+		virtual	void				transform_text(litehtml::tstring& text, litehtml::text_transform tt) = 0;
 		virtual void				import_css(tstring& text, const tstring& url, tstring& baseurl) = 0;
 		virtual void				set_clip(const litehtml::position& pos, bool valid_x, bool valid_y) = 0;
 		virtual void				del_clip() = 0;
