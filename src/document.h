@@ -34,11 +34,16 @@ namespace litehtml
 		}
 	};
 
-	struct tags_parse_data
+	struct stop_tags_t
+	{
+		const litehtml::tchar_t*	tags;
+		const litehtml::tchar_t*	stop_parent;
+	};
+
+	struct ommited_end_tags_t
 	{
 		const litehtml::tchar_t*	tag;
-		const litehtml::tchar_t*	parents;
-		const litehtml::tchar_t*	stop_parent;
+		const litehtml::tchar_t*	followed_tags;
 	};
 
 	class html_tag;
@@ -56,7 +61,8 @@ namespace litehtml
 		litehtml::web_color					m_def_color;
 		litehtml::context*					m_context;
 		litehtml::size						m_size;
-		static litehtml::tags_parse_data 	m_tags_table[];
+		static stop_tags_t 					m_stop_tags[];
+		static ommited_end_tags_t			m_ommited_end_tags[];
 		elements_vector						m_parse_stack;
 		position::vector					m_fixed_boxes;
 		media_query_list::vector			m_media_lists;
@@ -109,8 +115,10 @@ namespace litehtml
 		void parse_push_element(element::ptr el);
 		bool parse_pop_element();
 		bool parse_pop_element(const tchar_t* tag, const tchar_t* stop_tags = _t(""));
-		void parse_pop_empty_element();
+		void parse_pop_void_element();
 		void parse_pop_to_parent(const tchar_t* parents, const tchar_t* stop_parent);
+		void parse_close_omitted_end(const tchar_t* tag);
+		void parse_open_omitted_start(const tchar_t* tag);
 		bool update_media_lists(const media_features& features);
 	};
 

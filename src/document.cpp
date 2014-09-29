@@ -20,32 +20,11 @@
 #include <stdio.h>
 #include <algorithm>
 
-const litehtml::tchar_t* g_empty_tags[] =
+litehtml::stop_tags_t litehtml::document::m_stop_tags[] =
 {
-	_t("base"),
-	_t("meta"),
-	_t("link"),
-	_t("br"),
-	_t("hr"),
-	_t("input"),
-	_t("button"),
-	_t("img"),
-	_t("param"),
-	_t("col"),
-	0
-};
-
-litehtml::tags_parse_data litehtml::document::m_tags_table[] =
-{
-	{ _t("body"),	_t("html"),				_t("html")		},
-	{ _t("head"),	_t("html"),				_t("html")		},
-	{ _t("td"),		_t("tr"),				_t("table")		},
-	{ _t("th"),		_t("tr"),				_t("table")		},
-	{ _t("tr"),		_t("tbody;thead;tfoot"),_t("table")		},
-	{ _t("tbody"),	_t("table"),			_t("table")		},
-	{ _t("thead"),	_t("table"),			_t("table")		},
-	{ _t("tfoot"),	_t("table"),			_t("table")		},
-	{ 0,	0	},
+	{ _t("body;head"),						_t("html")		},
+	{ _t("td;th;tr;tbody;thead;tfoot"),		_t("table")		},
+	{ 0,	0},
 };
 
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
@@ -96,15 +75,6 @@ litehtml::document::ptr litehtml::document::createFromStream(litehtml::instream&
 			}
 			break;
 		case litehtml::scanner::TT_TAG_END_EMPTY:
-			{
-				tmp_str = sc.get_tag_name();
-				litehtml::lcase(tmp_str);
-				if( value_in_list(tmp_str.c_str(), _t("area;base;br;col;command;embed;hr;img;input;keygen;link;meta;param;source;track;wbr")) )
-				{
-					doc->parse_tag_end(tmp_str.c_str());
-				}
-			}
-			break;
 		case litehtml::scanner::TT_TAG_END:
 			{
 				tmp_str = sc.get_tag_name();
@@ -637,7 +607,7 @@ litehtml::element::ptr litehtml::document::create_element( const tchar_t* tag_na
 
 void litehtml::document::parse_tag_start( const tchar_t* tag_name )
 {
-	parse_pop_empty_element();
+	parse_pop_void_element();
 
 	// We add the html(root) element before parsing
 	if(!t_strcmp(tag_name, _t("html")))
@@ -657,16 +627,8 @@ void litehtml::document::parse_tag_start( const tchar_t* tag_name )
 			}
 		}
 
-
-		for(int i = 0; m_tags_table[i].tag; i++)
-		{
-			if(!t_strcmp(tag_name, m_tags_table[i].tag))
-			{
-				parse_pop_to_parent(m_tags_table[i].parents, m_tags_table[i].stop_parent);
-				break;
-			}
-		}
-
+		parse_close_omitted_end(tag_name);
+		parse_open_omitted_start(tag_name);
 		parse_push_element(el);
 	}
 }
@@ -682,11 +644,11 @@ void litehtml::document::parse_tag_end( const tchar_t* tag_name )
 		} else
 		{
 			const tchar_t* stop_tag = _t("");
-			for(int i = 0; m_tags_table[i].tag; i++)
+			for(int i = 0; m_stop_tags[i].tags; i++)
 			{
-				if(!t_strcmp(tag_name, m_tags_table[i].tag))
+				if(value_in_list(tag_name, m_stop_tags[i].tags))
 				{
-					stop_tag = m_tags_table[i].stop_parent;
+					stop_tag = m_stop_tags[i].stop_parent;
 					break;
 				}
 			}
@@ -725,7 +687,7 @@ void litehtml::document::parse_word( const tchar_t* val )
 		parse_push_element(create_element(_t("body")));
 	}
 
-	parse_pop_empty_element();
+	parse_pop_void_element();
 
 	if(!m_parse_stack.empty())
 	{
@@ -736,8 +698,7 @@ void litehtml::document::parse_word( const tchar_t* val )
 
 void litehtml::document::parse_space(const tchar_t* val)
 {
-	parse_pop_empty_element();
-
+	parse_pop_void_element();
 	if(!m_parse_stack.empty())
 	{
 		element::ptr el = new litehtml::el_space(val, this);
@@ -747,7 +708,7 @@ void litehtml::document::parse_space(const tchar_t* val)
 
 void litehtml::document::parse_comment_start()
 {
-	parse_pop_empty_element();
+	parse_pop_void_element();
 	parse_push_element(new litehtml::el_comment(this));
 }
 
@@ -800,20 +761,11 @@ bool litehtml::document::parse_pop_element( const tchar_t* tag, const tchar_t* s
 	return true;
 }
 
-void litehtml::document::parse_pop_empty_element()
+void litehtml::document::parse_pop_void_element()
 {
 	if(!m_parse_stack.empty())
 	{
-		bool is_empty_tag = false;
-		for(int i=0; g_empty_tags[i]; i++)
-		{
-			if(!t_strcmp(m_parse_stack.back()->get_tagName(), g_empty_tags[i]))
-			{
-				is_empty_tag = true;
-				break;
-			}
-		}
-		if(is_empty_tag)
+		if(value_in_list(m_parse_stack.back()->get_tagName(), void_elements))
 		{
 			parse_pop_element();
 		}
@@ -897,3 +849,59 @@ void litehtml::document::add_media_list( media_query_list::ptr list )
 		}
 	}
 }
+
+litehtml::ommited_end_tags_t litehtml::document::m_ommited_end_tags[] = 
+{
+	{_t("li"),			_t("li")},
+	{_t("dt"),			_t("dt;dd")},
+	{_t("dd"),			_t("dt;dd")},
+	{_t("p"),			_t("address;article;aside;blockquote;div;dl;fieldset;footer;form;h1;h2;h3;h4;h5;h6;header;hgroup;hr;main;nav;ol;p;pre;section;table;ul")},
+	{_t("rb"),			_t("rb;rt;rtc;rp")},
+	{_t("rt"),			_t("rb;rt;rtc;rp")},
+	{_t("rtc"),			_t("rb;rt;rtc;rp")},
+	{_t("rp"),			_t("rb;rt;rtc;rp")},
+	{_t("optgroup"),	_t("optgroup")},
+	{_t("option"),		_t("optgroup;option")},
+	{_t("thead"),		_t("tbody;tfoot")},
+	{_t("tbody"),		_t("tbody;tfoot")},
+	{_t("tfoot"),		_t("tbody;tfoot")},
+	{_t("tr"),			_t("tr")},
+	{_t("td"),			_t("td;th")},
+	{_t("th"),			_t("td;th")},
+	{0,	0},
+};
+
+void litehtml::document::parse_close_omitted_end( const tchar_t* tag )
+{
+	for(int i = 0; m_ommited_end_tags[i].tag; i++)
+	{
+		if(!t_strcmp(m_parse_stack.back()->get_tagName(), m_ommited_end_tags[i].tag))
+		{
+			if(value_in_list(tag, m_ommited_end_tags[i].followed_tags))
+			{
+				parse_pop_element();
+				break;
+			}
+		}
+	}
+}
+
+void litehtml::document::parse_open_omitted_start( const tchar_t* tag )
+{
+	if(!t_strcmp(tag, _t("col")))
+	{
+		if(t_strcmp(m_parse_stack.back()->get_tagName(), _t("colgroup")))
+		{
+			parse_tag_start(_t("colgroup"));
+		}
+	} else if(!t_strcmp(tag, _t("tr")))
+	{
+		if( t_strcmp(m_parse_stack.back()->get_tagName(), _t("tbody")) &&
+			t_strcmp(m_parse_stack.back()->get_tagName(), _t("thead")) &&
+			t_strcmp(m_parse_stack.back()->get_tagName(), _t("tfoot")))
+		{
+			parse_tag_start(_t("tbody"));
+		}
+	}
+}
+

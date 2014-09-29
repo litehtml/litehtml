@@ -203,5 +203,14 @@ namespace litehtml
 	{
 		return m_children;
 	}
+
+	class element_zindex_sort
+	{
+	public:
+		bool operator()(const litehtml::element* _Left, const litehtml::element* _Right) const
+		{
+			return (_Left->get_zindex() < _Right->get_zindex());
+		}
+	};
 }
 

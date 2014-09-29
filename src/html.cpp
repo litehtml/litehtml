@@ -62,7 +62,7 @@ int litehtml::value_index( const tstring& val, const tstring& strings, int defVa
 	return defValue;
 }
 
-int litehtml::value_in_list( const tstring& val, const tstring& strings, tchar_t delim )
+bool litehtml::value_in_list( const tstring& val, const tstring& strings, tchar_t delim )
 {
 	int idx = value_index(val, strings, -1, delim);
 	if(idx >= 0)

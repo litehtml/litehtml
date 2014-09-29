@@ -60,8 +60,8 @@ namespace litehtml
 
 	void trim(tstring &s);
 	void lcase(tstring &s);
-	int value_index(const tstring& val, const tstring& strings, int defValue = -1, tchar_t delim = _t(';'));
-	int value_in_list(const tstring& val, const tstring& strings, tchar_t delim = _t(';'));
+	int	 value_index(const tstring& val, const tstring& strings, int defValue = -1, tchar_t delim = _t(';'));
+	bool value_in_list(const tstring& val, const tstring& strings, tchar_t delim = _t(';'));
 
 	inline int round_f(float val)
 	{

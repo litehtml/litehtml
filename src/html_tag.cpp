@@ -2984,15 +2984,6 @@ void litehtml::html_tag::draw_children( uint_ptr hdc, int x, int y, const positi
 	}
 }
 
-class element_zindex_sort
-{
-public:
-	bool operator()(const litehtml::element* _Left, const litehtml::element* _Right) const
-	{
-		return (_Left->get_zindex() < _Right->get_zindex());
-	}
-};
-
 bool litehtml::html_tag::fetch_positioned()
 {
 	bool ret = false;
