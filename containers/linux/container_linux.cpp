@@ -442,7 +442,7 @@ void container_linux::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 	}
 }
 
-void container_linux::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos )
+void container_linux::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos, bool root )
 {
 	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
@@ -734,14 +734,9 @@ void container_linux::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 	cairo_restore(cr);
 }
 
-litehtml::tchar_t container_linux::toupper( const litehtml::tchar_t c )
+void container_linux::transform_text(litehtml::tstring& text, litehtml::text_transform tt)
 {
-	return (litehtml::tchar_t) c;
-}
 
-litehtml::tchar_t container_linux::tolower( const litehtml::tchar_t c )
-{
-	return (litehtml::tchar_t) c;
 }
 
 void container_linux::set_clip( const litehtml::position& pos, bool valid_x, bool valid_y )

@@ -67,7 +67,7 @@ namespace litehtml
 
 	#define t_strcasecmp		strcasecmp
 	#define t_strncasecmp		strncasecmp
-	#define t_itoa(value, buffer, size, radix)	itoa(value, buffer, radix)
+	#define t_itoa(value, buffer, size, radix)	snprintf(buffer, size, "%d", value)
 
 	#define t_strtol			strtol
 	#define t_atoi				atoi
