@@ -806,7 +806,13 @@ void cairo_container::add_image( std::wstring& url, CTxDIB* img )
 		{
 			delete i->second;
 		}
-		i->second = img;
+		if(img)
+		{
+			i->second = img;
+		} else
+		{
+			m_images.erase(i);
+		}
 	}
 	unlock_images_cache();
 }
