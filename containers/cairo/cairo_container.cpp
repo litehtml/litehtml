@@ -796,6 +796,21 @@ void cairo_container::rounded_rectangle( cairo_t* cr, const litehtml::position &
 	}
 }
 
+void cairo_container::remove_image( std::wstring& url )
+{
+	lock_images_cache();
+	images_map::iterator i = m_images.find(url);
+	if(i != m_images.end())
+	{
+		if(i->second)
+		{
+			delete i->second;
+		}
+		m_images.erase(i);
+	}
+	unlock_images_cache();
+}
+
 void cairo_container::add_image( std::wstring& url, CTxDIB* img )
 {
 	lock_images_cache();

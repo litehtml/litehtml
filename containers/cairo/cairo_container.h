@@ -60,6 +60,7 @@ public:
 	virtual void						get_client_rect(litehtml::position& client) = 0;
 	void								clear_images();
 	void								add_image(std::wstring& url, CTxDIB* img);
+	void								remove_image(std::wstring& url);
 	void								make_url_utf8( const char* url, const char* basepath, std::wstring& out );
 
 protected:
