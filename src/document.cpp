@@ -70,8 +70,11 @@ litehtml::document::ptr litehtml::document::createFromStream(litehtml::instream&
 		case litehtml::scanner::TT_TAG_START:
 			{
 				tmp_str = sc.get_tag_name();
-				litehtml::lcase(tmp_str);
-				doc->parse_tag_start(tmp_str.c_str());
+				if(!tmp_str.empty() && tmp_str[0] != '!')
+				{
+					litehtml::lcase(tmp_str);
+					doc->parse_tag_start(tmp_str.c_str());
+				}
 			}
 			break;
 		case litehtml::scanner::TT_TAG_END_EMPTY:

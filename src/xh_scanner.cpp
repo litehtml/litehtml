@@ -161,6 +161,7 @@ litehtml::scanner::token_type litehtml::scanner::scan_tag()
 		case 8:
 			if( equal(m_tag_name.c_str(), _t("![CDATA["),8) ) { c_scan = &scanner::scan_cdata; return TT_CDATA_START; }
 			if( equal(m_tag_name.c_str(), _t("!DOCTYPE"),8) ) { c_scan = &scanner::scan_entity_decl; return TT_DOCTYPE_START; }
+			if( equal(m_tag_name.c_str(), _t("!doctype"),8) ) { c_scan = &scanner::scan_entity_decl; return TT_DOCTYPE_START; }
 			break;
 		case 7:
 			if( equal(m_tag_name.c_str(), _t("!ENTITY"),8) ) { c_scan = &scanner::scan_entity_decl; return TT_ENTITY_START; }
