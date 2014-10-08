@@ -449,7 +449,7 @@ int litehtml::html_tag::render( int x, int y, int max_width, bool second_pass )
 
 	if(m_display != display_table_cell && !m_css_width.is_predefined())
 	{
-		ret_width = max_width = block_width = calc_width(parent_width - content_margins_left() + content_margins_right());
+		ret_width = max_width = block_width = calc_width(parent_width);
 	} else
 	{
 		if(max_width)
