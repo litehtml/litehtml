@@ -3654,7 +3654,7 @@ litehtml::element* litehtml::html_tag::get_child_by_point(int x, int y, int clie
 	pos.x	= x - pos.x;
 	pos.y	= y - pos.y;
 
-	for(elements_vector::iterator i = m_children.begin(); i != m_children.end() && !ret; i++)
+	for(elements_vector::reverse_iterator i = m_children.rbegin(); i != m_children.rend() && !ret; i++)
 	{
 		element* el = (*i);
 
