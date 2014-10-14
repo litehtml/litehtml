@@ -458,12 +458,6 @@ int litehtml::html_tag::render( int x, int y, int max_width, bool second_pass )
 		}
 	}
 
-	// we force re-render with new width here
-	if(m_css_width.units() == css_units_percentage)
-	{
-		ret_width = 0;
-	}
-
 	// check for max-width
 	if(!m_css_max_width.is_predefined())
 	{

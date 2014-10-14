@@ -42,7 +42,7 @@ int litehtml::el_table::render( int x, int y, int max_width, bool second_pass )
 	
 	if(!m_css_width.is_predefined())
 	{
-		max_width = block_width = calc_width(parent_width);
+		max_width = block_width = calc_width(parent_width - (content_margins_left() + content_margins_right()));
 	} else
 	{
 		if(max_width)
