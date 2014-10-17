@@ -3603,6 +3603,15 @@ bool litehtml::html_tag::have_inline_child()
 void litehtml::html_tag::refresh_styles()
 {
 	remove_before_after();
+
+	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		if((*i)->get_display() != display_inline_text)
+		{
+			(*i)->refresh_styles();
+		}
+	}
+
 	m_style.clear();
 
 	for(litehtml::used_selector::vector::iterator sel = m_used_styles.begin(); sel != m_used_styles.end(); sel++)
@@ -3643,14 +3652,6 @@ void litehtml::html_tag::refresh_styles()
 					usel->m_used = true;
 				}
 			}
-		}
-	}
-
-	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
-	{
-		if((*i)->get_display() != display_inline_text)
-		{
-			(*i)->refresh_styles();
 		}
 	}
 }
