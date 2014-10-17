@@ -11,6 +11,7 @@
 
 litehtml::html_tag::html_tag(litehtml::document* doc) : litehtml::element(doc)
 {
+	m_box_sizing			= box_sizing_content_box;
 	m_z_index				= 0;
 	m_overflow				= overflow_visible;
 	m_box					= 0;
@@ -247,6 +248,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 	m_white_space	= (white_space)			value_index(get_style_property(_t("white-space"),	true,	_t("normal")),		white_space_strings,		white_space_normal);
 	m_display		= (style_display)		value_index(get_style_property(_t("display"),		false,	_t("inline")),		style_display_strings,		display_inline);
 	m_visibility	= (visibility)			value_index(get_style_property(_t("visibility"),	true,	_t("visible")),		visibility_strings,			visibility_visible);
+	m_box_sizing	= (box_sizing)			value_index(get_style_property(_t("box-sizing"),	false,	_t("content-box")),	box_sizing_strings,			box_sizing_content_box);
 
 	if(m_el_position != element_position_static)
 	{
@@ -449,7 +451,12 @@ int litehtml::html_tag::render( int x, int y, int max_width, bool second_pass )
 
 	if(m_display != display_table_cell && !m_css_width.is_predefined())
 	{
-		ret_width = max_width = block_width = calc_width(parent_width);
+		int w = calc_width(parent_width);
+		if(m_box_sizing == box_sizing_border_box)
+		{
+			w -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
+		}
+		ret_width = max_width = block_width = w;
 	} else
 	{
 		if(max_width)
@@ -462,6 +469,10 @@ int litehtml::html_tag::render( int x, int y, int max_width, bool second_pass )
 	if(!m_css_max_width.is_predefined())
 	{
 		int mw = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+		if(m_box_sizing == box_sizing_border_box)
+		{
+			mw -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
+		}
 		if(max_width > mw)
 		{
 			max_width = mw;
@@ -562,6 +573,11 @@ int litehtml::html_tag::render( int x, int y, int max_width, bool second_pass )
 	{
 		min_height = (int) m_css_min_height.val();
 	}
+	if(min_height !=0 && m_box_sizing == box_sizing_border_box)
+	{
+		min_height -= m_padding.top + m_borders.top + m_padding.bottom + m_borders.bottom;
+		if(min_height < 0) min_height = 0;
+	}
 
 	if(m_display == display_list_item)
 	{
@@ -588,6 +604,13 @@ int litehtml::html_tag::render( int x, int y, int max_width, bool second_pass )
 	}
 
 	int min_width = m_css_min_width.calc_percent(parent_width);
+
+	if(min_width !=0 && m_box_sizing == box_sizing_border_box)
+	{
+		min_width -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
+		if(min_width < 0) min_width = 0;
+	}
+
 	if(min_width != 0)
 	{
 		if(min_width > m_pos.width)

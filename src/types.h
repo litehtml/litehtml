@@ -645,6 +645,15 @@ namespace litehtml
 		media_feature_max_resolution,
 	};
 
+#define box_sizing_strings		_t("content-box;border-box")
+
+	enum box_sizing
+	{
+		box_sizing_content_box,
+		box_sizing_border_box,
+	};
+
+
 #define media_type_strings		_t("none;all;screen;print;braille;embossed;handheld;projection;speech;tty;tv")
 
 	enum media_type
