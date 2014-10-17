@@ -764,10 +764,10 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 	int res = select_match;
 
 
-	for(css_attribute_selector::map::const_iterator i = selector.m_attrs.begin(); i != selector.m_attrs.end(); i++)
+	for(css_attribute_selector::vector::const_iterator i = selector.m_attrs.begin(); i != selector.m_attrs.end(); i++)
 	{
-		const tchar_t* attr_value = get_attr(i->first.c_str());
-		switch(i->second.condition)
+		const tchar_t* attr_value = get_attr(i->attribute.c_str());
+		switch(i->condition)
 		{
 		case select_exists:
 			if(!attr_value)
@@ -781,12 +781,12 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				return select_no_match;
 			} else 
 			{
-				if(i->first == _t("class"))
+				if(i->attribute == _t("class"))
 				{
 					string_vector tokens1;
 					tokenize(attr_value, tokens1, _t(" "));
 					string_vector tokens2;
-					tokenize(i->second.val, tokens2, _t(" "));
+					tokenize(i->val, tokens2, _t(" "));
 					bool found = true;
 					for(string_vector::iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
 					{
@@ -809,7 +809,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 					}
 				} else
 				{
-					if( t_strcasecmp(i->second.val.c_str(), attr_value) )
+					if( t_strcasecmp(i->val.c_str(), attr_value) )
 					{
 						return select_no_match;
 					}
@@ -820,7 +820,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			if(!attr_value)
 			{
 				return select_no_match;
-			} else if(!t_strstr(attr_value, i->second.val.c_str()))
+			} else if(!t_strstr(attr_value, i->val.c_str()))
 			{
 				return select_no_match;
 			}
@@ -829,7 +829,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			if(!attr_value)
 			{
 				return select_no_match;
-			} else if(t_strncmp(attr_value, i->second.val.c_str(), i->second.val.length()))
+			} else if(t_strncmp(attr_value, i->val.c_str(), i->val.length()))
 			{
 				return select_no_match;
 			}
@@ -838,24 +838,24 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			if(!attr_value)
 			{
 				return select_no_match;
-			} else if(t_strncmp(attr_value, i->second.val.c_str(), i->second.val.length()))
+			} else if(t_strncmp(attr_value, i->val.c_str(), i->val.length()))
 			{
-				const tchar_t* s = attr_value + t_strlen(attr_value) - i->second.val.length() - 1;
+				const tchar_t* s = attr_value + t_strlen(attr_value) - i->val.length() - 1;
 				if(s < attr_value)
 				{
 					return select_no_match;
 				}
-				if(i->second.val != s)
+				if(i->val != s)
 				{
 					return select_no_match;
 				}
 			}
 			break;
 		case select_pseudo_element:
-			if(i->second.val == _t("after"))
+			if(i->val == _t("after"))
 			{
 				res |= select_match_with_after;
-			} else if(i->second.val == _t("before"))
+			} else if(i->val == _t("before"))
 			{
 				res |= select_match_with_before;
 			} else
@@ -871,19 +871,19 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				tstring selector_param;
 				tstring	selector_name;
 
-				tstring::size_type begin	= i->second.val.find_first_of(_t('('));
-				tstring::size_type end		= i->second.val.find_last_of(_t(')'));
+				tstring::size_type begin	= i->val.find_first_of(_t('('));
+				tstring::size_type end		= i->val.find_last_of(_t(')'));
 				if(begin != tstring::npos && end != tstring::npos)
 				{
-					selector_param = i->second.val.substr(begin + 1, end - begin - 1);
+					selector_param = i->val.substr(begin + 1, end - begin - 1);
 				}
 				if(begin != tstring::npos)
 				{
-					selector_name = i->second.val.substr(0, begin);
+					selector_name = i->val.substr(0, begin);
 					litehtml::trim(selector_name);
 				} else
 				{
-					selector_name = i->second.val;
+					selector_name = i->val;
 				}
 
 				int selector = value_index(selector_name.c_str(), pseudo_class_strings);
@@ -979,7 +979,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 					}
 					break;
 				default:
-					if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), i->second.val) == m_pseudo_classes.end())
+					if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), i->val) == m_pseudo_classes.end())
 					{
 						return select_no_match;
 					}

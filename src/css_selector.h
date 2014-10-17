@@ -130,9 +130,10 @@ namespace litehtml
 
 	struct css_attribute_selector
 	{
-		typedef std::map<tstring, css_attribute_selector>	map;
+		typedef std::vector<css_attribute_selector>	vector;
 
-		tstring			val;
+		tstring					attribute;
+		tstring					val;
 		attr_select_condition	condition;
 
 		css_attribute_selector()
@@ -144,6 +145,7 @@ namespace litehtml
 		{
 			this->val	= val.val;
 			condition	= val.condition;
+			attribute	= val.attribute;
 		}
 	};
 
@@ -152,8 +154,8 @@ namespace litehtml
 	class css_element_selector
 	{
 	public:
-		tstring				m_tag;
-		css_attribute_selector::map	m_attrs;
+		tstring							m_tag;
+		css_attribute_selector::vector	m_attrs;
 	public:
 		css_element_selector()
 		{

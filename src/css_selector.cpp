@@ -17,15 +17,8 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 			tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
 			attribute.condition	= select_equal;
-			css_attribute_selector::map::iterator i = m_attrs.find(_t("class"));
-			if(i == m_attrs.end())
-			{
-				m_attrs[_t("class")] = attribute;
-			} else
-			{
-				i->second.val += _t(" ");
-				i->second.val += attribute.val;
-			}
+			attribute.attribute	= _t("class");
+			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else if(txt[el_end] == _t(':'))
 		{
@@ -37,7 +30,8 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 				attribute.val		= txt.substr(el_end + 2, pos - el_end - 2);
 				attribute.condition	= select_pseudo_element;
 				litehtml::lcase(attribute.val);
-				m_attrs[_t("pseudo-el")] = attribute;
+				attribute.attribute	= _t("pseudo-el");
+				m_attrs.push_back(attribute);
 				el_end = pos;
 			} else
 			{
@@ -55,7 +49,8 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 				{
 					attribute.condition	= select_pseudo_class;
 				}
-				m_attrs[_t("pseudo")] = attribute;
+				attribute.attribute	= _t("pseudo");
+				m_attrs.push_back(attribute);
 				el_end = pos;
 			}
 		} else if(txt[el_end] == _t('#'))
@@ -65,7 +60,8 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 			tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
 			attribute.condition	= select_equal;
-			m_attrs[_t("id")] = attribute;
+			attribute.attribute	= _t("id");
+			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else if(txt[el_end] == _t('['))
 		{
@@ -131,7 +127,8 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 			{
 				attribute.condition = select_exists;
 			}
-			m_attrs[attr] = attribute;
+			attribute.attribute	= attr;
+			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else
 		{
@@ -221,17 +218,17 @@ void litehtml::css_selector::calc_specificity()
 	{
 		m_specificity.d = 1;
 	}
-	for(css_attribute_selector::map::iterator i = m_right.m_attrs.begin(); i != m_right.m_attrs.end(); i++)
+	for(css_attribute_selector::vector::iterator i = m_right.m_attrs.begin(); i != m_right.m_attrs.end(); i++)
 	{
-		if(i->first == _t("id"))
+		if(i->attribute == _t("id"))
 		{
 			m_specificity.b++;
 		} else
 		{
-			if(i->first == _t("class"))
+			if(i->attribute == _t("class"))
 			{
 				string_vector tokens;
-				tokenize(i->second.val, tokens, _t(" "));
+				tokenize(i->val, tokens, _t(" "));
 				m_specificity.c += (int) tokens.size();
 			} else
 			{
@@ -253,3 +250,4 @@ void litehtml::css_selector::add_media_to_doc( document* doc ) const
 		doc->add_media_list(m_media_query);
 	}
 }
+
