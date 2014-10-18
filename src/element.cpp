@@ -144,6 +144,22 @@ void litehtml::element::calc_document_size( litehtml::size& sz, int x /*= 0*/, i
 	}
 }
 
+void litehtml::element::get_redraw_box(litehtml::position& pos, int x /*= 0*/, int y /*= 0*/)
+{
+	if(is_visible())
+	{
+		int p_left		= std::min(pos.left(),	x + m_pos.left() - m_padding.left - m_borders.left);
+		int p_right		= std::max(pos.right(), x + m_pos.right() + m_padding.left + m_borders.left);
+		int p_top		= std::min(pos.top(), y + m_pos.top() - m_padding.top - m_borders.top);
+		int p_bottom	= std::max(pos.bottom(), y + m_pos.bottom() + m_padding.bottom + m_borders.bottom);
+
+		pos.x = p_left;
+		pos.y = p_top;
+		pos.width	= p_right - p_left;
+		pos.height	= p_bottom - p_top;
+	}
+}
+
 int litehtml::element::calc_width(int defVal) const
 {
 	css_length w = get_css_width();

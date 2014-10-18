@@ -589,6 +589,14 @@
 				>
 			</File>
 			<File
+				RelativePath=".\el_cdata.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\el_cdata.h"
+				>
+			</File>
+			<File
 				RelativePath=".\el_comment.cpp"
 				>
 			</File>

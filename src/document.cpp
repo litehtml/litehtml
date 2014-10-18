@@ -10,6 +10,7 @@
 #include "el_style.h"
 #include "el_script.h"
 #include "el_comment.h"
+#include "el_cdata.h"
 #include "el_base.h"
 #include "el_anchor.h"
 #include "el_break.h"
@@ -58,6 +59,12 @@ litehtml::document::ptr litehtml::document::createFromStream(litehtml::instream&
 	{
 		switch(t)
 		{
+		case litehtml::scanner::TT_CDATA_START:
+			doc->parse_cdata_start();
+			break;
+		case litehtml::scanner::TT_CDATA_END:
+			doc->parse_cdata_end();
+			break;
 		case litehtml::scanner::TT_COMMENT_START:
 			doc->parse_comment_start();
 			break;
@@ -716,6 +723,17 @@ void litehtml::document::parse_comment_start()
 }
 
 void litehtml::document::parse_comment_end()
+{
+	parse_pop_element();
+}
+
+void litehtml::document::parse_cdata_start()
+{
+	parse_pop_void_element();
+	parse_push_element(new litehtml::el_cdata(this));
+}
+
+void litehtml::document::parse_cdata_end()
 {
 	parse_pop_element();
 }

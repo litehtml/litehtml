@@ -111,6 +111,8 @@ namespace litehtml
 		void parse_space(const tchar_t* val);
 		void parse_comment_start();
 		void parse_comment_end();
+		void parse_cdata_start();
+		void parse_cdata_end();
 		void parse_data(const tchar_t* val);
 		void parse_push_element(element::ptr el);
 		bool parse_pop_element();

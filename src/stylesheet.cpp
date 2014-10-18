@@ -24,7 +24,7 @@ void litehtml::css::parse_stylesheet( const tchar_t* str, const tchar_t* baseurl
 		while(pos != tstring::npos && text[pos] == _t('@'))
 		{
 			tstring::size_type sPos = pos;
-			pos = text.find_first_of(_t(";{"), pos);
+			pos = text.find_first_of(_t("{"), pos);
 			if(pos != tstring::npos && text[pos] == _t('{'))
 			{
 				int cnt = 1;

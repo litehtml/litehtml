@@ -3209,9 +3209,8 @@ void litehtml::html_tag::render_positioned(render_type rt)
 
 			if(el_position == element_position_fixed)
 			{
-				position fixed_pos = el->m_pos;
-				fixed_pos += el->m_padding;
-				fixed_pos += el->m_borders;
+				position fixed_pos;
+				el->get_redraw_box(fixed_pos);
 				m_doc->add_fixed_box(fixed_pos);
 			}
 		}
@@ -3382,10 +3381,6 @@ void litehtml::html_tag::calc_document_size( litehtml::size& sz, int x /*= 0*/, 
 
 		if(m_overflow == overflow_visible)
 		{
-			position pos = m_pos;
-			pos.x	+= x;
-			pos.y	+= y;
-
 			for(elements_vector::iterator el = m_children.begin(); el != m_children.end(); el++)
 			{
 				(*el)->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
@@ -3399,6 +3394,26 @@ void litehtml::html_tag::calc_document_size( litehtml::size& sz, int x /*= 0*/, 
 			m_doc->container()->get_client_rect(client_pos);
 			m_pos.height = std::max(sz.height, client_pos.height) - content_margins_top() - content_margins_bottom();
 			m_pos.width	 = std::max(sz.width, client_pos.width) - content_margins_left() - content_margins_right();
+		}
+	}
+}
+
+
+void litehtml::html_tag::get_redraw_box(litehtml::position& pos, int x /*= 0*/, int y /*= 0*/)
+{
+	if(is_visible())
+	{
+		element::get_redraw_box(pos, x, y);
+
+		if(m_overflow == overflow_visible)
+		{
+			for(elements_vector::iterator el = m_children.begin(); el != m_children.end(); el++)
+			{
+				if((*el)->get_element_position() != element_position_fixed)
+				{
+					(*el)->get_redraw_box(pos, x + m_pos.x, y + m_pos.y);
+				}
+			}
 		}
 	}
 }
