@@ -1,6 +1,5 @@
 #include "html.h"
 #include "web_color.h"
-#include "tokenizer.h"
 #include <string.h>
 
 litehtml::def_color litehtml::g_def_colors[] = 
@@ -205,7 +204,7 @@ litehtml::web_color litehtml::web_color::from_string( const tchar_t* str )
 		}
 
 		std::vector<tstring> tokens;
-		tokenize(s, tokens, _t(", \t"));
+		split_string(s, tokens, _t(", \t"));
 
 		web_color clr;
 

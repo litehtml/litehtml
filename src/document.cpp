@@ -1,7 +1,6 @@
 #include "html.h"
 #include "document.h"
 #include "elements.h"
-#include "tokenizer.h"
 #include "stylesheet.h"
 #include "el_table.h"
 #include "el_td.h"
@@ -227,7 +226,7 @@ litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, 
 		if(decoration)
 		{
 			std::vector<tstring> tokens;
-			tokenize(decoration, tokens, _t(" "));
+			split_string(decoration, tokens, _t(" "));
 			for(std::vector<tstring>::iterator i = tokens.begin(); i != tokens.end(); i++)
 			{
 				if(!t_strcasecmp(i->c_str(), _t("underline")))
@@ -798,7 +797,7 @@ void litehtml::document::parse_pop_to_parent( const tchar_t* parents, const tcha
 	elements_vector::size_type parent = 0;
 	bool found = false;
 	string_vector p;
-	tokenize(parents, p, _t(";"));
+	split_string(parents, p, _t(";"));
 
 	for(int i = (int) m_parse_stack.size() - 1; i >= 0 && !found; i--)
 	{

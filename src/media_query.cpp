@@ -1,6 +1,5 @@
 #include "html.h"
 #include "media_query.h"
-#include "tokenizer.h"
 #include "document.h"
 
 
@@ -22,7 +21,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string( const tstr
 	media_query::ptr query = new media_query();
 
 	string_vector tokens;
-	tokenize(str, tokens, _t(" \t\r\n"), _t(""), _t("()"));
+	split_string(str, tokens, _t(" \t\r\n"), _t(""), _t("("));
 
 	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
 	{
@@ -38,7 +37,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string( const tstr
 			}
 			media_query_expression expr;
 			string_vector expr_tokens;
-			tokenize((*tok), expr_tokens, _t(":"));
+			split_string((*tok), expr_tokens, _t(":"));
 			if(!expr_tokens.empty())
 			{
 				trim(expr_tokens[0]);
@@ -130,7 +129,7 @@ litehtml::media_query_list::ptr litehtml::media_query_list::create_from_string( 
 	media_query_list::ptr list = new media_query_list();
 
 	string_vector tokens;
-	tokenize(str, tokens, _t(","));
+	split_string(str, tokens, _t(","));
 
 	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
 	{

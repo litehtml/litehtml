@@ -29,7 +29,7 @@ litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceNa
 	std::wstring fnt_name = L"sans-serif";
 
 	litehtml::string_vector fonts;
-	litehtml::tokenize(faceName, fonts, _t(","));
+	litehtml::split_string(faceName, fonts, _t(","));
 	if(!fonts.empty())
 	{
 		litehtml::trim(fonts[0]);

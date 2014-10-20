@@ -5,6 +5,5 @@
 #include "../src/html_tag.h"
 #include "../src/stylesheet.h"
 #include "../src/stylesheet.h"
-#include "../src/tokenizer.h"
 #include "../src/element.h"
 #include "../src/html_tag.h"

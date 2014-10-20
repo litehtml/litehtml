@@ -1,6 +1,5 @@
 #include "html.h"
 #include "html_tag.h"
-#include "tokenizer.h"
 #include "document.h"
 #include "iterators.h"
 #include "stylesheet.h"
@@ -807,9 +806,9 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				if(i->attribute == _t("class"))
 				{
 					string_vector tokens1;
-					tokenize(attr_value, tokens1, _t(" "));
+					split_string(attr_value, tokens1, _t(" "));
 					string_vector tokens2;
-					tokenize(i->val, tokens2, _t(" "));
+					split_string(i->val, tokens2, _t(" "));
 					bool found = true;
 					for(string_vector::iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
 					{
@@ -1485,7 +1484,7 @@ void litehtml::html_tag::parse_background()
 	if(str)
 	{
 		string_vector res;
-		tokenize(str, res, _t(" \t"));
+		split_string(str, res, _t(" \t"));
 		if(res.size() > 0)
 		{
 			if(res.size() == 1)
@@ -1573,7 +1572,7 @@ void litehtml::html_tag::parse_background()
 	if(str)
 	{
 		string_vector res;
-		tokenize(str, res, _t(" \t"));
+		split_string(str, res, _t(" \t"));
 		if(!res.empty())
 		{
 			m_bg.m_position.width.fromString(res[0], background_size_strings);
@@ -3349,7 +3348,7 @@ void litehtml::html_tag::parse_nth_child_params( tstring param, int &num, int &o
 	} else
 	{
 		string_vector tokens;
-		tokenize(param, tokens, _t(" n"), _t("n"));
+		split_string(param, tokens, _t(" n"), _t("n"));
 
 		tstring s_num;
 		tstring s_off;

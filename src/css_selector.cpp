@@ -1,6 +1,5 @@
 #include "html.h"
 #include "css_selector.h"
-#include "tokenizer.h"
 #include "document.h"
 
 void litehtml::css_element_selector::parse( const tstring& txt )
@@ -38,9 +37,23 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 				tstring::size_type pos = txt.find_first_of(_t(".#[:("), el_end + 1);
 				if(pos != tstring::npos && txt.at(pos) == _t('('))
 				{
-					pos = txt.find_last_of(_t(")"), pos + 1);
+					pos = find_close_bracket(txt, pos);
+					if(pos != tstring::npos)
+					{
+						pos++;
+					} else
+					{
+						int iii = 0;
+						iii++;
+					}
 				}
-				attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
+				if(pos != tstring::npos)
+				{
+					attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
+				} else
+				{
+					attribute.val		= txt.substr(el_end + 1);
+				}
 				litehtml::lcase(attribute.val);
 				if(attribute.val == _t("after") || attribute.val == _t("before"))
 				{
@@ -146,7 +159,8 @@ bool litehtml::css_selector::parse( const tstring& text )
 		return false;
 	}
 	string_vector tokens;
-	tokenize(text, tokens, _t(""), _t(" \t>+~"), _t("()"));
+	split_string(text, tokens, _t(""), _t(" \t>+~"), _t("("));
+	//tokenize(text, tokens, _t(""), _t(" \t>+~"), _t("()"));
 
 	if(tokens.empty())
 	{
@@ -228,7 +242,7 @@ void litehtml::css_selector::calc_specificity()
 			if(i->attribute == _t("class"))
 			{
 				string_vector tokens;
-				tokenize(i->val, tokens, _t(" "));
+				split_string(i->val, tokens, _t(" "));
 				m_specificity.c += (int) tokens.size();
 			} else
 			{

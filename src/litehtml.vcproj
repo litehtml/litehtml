@@ -689,10 +689,6 @@
 				>
 			</File>
 			<File
-				RelativePath=".\tokenizer.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\web_color.cpp"
 				>
 			</File>
@@ -876,10 +872,6 @@
 			</File>
 			<File
 				RelativePath=".\table.h"
-				>
-			</File>
-			<File
-				RelativePath=".\tokenizer.h"
 				>
 			</File>
 			<File
