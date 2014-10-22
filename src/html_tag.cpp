@@ -894,7 +894,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				tstring	selector_name;
 
 				tstring::size_type begin	= i->val.find_first_of(_t('('));
-				tstring::size_type end		= i->val.find_last_of(_t(')'));
+				tstring::size_type end		= (begin == tstring::npos) ? tstring::npos : find_close_bracket(i->val, begin);
 				if(begin != tstring::npos && end != tstring::npos)
 				{
 					selector_param = i->val.substr(begin + 1, end - begin - 1);

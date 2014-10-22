@@ -26,24 +26,7 @@ void litehtml::css::parse_stylesheet( const tchar_t* str, const tchar_t* baseurl
 			pos = text.find_first_of(_t("{"), pos);
 			if(pos != tstring::npos && text[pos] == _t('{'))
 			{
-				int cnt = 1;
-				while(cnt && pos < text.length())
-				{
-					pos++;
-					switch(text[pos])
-					{
-					case _t('{'):
-						cnt++;
-						break;
-					case _t('}'):
-						cnt--;
-						break;
-					}
-				}
-				if(pos >= text.length())
-				{
-					pos = tstring::npos;
-				}
+				pos = find_close_bracket(text, pos, _t('{'), _t('}'));
 			}
 			if(pos != tstring::npos)
 			{
