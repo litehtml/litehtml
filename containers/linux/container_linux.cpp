@@ -19,7 +19,7 @@ container_linux::~container_linux(void)
 litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
 	litehtml::string_vector fonts;
-	litehtml::tokenize(faceName, fonts, ",");
+	litehtml::split_string(faceName, fonts, ",");
 	litehtml::trim(fonts[0]);
 
 	cairo_font_face_t* fnt = 0;
