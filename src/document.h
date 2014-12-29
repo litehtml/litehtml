@@ -2,8 +2,8 @@
 #include "object.h"
 #include "style.h"
 #include "types.h"
-#include "xh_scanner.h"
 #include "context.h"
+#include "gumbo/gumbo.h"
 
 namespace litehtml
 {
@@ -61,9 +61,6 @@ namespace litehtml
 		litehtml::web_color					m_def_color;
 		litehtml::context*					m_context;
 		litehtml::size						m_size;
-		static stop_tags_t 					m_stop_tags[];
-		static ommited_end_tags_t			m_ommited_end_tags[];
-		elements_vector						m_parse_stack;
 		position::vector					m_fixed_boxes;
 		media_query_list::vector			m_media_lists;
 		element::ptr						m_over_element;
@@ -93,34 +90,12 @@ namespace litehtml
 		bool							media_changed();
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
-		static litehtml::document::ptr createFromUTF8(const byte* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
-		static litehtml::document::ptr createFromStream(litehtml::instream& str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
+		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
 	
 	private:
-		//void			load_default_styles();
-		litehtml::element*	add_root();
-		litehtml::element*	add_body();
 		litehtml::uint_ptr	add_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);
 
-		void begin_parse();
-
-		void parse_tag_start(const tchar_t* tag_name);
-		void parse_tag_end(const tchar_t* tag_name);
-		void parse_attribute(const tchar_t* attr_name, const tchar_t* attr_value);
-		void parse_word(const tchar_t* val);
-		void parse_space(const tchar_t* val);
-		void parse_comment_start();
-		void parse_comment_end();
-		void parse_cdata_start();
-		void parse_cdata_end();
-		void parse_data(const tchar_t* val);
-		void parse_push_element(element::ptr el);
-		bool parse_pop_element();
-		bool parse_pop_element(const tchar_t* tag, const tchar_t* stop_tags = _t(""));
-		void parse_pop_void_element();
-		void parse_pop_to_parent(const tchar_t* parents, const tchar_t* stop_parent);
-		void parse_close_omitted_end(const tchar_t* tag);
-		void parse_open_omitted_start(const tchar_t* tag);
+		void create_node(GumboNode* node, elements_vector& elements);
 		bool update_media_lists(const media_features& features);
 	};
 

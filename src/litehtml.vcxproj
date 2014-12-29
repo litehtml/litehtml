@@ -118,34 +118,42 @@
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);./gumbo</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);./gumbo</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);./gumbo</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);./gumbo</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-UTF8|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);./gumbo</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-UTF8|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);./gumbo</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-UTF8|Win32'">
     <OutDir>$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir>$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);./gumbo</IncludePath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-UTF8|x64'">
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(Platform)\$(Configuration)\</IntDir>
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);./gumbo</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -319,19 +327,28 @@
     <ClCompile Include="el_text.cpp" />
     <ClCompile Include="el_title.cpp" />
     <ClCompile Include="el_tr.cpp" />
+    <ClCompile Include="gumbo\attribute.c" />
+    <ClCompile Include="gumbo\char_ref.c" />
+    <ClCompile Include="gumbo\error.c" />
+    <ClCompile Include="gumbo\parser.c" />
+    <ClCompile Include="gumbo\string_buffer.c" />
+    <ClCompile Include="gumbo\string_piece.c" />
+    <ClCompile Include="gumbo\tag.c" />
+    <ClCompile Include="gumbo\tokenizer.c" />
+    <ClCompile Include="gumbo\utf8.c" />
+    <ClCompile Include="gumbo\util.c" />
+    <ClCompile Include="gumbo\vector.c" />
     <ClCompile Include="html.cpp" />
     <ClCompile Include="html_tag.cpp" />
-    <ClCompile Include="instream.cpp" />
     <ClCompile Include="iterators.cpp" />
     <ClCompile Include="media_query.cpp" />
     <ClCompile Include="style.cpp" />
     <ClCompile Include="stylesheet.cpp" />
     <ClCompile Include="table.cpp" />
+    <ClCompile Include="utf8_strings.cpp" />
     <ClCompile Include="web_color.cpp" />
-    <ClCompile Include="xh_scanner.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\include\drawhtml.h" />
     <ClInclude Include="attributes.h" />
     <ClInclude Include="background.h" />
     <ClInclude Include="borders.h" />
@@ -344,7 +361,6 @@
     <ClInclude Include="css_selector.h" />
     <ClInclude Include="document.h" />
     <ClInclude Include="element.h" />
-    <ClInclude Include="elements.h" />
     <ClInclude Include="el_anchor.h" />
     <ClInclude Include="el_base.h" />
     <ClInclude Include="el_before_after.h" />
@@ -365,9 +381,23 @@
     <ClInclude Include="el_text.h" />
     <ClInclude Include="el_title.h" />
     <ClInclude Include="el_tr.h" />
+    <ClInclude Include="gumbo\attribute.h" />
+    <ClInclude Include="gumbo\char_ref.h" />
+    <ClInclude Include="gumbo\error.h" />
+    <ClInclude Include="gumbo\gumbo.h" />
+    <ClInclude Include="gumbo\insertion_mode.h" />
+    <ClInclude Include="gumbo\parser.h" />
+    <ClInclude Include="gumbo\strings.h" />
+    <ClInclude Include="gumbo\string_buffer.h" />
+    <ClInclude Include="gumbo\string_piece.h" />
+    <ClInclude Include="gumbo\tokenizer.h" />
+    <ClInclude Include="gumbo\tokenizer_states.h" />
+    <ClInclude Include="gumbo\token_type.h" />
+    <ClInclude Include="gumbo\utf8.h" />
+    <ClInclude Include="gumbo\util.h" />
+    <ClInclude Include="gumbo\vector.h" />
     <ClInclude Include="html.h" />
     <ClInclude Include="html_tag.h" />
-    <ClInclude Include="instream.h" />
     <ClInclude Include="iterators.h" />
     <ClInclude Include="media_query.h" />
     <ClInclude Include="object.h" />
@@ -376,8 +406,8 @@
     <ClInclude Include="stylesheet.h" />
     <ClInclude Include="table.h" />
     <ClInclude Include="types.h" />
+    <ClInclude Include="utf8_strings.h" />
     <ClInclude Include="web_color.h" />
-    <ClInclude Include="xh_scanner.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
