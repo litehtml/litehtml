@@ -37,10 +37,12 @@ namespace litehtml
 	};
 
 #ifdef LITEHTML_UTF8
-#define litehtml_from_utf8(str)	str
-#define litehtml_to_utf8(str)	str
+#define litehtml_from_utf8(str)		str
+#define litehtml_to_utf8(str)		str
+#define litehtml_from_wchar(str)	wchar_to_utf8(str)
 #else
-#define litehtml_from_utf8(str)	utf8_to_wchar(str)
-#define litehtml_to_utf8(str)	wchar_to_utf8(str)
+#define litehtml_from_utf8(str)		utf8_to_wchar(str)
+#define litehtml_from_wchar(str)	str
+#define litehtml_to_utf8(str)		wchar_to_utf8(str)
 #endif
 }

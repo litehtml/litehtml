@@ -630,22 +630,33 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		break;
 	case GUMBO_NODE_TEXT:
 		{
-			tstring str_in = litehtml_from_utf8(node->v.text.text);
-
-			tchar_t c;
-			tstring str;
+			std::wstring str;
+			std::wstring str_in = utf8_to_wchar(node->v.text.text);
+			ucode_t c;
 			for (size_t i = 0; i < str_in.length(); i++)
 			{
-				c = (tchar_t) str_in[i];
+				c = (ucode_t) str_in[i];
 				if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
 				{
 					if (!str.empty())
 					{
-						elements.push_back(new el_text(str.c_str(), this));
+						elements.push_back(new el_text(litehtml_from_wchar(str.c_str()), this));
 						str.clear();
 					}
 					str += c;
-					elements.push_back(new el_space(str.c_str(), this));
+					elements.push_back(new el_space(litehtml_from_wchar(str.c_str()), this));
+					str.clear();
+				}
+				// CJK character range
+				else if (c >= 0x4E00 && c <= 0x9FCC)
+				{
+					if (!str.empty())
+					{
+						elements.push_back(new el_text(litehtml_from_wchar(str.c_str()), this));
+						str.clear();
+					}
+					str += c;
+					elements.push_back(new el_text(litehtml_from_wchar(str.c_str()), this));
 					str.clear();
 				}
 				else
@@ -655,9 +666,9 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 			}
 			if (!str.empty())
 			{
-				elements.push_back(new el_text(str.c_str(), this));
+				elements.push_back(new el_text(litehtml_from_wchar(str.c_str()), this));
 			}
-	}
+		}
 		break;
 	case GUMBO_NODE_CDATA:
 		{
