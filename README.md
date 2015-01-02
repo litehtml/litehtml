@@ -16,9 +16,7 @@
 
 ##Support for HTML and CSS standards
 
-**litehtml** is not compatible with HTML/CSS standards. Although the gumbo-parser provides a good HTML5 parsing, **litehtml** does not supports some tags (frames, iframes, forms). But the most tags are supported. Also **litehtml** supports the most CSS2/3 properties, but not all. You can find the list of supported properties in  [this table](https://docs.google.com/spreadsheet/ccc?key=0AvHXl5n24PuhdHdELUdhaUl4OGlncXhDcDJuM1JpMnc&usp=sharing).
-
-**litehtml** is in active developing and the support of new html/css features will be released in the future versions.
+Unfortunately **litehtml** is not fully compatible with HTML/CSS standards. There are lots of work to do to make **litehtml** as well as modern browsers. But **litehtml** supports most HTML tags and CSS properties. You can find the list of supported CSS properties in  [this table](https://docs.google.com/spreadsheet/ccc?key=0AvHXl5n24PuhdHdELUdhaUl4OGlncXhDcDJuM1JpMnc&usp=sharing). In the most cases the html/css features supported by **litehtml** are enough. Right now **litehtml** supports the pages with very complex html/css designs. As example the pages created with [bootstrap framework](http://getbootstrap.com/) are usually well formated by **litehtml**.
 
 ##Testing litehtml
 
