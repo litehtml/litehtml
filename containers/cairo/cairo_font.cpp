@@ -192,16 +192,17 @@ void cairo_font::split_text( const litehtml::tchar_t* src, text_chunk::vector& c
 				linked_font* lkf = new linked_font;
 				lkf->code_pages	= dwActualCodePages;
 				lkf->hFont		= NULL;
-				HRESULT hr = m_font_link->MapFont(hdc, dwActualCodePages, 0, &lkf->hFont);
+				m_font_link->MapFont(hdc, dwActualCodePages, 0, &lkf->hFont);
 				if (lkf->hFont)
 				{
 					lkf->font_face = create_font_face(lkf->hFont);
+					m_linked_fonts.push_back(lkf);
 				}
 				else
 				{
-					lkf->font_face = create_font_face(m_hFont);
+					delete lkf;
+					lkf = NULL;
 				}
-				m_linked_fonts.push_back(lkf);
 				chk->font = lkf;
 			}
 		}
