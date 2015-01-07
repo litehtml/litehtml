@@ -52,25 +52,33 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 
 litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
 {
+	// parse document into GumboOutput
 	GumboOutput* output = gumbo_parse((const char*) str);
 
+	// Create litehtml::document
 	litehtml::document::ptr doc = new litehtml::document(objPainter, ctx);
+
+	// Create litehtml::elements.
 	elements_vector root_elements;
 	doc->create_node(output->root, root_elements);
 	if (!root_elements.empty())
 	{
 		doc->m_root = root_elements.back();
 	}
+	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
+	// Let's process created elements tree
 	if (doc->m_root)
 	{
+		// apply master CSS
 		doc->m_root->apply_stylesheet(ctx->master_css());
 
+		// parse elements attributes
 		doc->m_root->parse_attributes();
 
+		// parse style sheets linked in document
 		media_query_list::ptr media;
-
 		for (css_text::vector::iterator css = doc->m_css.begin(); css != doc->m_css.end(); css++)
 		{
 			if (!css->media.empty())
@@ -83,8 +91,10 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 			}
 			doc->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), doc, media);
 		}
+		// Sort css selectors using CSS rules.
 		doc->m_styles.sort_selectors();
 
+		// get current media features
 		if (!doc->m_media_lists.empty())
 		{
 			media_features features;
@@ -92,14 +102,25 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 			doc->update_media_lists(features);
 		}
 
+		// Apply parsed styles.
 		doc->m_root->apply_stylesheet(doc->m_styles);
 
+		// Apply user styles if any
 		if (user_styles)
 		{
 			doc->m_root->apply_stylesheet(*user_styles);
 		}
 
+		// Parse applied styles in the elements
 		doc->m_root->parse_styles();
+
+		// Now the m_tabular_elements is filled with tabular elements.
+		// We have to check the tabular elements for missing table elements 
+		// and create the anonymous boxes in visual table layout
+		doc->fix_tables_layout();
+
+		// Fanaly initialize elements
+		doc->m_root->init();
 	}
 
 	return doc;
@@ -689,5 +710,175 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		break;
 	default:
 		break;
+	}
+}
+
+void litehtml::document::fix_tables_layout()
+{
+	size_t i = 0;
+	while (i < m_tabular_elements.size())
+	{
+		element::ptr el_ptr = m_tabular_elements[i];
+
+		switch (el_ptr->get_display())
+		{
+		case display_inline_table:
+		case display_table:
+			fix_table_children(el_ptr, display_table_row_group, _t("table-row-group"));
+			break;
+		case display_table_footer_group:
+		case display_table_row_group:
+		case display_table_header_group:
+			fix_table_parent(el_ptr, display_table, _t("table"));
+			fix_table_children(el_ptr, display_table_row, _t("table-row"));
+			break;
+		case display_table_row:
+			fix_table_parent(el_ptr, display_table_row_group, _t("table-row-group"));
+			fix_table_children(el_ptr, display_table_cell, _t("table-cell"));
+			break;
+		case display_table_cell:
+			fix_table_parent(el_ptr, display_table_row, _t("table-row"));
+			break;
+		// TODO: make table layout fix for table-caption, table-column etc. elements
+		case display_table_caption:
+		case display_table_column:
+		case display_table_column_group:
+		default:
+			break;
+		}
+		i++;
+	}
+}
+
+void litehtml::document::fix_table_children(element::ptr el_ptr, style_display disp, tchar_t* disp_str)
+{
+	elements_vector tmp;
+	elements_vector::iterator first_iter = el_ptr->m_children.begin();
+	elements_vector::iterator cur_iter = el_ptr->m_children.begin();
+
+	auto flush_elements = [&]()
+	{
+		element::ptr annon_tag = new html_tag(this);
+		style::ptr st = new style;
+		st->add_property(_t("display"), disp_str, 0, false);
+		annon_tag->add_style(st);
+		annon_tag->parent(el_ptr);
+		annon_tag->parse_styles();
+		std::for_each(tmp.begin(), tmp.end(),
+			[&annon_tag](element::ptr& el)
+			{
+				annon_tag->appendChild(el);
+			}
+		);
+		first_iter = el_ptr->m_children.insert(first_iter, annon_tag);
+		cur_iter = first_iter + 1;
+		while (cur_iter != el_ptr->m_children.end() && (*cur_iter)->parent() != el_ptr)
+		{
+			cur_iter = el_ptr->m_children.erase(cur_iter);
+		}
+		first_iter = cur_iter;
+		tmp.clear();
+	};
+
+	while (cur_iter != el_ptr->m_children.end())
+	{
+		if ((*cur_iter)->get_display() != disp)
+		{
+			if (!(*cur_iter)->is_white_space() || ((*cur_iter)->is_white_space() && !tmp.empty()))
+			{
+				if (tmp.empty())
+				{
+					first_iter = cur_iter;
+				}
+				tmp.push_back((*cur_iter));
+			}
+			cur_iter++;
+		}
+		else if (!tmp.empty())
+		{
+			flush_elements();
+		}
+		else
+		{
+			cur_iter++;
+		}
+	}
+	if (!tmp.empty())
+	{
+		flush_elements();
+	}
+}
+
+void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display disp, tchar_t* disp_str)
+{
+	element::ptr parent = el_ptr->parent();
+
+	if (parent->get_display() != disp)
+	{
+		elements_vector::iterator this_element = std::find_if(parent->m_children.begin(), parent->m_children.end(),
+			[&](element::ptr& el)
+			{
+				if (el == el_ptr)
+				{
+					return true;
+				}
+				return false;
+			}
+		);
+		if (this_element != parent->m_children.end())
+		{
+			style_display el_disp = el_ptr->get_display();
+			elements_vector::iterator first = this_element;
+			elements_vector::iterator last = this_element;
+			elements_vector::iterator cur = this_element;
+
+			// find first element with same display
+			while (true)
+			{
+				if (cur == parent->m_children.begin()) break;
+				cur--;
+				if ((*cur)->is_white_space() || (*cur)->get_display() == el_disp)
+				{
+					first = cur;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			// find last element with same display
+			cur = this_element;
+			while (true)
+			{
+				cur++;
+				if (cur == parent->m_children.end()) break;
+
+				if ((*cur)->is_white_space() || (*cur)->get_display() == el_disp)
+				{
+					last = cur;
+				}
+				else
+				{
+					break;
+				}
+			}
+
+			// extract elements with the same display and wrap them with anonymous object
+			element::ptr annon_tag = new html_tag(this);
+			style::ptr st = new style;
+			st->add_property(_t("display"), disp_str, 0, false);
+			annon_tag->add_style(st);
+			annon_tag->parent(parent);
+			annon_tag->parse_styles();
+			std::for_each(first, last + 1,
+				[&annon_tag](element::ptr& el)
+				{
+					annon_tag->appendChild(el);
+				}
+			);
+			first = parent->m_children.erase(first, last + 1);
+			parent->m_children.insert(first, annon_tag);
+		}
 	}
 }

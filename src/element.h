@@ -13,12 +13,14 @@ namespace litehtml
 		friend class line_box;
 		friend class html_tag;
 		friend class el_table;
+		friend class document;
 	public:
 		typedef litehtml::object_ptr<litehtml::element>		ptr;
 	protected:
 		litehtml::element*			m_parent;
 		litehtml::document*			m_doc;
 		litehtml::box*				m_box;
+		elements_vector				m_children;
 		position					m_pos;
 		margins						m_margins;
 		margins						m_padding;

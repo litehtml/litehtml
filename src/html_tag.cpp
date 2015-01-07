@@ -28,6 +28,9 @@ litehtml::html_tag::html_tag(litehtml::document* doc) : litehtml::element(doc)
 	m_lh_predefined			= false;
 	m_line_height			= 0;
 	m_visibility			= visibility_visible;
+	m_border_spacing_x		= 0;
+	m_border_spacing_y		= 0;
+	m_border_collapse		= border_collapse_separate;
 }
 
 litehtml::html_tag::~html_tag()
@@ -266,13 +269,22 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	m_clear = (element_clear) value_index(get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
-	if(m_display != display_none)
+	if (m_display == display_table ||
+		m_display == display_table_caption ||
+		m_display == display_table_cell ||
+		m_display == display_table_column ||
+		m_display == display_table_column_group ||
+		m_display == display_table_footer_group ||
+		m_display == display_table_header_group ||
+		m_display == display_table_row ||
+		m_display == display_table_row_group)
 	{
-		if((m_el_position == element_position_absolute || m_float != float_none))
-		{
-			m_display = display_block;
-		}
-		if(m_el_position == element_position_fixed)
+		m_doc->add_tabular(this);
+	}
+	// fix inline boxes with float and absolute/fixed positions
+	else if (m_display != display_none && is_inline_box())
+	{
+		if (m_el_position == element_position_absolute || m_float != float_none || m_el_position == element_position_fixed)
 		{
 			m_display = display_block;
 		}
@@ -415,233 +427,17 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 		{
 			(*i)->parse_styles();
 		}
-
-		init();
 	}
 }
 
 int litehtml::html_tag::render( int x, int y, int max_width, bool second_pass )
 {
-	int parent_width = max_width;
-
-	// restore margins after collapse
-	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		m_font_size, max_width);
-	m_margins.bottom	= m_doc->cvt_units(m_css_margins.bottom,	m_font_size, max_width);
-
-	// reset auto margins
-	if(m_css_margins.left.is_predefined())
+	if (m_display == display_table || m_display == display_inline_table)
 	{
-		m_margins.left = 0;
-	}
-	if(m_css_margins.right.is_predefined())
-	{
-		m_margins.right = 0;
+		return render_table(x, y, max_width, second_pass);
 	}
 
-	m_pos.clear();
-	m_pos.move_to(x, y);
-
-	m_pos.x	+= content_margins_left();
-	m_pos.y += content_margins_top();
-
-	int ret_width = 0;
-
-	def_value<int>	block_width(0);
-
-	if(m_display != display_table_cell && !m_css_width.is_predefined())
-	{
-		int w = calc_width(parent_width);
-		if(m_box_sizing == box_sizing_border_box)
-		{
-			w -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
-		}
-		ret_width = max_width = block_width = w;
-	} else
-	{
-		if(max_width)
-		{
-			max_width -= content_margins_left() + content_margins_right();
-		}
-	}
-
-	// check for max-width
-	if(!m_css_max_width.is_predefined())
-	{
-		int mw = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
-		if(m_box_sizing == box_sizing_border_box)
-		{
-			mw -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
-		}
-		if(max_width > mw)
-		{
-			max_width = mw;
-		}
-	}
-
-	m_floats_left.clear();
-	m_floats_right.clear();
-	m_boxes.clear();
-	m_cahe_line_left.invalidate();
-	m_cahe_line_right.invalidate();
-
-	calc_outlines(parent_width);
-
-	element* el;
-	element_position el_position;
-
-	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
-	{
-		el = (*i);
-		el_position = el->get_element_position();
-		if( (el_position == element_position_absolute || el_position == element_position_fixed) && second_pass ) continue;
-
-		int rw = place_element(el, max_width);
-		if(rw > ret_width)
-		{
-			ret_width = rw;
-		}
-	}
-
-	m_pos.height = 0;
-
-	finish_last_box(true);
-
-	if(block_width.is_default() && is_inline_box())
-	{
-		m_pos.width		= ret_width;
-	} else
-	{
-		m_pos.width		= max_width;
-	}
-	calc_outlines(parent_width);
-
-	if(!m_boxes.empty())
-	{
-		if(collapse_top_margin())
-		{
-			int old_top = m_margins.top;
-			m_margins.top = std::max(m_boxes.front()->top_margin(), m_margins.top);
-			if(m_margins.top != old_top)
-			{
-				update_floats(m_margins.top - old_top, this);
-			}
-		}
-		if(collapse_bottom_margin())
-		{
-			m_margins.bottom = std::max(m_boxes.back()->bottom_margin(), m_margins.bottom);
-			m_pos.height = m_boxes.back()->bottom() - m_boxes.back()->bottom_margin();
-		} else
-		{
-			m_pos.height = m_boxes.back()->bottom();
-		}
-	}
-
-	// add the floats height to the block height
-	if(is_floats_holder())
-	{
-		int floats_height = get_floats_height();
-		if(floats_height > m_pos.height)
-		{
-			m_pos.height = floats_height;
-		}
-	}
-
-	// calculate the final position
-
-	m_pos.move_to(x, y);
-	m_pos.x	+= content_margins_left();
-	m_pos.y += content_margins_top();
-
-	int block_height = 0;
-	if(get_predefined_height(block_height))
-	{
-		m_pos.height = block_height;
-	}
-
-	int min_height = 0;
-	if(!m_css_min_height.is_predefined() && m_css_min_height.units() == css_units_percentage)
-	{
-		if(m_parent)
-		{
-			if(m_parent->get_predefined_height(block_height))
-			{
-				min_height = m_css_min_height.calc_percent(block_height);
-			}
-		}
-	} else
-	{
-		min_height = (int) m_css_min_height.val();
-	}
-	if(min_height !=0 && m_box_sizing == box_sizing_border_box)
-	{
-		min_height -= m_padding.top + m_borders.top + m_padding.bottom + m_borders.bottom;
-		if(min_height < 0) min_height = 0;
-	}
-
-	if(m_display == display_list_item)
-	{
-		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
-		if(list_image)
-		{
-			tstring url;
-			css::parse_css_url(list_image, url);
-
-			size sz;
-			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
-			m_doc->container()->get_image_size(url.c_str(), list_image_baseurl, sz);
-			if(min_height < sz.height)
-			{
-				min_height = sz.height;
-			}
-		}
-
-	}
-
-	if(min_height > m_pos.height)
-	{
-		m_pos.height = min_height;
-	}
-
-	int min_width = m_css_min_width.calc_percent(parent_width);
-
-	if(min_width !=0 && m_box_sizing == box_sizing_border_box)
-	{
-		min_width -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
-		if(min_width < 0) min_width = 0;
-	}
-
-	if(min_width != 0)
-	{
-		if(min_width > m_pos.width)
-		{
-			m_pos.width = min_width;
-		}
-		if(min_width >ret_width)
-		{
-			ret_width	= min_width;
-		}
-	}
-
-	ret_width += content_margins_left() + content_margins_right();
-
-	// re-render with new width
-	if(ret_width < max_width && !second_pass && m_parent)
-	{
-		if(	m_display == display_inline_block ||
-			m_css_width.is_predefined() && 
-			(	m_float != float_none || 
-				m_display == display_table ||
-				m_el_position == element_position_absolute || 
-				m_el_position == element_position_fixed
-			) 
-		  )
-		{
-			render(x, y, ret_width, true);
-			m_pos.width = ret_width - (content_margins_left() + content_margins_right());
-		}
-	}
-
-	return ret_width;
+	return render_box(x, y, max_width, second_pass);
 }
 
 bool litehtml::html_tag::is_white_space()
@@ -670,21 +466,58 @@ int litehtml::html_tag::get_base_line()
 
 void litehtml::html_tag::init()
 {
-	//remove white white spaces
-	elements_vector::iterator i = m_children.begin();
-	while(i != m_children.end())
+	if (m_display == display_table || m_display == display_inline_table)
 	{
-		if((*i)->is_white_space())
+		m_grid.clear();
+
+		go_inside_table 		table_selector;
+		table_rows_selector		row_selector;
+		table_cells_selector	cell_selector;
+
+		elements_iterator row_iter(this, &table_selector, &row_selector);
+
+		element* row = row_iter.next(false);
+		while (row)
 		{
-			i++;
-			while(i != m_children.end() && (*i)->is_white_space())
+			m_grid.begin_row(row);
+
+			elements_iterator cell_iter(row, &table_selector, &cell_selector);
+			element* cell = cell_iter.next();
+			while (cell)
 			{
-				i = m_children.erase(i);
+				m_grid.add_cell(cell);
+
+				cell = cell_iter.next(false);
 			}
-		} else
-		{
-			i++;
+			row = row_iter.next(false);
 		}
+
+		m_grid.finish();
+	}
+	else
+	{
+		//remove white white spaces
+		elements_vector::iterator i = m_children.begin();
+		while (i != m_children.end())
+		{
+			if ((*i)->is_white_space())
+			{
+				i++;
+				while (i != m_children.end() && (*i)->is_white_space())
+				{
+					i = m_children.erase(i);
+				}
+			}
+			else
+			{
+				i++;
+			}
+		}
+	}
+
+	for (elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		(*i)->init();
 	}
 }
 
@@ -2909,94 +2742,13 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 
 void litehtml::html_tag::draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex )
 {
-	position pos = m_pos;
-	pos.x	+= x;
-	pos.y	+= y;
-
-	if(m_overflow > overflow_visible)
+	if (m_display == display_table || m_display == display_inline_table)
 	{
-		m_doc->container()->set_clip(pos, true, true);
+		draw_children_table(hdc, x, y, clip, flag, zindex);
 	}
-
-	position browser_wnd;
-	m_doc->container()->get_client_rect(browser_wnd);
-
-	for(elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	else
 	{
-		element* el = (*i);
-
-		if(el->is_visible())
-		{
-			switch(flag)
-			{
-			case draw_positioned:
-				if(el->is_positioned() && el->get_zindex() == zindex)
-				{
-					if(el->get_element_position() == element_position_fixed)
-					{
-						el->draw(hdc, browser_wnd.x, browser_wnd.y, clip);
-						el->draw_stacking_context(hdc, browser_wnd.x, browser_wnd.y, clip, true);
-					} else
-					{
-						el->draw(hdc, pos.x, pos.y, clip);
-						el->draw_stacking_context(hdc, pos.x, pos.y, clip, true);
-					}
-					el = 0;
-				}
-				break;
-			case draw_block:
-				if(!el->is_inline_box() && el->get_float() == float_none && !el->is_positioned())
-				{
-					el->draw(hdc, pos.x, pos.y, clip);
-				}
-				break;
-			case draw_floats:
-				if(el->get_float() != float_none && !el->is_positioned())
-				{
-					el->draw(hdc, pos.x, pos.y, clip);
-					el->draw_stacking_context(hdc, pos.x, pos.y, clip, false);
-					el = 0;
-				}
-				break;
-			case draw_inlines:
-				if(el->is_inline_box() && el->get_float() == float_none && !el->is_positioned())
-				{
-					el->draw(hdc, pos.x, pos.y, clip);
-					if(el->get_display() == display_inline_block)
-					{
-						el->draw_stacking_context(hdc, pos.x, pos.y, clip, false);
-						el = 0;
-					}
-				}
-				break;
-			default:
-				break;
-			}
-
-			if(el)
-			{
-				if(flag == draw_positioned)
-				{
-					if(!el->is_positioned())
-					{
-						el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
-					}
-				} else
-				{
-					if(	el->get_float() == float_none &&
-						el->get_display() != display_inline_block && 
-						!el->is_positioned())
-					{
-						el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
-					}
-				}
-			}
-		}
-	}
-
-	if(m_overflow > overflow_visible)
-	{
-		m_doc->container()->del_clip();
+		draw_children_box(hdc, x, y, clip, flag, zindex);
 	}
 }
 
@@ -3888,4 +3640,649 @@ litehtml::background* litehtml::html_tag::get_background(bool own_only)
 	}
 
 	return &m_bg;
+}
+
+int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass /*= false*/)
+{
+	int parent_width = max_width;
+
+	// restore margins after collapse
+	m_margins.top = m_doc->cvt_units(m_css_margins.top, m_font_size, max_width);
+	m_margins.bottom = m_doc->cvt_units(m_css_margins.bottom, m_font_size, max_width);
+
+	// reset auto margins
+	if (m_css_margins.left.is_predefined())
+	{
+		m_margins.left = 0;
+	}
+	if (m_css_margins.right.is_predefined())
+	{
+		m_margins.right = 0;
+	}
+
+	m_pos.clear();
+	m_pos.move_to(x, y);
+
+	m_pos.x += content_margins_left();
+	m_pos.y += content_margins_top();
+
+	int ret_width = 0;
+
+	def_value<int>	block_width(0);
+
+	if (m_display != display_table_cell && !m_css_width.is_predefined())
+	{
+		int w = calc_width(parent_width);
+		if (m_box_sizing == box_sizing_border_box)
+		{
+			w -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
+		}
+		ret_width = max_width = block_width = w;
+	}
+	else
+	{
+		if (max_width)
+		{
+			max_width -= content_margins_left() + content_margins_right();
+		}
+	}
+
+	// check for max-width
+	if (!m_css_max_width.is_predefined())
+	{
+		int mw = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+		if (m_box_sizing == box_sizing_border_box)
+		{
+			mw -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
+		}
+		if (max_width > mw)
+		{
+			max_width = mw;
+		}
+	}
+
+	m_floats_left.clear();
+	m_floats_right.clear();
+	m_boxes.clear();
+	m_cahe_line_left.invalidate();
+	m_cahe_line_right.invalidate();
+
+	calc_outlines(parent_width);
+
+	element* el;
+	element_position el_position;
+
+	for (elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		el = (*i);
+		el_position = el->get_element_position();
+		if ((el_position == element_position_absolute || el_position == element_position_fixed) && second_pass) continue;
+
+		int rw = place_element(el, max_width);
+		if (rw > ret_width)
+		{
+			ret_width = rw;
+		}
+	}
+
+	m_pos.height = 0;
+
+	finish_last_box(true);
+
+	if (block_width.is_default() && is_inline_box())
+	{
+		m_pos.width = ret_width;
+	}
+	else
+	{
+		m_pos.width = max_width;
+	}
+	calc_outlines(parent_width);
+
+	if (!m_boxes.empty())
+	{
+		if (collapse_top_margin())
+		{
+			int old_top = m_margins.top;
+			m_margins.top = std::max(m_boxes.front()->top_margin(), m_margins.top);
+			if (m_margins.top != old_top)
+			{
+				update_floats(m_margins.top - old_top, this);
+			}
+		}
+		if (collapse_bottom_margin())
+		{
+			m_margins.bottom = std::max(m_boxes.back()->bottom_margin(), m_margins.bottom);
+			m_pos.height = m_boxes.back()->bottom() - m_boxes.back()->bottom_margin();
+		}
+		else
+		{
+			m_pos.height = m_boxes.back()->bottom();
+		}
+	}
+
+	// add the floats height to the block height
+	if (is_floats_holder())
+	{
+		int floats_height = get_floats_height();
+		if (floats_height > m_pos.height)
+		{
+			m_pos.height = floats_height;
+		}
+	}
+
+	// calculate the final position
+
+	m_pos.move_to(x, y);
+	m_pos.x += content_margins_left();
+	m_pos.y += content_margins_top();
+
+	int block_height = 0;
+	if (get_predefined_height(block_height))
+	{
+		m_pos.height = block_height;
+	}
+
+	int min_height = 0;
+	if (!m_css_min_height.is_predefined() && m_css_min_height.units() == css_units_percentage)
+	{
+		if (m_parent)
+		{
+			if (m_parent->get_predefined_height(block_height))
+			{
+				min_height = m_css_min_height.calc_percent(block_height);
+			}
+		}
+	}
+	else
+	{
+		min_height = (int)m_css_min_height.val();
+	}
+	if (min_height != 0 && m_box_sizing == box_sizing_border_box)
+	{
+		min_height -= m_padding.top + m_borders.top + m_padding.bottom + m_borders.bottom;
+		if (min_height < 0) min_height = 0;
+	}
+
+	if (m_display == display_list_item)
+	{
+		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
+		if (list_image)
+		{
+			tstring url;
+			css::parse_css_url(list_image, url);
+
+			size sz;
+			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
+			m_doc->container()->get_image_size(url.c_str(), list_image_baseurl, sz);
+			if (min_height < sz.height)
+			{
+				min_height = sz.height;
+			}
+		}
+
+	}
+
+	if (min_height > m_pos.height)
+	{
+		m_pos.height = min_height;
+	}
+
+	int min_width = m_css_min_width.calc_percent(parent_width);
+
+	if (min_width != 0 && m_box_sizing == box_sizing_border_box)
+	{
+		min_width -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
+		if (min_width < 0) min_width = 0;
+	}
+
+	if (min_width != 0)
+	{
+		if (min_width > m_pos.width)
+		{
+			m_pos.width = min_width;
+		}
+		if (min_width > ret_width)
+		{
+			ret_width = min_width;
+		}
+	}
+
+	ret_width += content_margins_left() + content_margins_right();
+
+	// re-render with new width
+	if (ret_width < max_width && !second_pass && m_parent)
+	{
+		if (m_display == display_inline_block ||
+			m_css_width.is_predefined() &&
+			(m_float != float_none ||
+			m_display == display_table ||
+			m_el_position == element_position_absolute ||
+			m_el_position == element_position_fixed
+			)
+			)
+		{
+			render(x, y, ret_width, true);
+			m_pos.width = ret_width - (content_margins_left() + content_margins_right());
+		}
+	}
+
+	return ret_width;
+}
+
+int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pass /*= false*/)
+{
+	int parent_width = max_width;
+
+	// reset auto margins
+	if (m_css_margins.left.is_predefined())
+	{
+		m_margins.left = 0;
+	}
+	if (m_css_margins.right.is_predefined())
+	{
+		m_margins.right = 0;
+	}
+
+	m_pos.clear();
+	m_pos.move_to(x, y);
+
+	m_pos.x += content_margins_left();
+	m_pos.y += content_margins_top();
+
+	def_value<int>	block_width(0);
+
+	if (!m_css_width.is_predefined())
+	{
+		max_width = block_width = calc_width(parent_width - (content_margins_left() + content_margins_right()));
+	}
+	else
+	{
+		if (max_width)
+		{
+			max_width -= content_margins_left() + content_margins_right();
+		}
+	}
+
+	calc_outlines(parent_width);
+
+	// Calculate table spacing
+	int table_width_spacing = 0;
+	if (m_border_collapse == border_collapse_separate)
+	{
+		table_width_spacing = m_border_spacing_x * (m_grid.cols_count() + 1);
+	}
+	else
+	{
+		table_width_spacing = 0;
+
+		if (m_grid.cols_count())
+		{
+			table_width_spacing -= std::min(border_left(), m_grid.column(0).border_left);
+			table_width_spacing -= std::min(border_right(), m_grid.column(m_grid.cols_count() - 1).border_right);
+		}
+
+		for (int col = 1; col < m_grid.cols_count(); col++)
+		{
+			table_width_spacing -= std::min(m_grid.column(col).border_left, m_grid.column(col - 1).border_right);
+		}
+	}
+
+
+	// Calculate the minimum content width (MCW) of each cell: the formatted content may span any number of lines but may not overflow the cell box. 
+	// If the specified 'width' (W) of the cell is greater than MCW, W is the minimum cell width. A value of 'auto' means that MCW is the minimum 
+	// cell width.
+	// 
+	// Also, calculate the "maximum" cell width of each cell: formatting the content without breaking lines other than where explicit line breaks occur.
+
+	if (m_grid.cols_count() == 1 && !block_width.is_default())
+	{
+		for (int row = 0; row < m_grid.rows_count(); row++)
+		{
+			table_cell* cell = m_grid.cell(0, row);
+			if (cell && cell->el)
+			{
+				cell->min_width = cell->max_width = cell->el->render(0, 0, max_width - table_width_spacing);
+				cell->el->m_pos.width = cell->min_width - cell->el->content_margins_left() - cell->el->content_margins_right();
+			}
+		}
+	}
+	else
+	{
+		for (int row = 0; row < m_grid.rows_count(); row++)
+		{
+			for (int col = 0; col < m_grid.cols_count(); col++)
+			{
+				table_cell* cell = m_grid.cell(col, row);
+				if (cell && cell->el)
+				{
+					if (!m_grid.column(col).css_width.is_predefined() && m_grid.column(col).css_width.units() != css_units_percentage)
+					{
+						int css_w = m_grid.column(col).css_width.calc_percent(block_width);
+						int el_w = cell->el->render(0, 0, css_w);
+						cell->min_width = cell->max_width = std::max(css_w, el_w);
+						cell->el->m_pos.width = cell->min_width - cell->el->content_margins_left() - cell->el->content_margins_right();
+					}
+					else
+					{
+						// calculate minimum content width
+						cell->min_width = cell->el->render(0, 0, 1);
+						// calculate maximum content width
+						cell->max_width = cell->el->render(0, 0, max_width - table_width_spacing);
+					}
+				}
+			}
+		}
+	}
+
+	// For each column, determine a maximum and minimum column width from the cells that span only that column. 
+	// The minimum is that required by the cell with the largest minimum cell width (or the column 'width', whichever is larger). 
+	// The maximum is that required by the cell with the largest maximum cell width (or the column 'width', whichever is larger).
+
+	for (int col = 0; col < m_grid.cols_count(); col++)
+	{
+		m_grid.column(col).max_width = 0;
+		m_grid.column(col).min_width = 0;
+		for (int row = 0; row < m_grid.rows_count(); row++)
+		{
+			if (m_grid.cell(col, row)->colspan <= 1)
+			{
+				m_grid.column(col).max_width = std::max(m_grid.column(col).max_width, m_grid.cell(col, row)->max_width);
+				m_grid.column(col).min_width = std::max(m_grid.column(col).min_width, m_grid.cell(col, row)->min_width);
+			}
+		}
+	}
+
+	// For each cell that spans more than one column, increase the minimum widths of the columns it spans so that together, 
+	// they are at least as wide as the cell. Do the same for the maximum widths. 
+	// If possible, widen all spanned columns by approximately the same amount.
+
+	for (int col = 0; col < m_grid.cols_count(); col++)
+	{
+		for (int row = 0; row < m_grid.rows_count(); row++)
+		{
+			if (m_grid.cell(col, row)->colspan > 1)
+			{
+				int max_total_width = m_grid.column(col).max_width;
+				int min_total_width = m_grid.column(col).min_width;
+				for (int col2 = col + 1; col2 < col + m_grid.cell(col, row)->colspan; col2++)
+				{
+					max_total_width += m_grid.column(col2).max_width;
+					min_total_width += m_grid.column(col2).min_width;
+				}
+				if (min_total_width < m_grid.cell(col, row)->min_width)
+				{
+					m_grid.distribute_min_width(m_grid.cell(col, row)->min_width - min_total_width, col, col + m_grid.cell(col, row)->colspan - 1);
+				}
+				if (max_total_width < m_grid.cell(col, row)->max_width)
+				{
+					m_grid.distribute_max_width(m_grid.cell(col, row)->max_width - max_total_width, col, col + m_grid.cell(col, row)->colspan - 1);
+				}
+			}
+		}
+	}
+
+	// If the 'table' or 'inline-table' element's 'width' property has a computed value (W) other than 'auto', the used width is the 
+	// greater of W, CAPMIN, and the minimum width required by all the columns plus cell spacing or borders (MIN). 
+	// If the used width is greater than MIN, the extra width should be distributed over the columns.
+	//
+	// If the 'table' or 'inline-table' element has 'width: auto', the used width is the greater of the table's containing block width, 
+	// CAPMIN, and MIN. However, if either CAPMIN or the maximum width required by the columns plus cell spacing or borders (MAX) is 
+	// less than that of the containing block, use max(MAX, CAPMIN).
+
+
+	int table_width = 0;
+
+	if (!block_width.is_default())
+	{
+		table_width = m_grid.calc_table_width(block_width - table_width_spacing, false);
+	}
+	else
+	{
+		table_width = m_grid.calc_table_width(max_width - table_width_spacing, true);
+	}
+
+	table_width += table_width_spacing;
+	m_grid.calc_horizontal_positions(m_borders, m_border_collapse, m_border_spacing_x);
+
+	bool row_span_found = false;
+
+	// render cells with computed width
+	for (int row = 0; row < m_grid.rows_count(); row++)
+	{
+		m_grid.row(row).height = 0;
+		for (int col = 0; col < m_grid.cols_count(); col++)
+		{
+			table_cell* cell = m_grid.cell(col, row);
+			if (cell->el)
+			{
+				int span_col = col + cell->colspan - 1;
+				if (span_col >= m_grid.cols_count())
+				{
+					span_col = m_grid.cols_count() - 1;
+				}
+				int cell_width = m_grid.column(span_col).right - m_grid.column(col).left;
+
+				if (cell->el->m_pos.width != cell_width - cell->el->content_margins_left() - cell->el->content_margins_right())
+				{
+					cell->el->render(m_grid.column(col).left, 0, cell_width);
+					cell->el->m_pos.width = cell_width - cell->el->content_margins_left() - cell->el->content_margins_right();
+				}
+				else
+				{
+					cell->el->m_pos.x = m_grid.column(col).left + cell->el->content_margins_left();
+				}
+
+				if (cell->rowspan <= 1)
+				{
+					m_grid.row(row).height = std::max(m_grid.row(row).height, cell->el->height());
+				}
+				else
+				{
+					row_span_found = true;
+				}
+
+			}
+		}
+	}
+
+	if (row_span_found)
+	{
+		for (int col = 0; col < m_grid.cols_count(); col++)
+		{
+			for (int row = 0; row < m_grid.rows_count(); row++)
+			{
+				table_cell* cell = m_grid.cell(col, row);
+				if (cell->el)
+				{
+					int span_row = row + cell->rowspan - 1;
+					if (span_row >= m_grid.rows_count())
+					{
+						span_row = m_grid.rows_count() - 1;
+					}
+					if (span_row != row)
+					{
+						int h = 0;
+						for (int i = row; i <= span_row; i++)
+						{
+							h += m_grid.row(i).height;
+						}
+						if (h < cell->el->height())
+						{
+							m_grid.row(span_row).height += cell->el->height() - h;
+						}
+					}
+				}
+			}
+		}
+	}
+
+	m_grid.calc_vertical_positions(m_borders, m_border_collapse, m_border_spacing_y);
+
+	int table_height = 0;
+	// place cells vertically
+	for (int col = 0; col < m_grid.cols_count(); col++)
+	{
+		for (int row = 0; row < m_grid.rows_count(); row++)
+		{
+			table_cell* cell = m_grid.cell(col, row);
+			if (cell->el)
+			{
+				int span_row = row + cell->rowspan - 1;
+				if (span_row >= m_grid.rows_count())
+				{
+					span_row = m_grid.rows_count() - 1;
+				}
+				cell->el->m_pos.y = m_grid.row(row).top + cell->el->content_margins_top();
+				cell->el->m_pos.height = m_grid.row(span_row).bottom - m_grid.row(row).top - cell->el->content_margins_top() - cell->el->content_margins_bottom();
+				table_height = std::max(table_height, m_grid.row(span_row).bottom);
+				cell->el->apply_vertical_align();
+			}
+		}
+	}
+
+	if (m_border_collapse == border_collapse_collapse)
+	{
+		if (m_grid.rows_count())
+		{
+			table_height -= std::min(border_bottom(), m_grid.row(m_grid.rows_count() - 1).border_bottom);
+		}
+	}
+	else
+	{
+		table_height += m_border_spacing_y;
+	}
+
+	m_pos.width = table_width;
+
+	calc_outlines(parent_width);
+
+	m_pos.move_to(x, y);
+	m_pos.x += content_margins_left();
+	m_pos.y += content_margins_top();
+	m_pos.width = table_width;
+	m_pos.height = table_height;
+
+	return table_width;
+}
+
+void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex)
+{
+	position pos = m_pos;
+	pos.x += x;
+	pos.y += y;
+
+	if (m_overflow > overflow_visible)
+	{
+		m_doc->container()->set_clip(pos, true, true);
+	}
+
+	position browser_wnd;
+	m_doc->container()->get_client_rect(browser_wnd);
+
+	for (elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	{
+		element* el = (*i);
+
+		if (el->is_visible())
+		{
+			switch (flag)
+			{
+			case draw_positioned:
+				if (el->is_positioned() && el->get_zindex() == zindex)
+				{
+					if (el->get_element_position() == element_position_fixed)
+					{
+						el->draw(hdc, browser_wnd.x, browser_wnd.y, clip);
+						el->draw_stacking_context(hdc, browser_wnd.x, browser_wnd.y, clip, true);
+					}
+					else
+					{
+						el->draw(hdc, pos.x, pos.y, clip);
+						el->draw_stacking_context(hdc, pos.x, pos.y, clip, true);
+					}
+					el = 0;
+				}
+				break;
+			case draw_block:
+				if (!el->is_inline_box() && el->get_float() == float_none && !el->is_positioned())
+				{
+					el->draw(hdc, pos.x, pos.y, clip);
+				}
+				break;
+			case draw_floats:
+				if (el->get_float() != float_none && !el->is_positioned())
+				{
+					el->draw(hdc, pos.x, pos.y, clip);
+					el->draw_stacking_context(hdc, pos.x, pos.y, clip, false);
+					el = 0;
+				}
+				break;
+			case draw_inlines:
+				if (el->is_inline_box() && el->get_float() == float_none && !el->is_positioned())
+				{
+					el->draw(hdc, pos.x, pos.y, clip);
+					if (el->get_display() == display_inline_block)
+					{
+						el->draw_stacking_context(hdc, pos.x, pos.y, clip, false);
+						el = 0;
+					}
+				}
+				break;
+			default:
+				break;
+			}
+
+			if (el)
+			{
+				if (flag == draw_positioned)
+				{
+					if (!el->is_positioned())
+					{
+						el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
+					}
+				}
+				else
+				{
+					if (el->get_float() == float_none &&
+						el->get_display() != display_inline_block &&
+						!el->is_positioned())
+					{
+						el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
+					}
+				}
+			}
+		}
+	}
+
+	if (m_overflow > overflow_visible)
+	{
+		m_doc->container()->del_clip();
+	}
+}
+
+void litehtml::html_tag::draw_children_table(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex)
+{
+	position pos = m_pos;
+	pos.x += x;
+	pos.y += y;
+	for (int row = 0; row < m_grid.rows_count(); row++)
+	{
+		if (flag == draw_block)
+		{
+			m_grid.row(row).el_row->draw_background(hdc, pos.x, pos.y, clip);
+		}
+		for (int col = 0; col < m_grid.cols_count(); col++)
+		{
+			table_cell* cell = m_grid.cell(col, row);
+			if (cell->el)
+			{
+				if (flag == draw_block)
+				{
+					cell->el->draw(hdc, pos.x, pos.y, clip);
+				}
+				cell->el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
+			}
+		}
+	}
 }

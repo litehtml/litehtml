@@ -9,6 +9,7 @@
 #include "css_selector.h"
 #include "stylesheet.h"
 #include "box.h"
+#include "table.h"
 
 namespace litehtml
 {
@@ -22,7 +23,6 @@ namespace litehtml
 	public:
 		typedef litehtml::object_ptr<litehtml::html_tag>	ptr;
 	protected:
-		elements_vector			m_children;
 		box::vector				m_boxes;
 		tstring					m_id;
 		tstring					m_class;
@@ -70,6 +70,15 @@ namespace litehtml
 
 		int_int_cache			m_cahe_line_left;
 		int_int_cache			m_cahe_line_right;
+
+		// data for table rendering
+		table_grid				m_grid;
+		css_length				m_css_border_spacing_x;
+		css_length				m_css_border_spacing_y;
+		int						m_border_spacing_x;
+		int						m_border_spacing_y;
+		border_collapse			m_border_collapse;
+
 	public:
 		html_tag(litehtml::document* doc);
 		virtual ~html_tag();
@@ -187,6 +196,10 @@ namespace litehtml
 		virtual background*			get_background(bool own_only = false);
 
 	protected:
+		void						draw_children_box(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex);
+		void						draw_children_table(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex);
+		int							render_box(int x, int y, int max_width, bool second_pass = false);
+		int							render_table(int x, int y, int max_width, bool second_pass = false);
 		int							fix_line_width(int max_width, element_float flt);
 		void						parse_background();
 		void						init_background_paint( position pos, background_paint &bg_paint, background* bg );
