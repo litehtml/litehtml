@@ -6,6 +6,11 @@
 #include <locale>
 #endif
 
+litehtml::string_map litehtml::style::m_valid_values =
+{
+	{ _t("white-space"), white_space_strings }
+};
+
 litehtml::style::style()
 {
 }
@@ -540,11 +545,11 @@ void litehtml::style::parse_short_background( const tstring& val, const tchar_t*
 
 void litehtml::style::parse_short_font( const tstring& val, bool important )
 {
-	add_parsed_property(_t("font-style"),			_t("normal"),	important);
-	add_parsed_property(_t("font-variant"),			_t("normal"),	important);
-	add_parsed_property(_t("font-weight"),			_t("normal"),	important);
-	add_parsed_property(_t("font-size"),			_t("medium"),	important);
-	add_parsed_property(_t("line-height"),			_t("normal"),	important);
+	add_parsed_property(_t("font-style"),	_t("normal"),	important);
+	add_parsed_property(_t("font-variant"),	_t("normal"),	important);
+	add_parsed_property(_t("font-weight"),	_t("normal"),	important);
+	add_parsed_property(_t("font-size"),		_t("medium"),	important);
+	add_parsed_property(_t("line-height"),	_t("normal"),	important);
 
 	string_vector tokens;
 	split_string(val, tokens, _t(" "), _t(""), _t("\""));
@@ -609,17 +614,31 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 
 void litehtml::style::add_parsed_property( const tstring& name, const tstring& val, bool important )
 {
-	props_map::iterator prop = m_properties.find(name);
-	if(prop != m_properties.end())
+	bool is_valid = true;
+	string_map::iterator vals = m_valid_values.find(name);
+	if (vals != m_valid_values.end())
 	{
-		if( !prop->second.m_important || (important && prop->second.m_important) )
+		if (!value_in_list(val, vals->second))
 		{
-			prop->second.m_value		= val;
-			prop->second.m_important	= important;
+			is_valid = false;
 		}
-	} else
+	}
+
+	if (is_valid)
 	{
-		m_properties[name] = property_value(val.c_str(), important);
+		props_map::iterator prop = m_properties.find(name);
+		if (prop != m_properties.end())
+		{
+			if (!prop->second.m_important || (important && prop->second.m_important))
+			{
+				prop->second.m_value = val;
+				prop->second.m_important = important;
+			}
+		}
+		else
+		{
+			m_properties[name] = property_value(val.c_str(), important);
+		}
 	}
 }
 

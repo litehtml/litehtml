@@ -245,12 +245,12 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 	init_font();
 
 	m_el_position	= (element_position)	value_index(get_style_property(_t("position"),		false,	_t("static")),		element_position_strings,	element_position_fixed);
-	m_text_align	= (text_align)			value_index(get_style_property(_t("text-align"),	true,	_t("left")),		text_align_strings,			text_align_left);
+	m_text_align	= (text_align)			value_index(get_style_property(_t("text-align"),		true,	_t("left")),		text_align_strings,			text_align_left);
 	m_overflow		= (overflow)			value_index(get_style_property(_t("overflow"),		false,	_t("visible")),		overflow_strings,			overflow_visible);
 	m_white_space	= (white_space)			value_index(get_style_property(_t("white-space"),	true,	_t("normal")),		white_space_strings,		white_space_normal);
 	m_display		= (style_display)		value_index(get_style_property(_t("display"),		false,	_t("inline")),		style_display_strings,		display_inline);
 	m_visibility	= (visibility)			value_index(get_style_property(_t("visibility"),	true,	_t("visible")),		visibility_strings,			visibility_visible);
-	m_box_sizing	= (box_sizing)			value_index(get_style_property(_t("box-sizing"),	false,	_t("content-box")),	box_sizing_strings,			box_sizing_content_box);
+	m_box_sizing	= (box_sizing)			value_index(get_style_property(_t("box-sizing"),		false,	_t("content-box")),	box_sizing_strings,			box_sizing_content_box);
 
 	if(m_el_position != element_position_static)
 	{
@@ -496,7 +496,7 @@ void litehtml::html_tag::init()
 	}
 	else
 	{
-		//remove white white spaces
+		//remove white spaces
 		elements_vector::iterator i = m_children.begin();
 		while (i != m_children.end())
 		{

@@ -706,7 +706,13 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		}
 		break;
 	case GUMBO_NODE_WHITESPACE:
-		elements.push_back(new el_space(litehtml_from_utf8(node->v.text.text), this));
+		{
+			tstring str = litehtml_from_utf8(node->v.text.text);
+			for (size_t i = 0; i < str.length(); i++)
+			{
+				elements.push_back(new el_space(str.substr(i, 1).c_str(), this));
+			}
+		}
 		break;
 	default:
 		break;

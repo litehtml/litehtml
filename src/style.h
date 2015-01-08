@@ -41,7 +41,8 @@ namespace litehtml
 		typedef object_ptr<style>			ptr;
 		typedef std::vector<style::ptr>		vector;
 	private:
-		props_map	m_properties;
+		props_map			m_properties;
+		static string_map	m_valid_values;
 	public:
 		style();
 		style(const style& val);
