@@ -29,7 +29,6 @@ void litehtml::style::parse( const tchar_t* txt, const tchar_t* baseurl )
 {
 	std::vector<tstring> properties;
 	split_string(txt, properties, _t(";"));
-//	tokenize(txt, properties, _t(";"), _t(""), _t(""), _t(""));
 
 	for(std::vector<tstring>::const_iterator i = properties.begin(); i != properties.end(); i++)
 	{

@@ -105,7 +105,6 @@ bool litehtml::css::parse_selectors( const tstring& txt, litehtml::style::ptr st
 	trim(selector);
 	string_vector tokens;
 	split_string(selector, tokens, _t(","));
-//	tokenize(selector, tokens, _t(","));
 
 	bool added_something = false;
 
@@ -144,7 +143,6 @@ void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, d
 		trim(iStr);
 		string_vector tokens;
 		split_string(iStr, tokens, _t(" "), _t(""), _t("(\""));
-		//tokenize(iStr, tokens, _t(" "), _t(""), _t("()\""));
 		if(!tokens.empty())
 		{
 			tstring url;

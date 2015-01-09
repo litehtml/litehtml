@@ -133,6 +133,7 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 					{
 						tstring::size_type pos2 = txt.find_first_of(_t("]"), pos + 1);
 						attribute.val = txt.substr(pos, pos2 == tstring::npos ? pos2 : (pos2 - pos));
+						trim(attribute.val);
 						pos = pos2 == tstring::npos ? pos2 : (pos2 + 1);
 					}
 				}
@@ -159,8 +160,7 @@ bool litehtml::css_selector::parse( const tstring& text )
 		return false;
 	}
 	string_vector tokens;
-	split_string(text, tokens, _t(""), _t(" \t>+~"), _t("("));
-	//tokenize(text, tokens, _t(""), _t(" \t>+~"), _t("()"));
+	split_string(text, tokens, _t(""), _t(" \t>+~"), _t("(["));
 
 	if(tokens.empty())
 	{
