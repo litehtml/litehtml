@@ -124,7 +124,7 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 					if(txt[pos] == _t('"'))
 					{
 						tstring::size_type pos2 = txt.find_first_of(_t("\""), pos + 1);
-						attribute.val = txt.substr(pos + 1, pos2 == tstring::npos ? pos2 : (pos2 - pos - 2));
+						attribute.val = txt.substr(pos + 1, pos2 == tstring::npos ? pos2 : (pos2 - pos - 1));
 						pos = pos2 == tstring::npos ? pos2 : (pos2 + 1);
 					} else if(txt[pos] == _t(']'))
 					{

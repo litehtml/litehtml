@@ -299,10 +299,10 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 	m_doc->cvt_units(m_css_height,	m_font_size);
 
 	m_css_min_width.fromString(		get_style_property(_t("min-width"),		false,	_t("0")));
-	m_css_min_height.fromString(	get_style_property(_t("min-height"),	false,	_t("0")));
+	m_css_min_height.fromString(	get_style_property(_t("min-height"),		false,	_t("0")));
 
 	m_css_max_width.fromString(		get_style_property(_t("max-width"),		false,	_t("none")),	_t("none"));
-	m_css_max_height.fromString(	get_style_property(_t("max-height"),	false,	_t("none")),	_t("none"));
+	m_css_max_height.fromString(	get_style_property(_t("max-height"),		false,	_t("none")),	_t("none"));
 	
 	m_doc->cvt_units(m_css_min_width,	m_font_size);
 	m_doc->cvt_units(m_css_min_height,	m_font_size);
@@ -317,18 +317,18 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 	m_doc->cvt_units(m_css_offsets.top,		m_font_size);
 	m_doc->cvt_units(m_css_offsets.bottom,	m_font_size);
 
-	m_css_margins.left.fromString(		get_style_property(_t("margin-left"),			false,	_t("0")), _t("auto"));
-	m_css_margins.right.fromString(		get_style_property(_t("margin-right"),			false,	_t("0")), _t("auto"));
+	m_css_margins.left.fromString(		get_style_property(_t("margin-left"),		false,	_t("0")), _t("auto"));
+	m_css_margins.right.fromString(		get_style_property(_t("margin-right"),		false,	_t("0")), _t("auto"));
 	m_css_margins.top.fromString(		get_style_property(_t("margin-top"),			false,	_t("0")), _t("auto"));
 	m_css_margins.bottom.fromString(	get_style_property(_t("margin-bottom"),		false,	_t("0")), _t("auto"));
 
-	m_css_padding.left.fromString(		get_style_property(_t("padding-left"),			false,	_t("0")), _t(""));
+	m_css_padding.left.fromString(		get_style_property(_t("padding-left"),		false,	_t("0")), _t(""));
 	m_css_padding.right.fromString(		get_style_property(_t("padding-right"),		false,	_t("0")), _t(""));
-	m_css_padding.top.fromString(		get_style_property(_t("padding-top"),			false,	_t("0")), _t(""));
+	m_css_padding.top.fromString(		get_style_property(_t("padding-top"),		false,	_t("0")), _t(""));
 	m_css_padding.bottom.fromString(	get_style_property(_t("padding-bottom"),		false,	_t("0")), _t(""));
 
-	m_css_borders.left.width.fromString(	get_style_property(_t("border-left-width"),	false,	_t("medium")), border_width_strings);
-	m_css_borders.right.width.fromString(	get_style_property(_t("border-right-width"),	false,	_t("medium")), border_width_strings);
+	m_css_borders.left.width.fromString(	get_style_property(_t("border-left-width"),		false,	_t("medium")), border_width_strings);
+	m_css_borders.right.width.fromString(	get_style_property(_t("border-right-width"),		false,	_t("medium")), border_width_strings);
 	m_css_borders.top.width.fromString(		get_style_property(_t("border-top-width"),		false,	_t("medium")), border_width_strings);
 	m_css_borders.bottom.width.fromString(	get_style_property(_t("border-bottom-width"),	false,	_t("medium")), border_width_strings);
 
