@@ -485,12 +485,12 @@ bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y
 	return false;
 }
 
-litehtml::element::ptr litehtml::document::create_element( const tchar_t* tag_name )
+litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_name, const string_map& attributes)
 {
 	element::ptr newTag = NULL;
 	if(m_container)
 	{
-		newTag = m_container->create_element(tag_name);
+		newTag = m_container->create_element(tag_name, attributes);
 	}
 	if(!newTag)
 	{
@@ -548,6 +548,10 @@ litehtml::element::ptr litehtml::document::create_element( const tchar_t* tag_na
 	if(newTag)
 	{
 		newTag->set_tagName(tag_name);
+		for (string_map::const_iterator iter = attributes.begin(); iter != attributes.end(); iter++)
+		{
+			newTag->set_attr(iter->first.c_str(), iter->second.c_str());
+		}
 	}
 
 	return newTag;
@@ -609,11 +613,20 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 	{
 	case GUMBO_NODE_ELEMENT:
 		{
+			string_map attrs;
+			GumboAttribute* attr;
+			for (unsigned int i = 0; i < node->v.element.attributes.length; i++)
+			{
+				attr = (GumboAttribute*)node->v.element.attributes.data[i];
+				attrs[tstring(litehtml_from_utf8(attr->name))] = litehtml_from_utf8(attr->value);
+			}
+
+
 			element::ptr ret;
 			const char* tag = gumbo_normalized_tagname(node->v.element.tag);
 			if (tag[0])
 			{
-				ret = create_element(litehtml_from_utf8(tag));
+				ret = create_element(litehtml_from_utf8(tag), attrs);
 			}
 			else
 			{
@@ -621,18 +634,11 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 				{
 					std::string strA;
 					strA.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
-					ret = create_element(litehtml_from_utf8(strA.c_str()));
+					ret = create_element(litehtml_from_utf8(strA.c_str()), attrs);
 				}
 			}
 			if (ret)
 			{
-				GumboAttribute* attr;
-				for (unsigned int i = 0; i < node->v.element.attributes.length; i++)
-				{
-					attr = (GumboAttribute*)node->v.element.attributes.data[i];
-					ret->set_attr(litehtml_from_utf8(attr->name), litehtml_from_utf8(attr->value));
-				}
-
 				elements_vector child;
 				for (unsigned int i = 0; i < node->v.element.children.length; i++)
 				{

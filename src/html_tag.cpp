@@ -269,7 +269,15 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	m_clear = (element_clear) value_index(get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
-	if (m_display == display_table ||
+	if (m_float != float_none)
+	{
+		// reset display in to block for floating elements
+		if (m_display != display_none)
+		{
+			m_display = display_block;
+		}
+	}
+	else if (m_display == display_table ||
 		m_display == display_table_caption ||
 		m_display == display_table_cell ||
 		m_display == display_table_column ||
@@ -281,10 +289,10 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 	{
 		m_doc->add_tabular(this);
 	}
-	// fix inline boxes with float and absolute/fixed positions
+	// fix inline boxes with absolute/fixed positions
 	else if (m_display != display_none && is_inline_box())
 	{
-		if (m_el_position == element_position_absolute || m_float != float_none || m_el_position == element_position_fixed)
+		if (m_el_position == element_position_absolute || m_el_position == element_position_fixed)
 		{
 			m_display = display_block;
 		}

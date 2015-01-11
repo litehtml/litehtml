@@ -850,7 +850,7 @@ void cairo_container::unlock_images_cache()
 	LeaveCriticalSection(&m_img_sync);
 }
 
-litehtml::element* cairo_container::create_element( const litehtml::tchar_t* tag_name )
+litehtml::element* cairo_container::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes)
 {
 	return 0;
 }

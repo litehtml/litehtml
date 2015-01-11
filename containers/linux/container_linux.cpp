@@ -831,7 +831,7 @@ const litehtml::tchar_t* container_linux::get_default_font_name()
 	return "Times New Roman";
 }
 
-litehtml::element* container_linux::create_element(const litehtml::tchar_t* tag_name)
+litehtml::element* container_linux::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes)
 {
 	return 0;
 }
