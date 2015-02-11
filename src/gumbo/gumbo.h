@@ -47,7 +47,9 @@
 #define fileno _fileno
 #endif
 
+#ifndef _MSC_VER
 #include <stdbool.h>
+#endif
 #include <stddef.h>
 
 #ifdef __cplusplus
