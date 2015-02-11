@@ -6,18 +6,17 @@
 #include <locale>
 #endif
 
-litehtml::string_map litehtml::style::m_valid_values =
-{
-	{ _t("white-space"), white_space_strings }
-};
+litehtml::string_map litehtml::style::m_valid_values;
 
 litehtml::style::style()
 {
+    m_valid_values[ _t("white-space") ] = white_space_strings;
 }
 
 litehtml::style::style( const style& val )
 {
 	m_properties = val.m_properties;
+    m_valid_values[ _t("white-space") ] = white_space_strings;
 }
 
 litehtml::style::~style()
