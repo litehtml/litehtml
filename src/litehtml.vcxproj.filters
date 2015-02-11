@@ -13,12 +13,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
     </Filter>
-    <Filter Include="Header Files\gumbo">
-      <UniqueIdentifier>{2ace1e9c-9b5f-42dc-8884-c15171319581}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="Source Files\gumbo">
-      <UniqueIdentifier>{ea5de415-e261-4c27-819a-a25f80f69673}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="background.cpp">
@@ -126,44 +120,11 @@
     <ClCompile Include="web_color.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="gumbo\string_buffer.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\string_piece.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\tag.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\tokenizer.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\utf8.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\util.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\vector.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\attribute.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\char_ref.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\error.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="gumbo\parser.c">
-      <Filter>Source Files\gumbo</Filter>
-    </ClCompile>
-    <ClCompile Include="utf8_strings.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="el_cdata.h">
+      <Filter>Source Files</Filter>
+    </ClInclude>
     <ClInclude Include="attributes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -195,6 +156,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="document.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="..\include\drawhtml.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="el_anchor.h">
@@ -257,10 +221,16 @@
     <ClInclude Include="element.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="elements.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="html.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="html_tag.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="instream.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="iterators.h">
@@ -290,55 +260,7 @@
     <ClInclude Include="web_color.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="gumbo\gumbo.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\insertion_mode.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\parser.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\string_buffer.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\string_piece.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\token_type.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\tokenizer.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\tokenizer_states.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\utf8.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\util.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\vector.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\attribute.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\char_ref.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\error.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="gumbo\strings.h">
-      <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="utf8_strings.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="el_cdata.h">
+    <ClInclude Include="xh_scanner.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
