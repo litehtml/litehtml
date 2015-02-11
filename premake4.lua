@@ -13,6 +13,7 @@ solution "litehtml"
     configuration "Debug"
         defines     { "_DEBUG" }
         flags       { "Symbols" }
+        targetsuffix "_d"
 
     configuration "Release"
         defines     { "NDEBUG" }
@@ -25,7 +26,7 @@ solution "litehtml"
 
     configuration "Debug"
         targetdir   "bin/debug"
-        targetsuffix = "_d"
+
 
     configuration "Release"
         targetdir   "bin/release"
