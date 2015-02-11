@@ -21,10 +21,11 @@ solution "litehtml"
     configuration "windows"
         defines     { "WIN32" }
 
-    project "ShaderShaker"
+    project "litehtml"
 
     configuration "Debug"
         targetdir   "bin/debug"
+        targetsuffix = "_d"
 
     configuration "Release"
         targetdir   "bin/release"
