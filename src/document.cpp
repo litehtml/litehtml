@@ -828,7 +828,7 @@ void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display dis
 	if (parent->get_display() != disp)
 	{
 		elements_vector::iterator this_element = std::find_if(parent->m_children.begin(), parent->m_children.end(),
-			[&](element::ptr& el)
+			[&](element::ptr& el)->bool
 			{
 				if (el == el_ptr)
 				{
