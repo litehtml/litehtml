@@ -43,8 +43,10 @@
 #define GUMBO_GUMBO_H_
 
 #ifdef _MSC_VER
-#define _CRT_SECURE_NO_WARNINGS
-#define fileno _fileno
+    #ifndef _CRT_SECURE_NO_WARNINGS
+        #define _CRT_SECURE_NO_WARNINGS
+    #endif
+    #define fileno _fileno
 #endif
 
 #ifndef _MSC_VER
