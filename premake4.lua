@@ -1,5 +1,6 @@
 solution "litehtml"
     configurations { "Release", "Debug" }
+    defines { "LITEHTML_UTF8" }
 
     targetname "litehtml"
     language "C++"
