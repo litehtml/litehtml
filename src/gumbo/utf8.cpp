@@ -19,13 +19,13 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
-#include <strings.h>    // For strncasecmp.
 
 #include "error.h"
 #include "gumbo.h"
 #include "parser.h"
 #include "util.h"
 #include "vector.h"
+#include "strings.h"
 
 const int kUtf8ReplacementChar = 0xFFFD;
 
@@ -239,7 +239,7 @@ bool utf8iterator_maybe_consume_match(
       !strncmp(iter->_start, prefix, length) :
       !strncasecmp(iter->_start, prefix, length));
   if (matched) {
-    for (int i = 0; i < length; ++i) {
+    for (unsigned int i = 0; i < length; ++i) {
       utf8iterator_next(iter);
     }
     return true;

@@ -115,7 +115,7 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 		doc->m_root->parse_styles();
 
 		// Now the m_tabular_elements is filled with tabular elements.
-		// We have to check the tabular elements for missing table elements 
+		// We have to check the tabular elements for missing table elements
 		// and create the anonymous boxes in visual table layout
 		doc->fix_tables_layout();
 
@@ -292,7 +292,7 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 int litehtml::document::cvt_units( const tchar_t* str, int fontSize, bool* is_percent/*= 0*/ ) const
 {
 	if(!str)	return 0;
-	
+
 	css_length val;
 	val.fromString(str);
 	if(is_percent && val.units() == css_units_percentage && !val.is_predefined())
@@ -392,9 +392,9 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 		}
 		cursor = m_over_element->get_cursor();
 	}
-	
+
 	m_container->set_cursor(cursor ? cursor : _t("auto"));
-	
+
 	if(state_was_changed)
 	{
 		return m_root->find_styles_changes(redraw_boxes, 0, 0);
@@ -632,6 +632,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 			{
 				if (node->v.element.original_tag.data && node->v.element.original_tag.length)
 				{
+					gumbo_tag_from_original_text( & node->v.element.original_tag );
 					std::string strA;
 					strA.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
 					ret = create_element(litehtml_from_utf8(strA.c_str()), attrs);
@@ -644,7 +645,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 				{
 					child.clear();
 					create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child);
-					std::for_each(child.begin(), child.end(), 
+					std::for_each(child.begin(), child.end(),
 						[&ret](element::ptr& el)
 						{
 							ret->appendChild(el);
@@ -828,7 +829,7 @@ void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display dis
 	if (parent->get_display() != disp)
 	{
 		elements_vector::iterator this_element = std::find_if(parent->m_children.begin(), parent->m_children.end(),
-			[&](element::ptr& el)
+			[&](element::ptr& el)->bool
 			{
 				if (el == el_ptr)
 				{

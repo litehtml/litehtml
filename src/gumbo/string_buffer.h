@@ -17,7 +17,6 @@
 #ifndef GUMBO_STRING_BUFFER_H_
 #define GUMBO_STRING_BUFFER_H_
 
-#include <stdbool.h>
 #include <stddef.h>
 
 #include "gumbo.h"

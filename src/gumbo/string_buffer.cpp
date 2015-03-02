@@ -18,11 +18,10 @@
 
 #include <assert.h>
 #include <stdlib.h>
-#include <string.h>
-#include <strings.h>
 
 #include "string_piece.h"
 #include "util.h"
+#include <string.h>
 
 struct GumboInternalParser;
 
@@ -37,7 +36,7 @@ static void maybe_resize_string_buffer(
     new_capacity *= 2;
   }
   if (new_capacity != buffer->capacity) {
-    char* new_data = gumbo_parser_allocate(parser, new_capacity);
+    char* new_data = reinterpret_cast< char* >(gumbo_parser_allocate(parser, new_capacity));
     memcpy(new_data, buffer->data, buffer->length);
     gumbo_parser_deallocate(parser, buffer->data);
     buffer->data = new_data;
@@ -47,7 +46,7 @@ static void maybe_resize_string_buffer(
 
 void gumbo_string_buffer_init(
     struct GumboInternalParser* parser, GumboStringBuffer* output) {
-  output->data = gumbo_parser_allocate(parser, kDefaultStringBufferSize);
+  output->data = reinterpret_cast< char* >( gumbo_parser_allocate(parser, kDefaultStringBufferSize));
   output->length = 0;
   output->capacity = kDefaultStringBufferSize;
 }
@@ -94,7 +93,7 @@ void gumbo_string_buffer_append_string(
 
 char* gumbo_string_buffer_to_string(
     struct GumboInternalParser* parser, GumboStringBuffer* input) {
-  char* buffer = gumbo_parser_allocate(parser, input->length + 1);
+  char* buffer = reinterpret_cast< char* >(gumbo_parser_allocate(parser, input->length + 1));
   memcpy(buffer, input->data, input->length);
   buffer[input->length] = '\0';
   return buffer;
