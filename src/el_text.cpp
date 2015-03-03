@@ -28,6 +28,12 @@ void litehtml::el_text::get_text( tstring& text )
 	text += m_text;
 }
 
+void litehtml::el_text::set_text( const tstring& text )
+{
+    m_text = text;
+    parse_styles( true );
+}
+
 const litehtml::tchar_t* litehtml::el_text::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
 {
 	if(inherited)
