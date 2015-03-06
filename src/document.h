@@ -93,8 +93,10 @@ namespace litehtml
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
 		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
+        static litehtml::element::ptr set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles = 0 );
 	
 	private:
+        document();
 		litehtml::uint_ptr	add_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);
 
 		void create_node(GumboNode* node, elements_vector& elements);
