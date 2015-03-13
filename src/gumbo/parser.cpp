@@ -649,8 +649,8 @@ static bool tag_in(const GumboToken* token, bool is_start, ...) {
   va_list tags;
   va_start(tags, is_start);
   bool result = false;
-  for (GumboTag tag = va_arg(tags, GumboTag); tag != GUMBO_TAG_LAST;
-       tag = va_arg(tags, GumboTag)) {
+  for (intptr_t  tag = va_arg(tags, intptr_t ); tag != GUMBO_TAG_LAST;
+       tag = va_arg(tags, intptr_t )) {
     if (tag == token_tag) {
       result = true;
       break;
@@ -682,8 +682,8 @@ static bool node_tag_in(const GumboNode* node, ...) {
   va_list tags;
   va_start(tags, node);
   bool result = false;
-  for (GumboTag tag = va_arg(tags, GumboTag); tag != GUMBO_TAG_LAST;
-       tag = va_arg(tags, GumboTag)) {
+  for (intptr_t  tag = va_arg(tags, intptr_t ); tag != GUMBO_TAG_LAST;
+       tag = va_arg(tags, intptr_t )) {
     assert(tag <= GUMBO_TAG_LAST);
     if (tag == node_tag) {
       result = true;
@@ -1286,8 +1286,8 @@ static bool has_an_element_in_specific_scope(
   // these tag sets anyway, to something more efficient.
   GumboVector tags;
   gumbo_vector_init(parser, 10, &tags);
-  for (GumboTag tag = va_arg(args, GumboTag); tag != GUMBO_TAG_LAST;
-       tag = va_arg(args, GumboTag)) {
+  for (intptr_t  tag = va_arg(args, intptr_t ); tag != GUMBO_TAG_LAST;
+       tag = va_arg(args, intptr_t )) {
     // We store the tags inline instead of storing pointers to them.
     gumbo_vector_add(parser, (void*) tag, &tags);
   }
@@ -1386,8 +1386,8 @@ static bool has_an_element_in_scope_with_tagname(GumboParser* parser, ...) {
   gumbo_vector_init(parser, 6, &tags);
   va_list args;
   va_start(args, parser);
-  for (GumboTag tag = va_arg(args, GumboTag); tag != GUMBO_TAG_LAST;
-       tag = va_arg(args, GumboTag)) {
+  for (intptr_t  tag = va_arg(args, intptr_t ); tag != GUMBO_TAG_LAST;
+       tag = va_arg(args, intptr_t )) {
     gumbo_vector_add(parser, (void*) tag, &tags);
   }
   bool found = has_an_element_in_specific_scope(

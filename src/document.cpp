@@ -64,7 +64,7 @@ litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::p
 {
     GumboOutput
         * output = gumbo_parse((const char*) text);
-    elements_vector 
+    elements_vector
         root_elements;
     litehtml::element::ptr
         root_element;
@@ -774,7 +774,7 @@ void litehtml::document::fix_tables_layout()
 	}
 }
 
-void litehtml::document::fix_table_children(element::ptr el_ptr, style_display disp, tchar_t* disp_str)
+void litehtml::document::fix_table_children(element::ptr el_ptr, style_display disp, const tchar_t* disp_str)
 {
 	elements_vector tmp;
 	elements_vector::iterator first_iter = el_ptr->m_children.begin();
@@ -833,7 +833,7 @@ void litehtml::document::fix_table_children(element::ptr el_ptr, style_display d
 	}
 }
 
-void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display disp, tchar_t* disp_str)
+void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display disp, const tchar_t* disp_str)
 {
 	element::ptr parent = el_ptr->parent();
 
