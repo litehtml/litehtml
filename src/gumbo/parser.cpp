@@ -309,7 +309,7 @@ static const NamespacedAttributeReplacement kForeignAttributeReplacements[] = {
 // The "scope marker" for the list of active formatting elements.  We use a
 // pointer to this as a generic marker element, since the particular element
 // scope doesn't matter.
-static const GumboNode kActiveFormattingScopeMarker;
+static GumboNode kActiveFormattingScopeMarker;
 
 // The tag_is and tag_in function use true & false to denote start & end tags,
 // but for readability, we define constants for them here.
@@ -1301,7 +1301,7 @@ static bool has_an_element_in_specific_scope(
     }
     GumboTag node_tag = node->v.element.tag;
     for (unsigned int j = 0; j < expected->length; ++j) {
-      GumboTag expected_tag = (GumboTag)(unsigned int)expected->data[j];
+      GumboTag expected_tag = (GumboTag)(uintptr_t)expected->data[j];
       if (node_tag == expected_tag) {
         result = true;
         goto cleanup;
@@ -1310,7 +1310,7 @@ static bool has_an_element_in_specific_scope(
 
     bool found_tag = false;
     for (unsigned int j = 0; j < tags.length; ++j) {
-      GumboTag tag = (GumboTag)(unsigned int) tags.data[j];
+      GumboTag tag = (GumboTag)(uintptr_t) tags.data[j];
       if (tag == node_tag) {
         found_tag = true;
         break;
