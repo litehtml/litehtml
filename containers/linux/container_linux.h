@@ -39,7 +39,7 @@ public:
 	virtual void						draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg);
 	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos, bool root);
 	virtual void 						draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker);
-	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes);
+	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, const litehtml::document * document);
 	virtual void						get_media_features(litehtml::media_features& media);
 
 

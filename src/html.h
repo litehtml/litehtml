@@ -54,7 +54,7 @@ namespace litehtml
 		virtual void				set_clip(const litehtml::position& pos, bool valid_x, bool valid_y) = 0;
 		virtual void				del_clip() = 0;
 		virtual void				get_client_rect(litehtml::position& client) = 0;
-		virtual litehtml::element*	create_element(const tchar_t* tag_name, const string_map& attributes) = 0;
+		virtual litehtml::element*	create_element(const tchar_t* tag_name, const string_map& attributes, const litehtml::document * document) = 0;
 		virtual void				get_media_features(litehtml::media_features& media) = 0;
 	};
 
