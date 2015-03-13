@@ -25,6 +25,10 @@ solution "litehtml"
 
     project "litehtml"
 
+        if not os.is("windows") then
+            buildoptions { "-std=c++11 -Wno-error=unused-variable -Wno-error=unused-parameter" }
+        end
+
         configuration "Debug"
             targetdir   "bin/debug"
 
@@ -32,6 +36,3 @@ solution "litehtml"
         configuration "Release"
             targetdir   "bin/release"
 
-        if not os.is("windows") then
-            buildoptions { "-std=c++11 -Wno-error=unused-variable -Wno-error=unused-parameter" }
-        end
