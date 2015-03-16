@@ -8,6 +8,8 @@
 *.sln
 *.vcxproj*
 *.vcproj*
+Makefile
+*.make
 
 # Build results
 [Dd]ebug/

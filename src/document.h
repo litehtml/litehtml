@@ -14,7 +14,7 @@ namespace litehtml
 		tstring	text;
 		tstring	baseurl;
 		tstring	media;
-		
+
 		css_text()
 		{
 		}
@@ -93,15 +93,17 @@ namespace litehtml
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
 		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
-	
+        static litehtml::element::ptr set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles = 0 );
+
 	private:
+        document();
 		litehtml::uint_ptr	add_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);
 
 		void create_node(GumboNode* node, elements_vector& elements);
 		bool update_media_lists(const media_features& features);
 		void fix_tables_layout();
-		void fix_table_children(element::ptr el_ptr, style_display disp, tchar_t* disp_str);
-		void fix_table_parent(element::ptr el_ptr, style_display disp, tchar_t* disp_str);
+		void fix_table_children(element::ptr el_ptr, style_display disp, const tchar_t* disp_str);
+		void fix_table_parent(element::ptr el_ptr, style_display disp, const tchar_t* disp_str);
 	};
 
 	inline element::ptr document::root()
