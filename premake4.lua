@@ -1,5 +1,6 @@
 solution "litehtml"
-    configurations { "release", "x32", "debug", "x64" }
+    configurations { "release", "debug" }
+    platforms { "x32", "x64" }
     defines { "LITEHTML_UTF8" }
 
     targetname "litehtml"
