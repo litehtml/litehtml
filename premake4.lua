@@ -1,5 +1,5 @@
 solution "litehtml"
-    configurations { "Release", "Debug" }
+    configurations { "release", "x32", "debug", "x64" }
     defines { "LITEHTML_UTF8" }
 
     targetname "litehtml"
@@ -11,12 +11,12 @@ solution "litehtml"
         "src/**.c", "src/**.cpp", "src/**.h"
     }
 
-    configuration "Debug"
+    configuration "debug"
         defines     { "_DEBUG" }
         flags       { "Symbols" }
         targetsuffix "_d"
 
-    configuration "Release"
+    configuration "release"
         defines     { "NDEBUG" }
         flags       { "OptimizeSize" }
 
@@ -29,10 +29,8 @@ solution "litehtml"
             buildoptions { "-std=c++11 -Wno-error=unused-variable -Wno-error=unused-parameter" }
         end
 
-        configuration "Debug"
-            targetdir   "bin/debug"
+        configuration "x32"
+            targetdir   "bin/i386"
 
-
-        configuration "Release"
-            targetdir   "bin/release"
-
+        configuration "x64"
+            targetdir   "bin/x64_86"
