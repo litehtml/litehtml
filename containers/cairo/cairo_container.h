@@ -21,7 +21,9 @@
 
 class cairo_container :	public litehtml::document_container
 {
-	typedef std::map<std::wstring, CTxDIB*>	images_map;
+public:
+	typedef std::shared_ptr<CTxDIB>				image_ptr;
+	typedef std::map<std::wstring, image_ptr>	images_map;
 
 protected:
 	cairo_surface_t*			m_temp_surface;
@@ -56,10 +58,10 @@ public:
 	virtual void						get_media_features(litehtml::media_features& media);
 
 	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
-	virtual CTxDIB*						get_image(LPCWSTR url, bool redraw_on_ready) = 0;
+	virtual image_ptr					get_image(LPCWSTR url, bool redraw_on_ready) = 0;
 	virtual void						get_client_rect(litehtml::position& client) = 0;
 	void								clear_images();
-	void								add_image(std::wstring& url, CTxDIB* img);
+	void								add_image(std::wstring& url, image_ptr& img);
 	void								remove_image(std::wstring& url);
 	void								make_url_utf8( const char* url, const char* basepath, std::wstring& out );
 

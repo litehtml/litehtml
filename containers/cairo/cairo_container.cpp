@@ -146,7 +146,7 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 		{
 			if(img_i->second)
 			{
-				draw_txdib((cairo_t*) hdc, img_i->second, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
+				draw_txdib((cairo_t*)hdc, img_i->second.get(), marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
 			}
 		}
 		unlock_images_cache();
@@ -190,7 +190,7 @@ void cairo_container::load_image( const litehtml::tchar_t* src, const litehtml::
 	if(m_images.find(url.c_str()) == m_images.end())
 	{
 		unlock_images_cache();
-		CTxDIB* img = get_image(url.c_str(), redraw_on_ready);
+		image_ptr img = get_image(url.c_str(), redraw_on_ready);
 		lock_images_cache();
 		m_images[url] = img;
 		unlock_images_cache();
@@ -236,7 +236,7 @@ void cairo_container::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_
 	{
 		if(img->second)
 		{
-			draw_txdib(cr, img->second, pos.x, pos.y, pos.width, pos.height);
+			draw_txdib(cr, img->second.get(), pos.x, pos.y, pos.width, pos.height);
 		}
 	}
 	unlock_images_cache();
@@ -268,13 +268,13 @@ void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 	images_map::iterator img_i = m_images.find(url.c_str());
 	if(img_i != m_images.end() && img_i->second)
 	{
-		CTxDIB* bgbmp = img_i->second;
+		image_ptr bgbmp = img_i->second;
 		
-		CTxDIB* new_img = 0;
+		image_ptr new_img;
 		if(bg.image_size.width != bgbmp->getWidth() || bg.image_size.height != bgbmp->getHeight())
 		{
-			new_img = new CTxDIB;
-			bgbmp->resample(bg.image_size.width, bg.image_size.height, new_img);
+			new_img = image_ptr(new CTxDIB);
+			bgbmp->resample(bg.image_size.width, bg.image_size.height, new_img.get());
 			bgbmp = new_img;
 		}
 
@@ -290,7 +290,7 @@ void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 		switch(bg.repeat)
 		{
 		case litehtml::background_repeat_no_repeat:
-			draw_txdib(cr, bgbmp, bg.position_x, bg.position_y, bgbmp->getWidth(), bgbmp->getHeight());
+			draw_txdib(cr, bgbmp.get(), bg.position_x, bg.position_y, bgbmp->getWidth(), bgbmp->getHeight());
 			break;
 
 		case litehtml::background_repeat_repeat_x:
@@ -314,11 +314,6 @@ void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 
 		cairo_pattern_destroy(pattern);
 		cairo_surface_destroy(img);
-
-		if(new_img)
-		{
-			delete new_img;
-		}
 	}
 	unlock_images_cache();
 	cairo_restore(cr);
@@ -723,13 +718,6 @@ void cairo_container::fill_ellipse( cairo_t* cr, int x, int y, int width, int he
 void cairo_container::clear_images()
 {
 	lock_images_cache();
-	for(images_map::iterator i = m_images.begin(); i != m_images.end(); i++)
-	{
-		if(i->second)
-		{
-			delete i->second;
-		}
-	}
 	m_images.clear();
 	unlock_images_cache();
 }
@@ -810,25 +798,17 @@ void cairo_container::remove_image( std::wstring& url )
 	images_map::iterator i = m_images.find(url);
 	if(i != m_images.end())
 	{
-		if(i->second)
-		{
-			delete i->second;
-		}
 		m_images.erase(i);
 	}
 	unlock_images_cache();
 }
 
-void cairo_container::add_image( std::wstring& url, CTxDIB* img )
+void cairo_container::add_image(std::wstring& url, image_ptr& img)
 {
 	lock_images_cache();
 	images_map::iterator i = m_images.find(url);
 	if(i != m_images.end())
 	{
-		if(i->second)
-		{
-			delete i->second;
-		}
 		if(img)
 		{
 			i->second = img;
