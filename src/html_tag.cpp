@@ -4040,16 +4040,20 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 
 
 	int table_width = 0;
+	int min_table_width = 0;
+	int max_table_width = 0;
 
 	if (!block_width.is_default())
 	{
-		table_width = m_grid.calc_table_width(block_width - table_width_spacing, false);
+		table_width = m_grid.calc_table_width(block_width - table_width_spacing, false, min_table_width, max_table_width);
 	}
 	else
 	{
-		table_width = m_grid.calc_table_width(max_width - table_width_spacing, true);
+		table_width = m_grid.calc_table_width(max_width - table_width_spacing, true, min_table_width, max_table_width);
 	}
 
+	min_table_width += table_width_spacing;
+	max_table_width += table_width_spacing;
 	table_width += table_width_spacing;
 	m_grid.calc_horizontal_positions(m_borders, m_border_collapse, m_border_spacing_x);
 
@@ -4171,7 +4175,7 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 	m_pos.width = table_width;
 	m_pos.height = table_height;
 
-	return table_width;
+	return max_table_width;
 }
 
 void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex)
