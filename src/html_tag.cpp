@@ -2134,7 +2134,8 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 				if(el->is_replaced() || el->is_floats_holder())
 				{
 					el->m_pos.width		= el->get_css_width().calc_percent(line_right - line_left);
-					el->m_pos.height	= el->get_css_height().calc_percent(0);
+					el->m_pos.height	= el->get_css_height().calc_percent(el->m_parent ?  el->m_parent->m_pos.height : 0);
+
 					if(el->m_pos.width || el->m_pos.height)
 					{
 						el->calc_outlines(line_right - line_left);
@@ -3720,6 +3721,15 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 	element* el;
 	element_position el_position;
 
+	int block_height = 0;
+
+	m_pos.height = 0;
+
+	if (get_predefined_height(block_height))
+	{
+		m_pos.height = block_height;
+	}
+
 	for (elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
 	{
 		el = (*i);
@@ -3732,8 +3742,6 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 			ret_width = rw;
 		}
 	}
-
-	m_pos.height = 0;
 
 	finish_last_box(true);
 
@@ -3785,7 +3793,6 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 	m_pos.x += content_margins_left();
 	m_pos.y += content_margins_top();
 
-	int block_height = 0;
 	if (get_predefined_height(block_height))
 	{
 		m_pos.height = block_height;
@@ -4129,9 +4136,34 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 		}
 	}
 
+
+	int unconstrained_table_height = 0;
+
+	// compute vertical size inferred by cells
+	for (int row = 0; row < m_grid.rows_count(); row++)
+	{
+		unconstrained_table_height += m_grid.row(row).height;
+	}
+
+	unconstrained_table_height += m_border_spacing_y * (m_grid.rows_count() + 1);
+
+	int extra_row_height = 0;
+	int minimum_table_height = std::max(m_css_height.calc_percent(m_parent ? m_parent->m_pos.height : 0), m_css_min_height.calc_percent(m_parent ? m_parent->m_pos.height : 0));
+
+	if(minimum_table_height > unconstrained_table_height)
+	{
+		extra_row_height = (minimum_table_height - unconstrained_table_height) / m_grid.rows_count();
+
+		for (int row = 0; row < m_grid.rows_count(); row++)
+		{
+			m_grid.row(row).height += extra_row_height;
+		}
+	}
+
 	m_grid.calc_vertical_positions(m_borders, m_border_collapse, m_border_spacing_y);
 
 	int table_height = 0;
+
 	// place cells vertically
 	for (int col = 0; col < m_grid.cols_count(); col++)
 	{

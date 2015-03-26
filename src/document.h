@@ -100,8 +100,8 @@ namespace litehtml
 		void create_node(GumboNode* node, elements_vector& elements);
 		bool update_media_lists(const media_features& features);
 		void fix_tables_layout();
-		void fix_table_children(element::ptr el_ptr, style_display disp, tchar_t* disp_str);
-		void fix_table_parent(element::ptr el_ptr, style_display disp, tchar_t* disp_str);
+		void fix_table_children(element::ptr el_ptr, style_display disp, const tchar_t* disp_str);
+		void fix_table_parent(element::ptr el_ptr, style_display disp, const tchar_t* disp_str);
 	};
 
 	inline element::ptr document::root()
