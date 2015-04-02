@@ -759,8 +759,21 @@ void cairo_container::draw_txdib( cairo_t* cr, CTxDIB* bmp, int x, int y, int cx
 	cairo_surface_destroy(img);
 }
 
-void cairo_container::rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &radius )
+void cairo_container::rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &css_radius )
 {
+	litehtml::css_border_radius radius;
+	radius.top_left_x = (float)css_radius.top_left_x.calc_percent(pos.width);
+	radius.top_left_y = (float)css_radius.top_left_y.calc_percent(pos.height);
+
+	radius.top_right_x = (float)css_radius.top_right_x.calc_percent(pos.width);
+	radius.top_right_y = (float)css_radius.top_right_y.calc_percent(pos.height);
+
+	radius.bottom_right_x = (float)css_radius.bottom_right_x.calc_percent(pos.width);
+	radius.bottom_right_y = (float)css_radius.bottom_right_y.calc_percent(pos.height);
+
+	radius.bottom_left_x = (float)css_radius.bottom_left_x.calc_percent(pos.width);
+	radius.bottom_left_y = (float)css_radius.bottom_left_y.calc_percent(pos.height);
+
 	cairo_new_path(cr);
 	if(radius.top_left_x.val())
 	{
