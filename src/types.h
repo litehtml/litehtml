@@ -355,7 +355,7 @@ namespace litehtml
 		clear_both
 	};
 
-#define  css_units_strings	_t("none;%;in;cm;mm;em;ex;pt;pc;px;dpi;dpcm")
+#define  css_units_strings	_t("none;%;in;cm;mm;em;ex;pt;pc;px;dpi;dpcm;vw;vh")
 
 	enum css_units
 	{
@@ -371,6 +371,8 @@ namespace litehtml
 		css_units_px,
 		css_units_dpi,
 		css_units_dpcm,
+		css_units_vw,
+		css_units_vh,
 	};
 
 #define  background_attachment_strings	_t("scroll;fixed")

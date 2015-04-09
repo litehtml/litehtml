@@ -71,6 +71,8 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 	// Let's process created elements tree
 	if (doc->m_root)
 	{
+		doc->container()->get_media_features(doc->m_media);
+
 		// apply master CSS
 		doc->m_root->apply_stylesheet(ctx->master_css());
 
@@ -97,9 +99,7 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 		// get current media features
 		if (!doc->m_media_lists.empty())
 		{
-			media_features features;
-			doc->container()->get_media_features(features);
-			doc->update_media_lists(features);
+			doc->update_media_lists(doc->m_media);
 		}
 
 		// Apply parsed styles.
@@ -333,6 +333,12 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 	case css_units_mm:
 		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
 		val.set_value((float) ret, css_units_px);
+		break;
+	case css_units_vw:
+		ret = (int)((double)m_media.width * (double)val.val() / 100.0);
+		break;
+	case css_units_vh:
+		ret = (int)((double)m_media.height * (double)val.val() / 100.0);
 		break;
 	default:
 		ret = (int) val.val();
@@ -571,9 +577,8 @@ bool litehtml::document::media_changed()
 {
 	if(!m_media_lists.empty())
 	{
-		media_features features;
-		container()->get_media_features(features);
-		if(update_media_lists(features))
+		container()->get_media_features(m_media);
+		if (update_media_lists(m_media))
 		{
 			m_root->refresh_styles();
 			m_root->parse_styles();
