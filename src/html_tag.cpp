@@ -1911,7 +1911,11 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 			position border_box = pos;
 			border_box += m_padding;
 			border_box += m_borders;
-			m_doc->container()->draw_borders(hdc, m_css_borders, border_box, parent() ? false : true);
+
+			css_borders bdr = m_css_borders;
+			bdr.radius.calc_percents(border_box.width, border_box.height);
+
+			m_doc->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
 		}
 	} else
 	{
@@ -1975,6 +1979,7 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 				if(bg)
 				{
 					bg_paint.border_radius = bdr.radius;
+					bg_paint.border_radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
 					m_doc->container()->draw_background(hdc, bg_paint);
 				}
 
@@ -2694,6 +2699,7 @@ void litehtml::html_tag::init_background_paint( position pos, background_paint &
 	bg_paint.border_radius	= m_css_borders.radius;
 	bg_paint.border_box		= border_box;
 	bg_paint.is_root		= parent() ? false : true;
+	bg_paint.border_radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.height);
 }
 
 litehtml::visibility litehtml::html_tag::get_visibility() const

@@ -74,6 +74,17 @@ namespace litehtml
 			bottom_right_y	= val.bottom_right_y;
 			return *this;
 		}
+		void calc_percents(int width, int height)
+		{
+			bottom_left_x.set_value((float)bottom_left_x.calc_percent(width), css_units_px);
+			bottom_left_y.set_value((float)bottom_left_y.calc_percent(height), css_units_px);
+			top_left_x.set_value((float)top_left_x.calc_percent(width), css_units_px);
+			top_left_y.set_value((float)top_left_y.calc_percent(height), css_units_px);
+			top_right_x.set_value((float)top_right_x.calc_percent(width), css_units_px);
+			top_right_y.set_value((float)top_right_y.calc_percent(height), css_units_px);
+			bottom_right_x.set_value((float)bottom_right_x.calc_percent(width), css_units_px);
+			bottom_right_y.set_value((float)bottom_right_y.calc_percent(height), css_units_px);
+		}
 	};
 
 	struct css_borders
@@ -95,6 +106,17 @@ namespace litehtml
 			right	= val.right;
 			top		= val.top;
 			bottom	= val.bottom;
+			radius	= val.radius;
+		}
+
+		css_borders& operator=(const css_borders& val)
+		{
+			left	= val.left;
+			right	= val.right;
+			top		= val.top;
+			bottom	= val.bottom;
+			radius	= val.radius;
+			return *this;
 		}
 	};
 }

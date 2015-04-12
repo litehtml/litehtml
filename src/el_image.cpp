@@ -176,11 +176,27 @@ void litehtml::el_image::parse_attributes()
 void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip )
 {
 	position pos = m_pos;
-	pos.x	+= x;
-	pos.y	+= y;
+	pos.x += x;
+	pos.y += y;
 
-	draw_background(hdc, x, y, clip);
+	position el_pos = pos;
+	el_pos += m_padding;
+	el_pos += m_borders;
 
+	// draw standard background here
+	if (el_pos.does_intersect(clip))
+	{
+		background* bg = get_background();
+		if (bg)
+		{
+			background_paint bg_paint;
+			init_background_paint(pos, bg_paint, bg);
+
+			m_doc->container()->draw_background(hdc, bg_paint);
+		}
+	}
+
+	// draw image as background
 	if(pos.does_intersect(clip))
 	{
 		background_paint bg;
@@ -197,6 +213,19 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		bg.position_x			= pos.x;
 		bg.position_y			= pos.y;
 		m_doc->container()->draw_background(hdc, bg);
+	}
+
+	// draw borders
+	if (el_pos.does_intersect(clip))
+	{
+		position border_box = pos;
+		border_box += m_padding;
+		border_box += m_borders;
+
+		css_borders bdr = m_css_borders;
+		bdr.radius.calc_percents(border_box.width, border_box.height);
+
+		m_doc->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
 	}
 }
 
