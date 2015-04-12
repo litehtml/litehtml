@@ -212,6 +212,7 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		bg.border_radius		= m_css_borders.radius;
 		bg.position_x			= pos.x;
 		bg.position_y			= pos.y;
+		bg.border_radius.calc_percents(bg.border_box.width, bg.border_box.height);
 		m_doc->container()->draw_background(hdc, bg);
 	}
 
