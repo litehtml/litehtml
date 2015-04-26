@@ -51,7 +51,7 @@ namespace litehtml
 		virtual	void				set_cursor(const tchar_t* cursor)	= 0;
 		virtual	void				transform_text(litehtml::tstring& text, litehtml::text_transform tt) = 0;
 		virtual void				import_css(tstring& text, const tstring& url, tstring& baseurl) = 0;
-		virtual void				set_clip(const litehtml::position& pos, bool valid_x, bool valid_y) = 0;
+		virtual void				set_clip(const litehtml::position& pos, const border_radiuses& bdr_radius, bool valid_x, bool valid_y) = 0;
 		virtual void				del_clip() = 0;
 		virtual void				get_client_rect(litehtml::position& client) = 0;
 		virtual litehtml::element*	create_element(const tchar_t* tag_name, const string_map& attributes) = 0;

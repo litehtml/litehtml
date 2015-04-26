@@ -209,10 +209,9 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		bg.repeat				= background_repeat_no_repeat;
 		bg.image_size.width		= pos.width;
 		bg.image_size.height	= pos.height;
-		bg.border_radius		= m_css_borders.radius;
+		bg.border_radius		= m_css_borders.radius.calc_percents(bg.border_box.width, bg.border_box.height);
 		bg.position_x			= pos.x;
 		bg.position_y			= pos.y;
-		bg.border_radius.calc_percents(bg.border_box.width, bg.border_box.height);
 		m_doc->container()->draw_background(hdc, bg);
 	}
 

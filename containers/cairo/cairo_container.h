@@ -19,6 +19,31 @@
 #define t_make_url	make_url
 #endif
 
+struct cairo_clip_box
+{
+	typedef std::vector<cairo_clip_box> vector;
+	litehtml::position	box;
+	litehtml::border_radiuses radius;
+
+	cairo_clip_box(const litehtml::position& vBox, litehtml::border_radiuses vRad)
+	{
+		box = vBox;
+		radius = vRad;
+	}
+
+	cairo_clip_box(const cairo_clip_box& val)
+	{
+		box = val.box;
+		radius = val.radius;
+	}
+	cairo_clip_box& operator=(const cairo_clip_box& val)
+	{
+		box = val.box;
+		radius = val.radius;
+		return *this;
+	}
+};
+
 class cairo_container :	public litehtml::document_container
 {
 public:
@@ -29,7 +54,7 @@ protected:
 	cairo_surface_t*			m_temp_surface;
 	cairo_t*					m_temp_cr;
 	images_map					m_images;
-	litehtml::position::vector	m_clips;
+	cairo_clip_box::vector		m_clips;
 	IMLangFontLink2*			m_font_link;
 	CRITICAL_SECTION			m_img_sync;
 public:
@@ -52,7 +77,7 @@ public:
 	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos, bool root);
 
 	virtual	void						transform_text(litehtml::tstring& text, litehtml::text_transform tt);
-	virtual void						set_clip(const litehtml::position& pos, bool valid_x, bool valid_y);
+	virtual void						set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y);
 	virtual void						del_clip();
 	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes);
 	virtual void						get_media_features(litehtml::media_features& media);
@@ -68,7 +93,7 @@ public:
 protected:
 	virtual void						draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, double line_width);
 	virtual void						fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color);
-	virtual void						rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &radius );
+	virtual void						rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius );
 
 	void								set_color(cairo_t* cr, litehtml::web_color color)	{ cairo_set_source_rgba(cr, color.red / 255.0, color.green / 255.0, color.blue / 255.0, color.alpha / 255.0); }
 private:

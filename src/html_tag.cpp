@@ -182,7 +182,16 @@ void litehtml::html_tag::draw( uint_ptr hdc, int x, int y, const position* clip 
 	{
 		if(m_overflow > overflow_visible)
 		{
-			m_doc->container()->set_clip(pos, true, true);
+			position border_box = pos;
+			border_box += m_padding;
+			border_box += m_borders;
+
+			border_radiuses bdr_radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
+
+			bdr_radius -= m_borders;
+			bdr_radius -= m_padding;
+
+			m_doc->container()->set_clip(pos, bdr_radius, true, true);
 		}
 
 		draw_list_marker(hdc, pos);
@@ -1978,8 +1987,7 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 
 				if(bg)
 				{
-					bg_paint.border_radius = bdr.radius;
-					bg_paint.border_radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
+					bg_paint.border_radius = bdr.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
 					m_doc->container()->draw_background(hdc, bg_paint);
 				}
 
@@ -2696,10 +2704,9 @@ void litehtml::html_tag::init_background_paint( position pos, background_paint &
 		}
 
 	}
-	bg_paint.border_radius	= m_css_borders.radius;
+	bg_paint.border_radius	= m_css_borders.radius.calc_percents(border_box.width, border_box.height);;
 	bg_paint.border_box		= border_box;
 	bg_paint.is_root		= parent() ? false : true;
-	bg_paint.border_radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.height);
 }
 
 litehtml::visibility litehtml::html_tag::get_visibility() const
@@ -4224,7 +4231,16 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 
 	if (m_overflow > overflow_visible)
 	{
-		m_doc->container()->set_clip(pos, true, true);
+		position border_box = pos;
+		border_box += m_padding;
+		border_box += m_borders;
+
+		border_radiuses bdr_radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
+
+		bdr_radius -= m_borders;
+		bdr_radius -= m_padding;
+
+		m_doc->container()->set_clip(pos, bdr_radius, true, true);
 	}
 
 	position browser_wnd;
