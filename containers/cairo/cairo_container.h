@@ -74,7 +74,7 @@ public:
 	virtual void						get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz);
 	virtual void						draw_image(litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos);
 	virtual void						draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg);
-	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos, bool root);
+	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root);
 
 	virtual	void						transform_text(litehtml::tstring& text, litehtml::text_transform tt);
 	virtual void						set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y);
@@ -99,7 +99,7 @@ protected:
 private:
 	simpledib::dib*						get_dib(litehtml::uint_ptr hdc)	{ return (simpledib::dib*) hdc;				}
 	void								apply_clip(cairo_t* cr);
-	void								add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg);
+	bool								add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg);
 
 	void								draw_txdib(cairo_t* cr, CTxDIB* bmp, int x, int y, int cx, int cy);
 	void								lock_images_cache();

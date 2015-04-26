@@ -31,6 +31,44 @@ namespace litehtml
 		}
 	};
 
+	struct border
+	{
+		int				width;
+		border_style	style;
+		web_color		color;
+
+		border()
+		{
+			width = 0;
+		}
+		border(const border& val)
+		{
+			width = val.width;
+			style = val.style;
+			color = val.color;
+		}
+		border(const css_border& val)
+		{
+			width = (int) val.width.val();
+			style = val.style;
+			color = val.color;
+		}
+		border& operator=(const border& val)
+		{
+			width = val.width;
+			style = val.style;
+			color = val.color;
+			return *this;
+		}
+		border& operator=(const css_border& val)
+		{
+			width = (int) val.width.val();
+			style = val.style;
+			color = val.color;
+			return *this;
+		}
+	};
+
 	struct border_radiuses
 	{
 		int	top_left_x;
@@ -202,6 +240,56 @@ namespace litehtml
 			top		= val.top;
 			bottom	= val.bottom;
 			radius	= val.radius;
+			return *this;
+		}
+	};
+
+	struct borders
+	{
+		border			left;
+		border			top;
+		border			right;
+		border			bottom;
+		border_radiuses	radius;
+
+		borders()
+		{
+
+		}
+
+		borders(const borders& val)
+		{
+			left = val.left;
+			right = val.right;
+			top = val.top;
+			bottom = val.bottom;
+			radius = val.radius;
+		}
+
+		borders(const css_borders& val)
+		{
+			left = val.left;
+			right = val.right;
+			top = val.top;
+			bottom = val.bottom;
+		}
+
+		borders& operator=(const borders& val)
+		{
+			left = val.left;
+			right = val.right;
+			top = val.top;
+			bottom = val.bottom;
+			radius = val.radius;
+			return *this;
+		}
+
+		borders& operator=(const css_borders& val)
+		{
+			left = val.left;
+			right = val.right;
+			top = val.top;
+			bottom = val.bottom;
 			return *this;
 		}
 	};

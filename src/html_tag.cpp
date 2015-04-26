@@ -1921,8 +1921,8 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 			border_box += m_padding;
 			border_box += m_borders;
 
-			css_borders bdr = m_css_borders;
-			bdr.radius.calc_percents(border_box.width, border_box.height);
+			borders bdr = m_css_borders;
+			bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
 
 			m_doc->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
 		}
@@ -1990,8 +1990,9 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 					bg_paint.border_radius = bdr.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
 					m_doc->container()->draw_background(hdc, bg_paint);
 				}
-
-				m_doc->container()->draw_borders(hdc, bdr, *box, false);
+				borders b = bdr;
+				b.radius = bdr.radius.calc_percents(box->width, box->height);
+				m_doc->container()->draw_borders(hdc, b, *box, false);
 			}
 		}
 	}

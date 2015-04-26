@@ -319,11 +319,10 @@ void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 	cairo_restore(cr);
 }
 
-void cairo_container::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg)
+bool cairo_container::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg)
 {
 	if(rx > 0 && ry > 0)
 	{
-
 		cairo_save(cr);
 
 		cairo_translate(cr, x, y);
@@ -339,13 +338,12 @@ void cairo_container::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 		}
 
 		cairo_restore(cr);
-	} else
-	{
-		cairo_move_to(cr, x, y);
+		return true;
 	}
+	return false;
 }
 
-void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos, bool root )
+void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root )
 {
 	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
@@ -358,51 +356,57 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 	int bdr_left	= 0;
 	int bdr_right	= 0;
 
-	if(borders.top.width.val() != 0 && borders.top.style > litehtml::border_style_hidden)
+	if(borders.top.width != 0 && borders.top.style > litehtml::border_style_hidden)
 	{
-		bdr_top = (int) borders.top.width.val();
+		bdr_top = (int) borders.top.width;
 	}
-	if(borders.bottom.width.val() != 0 && borders.bottom.style > litehtml::border_style_hidden)
+	if(borders.bottom.width != 0 && borders.bottom.style > litehtml::border_style_hidden)
 	{
-		bdr_bottom = (int) borders.bottom.width.val();
+		bdr_bottom = (int) borders.bottom.width;
 	}
-	if(borders.left.width.val() != 0 && borders.left.style > litehtml::border_style_hidden)
+	if(borders.left.width != 0 && borders.left.style > litehtml::border_style_hidden)
 	{
-		bdr_left = (int) borders.left.width.val();
+		bdr_left = (int) borders.left.width;
 	}
-	if(borders.right.width.val() != 0 && borders.right.style > litehtml::border_style_hidden)
+	if(borders.right.width != 0 && borders.right.style > litehtml::border_style_hidden)
 	{
-		bdr_right = (int) borders.right.width.val();
+		bdr_right = (int) borders.right.width;
 	}
 
 	// draw right border
-	if(bdr_right)
+	if (bdr_right)
 	{
 		set_color(cr, borders.right.color);
 
-		double r_top	= borders.radius.top_right_x.val();
-		double r_bottom	= borders.radius.bottom_right_x.val();
+		double r_top	= (double) borders.radius.top_right_x;
+		double r_bottom	= (double) borders.radius.bottom_right_x;
 
 		if(r_top)
 		{
-			double end_angle	= 2 * M_PI;
-			double start_angle	= end_angle - M_PI / 2.0  / ((double) bdr_top / (double) bdr_right + 1);
+			double end_angle	= 2.0 * M_PI;
+			double start_angle	= end_angle - M_PI / 2.0  / ((double) bdr_top / (double) bdr_right + 0.5);
 
-			add_path_arc(cr, 
-				draw_pos.right() - r_top, 
-				draw_pos.top() + r_top, 
-				r_top - bdr_right, 
-				r_top - bdr_right + (bdr_right - bdr_top), 
-				end_angle, 
-				start_angle, true);
+			if (!add_path_arc(cr,
+					draw_pos.right() - r_top,
+					draw_pos.top() + r_top,
+					r_top - bdr_right,
+					r_top - bdr_right + (bdr_right - bdr_top),
+					end_angle,
+					start_angle, true))
+			{
+				cairo_move_to(cr, draw_pos.right() - bdr_right, draw_pos.top() + bdr_top);
+			}
 
-			add_path_arc(cr, 
-				draw_pos.right() - r_top, 
-				draw_pos.top() + r_top, 
-				r_top, 
-				r_top, 
-				start_angle, 
-				end_angle, false);
+			if (!add_path_arc(cr,
+					draw_pos.right() - r_top,
+					draw_pos.top() + r_top,
+					r_top,
+					r_top,
+					start_angle,
+					end_angle, false))
+			{
+				cairo_line_to(cr, draw_pos.right(), draw_pos.top());
+			}
 		} else
 		{
 			cairo_move_to(cr, draw_pos.right() - bdr_right, draw_pos.top() + bdr_top);
@@ -414,23 +418,29 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 			cairo_line_to(cr, draw_pos.right(),	draw_pos.bottom() - r_bottom);
 
 			double start_angle	= 0;
-			double end_angle	= start_angle + M_PI / 2.0  / ((double) bdr_bottom / (double) bdr_right + 1);
+			double end_angle	= start_angle + M_PI / 2.0  / ((double) bdr_bottom / (double) bdr_right + 0.5);
 
-			add_path_arc(cr, 
-				draw_pos.right() - r_bottom, 
-				draw_pos.bottom() - r_bottom, 
-				r_bottom, 
-				r_bottom, 
-				start_angle, 
-				end_angle, false);
+			if (!add_path_arc(cr,
+				draw_pos.right() - r_bottom,
+				draw_pos.bottom() - r_bottom,
+				r_bottom,
+				r_bottom,
+				start_angle,
+				end_angle, false))
+			{
+				cairo_line_to(cr, draw_pos.right(), draw_pos.bottom());
+			}
 
-			add_path_arc(cr, 
-				draw_pos.right() - r_bottom, 
-				draw_pos.bottom() - r_bottom, 
-				r_bottom - bdr_right, 
-				r_bottom - bdr_right + (bdr_right - bdr_bottom), 
-				end_angle, 
-				start_angle, true);
+			if (!add_path_arc(cr,
+				draw_pos.right() - r_bottom,
+				draw_pos.bottom() - r_bottom,
+				r_bottom - bdr_right,
+				r_bottom - bdr_right + (bdr_right - bdr_bottom),
+				end_angle,
+				start_angle, true))
+			{
+				cairo_line_to(cr, draw_pos.right() - bdr_right, draw_pos.bottom() - bdr_bottom);
+			}
 		} else
 		{
 			cairo_line_to(cr, draw_pos.right(),	draw_pos.bottom());
@@ -445,29 +455,35 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 	{
 		set_color(cr, borders.bottom.color);
 
-		double r_left	= borders.radius.bottom_left_x.val();
-		double r_right	= borders.radius.bottom_right_x.val();
+		double r_left	= borders.radius.bottom_left_x;
+		double r_right	= borders.radius.bottom_right_x;
 
 		if(r_left)
 		{
 			double start_angle	= M_PI / 2.0;
-			double end_angle	= start_angle + M_PI / 2.0  / ((double) bdr_left / (double) bdr_bottom + 1);
+			double end_angle	= start_angle + M_PI / 2.0  / ((double) bdr_left / (double) bdr_bottom + 0.5);
 
-			add_path_arc(cr, 
-				draw_pos.left() + r_left, 
-				draw_pos.bottom() - r_left, 
-				r_left - bdr_bottom + (bdr_bottom - bdr_left), 
-				r_left - bdr_bottom, 
-				start_angle, 
-				end_angle, false);
+			if (!add_path_arc(cr,
+				draw_pos.left() + r_left,
+				draw_pos.bottom() - r_left,
+				r_left - bdr_bottom + (bdr_bottom - bdr_left),
+				r_left - bdr_bottom,
+				start_angle,
+				end_angle, false))
+			{
+				cairo_move_to(cr, draw_pos.left() + bdr_left, draw_pos.bottom() - bdr_bottom);
+			}
 
-			add_path_arc(cr, 
-				draw_pos.left() + r_left, 
-				draw_pos.bottom() - r_left, 
-				r_left, 
-				r_left, 
-				end_angle, 
-				start_angle, true);
+			if (!add_path_arc(cr,
+				draw_pos.left() + r_left,
+				draw_pos.bottom() - r_left,
+				r_left,
+				r_left,
+				end_angle,
+				start_angle, true))
+			{
+				cairo_line_to(cr, draw_pos.left(), draw_pos.bottom());
+			}
 		} else
 		{
 			cairo_move_to(cr, draw_pos.left(), draw_pos.bottom());
@@ -479,23 +495,29 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 			cairo_line_to(cr, draw_pos.right() - r_right,	draw_pos.bottom());
 
 			double end_angle	= M_PI / 2.0;
-			double start_angle	= end_angle - M_PI / 2.0  / ((double) bdr_right / (double) bdr_bottom + 1);
+			double start_angle	= end_angle - M_PI / 2.0  / ((double) bdr_right / (double) bdr_bottom + 0.5);
 
-			add_path_arc(cr, 
-				draw_pos.right() - r_right, 
-				draw_pos.bottom() - r_right, 
-				r_right, 
-				r_right, 
-				end_angle, 
-				start_angle, true);
+			if (!add_path_arc(cr,
+				draw_pos.right() - r_right,
+				draw_pos.bottom() - r_right,
+				r_right,
+				r_right,
+				end_angle,
+				start_angle, true))
+			{
+				cairo_line_to(cr, draw_pos.right(), draw_pos.bottom());
+			}
 
-			add_path_arc(cr, 
-				draw_pos.right() - r_right, 
-				draw_pos.bottom() - r_right, 
-				r_right - bdr_bottom + (bdr_bottom - bdr_right), 
-				r_right - bdr_bottom, 
+			if (!add_path_arc(cr,
+				draw_pos.right() - r_right,
+				draw_pos.bottom() - r_right,
+				r_right - bdr_bottom + (bdr_bottom - bdr_right),
+				r_right - bdr_bottom,
 				start_angle,
-				end_angle, false);
+				end_angle, false))
+			{
+				cairo_line_to(cr, draw_pos.right() - bdr_right, draw_pos.bottom() - bdr_bottom);
+			}
 		} else
 		{
 			cairo_line_to(cr, draw_pos.right() - bdr_right,	draw_pos.bottom() - bdr_bottom);
@@ -510,29 +532,35 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 	{
 		set_color(cr, borders.top.color);
 
-		double r_left	= borders.radius.top_left_x.val();
-		double r_right	= borders.radius.top_right_x.val();
+		double r_left	= borders.radius.top_left_x;
+		double r_right	= borders.radius.top_right_x;
 
 		if(r_left)
 		{
 			double end_angle	= M_PI * 3.0 / 2.0;
-			double start_angle	= end_angle - M_PI / 2.0  / ((double) bdr_left / (double) bdr_top + 1);
+			double start_angle	= end_angle - M_PI / 2.0  / ((double) bdr_left / (double) bdr_top + 0.5);
 
-			add_path_arc(cr, 
-				draw_pos.left() + r_left, 
-				draw_pos.top() + r_left, 
-				r_left, 
-				r_left, 
-				end_angle, 
-				start_angle, true);
+			if (!add_path_arc(cr,
+				draw_pos.left() + r_left,
+				draw_pos.top() + r_left,
+				r_left,
+				r_left,
+				end_angle,
+				start_angle, true))
+			{
+				cairo_move_to(cr, draw_pos.left(), draw_pos.top());
+			}
 
-			add_path_arc(cr, 
-				draw_pos.left() + r_left, 
-				draw_pos.top() + r_left, 
-				r_left - bdr_top + (bdr_top - bdr_left), 
-				r_left - bdr_top, 
-				start_angle, 
-				end_angle, false);
+			if (!add_path_arc(cr,
+				draw_pos.left() + r_left,
+				draw_pos.top() + r_left,
+				r_left - bdr_top + (bdr_top - bdr_left),
+				r_left - bdr_top,
+				start_angle,
+				end_angle, false))
+			{
+				cairo_line_to(cr, draw_pos.left() + bdr_left, draw_pos.top() + bdr_top);
+			}
 		} else
 		{
 			cairo_move_to(cr, draw_pos.left(), draw_pos.top());
@@ -544,23 +572,29 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 			cairo_line_to(cr, draw_pos.right() - r_right,	draw_pos.top() + bdr_top);
 
 			double start_angle	= M_PI * 3.0 / 2.0;
-			double end_angle	= start_angle + M_PI / 2.0  / ((double) bdr_right / (double) bdr_top + 1);
+			double end_angle	= start_angle + M_PI / 2.0  / ((double) bdr_right / (double) bdr_top + 0.5);
 
-			add_path_arc(cr, 
-				draw_pos.right() - r_right, 
-				draw_pos.top() + r_right, 
-				r_right - bdr_top + (bdr_top - bdr_right), 
-				r_right - bdr_top, 
-				start_angle, 
-				end_angle, false);
+			if (!add_path_arc(cr,
+				draw_pos.right() - r_right,
+				draw_pos.top() + r_right,
+				r_right - bdr_top + (bdr_top - bdr_right),
+				r_right - bdr_top,
+				start_angle,
+				end_angle, false))
+			{
+				cairo_line_to(cr, draw_pos.right() - bdr_right, draw_pos.top() + bdr_top);
+			}
 
-			add_path_arc(cr, 
-				draw_pos.right() - r_right, 
-				draw_pos.top() + r_right, 
-				r_right, 
-				r_right, 
+			if (!add_path_arc(cr,
+				draw_pos.right() - r_right,
+				draw_pos.top() + r_right,
+				r_right,
+				r_right,
 				end_angle,
-				start_angle, true);
+				start_angle, true))
+			{
+				cairo_line_to(cr, draw_pos.right(), draw_pos.top());
+			}
 		} else
 		{
 			cairo_line_to(cr, draw_pos.right() - bdr_right,	draw_pos.top() + bdr_top);
@@ -571,33 +605,39 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 	}
 
 	// draw left border
-	if(bdr_left)
+	if (bdr_left)
 	{
 		set_color(cr, borders.left.color);
 
-		double r_top	= borders.radius.top_left_x.val();
-		double r_bottom	= borders.radius.bottom_left_x.val();
+		double r_top	= borders.radius.top_left_x;
+		double r_bottom	= borders.radius.bottom_left_x;
 
 		if(r_top)
 		{
 			double start_angle	= M_PI;
-			double end_angle	= start_angle + M_PI / 2.0  / ((double) bdr_top / (double) bdr_left + 1);
+			double end_angle	= start_angle + M_PI / 2.0  / ((double) bdr_top / (double) bdr_left + 0.5);
 
-			add_path_arc(cr, 
-				draw_pos.left() + r_top, 
-				draw_pos.top() + r_top, 
-				r_top - bdr_left, 
-				r_top - bdr_left + (bdr_left - bdr_top), 
-				start_angle, 
-				end_angle, false);
+			if (!add_path_arc(cr,
+				draw_pos.left() + r_top,
+				draw_pos.top() + r_top,
+				r_top - bdr_left,
+				r_top - bdr_left + (bdr_left - bdr_top),
+				start_angle,
+				end_angle, false))
+			{
+				cairo_move_to(cr, draw_pos.left() + bdr_left, draw_pos.top() + bdr_top);
+			}
 
-			add_path_arc(cr, 
-				draw_pos.left() + r_top, 
-				draw_pos.top() + r_top, 
-				r_top, 
-				r_top, 
-				end_angle, 
-				start_angle, true);
+			if (!add_path_arc(cr,
+				draw_pos.left() + r_top,
+				draw_pos.top() + r_top,
+				r_top,
+				r_top,
+				end_angle,
+				start_angle, true))
+			{
+				cairo_line_to(cr, draw_pos.left(), draw_pos.top());
+			}
 		} else
 		{
 			cairo_move_to(cr, draw_pos.left() + bdr_left, draw_pos.top() + bdr_top);
@@ -609,23 +649,29 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::css_
 			cairo_line_to(cr, draw_pos.left(),	draw_pos.bottom() - r_bottom);
 
 			double end_angle	= M_PI;
-			double start_angle	= end_angle - M_PI / 2.0  / ((double) bdr_bottom / (double) bdr_left + 1);
+			double start_angle	= end_angle - M_PI / 2.0  / ((double) bdr_bottom / (double) bdr_left + 0.5);
 
-			add_path_arc(cr, 
-				draw_pos.left() + r_bottom, 
-				draw_pos.bottom() - r_bottom, 
-				r_bottom, 
-				r_bottom, 
-				end_angle, 
-				start_angle, true);
+			if (!add_path_arc(cr,
+				draw_pos.left() + r_bottom,
+				draw_pos.bottom() - r_bottom,
+				r_bottom,
+				r_bottom,
+				end_angle,
+				start_angle, true))
+			{
+				cairo_line_to(cr, draw_pos.left(), draw_pos.bottom());
+			}
 
-			add_path_arc(cr, 
-				draw_pos.left() + r_bottom, 
-				draw_pos.bottom() - r_bottom, 
-				r_bottom - bdr_left, 
-				r_bottom - bdr_left + (bdr_left - bdr_bottom), 
-				start_angle, 
-				end_angle, false);
+			if (!add_path_arc(cr,
+				draw_pos.left() + r_bottom,
+				draw_pos.bottom() - r_bottom,
+				r_bottom - bdr_left,
+				r_bottom - bdr_left + (bdr_left - bdr_bottom),
+				start_angle,
+				end_angle, false))
+			{
+				cairo_line_to(cr, draw_pos.left() + bdr_left, draw_pos.bottom() - bdr_bottom);
+			}
 		} else
 		{
 			cairo_line_to(cr, draw_pos.left(),	draw_pos.bottom());
