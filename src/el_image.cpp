@@ -83,7 +83,10 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		}
 	} else if(!m_css_height.is_predefined() && m_css_width.is_predefined())
 	{
-		m_pos.height = (int) m_css_height.val();
+		if (!get_predefined_height(m_pos.height))
+		{
+			m_pos.height = (int)m_css_height.val();
+		}
 
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
@@ -126,7 +129,11 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 	} else
 	{
 		m_pos.width		= (int) m_css_width.calc_percent(parent_width);
-		m_pos.height	= (int) m_css_height.val();
+		m_pos.height	= 0;
+		if (!get_predefined_height(m_pos.height))
+		{
+			m_pos.height = (int)m_css_height.val();
+		}
 
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
