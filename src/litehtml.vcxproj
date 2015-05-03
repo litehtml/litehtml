@@ -390,6 +390,10 @@
     <ClInclude Include="gumbo\strings.h" />
     <ClInclude Include="gumbo\string_buffer.h" />
     <ClInclude Include="gumbo\string_piece.h" />
+    <ClInclude Include="gumbo\tag_enum.h" />
+    <ClInclude Include="gumbo\tag_gperf.h" />
+    <ClInclude Include="gumbo\tag_sizes.h" />
+    <ClInclude Include="gumbo\tag_strings.h" />
     <ClInclude Include="gumbo\tokenizer.h" />
     <ClInclude Include="gumbo\tokenizer_states.h" />
     <ClInclude Include="gumbo\token_type.h" />

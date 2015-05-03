@@ -341,5 +341,17 @@
     <ClInclude Include="el_cdata.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="gumbo\tag_enum.h">
+      <Filter>Header Files\gumbo</Filter>
+    </ClInclude>
+    <ClInclude Include="gumbo\tag_gperf.h">
+      <Filter>Header Files\gumbo</Filter>
+    </ClInclude>
+    <ClInclude Include="gumbo\tag_sizes.h">
+      <Filter>Header Files\gumbo</Filter>
+    </ClInclude>
+    <ClInclude Include="gumbo\tag_strings.h">
+      <Filter>Header Files\gumbo</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>
