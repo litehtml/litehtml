@@ -79,7 +79,7 @@ public:
 	virtual	void						transform_text(litehtml::tstring& text, litehtml::text_transform tt);
 	virtual void						set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y);
 	virtual void						del_clip();
-	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes);
+	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc);
 	virtual void						get_media_features(litehtml::media_features& media);
 
 	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;

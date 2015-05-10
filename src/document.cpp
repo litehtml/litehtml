@@ -502,7 +502,7 @@ litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_nam
 	element::ptr newTag = NULL;
 	if(m_container)
 	{
-		newTag = m_container->create_element(tag_name, attributes);
+		newTag = m_container->create_element(tag_name, attributes, this);
 	}
 	if(!newTag)
 	{
