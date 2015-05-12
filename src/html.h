@@ -42,7 +42,7 @@ namespace litehtml
 		virtual void				load_image(const tchar_t* src, const tchar_t* baseurl, bool redraw_on_ready) = 0;
 		virtual void				get_image_size(const tchar_t* src, const tchar_t* baseurl, litehtml::size& sz) = 0;
 		virtual void				draw_background(uint_ptr hdc, const litehtml::background_paint& bg) = 0;
-		virtual void				draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos, bool root) = 0;
+		virtual void				draw_borders(uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) = 0;
 
 		virtual	void				set_caption(const tchar_t* caption)		= 0;
 		virtual	void				set_base_url(const tchar_t* base_url)	= 0;
@@ -51,10 +51,10 @@ namespace litehtml
 		virtual	void				set_cursor(const tchar_t* cursor)	= 0;
 		virtual	void				transform_text(litehtml::tstring& text, litehtml::text_transform tt) = 0;
 		virtual void				import_css(tstring& text, const tstring& url, tstring& baseurl) = 0;
-		virtual void				set_clip(const litehtml::position& pos, bool valid_x, bool valid_y) = 0;
+		virtual void				set_clip(const litehtml::position& pos, const border_radiuses& bdr_radius, bool valid_x, bool valid_y) = 0;
 		virtual void				del_clip() = 0;
 		virtual void				get_client_rect(litehtml::position& client) = 0;
-		virtual litehtml::element*	create_element(const tchar_t* tag_name, const string_map& attributes, const litehtml::document * document) = 0;
+		virtual litehtml::element*	create_element(const tchar_t* tag_name, const string_map& attributes, litehtml::document* doc) = 0;
 		virtual void				get_media_features(litehtml::media_features& media) = 0;
 	};
 

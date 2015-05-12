@@ -40,7 +40,7 @@ namespace litehtml
 		position				clip_box;
 		position				origin_box;
 		position				border_box;
-		css_border_radius		border_radius;
+		border_radiuses			border_radius;
 		size					image_size;
 		int						position_x;
 		int						position_y;
