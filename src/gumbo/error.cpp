@@ -76,11 +76,11 @@ static void print_tag_stack(
     GumboParser* parser, const GumboParserError* error,
     GumboStringBuffer* output) {
   print_message(parser, output, "  Currently open tags: ");
-  for (unsigned int i = 0; i < error->tag_stack.length; ++i) {
+  for (int i = 0; i < error->tag_stack.length; ++i) {
     if (i) {
       print_message(parser, output, ", ");
     }
-    GumboTag tag = (GumboTag)(uintptr_t) error->tag_stack.data[i];
+    GumboTag tag = (GumboTag) error->tag_stack.data[i];
     print_message(parser, output, gumbo_normalized_tagname(tag));
   }
   gumbo_string_buffer_append_codepoint(parser, '.', output);
@@ -155,11 +155,11 @@ static const char* find_next_newline(
 }
 
 GumboError* gumbo_add_error(GumboParser* parser) {
-  unsigned int max_errors = parser->_options->max_errors;
+  int max_errors = parser->_options->max_errors;
   if (max_errors >= 0 && parser->_output->errors.length >= max_errors) {
     return NULL;
   }
-  GumboError* error = reinterpret_cast< GumboError* >(gumbo_parser_allocate(parser, sizeof(GumboError)));
+  GumboError* error = gumbo_parser_allocate(parser, sizeof(GumboError));
   gumbo_vector_add(parser, error, &parser->_output->errors);
   return error;
 }
@@ -272,8 +272,8 @@ void gumbo_init_errors(GumboParser* parser) {
 }
 
 void gumbo_destroy_errors(GumboParser* parser) {
-  for (unsigned int i = 0; i < parser->_output->errors.length; ++i) {
-    gumbo_error_destroy(parser, reinterpret_cast< GumboError* >(parser->_output->errors.data[i]));
+  for (int i = 0; i < parser->_output->errors.length; ++i) {
+    gumbo_error_destroy(parser, parser->_output->errors.data[i]);
   }
   gumbo_vector_destroy(parser, &parser->_output->errors);
 }

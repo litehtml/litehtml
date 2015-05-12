@@ -18,7 +18,7 @@
 
 #include <assert.h>
 #include <ctype.h>
-#include "strings.h"
+#include <strings.h>    // For strcasecmp.
 
 // NOTE(jdtang): Keep this in sync with the GumboTag enum in the header.
 // TODO(jdtang): Investigate whether there're efficiency benefits to putting the
@@ -218,7 +218,7 @@ GumboTag gumbo_tag_enum(const char* tagname) {
     // non-GCC compilers, we'll need some #ifdef magic.  This source already has
     // pretty significant issues with MSVC6 anyway.
     if (strcasecmp(tagname, kGumboTagNames[i]) == 0) {
-      return (GumboTag)i;
+      return i;
     }
   }
   return GUMBO_TAG_UNKNOWN;

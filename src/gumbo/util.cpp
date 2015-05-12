@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -39,7 +40,7 @@ void gumbo_parser_deallocate(GumboParser* parser, void* ptr) {
 }
 
 char* gumbo_copy_stringz(GumboParser* parser, const char* str) {
-  char* buffer = reinterpret_cast< char* >( gumbo_parser_allocate(parser, strlen(str) + 1) );
+  char* buffer = gumbo_parser_allocate(parser, strlen(str) + 1);
   strcpy(buffer, str);
   return buffer;
 }
