@@ -39,7 +39,7 @@
 
 typedef char gumbo_tagset[GUMBO_TAG_LAST];
 
-#ifdef _MSC_VER
+#ifdef __cplusplus
 #define MAKE_TAGSET( ... ) make_tagset( 0, __VA_ARGS__, 0, 0 )
 #define TAG(tag) GUMBO_TAG_##tag, (1 << GUMBO_NAMESPACE_HTML)
 #define TAG_SVG(tag) GUMBO_TAG_##tag, (1 << GUMBO_NAMESPACE_SVG)
