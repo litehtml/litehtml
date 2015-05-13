@@ -82,7 +82,7 @@ litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::p
     // Let's process created elements tree
     if ( root_element )
     {
-        doc->container()->get_media_features(doc->m_media);
+        document->container()->get_media_features(document->m_media);
 
         // apply master CSS
         root_element->apply_stylesheet( document->m_context->master_css() );
@@ -108,9 +108,9 @@ litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::p
         document->m_styles.sort_selectors();
 
 		// get current media features
-		if (!doc->m_media_lists.empty())
+		if (!document->m_media_lists.empty())
 		{
-			doc->update_media_lists(doc->m_media);
+			document->update_media_lists(document->m_media);
 		}
 
         // Apply parsed styles.
