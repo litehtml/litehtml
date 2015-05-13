@@ -42,7 +42,7 @@ bool gumbo_string_equals_ignore_case(
 void gumbo_string_copy(struct GumboInternalParser* parser,
     GumboStringPiece* dest, const GumboStringPiece* source) {
   dest->length = source->length;
-  char* buffer = gumbo_parser_allocate(parser, source->length);
+  char* buffer = (char*)gumbo_parser_allocate(parser, source->length);
   memcpy(buffer, source->data, source->length);
   dest->data = buffer;
 }

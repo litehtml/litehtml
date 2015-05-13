@@ -18,6 +18,7 @@ namespace litehtml
 		virtual ~el_text();
 
 		virtual void				get_text(tstring& text);
+		virtual void				set_text(const tstring& text);
 		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
 		virtual void				parse_styles(bool is_reparse);
 		virtual int					get_base_line();

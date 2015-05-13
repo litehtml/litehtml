@@ -3883,11 +3883,12 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 	if (ret_width < max_width && !second_pass && m_parent)
 	{
 		if (m_display == display_inline_block ||
-			m_css_width.is_predefined() &&
+			( m_css_width.is_predefined() &&
 			(m_float != float_none ||
 			m_display == display_table ||
 			m_el_position == element_position_absolute ||
 			m_el_position == element_position_fixed
+			)
 			)
 			)
 		{

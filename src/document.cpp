@@ -52,78 +52,89 @@ litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str
 
 litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
 {
-	// parse document into GumboOutput
-	GumboOutput* output = gumbo_parse((const char*) str);
-
 	// Create litehtml::document
 	litehtml::document::ptr doc = new litehtml::document(objPainter, ctx);
 
-	// Create litehtml::elements.
-	elements_vector root_elements;
-	doc->create_node(output->root, root_elements);
-	if (!root_elements.empty())
-	{
-		doc->m_root = root_elements.back();
-	}
-	// Destroy GumboOutput
-	gumbo_destroy_output(&kGumboDefaultOptions, output);
-
-	// Let's process created elements tree
-	if (doc->m_root)
-	{
-		doc->container()->get_media_features(doc->m_media);
-
-		// apply master CSS
-		doc->m_root->apply_stylesheet(ctx->master_css());
-
-		// parse elements attributes
-		doc->m_root->parse_attributes();
-
-		// parse style sheets linked in document
-		media_query_list::ptr media;
-		for (css_text::vector::iterator css = doc->m_css.begin(); css != doc->m_css.end(); css++)
-		{
-			if (!css->media.empty())
-			{
-				media = media_query_list::create_from_string(css->media, doc);
-			}
-			else
-			{
-				media = 0;
-			}
-			doc->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), doc, media);
-		}
-		// Sort css selectors using CSS rules.
-		doc->m_styles.sort_selectors();
-
-		// get current media features
-		if (!doc->m_media_lists.empty())
-		{
-			doc->update_media_lists(doc->m_media);
-		}
-
-		// Apply parsed styles.
-		doc->m_root->apply_stylesheet(doc->m_styles);
-
-		// Apply user styles if any
-		if (user_styles)
-		{
-			doc->m_root->apply_stylesheet(*user_styles);
-		}
-
-		// Parse applied styles in the elements
-		doc->m_root->parse_styles();
-
-		// Now the m_tabular_elements is filled with tabular elements.
-		// We have to check the tabular elements for missing table elements 
-		// and create the anonymous boxes in visual table layout
-		doc->fix_tables_layout();
-
-		// Fanaly initialize elements
-		doc->m_root->init();
-	}
+    doc->m_root = set_inner_html( doc, str );
 
 	return doc;
+}
+
+litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles )
+{
+    GumboOutput
+        * output = gumbo_parse((const char*) text);
+    elements_vector
+        root_elements;
+    litehtml::element::ptr
+        root_element;
+
+    document->create_node(output->root, root_elements);
+
+    // Destroy GumboOutput
+    gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+    if ( !root_elements.empty() )
+    {
+        root_element = root_elements.back();
+    }
+
+    // Let's process created elements tree
+    if ( root_element )
+    {
+        document->container()->get_media_features(document->m_media);
+
+        // apply master CSS
+        root_element->apply_stylesheet( document->m_context->master_css() );
+
+        // parse elements attributes
+        root_element->parse_attributes();
+
+        // parse style sheets linked in document
+        media_query_list::ptr media;
+        for (css_text::vector::iterator css = document->m_css.begin(); css != document->m_css.end(); css++)
+        {
+            if (!css->media.empty())
+            {
+                media = media_query_list::create_from_string(css->media, document);
+            }
+            else
+            {
+                media = 0;
+            }
+            document->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), document, media);
+        }
+        // Sort css selectors using CSS rules.
+        document->m_styles.sort_selectors();
+
+		// get current media features
+		if (!document->m_media_lists.empty())
+		{
+			document->update_media_lists(document->m_media);
+		}
+
+        // Apply parsed styles.
+        root_element->apply_stylesheet(document->m_styles);
+
+        // Apply user styles if any
+        if (user_styles)
+        {
+            root_element->apply_stylesheet(*user_styles);
+        }
+
+        // Parse applied styles in the elements
+        root_element->parse_styles();
+
+        // Now the m_tabular_elements is filled with tabular elements.
+        // We have to check the tabular elements for missing table elements
+        // and create the anonymous boxes in visual table layout
+        document->fix_tables_layout();
+
+        // Finally initialize elements
+        root_element->init();
+    }
+
+    return root_element;
 }
 
 litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm )
@@ -292,7 +303,7 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 int litehtml::document::cvt_units( const tchar_t* str, int fontSize, bool* is_percent/*= 0*/ ) const
 {
 	if(!str)	return 0;
-	
+
 	css_length val;
 	val.fromString(str);
 	if(is_percent && val.units() == css_units_percentage && !val.is_predefined())
@@ -404,9 +415,9 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 		}
 		cursor = m_over_element->get_cursor();
 	}
-	
+
 	m_container->set_cursor(cursor ? cursor : _t("auto"));
-	
+
 	if(state_was_changed)
 	{
 		return m_root->find_styles_changes(redraw_boxes, 0, 0);
@@ -643,6 +654,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 			{
 				if (node->v.element.original_tag.data && node->v.element.original_tag.length)
 				{
+					gumbo_tag_from_original_text( & node->v.element.original_tag );
 					std::string strA;
 					strA.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
 					ret = create_element(litehtml_from_utf8(strA.c_str()), attrs);
@@ -655,7 +667,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 				{
 					child.clear();
 					create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child);
-					std::for_each(child.begin(), child.end(), 
+					std::for_each(child.begin(), child.end(),
 						[&ret](element::ptr& el)
 						{
 							ret->appendChild(el);
@@ -839,7 +851,7 @@ void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display dis
 	if (parent->get_display() != disp)
 	{
 		elements_vector::iterator this_element = std::find_if(parent->m_children.begin(), parent->m_children.end(),
-			[&](element::ptr& el)
+			[&](element::ptr& el)->bool
 			{
 				if (el == el_ptr)
 				{

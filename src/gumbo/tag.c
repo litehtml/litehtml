@@ -81,7 +81,7 @@ GumboTag gumbo_tagn_enum(const char* tagname, unsigned int length) {
   if (length) {
     unsigned int key = tag_hash(tagname, length);
     if (key < TAG_MAP_SIZE) {
-      GumboTag tag = kGumboTagMap[key];
+      GumboTag tag = (GumboTag)kGumboTagMap[key];
       if (length == kGumboTagSizes[(int) tag] &&
           !case_memcmp(tagname, kGumboTagNames[(int) tag], length))
         return tag;

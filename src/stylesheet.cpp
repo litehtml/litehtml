@@ -136,6 +136,7 @@ void litehtml::css::parse_atrule( const tstring& text, const tchar_t* baseurl, d
 		int sPos = 7;
 		tstring iStr;
 		iStr = text.substr(sPos);
+		trim(iStr);
 		if(iStr[iStr.length() - 1] == _t(';'))
 		{
 			iStr.erase(iStr.length() - 1);
