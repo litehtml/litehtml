@@ -28,7 +28,7 @@ struct GumboInternalParser;
 GumboAttribute* gumbo_get_attribute(
     const GumboVector* attributes, const char* name) {
   for (unsigned int i = 0; i < attributes->length; ++i) {
-    GumboAttribute* attr = attributes->data[i];
+    GumboAttribute* attr = (GumboAttribute*)attributes->data[i];
     if (!strcasecmp(attr->name, name)) {
       return attr;
     }

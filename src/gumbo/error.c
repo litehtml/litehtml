@@ -79,7 +79,7 @@ static void print_tag_stack(GumboParser* parser, const GumboParserError* error,
     if (i) {
       print_message(parser, output, ", ");
     }
-    GumboTag tag = (GumboTag) error->tag_stack.data[i];
+    GumboTag tag = (GumboTag) (int)error->tag_stack.data[i];
     print_message(parser, output, gumbo_normalized_tagname(tag));
   }
   gumbo_string_buffer_append_codepoint(parser, '.', output);
@@ -159,7 +159,7 @@ GumboError* gumbo_add_error(GumboParser* parser) {
   if (max_errors >= 0 && parser->_output->errors.length >= (unsigned int) max_errors) {
     return NULL;
   }
-  GumboError* error = gumbo_parser_allocate(parser, sizeof(GumboError));
+  GumboError* error = (GumboError*)gumbo_parser_allocate(parser, sizeof(GumboError));
   gumbo_vector_add(parser, error, &parser->_output->errors);
   return error;
 }
@@ -273,7 +273,7 @@ void gumbo_init_errors(GumboParser* parser) {
 
 void gumbo_destroy_errors(GumboParser* parser) {
   for (unsigned int i = 0; i < parser->_output->errors.length; ++i) {
-    gumbo_error_destroy(parser, parser->_output->errors.data[i]);
+    gumbo_error_destroy(parser, (GumboError*)parser->_output->errors.data[i]);
   }
   gumbo_vector_destroy(parser, &parser->_output->errors);
 }

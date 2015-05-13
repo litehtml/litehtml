@@ -9,7 +9,7 @@ solution "litehtml"
 
     files
     {
-        "src/**.c", "src/**.cpp", "src/**.h"
+        "src/**.cpp", "src/**.h"
     }
 
     configuration "debug"
