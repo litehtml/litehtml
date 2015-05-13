@@ -23,6 +23,7 @@ solution "litehtml"
 
     configuration "windows"
         defines     { "WIN32" }
+        includedirs "src/gumbo/vs/"
 
     project "litehtml"
 
