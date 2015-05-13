@@ -771,7 +771,7 @@ static GumboInsertionMode get_current_template_insertion_mode(
     return GUMBO_INSERTION_MODE_INITIAL;
   }
   return (GumboInsertionMode)
-      (int)template_insertion_modes->data[(template_insertion_modes->length - 1)];
+      (size_t)template_insertion_modes->data[(template_insertion_modes->length - 1)];
 }
 
 // http://www.whatwg.org/specs/web-apps/current-work/multipage/tree-construction.html#mathml-text-integration-point
