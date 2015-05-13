@@ -1,8 +1,4 @@
-#ifdef _MSC_VER
-#include <string.h>
+/*Dummy file to satisfy source file dependencies on Windows platform*/
 #define strcasecmp _stricmp
-#define  strncasecmp _strnicmp
-#else
-#include <string.h>
-#include <strings.h>
-#endif
+#define strncasecmp _strnicmp
+#define inline __inline

@@ -19,6 +19,7 @@
 #include <assert.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -28,7 +29,7 @@
 // TODO(jdtang): This should be elsewhere, but there's no .c file for
 // SourcePositions and yet the constant needs some linkage, so this is as good
 // as any.
-const GumboSourcePosition kGumboEmptySourcePosition = { 0, 0, 0 };
+const GumboSourcePosition kGumboEmptySourcePosition = {0, 0, 0};
 
 void* gumbo_parser_allocate(GumboParser* parser, size_t num_bytes) {
   return parser->_options->allocator(parser->_options->userdata, num_bytes);
@@ -39,7 +40,7 @@ void gumbo_parser_deallocate(GumboParser* parser, void* ptr) {
 }
 
 char* gumbo_copy_stringz(GumboParser* parser, const char* str) {
-  char* buffer = reinterpret_cast< char* >( gumbo_parser_allocate(parser, strlen(str) + 1) );
+  char* buffer = (char*)gumbo_parser_allocate(parser, strlen(str) + 1);
   strcpy(buffer, str);
   return buffer;
 }

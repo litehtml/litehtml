@@ -82,6 +82,8 @@ litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::p
     // Let's process created elements tree
     if ( root_element )
     {
+        document->container()->get_media_features(document->m_media);
+
         // apply master CSS
         root_element->apply_stylesheet( document->m_context->master_css() );
 
@@ -105,13 +107,11 @@ litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::p
         // Sort css selectors using CSS rules.
         document->m_styles.sort_selectors();
 
-        // get current media features
-        if (!document->m_media_lists.empty())
-        {
-            media_features features;
-            document->container()->get_media_features(features);
-            document->update_media_lists(features);
-        }
+		// get current media features
+		if (!document->m_media_lists.empty())
+		{
+			document->update_media_lists(document->m_media);
+		}
 
         // Apply parsed styles.
         root_element->apply_stylesheet(document->m_styles);
@@ -344,6 +344,18 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 	case css_units_mm:
 		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
 		val.set_value((float) ret, css_units_px);
+		break;
+	case css_units_vw:
+		ret = (int)((double)m_media.width * (double)val.val() / 100.0);
+		break;
+	case css_units_vh:
+		ret = (int)((double)m_media.height * (double)val.val() / 100.0);
+		break;
+	case css_units_vmin:
+		ret = (int)((double)std::min(m_media.height, m_media.width) * (double)val.val() / 100.0);
+		break;
+	case css_units_vmax:
+		ret = (int)((double)std::max(m_media.height, m_media.width) * (double)val.val() / 100.0);
 		break;
 	default:
 		ret = (int) val.val();
@@ -582,9 +594,8 @@ bool litehtml::document::media_changed()
 {
 	if(!m_media_lists.empty())
 	{
-		media_features features;
-		container()->get_media_features(features);
-		if(update_media_lists(features))
+		container()->get_media_features(m_media);
+		if (update_media_lists(m_media))
 		{
 			m_root->refresh_styles();
 			m_root->parse_styles();

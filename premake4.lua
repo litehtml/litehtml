@@ -9,7 +9,7 @@ solution "litehtml"
 
     files
     {
-        "src/**.c", "src/**.cpp", "src/**.h"
+        "src/**.cpp", "src/**.h"
     }
 
     configuration "debug"
@@ -23,6 +23,7 @@ solution "litehtml"
 
     configuration "windows"
         defines     { "WIN32" }
+        includedirs "src/gumbo/vs/"
 
     project "litehtml"
 

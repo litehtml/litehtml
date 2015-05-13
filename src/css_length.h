@@ -17,6 +17,7 @@ namespace litehtml
 		css_length(const css_length& val);
 
 		css_length&	operator=(const css_length& val);
+		css_length&	operator=(float val);
 		bool		is_predefined() const;
 		void		predef(int val);
 		int			predef() const;
@@ -64,7 +65,15 @@ namespace litehtml
 		return *this;
 	}
 
-	inline bool css_length::is_predefined() const	
+	inline css_length&	css_length::operator=(float val)
+	{
+		m_value = val;
+		m_units = css_units_px;
+		m_is_predefined = false;
+		return *this;
+	}
+
+	inline bool css_length::is_predefined() const
 	{ 
 		return m_is_predefined;					
 	}

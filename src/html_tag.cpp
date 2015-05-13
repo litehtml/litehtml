@@ -182,7 +182,16 @@ void litehtml::html_tag::draw( uint_ptr hdc, int x, int y, const position* clip 
 	{
 		if(m_overflow > overflow_visible)
 		{
-			m_doc->container()->set_clip(pos, true, true);
+			position border_box = pos;
+			border_box += m_padding;
+			border_box += m_borders;
+
+			border_radiuses bdr_radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
+
+			bdr_radius -= m_borders;
+			bdr_radius -= m_padding;
+
+			m_doc->container()->set_clip(pos, bdr_radius, true, true);
 		}
 
 		draw_list_marker(hdc, pos);
@@ -1911,7 +1920,11 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 			position border_box = pos;
 			border_box += m_padding;
 			border_box += m_borders;
-			m_doc->container()->draw_borders(hdc, m_css_borders, border_box, parent() ? false : true);
+
+			borders bdr = m_css_borders;
+			bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
+
+			m_doc->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
 		}
 	} else
 	{
@@ -1974,11 +1987,12 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 
 				if(bg)
 				{
-					bg_paint.border_radius = bdr.radius;
+					bg_paint.border_radius = bdr.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
 					m_doc->container()->draw_background(hdc, bg_paint);
 				}
-
-				m_doc->container()->draw_borders(hdc, bdr, *box, false);
+				borders b = bdr;
+				b.radius = bdr.radius.calc_percents(box->width, box->height);
+				m_doc->container()->draw_borders(hdc, b, *box, false);
 			}
 		}
 	}
@@ -2691,7 +2705,7 @@ void litehtml::html_tag::init_background_paint( position pos, background_paint &
 		}
 
 	}
-	bg_paint.border_radius	= m_css_borders.radius;
+	bg_paint.border_radius	= m_css_borders.radius.calc_percents(border_box.width, border_box.height);;
 	bg_paint.border_box		= border_box;
 	bg_paint.is_root		= parent() ? false : true;
 }
@@ -3869,11 +3883,12 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 	if (ret_width < max_width && !second_pass && m_parent)
 	{
 		if (m_display == display_inline_block ||
-			m_css_width.is_predefined() &&
+			( m_css_width.is_predefined() &&
 			(m_float != float_none ||
 			m_display == display_table ||
 			m_el_position == element_position_absolute ||
 			m_el_position == element_position_fixed
+			)
 			)
 			)
 		{
@@ -4047,16 +4062,20 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 
 
 	int table_width = 0;
+	int min_table_width = 0;
+	int max_table_width = 0;
 
 	if (!block_width.is_default())
 	{
-		table_width = m_grid.calc_table_width(block_width - table_width_spacing, false);
+		table_width = m_grid.calc_table_width(block_width - table_width_spacing, false, min_table_width, max_table_width);
 	}
 	else
 	{
-		table_width = m_grid.calc_table_width(max_width - table_width_spacing, true);
+		table_width = m_grid.calc_table_width(max_width - table_width_spacing, true, min_table_width, max_table_width);
 	}
 
+	min_table_width += table_width_spacing;
+	max_table_width += table_width_spacing;
 	table_width += table_width_spacing;
 	m_grid.calc_horizontal_positions(m_borders, m_border_collapse, m_border_spacing_x);
 
@@ -4203,7 +4222,7 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 	m_pos.width = table_width;
 	m_pos.height = table_height;
 
-	return table_width;
+	return max_table_width;
 }
 
 void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex)
@@ -4214,7 +4233,16 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 
 	if (m_overflow > overflow_visible)
 	{
-		m_doc->container()->set_clip(pos, true, true);
+		position border_box = pos;
+		border_box += m_padding;
+		border_box += m_borders;
+
+		border_radiuses bdr_radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
+
+		bdr_radius -= m_borders;
+		bdr_radius -= m_padding;
+
+		m_doc->container()->set_clip(pos, bdr_radius, true, true);
 	}
 
 	position browser_wnd;

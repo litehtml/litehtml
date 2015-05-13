@@ -83,7 +83,10 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		}
 	} else if(!m_css_height.is_predefined() && m_css_width.is_predefined())
 	{
-		m_pos.height = (int) m_css_height.val();
+		if (!get_predefined_height(m_pos.height))
+		{
+			m_pos.height = (int)m_css_height.val();
+		}
 
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
@@ -126,7 +129,11 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 	} else
 	{
 		m_pos.width		= (int) m_css_width.calc_percent(parent_width);
-		m_pos.height	= (int) m_css_height.val();
+		m_pos.height	= 0;
+		if (!get_predefined_height(m_pos.height))
+		{
+			m_pos.height = (int)m_css_height.val();
+		}
 
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
@@ -176,11 +183,27 @@ void litehtml::el_image::parse_attributes()
 void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip )
 {
 	position pos = m_pos;
-	pos.x	+= x;
-	pos.y	+= y;
+	pos.x += x;
+	pos.y += y;
 
-	draw_background(hdc, x, y, clip);
+	position el_pos = pos;
+	el_pos += m_padding;
+	el_pos += m_borders;
 
+	// draw standard background here
+	if (el_pos.does_intersect(clip))
+	{
+		background* bg = get_background();
+		if (bg)
+		{
+			background_paint bg_paint;
+			init_background_paint(pos, bg_paint, bg);
+
+			m_doc->container()->draw_background(hdc, bg_paint);
+		}
+	}
+
+	// draw image as background
 	if(pos.does_intersect(clip))
 	{
 		background_paint bg;
@@ -193,10 +216,23 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		bg.repeat				= background_repeat_no_repeat;
 		bg.image_size.width		= pos.width;
 		bg.image_size.height	= pos.height;
-		bg.border_radius		= m_css_borders.radius;
+		bg.border_radius		= m_css_borders.radius.calc_percents(bg.border_box.width, bg.border_box.height);
 		bg.position_x			= pos.x;
 		bg.position_y			= pos.y;
 		m_doc->container()->draw_background(hdc, bg);
+	}
+
+	// draw borders
+	if (el_pos.does_intersect(clip))
+	{
+		position border_box = pos;
+		border_box += m_padding;
+		border_box += m_borders;
+
+		borders bdr = m_css_borders;
+		bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
+
+		m_doc->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
 	}
 }
 

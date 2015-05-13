@@ -65,6 +65,7 @@ namespace litehtml
 		media_query_list::vector			m_media_lists;
 		element::ptr						m_over_element;
 		elements_vector						m_tabular_elements;
+		media_features						m_media;
 	public:
 		document(litehtml::document_container* objContainer, litehtml::context* ctx);
 		virtual ~document();

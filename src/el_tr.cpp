@@ -24,6 +24,11 @@ void litehtml::el_tr::parse_attributes()
 	{
 		m_style.add_property(_t("vertical-align"), str, 0, false);
 	}
+	str = get_attr(_t("bgcolor"));
+	if (str)
+	{
+		m_style.add_property(_t("background-color"), str, 0, false);
+	}
 	html_tag::parse_attributes();
 }
 
