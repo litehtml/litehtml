@@ -25,10 +25,15 @@ solution "litehtml"
         defines     { "WIN32" }
         includedirs "src/gumbo/vs/"
 
+    configuration "macosx"
+        cppbuildoptions{ "-stdlib=libc++" }
+
+    configuration {}
+
     project "litehtml"
 
         if not os.is("windows") then
-            buildoptions { "-std=c++11 -Wno-error=unused-variable -Wno-error=unused-parameter" }
+            cppbuildoptions { "-std=c++11", "-Wno-error=unused-variable", "-Wno-error=unused-parameter" }
         end
 
         configuration "x32"
