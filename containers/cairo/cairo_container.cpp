@@ -128,7 +128,7 @@ int cairo_container::pt_to_px( int pt )
 	return ret;
 }
 
-int cairo_container::get_default_font_size()
+int cairo_container::get_default_font_size() const
 {
 	return 16;
 }
@@ -764,7 +764,7 @@ void cairo_container::clear_images()
 	unlock_images_cache();
 }
 
-const litehtml::tchar_t* cairo_container::get_default_font_name()
+const litehtml::tchar_t* cairo_container::get_default_font_name() const
 {
 	return _t("Times New Roman");
 }
