@@ -224,7 +224,7 @@ int container_linux::pt_to_px( int pt )
 	return (int) ((double) pt * dpi / 72.0);
 }
 
-int container_linux::get_default_font_size()
+int container_linux::get_default_font_size() const
 {
 	return 16;
 }
@@ -826,7 +826,7 @@ void container_linux::clear_images()
 */
 }
 
-const litehtml::tchar_t* container_linux::get_default_font_name()
+const litehtml::tchar_t* container_linux::get_default_font_name() const
 {
 	return "Times New Roman";
 }
