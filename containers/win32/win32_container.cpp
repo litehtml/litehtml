@@ -212,7 +212,7 @@ void litehtml::win32_container::clear_images()
 	m_images.clear();
 }
 
-int litehtml::win32_container::get_default_font_size()
+int litehtml::win32_container::get_default_font_size() const
 {
 	return 16;
 }

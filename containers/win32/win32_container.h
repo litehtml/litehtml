@@ -41,7 +41,7 @@ namespace litehtml
 											litehtml::background_repeat repeat, 
 											litehtml::background_attachment attachment);
 
-		virtual int			get_default_font_size();
+		virtual int			get_default_font_size() const;
 		virtual	wchar_t		toupper(const wchar_t c);
 		virtual	wchar_t		tolower(const wchar_t c);
 		virtual void		set_clip(const litehtml::position& pos, bool valid_x, bool valid_y);

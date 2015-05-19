@@ -31,8 +31,8 @@ public:
 	virtual void						draw_text(litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos);
 	virtual void						fill_rect(litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius);
 	virtual int						pt_to_px(int pt);
-	virtual int						get_default_font_size();
-	virtual const litehtml::tchar_t*	get_default_font_name();
+	virtual int						get_default_font_size() const;
+	virtual const litehtml::tchar_t*	get_default_font_name() const;
 	virtual void 						load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready);
 	virtual void						get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz);
 	virtual void						draw_image(litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos);
