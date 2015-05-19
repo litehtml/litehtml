@@ -1,6 +1,11 @@
+newoption
+{
+    trigger = "ios",
+    description = "generates ios project without native target"
+}
+
 solution "litehtml"
     configurations { "release", "debug" }
-    platforms { "x32", "x64" }
     defines { "LITEHTML_UTF8" }
 
     targetname "litehtml"
@@ -11,6 +16,12 @@ solution "litehtml"
     {
         "src/**.cpp", "src/**.h"
     }
+
+    if _OPTIONS[ "ios" ] then
+        platforms { "ios" }
+    else
+        platforms { "x32", "x64" }
+    end
 
     configuration "debug"
         defines     { "_DEBUG" }

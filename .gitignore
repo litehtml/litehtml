@@ -10,6 +10,9 @@
 *.vcproj*
 Makefile
 *.make
+*.xcodeproj/
+*.xcworkspace/
+.DS_Store
 
 # Build results
 [Dd]ebug/
