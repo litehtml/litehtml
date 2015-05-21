@@ -44,7 +44,7 @@ solution "litehtml"
     project "litehtml"
 
         if not os.is("windows") then
-            cppbuildoptions { "-std=c++11", "-Wno-error=unused-variable", "-Wno-error=unused-parameter" }
+            buildoptions { "-std=c++11", "-Wno-error=unused-variable", "-Wno-error=unused-parameter" }
         end
 
         configuration "x32"
