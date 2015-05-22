@@ -10,6 +10,5 @@ namespace litehtml
 		virtual ~el_break();
 
 		virtual bool	is_break() const;
-		virtual void	parse_attributes();
 	};
 }
