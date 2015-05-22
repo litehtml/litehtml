@@ -110,6 +110,21 @@ br {
 	display:inline-block;
 }
 
+br[clear="all"]
+{
+	clear:both;
+}
+
+br[clear="left"]
+{
+	clear:left;
+}
+
+br[clear="right"]
+{
+	clear:right;
+}
+
 span {
 	display:inline
 }
