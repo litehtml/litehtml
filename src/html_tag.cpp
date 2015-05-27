@@ -1640,6 +1640,11 @@ void litehtml::html_tag::get_inline_boxes( position::vector& boxes )
 bool litehtml::html_tag::on_mouse_over()
 {
 	bool ret = false;
+	event_response response;
+	event_handler * handler = m_doc->get_event_handler();
+	mouse_event event;
+
+	event.m_type = event_mouseover;
 
 	element* el = this;
 	while(el)
@@ -1648,6 +1653,12 @@ bool litehtml::html_tag::on_mouse_over()
 		{
 			ret = true;
 		}
+
+		if(handler && !response.m_stop_propagation)
+		{
+		   handler->on_mouse_event( *el, response, event );
+		}
+
 		el = el->parent();
 	}
 
@@ -1729,6 +1740,20 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 bool litehtml::html_tag::on_mouse_leave()
 {
 	bool ret = false;
+	event_response response;
+	event_handler * handler = m_doc->get_event_handler();
+	mouse_event event;
+
+	event.m_type = event_mouseleave;
+	//todo: event.m_position;
+
+	if(handler)
+	{
+	   event_response r;
+	   handler->on_mouse_event( *this, r, event );
+	}
+
+	event.m_type = event_mouseout;
 
 	element* el = this;
 	while(el)
@@ -1741,6 +1766,12 @@ bool litehtml::html_tag::on_mouse_leave()
 		{
 			ret = true;
 		}
+
+		if(handler && !response.m_stop_propagation)
+		{
+		   handler->on_mouse_event( *el, response, event );
+		}
+
 		el = el->parent();
 	}
 
@@ -1749,17 +1780,46 @@ bool litehtml::html_tag::on_mouse_leave()
 
 bool litehtml::html_tag::on_lbutton_down()
 {
+	event_handler * h = m_doc->get_event_handler();
+	if( h )
+	{
+		event_response response;
+		mouse_event event;
+		event.m_type = event_mousedown;
+		h->on_mouse_event( *this, response, event );
+	}
 	return set_pseudo_class(_t("active"), true);
 }
 
 bool litehtml::html_tag::on_lbutton_up()
 {
 	bool ret = false;
+	event_handler * h = m_doc->get_event_handler();
+
+	if( h )
+	{
+		event_response response;
+		mouse_event event;
+		event.m_type = event_mouseup;
+		h->on_mouse_event( *this, response, event );
+	}
 
 	if(set_pseudo_class(_t("active"), false))
 	{
+		event_response response;
+
 		ret = true;
-		on_click();
+
+		if( h )
+		{
+			mouse_event event;
+			event.m_type = event_click;
+			h->on_mouse_event( *this, response, event );
+		}
+		if( !response.m_prevent_default )
+		{
+			on_click();
+		}
 	}
 
 	return ret;
