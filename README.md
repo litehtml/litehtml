@@ -1,6 +1,6 @@
 #What is litehtml?
 
-**litehtml** is the lightweight HTML redering engine with CSS2/CSS3 support. Note, **litehtml** itself does not draw any text, pictures or other graphics and **litehtml** does not depend of any image/draw/font library. You are free to use any library to draw images, fonts and any other graphics. **litehtml** just parses HTML/CSS and places the HTML elements into right position (renders HTML). To draw the html elemens you have to implement the simple callback interface [document_container](https://github.com/litehtml/litehtml/wiki/document_container). This interface is really simply, check it! Note, the [document_container](https://github.com/litehtml/litehtml/wiki/document_container) implementation is required to render HTML correctly. 
+**litehtml** is the lightweight HTML rendering engine with CSS2/CSS3 support. Note, **litehtml** itself does not draw any text, pictures or other graphics and **litehtml** does not depend of any image/draw/font library. You are free to use any library to draw images, fonts and any other graphics. **litehtml** just parses HTML/CSS and places the HTML elements into right position (renders HTML). To draw the html elemens you have to implement the simple callback interface [document_container](https://github.com/litehtml/litehtml/wiki/document_container). This interface is really simply, check it! Note, the [document_container](https://github.com/litehtml/litehtml/wiki/document_container) implementation is required to render HTML correctly. 
 
 #Where litehtml can be used
 
