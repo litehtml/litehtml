@@ -20,7 +20,7 @@ namespace litehtml
     struct mouse_event
     {
         mouse_event_type m_type;
-        Point m_position;
+        point m_position;
     };
 
 	struct event_response
