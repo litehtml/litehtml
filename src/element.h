@@ -30,6 +30,7 @@ namespace litehtml
 		element(litehtml::document* doc);
 		virtual ~element();
 
+		litehtml::document *        document();
 		int							left()						const;
 		int							right()						const;
 		int							top()						const;
@@ -182,6 +183,11 @@ namespace litehtml
 	//////////////////////////////////////////////////////////////////////////
 	//							INLINE FUNCTIONS							//
 	//////////////////////////////////////////////////////////////////////////
+
+	inline litehtml::document* litehtml::element::document()
+	{
+		return m_doc;
+	}
 
 	inline int litehtml::element::right() const
 	{
