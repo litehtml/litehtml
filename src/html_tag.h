@@ -118,7 +118,7 @@ namespace litehtml
 		virtual overflow			get_overflow() const;
 
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
-		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
+		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0) const;
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				refresh_styles();
 

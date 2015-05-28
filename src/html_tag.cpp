@@ -68,7 +68,7 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 	}
 }
 
-const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, const tchar_t* def )
+const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, const tchar_t* def ) const
 {
 	string_map::const_iterator attr = m_attrs.find(name);
 	if(attr != m_attrs.end())
