@@ -15,7 +15,7 @@ litehtml::el_script::~el_script()
 
 void litehtml::el_script::parse_attributes()
 {
-	//TODO: pass script text to document container
+	m_doc->container()->execute_script( m_doc, this );
 }
 
 bool litehtml::el_script::appendChild( litehtml::element* el )
@@ -27,4 +27,22 @@ bool litehtml::el_script::appendChild( litehtml::element* el )
 const litehtml::tchar_t* litehtml::el_script::get_tagName() const
 {
 	return _t("script");
+}
+
+void litehtml::el_script::set_attr(const tchar_t* name, const tchar_t* val)
+{
+	if( !t_strcmp( name, _t("src")) )
+	{
+		m_src = val;
+	}
+}
+
+const litehtml::tchar_t* litehtml::el_script::get_attr(const tchar_t* name, const tchar_t* def) const
+{
+	if( !t_strcmp( name, _t("src")) )
+	{
+		return m_src.empty() ? 0 : m_src.c_str();
+	}
+
+	return def;
 }

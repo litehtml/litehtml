@@ -6,12 +6,18 @@ namespace litehtml
 	class el_script : public element
 	{
 		tstring m_text;
+		tstring m_src;
 	public:
 		el_script(litehtml::document* doc);
+
 		virtual ~el_script();
 
-		virtual void			parse_attributes();
-		virtual bool			appendChild(litehtml::element* el);
-		virtual const tchar_t*	get_tagName() const;
+		const tstring & text() const { return m_text; }
+
+		virtual void			parse_attributes() override;
+		virtual bool			appendChild(litehtml::element* el) override;
+		virtual const tchar_t*	get_tagName() const override;
+		virtual void			set_attr(const tchar_t* name, const tchar_t* val) override;
+		virtual const tchar_t*	get_attr(const tchar_t* name, const tchar_t* def = 0) const override;
 	};
 }

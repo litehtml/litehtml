@@ -52,7 +52,6 @@ static char * make_tagset( int dummy, ... )
 
     va_list vl;
     va_start(vl,dummy);
-    int i = 0;
     while( true )
     {
         int index, value;

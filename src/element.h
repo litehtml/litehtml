@@ -30,6 +30,7 @@ namespace litehtml
 		element(litehtml::document* doc);
 		virtual ~element();
 
+		litehtml::document *        document();
 		int							left()						const;
 		int							right()						const;
 		int							top()						const;
@@ -110,7 +111,7 @@ namespace litehtml
 		virtual css_length			get_css_height() const;
 
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
-		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
+		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0) const;
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				refresh_styles();
 		virtual bool				is_white_space();
@@ -182,6 +183,11 @@ namespace litehtml
 	//////////////////////////////////////////////////////////////////////////
 	//							INLINE FUNCTIONS							//
 	//////////////////////////////////////////////////////////////////////////
+
+	inline litehtml::document* litehtml::element::document()
+	{
+		return m_doc;
+	}
 
 	inline int litehtml::element::right() const
 	{

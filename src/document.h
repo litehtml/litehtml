@@ -3,6 +3,7 @@
 #include "style.h"
 #include "types.h"
 #include "context.h"
+#include "event_handler.h"
 #include "gumbo/gumbo.h"
 
 namespace litehtml
@@ -55,6 +56,7 @@ namespace litehtml
 	private:
 		element::ptr						m_root;
 		document_container*					m_container;
+		event_handler::ptr					m_event_handler;
 		fonts_map							m_fonts;
 		css_text::vector					m_css;
 		litehtml::css						m_styles;
@@ -91,13 +93,15 @@ namespace litehtml
 		void							add_media_list(media_query_list::ptr list);
 		bool							media_changed();
 		void							add_tabular(element::ptr el);
+		void							set_event_handler(event_handler::ptr eh);
+		event_handler *					get_event_handler();
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
 		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
-        static litehtml::element::ptr set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles = 0 );
+		static litehtml::element::ptr set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles = 0 );
 
 	private:
-        document();
+		document();
 		litehtml::uint_ptr	add_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);
 
 		void create_node(GumboNode* node, elements_vector& elements);
@@ -114,5 +118,13 @@ namespace litehtml
 	inline void document::add_tabular(element::ptr el)
 	{
 		m_tabular_elements.push_back(el);
+	}
+	inline void document::set_event_handler(event_handler::ptr eh)
+	{
+		m_event_handler = eh;
+	}
+	inline event_handler * document::get_event_handler()
+	{
+		return m_event_handler;
 	}
 }
