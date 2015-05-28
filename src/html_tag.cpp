@@ -1814,7 +1814,18 @@ bool litehtml::html_tag::on_lbutton_up()
 		{
 			mouse_event event;
 			event.m_type = event_click;
-			h->on_mouse_event( *this, response, event );
+			element * el = this;
+
+			while(el)
+			{
+				h->on_mouse_event( *el, response, event );
+				if( response.m_stop_propagation )
+				{
+					break;
+				}
+
+				el = el->parent();
+			}
 		}
 		if( !response.m_prevent_default )
 		{
