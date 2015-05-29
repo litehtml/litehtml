@@ -309,8 +309,8 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	m_css_text_indent.fromString(	get_style_property(_t("text-indent"),	true,	_t("0")),	_t("0"));
 
-	m_css_width.fromString(			get_style_property(_t("width"),			false,	_t("auto")), _t("auto"));
-	m_css_height.fromString(		get_style_property(_t("height"),		false,	_t("auto")), _t("auto"));
+	m_css_width.fromString(			get_style_property(_t("width"),			false,	( m_parent && !is_body() ) ? _t("auto") : _t("100%")), _t("auto"));
+	m_css_height.fromString(		get_style_property(_t("height"),		false,	( m_parent && !is_body() ) ? _t("auto") : _t("100%")), _t("auto"));
 
 	m_doc->cvt_units(m_css_width,	m_font_size);
 	m_doc->cvt_units(m_css_height,	m_font_size);
