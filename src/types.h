@@ -51,6 +51,18 @@ namespace litehtml
 		}
 	};
 
+	struct point
+	{
+		int x;
+		int y;
+
+		point() :
+			x(0),
+			y(0)
+		{
+		}
+	};
+
 	struct position
 	{
 		typedef std::vector<position>	vector;
