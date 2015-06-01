@@ -2866,23 +2866,26 @@ void litehtml::html_tag::render_positioned(render_type rt)
 
 			css_length el_w = el->get_css_width();
 			css_length el_h = el->get_css_height();
+
+            int new_width = -1;
+            int new_height = -1;
 			if(el_w.units() == css_units_percentage && parent_width)
 			{
-				int w = el_w.calc_percent(parent_width);
-				if(el->m_pos.width != w)
+                new_width = el_w.calc_percent(parent_width);
+                if(el->m_pos.width != new_width)
 				{
 					need_render = true;
-					el->m_pos.width = w;
+                    el->m_pos.width = new_width;
 				}
 			}
 
 			if(el_h.units() == css_units_percentage && parent_height)
 			{
-				int h = el_h.calc_percent(parent_height);
-				if(el->m_pos.height != h)
+                new_height = el_h.calc_percent(parent_height);
+                if(el->m_pos.height != new_height)
 				{
 					need_render = true;
-					el->m_pos.height = h;
+                    el->m_pos.height = new_height;
 				}
 			}
 
@@ -2936,7 +2939,12 @@ void litehtml::html_tag::render_positioned(render_type rt)
 					{
 						el->m_pos.x		= css_left.calc_percent(parent_width) + el->content_margins_left() - m_padding.left;
 						el->m_pos.width	= m_pos.width + m_padding.left + m_padding.right - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_margins_left() + el->content_margins_right());
-						need_render = true;
+                        if (new_width != -1)
+                        {
+                            el->m_pos.x += (el->m_pos.width - new_width) / 2;
+                            el->m_pos.width = new_width;
+                        }
+                        need_render = true;
 					}
 					cvt_x = true;
 				}
@@ -2953,7 +2961,12 @@ void litehtml::html_tag::render_positioned(render_type rt)
 					{
 						el->m_pos.y			= css_top.calc_percent(parent_height) + el->content_margins_top() - m_padding.top;
 						el->m_pos.height	= m_pos.height + m_padding.top + m_padding.bottom - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_margins_top() + el->content_margins_bottom());
-						need_render = true;
+                        if (new_height != -1)
+                        {
+                            el->m_pos.y += (el->m_pos.height - new_height) / 2;
+                            el->m_pos.height = new_height;
+                        }
+                        need_render = true;
 					}
 					cvt_y = true;
 				}
