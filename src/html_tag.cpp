@@ -1781,56 +1781,70 @@ bool litehtml::html_tag::on_mouse_leave()
 bool litehtml::html_tag::on_lbutton_down()
 {
 	event_handler * h = m_doc->get_event_handler();
-	if( h )
+	event_response response;
+	mouse_event event;
+	event.m_type = event_mousedown;
+	bool ret = false;
+
+	element* el = this;
+	while(el)
 	{
-		event_response response;
-		mouse_event event;
-		event.m_type = event_mousedown;
-		h->on_mouse_event( *this, response, event );
+		if(el->set_pseudo_class(_t("active"), true))
+		{
+			ret = true;
+		}
+
+		if(h && !response.m_stop_propagation)
+		{
+			h->on_mouse_event( *el, response, event );
+		}
+
+		el = el->parent();
 	}
-	return set_pseudo_class(_t("active"), true);
+
+	return ret;
 }
 
 bool litehtml::html_tag::on_lbutton_up()
 {
 	bool ret = false;
 	event_handler * h = m_doc->get_event_handler();
+	event_response response;
+	mouse_event event;
+	event.m_type = event_mouseup;
 
-	if( h )
+	element* el = this;
+	while(el)
 	{
-		event_response response;
-		mouse_event event;
-		event.m_type = event_mouseup;
-		h->on_mouse_event( *this, response, event );
+		if(h && !response.m_stop_propagation)
+		{
+			h->on_mouse_event( *el, response, event );
+		}
+
+		el = el->parent();
 	}
 
-	if(set_pseudo_class(_t("active"), false))
+	event.m_type = event_click;
+	el = this;
+
+	while(el)
 	{
-		event_response response;
-
-		ret = true;
-
-		if( h )
+		if(el->set_pseudo_class(_t("active"), false))
 		{
-			mouse_event event;
-			event.m_type = event_click;
-			element * el = this;
-
-			while(el)
-			{
-				h->on_mouse_event( *el, response, event );
-				if( response.m_stop_propagation )
-				{
-					break;
-				}
-
-				el = el->parent();
-			}
+			ret = true;
 		}
-		if( !response.m_prevent_default )
+
+		if(h && !response.m_stop_propagation)
 		{
-			on_click();
+			h->on_mouse_event( *el, response, event );
 		}
+
+		el = el->parent();
+	}
+
+	if( !response.m_prevent_default )
+	{
+		on_click();
 	}
 
 	return ret;
