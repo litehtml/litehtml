@@ -1749,18 +1749,36 @@ bool litehtml::html_tag::on_mouse_leave()
 
 bool litehtml::html_tag::on_lbutton_down()
 {
-	return set_pseudo_class(_t("active"), true);
+    bool ret = false;
+
+    element* el = this;
+    while (el)
+    {
+        if (el->set_pseudo_class(_t("active"), true))
+        {
+            ret = true;
+        }
+        el = el->parent();
+    }
+
+    return ret;
 }
 
 bool litehtml::html_tag::on_lbutton_up()
 {
 	bool ret = false;
 
-	if(set_pseudo_class(_t("active"), false))
-	{
-		ret = true;
-		on_click();
-	}
+    element* el = this;
+    while (el)
+    {
+        if (el->set_pseudo_class(_t("active"), false))
+        {
+            ret = true;
+        }
+        el = el->parent();
+    }
+
+    on_click();
 
 	return ret;
 }
