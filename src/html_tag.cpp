@@ -1507,7 +1507,7 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 	m_padding.top		= m_css_padding.top.calc_percent(parent_width);
 	m_padding.bottom	= m_css_padding.bottom.calc_percent(parent_width);
 
-	if(m_display == display_block || m_display == display_table)
+    if (get_element_position() != element_position_absolute && (m_display == display_block || m_display == display_table))
 	{
 		if(m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
@@ -1781,56 +1781,70 @@ bool litehtml::html_tag::on_mouse_leave()
 bool litehtml::html_tag::on_lbutton_down()
 {
 	event_handler * h = m_doc->get_event_handler();
-	if( h )
+	event_response response;
+	mouse_event event;
+	event.m_type = event_mousedown;
+	bool ret = false;
+
+	element* el = this;
+	while(el)
 	{
-		event_response response;
-		mouse_event event;
-		event.m_type = event_mousedown;
-		h->on_mouse_event( *this, response, event );
+		if(el->set_pseudo_class(_t("active"), true))
+		{
+			ret = true;
+		}
+
+		if(h && !response.m_stop_propagation)
+		{
+			h->on_mouse_event( *el, response, event );
+		}
+
+		el = el->parent();
 	}
-	return set_pseudo_class(_t("active"), true);
+
+	return ret;
 }
 
 bool litehtml::html_tag::on_lbutton_up()
 {
 	bool ret = false;
 	event_handler * h = m_doc->get_event_handler();
+	event_response response;
+	mouse_event event;
+	event.m_type = event_mouseup;
 
-	if( h )
+	element* el = this;
+	while(el)
 	{
-		event_response response;
-		mouse_event event;
-		event.m_type = event_mouseup;
-		h->on_mouse_event( *this, response, event );
+		if(h && !response.m_stop_propagation)
+		{
+			h->on_mouse_event( *el, response, event );
+		}
+
+		el = el->parent();
 	}
 
-	if(set_pseudo_class(_t("active"), false))
+	event.m_type = event_click;
+	el = this;
+
+	while(el)
 	{
-		event_response response;
-
-		ret = true;
-
-		if( h )
+		if(el->set_pseudo_class(_t("active"), false))
 		{
-			mouse_event event;
-			event.m_type = event_click;
-			element * el = this;
-
-			while(el)
-			{
-				h->on_mouse_event( *el, response, event );
-				if( response.m_stop_propagation )
-				{
-					break;
-				}
-
-				el = el->parent();
-			}
+			ret = true;
 		}
-		if( !response.m_prevent_default )
+
+		if(h && !response.m_stop_propagation)
 		{
-			on_click();
+			h->on_mouse_event( *el, response, event );
 		}
+
+		el = el->parent();
+	}
+
+	if( !response.m_prevent_default )
+	{
+		on_click();
 	}
 
 	return ret;
@@ -2937,23 +2951,26 @@ void litehtml::html_tag::render_positioned(render_type rt)
 
 			css_length el_w = el->get_css_width();
 			css_length el_h = el->get_css_height();
+
+            int new_width = -1;
+            int new_height = -1;
 			if(el_w.units() == css_units_percentage && parent_width)
 			{
-				int w = el_w.calc_percent(parent_width);
-				if(el->m_pos.width != w)
+                new_width = el_w.calc_percent(parent_width);
+                if(el->m_pos.width != new_width)
 				{
 					need_render = true;
-					el->m_pos.width = w;
+                    el->m_pos.width = new_width;
 				}
 			}
 
 			if(el_h.units() == css_units_percentage && parent_height)
 			{
-				int h = el_h.calc_percent(parent_height);
-				if(el->m_pos.height != h)
+                new_height = el_h.calc_percent(parent_height);
+                if(el->m_pos.height != new_height)
 				{
 					need_render = true;
-					el->m_pos.height = h;
+                    el->m_pos.height = new_height;
 				}
 			}
 
@@ -3007,7 +3024,12 @@ void litehtml::html_tag::render_positioned(render_type rt)
 					{
 						el->m_pos.x		= css_left.calc_percent(parent_width) + el->content_margins_left() - m_padding.left;
 						el->m_pos.width	= m_pos.width + m_padding.left + m_padding.right - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_margins_left() + el->content_margins_right());
-						need_render = true;
+                        if (new_width != -1)
+                        {
+                            el->m_pos.x += (el->m_pos.width - new_width) / 2;
+                            el->m_pos.width = new_width;
+                        }
+                        need_render = true;
 					}
 					cvt_x = true;
 				}
@@ -3024,7 +3046,12 @@ void litehtml::html_tag::render_positioned(render_type rt)
 					{
 						el->m_pos.y			= css_top.calc_percent(parent_height) + el->content_margins_top() - m_padding.top;
 						el->m_pos.height	= m_pos.height + m_padding.top + m_padding.bottom - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_margins_top() + el->content_margins_bottom());
-						need_render = true;
+                        if (new_height != -1)
+                        {
+                            el->m_pos.y += (el->m_pos.height - new_height) / 2;
+                            el->m_pos.height = new_height;
+                        }
+                        need_render = true;
 					}
 					cvt_y = true;
 				}
