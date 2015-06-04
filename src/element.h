@@ -84,6 +84,7 @@ namespace litehtml
 		virtual int					render_inline(element* container, int max_width);
 		virtual int					place_element(element* el, int max_width);
 		virtual void				calc_outlines( int parent_width );
+		virtual void				calc_auto_margins(int parent_width);
 		virtual void				apply_vertical_align();
 		virtual bool				fetch_positioned();
 		virtual void				render_positioned(render_type rt = render_all);

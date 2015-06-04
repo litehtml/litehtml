@@ -150,6 +150,7 @@ namespace litehtml
 
 		elements_vector&			children();
 		virtual void				calc_outlines( int parent_width );
+		virtual void				calc_auto_margins(int parent_width);
 
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
