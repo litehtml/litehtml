@@ -74,8 +74,8 @@ litehtml::position litehtml::element::get_placement() const
 bool litehtml::element::is_inline_box() const
 {
 	style_display d = get_display();
-	if(	d == display_inline || 
-		d == display_inline_block || 
+	if(	d == display_inline ||
+		d == display_inline_block ||
 		d == display_inline_text)
 	{
 		return true;

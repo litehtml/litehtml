@@ -2,7 +2,7 @@
 #include "types.h"
 #include "html_tag.h"
 
-void litehtml::trim(tstring &s) 
+void litehtml::trim(tstring &s)
 {
 	tstring::size_type pos = s.find_first_not_of(_t(" \n\r\t"));
 	if(pos != tstring::npos)
@@ -16,7 +16,7 @@ void litehtml::trim(tstring &s)
 	}
 }
 
-void litehtml::lcase(tstring &s) 
+void litehtml::lcase(tstring &s)
 {
 	for(tstring::iterator i = s.begin(); i != s.end(); i++)
 	{

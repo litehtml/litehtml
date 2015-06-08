@@ -45,8 +45,8 @@ namespace litehtml
 		int						m_line_height;
 		bool					m_lh_predefined;
 		string_vector			m_pseudo_classes;
-		used_selector::vector	m_used_styles;		
-		
+		used_selector::vector	m_used_styles;
+
 		uint_ptr				m_font;
 		int						m_font_size;
 		font_metrics			m_font_metrics;
