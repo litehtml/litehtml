@@ -7,6 +7,7 @@
 #include <map>
 #include <cstring>
 #include <algorithm>
+#include <sstream>
 #include "os_types.h"
 #include "types.h"
 #include "object.h"
@@ -65,6 +66,7 @@ namespace litehtml
 	bool value_in_list(const tstring& val, const tstring& strings, tchar_t delim = _t(';'));
 	tstring::size_type find_close_bracket(const tstring &s, tstring::size_type off, tchar_t open_b = _t('('), tchar_t close_b = _t(')'));
 	void split_string(const tstring& str, string_vector& tokens, const tstring& delims, const tstring& delims_preserve = _t(""), const tstring& quote = _t("\""));
+	void join_string(tstring& str, const string_vector& tokens, const tstring& delims);
 
 	inline int round_f(float val)
 	{

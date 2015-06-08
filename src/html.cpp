@@ -152,3 +152,18 @@ void litehtml::split_string(const tstring& str, string_vector& tokens, const tst
 		token_end = str.find_first_of(all_delims, token_start);
 	}
 }
+
+void litehtml::join_string(tstring& str, const string_vector& tokens, const tstring& delims)
+{
+	std::stringstream ss;
+	for(size_t i=0; i<tokens.size(); ++i)
+	{
+		if(i != 0)
+		{
+			ss << delims;
+		}
+		ss << tokens[i];
+	}
+
+	str = ss.str();
+}
