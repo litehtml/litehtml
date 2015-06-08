@@ -73,6 +73,7 @@ namespace litehtml
 		virtual ~document();
 
 		litehtml::document_container*	container()	{ return m_container; }
+		const litehtml::css&			styles() { return m_styles; }
 		uint_ptr						get_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);
 		int								render(int max_width, render_type rt = render_all);
 		void							draw(uint_ptr hdc, int x, int y, const position* clip);

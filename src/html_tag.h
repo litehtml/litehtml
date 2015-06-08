@@ -45,8 +45,8 @@ namespace litehtml
 		int						m_line_height;
 		bool					m_lh_predefined;
 		string_vector			m_pseudo_classes;
-		used_selector::vector	m_used_styles;		
-		
+		used_selector::vector	m_used_styles;
+
 		uint_ptr				m_font;
 		int						m_font_size;
 		font_metrics			m_font_metrics;
@@ -135,6 +135,7 @@ namespace litehtml
 		virtual const tchar_t*		get_cursor();
 		virtual void				init_font();
 		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add);
+		virtual bool				set_class(const tchar_t* pclass, bool add);
 		virtual bool				is_replaced() const;
 		virtual int					line_height() const;
 		virtual white_space			get_white_space() const;

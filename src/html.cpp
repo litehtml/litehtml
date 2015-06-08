@@ -2,7 +2,7 @@
 #include "types.h"
 #include "html_tag.h"
 
-void litehtml::trim(tstring &s) 
+void litehtml::trim(tstring &s)
 {
 	tstring::size_type pos = s.find_first_not_of(_t(" \n\r\t"));
 	if(pos != tstring::npos)
@@ -16,7 +16,7 @@ void litehtml::trim(tstring &s)
 	}
 }
 
-void litehtml::lcase(tstring &s) 
+void litehtml::lcase(tstring &s)
 {
 	for(tstring::iterator i = s.begin(); i != s.end(); i++)
 	{
@@ -151,4 +151,19 @@ void litehtml::split_string(const tstring& str, string_vector& tokens, const tst
 		if(token_start == str.length()) break;
 		token_end = str.find_first_of(all_delims, token_start);
 	}
+}
+
+void litehtml::join_string(tstring& str, const string_vector& tokens, const tstring& delims)
+{
+	std::stringstream ss;
+	for(size_t i=0; i<tokens.size(); ++i)
+	{
+		if(i != 0)
+		{
+			ss << delims;
+		}
+		ss << tokens[i];
+	}
+
+	str = ss.str();
 }
