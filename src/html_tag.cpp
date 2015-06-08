@@ -2364,6 +2364,43 @@ bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 	return ret;
 }
 
+bool litehtml::html_tag::set_class( const tchar_t* pclass, bool add )
+{
+	string_vector tokens;
+	split_string(m_class, tokens, _t(" "));
+
+	if(add)
+	{
+		if(std::find(tokens.begin(), tokens.end(), pclass) == tokens.end())
+		{
+			if(m_class.size() > 0)
+			{
+				m_class += _t(" ");
+			}
+			m_class += pclass;
+		} else
+		{
+			return false;
+		}
+	} else
+	{
+		auto end = std::remove(tokens.begin(), tokens.end(), pclass);
+
+		if(end == tokens.end())
+		{
+			return false;
+		}
+
+		tokens.erase(end, tokens.end());
+
+		join_string(m_class, tokens, _t(" "));
+	}
+
+	set_attr(_t("class"), m_class.c_str());
+
+	return true;
+}
+
 int litehtml::html_tag::line_height() const
 {
 	return m_line_height;
