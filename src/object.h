@@ -10,7 +10,7 @@ namespace litehtml
 		int	m_refCount;
 	public:
 		object()
-		{ 
+		{
 			m_refCount = 0;
 		}
 		virtual ~object()
@@ -19,10 +19,10 @@ namespace litehtml
 		}
 
 		void addRef()
-		{ 
+		{
 			m_refCount++;
 		}
-		
+
 		void release()
 		{
 			if(!(--m_refCount)) delete this;
@@ -92,6 +92,16 @@ namespace litehtml
 			{
 				oldPtr->release();
 			}
+		}
+
+		bool operator==(const object_ptr<T>& val) const
+		{
+			return m_ptr == val.m_ptr;
+		}
+
+		bool operator==(T* val) const
+		{
+			return m_ptr == val;
 		}
 
 		T* operator->()

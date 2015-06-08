@@ -97,8 +97,9 @@ namespace litehtml
 		void							set_event_handler(event_handler::ptr eh);
 		event_handler *					get_event_handler();
 
-		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
-		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
+        static litehtml::document::ptr createEmptyDocument(litehtml::document_container* objPainter, litehtml::context* ctx);
+		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0, litehtml::document::ptr doc = nullptr);
+		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0, litehtml::document::ptr doc = nullptr);
 		static litehtml::element::ptr set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles = 0 );
 
 	private:

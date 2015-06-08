@@ -45,67 +45,75 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
+litehtml::document::ptr litehtml::document::createEmptyDocument(litehtml::document_container* objPainter, litehtml::context* ctx)
 {
-	return createFromUTF8(litehtml_to_utf8(str), objPainter, ctx, user_styles);
+	return new litehtml::document(objPainter, ctx);
 }
 
-litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles)
+litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles, litehtml::document::ptr doc)
+{
+	return createFromUTF8(litehtml_to_utf8(str), objPainter, ctx, user_styles, doc);
+}
+
+litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles, litehtml::document::ptr doc)
 {
 	// Create litehtml::document
-	litehtml::document::ptr doc = new litehtml::document(objPainter, ctx);
+	if ( doc == nullptr )
+	{
+		doc = new litehtml::document(objPainter, ctx);
+	}
 
-    doc->m_root = set_inner_html( doc, str );
+	doc->m_root = set_inner_html( doc, str );
 
 	return doc;
 }
 
 litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles )
 {
-    GumboOutput
-        * output = gumbo_parse((const char*) text);
-    elements_vector
-        root_elements;
-    litehtml::element::ptr
-        root_element;
+	GumboOutput
+		* output = gumbo_parse((const char*) text);
+	elements_vector
+		root_elements;
+	litehtml::element::ptr
+		root_element;
 
-    document->create_node(output->root, root_elements);
+	document->create_node(output->root, root_elements);
 
-    // Destroy GumboOutput
-    gumbo_destroy_output(&kGumboDefaultOptions, output);
+	// Destroy GumboOutput
+	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
-    if ( !root_elements.empty() )
-    {
-        root_element = root_elements.back();
-    }
+	if ( !root_elements.empty() )
+	{
+		root_element = root_elements.back();
+	}
 
-    // Let's process created elements tree
-    if ( root_element )
-    {
-        document->container()->get_media_features(document->m_media);
+	// Let's process created elements tree
+	if ( root_element )
+	{
+		document->container()->get_media_features(document->m_media);
 
-        // apply master CSS
-        root_element->apply_stylesheet( document->m_context->master_css() );
+		// apply master CSS
+		root_element->apply_stylesheet( document->m_context->master_css() );
 
-        // parse elements attributes
-        root_element->parse_attributes();
+		// parse elements attributes
+		root_element->parse_attributes();
 
-        // parse style sheets linked in document
-        media_query_list::ptr media;
-        for (css_text::vector::iterator css = document->m_css.begin(); css != document->m_css.end(); css++)
-        {
-            if (!css->media.empty())
-            {
-                media = media_query_list::create_from_string(css->media, document);
-            }
-            else
-            {
-                media = 0;
-            }
-            document->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), document, media);
-        }
-        // Sort css selectors using CSS rules.
-        document->m_styles.sort_selectors();
+		// parse style sheets linked in document
+		media_query_list::ptr media;
+		for (css_text::vector::iterator css = document->m_css.begin(); css != document->m_css.end(); css++)
+		{
+			if (!css->media.empty())
+			{
+				media = media_query_list::create_from_string(css->media, document);
+			}
+			else
+			{
+				media = 0;
+			}
+			document->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), document, media);
+		}
+		// Sort css selectors using CSS rules.
+		document->m_styles.sort_selectors();
 
 		// get current media features
 		if (!document->m_media_lists.empty())
@@ -113,28 +121,28 @@ litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::p
 			document->update_media_lists(document->m_media);
 		}
 
-        // Apply parsed styles.
-        root_element->apply_stylesheet(document->m_styles);
+		// Apply parsed styles.
+		root_element->apply_stylesheet(document->m_styles);
 
-        // Apply user styles if any
-        if (user_styles)
-        {
-            root_element->apply_stylesheet(*user_styles);
-        }
+		// Apply user styles if any
+		if (user_styles)
+		{
+			root_element->apply_stylesheet(*user_styles);
+		}
 
-        // Parse applied styles in the elements
-        root_element->parse_styles();
+		// Parse applied styles in the elements
+		root_element->parse_styles();
 
-        // Now the m_tabular_elements is filled with tabular elements.
-        // We have to check the tabular elements for missing table elements
-        // and create the anonymous boxes in visual table layout
-        document->fix_tables_layout();
+		// Now the m_tabular_elements is filled with tabular elements.
+		// We have to check the tabular elements for missing table elements
+		// and create the anonymous boxes in visual table layout
+		document->fix_tables_layout();
 
-        // Finally initialize elements
-        root_element->init();
-    }
+		// Finally initialize elements
+		root_element->init();
+	}
 
-    return root_element;
+	return root_element;
 }
 
 litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm )
