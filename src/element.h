@@ -133,6 +133,7 @@ namespace litehtml
 		virtual void				init_font();
 		virtual bool				is_point_inside(int x, int y);
 		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add);
+		virtual bool				set_class(const tchar_t* pclass, bool add);
 		virtual bool				is_replaced() const;
 		virtual int					line_height() const;
 		virtual white_space			get_white_space() const;
