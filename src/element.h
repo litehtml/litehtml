@@ -30,7 +30,7 @@ namespace litehtml
 		element(litehtml::document* doc);
 		virtual ~element();
 
-		litehtml::document *        document();
+		litehtml::document *		document();
 		int							left()						const;
 		int							right()						const;
 		int							top()						const;
