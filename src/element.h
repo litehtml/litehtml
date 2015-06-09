@@ -30,7 +30,7 @@ namespace litehtml
 		element(litehtml::document* doc);
 		virtual ~element();
 
-		litehtml::document *        document();
+		litehtml::document *		document();
 		int							left()						const;
 		int							right()						const;
 		int							top()						const;
@@ -77,6 +77,8 @@ namespace litehtml
 		int							calc_width(int defVal) const;
 		int							get_inline_shift_left();
 		int							get_inline_shift_right();
+
+		bool						set_inner_html(const tchar_t* text);
 
 		virtual element::ptr		select_one(const tstring& selector);
 		virtual element::ptr		select_one(const css_selector& selector);
