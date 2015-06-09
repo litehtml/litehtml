@@ -50,7 +50,7 @@ litehtml::document::ptr litehtml::document::createEmptyDocument(litehtml::docume
 	return new litehtml::document(objPainter, ctx);
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles, litehtml::document::ptr doc)
+litehtml::document::ptr litehtml::document::createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles, litehtml::document::ptr doc)
 {
 	return createFromUTF8(litehtml_to_utf8(str), objPainter, ctx, user_styles, doc);
 }
@@ -63,40 +63,41 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 		doc = new litehtml::document(objPainter, ctx);
 	}
 
-	doc->m_root = set_inner_html( doc, str );
+	elements_vector
+		root_elements;
+
+	if(createElements(root_elements, doc, str, nullptr, user_styles))
+	{
+		doc->m_root = root_elements.back();
+	}
 
 	return doc;
 }
 
-litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles )
+bool litehtml::document::createElements(elements_vector & elements, litehtml::document * document, const char* text, litehtml::element * parent_element, litehtml::css* user_styles)
 {
 	GumboOutput
 		* output = gumbo_parse((const char*) text);
-	elements_vector
-		root_elements;
-	litehtml::element::ptr
-		root_element;
 
-	document->create_node(output->root, root_elements);
+	document->create_node(output->root, elements);
 
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
-	if ( !root_elements.empty() )
+	for(auto element : elements)
 	{
-		root_element = root_elements.back();
-	}
+		if(parent_element)
+		{
+			element->parent(parent_element);
+		}
 
-	// Let's process created elements tree
-	if ( root_element )
-	{
 		document->container()->get_media_features(document->m_media);
 
 		// apply master CSS
-		root_element->apply_stylesheet( document->m_context->master_css() );
+		element->apply_stylesheet( document->m_context->master_css() );
 
 		// parse elements attributes
-		root_element->parse_attributes();
+		element->parse_attributes();
 
 		// parse style sheets linked in document
 		media_query_list::ptr media;
@@ -122,16 +123,16 @@ litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::p
 		}
 
 		// Apply parsed styles.
-		root_element->apply_stylesheet(document->m_styles);
+		element->apply_stylesheet(document->m_styles);
 
 		// Apply user styles if any
 		if (user_styles)
 		{
-			root_element->apply_stylesheet(*user_styles);
+			element->apply_stylesheet(*user_styles);
 		}
 
 		// Parse applied styles in the elements
-		root_element->parse_styles();
+		element->parse_styles();
 
 		// Now the m_tabular_elements is filled with tabular elements.
 		// We have to check the tabular elements for missing table elements
@@ -139,10 +140,10 @@ litehtml::element::ptr litehtml::document::set_inner_html( litehtml::document::p
 		document->fix_tables_layout();
 
 		// Finally initialize elements
-		root_element->init();
+		element->init();
 	}
 
-	return root_element;
+	return elements.size() > 0;
 }
 
 litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm )
