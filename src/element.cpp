@@ -251,10 +251,10 @@ int litehtml::element::get_inline_shift_right()
 	return ret;
 }
 
-void litehtml::element::set_inner_html(const tchar_t* text)
+bool litehtml::element::set_inner_html(const tchar_t* text)
 {
 	m_children.resize(0);
-	document::createElements(m_children, m_doc, text, this);
+	return document::createElements(m_children, m_doc, text, this);
 }
 
 litehtml::background* litehtml::element::get_background(bool own_only)				LITEHTML_RETURN_FUNC(0)
