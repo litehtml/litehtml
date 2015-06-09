@@ -251,6 +251,12 @@ int litehtml::element::get_inline_shift_right()
 	return ret;
 }
 
+bool litehtml::element::set_inner_html(const tchar_t* text)
+{
+	m_children.resize(0);
+	return document::createElements(m_children, m_doc, text, this);
+}
+
 litehtml::background* litehtml::element::get_background(bool own_only)				LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::get_element_by_point( int x, int y, int client_x, int client_y )	LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::get_child_by_point( int x, int y, int client_x, int client_y, draw_flag flag, int zindex ) LITEHTML_RETURN_FUNC(0)

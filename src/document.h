@@ -100,7 +100,7 @@ namespace litehtml
         static litehtml::document::ptr createEmptyDocument(litehtml::document_container* objPainter, litehtml::context* ctx);
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0, litehtml::document::ptr doc = nullptr);
 		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0, litehtml::document::ptr doc = nullptr);
-		static litehtml::element::ptr set_inner_html( litehtml::document::ptr & document, const char* text, litehtml::css* user_styles = 0 );
+		static bool createElements(elements_vector & elements, litehtml::document * document, const char* text, litehtml::element * parent_element = nullptr, litehtml::css* user_styles = nullptr);
 
 	private:
 		document();
