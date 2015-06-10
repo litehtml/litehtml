@@ -75,6 +75,7 @@ namespace litehtml
 
 	#define t_strtol			strtol
 	#define t_atoi				atoi
+	#define t_atof				atof
 	#define t_strtod			strtod
 	#define t_strstr			strstr
 	#define t_tolower			tolower
