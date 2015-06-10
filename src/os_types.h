@@ -18,6 +18,7 @@ namespace litehtml
 	#define t_strncasecmp		_wcsnicmp
 	#define t_strtol			wcstol
 	#define t_atoi				_wtoi
+	#define t_atof				_wtof
 	#define t_strtod			wcstod
 	#define t_itoa(value, buffer, size, radix)	_itow_s(value, buffer, size, radix)
 	#define t_strstr			wcsstr
@@ -38,6 +39,7 @@ namespace litehtml
 	#define t_strncasecmp		_strnicmp
 	#define t_strtol			strtol
 	#define t_atoi				atoi
+	#define t_atof				atof
 	#define t_strtod			strtod
 	#define t_itoa(value, buffer, size, radix)	_itoa_s(value, buffer, size, radix)
 	#define t_strstr			strstr
@@ -73,6 +75,7 @@ namespace litehtml
 
 	#define t_strtol			strtol
 	#define t_atoi				atoi
+	#define t_atof				atof
 	#define t_strtod			strtod
 	#define t_strstr			strstr
 	#define t_tolower			tolower

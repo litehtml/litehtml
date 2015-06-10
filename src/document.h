@@ -73,6 +73,7 @@ namespace litehtml
 		virtual ~document();
 
 		litehtml::document_container*	container()	{ return m_container; }
+		const litehtml::document_container*	container() const	{ return m_container; }
 		const litehtml::css&			styles() { return m_styles; }
 		uint_ptr						get_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);
 		int								render(int max_width, render_type rt = render_all);
@@ -89,6 +90,7 @@ namespace litehtml
 		bool							on_mouse_leave(position::vector& redraw_boxes);
 		litehtml::element::ptr			create_element(const tchar_t* tag_name, const string_map& attributes);
 		element::ptr					root();
+		const element::ptr				root() const;
 		void							get_fixed_boxes(position::vector& fixed_boxes);
 		void							add_fixed_box(const position& pos);
 		void							add_media_list(media_query_list::ptr list);
@@ -97,7 +99,7 @@ namespace litehtml
 		void							set_event_handler(event_handler::ptr eh);
 		event_handler *					get_event_handler();
 
-        static litehtml::document::ptr createEmptyDocument(litehtml::document_container* objPainter, litehtml::context* ctx);
+		static litehtml::document::ptr createEmptyDocument(litehtml::document_container* objPainter, litehtml::context* ctx);
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0, litehtml::document::ptr doc = nullptr);
 		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0, litehtml::document::ptr doc = nullptr);
 		static bool createElements(elements_vector & elements, litehtml::document * document, const char* text, litehtml::element * parent_element = nullptr, litehtml::css* user_styles = nullptr);
@@ -114,6 +116,10 @@ namespace litehtml
 	};
 
 	inline element::ptr document::root()
+	{
+		return m_root;
+	}
+	inline const element::ptr document::root() const
 	{
 		return m_root;
 	}
