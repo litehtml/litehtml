@@ -1507,7 +1507,7 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 	m_padding.top		= m_css_padding.top.calc_percent(parent_width);
 	m_padding.bottom	= m_css_padding.bottom.calc_percent(parent_width);
 
-    if (get_element_position() != element_position_absolute && (m_display == display_block || m_display == display_table))
+	if (get_element_position() != element_position_absolute && (m_display == display_block || m_display == display_table))
 	{
 		if(m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
