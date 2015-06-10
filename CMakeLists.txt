@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 2.8)
 
 project(litehtml)
 
-set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -O0")
-set(CMAKE_C_FLAGS_DEBUG "-std=c99 -O0")
+set(CMAKE_CXX_FLAGS_DEBUG "-std=c++11 -O0 -DDEBUG -g")
+set(CMAKE_C_FLAGS_DEBUG "-std=c99 -O0 -DDEBUG -g")
 set(CMAKE_CXX_FLAGS_RELEASE "-std=c++11 -O3")
 set(CMAKE_C_FLAGS_RELEASE "-std=c99 -O3")
 
