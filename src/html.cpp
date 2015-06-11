@@ -2,15 +2,29 @@
 #include "types.h"
 #include "html_tag.h"
 
-void litehtml::trim(tstring &s)
+void litehtml::trim(std::string &s)
 {
-	tstring::size_type pos = s.find_first_not_of(_t(" \n\r\t"));
-	if(pos != tstring::npos)
+	auto pos = s.find_first_not_of(_t(" \n\r\t"));
+	if(pos != std::string::npos)
 	{
 		s.erase(s.begin(), s.begin() + pos);
 	}
 	pos = s.find_last_not_of(_t(" \n\r\t"));
-	if(pos != tstring::npos)
+	if(pos != std::string::npos)
+	{
+		s.erase(s.begin() + pos + 1, s.end());
+	}
+}
+
+void litehtml::trim(std::wstring &s)
+{
+	auto pos = s.find_first_not_of(L" \n\r\t");
+	if(pos != std::wstring::npos)
+	{
+		s.erase(s.begin(), s.begin() + pos);
+	}
+	pos = s.find_last_not_of(L" \n\r\t");
+	if(pos != std::wstring::npos)
 	{
 		s.erase(s.begin() + pos + 1, s.end());
 	}

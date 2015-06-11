@@ -672,6 +672,8 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		{
 			std::wstring str;
 			std::wstring str_in = (const wchar_t*) (utf8_to_wchar(node->v.text.text));
+			trim( str_in );
+
 			ucode_t c;
 			for (size_t i = 0; i < str_in.length(); i++)
 			{
