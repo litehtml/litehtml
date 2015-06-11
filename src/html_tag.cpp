@@ -2680,6 +2680,22 @@ litehtml::element::ptr litehtml::html_tag::get_child( int idx ) const
 	return m_children[idx];
 }
 
+size_t litehtml::html_tag::get_index() const
+{
+	if( m_parent )
+	{
+		auto & children = m_parent->m_children;
+		auto it = std::find( children.begin(), children.end(), this );
+
+		if( it != children.end() )
+		{
+			return it - children.begin();
+		}
+	}
+
+	return -1;
+}
+
 void litehtml::html_tag::set_css_width( css_length& w )
 {
 	m_css_width = w;

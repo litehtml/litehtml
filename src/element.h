@@ -102,6 +102,7 @@ namespace litehtml
 		virtual element_clear		get_clear() const;
 		virtual size_t				get_children_count() const;
 		virtual element::ptr		get_child(int idx) const;
+		virtual size_t				get_index() const;
 		virtual overflow			get_overflow() const;
 
 		virtual css_length			get_css_left() const;

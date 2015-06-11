@@ -290,6 +290,7 @@ void litehtml::element::apply_vertical_align()										LITEHTML_EMPTY_FUNC
 void litehtml::element::set_css_width( css_length& w )								LITEHTML_EMPTY_FUNC
 litehtml::element::ptr litehtml::element::get_child( int idx ) const				LITEHTML_RETURN_FUNC(0)
 size_t litehtml::element::get_children_count() const								LITEHTML_RETURN_FUNC(0)
+size_t litehtml::element::get_index() const											LITEHTML_RETURN_FUNC(0)
 void litehtml::element::calc_outlines( int parent_width )							LITEHTML_EMPTY_FUNC
 litehtml::css_length litehtml::element::get_css_width() const						LITEHTML_RETURN_FUNC(css_length())
 litehtml::css_length litehtml::element::get_css_height() const						LITEHTML_RETURN_FUNC(css_length())
