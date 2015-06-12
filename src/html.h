@@ -60,7 +60,8 @@ namespace litehtml
 		virtual void				execute_script( litehtml::document * /*doc*/, const litehtml::element::ptr /*script*/ ) {}
 	};
 
-	void trim(tstring &s);
+	void trim(std::string &s);
+	void trim(std::wstring &s);
 	void lcase(tstring &s);
 	int	 value_index(const tstring& val, const tstring& strings, int defValue = -1, tchar_t delim = _t(';'));
 	bool value_in_list(const tstring& val, const tstring& strings, tchar_t delim = _t(';'));

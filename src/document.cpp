@@ -689,6 +689,8 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		{
 			std::wstring str;
 			std::wstring str_in = (const wchar_t*) (utf8_to_wchar(node->v.text.text));
+			trim( str_in );
+
 			ucode_t c;
 			for (size_t i = 0; i < str_in.length(); i++)
 			{
@@ -743,11 +745,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		break;
 	case GUMBO_NODE_WHITESPACE:
 		{
-			tstring str = litehtml_from_utf8(node->v.text.text);
-			for (size_t i = 0; i < str.length(); i++)
-			{
-				elements.push_back(new el_space(str.substr(i, 1).c_str(), this));
-			}
+
 		}
 		break;
 	default:
