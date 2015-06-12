@@ -31,9 +31,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 {
 	int parent_width = max_width;
 
-	// restore margins after collapse
-	m_margins.top		= m_doc->cvt_units(m_css_margins.top,		m_font_size);
-	m_margins.bottom	= m_doc->cvt_units(m_css_margins.bottom,	m_font_size);
+	calc_outlines(parent_width);
 
 	m_pos.move_to(x, y);
 
@@ -156,7 +154,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		}
 	}
 
-	calc_outlines(parent_width);
+	calc_auto_margins(parent_width);
 
 	m_pos.x	+= content_margins_left();
 	m_pos.y += content_margins_top();

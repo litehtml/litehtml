@@ -26,6 +26,7 @@
 #include <algorithm>
 #include "gumbo/gumbo.h"
 #include "utf8_strings.h"
+#include <assert.h>
 
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
@@ -76,10 +77,26 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 
 bool litehtml::document::createElements(elements_vector & elements, litehtml::document * document, const char* text, litehtml::element * parent_element, litehtml::css* user_styles)
 {
+	GumboOptions
+		options = kGumboDefaultOptions;
+
+	if( parent_element )
+	{
+		options.fragment_context = gumbo_tag_enum( parent_element->get_tagName() );
+	}
+
 	GumboOutput
-		* output = gumbo_parse((const char*) text);
+		* output = gumbo_parse_with_options(&options, text, strlen(text));
 
 	document->create_node(output->root, elements);
+
+	if( parent_element )
+	{
+		element::ptr html = elements[ 0 ];
+		assert( !strcmp( elements[ 0 ]->get_tagName(), "html" ) );
+
+		elements = html->m_children;
+	}
 
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
