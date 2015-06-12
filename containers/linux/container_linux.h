@@ -4,6 +4,31 @@
 #include <cairo.h>
 #include <gtkmm.h>
 
+struct cairo_clip_box
+{
+	typedef std::vector<cairo_clip_box> vector;
+	litehtml::position	box;
+	litehtml::border_radiuses radius;
+
+	cairo_clip_box(const litehtml::position& vBox, litehtml::border_radiuses vRad)
+	{
+		box = vBox;
+		radius = vRad;
+	}
+
+	cairo_clip_box(const cairo_clip_box& val)
+	{
+		box = val.box;
+		radius = val.radius;
+	}
+	cairo_clip_box& operator=(const cairo_clip_box& val)
+	{
+		box = val.box;
+		radius = val.radius;
+		return *this;
+	}
+};
+
 struct cairo_font
 {
 	cairo_font_face_t*	font;
@@ -20,7 +45,7 @@ protected:
 	cairo_surface_t*			m_temp_surface;
 	cairo_t*					m_temp_cr;
 	images_map					m_images;
-	litehtml::position::vector	m_clips;
+    cairo_clip_box::vector		m_clips;
 public:
 	container_linux(void);
 	virtual ~container_linux(void);
@@ -37,14 +62,14 @@ public:
 	virtual void						get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz);
 	virtual void						draw_image(litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos);
 	virtual void						draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg);
-	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::css_borders& borders, const litehtml::position& draw_pos, bool root);
+	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root);
 	virtual void 						draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker);
-	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, const litehtml::document * document);
+	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc);
 	virtual void						get_media_features(litehtml::media_features& media);
 
 
 	virtual	void						transform_text(litehtml::tstring& text, litehtml::text_transform tt);
-	virtual void						set_clip(const litehtml::position& pos, bool valid_x, bool valid_y);
+	virtual void						set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y);
 	virtual void						del_clip();
 
 	virtual void						make_url( const litehtml::tchar_t* url, const litehtml::tchar_t* basepath, litehtml::tstring& out );
@@ -56,7 +81,7 @@ public:
 protected:
 	virtual void						draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width);
 	virtual void						fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color);
-	virtual void						rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::css_border_radius &radius );
+	virtual void						rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius );
 
 private:
 	void								apply_clip(cairo_t* cr);
