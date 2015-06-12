@@ -4079,7 +4079,7 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 
 	if (!m_css_width.is_predefined())
 	{
-		max_width = block_width = calc_width(parent_width - (content_margins_left() + content_margins_right()));
+		max_width = block_width = calc_width(parent_width) - m_padding.width() - m_borders.width();
 	}
 	else
 	{
@@ -4315,8 +4315,33 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 
 	unconstrained_table_height += m_border_spacing_y * (m_grid.rows_count() + 1);
 
+	// calculate block height
+	int block_height = 0;
+	if (get_predefined_height(block_height))
+	{
+		block_height -= m_padding.height() + m_borders.height();
+	}
+
+	// calculate minimum height from m_css_min_height
+	int min_height = 0;
+	if (!m_css_min_height.is_predefined() && m_css_min_height.units() == css_units_percentage)
+	{
+		if (m_parent)
+		{
+			int parent_height = 0;
+			if (m_parent->get_predefined_height(parent_height))
+			{
+				min_height = m_css_min_height.calc_percent(parent_height);
+			}
+		}
+	}
+	else
+	{
+		min_height = (int)m_css_min_height.val();
+	}
+
 	int extra_row_height = 0;
-	int minimum_table_height = std::max(m_css_height.calc_percent(m_parent ? m_parent->m_pos.height : 0), m_css_min_height.calc_percent(m_parent ? m_parent->m_pos.height : 0));
+	int minimum_table_height = std::max(block_height, min_height);
 
 	if(minimum_table_height > unconstrained_table_height)
 	{
