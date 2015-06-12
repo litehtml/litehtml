@@ -3860,9 +3860,10 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 	if (m_display != display_table_cell && !m_css_width.is_predefined())
 	{
 		int w = calc_width(parent_width);
+		
 		if (m_box_sizing == box_sizing_border_box)
 		{
-			w -= m_padding.left + m_borders.left + m_padding.right + m_borders.right;
+			w -= m_padding.width() + m_borders.width();
 		}
 		ret_width = max_width = block_width = w;
 	}
