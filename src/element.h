@@ -30,6 +30,9 @@ namespace litehtml
 		element(litehtml::document* doc);
 		virtual ~element();
 
+		// returns refer to m_pos member;
+		position&					get_position();
+
 		int							left()						const;
 		int							right()						const;
 		int							top()						const;
@@ -364,6 +367,11 @@ namespace litehtml
 	inline bool litehtml::element::is_visible() const
 	{
 		return !(m_skip || get_display() == display_none || get_visibility() != visibility_visible);
+	}
+
+	inline position& litehtml::element::get_position()
+	{
+		return m_pos;
 	}
 
 }
