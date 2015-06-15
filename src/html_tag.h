@@ -24,8 +24,7 @@ namespace litehtml
 		typedef litehtml::object_ptr<litehtml::html_tag>	ptr;
 	protected:
 		box::vector				m_boxes;
-		tstring					m_id;
-		tstring					m_class;
+		string_vector			m_class_values;
 		tstring					m_tag;
 		litehtml::style			m_style;
 		string_map				m_attrs;
