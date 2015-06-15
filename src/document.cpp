@@ -101,14 +101,20 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
+	document->container()->get_media_features(document->m_media);
+
+	// get current media features
+	if (!document->m_media_lists.empty())
+	{
+		document->update_media_lists(document->m_media);
+	}
+
 	for(auto element : elements)
 	{
 		if(parent_element)
 		{
 			element->parent(parent_element);
 		}
-
-		document->container()->get_media_features(document->m_media);
 
 		// apply master CSS
 		element->apply_stylesheet( document->m_context->master_css() );
@@ -117,26 +123,23 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 		element->parse_attributes();
 
 		// parse style sheets linked in document
-		media_query_list::ptr media;
-		for (css_text::vector::iterator css = document->m_css.begin(); css != document->m_css.end(); css++)
+		if (!parent_element)
 		{
-			if (!css->media.empty())
+			media_query_list::ptr media;
+			for (css_text::vector::iterator css = document->m_css.begin(); css != document->m_css.end(); css++)
 			{
-				media = media_query_list::create_from_string(css->media, document);
+				if (!css->media.empty())
+				{
+					media = media_query_list::create_from_string(css->media, document);
+				}
+				else
+				{
+					media = 0;
+				}
+				document->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), document, media);
 			}
-			else
-			{
-				media = 0;
-			}
-			document->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), document, media);
-		}
-		// Sort css selectors using CSS rules.
-		document->m_styles.sort_selectors();
-
-		// get current media features
-		if (!document->m_media_lists.empty())
-		{
-			document->update_media_lists(document->m_media);
+			// Sort css selectors using CSS rules.
+			document->m_styles.sort_selectors();
 		}
 
 		// Apply parsed styles.
