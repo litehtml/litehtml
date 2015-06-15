@@ -65,6 +65,12 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 			s_val[i] = std::tolower(s_val[i], lc);
 		}
 		m_attrs[s_val] = val;
+
+		if( t_strcasecmp( name, _t("class") ) == 0 )
+		{
+			m_class_values.resize( 0 );
+			split_string( val, m_class_values, _t(" ") );
+		}
 	}
 }
 
@@ -241,9 +247,6 @@ const litehtml::tchar_t* litehtml::html_tag::get_style_property( const tchar_t* 
 
 void litehtml::html_tag::parse_styles(bool is_reparse)
 {
-	m_id	= get_attr(_t("id"), _t(""));
-	m_class	= get_attr(_t("class"), _t(""));
-
 	const tchar_t* style = get_attr(_t("style"));
 
 	if(style)
@@ -655,8 +658,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			{
 				if(i->attribute == _t("class"))
 				{
-					string_vector tokens1;
-					split_string(attr_value, tokens1, _t(" "));
+					const string_vector & tokens1 = m_class_values;
 					const string_vector & tokens2 = i->class_val;
 					bool found = true;
 					for(string_vector::const_iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
@@ -2300,39 +2302,48 @@ bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 
 bool litehtml::html_tag::set_class( const tchar_t* pclass, bool add )
 {
-	string_vector tokens;
-	split_string(m_class, tokens, _t(" "));
+	string_vector classes;
+	bool changed = false;
+
+	split_string( pclass, classes, _t(" ") );
 
 	if(add)
 	{
-		if(std::find(tokens.begin(), tokens.end(), pclass) == tokens.end())
+		for( auto & _class : classes  )
 		{
-			if(m_class.size() > 0)
+			if(std::find(m_class_values.begin(), m_class_values.end(), _class) == m_class_values.end())
 			{
-				m_class += _t(" ");
-			}
-			m_class += pclass;
-		} else
-		{
-			return false;
+				m_class_values.push_back( std::move( _class ) );
+				changed = true;
+			} 
 		}
 	} else
 	{
-		auto end = std::remove(tokens.begin(), tokens.end(), pclass);
-
-		if(end == tokens.end())
+		for( auto & _class : classes )
 		{
-			return false;
+			auto end = std::remove(m_class_values.begin(), m_class_values.end(), _class);
+
+			if(end != m_class_values.end())
+			{
+				m_class_values.erase(end, m_class_values.end());
+				changed = true;
+			}
 		}
-
-		tokens.erase(end, tokens.end());
-
-		join_string(m_class, tokens, _t(" "));
 	}
 
-	set_attr(_t("class"), m_class.c_str());
+	if( changed )
+	{
+		tstring class_string;
+		join_string(class_string, m_class_values, _t(" "));
+		set_attr(_t("class"), class_string.c_str());
 
-	return true;
+		return true;
+	}
+	else
+	{
+		return false;
+	}
+
 }
 
 int litehtml::html_tag::line_height() const
