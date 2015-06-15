@@ -101,14 +101,20 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
+	document->container()->get_media_features(document->m_media);
+
+	// get current media features
+	if (!document->m_media_lists.empty())
+	{
+		document->update_media_lists(document->m_media);
+	}
+
 	for(auto element : elements)
 	{
 		if(parent_element)
 		{
 			element->parent(parent_element);
 		}
-
-		document->container()->get_media_features(document->m_media);
 
 		// apply master CSS
 		element->apply_stylesheet( document->m_context->master_css() );
@@ -134,12 +140,6 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 			}
 			// Sort css selectors using CSS rules.
 			document->m_styles.sort_selectors();
-		}
-
-		// get current media features
-		if (!document->m_media_lists.empty())
-		{
-			document->update_media_lists(document->m_media);
 		}
 
 		// Apply parsed styles.
