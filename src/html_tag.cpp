@@ -657,13 +657,12 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				{
 					string_vector tokens1;
 					split_string(attr_value, tokens1, _t(" "));
-					string_vector tokens2;
-					split_string(i->val, tokens2, _t(" "));
+					const string_vector & tokens2 = i->class_val;
 					bool found = true;
-					for(string_vector::iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
+					for(string_vector::const_iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
 					{
 						bool f = false;
-						for(string_vector::iterator str2 = tokens1.begin(); str2 != tokens1.end() && !f; str2++)
+						for(string_vector::const_iterator str2 = tokens1.begin(); str2 != tokens1.end() && !f; str2++)
 						{
 							if( !t_strcasecmp(str1->c_str(), str2->c_str()) )
 							{

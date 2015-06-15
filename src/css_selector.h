@@ -134,6 +134,7 @@ namespace litehtml
 
 		tstring					attribute;
 		tstring					val;
+		string_vector			class_val;
 		attr_select_condition	condition;
 
 		css_attribute_selector()
@@ -144,6 +145,7 @@ namespace litehtml
 		css_attribute_selector(const css_attribute_selector& val)
 		{
 			this->val	= val.val;
+			class_val	= val.class_val;
 			condition	= val.condition;
 			attribute	= val.attribute;
 		}
