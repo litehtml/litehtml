@@ -149,6 +149,14 @@ namespace litehtml
 			condition	= val.condition;
 			attribute	= val.attribute;
 		}
+
+		css_attribute_selector(css_attribute_selector&& val) /*noexcept*/
+		{
+			this->val	= std::move( val.val );
+			class_val	= std::move( val.class_val );
+			condition	= std::move( val.condition );
+			attribute	= val.attribute;
+		}
 	};
 
 	//////////////////////////////////////////////////////////////////////////
