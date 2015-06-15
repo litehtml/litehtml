@@ -120,27 +120,7 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 		element->apply_stylesheet( document->m_context->master_css() );
 
 		// parse elements attributes
-		element->parse_attributes();
-
-		// parse style sheets linked in document
-		if (!parent_element)
-		{
-			media_query_list::ptr media;
-			for (css_text::vector::iterator css = document->m_css.begin(); css != document->m_css.end(); css++)
-			{
-				if (!css->media.empty())
-				{
-					media = media_query_list::create_from_string(css->media, document);
-				}
-				else
-				{
-					media = 0;
-				}
-				document->m_styles.parse_stylesheet(css->text.c_str(), css->baseurl.c_str(), document, media);
-			}
-			// Sort css selectors using CSS rules.
-			document->m_styles.sort_selectors();
-		}
+		element->parse_attributes();		
 
 		// Apply parsed styles.
 		element->apply_stylesheet(document->m_styles);
@@ -405,10 +385,30 @@ int litehtml::document::height() const
 
 void litehtml::document::add_stylesheet( const tchar_t* str, const tchar_t* baseurl, const tchar_t* media )
 {
+	css_text
+		new_css;
+
+	new_css = css_text(str, baseurl, media);
+
 	if(str && str[0])
 	{
-		m_css.push_back(css_text(str, baseurl, media));
+		m_css.push_back(new_css);
 	}
+
+	media_query_list::ptr media_query_list;
+
+	if (!new_css.media.empty())
+	{
+		media_query_list = media_query_list::create_from_string(new_css.media, this);
+	}
+	else
+	{
+		media_query_list = 0;
+	}
+	m_styles.parse_stylesheet(new_css.text.c_str(), new_css.baseurl.c_str(), this, media_query_list);
+	
+	// Sort css selectors using CSS rules.
+	m_styles.sort_selectors();
 }
 
 bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
