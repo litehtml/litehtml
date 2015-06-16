@@ -12,6 +12,7 @@ namespace litehtml
 
 		virtual void			parse_attributes();
 		virtual bool			appendChild(litehtml::element* el);
+		virtual bool			addChildAfter(litehtml::element* new_child, litehtml::element * existing_child);
 		virtual const tchar_t*	get_tagName() const;
 	};
 }

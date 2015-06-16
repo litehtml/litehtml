@@ -49,6 +49,19 @@ bool litehtml::html_tag::appendChild( litehtml::element* el )
 	return false;
 }
 
+bool litehtml::html_tag::addChildAfter( litehtml::element* new_el, litehtml::element* existing_el )
+{
+	if(new_el)
+	{
+		new_el->parent(this);
+
+		auto iter = std::find( m_children.begin(), m_children.end(), existing_el );
+		m_children.insert( ++iter, new_el );
+		return true;
+	}
+	return false;
+}
+
 const litehtml::tchar_t* litehtml::html_tag::get_tagName() const
 {
 	return m_tag.c_str();
