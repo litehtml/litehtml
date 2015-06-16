@@ -322,6 +322,8 @@ void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML
 void litehtml::element::init()														LITEHTML_EMPTY_FUNC
 int litehtml::element::render( int x, int y, int max_width, bool second_pass )		LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::appendChild( litehtml::element* el )						LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::addChildAfter( litehtml::element* new_child, litehtml::element * existing_child ) LITEHTML_RETURN_FUNC(false)
+
 const litehtml::tchar_t* litehtml::element::get_tagName() const						LITEHTML_RETURN_FUNC(_t(""))
 void litehtml::element::set_tagName( const tchar_t* tag )							LITEHTML_EMPTY_FUNC
 void litehtml::element::set_data( const tchar_t* data )								LITEHTML_EMPTY_FUNC

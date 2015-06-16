@@ -94,6 +94,7 @@ namespace litehtml
 		virtual void				render_positioned(render_type rt = render_all);
 
 		virtual bool				appendChild(litehtml::element* el);
+		virtual bool				addChildAfter(litehtml::element* new_child, litehtml::element * existing_child);
 
 		virtual const tchar_t*		get_tagName() const;
 		virtual void				set_tagName(const tchar_t* tag);
@@ -103,6 +104,7 @@ namespace litehtml
 		virtual element_clear		get_clear() const;
 		virtual size_t				get_children_count() const;
 		virtual element::ptr		get_child(int idx) const;
+		elements_vector &           children();
 		virtual size_t				get_index() const;
 		virtual overflow			get_overflow() const;
 
@@ -189,6 +191,11 @@ namespace litehtml
 	//////////////////////////////////////////////////////////////////////////
 	//							INLINE FUNCTIONS							//
 	//////////////////////////////////////////////////////////////////////////
+
+	inline litehtml::elements_vector & litehtml::element::children()
+	{
+		return m_children;
+	}
 
 	inline litehtml::document* litehtml::element::document()
 	{

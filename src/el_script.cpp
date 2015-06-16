@@ -24,6 +24,12 @@ bool litehtml::el_script::appendChild( litehtml::element* el )
 	return true;
 }
 
+bool litehtml::el_script::addChildAfter( litehtml::element* new_el, litehtml::element* existing_el)
+{
+	//    :TODO:
+	return false;
+}
+
 const litehtml::tchar_t* litehtml::el_script::get_tagName() const
 {
 	return _t("script");

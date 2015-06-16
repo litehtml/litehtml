@@ -97,6 +97,8 @@ namespace litehtml
 		int							finish_last_box(bool end_of_render = false);
 
 		virtual bool				appendChild(litehtml::element* el);
+		virtual bool				addChildAfter(litehtml::element* new_child, litehtml::element * existing_child) override;
+
 		virtual const tchar_t*		get_tagName() const;
 		virtual void				set_tagName(const tchar_t* tag);
 		virtual void				set_data(const tchar_t* data);
@@ -149,7 +151,6 @@ namespace litehtml
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
 		virtual int					get_font_size() const;
 
-		elements_vector&			children();
 		virtual void				calc_outlines( int parent_width );
 		virtual void				calc_auto_margins(int parent_width);
 
@@ -215,11 +216,6 @@ namespace litehtml
 	/************************************************************************/
 	/*                        Inline Functions                              */
 	/************************************************************************/
-
-	inline elements_vector& litehtml::html_tag::children()
-	{
-		return m_children;
-	}
 
 	class element_zindex_sort
 	{

@@ -17,6 +17,8 @@ namespace litehtml
 		virtual ~el_table();
 
 		virtual bool	appendChild(litehtml::element* el);
+		virtual bool 	addChildAfter( litehtml::element* new_el, litehtml::element* existing_el ) override;
+
 		virtual void	parse_styles(bool is_reparse = false);
 		virtual void	parse_attributes();
 	};
