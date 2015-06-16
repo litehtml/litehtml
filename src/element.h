@@ -104,6 +104,7 @@ namespace litehtml
 		virtual element_clear		get_clear() const;
 		virtual size_t				get_children_count() const;
 		virtual element::ptr		get_child(int idx) const;
+		elements_vector &           children();
 		virtual size_t				get_index() const;
 		virtual overflow			get_overflow() const;
 
@@ -190,6 +191,11 @@ namespace litehtml
 	//////////////////////////////////////////////////////////////////////////
 	//							INLINE FUNCTIONS							//
 	//////////////////////////////////////////////////////////////////////////
+
+	inline litehtml::elements_vector & litehtml::element::children()
+	{
+		return m_children;
+	}
 
 	inline litehtml::document* litehtml::element::document()
 	{
