@@ -86,9 +86,14 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	}
 
 	GumboOutput
-		* output = gumbo_parse_with_options(&options, text, strlen(text));
+		* output = nullptr;
 
-	document->create_node(output->root, elements);
+	if( text )
+	{
+		output = gumbo_parse_with_options(&options, text, strlen(text));
+
+		document->create_node(output->root, elements);
+	}
 
 	if( parent_element )
 	{
@@ -98,8 +103,11 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 		elements = html->m_children;
 	}
 
-	// Destroy GumboOutput
-	gumbo_destroy_output(&kGumboDefaultOptions, output);
+	if( text )
+	{
+		// Destroy GumboOutput
+		gumbo_destroy_output(&kGumboDefaultOptions, output);
+	}
 
 	document->container()->get_media_features(document->m_media);
 
