@@ -66,6 +66,7 @@ namespace litehtml
 		position::vector					m_fixed_boxes;
 		media_query_list::vector			m_media_lists;
 		element::ptr						m_over_element;
+		element::ptr						m_down_element;
 		elements_vector						m_tabular_elements;
 		media_features						m_media;
 	public:
