@@ -151,7 +151,6 @@ namespace litehtml
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
 		virtual int					get_font_size() const;
 
-		elements_vector&			children();
 		virtual void				calc_outlines( int parent_width );
 		virtual void				calc_auto_margins(int parent_width);
 
@@ -217,11 +216,6 @@ namespace litehtml
 	/************************************************************************/
 	/*                        Inline Functions                              */
 	/************************************************************************/
-
-	inline elements_vector& litehtml::html_tag::children()
-	{
-		return m_children;
-	}
 
 	class element_zindex_sort
 	{
