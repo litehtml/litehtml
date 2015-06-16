@@ -28,6 +28,16 @@ bool litehtml::el_table::appendChild( litehtml::element* el )
 	return false;
 }
 
+bool litehtml::el_table::addChildAfter( litehtml::element* new_el, litehtml::element* existing_el )
+{
+    if(!new_el)	return false;
+    if(!t_strcmp(new_el->get_tagName(), _t("tbody")) || !t_strcmp(new_el->get_tagName(), _t("thead")) || !t_strcmp(new_el->get_tagName(), _t("tfoot")))
+    {
+        return html_tag::addChildAfter(new_el, existing_el);
+    }
+    return false;
+}
+
 void litehtml::el_table::parse_styles(bool is_reparse)
 {
 	html_tag::parse_styles(is_reparse);
