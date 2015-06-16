@@ -141,22 +141,6 @@ namespace litehtml
 		{
 			condition = select_exists;
 		}
-
-		css_attribute_selector(const css_attribute_selector& val)
-		{
-			this->val	= val.val;
-			class_val	= val.class_val;
-			condition	= val.condition;
-			attribute	= val.attribute;
-		}
-
-		css_attribute_selector(css_attribute_selector&& val) /*noexcept*/
-		{
-			this->val	= std::move( val.val );
-			class_val	= std::move( val.class_val );
-			condition	= std::move( val.condition );
-			attribute	= val.attribute;
-		}
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -167,16 +151,6 @@ namespace litehtml
 		tstring							m_tag;
 		css_attribute_selector::vector	m_attrs;
 	public:
-		css_element_selector()
-		{
-
-		}
-
-		css_element_selector(const css_element_selector& val)
-		{
-			m_tag	= val.m_tag;
-			m_attrs	= val.m_attrs;
-		}
 
 		void parse(const tstring& txt);
 	};
