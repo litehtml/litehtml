@@ -15,6 +15,7 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 
 			tstring::size_type pos = txt.find_first_of(_t(".#[:"), el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
+			split_string( attribute.val, attribute.class_val, _t(" ") );
 			attribute.condition	= select_equal;
 			attribute.attribute	= _t("class");
 			m_attrs.push_back(attribute);
@@ -241,9 +242,7 @@ void litehtml::css_selector::calc_specificity()
 		{
 			if(i->attribute == _t("class"))
 			{
-				string_vector tokens;
-				split_string(i->val, tokens, _t(" "));
-				m_specificity.c += (int) tokens.size();
+				m_specificity.c += (int) i->class_val.size();
 			} else
 			{
 				m_specificity.c++;
