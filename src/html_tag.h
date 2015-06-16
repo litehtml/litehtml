@@ -97,6 +97,8 @@ namespace litehtml
 		int							finish_last_box(bool end_of_render = false);
 
 		virtual bool				appendChild(litehtml::element* el);
+		virtual bool				addChildAfter(litehtml::element* new_child, litehtml::element * existing_child) override;
+
 		virtual const tchar_t*		get_tagName() const;
 		virtual void				set_tagName(const tchar_t* tag);
 		virtual void				set_data(const tchar_t* data);
