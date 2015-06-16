@@ -2315,11 +2315,11 @@ bool litehtml::html_tag::set_class( const tchar_t* pclass, bool add )
 			{
 				m_class_values.push_back( std::move( _class ) );
 				changed = true;
-			} 
+			}
 		}
 	} else
 	{
-		for( auto & _class : classes )
+		for( const auto & _class : classes )
 		{
 			auto end = std::remove(m_class_values.begin(), m_class_values.end(), _class);
 
