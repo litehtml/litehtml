@@ -133,7 +133,10 @@ bool litehtml::element::get_predefined_height(int& p_height) const
 			if(m_parent->get_predefined_height(ph))
 			{
 				p_height = h.calc_percent(ph);
-				p_height -= content_margins_top() + content_margins_bottom();
+				if (is_body())
+				{
+					p_height -= content_margins_height();
+				}
 				return true;
 			} else
 			{
@@ -188,9 +191,11 @@ int litehtml::element::calc_width(int defVal) const
 		} else
 		{
 			int pw = m_parent->calc_width(defVal);
-			pw = w.calc_percent(pw);
-			pw -= content_margins_right() + content_margins_left();
-			return pw;
+			if (is_body())
+			{
+				pw -= content_margins_width();
+			}
+			return w.calc_percent(pw);
 		}
 	}
 	return 	m_doc->cvt_units(w, get_font_size());
