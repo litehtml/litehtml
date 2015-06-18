@@ -66,7 +66,7 @@ namespace litehtml
 		position::vector					m_fixed_boxes;
 		media_query_list::vector			m_media_lists;
 		element::ptr						m_over_element;
-		element::ptr						m_down_element;
+		element::ptr						m_active_element;
 		elements_vector						m_tabular_elements;
 		media_features						m_media;
 	public:
@@ -92,6 +92,8 @@ namespace litehtml
 		litehtml::element::ptr			create_element(const tchar_t* tag_name, const string_map& attributes);
 		element::ptr					root();
 		const element::ptr				root() const;
+		element::ptr					active_element();
+		const element::ptr				active_element() const;
 		void							get_fixed_boxes(position::vector& fixed_boxes);
 		void							add_fixed_box(const position& pos);
 		void							add_media_list(media_query_list::ptr list);
@@ -123,6 +125,14 @@ namespace litehtml
 	inline const element::ptr document::root() const
 	{
 		return m_root;
+	}
+	inline element::ptr document::active_element()
+	{
+		return m_active_element;
+	}
+	inline const element::ptr document::active_element() const
+	{
+		return m_active_element;
 	}
 	inline void document::add_tabular(element::ptr el)
 	{
