@@ -30,8 +30,11 @@ namespace litehtml
 		element(litehtml::document* doc);
 		virtual ~element();
 
+		// returns refer to m_pos member;
+		position&					get_position();
 		litehtml::document *		document();
 		const litehtml::document *	document() 					const;
+
 		int							left()						const;
 		int							right()						const;
 		int							top()						const;
@@ -43,6 +46,8 @@ namespace litehtml
 		int							content_margins_bottom()	const;
 		int							content_margins_left()		const;
 		int							content_margins_right()		const;
+		int							content_margins_width()		const;
+		int							content_margins_height()	const;
 
 		int							margin_top()				const;
 		int							margin_bottom()				const;
@@ -257,6 +262,16 @@ namespace litehtml
 		return margin_right() + m_padding.right + m_borders.right;
 	}
 
+	inline int litehtml::element::content_margins_width() const
+	{
+		return content_margins_left() + content_margins_right();
+	}
+
+	inline int litehtml::element::content_margins_height() const
+	{
+		return content_margins_top() + content_margins_bottom();
+	}
+
 	inline litehtml::margins litehtml::element::get_paddings()	const
 	{
 		return m_padding;
@@ -375,6 +390,11 @@ namespace litehtml
 	inline bool litehtml::element::is_visible() const
 	{
 		return !(m_skip || get_display() == display_none || get_visibility() != visibility_visible);
+	}
+
+	inline position& litehtml::element::get_position()
+	{
+		return m_pos;
 	}
 
 }

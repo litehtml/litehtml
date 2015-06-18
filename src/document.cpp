@@ -688,6 +688,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 				{
 					gumbo_tag_from_original_text( & node->v.element.original_tag );
 					std::string strA;
+					gumbo_tag_from_original_text(&node->v.element.original_tag);
 					strA.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
 					ret = create_element(litehtml_from_utf8(strA.c_str()), attrs);
 				}
