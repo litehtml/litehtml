@@ -486,12 +486,12 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 
 	element::ptr over_el = m_root->get_element_by_point(x, y, client_x, client_y);
 
-	m_active_element = over_el;
-
 	if(over_el == m_root)
 	{
 		over_el = nullptr;
 	}
+
+	m_active_element = over_el;
 
 	bool state_was_changed = false;
 
