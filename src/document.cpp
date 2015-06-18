@@ -128,7 +128,7 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 		element->apply_stylesheet( document->m_context->master_css() );
 
 		// parse elements attributes
-		element->parse_attributes();		
+		element->parse_attributes();
 
 		// Apply parsed styles.
 		element->apply_stylesheet(document->m_styles);
@@ -414,7 +414,7 @@ void litehtml::document::add_stylesheet( const tchar_t* str, const tchar_t* base
 		media_query_list = 0;
 	}
 	m_styles.parse_stylesheet(new_css.text.c_str(), new_css.baseurl.c_str(), this, media_query_list);
-	
+
 	// Sort css selectors using CSS rules.
 	m_styles.sort_selectors();
 }
@@ -427,6 +427,11 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 	}
 
 	element::ptr over_el = m_root->get_element_by_point(x, y, client_x, client_y);
+
+	if(over_el == m_root)
+	{
+		over_el = nullptr;
+	}
 
 	bool state_was_changed = false;
 
@@ -449,12 +454,11 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 
 		if(state_was_changed)
 		{
-			return m_root->find_styles_changes(redraw_boxes, 0, 0);
+			m_root->find_styles_changes(redraw_boxes, 0, 0);
 		}
 	}
 
-
-	return false;
+	return over_el != nullptr;
 }
 
 bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
@@ -482,6 +486,13 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 
 	element::ptr over_el = m_root->get_element_by_point(x, y, client_x, client_y);
 
+	m_active_element = over_el;
+
+	if(over_el == m_root)
+	{
+		over_el = nullptr;
+	}
+
 	bool state_was_changed = false;
 
 	if(over_el != m_over_element)
@@ -507,10 +518,10 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 
 	if(state_was_changed)
 	{
-		return m_root->find_styles_changes(redraw_boxes, 0, 0);
+		m_root->find_styles_changes(redraw_boxes, 0, 0);
 	}
 
-	return false;
+	return over_el != nullptr;
 }
 
 bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
@@ -519,11 +530,14 @@ bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y
 	{
 		return false;
 	}
-	if(m_over_element && m_over_element->on_lbutton_up())
+
+	if(m_over_element && m_over_element == m_active_element && m_over_element->on_lbutton_up())
 	{
-		return m_root->find_styles_changes(redraw_boxes, 0, 0);
+		m_root->find_styles_changes(redraw_boxes, 0, 0);
+		return true;
 	}
-	return false;
+
+	return m_active_element != nullptr;
 }
 
 litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_name, const string_map& attributes)
