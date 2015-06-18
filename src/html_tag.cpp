@@ -1885,14 +1885,14 @@ const litehtml::tchar_t* litehtml::html_tag::get_cursor()
 
 static const int font_size_table[8][7] =
 {
-	{ 9,    9,     9,     9,    11,    14,    18},
-	{ 9,    9,     9,    10,    12,    15,    20},
-	{ 9,    9,     9,    11,    13,    17,    22},
-	{ 9,    9,    10,    12,    14,    18,    24},
-	{ 9,    9,    10,    13,    16,    20,    26},
-	{ 9,    9,    11,    14,    17,    21,    28},
-	{ 9,   10,    12,    15,    17,    23,    30},
-	{ 9,   10,    13,    16,    18,    24,    32}
+	{ 9,	9,	 9,	 9,	11,	14,	18},
+	{ 9,	9,	 9,	10,	12,	15,	20},
+	{ 9,	9,	 9,	11,	13,	17,	22},
+	{ 9,	9,	10,	12,	14,	18,	24},
+	{ 9,	9,	10,	13,	16,	20,	26},
+	{ 9,	9,	11,	14,	17,	21,	28},
+	{ 9,   10,	12,	15,	17,	23,	30},
+	{ 9,   10,	13,	16,	18,	24,	32}
 };
 
 
@@ -3860,7 +3860,7 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 	if (m_display != display_table_cell && !m_css_width.is_predefined())
 	{
 		int w = calc_width(parent_width);
-		
+
 		if (m_box_sizing == box_sizing_border_box)
 		{
 			w -= m_padding.width() + m_borders.width();
