@@ -123,8 +123,26 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 				{
 					if(select(*(*sel), true))
 					{
-						add_style((*sel)->m_style);
-						us->m_used = true;
+						if(apply & select_match_with_after)
+						{
+							element* el = get_element_after();
+							if(el)
+							{
+								el->add_style((*sel)->m_style);
+							}
+						} else if(apply & select_match_with_before)
+						{
+							element* el = get_element_before();
+							if(el)
+							{
+								el->add_style((*sel)->m_style);
+							}
+						}
+						else
+						{
+							add_style((*sel)->m_style);
+							us->m_used = true;
+						}
 					}
 				} else if(apply & select_match_with_after)
 				{
