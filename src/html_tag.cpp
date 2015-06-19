@@ -3612,8 +3612,26 @@ void litehtml::html_tag::refresh_styles()
 				{
 					if(select(*usel->m_selector, true))
 					{
-						add_style(usel->m_selector->m_style);
-						usel->m_used = true;
+						if(apply & select_match_with_after)
+						{
+							element* el = get_element_after();
+							if(el)
+							{
+								el->add_style(usel->m_selector->m_style);
+							}
+						} else if(apply & select_match_with_before)
+						{
+							element* el = get_element_before();
+							if(el)
+							{
+								el->add_style(usel->m_selector->m_style);
+							}
+						}
+						else
+						{
+							add_style(usel->m_selector->m_style);
+							usel->m_used = true;
+						}
 					}
 				} else if(apply & select_match_with_after)
 				{
