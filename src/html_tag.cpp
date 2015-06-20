@@ -864,6 +864,16 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 						}
 					}
 					break;
+				case pseudo_class_lang:
+					{
+						trim( selector_param );
+
+						if( !m_doc->match_lang( selector_param ) )
+						{
+							return select_no_match;
+						}
+					}
+					break;
 				default:
 					if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), i->val) == m_pseudo_classes.end())
 					{
