@@ -66,6 +66,7 @@ public:
 	virtual void 						draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker);
 	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc);
 	virtual void						get_media_features(litehtml::media_features& media);
+	virtual void						get_language(tstring& language, tstring & culture);
 
 
 	virtual	void						transform_text(litehtml::tstring& text, litehtml::text_transform tt);

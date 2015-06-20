@@ -896,6 +896,12 @@ void cairo_container::get_media_features( litehtml::media_features& media )
 	ReleaseDC(NULL, hdc);
 }
 
+void cairo_container::get_language(tstring& language, tstring & culture) const
+{
+	language = "en";
+	culture = "";
+}
+
 void cairo_container::make_url_utf8( const char* url, const char* basepath, std::wstring& out )
 {
 	wchar_t* urlW = cairo_font::utf8_to_wchar(url);

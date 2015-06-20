@@ -594,6 +594,27 @@ bool litehtml::document::media_changed()
 	return false;
 }
 
+bool litehtml::document::lang_changed()
+{
+	if(!m_media_lists.empty())
+	{
+		tstring culture;
+		container()->get_language(m_lang, culture);
+		if(!culture.empty())
+		{
+			m_culture = m_lang + '-' + culture;
+		}
+		else
+		{
+			m_culture.clear();
+		}
+		m_root->refresh_styles();
+		m_root->parse_styles();
+		return true;
+	}
+	return false;
+}
+
 bool litehtml::document::update_media_lists(const media_features& features)
 {
 	bool update_styles = false;
