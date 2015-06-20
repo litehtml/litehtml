@@ -110,6 +110,16 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	}
 
 	document->container()->get_media_features(document->m_media);
+	tstring culture;
+	document->container()->get_language(document->m_lang, culture);
+	if ( !culture.empty() )
+	{
+		document->m_culture = document->m_lang + '-' + culture;
+	}
+	else
+	{
+		document->m_culture.clear();
+	}
 
 	// get current media features
 	if (!document->m_media_lists.empty())
@@ -633,6 +643,27 @@ bool litehtml::document::media_changed()
 			m_root->parse_styles();
 			return true;
 		}
+	}
+	return false;
+}
+
+bool litehtml::document::lang_changed()
+{
+	if(!m_media_lists.empty())
+	{
+		tstring culture;
+		container()->get_language(m_lang, culture);
+		if(!culture.empty())
+		{
+			m_culture = m_lang + '-' + culture;
+		}
+		else
+		{
+			m_culture.clear();
+		}
+		m_root->refresh_styles();
+		m_root->parse_styles();
+		return true;
 	}
 	return false;
 }

@@ -81,6 +81,8 @@ public:
 	virtual void						del_clip();
 	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc);
 	virtual void						get_media_features(litehtml::media_features& media);
+	virtual void						get_language(tstring& language, tstring & culture);
+
 
 	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
 	virtual image_ptr					get_image(LPCWSTR url, bool redraw_on_ready) = 0;

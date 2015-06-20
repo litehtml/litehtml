@@ -69,6 +69,8 @@ namespace litehtml
 		element::ptr						m_active_element;
 		elements_vector						m_tabular_elements;
 		media_features						m_media;
+		tstring                             m_lang;
+		tstring                             m_culture;
 	public:
 		document(litehtml::document_container* objContainer, litehtml::context* ctx);
 		virtual ~document();
@@ -98,6 +100,8 @@ namespace litehtml
 		void							add_fixed_box(const position& pos);
 		void							add_media_list(media_query_list::ptr list);
 		bool							media_changed();
+		bool							lang_changed();
+		bool                            match_lang(const tstring & lang);
 		void							add_tabular(element::ptr el);
 		void							set_event_handler(event_handler::ptr eh);
 		event_handler *					get_event_handler();
@@ -145,5 +149,9 @@ namespace litehtml
 	inline event_handler * document::get_event_handler()
 	{
 		return m_event_handler;
+	}
+	inline bool document::match_lang(const tstring & lang)
+	{
+		return lang == m_lang || lang == m_culture;
 	}
 }

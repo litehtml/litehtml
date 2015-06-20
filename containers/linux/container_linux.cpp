@@ -927,3 +927,9 @@ void container_linux::get_media_features(litehtml::media_features& media)
 	media.color_index	= 256;
 	media.resolution	= 96;
 }
+
+void container_linux::get_language(tstring& language, tstring & culture) const
+{
+	language = "en";
+	culture = "";
+}
