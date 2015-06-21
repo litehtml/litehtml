@@ -78,6 +78,8 @@ namespace litehtml
 		int						m_border_spacing_y;
 		border_collapse			m_border_collapse;
 
+		virtual void			select_all(const css_selector& selector, elements_vector& res);
+
 	public:
 		html_tag(litehtml::document* doc);
 		virtual ~html_tag();
@@ -154,6 +156,9 @@ namespace litehtml
 
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
+
+		virtual elements_vector		select_all(const tstring& selector);
+		virtual elements_vector		select_all(const css_selector& selector);
 
 		virtual element::ptr		select_one(const tstring& selector);
 		virtual element::ptr		select_one(const css_selector& selector);
