@@ -24,8 +24,7 @@ namespace litehtml
 		typedef litehtml::object_ptr<litehtml::html_tag>	ptr;
 	protected:
 		box::vector				m_boxes;
-		tstring					m_id;
-		tstring					m_class;
+		string_vector			m_class_values;
 		tstring					m_tag;
 		litehtml::style			m_style;
 		string_map				m_attrs;
@@ -135,6 +134,7 @@ namespace litehtml
 		virtual const tchar_t*		get_cursor();
 		virtual void				init_font();
 		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add);
+		virtual bool				set_class(const tchar_t* pclass, bool add);
 		virtual bool				is_replaced() const;
 		virtual int					line_height() const;
 		virtual white_space			get_white_space() const;
