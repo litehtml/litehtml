@@ -66,6 +66,8 @@ namespace litehtml
 		element::ptr						m_over_element;
 		elements_vector						m_tabular_elements;
 		media_features						m_media;
+		tstring                             m_lang;
+		tstring                             m_culture;
 	public:
 		document(litehtml::document_container* objContainer, litehtml::context* ctx);
 		virtual ~document();
@@ -90,6 +92,8 @@ namespace litehtml
 		void							add_fixed_box(const position& pos);
 		void							add_media_list(media_query_list::ptr list);
 		bool							media_changed();
+		bool							lang_changed();
+		bool                            match_lang(const tstring & lang);
 		void							add_tabular(element::ptr el);
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
@@ -112,5 +116,9 @@ namespace litehtml
 	inline void document::add_tabular(element::ptr el)
 	{
 		m_tabular_elements.push_back(el);
+	}
+	inline bool document::match_lang(const tstring & lang)
+	{
+		return lang == m_lang || lang == m_culture;
 	}
 }
