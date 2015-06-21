@@ -337,12 +337,30 @@ void litehtml::line_box::finish(bool last_box)
 			}
 			if(!offsets.top.is_predefined())
 			{
-				// TODO: m_line_height is not correct here
-				m_items[i]->m_pos.y += offsets.top.calc_percent(m_line_height);
+				int h = 0;
+
+				if(offsets.top.units() == css_units_percentage)
+				{
+					if(m_items.back()->parent())
+					{
+						m_items.back()->parent()->get_predefined_height(h);
+					}
+				}
+
+				m_items[i]->m_pos.y += offsets.top.calc_percent(h);
 			} else if(!offsets.bottom.is_predefined())
 			{
-				// TODO: m_line_height is not correct here
-				m_items[i]->m_pos.y -= offsets.bottom.calc_percent(m_line_height);
+				int h = 0;
+
+				if(offsets.top.units() == css_units_percentage)
+				{
+					if(m_items.back()->parent())
+					{
+						m_items.back()->parent()->get_predefined_height(h);
+					}
+				}
+
+				m_items[i]->m_pos.y -= offsets.bottom.calc_percent(h);
 			}
 		}
 	}
@@ -478,7 +496,7 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
 		{
 			els.insert(els.begin(), remove_begin, m_items.end());
 			m_items.erase(remove_begin, m_items.end());
-			
+
 			for(elements_vector::iterator i = els.begin(); i != els.end(); i++)
 			{
 				(*i)->m_box = 0;
