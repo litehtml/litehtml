@@ -6,8 +6,9 @@ namespace litehtml
 
 #ifndef LITEHTML_UTF8
 
-	typedef std::wstring	tstring;
-	typedef wchar_t			tchar_t;
+	typedef std::wstring		tstring;
+	typedef wchar_t				tchar_t;
+	typedef std::wstringstream	tstringstream;
 
 	#define _t(quote)			L##quote
 
@@ -28,6 +29,7 @@ namespace litehtml
 
 	typedef std::string			tstring;
 	typedef char				tchar_t;
+	typedef std::stringstream	tstringstream;
 
 	#define _t(quote)			quote
 
@@ -58,6 +60,7 @@ namespace litehtml
 	typedef std::string			tstring;
 	typedef char				tchar_t;
 	typedef void*				uint_ptr;
+	typedef std::stringstream	tstringstream;
 
 	#define _t(quote)			quote
 

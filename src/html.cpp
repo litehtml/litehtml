@@ -155,7 +155,7 @@ void litehtml::split_string(const tstring& str, string_vector& tokens, const tst
 
 void litehtml::join_string(tstring& str, const string_vector& tokens, const tstring& delims)
 {
-	std::stringstream ss;
+	tstringstream ss;
 	for(size_t i=0; i<tokens.size(); ++i)
 	{
 		if(i != 0)
