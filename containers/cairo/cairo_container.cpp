@@ -877,7 +877,7 @@ litehtml::element* cairo_container::create_element(const litehtml::tchar_t* tag_
 	return 0;
 }
 
-void cairo_container::get_media_features( litehtml::media_features& media )
+void cairo_container::get_media_features(litehtml::media_features& media)  const
 {
 	litehtml::position client;
 	get_client_rect(client);
@@ -896,10 +896,10 @@ void cairo_container::get_media_features( litehtml::media_features& media )
 	ReleaseDC(NULL, hdc);
 }
 
-void cairo_container::get_language(tstring& language, tstring & culture) const
+void cairo_container::get_language(litehtml::tstring& language, litehtml::tstring & culture) const
 {
-	language = "en";
-	culture = "";
+	language = _t("en");
+	culture = _t("");
 }
 
 void cairo_container::make_url_utf8( const char* url, const char* basepath, std::wstring& out )

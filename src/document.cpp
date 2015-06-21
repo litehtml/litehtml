@@ -602,7 +602,7 @@ bool litehtml::document::lang_changed()
 		container()->get_language(m_lang, culture);
 		if(!culture.empty())
 		{
-			m_culture = m_lang + '-' + culture;
+			m_culture = m_lang + _t('-') + culture;
 		}
 		else
 		{

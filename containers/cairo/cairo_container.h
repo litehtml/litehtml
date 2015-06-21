@@ -80,13 +80,12 @@ public:
 	virtual void						set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y);
 	virtual void						del_clip();
 	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc);
-	virtual void						get_media_features(litehtml::media_features& media);
-	virtual void						get_language(tstring& language, tstring & culture);
+	virtual void						get_media_features(litehtml::media_features& media) const;
+	virtual void						get_language(litehtml::tstring& language, litehtml::tstring & culture) const;
 
 
 	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
 	virtual image_ptr					get_image(LPCWSTR url, bool redraw_on_ready) = 0;
-	virtual void						get_client_rect(litehtml::position& client) = 0;
 	void								clear_images();
 	void								add_image(std::wstring& url, image_ptr& img);
 	void								remove_image(std::wstring& url);
