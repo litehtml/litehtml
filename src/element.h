@@ -26,6 +26,8 @@ namespace litehtml
 		margins						m_padding;
 		margins						m_borders;
 		bool						m_skip;
+		
+		virtual void select_all(const css_selector& selector, elements_vector& res);
 	public:
 		element(litehtml::document* doc);
 		virtual ~element();
@@ -81,6 +83,9 @@ namespace litehtml
 		int							calc_width(int defVal) const;
 		int							get_inline_shift_left();
 		int							get_inline_shift_right();
+
+		virtual elements_vector		select_all(const tstring& selector);
+		virtual elements_vector		select_all(const css_selector& selector);
 
 		virtual element::ptr		select_one(const tstring& selector);
 		virtual element::ptr		select_one(const css_selector& selector);

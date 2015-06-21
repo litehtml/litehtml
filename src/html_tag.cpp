@@ -78,6 +78,35 @@ const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, cons
 	return def;
 }
 
+litehtml::elements_vector litehtml::html_tag::select_all( const tstring& selector )
+{
+	css_selector sel(media_query_list::ptr(0));
+	sel.parse(selector);
+	
+	return select_all(sel);
+}
+
+litehtml::elements_vector litehtml::html_tag::select_all( const css_selector& selector )
+{
+	litehtml::elements_vector res;
+	select_all(selector, res);
+	return res;
+}
+
+void litehtml::html_tag::select_all(const css_selector& selector, elements_vector& res)
+{
+	if(select(selector))
+	{
+		res.push_back(this);
+	}
+	
+	for(elements_vector::iterator el = m_children.begin(); el != m_children.end(); el++)
+	{
+		(*el)->select_all(selector, res);
+	}
+}
+
+
 litehtml::element::ptr litehtml::html_tag::select_one( const tstring& selector )
 {
 	css_selector sel(media_query_list::ptr(0));
