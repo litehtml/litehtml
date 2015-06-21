@@ -65,8 +65,8 @@ public:
 	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root);
 	virtual void 						draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker);
 	virtual litehtml::element*			create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc);
-	virtual void						get_media_features(litehtml::media_features& media);
-	virtual void						get_language(tstring& language, tstring & culture);
+	virtual void						get_media_features(litehtml::media_features& media) const;
+	virtual void						get_language(litehtml::tstring& language, litehtml::tstring & culture) const;
 
 
 	virtual	void						transform_text(litehtml::tstring& text, litehtml::text_transform tt);
@@ -76,7 +76,6 @@ public:
 	virtual void						make_url( const litehtml::tchar_t* url, const litehtml::tchar_t* basepath, litehtml::tstring& out );
 	virtual Glib::RefPtr<Gdk::Pixbuf>	get_image(const litehtml::tchar_t* url, bool redraw_on_ready) = 0;
 
-	virtual void						get_client_rect(litehtml::position& client) = 0;
 	void								clear_images();
 
 protected:

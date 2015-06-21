@@ -917,7 +917,7 @@ cairo_surface_t* container_linux::surface_from_pixbuf(const Glib::RefPtr<Gdk::Pi
 	return ret;
 }
 
-void container_linux::get_media_features(litehtml::media_features& media)
+void container_linux::get_media_features(litehtml::media_features& media) const
 {
 	litehtml::position client;
 	media.type			= litehtml::media_type_screen;
@@ -931,8 +931,8 @@ void container_linux::get_media_features(litehtml::media_features& media)
 	media.resolution	= 96;
 }
 
-void container_linux::get_language(tstring& language, tstring & culture) const
+void container_linux::get_language(litehtml::tstring& language, litehtml::tstring& culture) const
 {
-	language = "en";
-	culture = "";
+	language = _t("en");
+	culture = _t("");
 }
