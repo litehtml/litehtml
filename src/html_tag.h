@@ -27,6 +27,7 @@ namespace litehtml
 		string_vector			m_class_values;
 		tstring					m_tag;
 		litehtml::style			m_style;
+		litehtml::style			m_user_style;
 		string_map				m_attrs;
 		vertical_align			m_vertical_align;
 		text_align				m_text_align;
@@ -190,6 +191,7 @@ namespace litehtml
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 		virtual void				get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
 		virtual void				add_style(litehtml::style::ptr st);
+		virtual void				add_user_style(litehtml::style::ptr st);
 		virtual element*			get_element_by_point(int x, int y, int client_x, int client_y);
 		virtual element*			get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 

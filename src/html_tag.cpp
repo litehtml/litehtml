@@ -3573,6 +3573,12 @@ litehtml::element* litehtml::html_tag::get_element_after()
 	return el;
 }
 
+void litehtml::html_tag::add_user_style( litehtml::style::ptr st )
+{
+	m_user_style.combine(*st);
+	m_style.combine(m_user_style);
+}
+
 void litehtml::html_tag::add_style( litehtml::style::ptr st )
 {
 	m_style.combine(*st);
@@ -3665,6 +3671,8 @@ void litehtml::html_tag::refresh_styles()
 			}
 		}
 	}
+
+	m_style.combine(m_user_style);
 }
 
 litehtml::element* litehtml::html_tag::get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex)
