@@ -187,6 +187,7 @@ namespace litehtml
 		virtual bool				get_predefined_height(int& p_height) const;
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 		virtual void				get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
+		virtual void				add_user_style(litehtml::style::ptr st);
 		virtual void				add_style(litehtml::style::ptr st);
 		virtual element*			get_element_by_point(int x, int y, int client_x, int client_y);
 		virtual element*			get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);

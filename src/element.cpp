@@ -281,6 +281,7 @@ litehtml::element* litehtml::element::get_element_by_point( int x, int y, int cl
 litehtml::element* litehtml::element::get_child_by_point( int x, int y, int client_x, int client_y, draw_flag flag, int zindex ) LITEHTML_RETURN_FUNC(0)
 void litehtml::element::get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) LITEHTML_EMPTY_FUNC
 void litehtml::element::add_style( litehtml::style::ptr st )						LITEHTML_EMPTY_FUNC
+void litehtml::element::add_user_style(litehtml::style::ptr st)						LITEHTML_EMPTY_FUNC
 litehtml::element::ptr litehtml::element::select_one( const css_selector& selector ) LITEHTML_RETURN_FUNC(0)
 litehtml::element::ptr litehtml::element::select_one( const tstring& selector )		LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::find_adjacent_sibling( element* el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ ) LITEHTML_RETURN_FUNC(0)
