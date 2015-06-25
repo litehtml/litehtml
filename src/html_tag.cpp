@@ -31,6 +31,7 @@ litehtml::html_tag::html_tag(litehtml::document* doc) : litehtml::element(doc)
 	m_border_spacing_x		= 0;
 	m_border_spacing_y		= 0;
 	m_border_collapse		= border_collapse_separate;
+	m_dirty_user_style		= false;
 }
 
 litehtml::html_tag::~html_tag()
@@ -1732,6 +1733,12 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 				apply = true;
 			}
 		}
+	}
+
+	if(m_dirty_user_style)
+	{
+		apply = true;
+		m_dirty_user_style = false;
 	}
 
 	if(apply)
@@ -3577,6 +3584,7 @@ void litehtml::html_tag::add_user_style( litehtml::style::ptr st )
 {
 	m_user_style.combine(*st);
 	m_style.combine(m_user_style);
+	m_dirty_user_style = true;
 }
 
 void litehtml::html_tag::add_style( litehtml::style::ptr st )
