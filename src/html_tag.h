@@ -81,25 +81,25 @@ namespace litehtml
 		virtual void			select_all(const css_selector& selector, elements_vector& res);
 
 	public:
-		html_tag(litehtml::document* doc);
+		html_tag(std::shared_ptr<litehtml::document>& doc);
 		virtual ~html_tag();
 
 		/* render functions */
 
 		virtual int					render(int x, int y, int max_width, bool second_pass = false);
 
-		virtual int					render_inline(element* container, int max_width);
-		virtual int					place_element(element* el, int max_width);
+		virtual int					render_inline(element::ptr& container, int max_width);
+		virtual int					place_element(element::ptr& el, int max_width);
 		virtual bool				fetch_positioned();
 		virtual void				render_positioned(render_type rt = render_all);
 
-		int							new_box( element* el, int max_width );
+		int							new_box(element::ptr& el, int max_width);
 
-		int							get_cleared_top( element* el, int line_top );
+		int							get_cleared_top(element::ptr& el, int line_top) const;
 		int							finish_last_box(bool end_of_render = false);
 
-		virtual bool				appendChild(litehtml::element* el);
-		virtual bool				removeChild(litehtml::element* el);
+		virtual bool				appendChild(litehtml::element::ptr& el);
+		virtual bool				removeChild(litehtml::element::ptr& el);
 		virtual void				clearRecursive();
 		virtual const tchar_t*		get_tagName() const;
 		virtual void				set_tagName(const tchar_t* tag);
@@ -125,7 +125,7 @@ namespace litehtml
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				refresh_styles();
 
-		virtual bool				is_white_space();
+		virtual bool				is_white_space() const;
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
 		virtual int					get_base_line();
@@ -165,15 +165,15 @@ namespace litehtml
 		virtual element::ptr		select_one(const tstring& selector);
 		virtual element::ptr		select_one(const css_selector& selector);
 
-		virtual element*			find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual element*			find_adjacent_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual element*			find_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element::ptr		find_adjacent_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element::ptr		find_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual void				get_text(tstring& text);
 		virtual void				parse_attributes();
 
-		virtual bool				is_first_child_inline(const element* el);
-		virtual bool				is_last_child_inline(const element* el);
-		virtual bool				have_inline_child();
+		virtual bool				is_first_child_inline(const element::ptr& el) const;
+		virtual bool				is_last_child_inline(const element::ptr& el);
+		virtual bool				have_inline_child() const;
 		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				init();
 		virtual void				get_inline_boxes(position::vector& boxes);
@@ -184,9 +184,9 @@ namespace litehtml
 		virtual int					get_line_left(int y);
 		virtual int					get_line_right(int y, int def_right);
 		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right);
-		virtual void				add_float(element* el, int x, int y);
-		virtual void				update_floats(int dy, element* parent);
-		virtual void				add_positioned(element* el);
+		virtual void				add_float(element::ptr& el, int x, int y);
+		virtual void				update_floats(int dy, element::ptr& parent);
+		virtual void				add_positioned(element::ptr& el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
 		virtual void				apply_vertical_align();
 		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
@@ -195,13 +195,13 @@ namespace litehtml
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 		virtual void				get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
 		virtual void				add_style(litehtml::style::ptr st);
-		virtual element*			get_element_by_point(int x, int y, int client_x, int client_y);
-		virtual element*			get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
+		virtual element::ptr		get_element_by_point(int x, int y, int client_x, int client_y);
+		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 
-		virtual bool				is_nth_child(element* el, int num, int off, bool of_type);
-		virtual bool				is_nth_last_child(element* el, int num, int off, bool of_type);
-		virtual bool				is_only_child(element* el, bool of_type);
-		virtual background*			get_background(bool own_only = false);
+		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const;
+		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const;
+		virtual bool				is_only_child(const element::ptr& el, bool of_type) const;
+		virtual const background*	get_background(bool own_only = false);
 
 	protected:
 		void						draw_children_box(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex);
@@ -210,12 +210,12 @@ namespace litehtml
 		int							render_table(int x, int y, int max_width, bool second_pass = false);
 		int							fix_line_width(int max_width, element_float flt);
 		void						parse_background();
-		void						init_background_paint( position pos, background_paint &bg_paint, background* bg );
+		void						init_background_paint( position pos, background_paint &bg_paint, const background* bg );
 		void						draw_list_marker( uint_ptr hdc, const position &pos );
 		void						parse_nth_child_params( tstring param, int &num, int &off );
 		void						remove_before_after();
-		litehtml::element*			get_element_before();
-		litehtml::element*			get_element_after();
+		litehtml::element::ptr		get_element_before();
+		litehtml::element::ptr		get_element_after();
 	};
 
 	/************************************************************************/
@@ -226,14 +226,5 @@ namespace litehtml
 	{
 		return m_children;
 	}
-
-	class element_zindex_sort
-	{
-	public:
-		bool operator()(const litehtml::element* _Left, const litehtml::element* _Right) const
-		{
-			return (_Left->get_zindex() < _Right->get_zindex());
-		}
-	};
 }
 

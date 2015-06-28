@@ -1,6 +1,7 @@
 #pragma once
 
 #include <stdlib.h>
+#include <memory>
 #include <map>
 #include <vector>
 #include "object.h"
@@ -11,7 +12,7 @@ namespace litehtml
 	class element;
 
 	typedef std::map<litehtml::tstring, litehtml::tstring>			string_map;
-	typedef std::vector< litehtml::object_ptr<litehtml::element> >	elements_vector;
+	typedef std::vector< std::shared_ptr<litehtml::element> >		elements_vector;
 	typedef std::vector<int>										int_vector;
 	typedef std::vector<litehtml::tstring>							string_vector;
 
@@ -515,14 +516,23 @@ namespace litehtml
 	};
 
 
-	struct floated_box 
+	struct floated_box
 	{
 		typedef std::vector<floated_box>	vector;
 
 		position		pos;
 		element_float	float_side;
 		element_clear	clear_floats;
-		element*		el;
+		std::shared_ptr<element>	el;
+
+		floated_box() = default;
+		floated_box(const floated_box& val)
+		{
+			pos = val.pos;
+			float_side = val.float_side;
+			clear_floats = val.clear_floats;
+			el = val.el;
+		}
 	};
 
 	struct int_int_cache

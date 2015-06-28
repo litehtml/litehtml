@@ -36,8 +36,8 @@ namespace litehtml
 		virtual litehtml::box_type	get_type() = 0;
 		virtual int					height() = 0;
 		virtual int					width() = 0;
-		virtual void				add_element(element* el) = 0;
-		virtual bool				can_hold(element* el, white_space ws) = 0;
+		virtual void				add_element(element::ptr& el) = 0;
+		virtual bool				can_hold(element::ptr& el, white_space ws) = 0;
 		virtual void				finish(bool last_box = false) = 0;
 		virtual bool				is_empty() = 0;
 		virtual int					baseline() = 0;
@@ -52,7 +52,7 @@ namespace litehtml
 
 	class block_box : public box
 	{
-		element*	m_element;
+		element::ptr m_element;
 	public:
 		block_box(int top, int left, int right) : box(top, left, right)
 		{
@@ -62,8 +62,8 @@ namespace litehtml
 		virtual litehtml::box_type	get_type();
 		virtual int					height();
 		virtual int					width();
-		virtual void				add_element(element* el);
-		virtual bool				can_hold(element* el, white_space ws);
+		virtual void				add_element(element::ptr& el);
+		virtual bool				can_hold(element::ptr& el, white_space ws);
 		virtual void				finish(bool last_box = false);
 		virtual bool				is_empty();
 		virtual int					baseline();
@@ -78,7 +78,7 @@ namespace litehtml
 
 	class line_box : public box
 	{
-		std::vector<element*>	m_items;
+		elements_vector			m_items;
 		int						m_height;
 		int						m_width;
 		int						m_line_height;
@@ -99,8 +99,8 @@ namespace litehtml
 		virtual litehtml::box_type	get_type();
 		virtual int					height();
 		virtual int					width();
-		virtual void				add_element(element* el);
-		virtual bool				can_hold(element* el, white_space ws);
+		virtual void				add_element(element::ptr& el);
+		virtual bool				can_hold(element::ptr& el, white_space ws);
 		virtual void				finish(bool last_box = false);
 		virtual bool				is_empty();
 		virtual int					baseline();
@@ -111,7 +111,7 @@ namespace litehtml
 		virtual void				new_width(int left, int right, elements_vector& els);
 
 	private:
-		element*					get_last_space();
+		element::ptr				get_last_space();
 		bool						is_break_only();
 	};
 }

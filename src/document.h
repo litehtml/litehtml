@@ -51,9 +51,10 @@ namespace litehtml
 	class document : public object
 	{
 	public:
-		typedef object_ptr<document>	ptr;
+		typedef std::shared_ptr<document>	ptr;
+		typedef std::weak_ptr<document>		weak_ptr;
 	private:
-		element::ptr						m_root;
+		std::shared_ptr<element>			m_root;
 		document_container*					m_container;
 		fonts_map							m_fonts;
 		css_text::vector					m_css;

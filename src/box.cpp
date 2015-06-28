@@ -18,7 +18,7 @@ int litehtml::block_box::width()
 	return m_element->width();
 }
 
-void litehtml::block_box::add_element( element* el)
+void litehtml::block_box::add_element(element::ptr& el)
 {
 	m_element = el;
 	el->m_box = this;
@@ -64,7 +64,7 @@ void litehtml::block_box::finish(bool last_box)
 	}
 }
 
-bool litehtml::block_box::can_hold( element* el, white_space ws )
+bool litehtml::block_box::can_hold( element::ptr& el, white_space ws )
 {
 	if(m_element || el->is_inline_box())
 	{
@@ -145,7 +145,7 @@ int litehtml::line_box::width()
 	return m_width;
 }
 
-void litehtml::line_box::add_element( element* el )
+void litehtml::line_box::add_element(element::ptr& el)
 {
 	el->m_skip	= false;
 	el->m_box	= 0;
@@ -155,7 +155,7 @@ void litehtml::line_box::add_element( element* el )
 		el->m_skip = true;
 	} else if(el->is_white_space())
 	{
-		element* ws = get_last_space();
+		element::ptr ws = get_last_space();
 		if(ws)
 		{
 			add = false;
@@ -188,7 +188,7 @@ void litehtml::line_box::finish(bool last_box)
 		return;
 	}
 
-	for(std::vector<element*>::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
+	for(elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
 	{
 		if((*i)->is_white_space() || (*i)->is_break())
 		{
@@ -368,7 +368,7 @@ void litehtml::line_box::finish(bool last_box)
 	m_baseline = (base_line - y1) - (m_height - line_height);
 }
 
-bool litehtml::line_box::can_hold( element* el, white_space ws )
+bool litehtml::line_box::can_hold(element::ptr& el, white_space ws)
 {
 	if(!el->is_inline_box()) return false;
 
@@ -390,10 +390,10 @@ bool litehtml::line_box::can_hold( element* el, white_space ws )
 	return true;
 }
 
-litehtml::element* litehtml::line_box::get_last_space()
+litehtml::element::ptr litehtml::line_box::get_last_space()
 {
-	element* ret = 0;
-	for(std::vector<element*>::reverse_iterator i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
+	element::ptr ret;
+	for (elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
 	{
 		if((*i)->is_white_space() || (*i)->is_break())
 		{
@@ -409,7 +409,7 @@ litehtml::element* litehtml::line_box::get_last_space()
 bool litehtml::line_box::is_empty()
 {
 	if(m_items.empty()) return true;
-	for(std::vector<element*>::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
+	for (elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
 	{
 		if(!(*i)->m_skip || (*i)->is_break())
 		{
@@ -442,9 +442,9 @@ int litehtml::line_box::bottom_margin()
 void litehtml::line_box::y_shift( int shift )
 {
 	m_box_top += shift;
-	for(std::vector<element*>::iterator i = m_items.begin(); i != m_items.end(); i++)
+	for (auto& el : m_items)
 	{
-		(*i)->m_pos.y += shift;
+		el->m_pos.y += shift;
 	}
 }
 
@@ -454,9 +454,9 @@ bool litehtml::line_box::is_break_only()
 
 	if(m_items.front()->is_break())
 	{
-		for(std::vector<element*>::iterator i = m_items.begin() + 1; i != m_items.end(); i++)
+		for (auto& el : m_items)
 		{
-			if(!(*i)->m_skip)
+			if(!el->m_skip)
 			{
 				return false;
 			}
@@ -474,10 +474,10 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
 		m_box_left	= left;
 		m_box_right	= right;
 		m_width = 0;
-		std::vector<element*>::iterator remove_begin = m_items.end();
-		for(std::vector<element*>::iterator i = m_items.begin() + 1; i != m_items.end(); i++)
+		elements_vector::iterator remove_begin = m_items.end();
+		for (elements_vector::iterator i = m_items.begin() + 1; i != m_items.end(); i++)
 		{
-			element* el = (*i);
+			element::ptr el = (*i);
 
 			if(!el->m_skip)
 			{

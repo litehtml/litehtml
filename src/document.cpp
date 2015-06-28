@@ -56,7 +56,7 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 	GumboOutput* output = gumbo_parse((const char*) str);
 
 	// Create litehtml::document
-	litehtml::document::ptr doc = new litehtml::document(objPainter, ctx);
+	litehtml::document::ptr doc = std::make_shared<litehtml::document>(objPainter, ctx);
 
 	// Create litehtml::elements.
 	elements_vector root_elements;

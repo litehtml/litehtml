@@ -4,7 +4,7 @@
 #include "el_space.h"
 #include "el_image.h"
 
-litehtml::el_before_after_base::el_before_after_base( litehtml::document* doc, bool before ) : html_tag(doc)
+litehtml::el_before_after_base::el_before_after_base(std::shared_ptr<litehtml::document>& doc, bool before) : html_tag(doc)
 {
 	if(before)
 	{
@@ -90,12 +90,12 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 			{
 				if(!word.empty())
 				{
-					element* el = new el_text(word.c_str(), m_doc);
+					element::ptr el = std::make_shared<el_text>(word.c_str(), m_doc);
 					appendChild(el);
 					word.clear();
 				}
 
-				element* el = new el_space(txt.substr(i, 1).c_str(), m_doc);
+				element::ptr el = std::make_shared<el_space>(txt.substr(i, 1).c_str(), m_doc);
 				appendChild(el);
 			} else
 			{
@@ -124,7 +124,7 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 	}
 	if(!word.empty())
 	{
-		element* el = new el_text(word.c_str(), m_doc);
+		element::ptr el = std::make_shared<el_text>(word.c_str(), m_doc);
 		appendChild(el);
 		word.clear();
 	}
@@ -141,7 +141,7 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 			tstring p_name = params;
 			trim(p_name);
 			lcase(p_name);
-			const tchar_t* attr_value = m_parent->get_attr(p_name.c_str());
+			const tchar_t* attr_value = parent()->get_attr(p_name.c_str());
 			if(attr_value)
 			{
 				add_text(attr_value);
@@ -172,7 +172,7 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 			}
 			if(!p_url.empty())
 			{
-				element* el = new el_image(m_doc);
+				element::ptr el = std::make_shared<el_image>(m_doc);
 				el->set_attr(_t("src"), p_url.c_str());
 				el->set_attr(_t("style"), _t("display:inline-block"));
 				el->set_tagName(_t("img"));

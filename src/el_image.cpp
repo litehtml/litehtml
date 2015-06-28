@@ -191,13 +191,13 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 	// draw standard background here
 	if (el_pos.does_intersect(clip))
 	{
-		background* bg = get_background();
+		const background* bg = get_background();
 		if (bg)
 		{
 			background_paint bg_paint;
 			init_background_paint(pos, bg_paint, bg);
 
-			m_doc->container()->draw_background(hdc, bg_paint);
+			get_document()->container()->draw_background(hdc, bg_paint);
 		}
 	}
 
@@ -217,7 +217,7 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		bg.border_radius		= m_css_borders.radius.calc_percents(bg.border_box.width, bg.border_box.height);
 		bg.position_x			= pos.x;
 		bg.position_y			= pos.y;
-		m_doc->container()->draw_background(hdc, bg);
+		get_document()->container()->draw_background(hdc, bg);
 	}
 
 	// draw borders
@@ -230,7 +230,7 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		borders bdr = m_css_borders;
 		bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
 
-		m_doc->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
+		get_document()->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
 	}
 }
 
@@ -242,10 +242,10 @@ void litehtml::el_image::parse_styles( bool is_reparse /*= false*/ )
 	{
 		if(!m_css_height.is_predefined() && !m_css_width.is_predefined())
 		{
-			m_doc->container()->load_image(m_src.c_str(), 0, true);
+			get_document()->container()->load_image(m_src.c_str(), 0, true);
 		} else
 		{
-			m_doc->container()->load_image(m_src.c_str(), 0, false);
+			get_document()->container()->load_image(m_src.c_str(), 0, false);
 		}
 	}
 }
