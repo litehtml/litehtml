@@ -49,6 +49,28 @@ bool litehtml::html_tag::appendChild( litehtml::element* el )
 	return false;
 }
 
+bool litehtml::html_tag::removeChild( litehtml::element* el )
+{
+	if(el && el->parent() == this)
+	{
+		el->parent(NULL);
+		m_children.erase(std::remove(m_children.begin(), m_children.end(), el), m_children.end());
+		return true;
+	}
+	return false;
+}
+
+void litehtml::html_tag::clearRecursive()
+{
+	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
+	{
+		(*iter)->clearRecursive();
+		(*iter)->parent(NULL);
+	}
+	m_children.clear();
+}
+
+
 const litehtml::tchar_t* litehtml::html_tag::get_tagName() const
 {
 	return m_tag.c_str();

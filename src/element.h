@@ -100,6 +100,8 @@ namespace litehtml
 		virtual void				render_positioned(render_type rt = render_all);
 
 		virtual bool				appendChild(litehtml::element* el);
+		virtual bool				removeChild(litehtml::element* el);
+		virtual void				clearRecursive();
 
 		virtual const tchar_t*		get_tagName() const;
 		virtual void				set_tagName(const tchar_t* tag);
