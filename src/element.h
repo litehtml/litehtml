@@ -102,6 +102,7 @@ namespace litehtml
 		virtual bool				appendChild(litehtml::element* el);
 		virtual bool				removeChild(litehtml::element* el);
 		virtual void				clearRecursive();
+		virtual void				set_scroll_offset(int x, int y);
 
 		virtual const tchar_t*		get_tagName() const;
 		virtual void				set_tagName(const tchar_t* tag);
