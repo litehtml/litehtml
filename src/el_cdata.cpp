@@ -1,7 +1,7 @@
 #include "html.h"
 #include "el_cdata.h"
 
-litehtml::el_cdata::el_cdata( litehtml::document* doc ) : litehtml::element(doc)
+litehtml::el_cdata::el_cdata(std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
 {
 	m_skip = true;
 }

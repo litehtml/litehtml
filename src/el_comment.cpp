@@ -1,7 +1,7 @@
 #include "html.h"
 #include "el_comment.h"
 
-litehtml::el_comment::el_comment( litehtml::document* doc ) : litehtml::element(doc)
+litehtml::el_comment::el_comment(std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
 {
 	m_skip = true;
 }

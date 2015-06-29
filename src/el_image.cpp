@@ -2,7 +2,7 @@
 #include "el_image.h"
 #include "document.h"
 
-litehtml::el_image::el_image( litehtml::document* doc ) : html_tag(doc)
+litehtml::el_image::el_image(std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
 	m_display = display_inline_block;
 }
@@ -14,7 +14,7 @@ litehtml::el_image::~el_image( void )
 
 void litehtml::el_image::get_content_size( size& sz, int max_width )
 {
-	m_doc->container()->get_image_size(m_src.c_str(), 0, sz);
+	get_document()->container()->get_image_size(m_src.c_str(), 0, sz);
 }
 
 int litehtml::el_image::line_height() const
@@ -35,8 +35,10 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 
 	m_pos.move_to(x, y);
 
+	document::ptr doc = get_document();
+
 	litehtml::size sz;
-	m_doc->container()->get_image_size(m_src.c_str(), 0, sz);
+	doc->container()->get_image_size(m_src.c_str(), 0, sz);
 
 	m_pos.width		= sz.width;
 	m_pos.height	= sz.height;
@@ -49,7 +51,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-height
 		if(!m_css_max_width.is_predefined())
 		{
-			int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+			int max_width = doc->cvt_units(m_css_max_width, m_font_size, parent_width);
 			if(m_pos.width > max_width)
 			{
 				m_pos.width = max_width;
@@ -66,7 +68,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
 		{
-			int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
+			int max_height = doc->cvt_units(m_css_max_height, m_font_size);
 			if(m_pos.height > max_height)
 			{
 				m_pos.height = max_height;
@@ -89,7 +91,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
 		{
-			int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
+			int max_height = doc->cvt_units(m_css_max_height, m_font_size);
 			if(m_pos.height > max_height)
 			{
 				m_pos.height = max_height;
@@ -110,7 +112,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-width
 		if(!m_css_max_width.is_predefined())
 		{
-			int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+			int max_width = doc->cvt_units(m_css_max_width, m_font_size, parent_width);
 			if(m_pos.width > max_width)
 			{
 				m_pos.width = max_width;
@@ -136,7 +138,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
 		{
-			int max_height = m_doc->cvt_units(m_css_max_height, m_font_size);
+			int max_height = doc->cvt_units(m_css_max_height, m_font_size);
 			if(m_pos.height > max_height)
 			{
 				m_pos.height = max_height;
@@ -146,7 +148,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-height
 		if(!m_css_max_width.is_predefined())
 		{
-			int max_width = m_doc->cvt_units(m_css_max_width, m_font_size, parent_width);
+			int max_width = doc->cvt_units(m_css_max_width, m_font_size, parent_width);
 			if(m_pos.width > max_width)
 			{
 				m_pos.width = max_width;

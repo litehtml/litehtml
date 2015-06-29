@@ -499,61 +499,61 @@ bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y
 
 litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_name, const string_map& attributes)
 {
-	element::ptr newTag = NULL;
+	element::ptr newTag;
 	if(m_container)
 	{
-		newTag = m_container->create_element(tag_name, attributes, this);
+		newTag = m_container->create_element(tag_name, attributes, shared_from_this());
 	}
 	if(!newTag)
 	{
 		if(!t_strcmp(tag_name, _t("br")))
 		{
-			newTag = new litehtml::el_break(this);
+			newTag = std::make_shared<litehtml::el_break>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("p")))
 		{
-			newTag = new litehtml::el_para(this);
+			newTag = std::make_shared<litehtml::el_para>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("img")))
 		{
-			newTag = new litehtml::el_image(this);
+			newTag = std::make_shared<litehtml::el_image>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("table")))
 		{
-			newTag = new litehtml::el_table(this);
+			newTag = std::make_shared<litehtml::el_table>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("td")) || !t_strcmp(tag_name, _t("th")))
 		{
-			newTag = new litehtml::el_td(this);
+			newTag = std::make_shared<litehtml::el_td>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("link")))
 		{
-			newTag = new litehtml::el_link(this);
+			newTag = std::make_shared<litehtml::el_link>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("title")))
 		{
-			newTag = new litehtml::el_title(this);
+			newTag = std::make_shared<litehtml::el_title>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("a")))
 		{
-			newTag = new litehtml::el_anchor(this);
+			newTag = std::make_shared<litehtml::el_anchor>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("tr")))
 		{
-			newTag = new litehtml::el_tr(this);
+			newTag = std::make_shared<litehtml::el_tr>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("style")))
 		{
-			newTag = new litehtml::el_style(this);
+			newTag = std::make_shared<litehtml::el_style>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("base")))
 		{
-			newTag = new litehtml::el_base(this);
+			newTag = std::make_shared<litehtml::el_base>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("body")))
 		{
-			newTag = new litehtml::el_body(this);
+			newTag = std::make_shared<litehtml::el_body>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("div")))
 		{
-			newTag = new litehtml::el_div(this);
+			newTag = std::make_shared<litehtml::el_div>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("script")))
 		{
-			newTag = new litehtml::el_script(this);
+			newTag = std::make_shared<litehtml::el_script>(shared_from_this());
 		} else if(!t_strcmp(tag_name, _t("font")))
 		{
-			newTag = new litehtml::el_font(this);
+			newTag = std::make_shared<litehtml::el_font>(shared_from_this());
 		} else
 		{
-			newTag = new litehtml::html_tag(this);
+			newTag = std::make_shared<litehtml::html_tag>(shared_from_this());
 		}
 	}
 
@@ -700,11 +700,11 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 				{
 					if (!str.empty())
 					{
-						elements.push_back(new el_text(litehtml_from_wchar(str.c_str()), this));
+						elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
 						str.clear();
 					}
 					str += c;
-					elements.push_back(new el_space(litehtml_from_wchar(str.c_str()), this));
+					elements.push_back(std::make_shared<el_space>(litehtml_from_wchar(str.c_str()), shared_from_this()));
 					str.clear();
 				}
 				// CJK character range
@@ -712,11 +712,11 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 				{
 					if (!str.empty())
 					{
-						elements.push_back(new el_text(litehtml_from_wchar(str.c_str()), this));
+						elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
 						str.clear();
 					}
 					str += c;
-					elements.push_back(new el_text(litehtml_from_wchar(str.c_str()), this));
+					elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
 					str.clear();
 				}
 				else
@@ -726,20 +726,20 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 			}
 			if (!str.empty())
 			{
-				elements.push_back(new el_text(litehtml_from_wchar(str.c_str()), this));
+				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
 			}
 		}
 		break;
 	case GUMBO_NODE_CDATA:
 		{
-			element::ptr ret = new el_cdata(this);
+			element::ptr ret = std::make_shared<el_cdata>(shared_from_this());
 			ret->set_data(litehtml_from_utf8(node->v.text.text));
 			elements.push_back(ret);
 		}
 		break;
 	case GUMBO_NODE_COMMENT:
 		{
-			element::ptr ret = new el_comment(this);
+			element::ptr ret = std::make_shared<el_comment>(shared_from_this());
 			ret->set_data(litehtml_from_utf8(node->v.text.text));
 			elements.push_back(ret);
 		}
@@ -749,7 +749,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 			tstring str = litehtml_from_utf8(node->v.text.text);
 			for (size_t i = 0; i < str.length(); i++)
 			{
-				elements.push_back(new el_space(str.substr(i, 1).c_str(), this));
+				elements.push_back(std::make_shared<el_space>(str.substr(i, 1).c_str(), shared_from_this()));
 			}
 		}
 		break;
@@ -803,7 +803,7 @@ void litehtml::document::fix_table_children(element::ptr el_ptr, style_display d
 
 	auto flush_elements = [&]()
 	{
-		element::ptr annon_tag = new html_tag(this);
+		element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
 		style::ptr st = new style;
 		st->add_property(_t("display"), disp_str, 0, false);
 		annon_tag->add_style(st);
@@ -910,7 +910,7 @@ void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display dis
 			}
 
 			// extract elements with the same display and wrap them with anonymous object
-			element::ptr annon_tag = new html_tag(this);
+			element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
 			style::ptr st = new style;
 			st->add_property(_t("display"), disp_str, 0, false);
 			annon_tag->add_style(st);

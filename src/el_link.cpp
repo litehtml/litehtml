@@ -3,7 +3,7 @@
 #include "document.h"
 
 
-litehtml::el_link::el_link( litehtml::document* doc ) : litehtml::html_tag(doc)
+litehtml::el_link::el_link(std::shared_ptr<litehtml::document>& doc) : litehtml::html_tag(doc)
 {
 
 }
@@ -17,6 +17,8 @@ void litehtml::el_link::parse_attributes()
 {
 	bool processed = false;
 
+	document::ptr doc = get_document();
+
 	const tchar_t* rel = get_attr(_t("rel"));
 	if(rel && !t_strcmp(rel, _t("stylesheet")))
 	{
@@ -26,10 +28,10 @@ void litehtml::el_link::parse_attributes()
 		{
 			tstring css_text;
 			tstring css_baseurl;
-			m_doc->container()->import_css(css_text, href, css_baseurl);
+			doc->container()->import_css(css_text, href, css_baseurl);
 			if(!css_text.empty())
 			{
-				m_doc->add_stylesheet(css_text.c_str(), css_baseurl.c_str(), media);
+				doc->add_stylesheet(css_text.c_str(), css_baseurl.c_str(), media);
 				processed = true;
 			}
 		}
@@ -37,6 +39,6 @@ void litehtml::el_link::parse_attributes()
 
 	if(!processed)
 	{
-		m_doc->container()->link(m_doc, this);
+		doc->container()->link(doc, shared_from_this());
 	}
 }

@@ -6,7 +6,7 @@ namespace litehtml
 	class el_break : public html_tag
 	{
 	public:
-		el_break(litehtml::document* doc);
+		el_break(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_break();
 
 		virtual bool	is_break() const;

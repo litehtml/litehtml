@@ -2,7 +2,7 @@
 #include "document.h"
 #include "el_space.h"
 
-litehtml::el_space::el_space( const tchar_t* text, litehtml::document* doc ) : el_text(text, doc)
+litehtml::el_space::el_space(const tchar_t* text, std::shared_ptr<litehtml::document>& doc) : el_text(text, doc)
 {
 }
 
@@ -11,7 +11,7 @@ litehtml::el_space::~el_space()
 
 }
 
-bool litehtml::el_space::is_white_space()
+bool litehtml::el_space::is_white_space() const
 {
 	white_space ws = get_white_space();
 	if(	ws == white_space_normal || 

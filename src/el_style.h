@@ -7,11 +7,11 @@ namespace litehtml
 	{
 		elements_vector		m_children;
 	public:
-		el_style(litehtml::document* doc);
+		el_style(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_style();
 
 		virtual void			parse_attributes();
-		virtual bool			appendChild(litehtml::element* el);
+		virtual bool			appendChild(litehtml::element::ptr& el);
 		virtual const tchar_t*	get_tagName() const;
 	};
 }

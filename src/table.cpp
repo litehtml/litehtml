@@ -2,7 +2,7 @@
 #include "table.h"
 #include "html_tag.h"
 
-void litehtml::table_grid::add_cell( element* el )
+void litehtml::table_grid::add_cell(element::ptr& el)
 {
 	table_cell cell;
 	cell.el = el;
@@ -24,7 +24,7 @@ void litehtml::table_grid::add_cell( element* el )
 }
 
 
-void litehtml::table_grid::begin_row(element* row)
+void litehtml::table_grid::begin_row(element::ptr& row)
 {
 	std::vector<table_cell> r;
 	m_cells.push_back(r);

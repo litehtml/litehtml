@@ -6,7 +6,7 @@ namespace litehtml
 	class el_title : public html_tag
 	{
 	public:
-		el_title(litehtml::document* doc);
+		el_title(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_title();
 
 	protected:

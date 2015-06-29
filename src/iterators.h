@@ -9,7 +9,7 @@ namespace litehtml
 	class iterator_selector
 	{
 	public:
-		virtual bool select(element* el) = 0;
+		virtual bool select(element::ptr& el) = 0;
 	};
 
 	class elements_iterator
@@ -17,18 +17,32 @@ namespace litehtml
 	private:
 		struct stack_item
 		{
-			int			idx;
-			element*	el;
+			int				idx;
+			element::ptr	el;
+			stack_item()
+			{
+
+			}
+			stack_item(const stack_item& val)
+			{
+				idx = val.idx;
+				el = val.el;
+			}
+			stack_item(stack_item&& val)
+			{
+				idx = val.idx;
+				el = std::move(val.el);
+			}
 		};
 
 		std::vector<stack_item>		m_stack;
-		element*					m_el;
+		element::ptr				m_el;
 		int							m_idx;
 		iterator_selector*			m_go_inside;
 		iterator_selector*			m_select;
 	public:
 
-		elements_iterator(element* el, iterator_selector* go_inside, iterator_selector* select)
+		elements_iterator(element::ptr& el, iterator_selector* go_inside, iterator_selector* select)
 		{ 
 			m_el			= el;
 			m_idx			= -1; 
@@ -41,7 +55,7 @@ namespace litehtml
 
 		}
 
-		element* next(bool ret_parent = true);
+		element::ptr next(bool ret_parent = true);
 	
 	private:
 		void next_idx();
@@ -50,24 +64,24 @@ namespace litehtml
 	class go_inside_inline : public iterator_selector
 	{
 	public:
-		virtual bool select(element* el);
+		virtual bool select(element::ptr& el);
 	};
 
 	class go_inside_table : public iterator_selector
 	{
 	public:
-		virtual bool select(element* el);
+		virtual bool select(element::ptr& el);
 	};
 
 	class table_rows_selector : public iterator_selector
 	{
 	public:
-		virtual bool select(element* el);
+		virtual bool select(element::ptr& el);
 	};
 
 	class table_cells_selector : public iterator_selector
 	{
 	public:
-		virtual bool select(element* el);
+		virtual bool select(element::ptr& el);
 	};
 }

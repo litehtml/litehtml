@@ -90,12 +90,12 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 			{
 				if(!word.empty())
 				{
-					element::ptr el = std::make_shared<el_text>(word.c_str(), m_doc);
+					element::ptr el = std::make_shared<el_text>(word.c_str(), get_document());
 					appendChild(el);
 					word.clear();
 				}
 
-				element::ptr el = std::make_shared<el_space>(txt.substr(i, 1).c_str(), m_doc);
+				element::ptr el = std::make_shared<el_space>(txt.substr(i, 1).c_str(), get_document());
 				appendChild(el);
 			} else
 			{
@@ -124,7 +124,7 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 	}
 	if(!word.empty())
 	{
-		element::ptr el = std::make_shared<el_text>(word.c_str(), m_doc);
+		element::ptr el = std::make_shared<el_text>(word.c_str(), get_document());
 		appendChild(el);
 		word.clear();
 	}
@@ -172,7 +172,7 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 			}
 			if(!p_url.empty())
 			{
-				element::ptr el = std::make_shared<el_image>(m_doc);
+				element::ptr el = std::make_shared<el_image>(get_document());
 				el->set_attr(_t("src"), p_url.c_str());
 				el->set_attr(_t("style"), _t("display:inline-block"));
 				el->set_tagName(_t("img"));

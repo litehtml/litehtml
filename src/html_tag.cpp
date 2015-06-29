@@ -557,15 +557,15 @@ void litehtml::html_tag::init()
 		table_rows_selector		row_selector;
 		table_cells_selector	cell_selector;
 
-		elements_iterator row_iter(this, &table_selector, &row_selector);
+		elements_iterator row_iter(shared_from_this(), &table_selector, &row_selector);
 
-		element* row = row_iter.next(false);
+		element::ptr row = row_iter.next(false);
 		while (row)
 		{
 			m_grid.begin_row(row);
 
 			elements_iterator cell_iter(row, &table_selector, &cell_selector);
-			element* cell = cell_iter.next();
+			element::ptr cell = cell_iter.next();
 			while (cell)
 			{
 				m_grid.add_cell(cell);
@@ -3521,8 +3521,7 @@ litehtml::element::ptr litehtml::html_tag::get_element_after()
 		}
 	}
 	element::ptr el = std::make_shared<el_after>(get_document());
-	el->parent(shared_from_this());
-	m_children.push_back(el);
+	appendChild(el);
 	return el;
 }
 
@@ -4426,8 +4425,10 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 	position browser_wnd;
 	doc->container()->get_client_rect(browser_wnd);
 
-	for (auto& el : m_children)
+	element::ptr el;
+	for (auto& item : m_children)
 	{
+		el = item;
 		if (el->is_visible())
 		{
 			switch (flag)

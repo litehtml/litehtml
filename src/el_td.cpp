@@ -2,7 +2,7 @@
 #include "el_td.h"
 
 
-litehtml::el_td::el_td( litehtml::document* doc ) : html_tag(doc)
+litehtml::el_td::el_td(std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
 
 }

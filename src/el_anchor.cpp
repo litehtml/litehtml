@@ -2,7 +2,7 @@
 #include "el_anchor.h"
 #include "document.h"
 
-litehtml::el_anchor::el_anchor( litehtml::document* doc ) : html_tag(doc)
+litehtml::el_anchor::el_anchor(std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
 }
 
@@ -17,7 +17,7 @@ void litehtml::el_anchor::on_click()
 
 	if(href)
 	{
-		m_doc->container()->on_anchor_click(href, this);
+		get_document()->container()->on_anchor_click(href, shared_from_this());
 	}
 }
 

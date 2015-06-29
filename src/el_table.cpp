@@ -5,7 +5,7 @@
 #include <algorithm>
 
 
-litehtml::el_table::el_table( litehtml::document* doc ) : html_tag(doc)
+litehtml::el_table::el_table(std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
 	m_border_spacing_x	= 0;
 	m_border_spacing_y	= 0;
@@ -40,8 +40,9 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 		m_css_border_spacing_y.fromString(get_style_property(_t("-litehtml-border-spacing-y"), true, _t("0px")));
 
 		int fntsz = get_font_size();
-		m_border_spacing_x = m_doc->cvt_units(m_css_border_spacing_x, fntsz);
-		m_border_spacing_y = m_doc->cvt_units(m_css_border_spacing_y, fntsz);
+		document::ptr doc = get_document();
+		m_border_spacing_x = doc->cvt_units(m_css_border_spacing_x, fntsz);
+		m_border_spacing_y = doc->cvt_units(m_css_border_spacing_y, fntsz);
 	} else
 	{
 		m_border_spacing_x	= 0;
