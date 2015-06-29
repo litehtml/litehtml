@@ -76,6 +76,10 @@ namespace litehtml
 		css_length				m_css_border_spacing_y;
 		int						m_border_spacing_x;
 		int						m_border_spacing_y;
+
+		int							m_scroll_offset_x;
+		int							m_scroll_offset_y;
+
 		border_collapse			m_border_collapse;
 
 		virtual void			select_all(const css_selector& selector, elements_vector& res);
@@ -94,6 +98,7 @@ namespace litehtml
 		virtual void				render_positioned(render_type rt = render_all);
 
 		int							new_box( element* el, int max_width );
+		void						set_offset(int x, int y) { m_scroll_offset_x = x; m_scroll_offset_y = y; }
 
 		int							get_cleared_top( element* el, int line_top );
 		int							finish_last_box(bool end_of_render = false);

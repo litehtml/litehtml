@@ -31,6 +31,8 @@ litehtml::html_tag::html_tag(litehtml::document* doc) : litehtml::element(doc)
 	m_border_spacing_x		= 0;
 	m_border_spacing_y		= 0;
 	m_border_collapse		= border_collapse_separate;
+	m_scroll_offset_x		= 0;
+	m_scroll_offset_y		= 0;
 }
 
 litehtml::html_tag::~html_tag()
@@ -2353,6 +2355,9 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 		}
 		break;
 	}
+
+	el->m_pos.x -= m_scroll_offset_x;
+	el->m_pos.y -= m_scroll_offset_y;
 
 	return ret_width;
 }

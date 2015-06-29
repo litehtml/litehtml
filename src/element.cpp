@@ -315,6 +315,7 @@ int litehtml::element::render( int x, int y, int max_width, bool second_pass )		
 bool litehtml::element::appendChild( litehtml::element* el )						LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::removeChild( litehtml::element* el )						LITEHTML_RETURN_FUNC(false)
 void litehtml::element::clearRecursive()											LITEHTML_EMPTY_FUNC
+void litehtml::element::set_scroll_offset(int x, int y)								LITEHTML_EMPTY_FUNC
 const litehtml::tchar_t* litehtml::element::get_tagName() const						LITEHTML_RETURN_FUNC(_t(""))
 void litehtml::element::set_tagName( const tchar_t* tag )							LITEHTML_EMPTY_FUNC
 void litehtml::element::set_data( const tchar_t* data )								LITEHTML_EMPTY_FUNC
