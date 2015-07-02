@@ -1,5 +1,4 @@
 #pragma once
-#include "object.h"
 
 namespace litehtml
 {
@@ -11,11 +10,11 @@ namespace litehtml
 		box_line
 	};
 
-	class box : public object
+	class box
 	{
 	public:
-		typedef litehtml::object_ptr<litehtml::box>					ptr;
-		typedef std::vector< litehtml::object_ptr<litehtml::box> >	vector;
+		typedef std::shared_ptr<litehtml::box>	ptr;
+		typedef std::vector< box::ptr >			vector;
 	protected:
 		int		m_box_top;
 		int		m_box_left;

@@ -1,5 +1,4 @@
 #pragma once
-#include "object.h"
 
 namespace litehtml
 {

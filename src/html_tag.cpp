@@ -165,39 +165,39 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 {
 	remove_before_after();
 
-	for(litehtml::css_selector::vector::const_iterator sel = stylesheet.selectors().begin(); sel != stylesheet.selectors().end(); sel++)
+	for(const auto& sel : stylesheet.selectors())
 	{
-		int apply = select(*(*sel), false);
+		int apply = select(*sel, false);
 
 		if(apply != select_no_match)
 		{
-			used_selector::ptr us = new used_selector((*sel), false);
+			used_selector::ptr us = std::make_shared<used_selector>(sel, false);
 			m_used_styles.push_back(us);
 
-			if((*sel)->is_media_valid())
+			if(sel->is_media_valid())
 			{
 				if(apply & select_match_pseudo_class)
 				{
-					if(select(*(*sel), true))
+					if(select(*sel, true))
 					{
 						if(apply & select_match_with_after)
 						{
 							element::ptr el = get_element_after();
 							if(el)
 							{
-								el->add_style((*sel)->m_style);
+								el->add_style(sel->m_style);
 							}
 						} else if(apply & select_match_with_before)
 						{
 							element::ptr el = get_element_before();
 							if(el)
 							{
-								el->add_style((*sel)->m_style);
+								el->add_style(sel->m_style);
 							}
 						}
 						else
 						{
-							add_style((*sel)->m_style);
+							add_style(sel->m_style);
 							us->m_used = true;
 						}
 					}
@@ -206,18 +206,18 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 					element::ptr el = get_element_after();
 					if(el)
 					{
-						el->add_style((*sel)->m_style);
+						el->add_style(sel->m_style);
 					}
 				} else if(apply & select_match_with_before)
 				{
 					element::ptr el = get_element_before();
 					if(el)
 					{
-						el->add_style((*sel)->m_style);
+						el->add_style(sel->m_style);
 					}
 				} else
 				{
-					add_style((*sel)->m_style);
+					add_style(sel->m_style);
 					us->m_used = true;
 				}
 			}
@@ -2504,11 +2504,11 @@ int litehtml::html_tag::new_box(element::ptr& el, int max_width)
 
 		font_metrics fm;
 		get_font(&fm);
-		line_box* lb = new line_box(line_top, line_left + first_line_margin + text_indent, line_right, line_height(), fm, m_text_align);
+		line_box::ptr lb = std::make_shared<line_box>(line_top, line_left + first_line_margin + text_indent, line_right, line_height(), fm, m_text_align);
 		m_boxes.push_back(lb);
 	} else
 	{
-		block_box* bb = new block_box(line_top, line_left, line_right);
+		block_box::ptr bb = std::make_shared<block_box>(line_top, line_left, line_right);
 		m_boxes.push_back(bb);
 	}
 
@@ -3559,9 +3559,8 @@ void litehtml::html_tag::refresh_styles()
 
 	m_style.clear();
 
-	for(litehtml::used_selector::vector::iterator sel = m_used_styles.begin(); sel != m_used_styles.end(); sel++)
+	for (auto& usel : m_used_styles)
 	{
-		used_selector* usel = (*sel);
 		usel->m_used = false;
 
 		if(usel->m_selector->is_media_valid())

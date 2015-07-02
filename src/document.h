@@ -1,5 +1,4 @@
 #pragma once
-#include "object.h"
 #include "style.h"
 #include "types.h"
 #include "context.h"

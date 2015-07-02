@@ -35,10 +35,10 @@ namespace litehtml
 
 	typedef std::map<tstring, property_value>	props_map;
 
-	class style : public object
+	class style
 	{
 	public:
-		typedef object_ptr<style>			ptr;
+		typedef std::shared_ptr<style>		ptr;
 		typedef std::vector<style::ptr>		vector;
 	private:
 		props_map			m_properties;
@@ -88,32 +88,4 @@ namespace litehtml
 		void add_parsed_property(const tstring& name, const tstring& val, bool important);
 		void remove_property(const tstring& name, bool important);
 	};
-
-/*
-	class used_styles
-	{
-	public:
-		typedef std::vector<used_styles>	vector;
-
-		style_sheet::ptr	m_style_sheet;
-		bool				m_used;
-
-		used_styles()
-		{
-			m_used = false;
-		}
-
-		used_styles(style_sheet::ptr sh, bool used)
-		{
-			m_used			= used;
-			m_style_sheet	= sh;
-		}
-
-		used_styles(const used_styles& val)
-		{
-			m_style_sheet	= val.m_style_sheet;
-			m_used			= val.m_used;
-		}
-	};
-*/
 }

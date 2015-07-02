@@ -404,7 +404,6 @@
     <ClInclude Include="html_tag.h" />
     <ClInclude Include="iterators.h" />
     <ClInclude Include="media_query.h" />
-    <ClInclude Include="object.h" />
     <ClInclude Include="os_types.h" />
     <ClInclude Include="style.h" />
     <ClInclude Include="stylesheet.h" />

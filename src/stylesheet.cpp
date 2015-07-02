@@ -51,7 +51,7 @@ void litehtml::css::parse_stylesheet(const tchar_t* str, const tchar_t* baseurl,
 		tstring::size_type style_end	= text.find(_t("}"), pos);
 		if(style_start != tstring::npos && style_end != tstring::npos)
 		{
-			style::ptr st = new style;
+			style::ptr st = std::make_shared<style>();
 			st->add(text.substr(style_start + 1, style_end - style_start - 1).c_str(), baseurl);
 
 			parse_selectors(text.substr(pos, style_start - pos), st, media);
@@ -110,7 +110,7 @@ bool litehtml::css::parse_selectors( const tstring& txt, litehtml::style::ptr st
 
 	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
 	{
-		css_selector::ptr selector = new css_selector(media);
+		css_selector::ptr selector = std::make_shared<css_selector>(media);
 		selector->m_style = styles;
 		trim(*tok);
 		if(selector->parse(*tok))

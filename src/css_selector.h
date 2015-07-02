@@ -167,10 +167,10 @@ namespace litehtml
 
 	//////////////////////////////////////////////////////////////////////////
 
-	class css_selector : public object
+	class css_selector
 	{
 	public:
-		typedef object_ptr<css_selector>		ptr;
+		typedef std::shared_ptr<css_selector>	ptr;
 		typedef std::vector<css_selector::ptr>	vector;
 	public:
 		selector_specificity	m_specificity;
@@ -197,7 +197,7 @@ namespace litehtml
 			m_right			= val.m_right;
 			if(val.m_left)
 			{
-				m_left			= new css_selector(*val.m_left);
+				m_left			= std::make_shared<css_selector>(*val.m_left);
 			} else
 			{
 				m_left = 0;
@@ -256,10 +256,10 @@ namespace litehtml
 
 	//////////////////////////////////////////////////////////////////////////
 
-	class used_selector : public object
+	class used_selector
 	{
 	public:
-		typedef object_ptr<used_selector>		ptr;
+		typedef std::shared_ptr<used_selector>	ptr;
 		typedef std::vector<used_selector::ptr>	vector;
 
 		css_selector::ptr	m_selector;

@@ -4,7 +4,6 @@
 #include <memory>
 #include <map>
 #include <vector>
-#include "object.h"
 
 namespace litehtml
 {

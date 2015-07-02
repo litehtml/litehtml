@@ -1,6 +1,5 @@
 #pragma once
 #include <memory>
-#include "object.h"
 #include "stylesheet.h"
 #include "css_offsets.h"
 

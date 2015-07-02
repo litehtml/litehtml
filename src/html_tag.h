@@ -1,7 +1,6 @@
 #pragma once
 
 #include "element.h"
-#include "object.h"
 #include "style.h"
 #include "background.h"
 #include "css_margins.h"
@@ -21,7 +20,7 @@ namespace litehtml
 		friend class block_box;
 		friend class line_box;
 	public:
-		typedef litehtml::object_ptr<litehtml::html_tag>	ptr;
+		typedef std::shared_ptr<litehtml::html_tag>	ptr;
 	protected:
 		box::vector				m_boxes;
 		string_vector			m_class_values;

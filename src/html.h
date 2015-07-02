@@ -10,7 +10,6 @@
 #include <sstream>
 #include "os_types.h"
 #include "types.h"
-#include "object.h"
 #include "background.h"
 #include "borders.h"
 #include "html_tag.h"
