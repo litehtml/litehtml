@@ -10,8 +10,8 @@ namespace litehtml
 		el_script(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_script();
 
-		virtual void			parse_attributes();
-		virtual bool			appendChild(litehtml::element* el);
-		virtual const tchar_t*	get_tagName() const;
+		virtual void			parse_attributes() override;
+		virtual bool			appendChild(litehtml::element::ptr& el) override;
+		virtual const tchar_t*	get_tagName() const override;
 	};
 }

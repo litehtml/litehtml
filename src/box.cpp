@@ -43,9 +43,10 @@ void litehtml::block_box::finish(bool last_box)
 			int h = 0;
 			if(offsets.top.units() == css_units_percentage)
 			{
-				if(m_element->parent())
+				element::ptr el_parent = m_element->parent();
+				if(el_parent)
 				{
-					m_element->parent()->get_predefined_height(h);
+					el_parent->get_predefined_height(h);
 				}
 			}
 			m_element->m_pos.y += offsets.top.calc_percent(h);
@@ -54,9 +55,10 @@ void litehtml::block_box::finish(bool last_box)
 			int h = 0;
 			if(offsets.bottom.units() == css_units_percentage)
 			{
-				if(m_element->parent())
+				element::ptr el_parent = m_element->parent();
+				if (el_parent)
 				{
-					m_element->parent()->get_predefined_height(h);
+					el_parent->get_predefined_height(h);
 				}
 			}
 			m_element->m_pos.y -= offsets.bottom.calc_percent(h);
@@ -155,8 +157,7 @@ void litehtml::line_box::add_element(element::ptr& el)
 		el->m_skip = true;
 	} else if(el->is_white_space())
 	{
-		element::ptr ws = get_last_space();
-		if(ws)
+		if (have_last_space())
 		{
 			add = false;
 			el->m_skip = true;
@@ -341,9 +342,10 @@ void litehtml::line_box::finish(bool last_box)
 
 				if(offsets.top.units() == css_units_percentage)
 				{
-					if(m_items.back()->parent())
+					element::ptr el_parent = m_items.back()->parent();
+					if(el_parent)
 					{
-						m_items.back()->parent()->get_predefined_height(h);
+						el_parent->get_predefined_height(h);
 					}
 				}
 
@@ -354,9 +356,10 @@ void litehtml::line_box::finish(bool last_box)
 
 				if(offsets.top.units() == css_units_percentage)
 				{
-					if(m_items.back()->parent())
+					element::ptr el_parent = m_items.back()->parent();
+					if (el_parent)
 					{
-						m_items.back()->parent()->get_predefined_height(h);
+						el_parent->get_predefined_height(h);
 					}
 				}
 
@@ -390,14 +393,14 @@ bool litehtml::line_box::can_hold(element::ptr& el, white_space ws)
 	return true;
 }
 
-litehtml::element::ptr litehtml::line_box::get_last_space()
+bool litehtml::line_box::have_last_space()
 {
-	element::ptr ret;
+	bool ret = false;
 	for (elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
 	{
 		if((*i)->is_white_space() || (*i)->is_break())
 		{
-			ret = (*i);
+			ret = true;
 		} else
 		{
 			break;

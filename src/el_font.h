@@ -9,6 +9,6 @@ namespace litehtml
 		el_font(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_font();
 
-		virtual void parse_attributes();
+		virtual void parse_attributes() override;
 	};
 }

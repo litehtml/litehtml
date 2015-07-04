@@ -18,7 +18,7 @@ namespace litehtml
 		typedef std::shared_ptr<litehtml::element>		ptr;
 		typedef std::weak_ptr<litehtml::element>		weak_ptr;
 	protected:
-		element::weak_ptr			m_parent;
+		std::weak_ptr<element>		m_parent;
 		std::weak_ptr<litehtml::document>	m_doc;
 		litehtml::box*				m_box;
 		elements_vector				m_children;
@@ -78,6 +78,7 @@ namespace litehtml
 
 		bool						skip();
 		void						skip(bool val);
+		bool						have_parent() const;
 		element::ptr				parent() const;
 		void						parent(element::ptr par);
 		bool						is_visible() const;
@@ -190,7 +191,7 @@ namespace litehtml
 		virtual bool				get_predefined_height(int& p_height) const;
 		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
 		virtual void				get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
-		virtual void				add_style(litehtml::style::ptr st);
+		virtual void				add_style(const litehtml::style& st);
 		virtual element::ptr		get_element_by_point(int x, int y, int client_x, int client_y);
 		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 		virtual const background*	get_background(bool own_only = false);
@@ -327,6 +328,11 @@ namespace litehtml
 	inline void litehtml::element::skip(bool val)
 	{
 		m_skip = val;
+	}
+
+	inline bool litehtml::element::have_parent() const
+	{
+		return !m_parent.expired();
 	}
 
 	inline element::ptr litehtml::element::parent() const

@@ -795,7 +795,7 @@ void litehtml::document::fix_tables_layout()
 	}
 }
 
-void litehtml::document::fix_table_children(element::ptr el_ptr, style_display disp, const tchar_t* disp_str)
+void litehtml::document::fix_table_children(element::ptr& el_ptr, style_display disp, const tchar_t* disp_str)
 {
 	elements_vector tmp;
 	elements_vector::iterator first_iter = el_ptr->m_children.begin();
@@ -804,8 +804,8 @@ void litehtml::document::fix_table_children(element::ptr el_ptr, style_display d
 	auto flush_elements = [&]()
 	{
 		element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-		style::ptr st = std::make_shared<style>();
-		st->add_property(_t("display"), disp_str, 0, false);
+		style st;
+		st.add_property(_t("display"), disp_str, 0, false);
 		annon_tag->add_style(st);
 		annon_tag->parent(el_ptr);
 		annon_tag->parse_styles();
@@ -854,7 +854,7 @@ void litehtml::document::fix_table_children(element::ptr el_ptr, style_display d
 	}
 }
 
-void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display disp, const tchar_t* disp_str)
+void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display disp, const tchar_t* disp_str)
 {
 	element::ptr parent = el_ptr->parent();
 
@@ -911,8 +911,8 @@ void litehtml::document::fix_table_parent(element::ptr el_ptr, style_display dis
 
 			// extract elements with the same display and wrap them with anonymous object
 			element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-			style::ptr st = std::make_shared<style>();
-			st->add_property(_t("display"), disp_str, 0, false);
+			style st;
+			st.add_property(_t("display"), disp_str, 0, false);
 			annon_tag->add_style(st);
 			annon_tag->parent(parent);
 			annon_tag->parse_styles();

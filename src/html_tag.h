@@ -70,7 +70,7 @@ namespace litehtml
 		int_int_cache			m_cahe_line_right;
 
 		// data for table rendering
-		table_grid				m_grid;
+		std::unique_ptr<table_grid>	m_grid;
 		css_length				m_css_border_spacing_x;
 		css_length				m_css_border_spacing_y;
 		int						m_border_spacing_x;
@@ -85,122 +85,122 @@ namespace litehtml
 
 		/* render functions */
 
-		virtual int					render(int x, int y, int max_width, bool second_pass = false);
+		virtual int					render(int x, int y, int max_width, bool second_pass = false) override;
 
-		virtual int					render_inline(element::ptr& container, int max_width);
-		virtual int					place_element(element::ptr& el, int max_width);
-		virtual bool				fetch_positioned();
-		virtual void				render_positioned(render_type rt = render_all);
+		virtual int					render_inline(element::ptr& container, int max_width) override;
+		virtual int					place_element(element::ptr& el, int max_width) override;
+		virtual bool				fetch_positioned() override;
+		virtual void				render_positioned(render_type rt = render_all) override;
 
 		int							new_box(element::ptr& el, int max_width);
 
 		int							get_cleared_top(element::ptr& el, int line_top) const;
 		int							finish_last_box(bool end_of_render = false);
 
-		virtual bool				appendChild(litehtml::element::ptr& el);
-		virtual bool				removeChild(litehtml::element::ptr& el);
-		virtual void				clearRecursive();
-		virtual const tchar_t*		get_tagName() const;
-		virtual void				set_tagName(const tchar_t* tag);
-		virtual void				set_data(const tchar_t* data);
-		virtual element_float		get_float() const;
-		virtual vertical_align		get_vertical_align() const;
-		virtual css_length			get_css_left() const;
-		virtual css_length			get_css_right() const;
-		virtual css_length			get_css_top() const;
-		virtual css_length			get_css_bottom() const;
-		virtual css_length			get_css_width() const;
-		virtual css_offsets			get_css_offsets() const;
-		virtual void				set_css_width(css_length& w);
-		virtual css_length			get_css_height() const;
-		virtual element_clear		get_clear() const;
-		virtual size_t				get_children_count() const;
-		virtual element::ptr		get_child(int idx) const;
-		virtual element_position	get_element_position(css_offsets* offsets = 0) const;
-		virtual overflow			get_overflow() const;
+		virtual bool				appendChild(litehtml::element::ptr& el) override;
+		virtual bool				removeChild(litehtml::element::ptr& el) override;
+		virtual void				clearRecursive() override;
+		virtual const tchar_t*		get_tagName() const override;
+		virtual void				set_tagName(const tchar_t* tag) override;
+		virtual void				set_data(const tchar_t* data) override;
+		virtual element_float		get_float() const override;
+		virtual vertical_align		get_vertical_align() const override;
+		virtual css_length			get_css_left() const override;
+		virtual css_length			get_css_right() const override;
+		virtual css_length			get_css_top() const override;
+		virtual css_length			get_css_bottom() const override;
+		virtual css_length			get_css_width() const override;
+		virtual css_offsets			get_css_offsets() const override;
+		virtual void				set_css_width(css_length& w) override;
+		virtual css_length			get_css_height() const override;
+		virtual element_clear		get_clear() const override;
+		virtual size_t				get_children_count() const override;
+		virtual element::ptr		get_child(int idx) const override;
+		virtual element_position	get_element_position(css_offsets* offsets = 0) const override;
+		virtual overflow			get_overflow() const override;
 
-		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
-		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0);
-		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
-		virtual void				refresh_styles();
+		virtual void				set_attr(const tchar_t* name, const tchar_t* val) override;
+		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0) override;
+		virtual void				apply_stylesheet(const litehtml::css& stylesheet) override;
+		virtual void				refresh_styles() override;
 
-		virtual bool				is_white_space() const;
-		virtual bool				is_body() const;
-		virtual bool				is_break() const;
-		virtual int					get_base_line();
-		virtual bool				on_mouse_over();
-		virtual bool				on_mouse_leave();
-		virtual bool				on_lbutton_down();
-		virtual bool				on_lbutton_up();
-		virtual void				on_click();
-		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
-		virtual const tchar_t*		get_cursor();
-		virtual void				init_font();
-		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add);
-		virtual bool				set_class(const tchar_t* pclass, bool add);
-		virtual bool				is_replaced() const;
-		virtual int					line_height() const;
-		virtual white_space			get_white_space() const;
-		virtual style_display		get_display() const;
-		virtual visibility			get_visibility() const;
-		virtual void				parse_styles(bool is_reparse = false);
-		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
-		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
+		virtual bool				is_white_space() const override;
+		virtual bool				is_body() const override;
+		virtual bool				is_break() const override;
+		virtual int					get_base_line() override;
+		virtual bool				on_mouse_over() override;
+		virtual bool				on_mouse_leave() override;
+		virtual bool				on_lbutton_down() override;
+		virtual bool				on_lbutton_up() override;
+		virtual void				on_click() override;
+		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y) override;
+		virtual const tchar_t*		get_cursor() override;
+		virtual void				init_font() override;
+		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add) override;
+		virtual bool				set_class(const tchar_t* pclass, bool add) override;
+		virtual bool				is_replaced() const override;
+		virtual int					line_height() const override;
+		virtual white_space			get_white_space() const override;
+		virtual style_display		get_display() const override;
+		virtual visibility			get_visibility() const override;
+		virtual void				parse_styles(bool is_reparse = false) override;
+		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip) override;
+		virtual void				draw_background(uint_ptr hdc, int x, int y, const position* clip) override;
 
-		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
-		virtual uint_ptr			get_font(font_metrics* fm = 0);
-		virtual int					get_font_size() const;
+		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0) override;
+		virtual uint_ptr			get_font(font_metrics* fm = 0) override;
+		virtual int					get_font_size() const override;
 
 		elements_vector&			children();
-		virtual void				calc_outlines( int parent_width );
-		virtual void				calc_auto_margins(int parent_width);
+		virtual void				calc_outlines(int parent_width) override;
+		virtual void				calc_auto_margins(int parent_width) override;
 
-		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
-		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
+		virtual int					select(const css_selector& selector, bool apply_pseudo = true) override;
+		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true) override;
 
-		virtual elements_vector		select_all(const tstring& selector);
-		virtual elements_vector		select_all(const css_selector& selector);
+		virtual elements_vector		select_all(const tstring& selector) override;
+		virtual elements_vector		select_all(const css_selector& selector) override;
 
-		virtual element::ptr		select_one(const tstring& selector);
-		virtual element::ptr		select_one(const css_selector& selector);
+		virtual element::ptr		select_one(const tstring& selector) override;
+		virtual element::ptr		select_one(const css_selector& selector) override;
 
-		virtual element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual element::ptr		find_adjacent_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0) override;
+		virtual element::ptr		find_adjacent_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0) override;
 		virtual element::ptr		find_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual void				get_text(tstring& text);
-		virtual void				parse_attributes();
+		virtual void				get_text(tstring& text) override;
+		virtual void				parse_attributes() override;
 
-		virtual bool				is_first_child_inline(const element::ptr& el) const;
-		virtual bool				is_last_child_inline(const element::ptr& el);
-		virtual bool				have_inline_child() const;
-		virtual void				get_content_size(size& sz, int max_width);
-		virtual void				init();
-		virtual void				get_inline_boxes(position::vector& boxes);
-		virtual bool				is_floats_holder() const;
-		virtual int					get_floats_height(element_float el_float = float_none) const;
-		virtual int					get_left_floats_height() const;
-		virtual int					get_right_floats_height() const;
-		virtual int					get_line_left(int y);
-		virtual int					get_line_right(int y, int def_right);
-		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right);
-		virtual void				add_float(element::ptr& el, int x, int y);
-		virtual void				update_floats(int dy, element::ptr& parent);
-		virtual void				add_positioned(element::ptr& el);
-		virtual int					find_next_line_top(int top, int width, int def_right);
-		virtual void				apply_vertical_align();
-		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
-		virtual int					get_zindex() const;
-		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
-		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0);
-		virtual void				get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
-		virtual void				add_style(litehtml::style::ptr st);
-		virtual element::ptr		get_element_by_point(int x, int y, int client_x, int client_y);
-		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
+		virtual bool				is_first_child_inline(const element::ptr& el) const override;
+		virtual bool				is_last_child_inline(const element::ptr& el) override;
+		virtual bool				have_inline_child() const override;
+		virtual void				get_content_size(size& sz, int max_width) override;
+		virtual void				init() override;
+		virtual void				get_inline_boxes(position::vector& boxes) override;
+		virtual bool				is_floats_holder() const override;
+		virtual int					get_floats_height(element_float el_float = float_none) const override;
+		virtual int					get_left_floats_height() const override;
+		virtual int					get_right_floats_height() const override;
+		virtual int					get_line_left(int y) override;
+		virtual int					get_line_right(int y, int def_right) override;
+		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right) override;
+		virtual void				add_float(element::ptr& el, int x, int y) override;
+		virtual void				update_floats(int dy, element::ptr& parent) override;
+		virtual void				add_positioned(element::ptr& el) override;
+		virtual int					find_next_line_top(int top, int width, int def_right) override;
+		virtual void				apply_vertical_align() override;
+		virtual void				draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;
+		virtual int					get_zindex() const override;
+		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned) override;
+		virtual void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0) override;
+		virtual void				get_redraw_box(litehtml::position& pos, int x = 0, int y = 0) override;
+		virtual void				add_style(const litehtml::style& st) override;
+		virtual element::ptr		get_element_by_point(int x, int y, int client_x, int client_y) override;
+		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex) override;
 
-		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const;
-		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const;
-		virtual bool				is_only_child(const element::ptr& el, bool of_type) const;
-		virtual const background*	get_background(bool own_only = false);
+		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const override;
+		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const override;
+		virtual bool				is_only_child(const element::ptr& el, bool of_type) const override;
+		virtual const background*	get_background(bool own_only = false) override;
 
 	protected:
 		void						draw_children_box(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex);

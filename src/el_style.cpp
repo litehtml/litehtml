@@ -17,9 +17,9 @@ void litehtml::el_style::parse_attributes()
 {
 	tstring text;
 
-	for(elements_vector::iterator iter = m_children.begin(); iter != m_children.end(); iter++)
+	for(auto& el : m_children)
 	{
-		(*iter)->get_text(text);
+		el->get_text(text);
 	}
 	get_document()->add_stylesheet( text.c_str(), 0, get_attr(_t("media")) );
 }

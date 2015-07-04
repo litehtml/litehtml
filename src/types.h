@@ -532,6 +532,13 @@ namespace litehtml
 			clear_floats = val.clear_floats;
 			el = val.el;
 		}
+		floated_box(floated_box&& val)
+		{
+			pos = val.pos;
+			float_side = val.float_side;
+			clear_floats = val.clear_floats;
+			el = std::move(val.el);
+		}
 	};
 
 	struct int_int_cache

@@ -16,8 +16,8 @@ namespace litehtml
 		el_table(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_table();
 
-		virtual bool	appendChild(litehtml::element::ptr& el);
-		virtual void	parse_styles(bool is_reparse = false);
-		virtual void	parse_attributes();
+		virtual bool	appendChild(litehtml::element::ptr& el) override;
+		virtual void	parse_styles(bool is_reparse = false) override;
+		virtual void	parse_attributes() override;
 	};
 }

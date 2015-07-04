@@ -12,12 +12,12 @@ namespace litehtml
 		el_image(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_image(void);
 
-		virtual int		line_height() const;
-		virtual bool	is_replaced() const;
-		virtual int		render(int x, int y, int max_width, bool second_pass = false);
-		virtual void	parse_attributes();
-		virtual void	parse_styles(bool is_reparse = false);
-		virtual void	draw(uint_ptr hdc, int x, int y, const position* clip);
-		virtual void	get_content_size(size& sz, int max_width);
+		virtual int		line_height() const override;
+		virtual bool	is_replaced() const override;
+		virtual int		render(int x, int y, int max_width, bool second_pass = false) override;
+		virtual void	parse_attributes() override;
+		virtual void	parse_styles(bool is_reparse = false) override;
+		virtual void	draw(uint_ptr hdc, int x, int y, const position* clip) override;
+		virtual void	get_content_size(size& sz, int max_width) override;
 	};
 }

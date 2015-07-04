@@ -9,6 +9,6 @@ namespace litehtml
 		el_break(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_break();
 
-		virtual bool	is_break() const;
+		virtual bool is_break() const override;
 	};
 }

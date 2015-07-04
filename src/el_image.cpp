@@ -232,7 +232,7 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		borders bdr = m_css_borders;
 		bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
 
-		get_document()->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
+		get_document()->container()->draw_borders(hdc, bdr, border_box, have_parent() ? false : true);
 	}
 }
 

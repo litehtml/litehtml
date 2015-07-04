@@ -20,7 +20,7 @@ litehtml::el_before_after_base::~el_before_after_base()
 
 }
 
-void litehtml::el_before_after_base::add_style( litehtml::style::ptr st )
+void litehtml::el_before_after_base::add_style(const litehtml::style& st)
 {
 	html_tag::add_style(st);
 

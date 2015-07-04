@@ -9,8 +9,8 @@ namespace litehtml
 		el_before_after_base(std::shared_ptr<litehtml::document>& doc, bool before);
 		virtual ~el_before_after_base();
 
-		virtual void add_style(litehtml::style::ptr st);
-		virtual void apply_stylesheet(const litehtml::css& stylesheet);
+		virtual void add_style(const litehtml::style& st) override;
+		virtual void apply_stylesheet(const litehtml::css& stylesheet) override;
 	private:
 		void	add_text(const tstring& txt);
 		void	add_function(const tstring& fnc, const tstring& params);

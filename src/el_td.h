@@ -9,6 +9,6 @@ namespace litehtml
 		el_td(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_td();
 
-		virtual void parse_attributes();
+		virtual void parse_attributes() override;
 	};
 }

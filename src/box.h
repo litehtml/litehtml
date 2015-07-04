@@ -13,7 +13,7 @@ namespace litehtml
 	class box
 	{
 	public:
-		typedef std::shared_ptr<litehtml::box>	ptr;
+		typedef std::unique_ptr<litehtml::box>	ptr;
 		typedef std::vector< box::ptr >			vector;
 	protected:
 		int		m_box_top;
@@ -110,7 +110,7 @@ namespace litehtml
 		virtual void				new_width(int left, int right, elements_vector& els);
 
 	private:
-		element::ptr				get_last_space();
+		bool						have_last_space();
 		bool						is_break_only();
 	};
 }

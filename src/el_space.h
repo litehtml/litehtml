@@ -10,7 +10,7 @@ namespace litehtml
 		el_space(const tchar_t* text, std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_space();
 
-		virtual bool	is_white_space() const;
-		virtual bool	is_break() const;
+		virtual bool	is_white_space() const override;
+		virtual bool	is_break() const override;
 	};
 }

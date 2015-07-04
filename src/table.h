@@ -167,6 +167,20 @@ namespace litehtml
 			max_height		= val.max_height;
 			borders			= val.borders;
 		}
+
+		table_cell(const table_cell&& val)
+		{
+			el = std::move(val.el);
+			colspan = val.colspan;
+			rowspan = val.rowspan;
+			width = val.width;
+			height = val.height;
+			min_width = val.min_width;
+			min_height = val.min_height;
+			max_width = val.max_width;
+			max_height = val.max_height;
+			borders = val.borders;
+		}
 	};
 
 	class table_grid

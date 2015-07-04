@@ -9,6 +9,6 @@ namespace litehtml
 		el_body(std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_body();
 
-		virtual bool is_body()  const;
+		virtual bool is_body() const override;
 	};
 }
