@@ -958,3 +958,7 @@ void cairo_container::transform_text( litehtml::tstring& text, litehtml::text_tr
 	delete txt;
 #endif
 }
+
+void cairo_container::link(std::shared_ptr<litehtml::document>& doc, litehtml::element::ptr el)
+{
+}
