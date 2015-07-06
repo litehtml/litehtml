@@ -954,7 +954,7 @@ litehtml::element::ptr litehtml::html_tag::find_ancestor(const css_selector& sel
 	element::ptr el_parent = parent();
 	if (!el_parent)
 	{
-		return 0;
+		return nullptr;
 	}
 	int res = el_parent->select(selector, apply_pseudo);
 	if(res != select_no_match)
@@ -1051,8 +1051,13 @@ int litehtml::html_tag::get_floats_height(element_float el_float) const
 
 		return h;
 	}
-	int h = parent()->get_floats_height(el_float);
-	return h - m_pos.y;
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		int h = el_parent->get_floats_height(el_float);
+		return h - m_pos.y;
+	}
+	return 0;
 }
 
 int litehtml::html_tag::get_left_floats_height() const
@@ -1069,8 +1074,13 @@ int litehtml::html_tag::get_left_floats_height() const
 		}
 		return h;
 	}
-	int h = parent()->get_left_floats_height();
-	return h - m_pos.y;
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		int h = el_parent->get_left_floats_height();
+		return h - m_pos.y;
+	}
+	return 0;
 }
 
 int litehtml::html_tag::get_right_floats_height() const
@@ -1087,8 +1097,13 @@ int litehtml::html_tag::get_right_floats_height() const
 		}
 		return h;
 	}
-	int h = parent()->get_right_floats_height();
-	return h - m_pos.y;
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		int h = el_parent->get_right_floats_height();
+		return h - m_pos.y;
+	}
+	return 0;
 }
 
 int litehtml::html_tag::get_line_left( int y )
@@ -1115,12 +1130,17 @@ int litehtml::html_tag::get_line_left( int y )
 		m_cahe_line_left.set_value(y, w);
 		return w;
 	}
-	int w = parent()->get_line_left(y + m_pos.y);
-	if(w < 0)
+	element::ptr el_parent = parent();
+	if (el_parent)
 	{
-		w = 0;
+		int w = el_parent->get_line_left(y + m_pos.y);
+		if (w < 0)
+		{
+			w = 0;
+		}
+		return w - (w ? m_pos.x : 0);
 	}
-	return w - (w ? m_pos.x : 0);
+	return 0;
 }
 
 int litehtml::html_tag::get_line_right( int y, int def_right )
@@ -1155,8 +1175,13 @@ int litehtml::html_tag::get_line_right( int y, int def_right )
 		m_cahe_line_right.set_value(y, w);
 		return w;
 	}
-	int w = parent()->get_line_right(y + m_pos.y, def_right + m_pos.x);
-	return w - m_pos.x;
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		int w = el_parent->get_line_right(y + m_pos.y, def_right + m_pos.x);
+		return w - m_pos.x;
+	}
+	return 0;
 }
 
 
@@ -1168,7 +1193,11 @@ void litehtml::html_tag::get_line_left_right( int y, int def_right, int& ln_left
 		ln_right	= get_line_right(y, def_right);
 	} else
 	{
-		parent()->get_line_left_right(y + m_pos.y, def_right + m_pos.x, ln_left, ln_right);
+		element::ptr el_parent = parent();
+		if (el_parent)
+		{
+			el_parent->get_line_left_right(y + m_pos.y, def_right + m_pos.x, ln_left, ln_right);
+		}
 		ln_right -= m_pos.x;
 
 		if(ln_left < 0)
@@ -1336,7 +1365,11 @@ void litehtml::html_tag::add_float(element::ptr& el, int x, int y)
 		}
 	} else
 	{
-		parent()->add_float(el, x + m_pos.x, y + m_pos.y);
+		element::ptr el_parent = parent();
+		if (el_parent)
+		{
+			el_parent->add_float(el, x + m_pos.x, y + m_pos.y);
+		}
 	}
 }
 
@@ -1403,8 +1436,13 @@ int litehtml::html_tag::find_next_line_top( int top, int width, int def_right )
 		}
 		return new_top;
 	}
-	int new_top = parent()->find_next_line_top(top + m_pos.y, width, def_right + m_pos.x);
-	return new_top - m_pos.y;
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		int new_top = el_parent->find_next_line_top(top + m_pos.y, width, def_right + m_pos.x);
+		return new_top - m_pos.y;
+	}
+	return 0;
 }
 
 void litehtml::html_tag::parse_background()
@@ -1571,7 +1609,11 @@ void litehtml::html_tag::add_positioned(element::ptr& el)
 		m_positioned.push_back(el);
 	} else
 	{
-		parent()->add_positioned(el);
+		element::ptr el_parent = parent();
+		if (el_parent)
+		{
+			el_parent->add_positioned(el);
+		}
 	}
 }
 
@@ -1877,7 +1919,11 @@ void litehtml::html_tag::on_click()
 {
 	if (have_parent())
 	{
-		parent()->on_click();
+		element::ptr el_parent = parent();
+		if (el_parent)
+		{
+			el_parent->on_click();
+		}
 	}
 }
 
@@ -2033,7 +2079,7 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 			borders bdr = m_css_borders;
 			bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
 
-			get_document()->container()->draw_borders(hdc, bdr, border_box, parent() ? false : true);
+			get_document()->container()->draw_borders(hdc, bdr, border_box, have_parent() ? false : true);
 		}
 	} else
 	{
@@ -3483,7 +3529,11 @@ void litehtml::html_tag::update_floats(int dy, element::ptr& parent)
 		}
 	} else
 	{
-		this->parent()->update_floats(dy, parent);
+		element::ptr el_parent = this->parent();
+		if (el_parent)
+		{
+			el_parent->update_floats(dy, parent);
+		}
 	}
 }
 
@@ -3837,10 +3887,14 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 	
 	if(is_body())
 	{
-		if (!parent()->get_background(true))
+		element::ptr el_parent = parent();
+		if (el_parent)
 		{
-			// parent of body will draw background for body
-			return 0;
+			if (!el_parent->get_background(true))
+			{
+				// parent of body will draw background for body
+				return 0;
+			}
 		}
 	}
 

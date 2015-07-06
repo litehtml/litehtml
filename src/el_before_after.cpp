@@ -141,10 +141,14 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 			tstring p_name = params;
 			trim(p_name);
 			lcase(p_name);
-			const tchar_t* attr_value = parent()->get_attr(p_name.c_str());
-			if(attr_value)
+			element::ptr el_parent = parent();
+			if (el_parent)
 			{
-				add_text(attr_value);
+				const tchar_t* attr_value = el_parent->get_attr(p_name.c_str());
+				if (attr_value)
+				{
+					add_text(attr_value);
+				}
 			}
 		}
 		break;

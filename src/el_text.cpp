@@ -32,7 +32,11 @@ const litehtml::tchar_t* litehtml::el_text::get_style_property( const tchar_t* n
 {
 	if(inherited)
 	{
-		return parent()->get_style_property(name, inherited, def);
+		element::ptr el_parent = parent();
+		if (el_parent)
+		{
+			return el_parent->get_style_property(name, inherited, def);
+		}
 	}
 	return def;
 }
@@ -66,7 +70,12 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 	}
 
 	font_metrics fm;
-	uint_ptr font	= parent()->get_font(&fm);
+	uint_ptr font = 0;
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		font = el_parent->get_font(&fm);
+	}
 	if(is_break())
 	{
 		m_size.height	= 0;
@@ -81,7 +90,12 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 
 int litehtml::el_text::get_base_line()
 {
-	return parent()->get_base_line();
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		return el_parent->get_base_line();
+	}
+	return 0;
 }
 
 void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
@@ -98,22 +112,35 @@ void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 	if(pos.does_intersect(clip))
 	{
 		element::ptr el_parent = parent();
-		document::ptr doc = get_document();
+		if (el_parent)
+		{
+			document::ptr doc = get_document();
 
-		uint_ptr font = el_parent->get_font();
-		litehtml::web_color color = el_parent->get_color(_t("color"), true, doc->get_def_color());
-		doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
+			uint_ptr font = el_parent->get_font();
+			litehtml::web_color color = el_parent->get_color(_t("color"), true, doc->get_def_color());
+			doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
+		}
 	}
 }
 
 int litehtml::el_text::line_height() const
 {
-	return parent()->line_height();
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		return el_parent->line_height();
+	}
+	return 0;
 }
 
 litehtml::uint_ptr litehtml::el_text::get_font( font_metrics* fm /*= 0*/ )
 {
-	return parent()->get_font(fm);
+	element::ptr el_parent = parent();
+	if (el_parent)
+	{
+		return el_parent->get_font(fm);
+	}
+	return 0;
 }
 
 litehtml::style_display litehtml::el_text::get_display() const
