@@ -50,22 +50,12 @@ bool litehtml::element::is_point_inside( int x, int y )
 
 litehtml::web_color litehtml::element::get_color( const tchar_t* prop_name, bool inherited, const litehtml::web_color& def_color )
 {
-	litehtml::web_color color;
-
 	const tchar_t* clrstr = get_style_property(prop_name, inherited, 0);
 	if(!clrstr)
 	{
 		return def_color;
 	}
-	color = web_color::from_string(clrstr);
-
-	const tchar_t* opacity = get_style_property(_t("opacity"), true, 0);
-	if(opacity)
-	{
-		color.alpha = litehtml::byte(color.alpha * t_atof(opacity));
-	}
-
-	return color;
+	return web_color::from_string(clrstr);
 }
 
 litehtml::position litehtml::element::get_placement() const

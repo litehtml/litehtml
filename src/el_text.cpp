@@ -105,7 +105,15 @@ void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 	{
 		uint_ptr font = m_parent->get_font();
 		litehtml::web_color color = m_parent->get_color(_t("color"), true, m_doc->get_def_color());
-		m_doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
+		
+        float opacity = 1.0f;
+        const tchar_t* opacity_str = get_style_property(_t("opacity"), true, 0);
+	    if(opacity_str)
+	    {
+            opacity = float(t_atof(opacity_str) * 255.0f);
+	    }
+        
+        m_doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos, opacity);
 	}
 }
 
