@@ -14,7 +14,7 @@ namespace litehtml
 		tstring					m_image;
 		tstring					m_baseurl;
 		web_color				m_color;
-        float                   m_opacity;
+		float					m_opacity;
 		background_attachment	m_attachment;
 		css_position			m_position;
 		background_repeat		m_repeat;
@@ -43,7 +43,7 @@ namespace litehtml
 		position				border_box;
 		border_radiuses			border_radius;
 		size					image_size;
-        float                   opacity;
+		float					opacity;
 		int						position_x;
 		int						position_y;
 		bool					is_root;
