@@ -2,7 +2,7 @@
 #include "el_font.h"
 
 
-litehtml::el_font::el_font(std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
+litehtml::el_font::el_font(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
 
 }

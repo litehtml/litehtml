@@ -5,7 +5,7 @@
 #define LITEHTML_EMPTY_FUNC			{}
 #define LITEHTML_RETURN_FUNC(ret)	{return ret;}
 
-litehtml::element::element(std::shared_ptr<litehtml::document>& doc) : m_doc(doc)
+litehtml::element::element(const std::shared_ptr<litehtml::document>& doc) : m_doc(doc)
 {
 	m_box		= 0;
 	m_skip		= false;
@@ -191,7 +191,7 @@ int litehtml::element::calc_width(int defVal) const
 	return 	get_document()->cvt_units(w, get_font_size());
 }
 
-bool litehtml::element::is_ancestor(element::ptr& el) const
+bool litehtml::element::is_ancestor(const ptr &el) const
 {
 	element::ptr el_parent = parent();
 	while(el_parent && el_parent != el)
@@ -274,8 +274,8 @@ litehtml::elements_vector litehtml::element::select_all(const litehtml::css_sele
 litehtml::elements_vector litehtml::element::select_all(const litehtml::tstring& selector)			 LITEHTML_RETURN_FUNC(litehtml::elements_vector())
 litehtml::element::ptr litehtml::element::select_one( const css_selector& selector ) LITEHTML_RETURN_FUNC(0)
 litehtml::element::ptr litehtml::element::select_one( const tstring& selector )		LITEHTML_RETURN_FUNC(0)
-litehtml::element::ptr litehtml::element::find_adjacent_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/) LITEHTML_RETURN_FUNC(0)
-litehtml::element::ptr litehtml::element::find_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/) LITEHTML_RETURN_FUNC(0)
+litehtml::element::ptr litehtml::element::find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/) LITEHTML_RETURN_FUNC(0)
+litehtml::element::ptr litehtml::element::find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/) LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const		LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_nth_child(const element::ptr&, int num, int off, bool of_type) const		LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_only_child(const element::ptr& el, bool of_type)	 const	LITEHTML_RETURN_FUNC(false)
@@ -300,13 +300,13 @@ litehtml::css_length litehtml::element::get_css_top() const							LITEHTML_RETUR
 litehtml::css_length litehtml::element::get_css_bottom() const						LITEHTML_RETURN_FUNC(css_length())
 litehtml::css_offsets litehtml::element::get_css_offsets() const					LITEHTML_RETURN_FUNC(css_offsets())
 litehtml::vertical_align litehtml::element::get_vertical_align() const				LITEHTML_RETURN_FUNC(va_baseline)
-int litehtml::element::place_element(element::ptr& el, int max_width)				LITEHTML_RETURN_FUNC(0)
-int litehtml::element::render_inline(element::ptr& container, int max_width)			LITEHTML_RETURN_FUNC(0)
-void litehtml::element::add_positioned(element::ptr& el)							LITEHTML_EMPTY_FUNC
+int litehtml::element::place_element(const ptr &el, int max_width)					LITEHTML_RETURN_FUNC(0)
+int litehtml::element::render_inline(const ptr &container, int max_width)			LITEHTML_RETURN_FUNC(0)
+void litehtml::element::add_positioned(const ptr &el)							LITEHTML_EMPTY_FUNC
 int litehtml::element::find_next_line_top( int top, int width, int def_right )		LITEHTML_RETURN_FUNC(0)
 litehtml::element_float litehtml::element::get_float() const						LITEHTML_RETURN_FUNC(float_none)
-void litehtml::element::add_float(element::ptr& el, int x, int y)					LITEHTML_EMPTY_FUNC
-void litehtml::element::update_floats(int dy, element::ptr& parent)					LITEHTML_EMPTY_FUNC
+void litehtml::element::add_float(const ptr &el, int x, int y)					LITEHTML_EMPTY_FUNC
+void litehtml::element::update_floats(int dy, const ptr &parent)					LITEHTML_EMPTY_FUNC
 int litehtml::element::get_line_left( int y )										LITEHTML_RETURN_FUNC(0)
 int litehtml::element::get_line_right( int y, int def_right )						LITEHTML_RETURN_FUNC(def_right)
 int litehtml::element::get_left_floats_height() const								LITEHTML_RETURN_FUNC(0)
@@ -316,8 +316,8 @@ bool litehtml::element::is_floats_holder() const									LITEHTML_RETURN_FUNC(fa
 void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML_EMPTY_FUNC
 void litehtml::element::init()														LITEHTML_EMPTY_FUNC
 int litehtml::element::render( int x, int y, int max_width, bool second_pass )		LITEHTML_RETURN_FUNC(0)
-bool litehtml::element::appendChild(litehtml::element::ptr& el)						LITEHTML_RETURN_FUNC(false)
-bool litehtml::element::removeChild(litehtml::element::ptr& el)						LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::appendChild(const ptr &el)						LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::removeChild(const ptr &el)						LITEHTML_RETURN_FUNC(false)
 void litehtml::element::clearRecursive()											LITEHTML_EMPTY_FUNC
 const litehtml::tchar_t* litehtml::element::get_tagName() const						LITEHTML_RETURN_FUNC(_t(""))
 void litehtml::element::set_tagName( const tchar_t* tag )							LITEHTML_EMPTY_FUNC

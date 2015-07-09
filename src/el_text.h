@@ -14,7 +14,7 @@ namespace litehtml
 		bool			m_use_transformed;
 		bool			m_draw_spaces;
 	public:
-		el_text(const tchar_t* text, std::shared_ptr<litehtml::document>& doc);
+		el_text(const tchar_t* text, const std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_text();
 
 		virtual void				get_text(tstring& text) override;

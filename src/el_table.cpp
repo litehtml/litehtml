@@ -5,7 +5,7 @@
 #include <algorithm>
 
 
-litehtml::el_table::el_table(std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
+litehtml::el_table::el_table(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
 	m_border_spacing_x	= 0;
 	m_border_spacing_y	= 0;
@@ -18,7 +18,7 @@ litehtml::el_table::~el_table()
 
 }
 
-bool litehtml::el_table::appendChild(litehtml::element::ptr& el)
+bool litehtml::el_table::appendChild(const litehtml::element::ptr& el)
 {
 	if(!el)	return false;
 	if(!t_strcmp(el->get_tagName(), _t("tbody")) || !t_strcmp(el->get_tagName(), _t("thead")) || !t_strcmp(el->get_tagName(), _t("tfoot")))

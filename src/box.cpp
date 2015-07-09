@@ -18,7 +18,7 @@ int litehtml::block_box::width()
 	return m_element->width();
 }
 
-void litehtml::block_box::add_element(element::ptr& el)
+void litehtml::block_box::add_element(const element::ptr &el)
 {
 	m_element = el;
 	el->m_box = this;
@@ -66,7 +66,7 @@ void litehtml::block_box::finish(bool last_box)
 	}
 }
 
-bool litehtml::block_box::can_hold( element::ptr& el, white_space ws )
+bool litehtml::block_box::can_hold(const element::ptr &el, white_space ws)
 {
 	if(m_element || el->is_inline_box())
 	{
@@ -147,7 +147,7 @@ int litehtml::line_box::width()
 	return m_width;
 }
 
-void litehtml::line_box::add_element(element::ptr& el)
+void litehtml::line_box::add_element(const element::ptr &el)
 {
 	el->m_skip	= false;
 	el->m_box	= 0;
@@ -371,7 +371,7 @@ void litehtml::line_box::finish(bool last_box)
 	m_baseline = (base_line - y1) - (m_height - line_height);
 }
 
-bool litehtml::line_box::can_hold(element::ptr& el, white_space ws)
+bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws)
 {
 	if(!el->is_inline_box()) return false;
 

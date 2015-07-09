@@ -9,7 +9,7 @@ namespace litehtml
 	{
 		tstring	m_src;
 	public:
-		el_image(std::shared_ptr<litehtml::document>& doc);
+		el_image(const std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_image(void);
 
 		virtual int		line_height() const override;

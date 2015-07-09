@@ -2,7 +2,7 @@
 #include "el_para.h"
 #include "document.h"
 
-litehtml::el_para::el_para(std::shared_ptr<litehtml::document>& doc) : litehtml::html_tag(doc)
+litehtml::el_para::el_para(const std::shared_ptr<litehtml::document>& doc) : litehtml::html_tag(doc)
 {
 }
 

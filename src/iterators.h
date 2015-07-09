@@ -9,7 +9,7 @@ namespace litehtml
 	class iterator_selector
 	{
 	public:
-		virtual bool select(element::ptr& el) = 0;
+		virtual bool select(const element::ptr& el) = 0;
 	};
 
 	class elements_iterator
@@ -42,7 +42,7 @@ namespace litehtml
 		iterator_selector*			m_select;
 	public:
 
-		elements_iterator(element::ptr& el, iterator_selector* go_inside, iterator_selector* select)
+		elements_iterator(const element::ptr& el, iterator_selector* go_inside, iterator_selector* select)
 		{ 
 			m_el			= el;
 			m_idx			= -1; 
@@ -64,24 +64,24 @@ namespace litehtml
 	class go_inside_inline : public iterator_selector
 	{
 	public:
-		virtual bool select(element::ptr& el);
+		virtual bool select(const element::ptr& el);
 	};
 
 	class go_inside_table : public iterator_selector
 	{
 	public:
-		virtual bool select(element::ptr& el);
+		virtual bool select(const element::ptr& el);
 	};
 
 	class table_rows_selector : public iterator_selector
 	{
 	public:
-		virtual bool select(element::ptr& el);
+		virtual bool select(const element::ptr& el);
 	};
 
 	class table_cells_selector : public iterator_selector
 	{
 	public:
-		virtual bool select(element::ptr& el);
+		virtual bool select(const element::ptr& el);
 	};
 }

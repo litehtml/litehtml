@@ -3,7 +3,7 @@
 #include "document.h"
 
 
-litehtml::el_link::el_link(std::shared_ptr<litehtml::document>& doc) : litehtml::html_tag(doc)
+litehtml::el_link::el_link(const std::shared_ptr<litehtml::document>& doc) : litehtml::html_tag(doc)
 {
 
 }

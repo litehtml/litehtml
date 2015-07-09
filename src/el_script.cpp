@@ -3,7 +3,7 @@
 #include "document.h"
 
 
-litehtml::el_script::el_script(std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
+litehtml::el_script::el_script(const std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
 {
 
 }
@@ -18,7 +18,7 @@ void litehtml::el_script::parse_attributes()
 	//TODO: pass script text to document container
 }
 
-bool litehtml::el_script::appendChild(litehtml::element::ptr& el)
+bool litehtml::el_script::appendChild(const ptr &el)
 {
 	el->get_text(m_text);
 	return true;

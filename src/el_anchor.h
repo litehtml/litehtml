@@ -6,7 +6,7 @@ namespace litehtml
 	class el_anchor : public html_tag
 	{
 	public:
-		el_anchor(std::shared_ptr<litehtml::document>& doc);
+		el_anchor(const std::shared_ptr<litehtml::document>& doc);
 		virtual ~el_anchor();
 
 		virtual void	on_click() override;

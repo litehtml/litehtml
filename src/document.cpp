@@ -500,60 +500,61 @@ bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y
 litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_name, const string_map& attributes)
 {
 	element::ptr newTag;
+	document::ptr this_doc = shared_from_this();
 	if(m_container)
 	{
-		newTag = m_container->create_element(tag_name, attributes, shared_from_this());
+		newTag = m_container->create_element(tag_name, attributes, this_doc);
 	}
 	if(!newTag)
 	{
 		if(!t_strcmp(tag_name, _t("br")))
 		{
-			newTag = std::make_shared<litehtml::el_break>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_break>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("p")))
 		{
-			newTag = std::make_shared<litehtml::el_para>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_para>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("img")))
 		{
-			newTag = std::make_shared<litehtml::el_image>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_image>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("table")))
 		{
-			newTag = std::make_shared<litehtml::el_table>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_table>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("td")) || !t_strcmp(tag_name, _t("th")))
 		{
-			newTag = std::make_shared<litehtml::el_td>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_td>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("link")))
 		{
-			newTag = std::make_shared<litehtml::el_link>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_link>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("title")))
 		{
-			newTag = std::make_shared<litehtml::el_title>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_title>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("a")))
 		{
-			newTag = std::make_shared<litehtml::el_anchor>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_anchor>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("tr")))
 		{
-			newTag = std::make_shared<litehtml::el_tr>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_tr>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("style")))
 		{
-			newTag = std::make_shared<litehtml::el_style>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_style>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("base")))
 		{
-			newTag = std::make_shared<litehtml::el_base>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_base>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("body")))
 		{
-			newTag = std::make_shared<litehtml::el_body>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_body>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("div")))
 		{
-			newTag = std::make_shared<litehtml::el_div>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_div>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("script")))
 		{
-			newTag = std::make_shared<litehtml::el_script>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_script>(this_doc);
 		} else if(!t_strcmp(tag_name, _t("font")))
 		{
-			newTag = std::make_shared<litehtml::el_font>(shared_from_this());
+			newTag = std::make_shared<litehtml::el_font>(this_doc);
 		} else
 		{
-			newTag = std::make_shared<litehtml::html_tag>(shared_from_this());
+			newTag = std::make_shared<litehtml::html_tag>(this_doc);
 		}
 	}
 

@@ -4,7 +4,7 @@
 #include "el_space.h"
 #include "el_image.h"
 
-litehtml::el_before_after_base::el_before_after_base(std::shared_ptr<litehtml::document>& doc, bool before) : html_tag(doc)
+litehtml::el_before_after_base::el_before_after_base(const std::shared_ptr<litehtml::document>& doc, bool before) : html_tag(doc)
 {
 	if(before)
 	{

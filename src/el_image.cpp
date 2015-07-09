@@ -2,7 +2,7 @@
 #include "el_image.h"
 #include "document.h"
 
-litehtml::el_image::el_image(std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
+litehtml::el_image::el_image(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
 	m_display = display_inline_block;
 }

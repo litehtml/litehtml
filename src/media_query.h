@@ -34,7 +34,7 @@ namespace litehtml
 		media_query();
 		media_query(const media_query& val);
 
-		static media_query::ptr create_from_string(const tstring& str, std::shared_ptr<document>& doc);
+		static media_query::ptr create_from_string(const tstring& str, const std::shared_ptr<document>& doc);
 		bool check(const media_features& features) const;
 	};
 
@@ -50,7 +50,7 @@ namespace litehtml
 		media_query_list();
 		media_query_list(const media_query_list& val);
 
-		static media_query_list::ptr create_from_string(const tstring& str, std::shared_ptr<document>& doc);
+		static media_query_list::ptr create_from_string(const tstring& str, const std::shared_ptr<document>& doc);
 		bool is_used() const;
 		bool apply_media_features(const media_features& features);	// returns true if the m_is_used changed
 	};

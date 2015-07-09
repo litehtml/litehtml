@@ -4,7 +4,7 @@
 #include "document.h"
 
 
-void litehtml::css::parse_stylesheet(const tchar_t* str, const tchar_t* baseurl, std::shared_ptr<document>& doc, media_query_list::ptr& media)
+void litehtml::css::parse_stylesheet(const tchar_t* str, const tchar_t* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
 {
 	tstring text = str;
 
@@ -99,7 +99,7 @@ void litehtml::css::parse_css_url( const tstring& str, tstring& url )
 	}
 }
 
-bool litehtml::css::parse_selectors( const tstring& txt, litehtml::style::ptr styles, media_query_list::ptr& media )
+bool litehtml::css::parse_selectors( const tstring& txt, const litehtml::style::ptr& styles, const media_query_list::ptr& media )
 {
 	tstring selector = txt;
 	trim(selector);
@@ -129,7 +129,7 @@ void litehtml::css::sort_selectors()
 	sort(m_selectors.begin(), m_selectors.end(), std::less<css_selector::ptr>( ));
 }
 
-void litehtml::css::parse_atrule(const tstring& text, const tchar_t* baseurl, std::shared_ptr<document>& doc, media_query_list::ptr& media)
+void litehtml::css::parse_atrule(const tstring& text, const tchar_t* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
 {
 	if(text.substr(0, 7) == _t("@import"))
 	{

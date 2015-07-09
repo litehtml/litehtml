@@ -3,7 +3,7 @@
 #include "document.h"
 
 
-litehtml::el_style::el_style(std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
+litehtml::el_style::el_style(const std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
 {
 
 }
@@ -24,7 +24,7 @@ void litehtml::el_style::parse_attributes()
 	get_document()->add_stylesheet( text.c_str(), 0, get_attr(_t("media")) );
 }
 
-bool litehtml::el_style::appendChild( litehtml::element::ptr& el )
+bool litehtml::el_style::appendChild(const ptr &el)
 {
 	m_children.push_back(el);
 	return true;

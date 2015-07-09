@@ -80,25 +80,25 @@ namespace litehtml
 		virtual void			select_all(const css_selector& selector, elements_vector& res);
 
 	public:
-		html_tag(std::shared_ptr<litehtml::document>& doc);
+		html_tag(const std::shared_ptr<litehtml::document>& doc);
 		virtual ~html_tag();
 
 		/* render functions */
 
 		virtual int					render(int x, int y, int max_width, bool second_pass = false) override;
 
-		virtual int					render_inline(element::ptr& container, int max_width) override;
-		virtual int					place_element(element::ptr& el, int max_width) override;
+		virtual int					render_inline(const element::ptr &container, int max_width) override;
+		virtual int					place_element(const element::ptr &el, int max_width) override;
 		virtual bool				fetch_positioned() override;
 		virtual void				render_positioned(render_type rt = render_all) override;
 
-		int							new_box(element::ptr& el, int max_width);
+		int							new_box(const element::ptr &el, int max_width);
 
-		int							get_cleared_top(element::ptr& el, int line_top) const;
+		int							get_cleared_top(const element::ptr &el, int line_top) const;
 		int							finish_last_box(bool end_of_render = false);
 
-		virtual bool				appendChild(litehtml::element::ptr& el) override;
-		virtual bool				removeChild(litehtml::element::ptr& el) override;
+		virtual bool				appendChild(const element::ptr &el) override;
+		virtual bool				removeChild(const element::ptr &el) override;
 		virtual void				clearRecursive() override;
 		virtual const tchar_t*		get_tagName() const override;
 		virtual void				set_tagName(const tchar_t* tag) override;
@@ -165,8 +165,8 @@ namespace litehtml
 		virtual element::ptr		select_one(const css_selector& selector) override;
 
 		virtual element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0) override;
-		virtual element::ptr		find_adjacent_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0) override;
-		virtual element::ptr		find_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0) override;
+		virtual element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0) override;
 		virtual void				get_text(tstring& text) override;
 		virtual void				parse_attributes() override;
 
@@ -183,9 +183,9 @@ namespace litehtml
 		virtual int					get_line_left(int y) override;
 		virtual int					get_line_right(int y, int def_right) override;
 		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right) override;
-		virtual void				add_float(element::ptr& el, int x, int y) override;
-		virtual void				update_floats(int dy, element::ptr& parent) override;
-		virtual void				add_positioned(element::ptr& el) override;
+		virtual void				add_float(const element::ptr &el, int x, int y) override;
+		virtual void				update_floats(int dy, const element::ptr &parent) override;
+		virtual void				add_positioned(const element::ptr &el) override;
 		virtual int					find_next_line_top(int top, int width, int def_right) override;
 		virtual void				apply_vertical_align() override;
 		virtual void				draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;

@@ -35,8 +35,8 @@ namespace litehtml
 		virtual litehtml::box_type	get_type() = 0;
 		virtual int					height() = 0;
 		virtual int					width() = 0;
-		virtual void				add_element(element::ptr& el) = 0;
-		virtual bool				can_hold(element::ptr& el, white_space ws) = 0;
+		virtual void				add_element(const element::ptr &el) = 0;
+		virtual bool				can_hold(const element::ptr &el, white_space ws) = 0;
 		virtual void				finish(bool last_box = false) = 0;
 		virtual bool				is_empty() = 0;
 		virtual int					baseline() = 0;
@@ -61,8 +61,8 @@ namespace litehtml
 		virtual litehtml::box_type	get_type();
 		virtual int					height();
 		virtual int					width();
-		virtual void				add_element(element::ptr& el);
-		virtual bool				can_hold(element::ptr& el, white_space ws);
+		virtual void				add_element(const element::ptr &el);
+		virtual bool				can_hold(const element::ptr &el, white_space ws);
 		virtual void				finish(bool last_box = false);
 		virtual bool				is_empty();
 		virtual int					baseline();
@@ -98,8 +98,8 @@ namespace litehtml
 		virtual litehtml::box_type	get_type();
 		virtual int					height();
 		virtual int					width();
-		virtual void				add_element(element::ptr& el);
-		virtual bool				can_hold(element::ptr& el, white_space ws);
+		virtual void				add_element(const element::ptr &el);
+		virtual bool				can_hold(const element::ptr &el, white_space ws);
 		virtual void				finish(bool last_box = false);
 		virtual bool				is_empty();
 		virtual int					baseline();

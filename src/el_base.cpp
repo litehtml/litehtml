@@ -2,7 +2,7 @@
 #include "el_base.h"
 #include "document.h"
 
-litehtml::el_base::el_base(std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
+litehtml::el_base::el_base(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
 	
 }

@@ -30,7 +30,7 @@ namespace litehtml
 		
 		virtual void select_all(const css_selector& selector, elements_vector& res);
 	public:
-		element(std::shared_ptr<litehtml::document>& doc);
+		element(const std::shared_ptr<litehtml::document>& doc);
 		virtual ~element();
 
 		// returns refer to m_pos member;
@@ -95,16 +95,16 @@ namespace litehtml
 		virtual element::ptr		select_one(const css_selector& selector);
 
 		virtual int					render(int x, int y, int max_width, bool second_pass = false);
-		virtual int					render_inline(element::ptr& container, int max_width);
-		virtual int					place_element(element::ptr& el, int max_width);
+		virtual int					render_inline(const ptr &container, int max_width);
+		virtual int					place_element(const ptr &el, int max_width);
 		virtual void				calc_outlines( int parent_width );
 		virtual void				calc_auto_margins(int parent_width);
 		virtual void				apply_vertical_align();
 		virtual bool				fetch_positioned();
 		virtual void				render_positioned(render_type rt = render_all);
 
-		virtual bool				appendChild(litehtml::element::ptr& el);
-		virtual bool				removeChild(litehtml::element::ptr& el);
+		virtual bool				appendChild(const ptr &el);
+		virtual bool				removeChild(const ptr &el);
 		virtual void				clearRecursive();
 
 		virtual const tchar_t*		get_tagName() const;
@@ -163,9 +163,9 @@ namespace litehtml
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
 		virtual element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual bool				is_ancestor(element::ptr& el) const;
-		virtual element::ptr		find_adjacent_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual element::ptr		find_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual bool				is_ancestor(const ptr &el) const;
+		virtual element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual bool				is_first_child_inline(const element::ptr& el) const;
 		virtual bool				is_last_child_inline(const element::ptr& el);
 		virtual bool				have_inline_child() const;
@@ -178,9 +178,9 @@ namespace litehtml
 		virtual int					get_line_left(int y);
 		virtual int					get_line_right(int y, int def_right);
 		virtual void				get_line_left_right(int y, int def_right, int& ln_left, int& ln_right);
-		virtual void				add_float(element::ptr& el, int x, int y);
-		virtual void				update_floats(int dy, element::ptr& parent);
-		virtual void				add_positioned(element::ptr& el);
+		virtual void				add_float(const ptr &el, int x, int y);
+		virtual void				update_floats(int dy, const ptr &parent);
+		virtual void				add_positioned(const ptr &el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
 		virtual int					get_zindex() const;
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);

@@ -8,7 +8,7 @@
 #include <locale>
 #include "el_before_after.h"
 
-litehtml::html_tag::html_tag(std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
+litehtml::html_tag::html_tag(const std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
 {
 	m_box_sizing			= box_sizing_content_box;
 	m_z_index				= 0;
@@ -38,7 +38,7 @@ litehtml::html_tag::~html_tag()
 
 }
 
-bool litehtml::html_tag::appendChild(litehtml::element::ptr& el)
+bool litehtml::html_tag::appendChild(const element::ptr &el)
 {
 	if(el)
 	{
@@ -49,7 +49,7 @@ bool litehtml::html_tag::appendChild(litehtml::element::ptr& el)
 	return false;
 }
 
-bool litehtml::html_tag::removeChild(litehtml::element::ptr& el)
+bool litehtml::html_tag::removeChild(const element::ptr &el)
 {
 	if(el && el->parent() == shared_from_this())
 	{
@@ -171,7 +171,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 
 		if(apply != select_no_match)
 		{
-			used_selector::ptr us = std::make_unique<used_selector>(sel, false);
+			used_selector::ptr us = std::unique_ptr<used_selector>(new used_selector(sel, false));
 
 			if(sel->is_media_valid())
 			{
@@ -557,7 +557,7 @@ void litehtml::html_tag::init()
 		}
 		else
 		{
-			m_grid = std::make_unique<table_grid>();
+			m_grid = std::unique_ptr<table_grid>(new table_grid());
 		}
 
 		go_inside_table 		table_selector;
@@ -1303,7 +1303,7 @@ int litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 	return ret_width;
 }
 
-void litehtml::html_tag::add_float(element::ptr& el, int x, int y)
+void litehtml::html_tag::add_float(const element::ptr &el, int x, int y)
 {
 	if(is_floats_holder())
 	{
@@ -1328,7 +1328,7 @@ void litehtml::html_tag::add_float(element::ptr& el, int x, int y)
 				{
 					if(fb.pos.right() > i->pos.right())
 					{
-						m_floats_left.insert(i, fb);
+						m_floats_left.insert(i, std::move(fb));
 						inserted = true;
 						break;
 					}
@@ -1351,7 +1351,7 @@ void litehtml::html_tag::add_float(element::ptr& el, int x, int y)
 				{
 					if(fb.pos.left() < i->pos.left())
 					{
-						m_floats_right.insert(i, fb);
+						m_floats_right.insert(i, std::move(fb));
 						inserted = true;
 						break;
 					}
@@ -1602,7 +1602,7 @@ void litehtml::html_tag::parse_background()
 	}
 }
 
-void litehtml::html_tag::add_positioned(element::ptr& el)
+void litehtml::html_tag::add_positioned(const element::ptr &el)
 {
 	if (m_el_position != element_position_static || (!have_parent()))
 	{
@@ -2153,7 +2153,7 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 	}
 }
 
-int litehtml::html_tag::render_inline( element::ptr& container, int max_width )
+int litehtml::html_tag::render_inline(const element::ptr &container, int max_width)
 {
 	int ret_width = 0;
 	int rw = 0;
@@ -2168,7 +2168,7 @@ int litehtml::html_tag::render_inline( element::ptr& container, int max_width )
 	return ret_width;
 }
 
-int litehtml::html_tag::place_element(element::ptr& el, int max_width)
+int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 {
 	if(el->get_display() == display_none) return 0;
 
@@ -2509,7 +2509,7 @@ int litehtml::html_tag::finish_last_box(bool end_of_render)
 	return line_top;
 }
 
-int litehtml::html_tag::new_box(element::ptr& el, int max_width)
+int litehtml::html_tag::new_box(const element::ptr &el, int max_width)
 {
 	int line_top	= get_cleared_top(el, finish_last_box());
 
@@ -2557,16 +2557,16 @@ int litehtml::html_tag::new_box(element::ptr& el, int max_width)
 
 		font_metrics fm;
 		get_font(&fm);
-		m_boxes.emplace_back(std::make_unique<line_box>(line_top, line_left + first_line_margin + text_indent, line_right, line_height(), fm, m_text_align));
+		m_boxes.emplace_back(std::unique_ptr<line_box>(new line_box(line_top, line_left + first_line_margin + text_indent, line_right, line_height(), fm, m_text_align)));
 	} else
 	{
-		m_boxes.emplace_back(std::make_unique<block_box>(line_top, line_left, line_right));
+		m_boxes.emplace_back(std::unique_ptr<block_box>(new block_box(line_top, line_left, line_right)));
 	}
 
 	return line_top;
 }
 
-int litehtml::html_tag::get_cleared_top(element::ptr& el, int line_top) const
+int litehtml::html_tag::get_cleared_top(const element::ptr &el, int line_top) const
 {
 	switch(el->get_clear())
 	{
@@ -3406,7 +3406,7 @@ void litehtml::html_tag::get_redraw_box(litehtml::position& pos, int x /*= 0*/, 
 	}
 }
 
-litehtml::element::ptr litehtml::html_tag::find_adjacent_sibling( element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ )
+litehtml::element::ptr litehtml::html_tag::find_adjacent_sibling( const element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ )
 {
 	element::ptr ret;
 	for(auto& e : m_children)
@@ -3443,7 +3443,7 @@ litehtml::element::ptr litehtml::html_tag::find_adjacent_sibling( element::ptr& 
 	return 0;
 }
 
-litehtml::element::ptr litehtml::html_tag::find_sibling(element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/)
+litehtml::element::ptr litehtml::html_tag::find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/)
 {
 	element::ptr ret = 0;
 	for(auto& e : m_children)
@@ -3497,7 +3497,7 @@ bool litehtml::html_tag::is_only_child(const element::ptr& el, bool of_type) con
 	return true;
 }
 
-void litehtml::html_tag::update_floats(int dy, element::ptr& parent)
+void litehtml::html_tag::update_floats(int dy, const element::ptr &parent)
 {
 	if(is_floats_holder())
 	{

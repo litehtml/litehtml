@@ -94,7 +94,7 @@ namespace litehtml
 		bool							media_changed();
 		bool							lang_changed();
 		bool                            match_lang(const tstring & lang);
-		void							add_tabular(element::ptr& el);
+		void							add_tabular(const element::ptr& el);
 
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
 		static litehtml::document::ptr createFromUTF8(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0);
@@ -113,7 +113,7 @@ namespace litehtml
 	{
 		return m_root;
 	}
-	inline void document::add_tabular(element::ptr& el)
+	inline void document::add_tabular(const element::ptr& el)
 	{
 		m_tabular_elements.push_back(el);
 	}

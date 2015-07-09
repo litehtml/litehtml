@@ -46,15 +46,17 @@ namespace litehtml
 
 		virtual	void				set_caption(const litehtml::tchar_t* caption) = 0;
 		virtual	void				set_base_url(const litehtml::tchar_t* base_url) = 0;
-		virtual void				link(std::shared_ptr<litehtml::document>& doc, litehtml::element::ptr el) = 0;
-		virtual void				on_anchor_click(const litehtml::tchar_t* url, litehtml::element::ptr el) = 0;
+		virtual void				link(std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el) = 0;
+		virtual void				on_anchor_click(const litehtml::tchar_t* url, const litehtml::element::ptr& el) = 0;
 		virtual	void				set_cursor(const litehtml::tchar_t* cursor) = 0;
 		virtual	void				transform_text(litehtml::tstring& text, litehtml::text_transform tt) = 0;
 		virtual void				import_css(litehtml::tstring& text, const litehtml::tstring& url, litehtml::tstring& baseurl) = 0;
 		virtual void				set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) = 0;
 		virtual void				del_clip() = 0;
 		virtual void				get_client_rect(litehtml::position& client) const = 0;
-		virtual std::shared_ptr<litehtml::element>	create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, std::shared_ptr<litehtml::document>& doc) = 0;
+		virtual std::shared_ptr<litehtml::element>	create_element(const litehtml::tchar_t *tag_name,
+																	 const litehtml::string_map &attributes,
+																	 const std::shared_ptr<litehtml::document> &doc) = 0;
 
 		virtual void				get_media_features(litehtml::media_features& media) const = 0;
 		virtual void				get_language(litehtml::tstring& language, litehtml::tstring & culture) const = 0;
