@@ -110,7 +110,7 @@ void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 		const tchar_t* opacity_str = get_style_property(_t("opacity"), true, 0);
 		if(opacity_str)
 		{
-			opacity = float(t_atof(opacity_str) * 255.0f);
+			opacity = float(t_atof(opacity_str));
 		}
 
 		m_doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos, opacity);

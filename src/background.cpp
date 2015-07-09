@@ -11,7 +11,7 @@ litehtml::background::background(void)
 	m_color.red		= 0;
 	m_color.green	= 0;
 	m_color.blue	= 0;
-	m_opacity		= 255.0f;
+	m_opacity		= 1.0f;
 }
 
 litehtml::background::background( const background& val )
@@ -57,7 +57,7 @@ litehtml::background_paint::background_paint()
 	color.red		= 0;
 	color.green		= 0;
 	color.blue		= 0;
-	opacity			= 255.0f;
+	opacity			= 1.0f;
 }
 
 litehtml::background_paint::background_paint( const background_paint& val )

@@ -1376,7 +1376,7 @@ void litehtml::html_tag::parse_background()
 	const tchar_t* opacity = get_style_property(_t("opacity"), true, 0);
 	if(opacity)
 	{
-		m_bg.m_opacity = float(t_atof(opacity) * 255.0f);
+		m_bg.m_opacity = float(t_atof(opacity));
 	}
 
 	// parse background-position
