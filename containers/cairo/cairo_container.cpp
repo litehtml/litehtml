@@ -872,7 +872,7 @@ void cairo_container::unlock_images_cache()
 	LeaveCriticalSection(&m_img_sync);
 }
 
-std::shared_ptr<litehtml::element> cairo_container::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, std::shared_ptr<litehtml::document>& doc)
+std::shared_ptr<litehtml::element> cairo_container::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, const std::shared_ptr<litehtml::document>& doc)
 {
 	return 0;
 }
@@ -959,6 +959,6 @@ void cairo_container::transform_text( litehtml::tstring& text, litehtml::text_tr
 #endif
 }
 
-void cairo_container::link(std::shared_ptr<litehtml::document>& doc, litehtml::element::ptr el)
+void cairo_container::link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el)
 {
 }

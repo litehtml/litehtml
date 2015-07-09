@@ -79,10 +79,10 @@ public:
 	virtual	void						transform_text(litehtml::tstring& text, litehtml::text_transform tt) override;
 	virtual void						set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) override;
 	virtual void						del_clip() override;
-	virtual std::shared_ptr<litehtml::element>	create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, std::shared_ptr<litehtml::document>& doc) override;
+	virtual std::shared_ptr<litehtml::element>	create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, const std::shared_ptr<litehtml::document>& doc) override;
 	virtual void						get_media_features(litehtml::media_features& media) const override;
 	virtual void						get_language(litehtml::tstring& language, litehtml::tstring & culture) const override;
-	virtual void						link(std::shared_ptr<litehtml::document>& doc, litehtml::element::ptr el) override;
+	virtual void						link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el) override;
 
 
 	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;
