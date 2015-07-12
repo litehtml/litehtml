@@ -189,7 +189,7 @@ void litehtml::line_box::finish(bool last_box)
 		return;
 	}
 
-	for(elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
+	for(auto i = m_items.rbegin(); i != m_items.rend(); i++)
 	{
 		if((*i)->is_white_space() || (*i)->is_break())
 		{
@@ -228,17 +228,17 @@ void litehtml::line_box::finish(bool last_box)
 
 	m_height = 0;
 	// find line box baseline and line-height
-	for(size_t i = 0; i < m_items.size(); i++)
+	for(const auto& el : m_items)
 	{
-		if(m_items[i]->get_display() == display_inline_text)
+		if(el->get_display() == display_inline_text)
 		{
 			font_metrics fm;
-			m_items[i]->get_font(&fm);
+			el->get_font(&fm);
 			base_line	= std::max(base_line,	fm.base_line());
-			line_height	= std::max(line_height,	m_items[i]->line_height());
+			line_height = std::max(line_height, el->line_height());
 			m_height = std::max(m_height, fm.height);
 		}
-		m_items[i]->m_pos.x += add_x;
+		el->m_pos.x += add_x;
 	}
 
 	if(m_height)
@@ -251,58 +251,58 @@ void litehtml::line_box::finish(bool last_box)
 	int y1	= 0;
 	int y2	= m_height;
 
-	for(size_t i = 0; i < m_items.size(); i++)
+	for (const auto& el : m_items)
 	{
-		if(m_items[i]->get_display() == display_inline_text)
+		if(el->get_display() == display_inline_text)
 		{
 			font_metrics fm;
-			m_items[i]->get_font(&fm);
-			m_items[i]->m_pos.y = m_height - base_line - fm.ascent;
+			el->get_font(&fm);
+			el->m_pos.y = m_height - base_line - fm.ascent;
 		} else
 		{
-			switch(m_items[i]->get_vertical_align())
+			switch(el->get_vertical_align())
 			{
 			case va_super:
 			case va_sub:
 			case va_baseline:
-				m_items[i]->m_pos.y = m_height - base_line - m_items[i]->height() + m_items[i]->get_base_line() + m_items[i]->content_margins_top();
+				el->m_pos.y = m_height - base_line - el->height() + el->get_base_line() + el->content_margins_top();
 				break;
 			case va_top:
-				m_items[i]->m_pos.y = y1 + m_items[i]->content_margins_top();
+				el->m_pos.y = y1 + el->content_margins_top();
 				break;
 			case va_text_top:
-				m_items[i]->m_pos.y = m_height - base_line - m_font_metrics.ascent + m_items[i]->content_margins_top();
+				el->m_pos.y = m_height - base_line - m_font_metrics.ascent + el->content_margins_top();
 				break;
 			case va_middle:
-				m_items[i]->m_pos.y = m_height - base_line - m_font_metrics.x_height / 2 - m_items[i]->height() / 2 + m_items[i]->content_margins_top();
+				el->m_pos.y = m_height - base_line - m_font_metrics.x_height / 2 - el->height() / 2 + el->content_margins_top();
 				break;
 			case va_bottom:
-				m_items[i]->m_pos.y = y2 - m_items[i]->height() + m_items[i]->content_margins_top();
+				el->m_pos.y = y2 - el->height() + el->content_margins_top();
 				break;
 			case va_text_bottom:
-				m_items[i]->m_pos.y = m_height - base_line + m_font_metrics.descent - m_items[i]->height() + m_items[i]->content_margins_top();
+				el->m_pos.y = m_height - base_line + m_font_metrics.descent - el->height() + el->content_margins_top();
 				break;
 			}
-			y1 = std::min(y1, m_items[i]->top());
-			y2 = std::max(y2, m_items[i]->bottom());
+			y1 = std::min(y1, el->top());
+			y2 = std::max(y2, el->bottom());
 		}
 	}
 
 	css_offsets offsets;
 
-	for(size_t i = 0; i < m_items.size(); i++)
+	for (const auto& el : m_items)
 	{
-		m_items[i]->m_pos.y -= y1;
-		m_items[i]->m_pos.y += m_box_top;
-		if(m_items[i]->get_display() != display_inline_text)
+		el->m_pos.y -= y1;
+		el->m_pos.y += m_box_top;
+		if(el->get_display() != display_inline_text)
 		{
-			switch(m_items[i]->get_vertical_align())
+			switch(el->get_vertical_align())
 			{
 			case va_top:
-				m_items[i]->m_pos.y = m_box_top + m_items[i]->content_margins_top();
+				el->m_pos.y = m_box_top + el->content_margins_top();
 				break;
 			case va_bottom:
-				m_items[i]->m_pos.y = m_box_top + (y2 - y1) - m_items[i]->height() + m_items[i]->content_margins_top();
+				el->m_pos.y = m_box_top + (y2 - y1) - el->height() + el->content_margins_top();
 				break;
 			case va_baseline:
 				//TODO: process vertical align "baseline"
@@ -327,14 +327,14 @@ void litehtml::line_box::finish(bool last_box)
 
 		// update position for relative positioned elements
 
-		if(m_items[i]->get_element_position(&offsets) == element_position_relative)
+		if(el->get_element_position(&offsets) == element_position_relative)
 		{
 			if(!offsets.left.is_predefined())
 			{
-				m_items[i]->m_pos.x += offsets.left.calc_percent(m_box_right - m_box_left);
+				el->m_pos.x += offsets.left.calc_percent(m_box_right - m_box_left);
 			} else if(!offsets.right.is_predefined())
 			{
-				m_items[i]->m_pos.x -= offsets.right.calc_percent(m_box_right - m_box_left);
+				el->m_pos.x -= offsets.right.calc_percent(m_box_right - m_box_left);
 			}
 			if(!offsets.top.is_predefined())
 			{
@@ -349,7 +349,7 @@ void litehtml::line_box::finish(bool last_box)
 					}
 				}
 
-				m_items[i]->m_pos.y += offsets.top.calc_percent(h);
+				el->m_pos.y += offsets.top.calc_percent(h);
 			} else if(!offsets.bottom.is_predefined())
 			{
 				int h = 0;
@@ -363,7 +363,7 @@ void litehtml::line_box::finish(bool last_box)
 					}
 				}
 
-				m_items[i]->m_pos.y -= offsets.bottom.calc_percent(h);
+				el->m_pos.y -= offsets.bottom.calc_percent(h);
 			}
 		}
 	}
@@ -396,7 +396,7 @@ bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws)
 bool litehtml::line_box::have_last_space()
 {
 	bool ret = false;
-	for (elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
+	for (auto i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
 	{
 		if((*i)->is_white_space() || (*i)->is_break())
 		{
@@ -412,7 +412,7 @@ bool litehtml::line_box::have_last_space()
 bool litehtml::line_box::is_empty()
 {
 	if(m_items.empty()) return true;
-	for (elements_vector::reverse_iterator i = m_items.rbegin(); i != m_items.rend(); i++)
+	for (auto i = m_items.rbegin(); i != m_items.rend(); i++)
 	{
 		if(!(*i)->m_skip || (*i)->is_break())
 		{
@@ -477,8 +477,8 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
 		m_box_left	= left;
 		m_box_right	= right;
 		m_width = 0;
-		elements_vector::iterator remove_begin = m_items.end();
-		for (elements_vector::iterator i = m_items.begin() + 1; i != m_items.end(); i++)
+		auto remove_begin = m_items.end();
+		for (auto i = m_items.begin() + 1; i != m_items.end(); i++)
 		{
 			element::ptr el = (*i);
 
@@ -500,9 +500,9 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
 			els.insert(els.begin(), remove_begin, m_items.end());
 			m_items.erase(remove_begin, m_items.end());
 
-			for(elements_vector::iterator i = els.begin(); i != els.end(); i++)
+			for(const auto& el : els)
 			{
-				(*i)->m_box = 0;
+				el->m_box = 0;
 			}
 		}
 	}
