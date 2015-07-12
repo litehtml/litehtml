@@ -584,26 +584,6 @@ void litehtml::html_tag::init()
 
 		m_grid->finish();
 	}
-	else
-	{
-		//remove white spaces
-		elements_vector::iterator i = m_children.begin();
-		while (i != m_children.end())
-		{
-			if ((*i)->is_white_space())
-			{
-				i++;
-				while (i != m_children.end() && (*i)->is_white_space())
-				{
-					i = m_children.erase(i);
-				}
-			}
-			else
-			{
-				i++;
-			}
-		}
-	}
 
 	for (auto& el : m_children)
 	{
@@ -2157,8 +2137,40 @@ int litehtml::html_tag::render_inline(const element::ptr &container, int max_wid
 {
 	int ret_width = 0;
 	int rw = 0;
+
+	white_space ws = get_white_space();
+	bool skip_spaces = false;
+	if (ws == white_space_normal ||
+		ws == white_space_nowrap ||
+		ws == white_space_pre_line)
+	{
+		skip_spaces = true;
+	}
+	bool was_space = false;
+
 	for (auto& el : m_children)
 	{
+		// skip spaces to make rendering a bit faster
+		if (skip_spaces)
+		{
+			if (el->is_white_space())
+			{
+				if (was_space)
+				{
+					el->skip(true);
+					continue;
+				}
+				else
+				{
+					was_space = true;
+				}
+			}
+			else
+			{
+				was_space = false;
+			}
+		}
+
 		rw = container->place_element( el, max_width );
 		if(rw > ret_width)
 		{
@@ -2285,33 +2297,35 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 		break;
 	default:
 		{
-			int line_top = 0;
-			if(!m_boxes.empty())
+			line_context line_ctx;
+			line_ctx.top = 0;
+			if (!m_boxes.empty())
 			{
-				line_top = m_boxes.back()->top();
+				line_ctx.top = m_boxes.back()->top();
 			}
-			int line_left	= 0;
-			int line_right	= max_width;
-			get_line_left_right(line_top, max_width, line_left, line_right);
+			line_ctx.left = 0;
+			line_ctx.right = max_width;
+			line_ctx.fix_top();
+			get_line_left_right(line_ctx.top, max_width, line_ctx.left, line_ctx.right);
 
 			switch(el->get_display())
 			{
 			case display_inline_block:
-				ret_width = el->render(line_left, line_top, line_right);
+				ret_width = el->render(line_ctx.left, line_ctx.top, line_ctx.right);
 				break;
 			case display_block:		
 				if(el->is_replaced() || el->is_floats_holder())
 				{
 					element::ptr el_parent = el->parent();
-					el->m_pos.width	= el->get_css_width().calc_percent(line_right - line_left);
+					el->m_pos.width = el->get_css_width().calc_percent(line_ctx.right - line_ctx.left);
 					el->m_pos.height = el->get_css_height().calc_percent(el_parent ? el_parent->m_pos.height : 0);
 				}
-				el->calc_outlines(line_right - line_left);
+				el->calc_outlines(line_ctx.right - line_ctx.left);
 				break;
 			case display_inline_text:
 				{
 					litehtml::size sz;
-					el->get_content_size(sz, line_right);
+					el->get_content_size(sz, line_ctx.right);
 					el->m_pos = sz;
 				}
 				break;
@@ -2330,15 +2344,19 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 			}
 			if(add_box)
 			{
-				line_top = new_box(el, max_width);
+				new_box(el, max_width, line_ctx);
 			} else if(!m_boxes.empty())
 			{
-				line_top = m_boxes.back()->top();
+				line_ctx.top = m_boxes.back()->top();
 			}
 
-			line_left	= 0;
-			line_right	= max_width;
-			get_line_left_right(line_top, max_width, line_left, line_right);
+			if (line_ctx.top != line_ctx.calculatedTop)
+			{
+				line_ctx.left = 0;
+				line_ctx.right = max_width;
+				line_ctx.fix_top();
+				get_line_left_right(line_ctx.top, max_width, line_ctx.left, line_ctx.right);
+			}
 
 			if(!el->is_inline_box())
 			{
@@ -2349,7 +2367,7 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 						int shift = el->margin_top();
 						if(shift >= 0)
 						{
-							line_top -=shift;
+							line_ctx.top -= shift;
 							m_boxes.back()->y_shift(-shift);
 						}
 					}
@@ -2367,7 +2385,7 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 					}
 					if(shift >= 0)
 					{
-						line_top -= shift;
+						line_ctx.top -= shift;
 						m_boxes.back()->y_shift(-shift);
 					}
 				}
@@ -2377,7 +2395,7 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 			{
 			case display_table:
 			case display_list_item:
-				ret_width = el->render(line_left, line_top, line_right - line_left);
+				ret_width = el->render(line_ctx.left, line_ctx.top, line_ctx.width());
 				break;
 			case display_block:
 			case display_table_cell:
@@ -2385,10 +2403,10 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 			case display_table_row:
 				if(el->is_replaced() || el->is_floats_holder())
 				{
-					ret_width = el->render(line_left, line_top, line_right - line_left) + line_left + (max_width - line_right);
+					ret_width = el->render(line_ctx.left, line_ctx.top, line_ctx.width()) + line_ctx.left + (max_width - line_ctx.right);
 				} else
 				{
-					ret_width = el->render(0, line_top, max_width);
+					ret_width = el->render(0, line_ctx.top, max_width);
 				}
 				break;
 			default:
@@ -2400,7 +2418,7 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 
 			if(el->is_inline_box() && !el->skip())
 			{
-				ret_width = el->right() + (max_width - line_right);
+				ret_width = el->right() + (max_width - line_ctx.right);
 			}
 		}
 		break;
@@ -2509,22 +2527,24 @@ int litehtml::html_tag::finish_last_box(bool end_of_render)
 	return line_top;
 }
 
-int litehtml::html_tag::new_box(const element::ptr &el, int max_width)
+int litehtml::html_tag::new_box(const element::ptr &el, int max_width, line_context& line_ctx)
 {
-	int line_top	= get_cleared_top(el, finish_last_box());
+	line_ctx.top = get_cleared_top(el, finish_last_box());
 
-	int line_left	= 0;
-	int line_right	= max_width;
-	get_line_left_right(line_top, max_width, line_left, line_right);
+	line_ctx.left = 0;
+	line_ctx.right = max_width;
+	line_ctx.fix_top();
+	get_line_left_right(line_ctx.top, max_width, line_ctx.left, line_ctx.right);
 
 	if(el->is_inline_box() || el->is_floats_holder())
 	{
-		if(el->width() > line_right - line_left)
+		if (el->width() > line_ctx.right - line_ctx.left)
 		{
-			line_top	= find_next_line_top(line_top, el->width(), max_width);
-			line_left	= 0;
-			line_right	= max_width;
-			get_line_left_right(line_top, max_width, line_left, line_right);
+			line_ctx.top = find_next_line_top(line_ctx.top, el->width(), max_width);
+			line_ctx.left = 0;
+			line_ctx.right = max_width;
+			line_ctx.fix_top();
+			get_line_left_right(line_ctx.top, max_width, line_ctx.left, line_ctx.right);
 		}
 	}
 
@@ -2557,13 +2577,13 @@ int litehtml::html_tag::new_box(const element::ptr &el, int max_width)
 
 		font_metrics fm;
 		get_font(&fm);
-		m_boxes.emplace_back(std::unique_ptr<line_box>(new line_box(line_top, line_left + first_line_margin + text_indent, line_right, line_height(), fm, m_text_align)));
+		m_boxes.emplace_back(std::unique_ptr<line_box>(new line_box(line_ctx.top, line_ctx.left + first_line_margin + text_indent, line_ctx.right, line_height(), fm, m_text_align)));
 	} else
 	{
-		m_boxes.emplace_back(std::unique_ptr<block_box>(new block_box(line_top, line_left, line_right)));
+		m_boxes.emplace_back(std::unique_ptr<block_box>(new block_box(line_ctx.top, line_ctx.left, line_ctx.right)));
 	}
 
-	return line_top;
+	return line_ctx.top;
 }
 
 int litehtml::html_tag::get_cleared_top(const element::ptr &el, int line_top) const
@@ -3966,11 +3986,48 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 		m_pos.height = block_height;
 	}
 
+	white_space ws = get_white_space();
+	bool skip_spaces = false;
+	if (ws == white_space_normal ||
+		ws == white_space_nowrap ||
+		ws == white_space_pre_line)
+	{
+		skip_spaces = true;
+	}
+
+	bool was_space = false;
+
 	for (auto el : m_children)
 	{
-		el_position = el->get_element_position();
-		if ((el_position == element_position_absolute || el_position == element_position_fixed) && second_pass) continue;
+		// we don't need process absolute and fixed positioned element on the second pass
+		if (second_pass)
+		{
+			el_position = el->get_element_position();
+			if ((el_position == element_position_absolute || el_position == element_position_fixed)) continue;
+		}
 
+		// skip spaces to make rendering a bit faster
+		if (skip_spaces)
+		{
+			if (el->is_white_space())
+			{
+				if (was_space)
+				{
+					el->skip(true);
+					continue;
+				}
+				else
+				{
+					was_space = true;
+				}
+			}
+			else
+			{
+				was_space = false;
+			}
+		}
+
+		// place element into rendering flow
 		int rw = place_element(el, max_width);
 		if (rw > ret_width)
 		{

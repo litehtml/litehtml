@@ -12,6 +12,23 @@
 
 namespace litehtml
 {
+	struct line_context
+	{
+		int calculatedTop;
+		int top;
+		int left;
+		int right;
+
+		int width()
+		{
+			return right - left;
+		}
+		void fix_top()
+		{
+			calculatedTop = top;
+		}
+	};
+
 	class html_tag : public element
 	{
 		friend class elements_iterator;
@@ -92,7 +109,7 @@ namespace litehtml
 		virtual bool				fetch_positioned() override;
 		virtual void				render_positioned(render_type rt = render_all) override;
 
-		int							new_box(const element::ptr &el, int max_width);
+		int							new_box(const element::ptr &el, int max_width, line_context& line_ctx);
 
 		int							get_cleared_top(const element::ptr &el, int line_top) const;
 		int							finish_last_box(bool end_of_render = false);
