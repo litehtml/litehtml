@@ -35,7 +35,7 @@ namespace litehtml
 		virtual uint_ptr			create_font(const tchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration, litehtml::font_metrics* fm) = 0;
 		virtual void				delete_font(uint_ptr hFont) = 0;
 		virtual int					text_width(const tchar_t* text, uint_ptr hFont) = 0;
-		virtual void				draw_text(uint_ptr hdc, const tchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;
+		virtual void				draw_text(uint_ptr hdc, const tchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos, float opacity) = 0;
 		virtual int					pt_to_px(int pt) = 0;
 		virtual int					get_default_font_size() const = 0;
 		virtual const tchar_t*		get_default_font_name() const = 0;
