@@ -101,10 +101,11 @@ namespace litehtml
 		void							add_media_list(media_query_list::ptr list);
 		bool							media_changed();
 		bool							lang_changed();
-		bool                            match_lang(const tstring & lang);
+		bool							match_lang(const tstring & lang);
 		void							add_tabular(element::ptr el);
 		void							set_event_handler(event_handler::ptr eh);
 		event_handler *					get_event_handler();
+		void							finalize();
 
 		static litehtml::document::ptr createEmptyDocument(litehtml::document_container* objPainter, litehtml::context* ctx);
 		static litehtml::document::ptr createFromString(const tchar_t* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = 0, litehtml::document::ptr doc = nullptr);
