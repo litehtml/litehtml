@@ -267,7 +267,7 @@ bool litehtml::element::set_inner_html(const tchar_t* text)
 
 void litehtml::element::finalize()
 {
-	for (auto child : m_children)
+	for (auto & child : m_children)
 	{
 		child->finalize();
 	}
