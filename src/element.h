@@ -167,6 +167,7 @@ namespace litehtml
 		virtual bool				have_inline_child();
 		virtual void				get_content_size(size& sz, int max_width);
 		virtual void				init();
+		virtual void				finalize();
 		virtual bool				is_floats_holder() const;
 		virtual int					get_floats_height(element_float el_float = float_none) const;
 		virtual int					get_left_floats_height() const;

@@ -316,6 +316,7 @@ int litehtml::element::get_floats_height(element_float el_float) const				LITEHT
 bool litehtml::element::is_floats_holder() const									LITEHTML_RETURN_FUNC(false)
 void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML_EMPTY_FUNC
 void litehtml::element::init()														LITEHTML_EMPTY_FUNC
+void litehtml::element::finalize()													LITEHTML_EMPTY_FUNC
 int litehtml::element::render( int x, int y, int max_width, bool second_pass )		LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::appendChild( litehtml::element* el )						LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::addChildAfter( litehtml::element* new_child, litehtml::element * existing_child ) LITEHTML_RETURN_FUNC(false)
