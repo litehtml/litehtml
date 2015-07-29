@@ -265,6 +265,14 @@ bool litehtml::element::set_inner_html(const tchar_t* text)
 	return document::createElements(m_children, m_doc, text, this);
 }
 
+void litehtml::element::finalize()
+{
+	for (auto child : m_children)
+	{
+		child->finalize();
+	}
+}
+
 void litehtml::element::calc_auto_margins(int parent_width)							LITEHTML_EMPTY_FUNC
 litehtml::background* litehtml::element::get_background(bool own_only)				LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::get_element_by_point( int x, int y, int client_x, int client_y )	LITEHTML_RETURN_FUNC(0)
@@ -316,7 +324,6 @@ int litehtml::element::get_floats_height(element_float el_float) const				LITEHT
 bool litehtml::element::is_floats_holder() const									LITEHTML_RETURN_FUNC(false)
 void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML_EMPTY_FUNC
 void litehtml::element::init()														LITEHTML_EMPTY_FUNC
-void litehtml::element::finalize()													LITEHTML_EMPTY_FUNC
 int litehtml::element::render( int x, int y, int max_width, bool second_pass )		LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::appendChild( litehtml::element* el )						LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::addChildAfter( litehtml::element* new_child, litehtml::element * existing_child ) LITEHTML_RETURN_FUNC(false)
