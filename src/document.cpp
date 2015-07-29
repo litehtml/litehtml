@@ -695,10 +695,6 @@ void litehtml::document::add_media_list( media_query_list::ptr list )
 void litehtml::document::finalize()
 {
 	m_root->finalize();
-	for ( auto & element : m_root->children() )
-	{
-		element->finalize();
-	}
 }
 
 void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
