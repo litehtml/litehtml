@@ -571,6 +571,8 @@ void litehtml::html_tag::init()
 	{
 		(*i)->init();
 	}
+
+	litehtml::element::init();
 }
 
 int litehtml::html_tag::select(const css_selector& selector, bool apply_pseudo)
@@ -1700,7 +1702,7 @@ bool litehtml::html_tag::on_mouse_over()
 	event_handler * handler = m_doc->get_event_handler();
 	mouse_event event;
 
-	event.m_type = event_mouseover;
+	event.m_type = mouse_event_mouseover;
 
 	element* el = this;
 	while(el)
@@ -1806,7 +1808,7 @@ bool litehtml::html_tag::on_mouse_leave()
 	event_handler * handler = m_doc->get_event_handler();
 	mouse_event event;
 
-	event.m_type = event_mouseleave;
+	event.m_type = mouse_event_mouseleave;
 	//todo: event.m_position;
 
 	if(handler)
@@ -1815,7 +1817,7 @@ bool litehtml::html_tag::on_mouse_leave()
 	   handler->on_mouse_event( *this, r, event );
 	}
 
-	event.m_type = event_mouseout;
+	event.m_type = mouse_event_mouseout;
 
 	element* el = this;
 	while(el)
@@ -1845,7 +1847,7 @@ bool litehtml::html_tag::on_lbutton_down()
 	event_handler * h = m_doc->get_event_handler();
 	event_response response;
 	mouse_event event;
-	event.m_type = event_mousedown;
+	event.m_type = mouse_event_mousedown;
 	bool ret = false;
 
 	element* el = this;
@@ -1873,7 +1875,7 @@ bool litehtml::html_tag::on_lbutton_up()
 	event_handler * h = m_doc->get_event_handler();
 	event_response response;
 	mouse_event event;
-	event.m_type = event_mouseup;
+	event.m_type = mouse_event_mouseup;
 
 	element* el = this;
 	while(el)
@@ -1886,7 +1888,7 @@ bool litehtml::html_tag::on_lbutton_up()
 		el = el->parent();
 	}
 
-	event.m_type = event_click;
+	event.m_type = mouse_event_click;
 	el = this;
 
 	while(el)

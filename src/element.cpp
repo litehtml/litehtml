@@ -265,8 +265,21 @@ bool litehtml::element::set_inner_html(const tchar_t* text)
 	return document::createElements(m_children, m_doc, text, this);
 }
 
+void litehtml::element::init()
+{
+	event_handler * h = m_doc->get_event_handler();
+	event_response response;
+
+	h->on_browser_event( *this, response, browser_event_load );
+}
+
 void litehtml::element::finalize()
 {
+	event_handler * h = m_doc->get_event_handler();
+	event_response response;
+
+	h->on_browser_event( *this, response, browser_event_unload );
+
 	for (auto & child : m_children)
 	{
 		child->finalize();
@@ -323,7 +336,6 @@ int litehtml::element::get_right_floats_height() const								LITEHTML_RETURN_FU
 int litehtml::element::get_floats_height(element_float el_float) const				LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::is_floats_holder() const									LITEHTML_RETURN_FUNC(false)
 void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML_EMPTY_FUNC
-void litehtml::element::init()														LITEHTML_EMPTY_FUNC
 int litehtml::element::render( int x, int y, int max_width, bool second_pass )		LITEHTML_RETURN_FUNC(0)
 bool litehtml::element::appendChild( litehtml::element* el )						LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::addChildAfter( litehtml::element* new_child, litehtml::element * existing_child ) LITEHTML_RETURN_FUNC(false)
