@@ -268,9 +268,12 @@ bool litehtml::element::set_inner_html(const tchar_t* text)
 void litehtml::element::init()
 {
 	event_handler * h = m_doc->get_event_handler();
-	event_response response;
+	if ( h )
+	{
+		event_response response;
 
-	h->on_browser_event( *this, response, browser_event_load );
+		h->on_browser_event( *this, response, browser_event_load );
+	}
 }
 
 void litehtml::element::finalize()
