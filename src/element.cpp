@@ -279,9 +279,12 @@ void litehtml::element::init()
 void litehtml::element::finalize()
 {
 	event_handler * h = m_doc->get_event_handler();
-	event_response response;
+	if ( h )
+	{
+		event_response response;
 
-	h->on_browser_event( *this, response, browser_event_unload );
+		h->on_browser_event( *this, response, browser_event_unload );
+	}
 
 	for (auto & child : m_children)
 	{
