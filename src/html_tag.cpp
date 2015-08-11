@@ -2698,6 +2698,11 @@ litehtml::vertical_align litehtml::html_tag::get_vertical_align() const
 	return m_vertical_align;
 }
 
+litehtml::css_margins litehtml::html_tag::get_css_margins() const
+{
+	return m_css_margins;
+}
+
 litehtml::css_length litehtml::html_tag::get_css_left() const
 {
 	return m_css_offsets.left;
@@ -3148,7 +3153,15 @@ void litehtml::html_tag::render_positioned(render_type rt)
 						el->m_pos.width	= m_pos.width + m_padding.left + m_padding.right - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_margins_left() + el->content_margins_right());
 						if (new_width != -1)
 						{
-							el->m_pos.x += (el->m_pos.width - new_width) / 2;
+							const css_margins & el_margins = el->get_css_margins();
+							if ( el_margins.left.is_predefined() && el_margins.right.is_predefined() )
+							{
+								el->m_pos.x += (el->m_pos.width - new_width) / 2;
+							}
+							else if ( el_margins.left.is_predefined() )
+							{
+								el->m_pos.x += (el->m_pos.width - new_width );
+							}
 							el->m_pos.width = new_width;
 						}
 						need_render = true;
@@ -3170,7 +3183,16 @@ void litehtml::html_tag::render_positioned(render_type rt)
 						el->m_pos.height	= m_pos.height + m_padding.top + m_padding.bottom - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_margins_top() + el->content_margins_bottom());
 						if (new_height != -1)
 						{
-							el->m_pos.y += (el->m_pos.height - new_height) / 2;
+							const css_margins & el_margins = el->get_css_margins();
+							if ( el_margins.top.is_predefined() && el_margins.bottom.is_predefined() )
+							{
+								el->m_pos.y += (el->m_pos.height - new_height) / 2;
+							}
+							else if ( el_margins.top.is_predefined() )
+							{
+								el->m_pos.y += (el->m_pos.height - new_height);
+							}
+
 							el->m_pos.height = new_height;
 						}
 						need_render = true;
