@@ -374,9 +374,11 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 		break;
 	case css_units_vw:
 		ret = (int)((double)m_media.width * (double)val.val() / 100.0);
+		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_vh:
 		ret = (int)((double)m_media.height * (double)val.val() / 100.0);
+		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_vmin:
 		ret = (int)((double)std::min(m_media.height, m_media.width) * (double)val.val() / 100.0);
