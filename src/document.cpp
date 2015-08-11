@@ -800,9 +800,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		break;
 	case GUMBO_NODE_COMMENT:
 		{
-			element::ptr ret = new el_comment(this);
-			ret->set_data(litehtml_from_utf8(node->v.text.text));
-			elements.push_back(ret);
+			
 		}
 		break;
 	case GUMBO_NODE_WHITESPACE:
