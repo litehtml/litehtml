@@ -382,9 +382,11 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 		break;
 	case css_units_vmin:
 		ret = (int)((double)std::min(m_media.height, m_media.width) * (double)val.val() / 100.0);
+		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_vmax:
 		ret = (int)((double)std::max(m_media.height, m_media.width) * (double)val.val() / 100.0);
+		val.set_value((float) ret, css_units_px);
 		break;
 	default:
 		ret = (int) val.val();
@@ -802,7 +804,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		break;
 	case GUMBO_NODE_COMMENT:
 		{
-			
+
 		}
 		break;
 	case GUMBO_NODE_WHITESPACE:
