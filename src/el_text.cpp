@@ -76,8 +76,8 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 	if(!font)
 	{
 		m_parent->init_font();
+		font	= m_parent->get_font(&fm);
 	}
-	font	= m_parent->get_font(&fm);
 	if(is_break())
 	{
 		m_size.height	= 0;
