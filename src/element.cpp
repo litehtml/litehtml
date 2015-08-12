@@ -318,7 +318,6 @@ void litehtml::element::set_css_width( css_length& w )								LITEHTML_EMPTY_FUN
 litehtml::element::ptr litehtml::element::get_child( int idx ) const				LITEHTML_RETURN_FUNC(0)
 size_t litehtml::element::get_children_count() const								LITEHTML_RETURN_FUNC(0)
 size_t litehtml::element::get_index() const											LITEHTML_RETURN_FUNC(-1)
-size_t litehtml::element::get_index( const litehtml::element * element ) const		LITEHTML_RETURN_FUNC(-1)
 size_t litehtml::element::get_index( const tstring & selector ) const				LITEHTML_RETURN_FUNC(-1)
 void litehtml::element::calc_outlines( int parent_width )							LITEHTML_EMPTY_FUNC
 litehtml::css_length litehtml::element::get_css_width() const						LITEHTML_RETURN_FUNC(css_length())

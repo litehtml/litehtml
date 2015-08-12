@@ -2751,15 +2751,10 @@ litehtml::element::ptr litehtml::html_tag::get_child( int idx ) const
 
 size_t litehtml::html_tag::get_index() const
 {
-	return get_index( this );
-}
-
-size_t litehtml::html_tag::get_index( const litehtml::element * element ) const
-{
 	if( m_parent )
 	{
 		auto & children = m_parent->m_children;
-		auto it = std::find( children.begin(), children.end(), element );
+		auto it = std::find( children.begin(), children.end(), this );
 
 		if( it != children.end() )
 		{

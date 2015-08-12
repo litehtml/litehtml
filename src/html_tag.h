@@ -118,7 +118,6 @@ namespace litehtml
 		virtual size_t				get_children_count() const;
 		virtual element::ptr		get_child(int idx) const;
 		virtual size_t				get_index() const override;
-		virtual size_t				get_index( const litehtml::element * element ) const override;
 		virtual size_t				get_index( const tstring & selector ) const override;
 		virtual element_position	get_element_position(css_offsets* offsets = 0) const;
 		virtual overflow			get_overflow() const;
