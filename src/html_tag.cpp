@@ -2751,15 +2751,46 @@ litehtml::element::ptr litehtml::html_tag::get_child( int idx ) const
 
 size_t litehtml::html_tag::get_index() const
 {
+	return get_index( this );
+}
+
+size_t litehtml::html_tag::get_index( const litehtml::element * element ) const
+{
 	if( m_parent )
 	{
 		auto & children = m_parent->m_children;
-		auto it = std::find( children.begin(), children.end(), this );
+		auto it = std::find( children.begin(), children.end(), element );
 
 		if( it != children.end() )
 		{
 			return it - children.begin();
 		}
+	}
+
+	return -1;
+}
+
+size_t litehtml::html_tag::get_index( const tstring & selector ) const
+{
+	if( m_parent )
+	{
+		int index = -1;
+		auto & children = m_parent->m_children;
+
+		for ( auto & child : children )
+		{
+			if ( child->get_tagName() == selector )
+			{
+				++index;
+			}
+
+			if ( child == this )
+			{
+				break;
+			}
+		}
+
+		return index;
 	}
 
 	return -1;
