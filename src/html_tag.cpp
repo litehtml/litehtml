@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <locale>
 #include "el_before_after.h"
+#include <set>
 
 litehtml::html_tag::html_tag(litehtml::document* doc) : litehtml::element(doc)
 {
@@ -3222,42 +3223,43 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 {
 	if(!is_visible()) return;
 
-	std::map<int, bool> zindexes;
+	std::set<int> zindexes;
 	if(with_positioned)
 	{
-		for(elements_vector::iterator i = m_positioned.begin(); i != m_positioned.end(); i++)
+		for(elements_vector::iterator i = m_positioned.begin(); i != m_positioned.end(); ++i)
 		{
-			zindexes[(*i)->get_zindex()];
+			zindexes.insert( (*i)->get_zindex() );
 		}
 
-		for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end(); idx++)
+		auto idx = zindexes.cbegin();
+
+		for(; idx != zindexes.cend(); ++idx)
 		{
-			if(idx->first < 0)
+			if(*idx < 0)
 			{
-				draw_children(hdc, x, y, clip, draw_positioned, idx->first);
+				draw_children(hdc, x, y, clip, draw_positioned, *idx);
 			}
+			else
+			{
+				break;
+			}
+		}
+
+		draw_children(hdc, x, y, clip, draw_block, 0);
+		draw_children(hdc, x, y, clip, draw_floats, 0);
+		draw_children(hdc, x, y, clip, draw_inlines, 0);
+
+
+		for(;idx != zindexes.cend(); ++idx)
+		{
+			draw_children(hdc, x, y, clip, draw_positioned, *idx);
 		}
 	}
-	draw_children(hdc, x, y, clip, draw_block, 0);
-	draw_children(hdc, x, y, clip, draw_floats, 0);
-	draw_children(hdc, x, y, clip, draw_inlines, 0);
-	if(with_positioned)
+	else
 	{
-		for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end(); idx++)
-		{
-			if(idx->first == 0)
-			{
-				draw_children(hdc, x, y, clip, draw_positioned, idx->first);
-			}
-		}
-
-		for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end(); idx++)
-		{
-			if(idx->first > 0)
-			{
-				draw_children(hdc, x, y, clip, draw_positioned, idx->first);
-			}
-		}
+		draw_children(hdc, x, y, clip, draw_block, 0);
+		draw_children(hdc, x, y, clip, draw_floats, 0);
+		draw_children(hdc, x, y, clip, draw_inlines, 0);
 	}
 }
 
