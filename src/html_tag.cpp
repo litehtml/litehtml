@@ -3229,7 +3229,9 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 			zindexes.insert( (*i)->get_zindex() );
 		}
 
-		for(auto idx = zindexes.cbegin(); idx != zindexes.cend(); ++idx)
+		auto idx = zindexes.cbegin();
+
+		for(; idx != zindexes.cend(); ++idx)
 		{
 			if(*idx < 0)
 			{
@@ -3240,21 +3242,22 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 				break;
 			}
 		}
-	}
 
-	draw_children(hdc, x, y, clip, draw_block, 0);
-	draw_children(hdc, x, y, clip, draw_floats, 0);
-	draw_children(hdc, x, y, clip, draw_inlines, 0);
+		draw_children(hdc, x, y, clip, draw_block, 0);
+		draw_children(hdc, x, y, clip, draw_floats, 0);
+		draw_children(hdc, x, y, clip, draw_inlines, 0);
 
-	if(with_positioned)
-	{
-		for(auto idx = zindexes.cbegin(); idx != zindexes.cend(); ++idx)
+
+		for(;idx != zindexes.cend(); ++idx)
 		{
-			if( *idx >= 0 )
-			{
-				draw_children(hdc, x, y, clip, draw_positioned, *idx);
-			}
+			draw_children(hdc, x, y, clip, draw_positioned, *idx);
 		}
+	}
+	else
+	{
+		draw_children(hdc, x, y, clip, draw_block, 0);
+		draw_children(hdc, x, y, clip, draw_floats, 0);
+		draw_children(hdc, x, y, clip, draw_inlines, 0);
 	}
 }
 
