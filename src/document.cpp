@@ -67,10 +67,7 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 	elements_vector
 		root_elements;
 
-	if(createElements(root_elements, doc, str, nullptr, user_styles))
-	{
-		doc->m_root = root_elements.back();
-	}
+	createElements(root_elements, doc, str, nullptr, user_styles);
 
 	return doc;
 }
@@ -102,6 +99,15 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 
 		elements = html->m_children;
 	}
+	else
+	{
+		if ( elements.size() > 0 )
+		{
+			document->m_root = elements.back();
+		}
+	}
+
+	
 
 	if( text )
 	{

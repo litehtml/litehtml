@@ -2766,6 +2766,32 @@ size_t litehtml::html_tag::get_index() const
 	return -1;
 }
 
+size_t litehtml::html_tag::get_index( const tstring & selector ) const
+{
+	if( m_parent )
+	{
+		int index = -1;
+		auto & children = m_parent->m_children;
+
+		for ( auto & child : children )
+		{
+			if ( child->get_tagName() == selector )
+			{
+				++index;
+			}
+
+			if ( child == this )
+			{
+				break;
+			}
+		}
+
+		return index;
+	}
+
+	return -1;
+}
+
 void litehtml::html_tag::set_css_width( css_length& w )
 {
 	m_css_width = w;
