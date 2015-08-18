@@ -12,44 +12,57 @@ namespace litehtml
 		element::ptr	el_row;
 		int				top;
 		int				bottom;
+		css_length		css_height;
+		int				min_height;
 
 		table_row()
 		{
+			min_height		= 0;
 			top				= 0;
 			bottom			= 0;
 			border_bottom	= 0;
 			border_top		= 0;
 			height			= 0;
 			el_row			= nullptr;
+			css_height.predef(0);
 		}
 
 		table_row(int h, element::ptr& row)
 		{
+			min_height		= 0;
 			height			= h;
 			el_row			= row;
 			border_bottom	= 0;
 			border_top		= 0;
 			top				= 0;
 			bottom			= 0;
+			if (row)
+			{
+				css_height = row->get_css_height();
+			}
 		}
 
 		table_row(const table_row& val)
 		{
+			min_height = val.min_height;
 			top = val.top;
 			bottom = val.bottom;
 			border_bottom = val.border_bottom;
 			border_top = val.border_top;
 			height = val.height;
+			css_height = val.css_height;
 			el_row = val.el_row;
 		}
 
 		table_row(table_row&& val)
 		{
+			min_height = val.min_height;
 			top = val.top;
 			bottom = val.bottom;
 			border_bottom = val.border_bottom;
 			border_top = val.border_top;
 			height = val.height;
+			css_height = val.css_height;
 			el_row = std::move(val.el_row);
 		}
 	};
@@ -220,5 +233,6 @@ namespace litehtml
 		int				calc_table_width(int block_width, bool is_auto, int& min_table_width, int& max_table_width);
 		void			calc_horizontal_positions(margins& table_borders, border_collapse bc, int bdr_space_x);
 		void			calc_vertical_positions(margins& table_borders, border_collapse bc, int bdr_space_y);
+		void			calc_rows_height(int blockHeight, int borderSpacingY);
 	};
 }
