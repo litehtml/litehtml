@@ -4415,16 +4415,6 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 	}
 
 
-	int unconstrained_table_height = 0;
-
-	// compute vertical size inferred by cells
-	for (int row = 0; row < m_grid.rows_count(); row++)
-	{
-		unconstrained_table_height += m_grid.row(row).height;
-	}
-
-	unconstrained_table_height += m_border_spacing_y * (m_grid.rows_count() + 1);
-
 	// calculate block height
 	int block_height = 0;
 	if (get_predefined_height(block_height))
@@ -4453,16 +4443,7 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 	int extra_row_height = 0;
 	int minimum_table_height = std::max(block_height, min_height);
 
-	if(minimum_table_height > unconstrained_table_height)
-	{
-		extra_row_height = (minimum_table_height - unconstrained_table_height) / m_grid.rows_count();
-
-		for (int row = 0; row < m_grid.rows_count(); row++)
-		{
-			m_grid.row(row).height += extra_row_height;
-		}
-	}
-
+	m_grid.calc_rows_height(minimum_table_height, m_border_spacing_y);
 	m_grid.calc_vertical_positions(m_borders, m_border_collapse, m_border_spacing_y);
 
 	int table_height = 0;

@@ -6,48 +6,47 @@ namespace litehtml
 	{
 		typedef std::vector<table_row>	vector;
 
-		int			height;
-		int			border_top;
-		int			border_bottom;
-		element*	el_row;
-		int			top;
-		int			bottom;
+		int				height;
+		int				border_top;
+		int				border_bottom;
+		element*		el_row;
+		int				top;
+		int				bottom;
+		css_length		css_height;
+		int				min_height;
 
 		table_row()
 		{
+			min_height		= 0;
 			top				= 0;
 			bottom			= 0;
 			border_bottom	= 0;
 			border_top		= 0;
 			height			= 0;
-			el_row			= 0;
+			el_row			= nullptr;
+			css_height.predef(0);
 		}
 
 		table_row(int h, element* row)
 		{
+			min_height		= 0;
 			height			= h;
 			el_row			= row;
 			border_bottom	= 0;
 			border_top		= 0;
 			top				= 0;
 			bottom			= 0;
-		}
-
-		table_row(const table_row& val)
-		{
-			top				= val.top;
-			bottom			= val.bottom;
-			border_bottom	= val.border_bottom;
-			border_top		= val.border_top;
-			height			= val.height;
-			el_row			= val.el_row;
+			if (row)
+			{
+				css_height = row->get_css_height();
+			}
 		}
 	};
 
 	struct table_column
 	{
 		typedef std::vector<table_column>	vector;
-		
+
 		int			min_width;
 		int			max_width;
 		int			width;
@@ -79,18 +78,6 @@ namespace litehtml
 			min_width		= min_w;
 			width			= 0;
 			css_width.predef(0);
-		}
-
-		table_column(const table_column& val)
-		{
-			left			= val.left;
-			right			= val.right;
-			border_left		= val.border_left;
-			border_right	= val.border_right;
-			max_width		= val.max_width;
-			min_width		= val.min_width;
-			width			= val.width;
-			css_width		= val.css_width;
 		}
 	};
 
@@ -144,19 +131,6 @@ namespace litehtml
 			el				= 0;
 		}
 
-		table_cell(const table_cell& val)
-		{
-			el				= val.el;
-			colspan			= val.colspan;
-			rowspan			= val.rowspan;
-			width			= val.width;
-			height			= val.height;
-			min_width		= val.min_width;
-			min_height		= val.min_height;
-			max_width		= val.max_width;
-			max_height		= val.max_height;
-			borders			= val.borders;
-		}
 	};
 
 	class table_grid
@@ -196,5 +170,6 @@ namespace litehtml
 		int				calc_table_width(int block_width, bool is_auto, int& min_table_width, int& max_table_width);
 		void			calc_horizontal_positions(margins& table_borders, border_collapse bc, int bdr_space_x);
 		void			calc_vertical_positions(margins& table_borders, border_collapse bc, int bdr_space_y);
+		void			calc_rows_height(int blockHeight, int borderSpacingY);
 	};
 }
