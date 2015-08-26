@@ -4414,6 +4414,28 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 		}
 	}
 
+	// Calculate vertical table spacing
+	int table_height_spacing = 0;
+	if (m_border_collapse == border_collapse_separate)
+	{
+		table_height_spacing = m_border_spacing_y * (m_grid.rows_count() + 1);
+	}
+	else
+	{
+		table_height_spacing = 0;
+
+		if (m_grid.rows_count())
+		{
+			table_height_spacing -= std::min(border_top(), m_grid.row(0).border_top);
+			table_height_spacing -= std::min(border_bottom(), m_grid.row(m_grid.rows_count() - 1).border_bottom);
+		}
+
+		for (int row = 1; row < m_grid.rows_count(); row++)
+		{
+			table_height_spacing -= std::min(m_grid.row(row).border_top, m_grid.row(row - 1).border_bottom);
+		}
+	}
+
 
 	// calculate block height
 	int block_height = 0;
@@ -4443,7 +4465,7 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 	int extra_row_height = 0;
 	int minimum_table_height = std::max(block_height, min_height);
 
-	m_grid.calc_rows_height(minimum_table_height, m_border_spacing_y);
+	m_grid.calc_rows_height(minimum_table_height - table_height_spacing, m_border_spacing_y);
 	m_grid.calc_vertical_positions(m_borders, m_border_collapse, m_border_spacing_y);
 
 	int table_height = 0;
