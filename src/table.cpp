@@ -117,10 +117,9 @@ void litehtml::table_grid::finish()
 
 			if(cell(col, row)->el && cell(col, row)->colspan <= 1)
 			{
-				if(!cell(col, row)->el->get_css_width().is_predefined())
+				if (!cell(col, row)->el->get_css_width().is_predefined() && m_columns[col].css_width.is_predefined())
 				{
 					m_columns[col].css_width = cell(col, row)->el->get_css_width();
-					break;
 				}
 			}
 		}
@@ -474,7 +473,7 @@ void litehtml::table_grid::calc_rows_height(int blockHeight, int borderSpacingY)
 		min_table_height += row.height;
 	}
 
-	min_table_height += borderSpacingY * ((int) m_rows.size() + 1);
+	//min_table_height += borderSpacingY * ((int) m_rows.size() + 1);
 
 	if (blockHeight > min_table_height)
 	{
