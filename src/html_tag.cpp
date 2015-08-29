@@ -4170,6 +4170,15 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 		}
 	}
 
+	if (is_floats_holder() && !second_pass)
+	{
+		for (const auto& fb : m_floats_left)
+		{
+			fb.el->apply_relative_shift(fb.el->parent()->calc_width(m_pos.width));
+		}
+	}
+
+
 	return ret_width;
 }
 
