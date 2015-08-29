@@ -263,6 +263,53 @@ int litehtml::element::get_inline_shift_right()
 	return ret;
 }
 
+void litehtml::element::apply_relative_shift(int parent_width)
+{
+	css_offsets offsets;
+	if (get_element_position(&offsets) == element_position_relative)
+	{
+		element::ptr parent_ptr = parent();
+		if (!offsets.left.is_predefined())
+		{
+			m_pos.x += offsets.left.calc_percent(parent_width);
+		}
+		else if (!offsets.right.is_predefined())
+		{
+			m_pos.x -= offsets.right.calc_percent(parent_width);
+		}
+		if (!offsets.top.is_predefined())
+		{
+			int h = 0;
+
+			if (offsets.top.units() == css_units_percentage)
+			{
+				element::ptr el_parent = parent();
+				if (el_parent)
+				{
+					el_parent->get_predefined_height(h);
+				}
+			}
+
+			m_pos.y += offsets.top.calc_percent(h);
+		}
+		else if (!offsets.bottom.is_predefined())
+		{
+			int h = 0;
+
+			if (offsets.top.units() == css_units_percentage)
+			{
+				element::ptr el_parent = parent();
+				if (el_parent)
+				{
+					el_parent->get_predefined_height(h);
+				}
+			}
+
+			m_pos.y -= offsets.bottom.calc_percent(h);
+		}
+	}
+}
+
 void litehtml::element::calc_auto_margins(int parent_width)							LITEHTML_EMPTY_FUNC
 const litehtml::background* litehtml::element::get_background(bool own_only)		LITEHTML_RETURN_FUNC(0)
 litehtml::element::ptr litehtml::element::get_element_by_point(int x, int y, int client_x, int client_y)	LITEHTML_RETURN_FUNC(0)

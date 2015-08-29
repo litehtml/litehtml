@@ -85,6 +85,7 @@ namespace litehtml
 		int							calc_width(int defVal) const;
 		int							get_inline_shift_left();
 		int							get_inline_shift_right();
+		void						apply_relative_shift(int parent_width);
 
 		std::shared_ptr<document>	get_document() const;
 
