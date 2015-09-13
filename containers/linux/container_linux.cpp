@@ -174,51 +174,6 @@ void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
 	cairo_restore(cr);
 }
 
-void container_linux::fill_rect( litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius )
-{
-	if(hdc)
-	{
-		cairo_t* cr = (cairo_t*) hdc;
-		cairo_save(cr);
-		apply_clip(cr);
-
-		cairo_new_path(cr);
-
-		if(radius.top_left_x.val())
-		{
-			cairo_arc(cr, pos.left() + radius.top_left_x.val(), pos.top() + radius.top_left_x.val(), radius.top_left_x.val(), M_PI, M_PI * 3.0 / 2.0);
-		} else
-		{
-			cairo_move_to(cr, pos.left(), pos.top());
-		}
-
-		cairo_line_to(cr, pos.right() - radius.top_right_x.val(), pos.top());
-
-		if(radius.top_right_x.val())
-		{
-			cairo_arc(cr, pos.right() - radius.top_right_x.val(), pos.top() + radius.top_right_x.val(), radius.top_right_x.val(), M_PI * 3.0 / 2.0, 2.0 * M_PI);
-		}
-
-		cairo_line_to(cr, pos.right(), pos.bottom() - radius.bottom_right_x.val());
-
-		if(radius.bottom_right_x.val())
-		{
-			cairo_arc(cr, pos.right() - radius.bottom_right_x.val(), pos.bottom() - radius.bottom_right_x.val(), radius.bottom_right_x.val(), 0, M_PI / 2.0);
-		}
-
-		cairo_line_to(cr, pos.left() - radius.bottom_left_x.val(), pos.bottom());
-
-		if(radius.bottom_left_x.val())
-		{
-			cairo_arc(cr, pos.left() + radius.bottom_left_x.val(), pos.bottom() - radius.bottom_left_x.val(), radius.bottom_left_x.val(), M_PI / 2.0, M_PI);
-		}
-
-		set_color(cr, color);
-		cairo_fill(cr);
-		cairo_restore(cr);
-	}
-}
-
 int container_linux::pt_to_px( int pt )
 {
 	GdkScreen* screen = gdk_screen_get_default();
@@ -320,23 +275,6 @@ void container_linux::get_image_size( const litehtml::tchar_t* src, const liteht
 		sz.width	= 0;
 		sz.height	= 0;
 	}
-}
-
-void container_linux::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos )
-{
-	cairo_t* cr = (cairo_t*) hdc;
-	cairo_save(cr);
-	apply_clip(cr);
-
-	litehtml::tstring url;
-	make_url(src, baseurl, url);
-	images_map::iterator img = m_images.find(url.c_str());
-	if(img != m_images.end())
-	{
-		draw_pixbuf(cr, img->second, pos.x, pos.y, pos.width, pos.height);
-	}
-	cairo_restore(cr);
-
 }
 
 void container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::background_paint& bg )
@@ -834,7 +772,9 @@ const litehtml::tchar_t* container_linux::get_default_font_name() const
 	return "Times New Roman";
 }
 
-litehtml::element* container_linux::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, litehtml::document* doc)
+std::shared_ptr<litehtml::element>	container_linux::create_element(const litehtml::tchar_t *tag_name,
+																	  const litehtml::string_map &attributes,
+																	  const std::shared_ptr<litehtml::document> &doc)
 {
 	return 0;
 }
@@ -935,4 +875,9 @@ void container_linux::get_language(litehtml::tstring& language, litehtml::tstrin
 {
 	language = _t("en");
 	culture = _t("");
+}
+
+void container_linux::link(const std::shared_ptr<litehtml::document> &ptr, const litehtml::element::ptr& el)
+{
+
 }
