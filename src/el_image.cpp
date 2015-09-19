@@ -206,20 +206,22 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 	// draw image as background
 	if(pos.does_intersect(clip))
 	{
-		background_paint bg;
-		bg.image				= m_src;
-		bg.clip_box				= pos;
-		bg.origin_box			= pos;
-		bg.border_box			= pos;
-		bg.border_box			+= m_padding;
-		bg.border_box			+= m_borders;
-		bg.repeat				= background_repeat_no_repeat;
-		bg.image_size.width		= pos.width;
-		bg.image_size.height	= pos.height;
-		bg.border_radius		= m_css_borders.radius.calc_percents(bg.border_box.width, bg.border_box.height);
-		bg.position_x			= pos.x;
-		bg.position_y			= pos.y;
-		get_document()->container()->draw_background(hdc, bg);
+		if (pos.width > 0 && pos.height > 0) {
+			background_paint bg;
+			bg.image				= m_src;
+			bg.clip_box				= pos;
+			bg.origin_box			= pos;
+			bg.border_box			= pos;
+			bg.border_box			+= m_padding;
+			bg.border_box			+= m_borders;
+			bg.repeat				= background_repeat_no_repeat;
+			bg.image_size.width		= pos.width;
+			bg.image_size.height	= pos.height;
+			bg.border_radius		= m_css_borders.radius.calc_percents(bg.border_box.width, bg.border_box.height);
+			bg.position_x			= pos.x;
+			bg.position_y			= pos.y;
+			get_document()->container()->draw_background(hdc, bg);
+		}
 	}
 
 	// draw borders
