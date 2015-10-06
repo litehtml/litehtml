@@ -1,6 +1,7 @@
 #include "html.h"
 #include "el_anchor.h"
 #include "document.h"
+#include <assert.h>
 
 litehtml::el_anchor::el_anchor( litehtml::document* doc ) : html_tag(doc)
 {
@@ -13,6 +14,8 @@ litehtml::el_anchor::~el_anchor()
 
 void litehtml::el_anchor::on_click()
 {
+	assert( get_pointer_events() != pointer_events_none );
+
 	const tchar_t* href = get_attr(_t("href"));
 
 	if(href)

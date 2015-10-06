@@ -8,6 +8,7 @@
 #include <locale>
 #include "el_before_after.h"
 #include <set>
+#include <assert.h>
 
 litehtml::html_tag::html_tag(litehtml::document* doc) : litehtml::element(doc)
 {
@@ -251,41 +252,9 @@ litehtml::uint_ptr litehtml::html_tag::get_font(font_metrics* fm)
 	return m_font;
 }
 
-const litehtml::tchar_t* litehtml::html_tag::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
-{
-	const tchar_t* ret = m_style.get_property(name);
-	bool pass_parent = false;
-	if(m_parent)
-	{
-		if(ret && !t_strcasecmp(ret, _t("inherit")))
-		{
-			pass_parent = true;
-		} else if(!ret && inherited)
-		{
-			pass_parent = true;
-		}
-	}
-	if(pass_parent)
-	{
-		ret = m_parent->get_style_property(name, inherited, def);
-	}
-
-	if(!ret)
-	{
-		ret = def;
-	}
-
-	return ret;
-}
-
 void litehtml::html_tag::parse_styles(bool is_reparse)
 {
-	const tchar_t* style = get_attr(_t("style"));
-
-	if(style)
-	{
-		m_style.add(style, NULL);
-	}
+	litehtml::element::parse_styles( is_reparse );
 
 	init_font();
 
@@ -1708,6 +1677,8 @@ bool litehtml::html_tag::on_mouse_over()
 	element* el = this;
 	while(el)
 	{
+		assert( el->get_pointer_events() != pointer_events_none );
+
 		if(el->set_pseudo_class(_t("hover"), true))
 		{
 			ret = true;
@@ -1812,17 +1783,18 @@ bool litehtml::html_tag::on_mouse_leave()
 	event.m_type = mouse_event_mouseleave;
 	//todo: event.m_position;
 
-	if(handler)
-	{
-	   event_response r;
-	   handler->on_mouse_event( *this, r, event );
-	}
+	assert( get_pointer_events() != pointer_events_none );
+
+	event_response r;
+	handler->on_mouse_event( *this, r, event );
 
 	event.m_type = mouse_event_mouseout;
 
 	element* el = this;
 	while(el)
 	{
+		assert( el->get_pointer_events() != pointer_events_none );
+
 		if(el->set_pseudo_class(_t("hover"), false))
 		{
 			ret = true;
@@ -1854,6 +1826,8 @@ bool litehtml::html_tag::on_lbutton_down()
 	element* el = this;
 	while(el)
 	{
+		assert( el->get_pointer_events() != pointer_events_none );
+
 		if(el->set_pseudo_class(_t("active"), true))
 		{
 			ret = true;
@@ -1881,6 +1855,8 @@ bool litehtml::html_tag::on_lbutton_up()
 	element* el = this;
 	while(el)
 	{
+		assert( el->get_pointer_events() != pointer_events_none );
+
 		if(h && !response.m_stop_propagation)
 		{
 			h->on_mouse_event( *el, response, event );
@@ -1894,6 +1870,8 @@ bool litehtml::html_tag::on_lbutton_up()
 
 	while(el)
 	{
+		assert( el->get_pointer_events() != pointer_events_none );
+
 		if(el->set_pseudo_class(_t("active"), false))
 		{
 			ret = true;
@@ -3252,9 +3230,9 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 	std::set<int> zindexes;
 	if(with_positioned)
 	{
-		for(elements_vector::iterator i = m_positioned.begin(); i != m_positioned.end(); ++i)
+		for(auto element : m_positioned )
 		{
-			zindexes.insert( (*i)->get_zindex() );
+			zindexes.insert( element->get_zindex() );
 		}
 
 		auto idx = zindexes.cbegin();
@@ -3740,7 +3718,7 @@ litehtml::element* litehtml::html_tag::get_child_by_point(int x, int y, int clie
 	{
 		element* el = (*i);
 
-		if(el->is_visible() && el->get_display() != display_inline_text)
+		if(el->get_pointer_events() != pointer_events_none && el->is_visible() && el->get_display() != display_inline_text)
 		{
 			switch(flag)
 			{
@@ -3838,29 +3816,33 @@ litehtml::element* litehtml::html_tag::get_element_by_point( int x, int y, int c
 
 	element* ret = 0;
 
-	std::map<int, bool> zindexes;
+	std::set<int> zindexes;
 
-	for(elements_vector::iterator i = m_positioned.begin(); i != m_positioned.end(); i++)
+	for(const auto & element : m_positioned )
 	{
-		zindexes[(*i)->get_zindex()];
+		zindexes.insert( element->get_zindex() );
 	}
 
-	for(std::map<int, bool>::reverse_iterator idx = zindexes.rbegin(); idx != zindexes.rend() && !ret; idx++)
+	auto idx = zindexes.crbegin();
+	for(; idx != zindexes.crend() && !ret; ++idx)
 	{
-		if(idx->first > 0)
+		if(*idx > 0)
 		{
-			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
+			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, *idx);
+		}
+		else
+		{
+			break;
 		}
 	}
 	if(ret) return ret;
 
-	for(std::map<int, bool>::reverse_iterator idx = zindexes.rbegin(); idx != zindexes.rend() && !ret; idx++)
+	if(idx != zindexes.crend() && *idx == 0)
 	{
-		if(idx->first == 0)
-		{
-			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
-		}
+		ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, 0);
+		++idx;
 	}
+
 	if(ret) return ret;
 
 	ret = get_child_by_point(x, y, client_x, client_y, draw_inlines, 0);
@@ -3873,12 +3855,9 @@ litehtml::element* litehtml::html_tag::get_element_by_point( int x, int y, int c
 	if(ret) return ret;
 
 
-	for(std::map<int, bool>::reverse_iterator idx = zindexes.rbegin(); idx != zindexes.rend() && !ret; idx++)
+	for(; idx != zindexes.crend() && !ret; ++idx)
 	{
-		if(idx->first < 0)
-		{
-			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
-		}
+		ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, *idx);
 	}
 	if(ret) return ret;
 

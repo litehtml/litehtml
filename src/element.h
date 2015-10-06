@@ -26,6 +26,8 @@ namespace litehtml
 		margins						m_padding;
 		margins						m_borders;
 		bool						m_skip;
+		pointer_events				m_pointer_events;
+		litehtml::style				m_style;
 	public:
 		element(litehtml::document* doc);
 		virtual ~element();
@@ -74,6 +76,7 @@ namespace litehtml
 		bool						collapse_top_margin()		const;
 		bool						collapse_bottom_margin()	const;
 		bool						is_positioned()				const;
+		litehtml::pointer_events	get_pointer_events() 		const;
 
 		bool						skip();
 		void						skip(bool val);
@@ -388,6 +391,11 @@ namespace litehtml
 	inline bool litehtml::element::is_positioned()	const
 	{
 		return (get_element_position() > element_position_static);
+	}
+
+	inline litehtml::pointer_events litehtml::element::get_pointer_events()	const
+	{
+		return m_pointer_events;
 	}
 
 	inline bool litehtml::element::is_visible() const

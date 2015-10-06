@@ -34,17 +34,10 @@ void litehtml::el_text::set_text( const tstring& text )
 	parse_styles( true );
 }
 
-const litehtml::tchar_t* litehtml::el_text::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
-{
-	if(inherited)
-	{
-		return m_parent->get_style_property(name, inherited, def);
-	}
-	return def;
-}
-
 void litehtml::el_text::parse_styles(bool is_reparse)
 {
+	element::parse_styles( is_reparse );
+
 	m_text_transform	= (text_transform)	value_index(get_style_property(_t("text-transform"), true,	_t("none")),	text_transform_strings,	text_transform_none);
 	if(m_text_transform != text_transform_none)
 	{
