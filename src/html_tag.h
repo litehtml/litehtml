@@ -26,7 +26,6 @@ namespace litehtml
 		box::vector				m_boxes;
 		string_vector			m_class_values;
 		tstring					m_tag;
-		litehtml::style			m_style;
 		litehtml::style			m_user_style;
 		bool					m_dirty_user_style;
 		string_map				m_attrs;
@@ -150,7 +149,6 @@ namespace litehtml
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
 
-		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
 		virtual int					get_font_size() const;
 
@@ -230,4 +228,3 @@ namespace litehtml
 		}
 	};
 }
-

@@ -35,8 +35,8 @@ namespace litehtml
 			left = right = top = bottom = 0;
 		}
 
-		int width()		const	{ return left + right; } 
-		int height()	const	{ return top + bottom; } 
+		int width()		const	{ return left + right; }
+		int height()	const	{ return top + bottom; }
 	};
 
 	struct size
@@ -127,14 +127,14 @@ namespace litehtml
 			if(!val) return true;
 
 			return (
-				left()			<= val->right()		&& 
-				right()			>= val->left()		&& 
-				bottom()		>= val->top()		&& 
+				left()			<= val->right()		&&
+				right()			>= val->left()		&&
+				bottom()		>= val->top()		&&
 				top()			<= val->bottom()	)
 				|| (
-				val->left()		<= right()			&& 
-				val->right()	>= left()			&& 
-				val->bottom()	>= top()			&& 
+				val->left()		<= right()			&&
+				val->right()	>= left()			&&
+				val->bottom()	>= top()			&&
 				val->top()		<= bottom()			);
 		}
 
@@ -527,7 +527,7 @@ namespace litehtml
 	};
 
 
-	struct floated_box 
+	struct floated_box
 	{
 		typedef std::vector<floated_box>	vector;
 
@@ -671,6 +671,21 @@ namespace litehtml
 		box_sizing_border_box,
 	};
 
+#define pointer_events_strings		_t("auto;none;visiblePainted;visibleFill;visibleStroke;visible;painted;fill;stroke;all")
+
+	enum pointer_events
+	{
+		pointer_events_auto,
+		pointer_events_none,
+		pointer_events_visiblePainted,
+		pointer_events_visibleFill,
+		pointer_events_visibleStroke,
+		pointer_events_visible,
+		pointer_events_painted,
+		pointer_events_fill,
+		pointer_events_stroke,
+		pointer_events_all
+	};
 
 #define media_type_strings		_t("none;all;screen;print;braille;embossed;handheld;projection;speech;tty;tv")
 

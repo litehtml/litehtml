@@ -292,6 +292,45 @@ void litehtml::element::finalize()
 	}
 }
 
+const litehtml::tchar_t* litehtml::element::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
+{
+	const tchar_t* ret = m_style.get_property(name);
+	bool pass_parent = false;
+	if(m_parent)
+	{
+		if(ret && !t_strcasecmp(ret, _t("inherit")))
+		{
+			pass_parent = true;
+		} else if(!ret && inherited)
+		{
+			pass_parent = true;
+		}
+	}
+	if(pass_parent)
+	{
+		ret = m_parent->get_style_property(name, inherited, def);
+	}
+
+	if(!ret)
+	{
+		ret = def;
+	}
+
+	return ret;
+}
+
+void litehtml::element::parse_styles( bool is_reparse /*= false*/ )
+{
+	const tchar_t* style = get_attr(_t("style"));
+
+	if(style)
+	{
+		m_style.add(style, NULL);
+	}
+
+	m_pointer_events	= (pointer_events)	value_index(get_style_property(_t("pointer-events"),		true,	_t("auto")),		pointer_events_strings,	pointer_events_auto);
+}
+
 void litehtml::element::calc_auto_margins(int parent_width)							LITEHTML_EMPTY_FUNC
 litehtml::background* litehtml::element::get_background(bool own_only)				LITEHTML_RETURN_FUNC(0)
 litehtml::element* litehtml::element::get_element_by_point( int x, int y, int client_x, int client_y )	LITEHTML_RETURN_FUNC(0)
@@ -356,7 +395,6 @@ void litehtml::element::refresh_styles()											LITEHTML_EMPTY_FUNC
 void litehtml::element::on_click()													LITEHTML_EMPTY_FUNC
 void litehtml::element::init_font()													LITEHTML_EMPTY_FUNC
 void litehtml::element::get_inline_boxes( position::vector& boxes )					LITEHTML_EMPTY_FUNC
-void litehtml::element::parse_styles( bool is_reparse /*= false*/ )					LITEHTML_EMPTY_FUNC
 const litehtml::tchar_t* litehtml::element::get_attr( const tchar_t* name, const tchar_t* def /*= 0*/ ) const	LITEHTML_RETURN_FUNC(def)
 bool litehtml::element::is_white_space()											LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_body() const												LITEHTML_RETURN_FUNC(false)
@@ -377,7 +415,6 @@ bool litehtml::element::is_replaced() const											LITEHTML_RETURN_FUNC(false
 int litehtml::element::line_height() const											LITEHTML_RETURN_FUNC(0)
 void litehtml::element::draw( uint_ptr hdc, int x, int y, const position* clip )	LITEHTML_EMPTY_FUNC
 void litehtml::element::draw_background( uint_ptr hdc, int x, int y, const position* clip )	LITEHTML_EMPTY_FUNC
-const litehtml::tchar_t* litehtml::element::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )	LITEHTML_RETURN_FUNC(0)
 litehtml::uint_ptr litehtml::element::get_font( font_metrics* fm /*= 0*/ )			LITEHTML_RETURN_FUNC(0)
 int litehtml::element::get_font_size()	const										LITEHTML_RETURN_FUNC(0)
 void litehtml::element::get_text( tstring& text )									LITEHTML_EMPTY_FUNC
