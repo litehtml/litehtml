@@ -26,6 +26,7 @@ namespace litehtml
 			m_box_left	= left;
 			m_box_right	= right;
 		}
+		virtual ~box() {}
 
 		int		bottom()	{ return m_box_top + height();	}
 		int		top()		{ return m_box_top;				}
