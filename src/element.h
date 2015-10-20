@@ -70,7 +70,7 @@ namespace litehtml
 		margins						get_borders()				const;
 
 		bool						in_normal_flow()			const;
-		litehtml::web_color			get_color(const tchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
+		litehtml::web_color			get_color(const string_hash & prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		bool						is_inline_box()				const;
 		position					get_placement()				const;
 		bool						collapse_top_margin()		const;
@@ -155,7 +155,7 @@ namespace litehtml
 		virtual void				parse_styles(bool is_reparse = false);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
-		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
+		virtual const tchar_t*		get_style_property(const string_hash & name, bool inherited, const tchar_t* def = 0);
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
 		virtual int					get_font_size() const;
 		virtual void				get_text(tstring& text);

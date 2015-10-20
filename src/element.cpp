@@ -48,7 +48,7 @@ bool litehtml::element::is_point_inside( int x, int y )
 	return false;
 }
 
-litehtml::web_color litehtml::element::get_color( const tchar_t* prop_name, bool inherited, const litehtml::web_color& def_color )
+litehtml::web_color litehtml::element::get_color( const string_hash & prop_name, bool inherited, const litehtml::web_color& def_color )
 {
 	const tchar_t* clrstr = get_style_property(prop_name, inherited, 0);
 	if(!clrstr)
@@ -292,7 +292,7 @@ void litehtml::element::finalize()
 	}
 }
 
-const litehtml::tchar_t* litehtml::element::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
+const litehtml::tchar_t* litehtml::element::get_style_property( const string_hash & name, bool inherited, const tchar_t* def /*= 0*/ )
 {
 	const tchar_t* ret = m_style.get_property(name);
 	bool pass_parent = false;

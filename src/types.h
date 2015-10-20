@@ -23,6 +23,8 @@ namespace litehtml
 	typedef unsigned char	byte;
 	typedef unsigned int	ucode_t;
 
+	typedef unsigned int	hash_code;
+
 	struct margins
 	{
 		int	left;
