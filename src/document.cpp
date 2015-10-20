@@ -231,17 +231,17 @@ litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, 
 
 		if(decoration)
 		{
-			std::vector<tstring> tokens;
+			string_hash_vector tokens;
 			split_string(decoration, tokens, _t(" "));
-			for(std::vector<tstring>::iterator i = tokens.begin(); i != tokens.end(); i++)
+			for(string_hash_vector::iterator i = tokens.begin(); i != tokens.end(); i++)
 			{
-				if(!t_strcasecmp(i->c_str(), _t("underline")))
+				if( *i == _t("underline") )
 				{
 					decor |= font_decoration_underline;
-				} else if(!t_strcasecmp(i->c_str(), _t("line-through")))
+				} else if( *i == _t("line-through") )
 				{
 					decor |= font_decoration_linethrough;
-				} else if(!t_strcasecmp(i->c_str(), _t("overline")))
+				} else if( *i == _t("overline") )
 				{
 					decor |= font_decoration_overline;
 				}

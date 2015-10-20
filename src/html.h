@@ -68,7 +68,6 @@ namespace litehtml
 	int	 value_index(const tstring& val, const tstring& strings, int defValue = -1, tchar_t delim = _t(';'));
 	bool value_in_list(const tstring& val, const tstring& strings, tchar_t delim = _t(';'));
 	tstring::size_type find_close_bracket(const tstring &s, tstring::size_type off, tchar_t open_b = _t('('), tchar_t close_b = _t(')'));
-	void split_string(const tstring& str, string_vector& tokens, const tstring& delims, const tstring& delims_preserve = _t(""), const tstring& quote = _t("\""));
 	void join_string(tstring& str, const string_vector& tokens, const tstring& delims);
 
 	inline int round_f(float val)
@@ -89,5 +88,68 @@ namespace litehtml
 			int_val++;
 		}
 		return int_val;
+	}
+
+	template<typename token_vector >
+	void split_string(const tstring& str, token_vector & tokens, const tstring& delims, const tstring& delims_preserve= _t(""), const tstring& quote = _t("\"") )
+	{
+		if(str.empty() || (delims.empty() && delims_preserve.empty()))
+		{
+			return;
+		}
+
+		tstring all_delims = delims + delims_preserve + quote;
+
+		tstring::size_type token_start	= 0;
+		tstring::size_type token_end	= str.find_first_of(all_delims, token_start);
+		tstring::size_type token_len	= 0;
+		tstring token;
+		while(true)
+		{
+			while( token_end != tstring::npos && quote.find_first_of(str[token_end]) != tstring::npos )
+			{
+				if(str[token_end] == _t('('))
+				{
+					token_end = find_close_bracket(str, token_end, _t('('), _t(')'));
+				} else if(str[token_end] == _t('['))
+				{
+					token_end = find_close_bracket(str, token_end, _t('['), _t(']'));
+				} else if(str[token_end] == _t('{'))
+				{
+					token_end = find_close_bracket(str, token_end, _t('{'), _t('}'));
+				} else
+				{
+					token_end = str.find_first_of(str[token_end], token_end + 1);
+				}
+				if(token_end != tstring::npos)
+				{
+					token_end = str.find_first_of(all_delims, token_end + 1);
+				}
+			}
+
+			if(token_end == tstring::npos)
+			{
+				token_len = tstring::npos;
+			} else
+			{
+				token_len = token_end - token_start;
+			}
+
+			token = str.substr(token_start, token_len);
+			if(!token.empty())
+			{
+				tokens.push_back( token );
+			}
+			if(token_end != tstring::npos && !delims_preserve.empty() && delims_preserve.find_first_of(str[token_end]) != tstring::npos)
+			{
+				tokens.push_back( str.substr(token_end, 1) );
+			}
+
+			token_start = token_end;
+			if(token_start == tstring::npos) break;
+			token_start++;
+			if(token_start == str.length()) break;
+			token_end = str.find_first_of(all_delims, token_start);
+		}
 	}
 }
