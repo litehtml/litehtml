@@ -636,7 +636,7 @@ void litehtml::style::add_parsed_property( const string_hash & name, const strin
 		}
 		else
 		{
-			m_properties[name] = property_value(val, important);
+			m_properties.insert( std::make_pair( name, property_value(val, important) ) );
 		}
 	}
 }

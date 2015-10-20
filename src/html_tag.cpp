@@ -646,7 +646,9 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 	for(css_attribute_selector::vector::const_iterator i = selector.m_attrs.begin(); i != selector.m_attrs.end(); i++)
 	{
 		const tchar_t* attr_value = get_attr(i->attribute);
-		switch(i->condition)
+		attr_select_condition condition = i->condition;
+
+		switch(condition)
 		{
 		case select_exists:
 			if(!attr_value)
@@ -3227,13 +3229,18 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 {
 	if(!is_visible()) return;
 
-	std::set<int> zindexes;
 	if(with_positioned)
 	{
-		for(auto element : m_positioned )
+		std::vector<int> zindexes;
+		zindexes.reserve( m_positioned.size() );
+
+		for(auto & element : m_positioned )
 		{
-			zindexes.insert( element->get_zindex() );
+			zindexes.push_back( element->get_zindex() );
 		}
+
+		std::sort( zindexes.begin(), zindexes.end() );
+		zindexes.erase( std::unique( zindexes.begin(), zindexes.end() ), zindexes.end() );
 
 		auto idx = zindexes.cbegin();
 
@@ -4504,7 +4511,9 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 	position browser_wnd;
 	m_doc->container()->get_client_rect(browser_wnd);
 
-	for (elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	auto end = m_children.end();
+
+	for (elements_vector::iterator i = m_children.begin(); i != end; ++i)
 	{
 		element* el = (*i);
 

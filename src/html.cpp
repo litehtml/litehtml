@@ -80,7 +80,7 @@ int litehtml::value_index( const tstring& val, const tstring& strings, int defVa
 		}
 		if(item_len == val.length())
 		{
-			if(val == strings.substr(delim_start, item_len))
+			if( t_strncmp( val.c_str(), strings.c_str() + delim_start, item_len ) == 0 )
 			{
 				return idx;
 			}
