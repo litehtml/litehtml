@@ -24,7 +24,7 @@ namespace litehtml
 		typedef litehtml::object_ptr<litehtml::html_tag>	ptr;
 	protected:
 		box::vector				m_boxes;
-		string_vector			m_class_values;
+		string_vector	    	m_class_values;
 		tstring					m_tag;
 		litehtml::style			m_user_style;
 		bool					m_dirty_user_style;
@@ -44,7 +44,7 @@ namespace litehtml
 		element_position		m_el_position;
 		int						m_line_height;
 		bool					m_lh_predefined;
-		string_vector			m_pseudo_classes;
+		string_hash_vector		m_pseudo_classes;
 		used_selector::vector	m_used_styles;
 
 		uint_ptr				m_font;

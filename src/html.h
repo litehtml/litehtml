@@ -16,6 +16,7 @@
 #include "html_tag.h"
 #include "web_color.h"
 #include "media_query.h"
+#include "string_hash.h"
 
 namespace litehtml
 {

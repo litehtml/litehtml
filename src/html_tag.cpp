@@ -645,7 +645,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 
 	for(css_attribute_selector::vector::const_iterator i = selector.m_attrs.begin(); i != selector.m_attrs.end(); i++)
 	{
-		const tchar_t* attr_value = get_attr(i->attribute.c_str());
+		const tchar_t* attr_value = get_attr(i->attribute);
 		switch(i->condition)
 		{
 		case select_exists:
@@ -665,10 +665,10 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 					const string_vector & tokens1 = m_class_values;
 					const string_vector & tokens2 = i->class_val;
 					bool found = true;
-					for(string_vector::const_iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
+					for(auto str1 = tokens2.cbegin(); str1 != tokens2.cend() && found; str1++)
 					{
 						bool f = false;
-						for(string_vector::const_iterator str2 = tokens1.begin(); str2 != tokens1.end() && !f; str2++)
+						for(auto str2 = tokens1.cbegin(); str2 != tokens1.cend() && !f; str2++)
 						{
 							if( !t_strcasecmp(str1->c_str(), str2->c_str()) )
 							{
@@ -2393,7 +2393,7 @@ bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 		}
 	} else
 	{
-		string_vector::iterator pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
+		auto pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
 		if(pi != m_pseudo_classes.end())
 		{
 			m_pseudo_classes.erase(pi);

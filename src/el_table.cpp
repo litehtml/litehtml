@@ -100,7 +100,7 @@ void litehtml::el_table::parse_attributes()
 		val += str;
 		m_style.add_property(_t("border-spacing"), val.c_str(), 0, false);
 	}
-	
+
 	str = get_attr(_t("border"));
 	if(str)
 	{
