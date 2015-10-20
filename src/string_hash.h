@@ -39,6 +39,14 @@ namespace litehtml
 
         string_hash( const string_hash & other )
             : HashCode( other.HashCode )
+            , OriginalText( other.OriginalText )
+        {
+
+        }
+
+        string_hash( string_hash && other )
+            : HashCode( std::move( other.HashCode ) )
+            , OriginalText( std::move( other.OriginalText ) )
         {
 
         }
@@ -46,6 +54,14 @@ namespace litehtml
         string_hash & operator=( const string_hash & other )
         {
             HashCode = other.HashCode;
+            OriginalText = other.OriginalText;
+            return *this;
+        }
+
+        string_hash & operator=( string_hash && other )
+        {
+            HashCode = std::move( other.HashCode );
+            OriginalText = std::move( other.OriginalText );
             return *this;
         }
 
