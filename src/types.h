@@ -9,12 +9,15 @@ namespace litehtml
 {
 	class document;
 	class element;
+    class string_hash;
 
 	typedef std::map<litehtml::tstring, litehtml::tstring>			string_map;
+    typedef std::map<litehtml::string_hash, litehtml::tstring>      strings_hash_map;
 	typedef std::vector< litehtml::object_ptr<litehtml::element> >	elements_vector;
 	typedef std::vector<int>										int_vector;
 	typedef std::vector<litehtml::tstring>							string_vector;
-
+	typedef std::vector<litehtml::string_hash>			string_hash_vector;
+	
 	const unsigned int font_decoration_none			= 0x00;
 	const unsigned int font_decoration_underline	= 0x01;
 	const unsigned int font_decoration_linethrough	= 0x02;

@@ -70,11 +70,11 @@ const litehtml::tchar_t* litehtml::html_tag::get_tagName() const
 	return m_tag.c_str();
 }
 
-void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
+void litehtml::html_tag::set_attr( const string_hash& name, const tchar_t* val )
 {
-	if(name && val)
+	if(name.is_valid() && val)
 	{
-		tstring s_val = name;
+		tstring s_val = name.get_original_text();
 		std::locale lc = std::locale::global(std::locale::classic());
 		for(size_t i = 0; i < s_val.length(); i++)
 		{
@@ -82,7 +82,7 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 		}
 		m_attrs[s_val] = val;
 
-		if( t_strcasecmp( name, _t("class") ) == 0 )
+		if( name == _t("class") )
 		{
 			m_class_values.resize( 0 );
 			split_string( val, m_class_values, _t(" ") );
@@ -90,9 +90,9 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 	}
 }
 
-const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, const tchar_t* def ) const
+const litehtml::tchar_t * litehtml::html_tag::get_attr( const string_hash & name, const tchar_t* def ) const
 {
-	string_map::const_iterator attr = m_attrs.find(name);
+	strings_hash_map::const_iterator attr = m_attrs.find(name);
 	if(attr != m_attrs.end())
 	{
 		return attr->second.c_str();

@@ -7,7 +7,7 @@
 #include <locale>
 #endif
 
-litehtml::values_map litehtml::style::m_valid_values;
+litehtml::strings_hash_map litehtml::style::m_valid_values;
 
 litehtml::style::style()
 {
@@ -614,7 +614,7 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 void litehtml::style::add_parsed_property( const string_hash & name, const tstring& val, bool important )
 {
 	bool is_valid = true;
-	values_map::iterator vals = m_valid_values.find(name);
+	strings_hash_map::iterator vals = m_valid_values.find(name);
 	if (vals != m_valid_values.end())
 	{
 		if (!value_in_list(val, vals->second))

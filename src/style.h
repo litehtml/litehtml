@@ -35,7 +35,6 @@ namespace litehtml
 	};
 
 	typedef std::map<string_hash, property_value>	props_map;
-	typedef std::map<string_hash, litehtml::tstring>	values_map;
 
 	class style : public object
 	{
@@ -44,7 +43,7 @@ namespace litehtml
 		typedef std::vector<style::ptr>		vector;
 	private:
 		props_map			m_properties;
-		static values_map	m_valid_values;
+		static strings_hash_map	m_valid_values;
 	public:
 		style();
 		style(const style& val);

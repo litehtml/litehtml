@@ -1,10 +1,20 @@
 #pragma once
+#include "types.h"
+#include "os_types.h"
 
 namespace litehtml
 {
     class string_hash
     {
     public:
+
+        string_hash()
+            : HashCode( 0 )
+            , OriginalText()
+        {
+
+        }
+
         template< unsigned int character_count >
         string_hash( const litehtml::tchar_t ( &text )[ character_count ] )
             : HashCode( string_hash::HashGenerator< character_count >::Hash( text ) )
@@ -54,6 +64,11 @@ namespace litehtml
             return HashCode < other.HashCode;
         }
 
+        bool is_valid() const
+        {
+            return HashCode != 0;
+        }
+
         const litehtml::tstring & get_original_text() const
         {
             return OriginalText;
@@ -62,6 +77,11 @@ namespace litehtml
         litehtml::tstring get_original_text()
         {
             return OriginalText;
+        }
+
+        bool empty() const
+        {
+            return HashCode == 0;
         }
 
     private:
