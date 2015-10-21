@@ -389,13 +389,13 @@ bool litehtml::element::addChildAfter( litehtml::element* new_child, litehtml::e
 const litehtml::tchar_t* litehtml::element::get_tagName() const						LITEHTML_RETURN_FUNC(_t(""))
 void litehtml::element::set_tagName( const tchar_t* tag )							LITEHTML_EMPTY_FUNC
 void litehtml::element::set_data( const tchar_t* data )								LITEHTML_EMPTY_FUNC
-void litehtml::element::set_attr( const string_hash& name, const tchar_t* val )			LITEHTML_EMPTY_FUNC
+void litehtml::element::set_attr( const tchar_t* name, const tchar_t* val )			LITEHTML_EMPTY_FUNC
 void litehtml::element::apply_stylesheet( const litehtml::css& stylesheet )			LITEHTML_EMPTY_FUNC
 void litehtml::element::refresh_styles()											LITEHTML_EMPTY_FUNC
 void litehtml::element::on_click()													LITEHTML_EMPTY_FUNC
 void litehtml::element::init_font()													LITEHTML_EMPTY_FUNC
 void litehtml::element::get_inline_boxes( position::vector& boxes )					LITEHTML_EMPTY_FUNC
-const litehtml::tchar_t* litehtml::element::get_attr( const string_hash& name, const tchar_t* def /*= 0*/ ) const	LITEHTML_RETURN_FUNC(def)
+const litehtml::tchar_t* litehtml::element::get_attr( const tchar_t* name, const tchar_t* def /*= 0*/ ) const	LITEHTML_RETURN_FUNC(def)
 bool litehtml::element::is_white_space()											LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_body() const												LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_break() const											LITEHTML_RETURN_FUNC(false)

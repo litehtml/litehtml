@@ -156,24 +156,38 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 		split_string(val, tokens, _t(" "), _t(""), _t("("));
 		int idx;
 		tstring str;
+		if ( name == _t("border-left") )
+		{
+			str = _t("border-left");
+		}
+		else if ( name == _t("border-right") )
+		{
+			str = _t("border-right");
+		}
+		else if ( name == _t("border-top") )
+		{
+			str = _t("border-top");
+		}
+		else
+		{
+			str = _t("border-bottom");
+		}
+
 		for(string_vector::const_iterator tok = tokens.begin(); tok != tokens.end(); tok++)
 		{
 			idx = value_index(tok->c_str(), border_style_strings, -1);
 			if(idx >= 0)
 			{
-				str = name.get_original_text();
 				str += _t("-style");
 				add_property(str.c_str(), tok->c_str(), baseurl, important);
 			} else
 			{
 				if(web_color::is_color(tok->c_str()))
 				{
-					str = name.get_original_text();
 					str += _t("-color");
 					add_property(str.c_str(), tok->c_str(), baseurl, important);
 				} else
 				{
-					str = name.get_original_text();
 					str += _t("-width");
 					add_property(str.c_str(), tok->c_str(), baseurl, important);
 				}
@@ -371,41 +385,57 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 	{
 		string_vector tokens;
 		split_string(val, tokens, _t(" "));
+		tstring str;
+		if ( name == _t("margin") )
+		{
+			str = _t("margin");
+		}
+		else
+		{
+			str = _t("padding");
+		}
+
 		if(tokens.size() >= 4)
 		{
-			add_parsed_property(tstring( name.get_original_text() + _t("-top") ),		tokens[0], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-right") ),		tokens[1], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-bottom") ),	tokens[2], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-left") ),		tokens[3], important);
+			add_parsed_property(tstring( str + _t("-top") ),		tokens[0], important);
+			add_parsed_property(tstring( str + _t("-right") ),		tokens[1], important);
+			add_parsed_property(tstring( str + _t("-bottom") ),	tokens[2], important);
+			add_parsed_property(tstring( str + _t("-left") ),		tokens[3], important);
 		} else if(tokens.size() == 3)
 		{
-			add_parsed_property(tstring( name.get_original_text() + _t("-top") ),		tokens[0], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-right") ),		tokens[1], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-left") ),		tokens[1], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-bottom") ),	tokens[2], important);
+			add_parsed_property(tstring( str + _t("-top") ),		tokens[0], important);
+			add_parsed_property(tstring( str + _t("-right") ),		tokens[1], important);
+			add_parsed_property(tstring( str + _t("-left") ),		tokens[1], important);
+			add_parsed_property(tstring( str + _t("-bottom") ),	tokens[2], important);
 		} else if(tokens.size() == 2)
 		{
-			add_parsed_property(tstring( name.get_original_text() + _t("-top") ),		tokens[0], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-bottom") ),	tokens[0], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-right") ),		tokens[1], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-left") ),		tokens[1], important);
+			add_parsed_property(tstring( str + _t("-top") ),		tokens[0], important);
+			add_parsed_property(tstring( str + _t("-bottom") ),	tokens[0], important);
+			add_parsed_property(tstring( str + _t("-right") ),		tokens[1], important);
+			add_parsed_property(tstring( str + _t("-left") ),		tokens[1], important);
 		} else if(tokens.size() == 1)
 		{
-			add_parsed_property(tstring( name.get_original_text() + _t("-top") ),		tokens[0], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-bottom") ),	tokens[0], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-right") ),		tokens[0], important);
-			add_parsed_property(tstring( name.get_original_text() + _t("-left") ),		tokens[0], important);
+			add_parsed_property(tstring( str + _t("-top") ),		tokens[0], important);
+			add_parsed_property(tstring( str + _t("-bottom") ),	tokens[0], important);
+			add_parsed_property(tstring( str + _t("-right") ),		tokens[0], important);
+			add_parsed_property(tstring( str + _t("-left") ),		tokens[0], important);
 		}
 	} else
 
 
 	// Parse border-* shorthand properties
-	if(	 name == _t("border-left") ||
-		 name == _t("border-right") ||
-		 name == _t("border-top")  ||
-		 name == _t("border-bottom"))
+	if(	 name == _t("border-left") )
 	{
-		parse_short_border(name.get_original_text(), val, important);
+		parse_short_border(_t("border-left"), val, important);
+	} else if( name == _t("border-right") )
+	{
+		parse_short_border(_t("border-right"), val, important);
+	} else if( name == _t("border-top") )
+	{
+		parse_short_border(_t("border-top"), val, important);
+	} else if( name == _t("border-bottom") )
+	{
+		parse_short_border(_t("border-bottom"), val, important);
 	} else
 
 	// Parse border-width/style/color shorthand properties
@@ -413,8 +443,19 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 		 name == _t("border-style")  ||
 		 name == _t("border-color"))
 	{
+		tstring str;
+		if ( name == _t("border-width") )
+		{
+			str = _t("border-width");
+		} else if ( name == _t("border-style") )
+		{
+			str = _t("border-style");
+		} else
+		{
+			str = _t("border-color");
+		}
 		string_vector nametokens;
-		split_string(name.get_original_text(), nametokens, _t("-"));
+		split_string(str, nametokens, _t("-"));
 
 		string_vector tokens;
 		split_string(val, tokens, _t(" "));

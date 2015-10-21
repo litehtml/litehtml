@@ -132,7 +132,7 @@ namespace litehtml
 	{
 		typedef std::vector<css_attribute_selector>	vector;
 
-		string_hash				attribute;
+		tstring				    attribute;
 		tstring					val;
 		string_vector			class_val;
 		attr_select_condition	condition;

@@ -35,17 +35,19 @@ const litehtml::tchar_t* litehtml::el_script::get_tagName() const
 	return _t("script");
 }
 
-void litehtml::el_script::set_attr(const string_hash& name, const tchar_t* val)
+void litehtml::el_script::set_attr(const tchar_t* name, const tchar_t* val)
 {
-	if( name == _t("src") )
+	check_lower_case( name );
+	if( !t_strcmp( name, _t("src")) )
 	{
 		m_src = val;
 	}
 }
 
-const litehtml::tchar_t * litehtml::el_script::get_attr(const string_hash& name, const tchar_t* def) const
+const litehtml::tchar_t * litehtml::el_script::get_attr(const tchar_t* name, const tchar_t* def) const
 {
-	if( name == _t("src") )
+	check_lower_case( name );
+	if( !t_strcmp( name, _t("src")) )
 	{
 		return m_src.empty() ? 0 : m_src.c_str();
 	}

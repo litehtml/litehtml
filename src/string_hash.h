@@ -10,7 +10,6 @@ namespace litehtml
 
         string_hash()
             : HashCode( 0 )
-            , OriginalText()
         {
 
         }
@@ -18,35 +17,30 @@ namespace litehtml
         template< unsigned int character_count >
         string_hash( const litehtml::tchar_t ( &text )[ character_count ] )
             : HashCode( string_hash::HashGenerator< character_count >::Hash( text ) )
-            , OriginalText( text )
         {
 
         }
 
         string_hash( const litehtml::tchar_t * text )
             : HashCode( string_hash::LoopedHash( text ) )
-            , OriginalText( text )
         {
 
         }
 
         string_hash( const litehtml::tstring & text )
             : HashCode( string_hash::LoopedHash( text.c_str() ) )
-            , OriginalText( text )
         {
 
         }
 
         string_hash( const string_hash & other )
             : HashCode( other.HashCode )
-            , OriginalText( other.OriginalText )
         {
 
         }
 
         string_hash( string_hash && other )
             : HashCode( std::move( other.HashCode ) )
-            , OriginalText( std::move( other.OriginalText ) )
         {
 
         }
@@ -54,14 +48,12 @@ namespace litehtml
         string_hash & operator=( const string_hash & other )
         {
             HashCode = other.HashCode;
-            OriginalText = other.OriginalText;
             return *this;
         }
 
         string_hash & operator=( string_hash && other )
         {
             HashCode = std::move( other.HashCode );
-            OriginalText = std::move( other.OriginalText );
             return *this;
         }
 
@@ -92,15 +84,6 @@ namespace litehtml
             return HashCode != 0;
         }
 
-        const litehtml::tstring & get_original_text() const
-        {
-            return OriginalText;
-        }
-
-        litehtml::tstring get_original_text()
-        {
-            return OriginalText;
-        }
 
         bool empty() const
         {
@@ -154,7 +137,6 @@ namespace litehtml
         }
 
         hash_code HashCode;
-        litehtml::tstring OriginalText;
 
         static const unsigned int FNV_OffsetBase = 2166136261u;
         static const unsigned int FNV_Prime = 16777619u;

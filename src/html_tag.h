@@ -121,8 +121,8 @@ namespace litehtml
 		virtual element_position	get_element_position(css_offsets* offsets = 0) const;
 		virtual overflow			get_overflow() const;
 
-		virtual void				set_attr(const string_hash& name, const tchar_t* val) override;
-		virtual const tchar_t*    	get_attr(const string_hash& name, const tchar_t* def = 0) const override;
+		virtual void				set_attr(const tchar_t* name, const tchar_t* val) override;
+		virtual const tchar_t*    	get_attr(const tchar_t* name, const tchar_t* def = 0) const override;
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				refresh_styles();
 

@@ -1,6 +1,7 @@
 #include "html.h"
 #include "types.h"
 #include "html_tag.h"
+#include <assert.h>
 
 void litehtml::trim(std::string &s)
 {
@@ -36,6 +37,18 @@ void litehtml::lcase(tstring &s)
 	{
 		(*i) = t_tolower(*i);
 	}
+}
+
+void litehtml::check_lower_case( const tchar_t* text)
+{
+	#ifndef NDEBUG
+		int i=0;
+		while( text[i] )
+		{
+			assert( !t_isalpha(text[i]) || t_islower(text[i]) );
+			++i;
+		}
+	#endif
 }
 
 litehtml::tstring::size_type litehtml::find_close_bracket(const tstring &s, tstring::size_type off, tchar_t open_b, tchar_t close_b)
