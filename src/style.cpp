@@ -100,7 +100,7 @@ void litehtml::style::add_property( const string_hash & name, const string_hash&
 	// Parse border spacing properties
 	if(	name == _t("border-spacing"))
 	{
-		string_hash_vector tokens;
+		string_vector tokens;
 		split_string(val.get_original_text(), tokens, _t(" "));
 		if(tokens.size() == 1)
 		{

@@ -107,8 +107,6 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 		}
 	}
 
-	
-
 	if( text )
 	{
 		// Destroy GumboOutput
@@ -231,17 +229,17 @@ litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, 
 
 		if(decoration)
 		{
-			string_hash_vector tokens;
+			string_vector tokens;
 			split_string(decoration, tokens, _t(" "));
-			for(string_hash_vector::iterator i = tokens.begin(); i != tokens.end(); i++)
+			for(auto i = tokens.cbegin(); i != tokens.cend(); ++i)
 			{
-				if( *i == _t("underline") )
+				if(!t_strcasecmp(i->c_str(), _t("underline")))
 				{
 					decor |= font_decoration_underline;
-				} else if( *i == _t("line-through") )
+				} else if(!t_strcasecmp(i->c_str(), _t("line-through")))
 				{
 					decor |= font_decoration_linethrough;
-				} else if( *i == _t("overline") )
+				} else if(!t_strcasecmp(i->c_str(), _t("overline")))
 				{
 					decor |= font_decoration_overline;
 				}
