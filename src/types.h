@@ -9,15 +9,15 @@ namespace litehtml
 {
 	class document;
 	class element;
-    class string_hash;
+	class string_hash;
 
 	typedef std::map<litehtml::tstring, litehtml::tstring>			string_map;
-    typedef std::map<litehtml::string_hash, litehtml::tstring>      strings_hash_map;
+	typedef std::map<litehtml::string_hash, litehtml::tstring>      strings_hash_map;
 	typedef std::vector< litehtml::object_ptr<litehtml::element> >	elements_vector;
 	typedef std::vector<int>										int_vector;
 	typedef std::vector<litehtml::tstring>							string_vector;
 	typedef std::vector<litehtml::string_hash>			string_hash_vector;
-	
+
 	const unsigned int font_decoration_none			= 0x00;
 	const unsigned int font_decoration_underline	= 0x01;
 	const unsigned int font_decoration_linethrough	= 0x02;
@@ -198,7 +198,7 @@ namespace litehtml
 		draw_positioned,
 	};
 
-#define  style_display_strings		_t("none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group")
+extern const tstring style_display_strings;
 
 	enum style_display
 	{
@@ -231,7 +231,7 @@ namespace litehtml
 		borderDouble
 	};
 
-#define  font_size_strings		_t("xx-small;x-small;small;medium;large;x-large;xx-large;smaller;larger")
+extern const tstring font_size_strings;
 
 	enum font_size
 	{
@@ -246,7 +246,7 @@ namespace litehtml
 		fontSize_larger,
 	};
 
-#define  font_style_strings		_t("normal;italic")
+extern const tstring font_style_strings;
 
 	enum font_style
 	{
@@ -254,7 +254,7 @@ namespace litehtml
 		fontStyleItalic
 	};
 
-#define  font_variant_strings		_t("normal;small-caps")
+extern const tstring font_variant_strings;
 
 	enum font_variant
 	{
@@ -262,7 +262,7 @@ namespace litehtml
 		font_variant_italic
 	};
 
-#define  font_weight_strings	_t("normal;bold;bolder;lighter100;200;300;400;500;600;700")
+extern const tstring font_weight_strings;
 
 	enum font_weight
 	{
@@ -279,7 +279,7 @@ namespace litehtml
 		fontWeight700
 	};
 
-#define  list_style_type_strings	_t("none;circle;disc;square;armenian;cjk-ideographic;decimal;decimal-leading-zero;georgian;hebrew;hiragana;hiragana-iroha;katakana;katakana-iroha;lower-alpha;lower-greek;lower-latin;lower-roman;upper-alpha;upper-latin;upper-roman")
+extern const tstring list_style_type_strings;
 
 	enum list_style_type
 	{
@@ -306,7 +306,7 @@ namespace litehtml
 		list_style_type_upper_roman,
 	};
 
-#define  list_style_position_strings	_t("inside;outside")
+extern const tstring list_style_position_strings;
 
 	enum list_style_position
 	{
@@ -314,7 +314,7 @@ namespace litehtml
 		list_style_position_outside
 	};
 
-#define  vertical_align_strings	_t("baseline;sub;super;top;text-top;middle;bottom;text-bottom")
+extern const tstring vertical_align_strings;
 
 	enum vertical_align
 	{
@@ -328,7 +328,7 @@ namespace litehtml
 		va_text_bottom
 	};
 
-#define  border_width_strings	_t("thin;medium;thick")
+extern const tstring border_width_strings;
 
 	enum border_width
 	{
@@ -337,7 +337,7 @@ namespace litehtml
 		border_width_thick
 	};
 
-#define  border_style_strings	_t("none;hidden;dotted;dashed;solid;double;groove;ridge;inset;outset")
+extern const tstring border_style_strings;
 
 	enum border_style
 	{
@@ -353,7 +353,7 @@ namespace litehtml
 		border_style_outset
 	};
 
-#define  element_float_strings	_t("none;left;right")
+extern const tstring element_float_strings;
 
 	enum element_float
 	{
@@ -362,7 +362,7 @@ namespace litehtml
 		float_right
 	};
 
-#define  element_clear_strings	_t("none;left;right;both")
+extern const tstring element_clear_strings;
 
 	enum element_clear
 	{
@@ -372,7 +372,7 @@ namespace litehtml
 		clear_both
 	};
 
-#define  css_units_strings	_t("none;%;in;cm;mm;em;ex;pt;pc;px;dpi;dpcm;vw;vh;vmin;vmax")
+extern const tstring css_units_strings;
 
 	enum css_units
 	{
@@ -394,7 +394,7 @@ namespace litehtml
 		css_units_vmax,
 	};
 
-#define  background_attachment_strings	_t("scroll;fixed")
+extern const tstring background_attachment_strings;
 
 	enum background_attachment
 	{
@@ -402,7 +402,7 @@ namespace litehtml
 		background_attachment_fixed
 	};
 
-#define  background_repeat_strings	_t("repeat;repeat-x;repeat-y;no-repeat")
+extern const tstring background_repeat_strings;
 
 	enum background_repeat
 	{
@@ -412,7 +412,7 @@ namespace litehtml
 		background_repeat_no_repeat
 	};
 
-#define  background_box_strings	_t("border-box;padding-box;content-box")
+extern const tstring background_box_strings;
 
 	enum background_box
 	{
@@ -421,7 +421,7 @@ namespace litehtml
 		background_box_content
 	};
 
-#define element_position_strings	_t("static;relative;absolute;fixed")
+extern const tstring element_position_strings;
 
 	enum element_position
 	{
@@ -431,7 +431,7 @@ namespace litehtml
 		element_position_fixed,
 	};
 
-#define text_align_strings		_t("left;right;center;justify")
+extern const tstring text_align_strings;
 
 	enum text_align
 	{
@@ -441,7 +441,7 @@ namespace litehtml
 		text_align_justify
 	};
 
-#define text_transform_strings		_t("none;capitalize;uppercase;lowercase")
+extern const tstring text_transform_strings;
 
 	enum text_transform
 	{
@@ -451,7 +451,7 @@ namespace litehtml
 		text_transform_lowercase
 	};
 
-#define white_space_strings		_t("normal;nowrap;pre;pre-line;pre-wrap")
+extern const tstring white_space_strings;
 
 	enum white_space
 	{
@@ -462,7 +462,7 @@ namespace litehtml
 		white_space_pre_wrap
 	};
 
-#define overflow_strings		_t("visible;hidden;scroll;auto;no-display;no-content")
+extern const tstring overflow_strings;
 
 	enum overflow
 	{
@@ -474,7 +474,7 @@ namespace litehtml
 		overflow_no_content
 	};
 
-#define background_size_strings		_t("auto;cover;contain")
+extern const tstring background_size_strings;
 
 	enum background_size
 	{
@@ -483,7 +483,7 @@ namespace litehtml
 		background_size_contain,
 	};
 
-#define visibility_strings			_t("visible;hidden;collapse")
+extern const tstring visibility_strings;
 
 	enum visibility
 	{
@@ -492,7 +492,7 @@ namespace litehtml
 		visibility_collapse,
 	};
 
-#define border_collapse_strings		_t("collapse;separate")
+extern const tstring border_collapse_strings;
 
 	enum border_collapse
 	{
@@ -501,7 +501,7 @@ namespace litehtml
 	};
 
 
-#define pseudo_class_strings		_t("only-child;only-of-type;first-child;first-of-type;last-child;last-of-type;nth-child;nth-of-type;nth-last-child;nth-last-of-type;not;lang")
+extern const tstring pseudo_class_strings;
 
 	enum pseudo_class
 	{
@@ -519,7 +519,7 @@ namespace litehtml
 		pseudo_class_lang,
 	};
 
-#define content_property_string		_t("none;normal;open-quote;close-quote;no-open-quote;no-close-quote")
+extern const tstring content_property_string;
 
 	enum content_property
 	{
@@ -611,7 +611,7 @@ namespace litehtml
 	};
 
 
-#define media_orientation_strings		_t("portrait;landscape")
+extern const tstring media_orientation_strings;
 
 	enum media_orientation
 	{
@@ -619,7 +619,7 @@ namespace litehtml
 		media_orientation_landscape,
 	};
 
-#define media_feature_strings		_t("none;width;min-width;max-width;height;min-height;max-height;device-width;min-device-width;max-device-width;device-height;min-device-height;max-device-height;orientation;aspect-ratio;min-aspect-ratio;max-aspect-ratio;device-aspect-ratio;min-device-aspect-ratio;max-device-aspect-ratio;color;min-color;max-color;color-index;min-color-index;max-color-index;monochrome;min-monochrome;max-monochrome;resolution;min-resolution;max-resolution")
+extern const tstring media_feature_strings;
 
 	enum media_feature
 	{
@@ -668,7 +668,7 @@ namespace litehtml
 		media_feature_max_resolution,
 	};
 
-#define box_sizing_strings		_t("content-box;border-box")
+extern const tstring box_sizing_strings;
 
 	enum box_sizing
 	{
@@ -676,7 +676,7 @@ namespace litehtml
 		box_sizing_border_box,
 	};
 
-#define pointer_events_strings		_t("auto;none;visiblePainted;visibleFill;visibleStroke;visible;painted;fill;stroke;all")
+extern const tstring pointer_events_strings;
 
 	enum pointer_events
 	{
@@ -692,7 +692,7 @@ namespace litehtml
 		pointer_events_all
 	};
 
-#define media_type_strings		_t("none;all;screen;print;braille;embossed;handheld;projection;speech;tty;tv")
+extern const tstring media_type_strings;
 
 	enum media_type
 	{
