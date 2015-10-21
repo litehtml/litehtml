@@ -69,6 +69,12 @@ namespace litehtml
             return HashCode == temp_hash;
         }
 
+        bool operator==( const litehtml::tchar_t * text )
+        {
+            hash_code temp_hash( string_hash::LoopedHash( text ) );
+            return HashCode == temp_hash;
+        }
+
         bool operator!=( const string_hash & other ) const
         {
             return HashCode != other.HashCode;
