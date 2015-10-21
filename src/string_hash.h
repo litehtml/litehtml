@@ -114,7 +114,11 @@ namespace litehtml
         {
             inline static hash_code Hash( const litehtml::tchar_t ( &character_array )[ character_count ] )
             {
-                return ( HashGenerator< character_count, index - 1 >::Hash( character_array ) ^ character_array[ index - 1 ] ) * FNV_Prime;
+                #ifdef NDEBUG
+                    return ( HashGenerator< character_count, index - 1 >::Hash( character_array ) ^ character_array[ index - 1 ] ) * FNV_Prime;
+                #else
+                    return LoopedHash( character_array );
+                #endif
             }
         };
 
