@@ -70,6 +70,13 @@ namespace litehtml
             return HashCode == other.HashCode;
         }
 
+        template< unsigned int character_count >
+        bool operator==( const litehtml::tchar_t ( &text )[ character_count ] )
+        {
+            hash_code temp_hash( string_hash::HashGenerator< character_count >::Hash( text ) );
+            return HashCode == temp_hash;
+        }
+
         bool operator!=( const string_hash & other ) const
         {
             return HashCode != other.HashCode;
