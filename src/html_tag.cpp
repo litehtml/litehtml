@@ -283,6 +283,12 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	m_clear = (element_clear) value_index(get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
+	// parse opacity
+	m_opacity = (float) t_strtod( get_style_property(_t("opacity"), false, _t("1") ), NULL );
+
+	if ( m_parent )
+		m_opacity *= m_parent->m_opacity;
+
 	if (m_float != float_none)
 	{
 		// reset display in to block for floating elements
@@ -1343,13 +1349,6 @@ void litehtml::html_tag::parse_background()
 {
 	// parse background-color
 	m_bg.m_color		= get_color(_t("background-color"), false, web_color(0, 0, 0, 0));
-
-	// parse background-opacity
-	const tchar_t* opacity = get_style_property(_t("opacity"), true, 0);
-	if(opacity)
-	{
-		m_bg.m_opacity = float(t_atof(opacity));
-	}
 
 	// parse background-position
 	const tchar_t* str = get_style_property(_t("background-position"), false, _t("0% 0%"));
@@ -2919,6 +2918,7 @@ void litehtml::html_tag::init_background_paint( position pos, background_paint &
 	}
 	bg_paint.border_radius	= m_css_borders.radius.calc_percents(border_box.width, border_box.height);;
 	bg_paint.border_box		= border_box;
+	bg_paint.opacity		= m_opacity;
 	bg_paint.is_root		= parent() ? false : true;
 }
 

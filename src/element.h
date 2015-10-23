@@ -28,6 +28,7 @@ namespace litehtml
 		bool						m_skip;
 		pointer_events				m_pointer_events;
 		litehtml::style				m_style;
+		float						m_opacity;
 	public:
 		element(litehtml::document* doc);
 		virtual ~element();
@@ -83,6 +84,7 @@ namespace litehtml
 		element*					parent() const;
 		void						parent(element* par);
 		bool						is_visible() const;
+		float                       get_opacity() const;
 		int							calc_width(int defVal) const;
 		int							get_inline_shift_left();
 		int							get_inline_shift_right();
@@ -401,6 +403,11 @@ namespace litehtml
 	inline bool litehtml::element::is_visible() const
 	{
 		return !(m_skip || get_display() == display_none || get_visibility() != visibility_visible);
+	}
+
+	inline float litehtml::element::get_opacity() const
+	{
+		return m_opacity;
 	}
 
 	inline position& litehtml::element::get_position()
