@@ -14,7 +14,6 @@ namespace litehtml
 		tstring					m_image;
 		tstring					m_baseurl;
 		web_color				m_color;
-		float					m_opacity;
 		background_attachment	m_attachment;
 		css_position			m_position;
 		background_repeat		m_repeat;

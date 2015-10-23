@@ -11,7 +11,6 @@ litehtml::background::background(void)
 	m_color.red		= 0;
 	m_color.green	= 0;
 	m_color.blue	= 0;
-	m_opacity		= 1.0f;
 }
 
 litehtml::background::background( const background& val )
@@ -19,7 +18,6 @@ litehtml::background::background( const background& val )
 	m_image			= val.m_image;
 	m_baseurl		= val.m_baseurl;
 	m_color			= val.m_color;
-	m_opacity		= val.m_opacity;
 	m_attachment	= val.m_attachment;
 	m_position		= val.m_position;
 	m_repeat		= val.m_repeat;
@@ -36,7 +34,6 @@ litehtml::background& litehtml::background::operator=( const background& val )
 	m_image			= val.m_image;
 	m_baseurl		= val.m_baseurl;
 	m_color			= val.m_color;
-	m_opacity		= val.m_opacity;
 	m_attachment	= val.m_attachment;
 	m_position		= val.m_position;
 	m_repeat		= val.m_repeat;
@@ -85,5 +82,4 @@ void litehtml::background_paint::operator=( const background& val )
 	image		= val.m_image;
 	repeat		= val.m_repeat;
 	color		= val.m_color;
-	opacity		= val.m_opacity;
 }
