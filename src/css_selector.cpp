@@ -182,7 +182,7 @@ bool litehtml::css_selector::parse( const tstring& text )
 		tokens.pop_back();
 	}
 
-	for(string_vector::const_iterator i = tokens.begin(); i != tokens.end(); i++)
+	for(auto i = tokens.cbegin(); i != tokens.cend(); i++)
 	{
 		left += *i;
 	}
@@ -247,7 +247,7 @@ void litehtml::css_selector::calc_specificity()
 			{
 				m_specificity.c++;
 			}
-		}	
+		}
 	}
 	if(m_left)
 	{
@@ -263,4 +263,3 @@ void litehtml::css_selector::add_media_to_doc( document* doc ) const
 		doc->add_media_list(m_media_query);
 	}
 }
-

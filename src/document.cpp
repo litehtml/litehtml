@@ -107,8 +107,6 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 		}
 	}
 
-	
-
 	if( text )
 	{
 		// Destroy GumboOutput
@@ -231,9 +229,9 @@ litehtml::uint_ptr litehtml::document::add_font( const tchar_t* name, int size, 
 
 		if(decoration)
 		{
-			std::vector<tstring> tokens;
+			string_vector tokens;
 			split_string(decoration, tokens, _t(" "));
-			for(std::vector<tstring>::iterator i = tokens.begin(); i != tokens.end(); i++)
+			for(auto i = tokens.cbegin(); i != tokens.cend(); ++i)
 			{
 				if(!t_strcasecmp(i->c_str(), _t("underline")))
 				{

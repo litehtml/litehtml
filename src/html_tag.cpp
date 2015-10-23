@@ -74,15 +74,11 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 {
 	if(name && val)
 	{
-		tstring s_val = name;
-		std::locale lc = std::locale::global(std::locale::classic());
-		for(size_t i = 0; i < s_val.length(); i++)
-		{
-			s_val[i] = std::tolower(s_val[i], lc);
-		}
-		m_attrs[s_val] = val;
+		check_lower_case( name );
 
-		if( t_strcasecmp( name, _t("class") ) == 0 )
+		m_attrs[name] = val;
+
+		if( !t_strcmp(name, _t("class") ))
 		{
 			m_class_values.resize( 0 );
 			split_string( val, m_class_values, _t(" ") );
@@ -90,13 +86,19 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 	}
 }
 
-const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, const tchar_t* def ) const
+const litehtml::tchar_t * litehtml::html_tag::get_attr( const tchar_t* name, const tchar_t* def ) const
 {
-	string_map::const_iterator attr = m_attrs.find(name);
-	if(attr != m_attrs.end())
+	if( name )
 	{
-		return attr->second.c_str();
+		check_lower_case( name );
+
+		strings_hash_map::const_iterator attr = m_attrs.find(name);
+		if(attr != m_attrs.end())
+		{
+			return attr->second.c_str();
+		}
 	}
+
 	return def;
 }
 
@@ -646,7 +648,9 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 	for(css_attribute_selector::vector::const_iterator i = selector.m_attrs.begin(); i != selector.m_attrs.end(); i++)
 	{
 		const tchar_t* attr_value = get_attr(i->attribute.c_str());
-		switch(i->condition)
+		attr_select_condition condition = i->condition;
+
+		switch(condition)
 		{
 		case select_exists:
 			if(!attr_value)
@@ -665,10 +669,10 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 					const string_vector & tokens1 = m_class_values;
 					const string_vector & tokens2 = i->class_val;
 					bool found = true;
-					for(string_vector::const_iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
+					for(auto str1 = tokens2.cbegin(); str1 != tokens2.cend() && found; str1++)
 					{
 						bool f = false;
-						for(string_vector::const_iterator str2 = tokens1.begin(); str2 != tokens1.end() && !f; str2++)
+						for(auto str2 = tokens1.cbegin(); str2 != tokens1.cend() && !f; str2++)
 						{
 							if( !t_strcasecmp(str1->c_str(), str2->c_str()) )
 							{
@@ -2015,10 +2019,9 @@ bool litehtml::html_tag::is_break() const
 void litehtml::html_tag::set_tagName( const tchar_t* tag )
 {
 	tstring s_val = tag;
-	std::locale lc = std::locale::global(std::locale::classic());
 	for(size_t i = 0; i < s_val.length(); i++)
 	{
-		s_val[i] = std::tolower(s_val[i], lc);
+		s_val[i] = t_tolower(s_val[i]);
 	}
 	m_tag = s_val;
 }
@@ -2393,7 +2396,7 @@ bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 		}
 	} else
 	{
-		string_vector::iterator pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
+		auto pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
 		if(pi != m_pseudo_classes.end())
 		{
 			m_pseudo_classes.erase(pi);
@@ -3249,13 +3252,18 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 {
 	if(!is_visible()) return;
 
-	std::set<int> zindexes;
 	if(with_positioned)
 	{
-		for(auto element : m_positioned )
+		std::vector<int> zindexes;
+		zindexes.reserve( m_positioned.size() );
+
+		for(auto & element : m_positioned )
 		{
-			zindexes.insert( element->get_zindex() );
+			zindexes.push_back( element->get_zindex() );
 		}
+
+		std::sort( zindexes.begin(), zindexes.end() );
+		zindexes.erase( std::unique( zindexes.begin(), zindexes.end() ), zindexes.end() );
 
 		auto idx = zindexes.cbegin();
 
@@ -4526,7 +4534,9 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 	position browser_wnd;
 	m_doc->container()->get_client_rect(browser_wnd);
 
-	for (elements_vector::iterator i = m_children.begin(); i != m_children.end(); i++)
+	auto end = m_children.end();
+
+	for (elements_vector::iterator i = m_children.begin(); i != end; ++i)
 	{
 		element* el = (*i);
 

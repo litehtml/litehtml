@@ -1,6 +1,7 @@
 #include "html.h"
 #include "types.h"
 #include "html_tag.h"
+#include <assert.h>
 
 void litehtml::trim(std::string &s)
 {
@@ -36,6 +37,18 @@ void litehtml::lcase(tstring &s)
 	{
 		(*i) = t_tolower(*i);
 	}
+}
+
+void litehtml::check_lower_case( const tchar_t* text)
+{
+	#ifndef NDEBUG
+		int i=0;
+		while( text[i] )
+		{
+			assert( !t_isalpha(text[i]) || t_islower(text[i]) );
+			++i;
+		}
+	#endif
 }
 
 litehtml::tstring::size_type litehtml::find_close_bracket(const tstring &s, tstring::size_type off, tchar_t open_b, tchar_t close_b)
@@ -80,7 +93,7 @@ int litehtml::value_index( const tstring& val, const tstring& strings, int defVa
 		}
 		if(item_len == val.length())
 		{
-			if(val == strings.substr(delim_start, item_len))
+			if( t_strncmp( val.c_str(), strings.c_str() + delim_start, item_len ) == 0 )
 			{
 				return idx;
 			}
@@ -105,7 +118,7 @@ bool litehtml::value_in_list( const tstring& val, const tstring& strings, tchar_
 	return false;
 }
 
-void litehtml::split_string(const tstring& str, string_vector& tokens, const tstring& delims, const tstring& delims_preserve, const tstring& quote)
+void litehtml::split_string(const tstring& str, string_vector & tokens, const tstring& delims, const tstring& delims_preserve, const tstring& quote )
 {
 	if(str.empty() || (delims.empty() && delims_preserve.empty()))
 	{

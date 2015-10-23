@@ -1,20 +1,21 @@
 #pragma once
 #include "attributes.h"
 #include <string>
+#include "string_hash.h"
 
 namespace litehtml
 {
 	class property_value
 	{
 	public:
-		tstring	m_value;
+		tstring			m_value;
 		bool			m_important;
 
 		property_value()
 		{
 			m_important = false;
 		}
-		property_value(const tchar_t* val, bool imp)
+		property_value(const tstring& val, bool imp)
 		{
 			m_important = imp;
 			m_value		= val;
@@ -24,6 +25,11 @@ namespace litehtml
 			m_value		= val.m_value;
 			m_important	= val.m_important;
 		}
+		property_value( property_value && val)
+		{
+			m_value = std::move( val.m_value );
+			m_important = m_important;
+		}
 
 		property_value& operator=(const property_value& val)
 		{
@@ -31,9 +37,15 @@ namespace litehtml
 			m_important	= val.m_important;
 			return *this;
 		}
+		property_value& operator=( property_value&& val)
+		{
+			m_value		= std::move(val.m_value);
+			m_important	= val.m_important;
+			return *this;
+		}
 	};
 
-	typedef std::map<tstring, property_value>	props_map;
+	typedef std::map<string_hash, property_value>	props_map;
 
 	class style : public object
 	{
@@ -42,7 +54,7 @@ namespace litehtml
 		typedef std::vector<style::ptr>		vector;
 	private:
 		props_map			m_properties;
-		static string_map	m_valid_values;
+		static strings_hash_map	m_valid_values;
 	public:
 		style();
 		style(const style& val);
@@ -58,18 +70,18 @@ namespace litehtml
 			parse(txt, baseurl);
 		}
 
-		void add_property(const tchar_t* name, const tchar_t* val, const tchar_t* baseurl, bool important);
+		void add_property(const string_hash & name, const tchar_t* val, const tchar_t* baseurl, bool important);
 
-		const tchar_t* get_property(const tchar_t* name) const
+		void expand_shorthand_properties( const string_vector &tokens, const string_hash (&name_array)[4], bool important );
+
+		const tchar_t* get_property( const string_hash & name) const
 		{
-			if(name)
+			props_map::const_iterator f = m_properties.find(name);
+			if(f != m_properties.end())
 			{
-				props_map::const_iterator f = m_properties.find(name);
-				if(f != m_properties.end())
-				{
-					return f->second.m_value.c_str();
-				}
+				return f->second.m_value.c_str();
 			}
+
 			return 0;
 		}
 
@@ -85,7 +97,7 @@ namespace litehtml
 		void parse_short_border(const tstring& prefix, const tstring& val, bool important);
 		void parse_short_background(const tstring& val, const tchar_t* baseurl, bool important);
 		void parse_short_font(const tstring& val, bool important);
-		void add_parsed_property(const tstring& name, const tstring& val, bool important);
+		void add_parsed_property(const string_hash & name, const tstring& val, bool important);
 		void remove_property(const tstring& name, bool important);
 	};
 

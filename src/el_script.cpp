@@ -37,14 +37,16 @@ const litehtml::tchar_t* litehtml::el_script::get_tagName() const
 
 void litehtml::el_script::set_attr(const tchar_t* name, const tchar_t* val)
 {
+	check_lower_case( name );
 	if( !t_strcmp( name, _t("src")) )
 	{
 		m_src = val;
 	}
 }
 
-const litehtml::tchar_t* litehtml::el_script::get_attr(const tchar_t* name, const tchar_t* def) const
+const litehtml::tchar_t * litehtml::el_script::get_attr(const tchar_t* name, const tchar_t* def) const
 {
+	check_lower_case( name );
 	if( !t_strcmp( name, _t("src")) )
 	{
 		return m_src.empty() ? 0 : m_src.c_str();

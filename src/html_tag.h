@@ -24,11 +24,11 @@ namespace litehtml
 		typedef litehtml::object_ptr<litehtml::html_tag>	ptr;
 	protected:
 		box::vector				m_boxes;
-		string_vector			m_class_values;
+		string_vector	    	m_class_values;
 		tstring					m_tag;
 		litehtml::style			m_user_style;
 		bool					m_dirty_user_style;
-		string_map				m_attrs;
+		strings_hash_map		m_attrs;
 		vertical_align			m_vertical_align;
 		text_align				m_text_align;
 		style_display			m_display;
@@ -44,7 +44,7 @@ namespace litehtml
 		element_position		m_el_position;
 		int						m_line_height;
 		bool					m_lh_predefined;
-		string_vector			m_pseudo_classes;
+		string_hash_vector		m_pseudo_classes;
 		used_selector::vector	m_used_styles;
 
 		uint_ptr				m_font;
@@ -122,8 +122,8 @@ namespace litehtml
 		virtual element_position	get_element_position(css_offsets* offsets = 0) const;
 		virtual overflow			get_overflow() const;
 
-		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
-		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0) const;
+		virtual void				set_attr(const tchar_t* name, const tchar_t* val) override;
+		virtual const tchar_t*    	get_attr(const tchar_t* name, const tchar_t* def = 0) const override;
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				refresh_styles();
 

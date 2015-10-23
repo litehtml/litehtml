@@ -23,6 +23,8 @@ namespace litehtml
 	#define t_itoa(value, buffer, size, radix)	_itow_s(value, buffer, size, radix)
 	#define t_strstr			wcsstr
 	#define t_tolower			towlower
+	#define t_islower			iswlower
+	#define t_isalpha           iswalpha
 	#define t_isdigit			iswdigit
 
 #else
@@ -44,6 +46,8 @@ namespace litehtml
 	#define t_itoa(value, buffer, size, radix)	_itoa_s(value, buffer, size, radix)
 	#define t_strstr			strstr
 	#define t_tolower			tolower
+	#define t_islower			islower
+	#define t_isalpha           isalpha
 	#define t_isdigit			isdigit
 
 #endif
@@ -79,6 +83,8 @@ namespace litehtml
 	#define t_strtod			strtod
 	#define t_strstr			strstr
 	#define t_tolower			tolower
+	#define t_islower			islower
+	#define t_isalpha           isalpha
 	#define t_isdigit			isdigit
 
 #endif
