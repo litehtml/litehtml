@@ -154,42 +154,60 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 	{
 		string_vector tokens;
 		split_string(val, tokens, _t(" "), _t(""), _t("("));
-		int idx;
-		tstring str;
+
+		static const string_hash border_table[ 12 ] =
+		{
+			_t("border-left-style") ,
+			_t("border-left-color") ,
+			_t("border-left-width") ,
+			_t("border-right-style") ,
+			_t("border-right-color") ,
+			_t("border-right-width") ,
+			_t("border-top-style") ,
+			_t("border-top-color") ,
+			_t("border-top-width") ,
+			_t("border-bottom-style") ,
+			_t("border-bottom-color") ,
+			_t("border-bottom-width")
+		};
+
+		const string_hash * name_table;
+
 		if ( name == _t("border-left") )
 		{
-			str = _t("border-left");
+			name_table = &border_table[ 0 ];
 		}
 		else if ( name == _t("border-right") )
 		{
-			str = _t("border-right");
+			name_table = &border_table[ 3 ];
 		}
 		else if ( name == _t("border-top") )
 		{
-			str = _t("border-top");
+			name_table = &border_table[ 6 ];
 		}
-		else
+		else if ( name == _t("border-bottom") )
 		{
-			str = _t("border-bottom");
+			name_table = &border_table[ 9 ];
 		}
 
-		for(string_vector::const_iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+		int idx;
+
+		for(string_vector::const_iterator tok = tokens.cbegin(); tok != tokens.cend(); tok++)
 		{
-			idx = value_index(tok->c_str(), border_style_strings, -1);
+			const tchar_t * c_string = tok->c_str();
+
+			idx = value_index(c_string, border_style_strings, -1);
 			if(idx >= 0)
 			{
-				str += _t("-style");
-				add_property(str.c_str(), tok->c_str(), baseurl, important);
+				add_property(name_table[0], c_string, baseurl, important);
 			} else
 			{
-				if(web_color::is_color(tok->c_str()))
+				if(web_color::is_color(c_string))
 				{
-					str += _t("-color");
-					add_property(str.c_str(), tok->c_str(), baseurl, important);
+					add_property(name_table[1], c_string, baseurl, important);
 				} else
 				{
-					str += _t("-width");
-					add_property(str.c_str(), tok->c_str(), baseurl, important);
+					add_property(name_table[2], c_string, baseurl, important);
 				}
 			}
 		}
@@ -272,60 +290,30 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 	{
 		string_vector tokens;
 		split_string(val, tokens, _t(" "));
-		if(tokens.size() == 1)
+
+		static const string_hash border_radius_x_table[4] =
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[0].c_str(), baseurl, important);
-		} else if(tokens.size() == 2)
-		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[1].c_str(), baseurl, important);
-		} else if(tokens.size() == 3)
-		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[2].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[1].c_str(), baseurl, important);
-		} else if(tokens.size() == 4)
-		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[2].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[3].c_str(), baseurl, important);
-		}
+			_t("border-top-left-radius-x"),
+			_t("border-top-right-radius-x"),
+			_t("border-bottom-right-radius-x"),
+			_t("border-bottom-left-radius-x")
+		};
+
+		expand_shorthand_properties(tokens, border_radius_x_table, important);
 	} else if( name == _t("border-radius-y"))
 	{
 		string_vector tokens;
 		split_string(val, tokens, _t(" "));
-		if(tokens.size() == 1)
+
+		static const string_hash border_radius_y_table[4] =
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[0].c_str(), baseurl, important);
-		} else if(tokens.size() == 2)
-		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[1].c_str(), baseurl, important);
-		} else if(tokens.size() == 3)
-		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[2].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[1].c_str(), baseurl, important);
-		} else if(tokens.size() == 4)
-		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[2].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[3].c_str(), baseurl, important);
-		}
+			_t("border-top-left-radius-y"),
+			_t("border-top-right-radius-y"),
+			_t("border-bottom-right-radius-y"),
+			_t("border-bottom-left-radius-y")
+		};
+
+		expand_shorthand_properties(tokens, border_radius_y_table, important);
 	}
 
 
@@ -385,41 +373,26 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 	{
 		string_vector tokens;
 		split_string(val, tokens, _t(" "));
-		tstring str;
-		if ( name == _t("margin") )
-		{
-			str = _t("margin");
-		}
-		else
-		{
-			str = _t("padding");
-		}
 
-		if(tokens.size() >= 4)
+		static const string_hash margin_table[ 4 ] =
 		{
-			add_parsed_property(tstring( str + _t("-top") ),		tokens[0], important);
-			add_parsed_property(tstring( str + _t("-right") ),		tokens[1], important);
-			add_parsed_property(tstring( str + _t("-bottom") ),	tokens[2], important);
-			add_parsed_property(tstring( str + _t("-left") ),		tokens[3], important);
-		} else if(tokens.size() == 3)
+			_t("margin-top") ,
+			_t("margin-right"),
+			_t("margin-bottom"),
+			_t("margin-left")
+		};
+
+		static const string_hash padding_table[ 4 ] =
 		{
-			add_parsed_property(tstring( str + _t("-top") ),		tokens[0], important);
-			add_parsed_property(tstring( str + _t("-right") ),		tokens[1], important);
-			add_parsed_property(tstring( str + _t("-left") ),		tokens[1], important);
-			add_parsed_property(tstring( str + _t("-bottom") ),	tokens[2], important);
-		} else if(tokens.size() == 2)
-		{
-			add_parsed_property(tstring( str + _t("-top") ),		tokens[0], important);
-			add_parsed_property(tstring( str + _t("-bottom") ),	tokens[0], important);
-			add_parsed_property(tstring( str + _t("-right") ),		tokens[1], important);
-			add_parsed_property(tstring( str + _t("-left") ),		tokens[1], important);
-		} else if(tokens.size() == 1)
-		{
-			add_parsed_property(tstring( str + _t("-top") ),		tokens[0], important);
-			add_parsed_property(tstring( str + _t("-bottom") ),	tokens[0], important);
-			add_parsed_property(tstring( str + _t("-right") ),		tokens[0], important);
-			add_parsed_property(tstring( str + _t("-left") ),		tokens[0], important);
-		}
+			_t("padding-top"),
+			_t("padding-right"),
+			_t("padding-bottom"),
+			_t("padding-left")
+		};
+
+		const string_hash ( & name_table )[ 4 ] = ( name == _t("margin") ) ? margin_table : padding_table;
+
+		expand_shorthand_properties(tokens, name_table, important);
 	} else
 
 
@@ -443,47 +416,47 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 		 name == _t("border-style")  ||
 		 name == _t("border-color"))
 	{
-		tstring str;
-		if ( name == _t("border-width") )
+		static const string_hash border_width_table[ 4 ] =
 		{
-			str = _t("border-width");
-		} else if ( name == _t("border-style") )
+			_t("border-top-width"),
+			_t("border-right-width"),
+			_t("border-bottom-width"),
+			_t("border-left-width"),
+		};
+
+		static const string_hash border_style_table[ 4 ] =
 		{
-			str = _t("border-style");
-		} else
+			_t("border-top-style"),
+			_t("border-right-style"),
+			_t("border-bottom-style"),
+			_t("border-left-style"),
+		};
+
+		static const string_hash border_color_table[ 4 ] =
 		{
-			str = _t("border-color");
-		}
-		string_vector nametokens;
-		split_string(str, nametokens, _t("-"));
+			_t("border-top-color"),
+			_t("border-right-color"),
+			_t("border-bottom-color"),
+			_t("border-left-color"),
+		};
+
 
 		string_vector tokens;
 		split_string(val, tokens, _t(" "));
-		if(tokens.size() >= 4)
+
+		if ( name == _t("border-width") )
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
-			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[2], important);
-			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[3], important);
-		} else if(tokens.size() == 3)
+			expand_shorthand_properties(tokens, border_width_table, important);
+		} else if ( name == _t("border-style") )
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
-			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[1], important);
-			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[2], important);
-		} else if(tokens.size() == 2)
+			expand_shorthand_properties(tokens, border_style_table, important);
+		} else
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
-			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[1], important);
-		} else if(tokens.size() == 1)
-		{
-			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[0], important);
+			expand_shorthand_properties(tokens, border_color_table, important);
 		}
+
+
+
 	} else
 
 	// Parse font shorthand properties
@@ -494,6 +467,24 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 	{
 		add_parsed_property(name, val, important);
 	}
+}
+
+void litehtml::style::expand_shorthand_properties( const string_vector &tokens, const string_hash (& name_array)[4], bool important )
+{
+	static const int index_table_table[ 4 ][ 4 ] =
+	{
+		{ 0, 0, 0, 0 },
+		{ 0, 1, 0, 1 },
+		{ 0, 1, 2, 1 },
+		{ 0, 1, 2, 3 }
+	};
+
+	const int ( &index_table )[ 4 ] = index_table_table[ std::min( tokens.size() - 1, 3u ) ];
+
+	add_parsed_property( name_array[ 0 ], tokens[ index_table[ 0 ] ], important);
+	add_parsed_property( name_array[ 1 ], tokens[ index_table[ 1 ] ], important);
+	add_parsed_property( name_array[ 2 ], tokens[ index_table[ 2 ] ], important);
+	add_parsed_property( name_array[ 3 ], tokens[ index_table[ 3 ] ], important);
 }
 
 void litehtml::style::parse_short_border( const tstring& prefix, const tstring& val, bool important )

@@ -72,6 +72,8 @@ namespace litehtml
 
 		void add_property(const string_hash & name, const tchar_t* val, const tchar_t* baseurl, bool important);
 
+		void expand_shorthand_properties( const string_vector &tokens, const string_hash (&name_array)[4], bool important );
+
 		const tchar_t* get_property( const string_hash & name) const
 		{
 			props_map::const_iterator f = m_properties.find(name);
