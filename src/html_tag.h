@@ -105,6 +105,7 @@ namespace litehtml
 		virtual void				set_data(const tchar_t* data);
 		virtual element_float		get_float() const;
 		virtual vertical_align		get_vertical_align() const;
+		virtual css_margins			get_css_margins() const override;
 		virtual css_length			get_css_left() const;
 		virtual css_length			get_css_right() const;
 		virtual css_length			get_css_top() const;

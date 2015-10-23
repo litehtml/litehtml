@@ -2,6 +2,7 @@
 #include "object.h"
 #include "stylesheet.h"
 #include "css_offsets.h"
+#include "css_margins.h"
 
 namespace litehtml
 {
@@ -117,6 +118,7 @@ namespace litehtml
 		virtual size_t				get_index( const tstring & selector ) const;
 		virtual overflow			get_overflow() const;
 
+		virtual css_margins			get_css_margins() const; // :TODO: Make this a const ref when these css accesors are moved to html_tag.h
 		virtual css_length			get_css_left() const;
 		virtual css_length			get_css_right() const;
 		virtual css_length			get_css_top() const;
