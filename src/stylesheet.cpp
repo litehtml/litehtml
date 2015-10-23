@@ -126,7 +126,12 @@ bool litehtml::css::parse_selectors( const tstring& txt, const litehtml::style::
 
 void litehtml::css::sort_selectors()
 {
-	sort(m_selectors.begin(), m_selectors.end(), std::less<css_selector::ptr>( ));
+	std::sort(m_selectors.begin(), m_selectors.end(),
+		 [](const css_selector::ptr& v1, const css_selector::ptr& v2)
+		 {
+			 return (*v1) < (*v2);
+		 }
+	);
 }
 
 void litehtml::css::parse_atrule(const tstring& text, const tchar_t* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)

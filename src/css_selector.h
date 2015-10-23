@@ -244,12 +244,12 @@ namespace litehtml
 		return (v1.m_specificity < v2.m_specificity);
 	}
 
-	inline bool operator > (css_selector::ptr v1, css_selector::ptr v2)
+	inline bool operator >(const css_selector::ptr& v1, const css_selector::ptr& v2)
 	{
 		return (*v1 > *v2);
 	}
 
-	inline bool operator < (css_selector::ptr v1, css_selector::ptr v2)
+	inline bool operator < (const css_selector::ptr& v1, const css_selector::ptr& v2)
 	{
 		return (*v1 < *v2);
 	}
