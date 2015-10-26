@@ -111,25 +111,6 @@ namespace litehtml
             }
         };
 
-        template< unsigned int character_count >
-        struct HashGenerator< character_count, 0 >
-        {
-            inline static hash_code Hash( const litehtml::tchar_t ( &character_array )[ character_count ] )
-            {
-                return FNV_OffsetBase;
-            }
-        };
-
-        // Special case: Hash empty string as 0 to make it more human readable
-        template<>
-        struct HashGenerator<1, 0>
-        {
-            inline static hash_code Hash( const litehtml::tchar_t ( & )[ 1 ] )
-            {
-                return 0u;
-            }
-        };
-
         inline static unsigned int LoopedHash( const litehtml::tchar_t * input )
         {
             unsigned int result = FNV_OffsetBase;
@@ -147,4 +128,24 @@ namespace litehtml
         static const unsigned int FNV_OffsetBase = 2166136261u;
         static const unsigned int FNV_Prime = 16777619u;
     };
+
+    template< unsigned int character_count >
+    struct string_hash::HashGenerator< character_count, 0 >
+    {
+        inline static hash_code Hash( const litehtml::tchar_t ( &character_array )[ character_count ] )
+        {
+            return FNV_OffsetBase;
+        }
+    };
+
+    // Special case: Hash empty string as 0 to make it more human readable
+    template<>
+    struct string_hash::HashGenerator<1, 0>
+    {
+        inline static hash_code Hash( const litehtml::tchar_t ( & )[ 1 ] )
+        {
+            return 0u;
+        }
+    };
 }
+
