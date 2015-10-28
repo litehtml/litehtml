@@ -479,7 +479,7 @@ void litehtml::style::expand_shorthand_properties( const string_vector &tokens, 
 		{ 0, 1, 2, 3 }
 	};
 
-	const int ( &index_table )[ 4 ] = index_table_table[ std::min( tokens.size() - 1, 3ul ) ];
+	const int ( &index_table )[ 4 ] = index_table_table[ std::min< string_vector::size_type >( tokens.size() - 1, 3 ) ];
 
 	add_parsed_property( name_array[ 0 ], tokens[ index_table[ 0 ] ], important);
 	add_parsed_property( name_array[ 1 ], tokens[ index_table[ 1 ] ], important);
