@@ -28,7 +28,7 @@ namespace litehtml
 		property_value( property_value && val)
 		{
 			m_value = std::move( val.m_value );
-			m_important = m_important;
+			m_important = val.m_important;
 		}
 
 		property_value& operator=(const property_value& val)
