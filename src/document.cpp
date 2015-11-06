@@ -77,37 +77,37 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	GumboOptions
 		options = kGumboDefaultOptions;
 
-	if( parent_element )
+	if(parent_element)
 	{
-		options.fragment_context = gumbo_tag_enum( parent_element->get_tagName() );
+		options.fragment_context = gumbo_tag_enum(parent_element->get_tagName());
 	}
 
 	GumboOutput
 		* output = nullptr;
 
-	if( text )
+	if(text)
 	{
 		output = gumbo_parse_with_options(&options, text, strlen(text));
 
 		document->create_node(output->root, elements);
 	}
 
-	if( parent_element )
+	if(parent_element)
 	{
-		element::ptr html = elements[ 0 ];
-		assert( !strcmp( elements[ 0 ]->get_tagName(), "html" ) );
+		element::ptr html = elements[0];
+		assert(!strcmp(elements[0]->get_tagName(), "html"));
 
 		elements = html->m_children;
 	}
 	else
 	{
-		if ( elements.size() > 0 )
+		if(elements.size() > 0)
 		{
 			document->m_root = elements.back();
 		}
 	}
 
-	if( text )
+	if(text)
 	{
 		// Destroy GumboOutput
 		gumbo_destroy_output(&kGumboDefaultOptions, output);
@@ -116,7 +116,8 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	document->container()->get_media_features(document->m_media);
 	tstring culture;
 	document->container()->get_language(document->m_lang, culture);
-	if ( !culture.empty() )
+
+	if(!culture.empty())
 	{
 		document->m_culture = document->m_lang + '-' + culture;
 	}
@@ -126,7 +127,7 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	}
 
 	// get current media features
-	if (!document->m_media_lists.empty())
+	if(!document->m_media_lists.empty())
 	{
 		document->update_media_lists(document->m_media);
 	}
@@ -135,11 +136,18 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	{
 		if(parent_element)
 		{
-			element->parent(parent_element);
+			if(& elements != & parent_element->m_children)
+			{
+				parent_element->appendChild(element);
+			}
+			else
+			{
+				element->parent(parent_element);
+			}
 		}
 
 		// apply master CSS
-		element->apply_stylesheet( document->m_context->master_css() );
+		element->apply_stylesheet(document->m_context->master_css());
 
 		// parse elements attributes
 		element->parse_attributes();
@@ -148,7 +156,7 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 		element->apply_stylesheet(document->m_styles);
 
 		// Apply user styles if any
-		if (user_styles)
+		if(user_styles)
 		{
 			element->apply_stylesheet(*user_styles);
 		}
