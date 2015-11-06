@@ -135,7 +135,14 @@ bool litehtml::document::createElements(elements_vector & elements, litehtml::do
 	{
 		if(parent_element)
 		{
-			element->parent(parent_element);
+			if(& elements != & parent_element->m_children)
+			{
+				parent_element->appendChild(element);
+			}
+			else
+			{
+				element->parent(parent_element);
+			}
 		}
 
 		// apply master CSS
