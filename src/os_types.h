@@ -1,5 +1,7 @@
 #pragma once
 
+#include <string>
+
 namespace litehtml
 {
 #if defined( WIN32 ) || defined( WINCE )

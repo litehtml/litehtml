@@ -4,6 +4,7 @@
 #include <map>
 #include <vector>
 #include "object.h"
+#include "os_types.h"
 
 namespace litehtml
 {
