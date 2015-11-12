@@ -15,7 +15,10 @@ litehtml::element::element( litehtml::document* doc )
 
 litehtml::element::~element()
 {
-
+	for (auto & child : m_children)
+	{
+		child->m_parent = nullptr;
+	}
 }
 
 
@@ -290,6 +293,8 @@ void litehtml::element::finalize()
 	{
 		child->finalize();
 	}
+
+	m_parent = nullptr;
 }
 
 const litehtml::tchar_t* litehtml::element::get_style_property( const string_hash & name, bool inherited, const tchar_t* def /*= 0*/ )

@@ -3583,6 +3583,7 @@ void litehtml::html_tag::remove_before_after()
 	{
 		if( !t_strcmp(m_children.front()->get_tagName(), _t("::before")) )
 		{
+			m_children.front()->parent( nullptr );
 			m_children.erase(m_children.begin());
 		}
 	}
@@ -3590,6 +3591,7 @@ void litehtml::html_tag::remove_before_after()
 	{
 		if( !t_strcmp(m_children.back()->get_tagName(), _t("::after")) )
 		{
+			m_children.back()->parent( nullptr );
 			m_children.erase(m_children.end() - 1);
 		}
 	}
