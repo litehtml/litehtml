@@ -117,10 +117,9 @@ void litehtml::table_grid::finish()
 
 			if(cell(col, row)->el && cell(col, row)->colspan <= 1)
 			{
-				if(!cell(col, row)->el->get_css_width().is_predefined())
+				if (!cell(col, row)->el->get_css_width().is_predefined() && m_columns[col].css_width.is_predefined())
 				{
 					m_columns[col].css_width = cell(col, row)->el->get_css_width();
-					break;
 				}
 			}
 		}
@@ -449,6 +448,99 @@ void litehtml::table_grid::calc_vertical_positions( margins& table_borders, bord
 			m_rows[i].top		= top;
 			m_rows[i].bottom	= m_rows[i].top + m_rows[i].height;
 			top = m_rows[i].bottom;
+		}
+	}
+}
+
+void litehtml::table_grid::calc_rows_height(int blockHeight, int borderSpacingY)
+{
+	int min_table_height = 0;
+
+	// compute vertical size inferred by cells
+	for (auto& row : m_rows)
+	{
+		if (!row.css_height.is_predefined())
+		{
+			if (row.css_height.units() != css_units_percentage)
+			{
+				if (row.height < (int)row.css_height.val())
+				{
+					row.height = (int)row.css_height.val();
+				}
+			}
+		}
+		row.min_height = row.height;
+		min_table_height += row.height;
+	}
+
+	//min_table_height += borderSpacingY * ((int) m_rows.size() + 1);
+
+	if (blockHeight > min_table_height)
+	{
+		int extra_height = blockHeight - min_table_height;
+		int auto_count = 0; // number of rows with height=auto
+		for (auto& row : m_rows)
+		{
+			if (!row.css_height.is_predefined() && row.css_height.units() == css_units_percentage)
+			{
+				row.height = row.css_height.calc_percent(blockHeight);
+				if (row.height < row.min_height)
+				{
+					row.height = row.min_height;
+				}
+
+				extra_height -= row.height - row.min_height;
+
+				if (extra_height <= 0) break;
+			}
+			else if (row.css_height.is_predefined())
+			{
+				auto_count++;
+			}
+		}
+		if (extra_height > 0)
+		{
+			if (auto_count)
+			{
+				// distribute height to the rows with height=auto
+				int extra_row_height = (int)(extra_height / auto_count);
+				for (auto& row : m_rows)
+				{
+					if (row.css_height.is_predefined())
+					{
+						row.height += extra_row_height;
+					}
+				}
+			}
+			else
+			{
+				// We don't have rows with height=auto, so ditribute height to all rows
+				int extra_row_height = (int)(extra_height / m_rows.size());
+				for (auto& row : m_rows)
+				{
+					row.height += extra_row_height;
+				}
+			}
+		}
+		else if (extra_height < 0)
+		{
+			extra_height = -extra_height;
+			for (auto& row = m_rows.rbegin(); row < m_rows.rend() && extra_height > 0; row++)
+			{
+				if (row->height > row->min_height)
+				{
+					if (row->height - extra_height >= row->min_height)
+					{
+						row->height -= extra_height;
+						extra_height = 0;
+					}
+					else
+					{
+						extra_height -= row->height - row->min_height;
+						row->height = row->min_height;
+					}
+				}
+			}
 		}
 	}
 }

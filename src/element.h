@@ -89,6 +89,7 @@ namespace litehtml
 		int							calc_width(int defVal) const;
 		int							get_inline_shift_left();
 		int							get_inline_shift_right();
+		void						apply_relative_shift(int parent_width);
 
 		bool						set_inner_html(const tchar_t* text);
 

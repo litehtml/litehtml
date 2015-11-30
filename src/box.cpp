@@ -27,41 +27,7 @@ void litehtml::block_box::add_element( element* el)
 void litehtml::block_box::finish(bool last_box)
 {
 	if(!m_element) return;
-
-	css_offsets offsets;
-	if(m_element->get_element_position(&offsets) == element_position_relative)
-	{
-		if(!offsets.left.is_predefined())
-		{
-			m_element->m_pos.x += offsets.left.calc_percent(m_box_right - m_box_left);
-		} else if(!offsets.right.is_predefined())
-		{
-			m_element->m_pos.x -= offsets.right.calc_percent(m_box_right - m_box_left);
-		}
-		if(!offsets.top.is_predefined())
-		{
-			int h = 0;
-			if(offsets.top.units() == css_units_percentage)
-			{
-				if(m_element->parent())
-				{
-					m_element->parent()->get_predefined_height(h);
-				}
-			}
-			m_element->m_pos.y += offsets.top.calc_percent(h);
-		} else if(!offsets.bottom.is_predefined())
-		{
-			int h = 0;
-			if(offsets.bottom.units() == css_units_percentage)
-			{
-				if(m_element->parent())
-				{
-					m_element->parent()->get_predefined_height(h);
-				}
-			}
-			m_element->m_pos.y -= offsets.bottom.calc_percent(h);
-		}
-	}
+	m_element->apply_relative_shift(m_box_right - m_box_left);
 }
 
 bool litehtml::block_box::can_hold( element* el, white_space ws )
@@ -324,46 +290,7 @@ void litehtml::line_box::finish(bool last_box)
 			}
 		}
 
-		// update position for relative positioned elements
-
-		if(m_items[i]->get_element_position(&offsets) == element_position_relative)
-		{
-			if(!offsets.left.is_predefined())
-			{
-				m_items[i]->m_pos.x += offsets.left.calc_percent(m_box_right - m_box_left);
-			} else if(!offsets.right.is_predefined())
-			{
-				m_items[i]->m_pos.x -= offsets.right.calc_percent(m_box_right - m_box_left);
-			}
-			if(!offsets.top.is_predefined())
-			{
-				int h = 0;
-				
-				if(offsets.top.units() == css_units_percentage)
-				{
-					if(m_items.back()->parent())
-					{
-						m_items.back()->parent()->get_predefined_height(h);
-					}
-				}
-
-				m_items[i]->m_pos.y += offsets.top.calc_percent(h);
-			} else if(!offsets.bottom.is_predefined())
-			{
-				int h = 0;
-
-				if(offsets.top.units() == css_units_percentage)
-				{
-					if(m_items.back()->parent())
-					{
-						m_items.back()->parent()->get_predefined_height(h);
-					}
-				}
-
-				// TODO: m_line_height is not correct here
-				m_items[i]->m_pos.y -= offsets.bottom.calc_percent(h);
-			}
-		}
+		m_items[i]->apply_relative_shift(m_box_right - m_box_left);
 	}
 	m_height = y2 - y1;
 	m_baseline = (base_line - y1) - (m_height - line_height);
