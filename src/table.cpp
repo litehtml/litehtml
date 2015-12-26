@@ -514,11 +514,14 @@ void litehtml::table_grid::calc_rows_height(int blockHeight, int borderSpacingY)
 			}
 			else
 			{
-				// We don't have rows with height=auto, so ditribute height to all rows
-				int extra_row_height = (int)(extra_height / m_rows.size());
-				for (auto& row : m_rows)
+				// We don't have rows with height=auto, so distribute height to all rows
+				if (!m_rows.empty())
 				{
-					row.height += extra_row_height;
+					int extra_row_height = (int)(extra_height / m_rows.size());
+					for (auto& row : m_rows)
+					{
+						row.height += extra_row_height;
+					}
 				}
 			}
 		}
