@@ -60,3 +60,7 @@ set(SOURCE_GUMBO    src/gumbo/attribute.c
 
 add_library(litehtml STATIC ${SOURCE_LITEHTML} ${SOURCE_GUMBO})
 
+if(WIN32)
+     target_include_directories(litehtml PUBLIC src/gumbo)
+endif()
+
