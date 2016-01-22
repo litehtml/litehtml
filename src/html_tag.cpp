@@ -3072,8 +3072,8 @@ void litehtml::html_tag::render_positioned(render_type rt)
 			{
 				if(el->parent())
 				{
-					parent_height	= el->parent()->height();
-					parent_width	= el->parent()->width();
+					parent_height	= el->parent()->content_height();
+					parent_width	= el->parent()->content_width();
 				}
 			}
 
