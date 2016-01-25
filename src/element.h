@@ -45,6 +45,8 @@ namespace litehtml
 		int							bottom()					const;
 		int							height()					const;
 		int							width()						const;
+		int							box_height()				const;
+		int							box_width()					const;
 
 		int							content_margins_top()		const;
 		int							content_margins_bottom()	const;
@@ -245,12 +247,22 @@ namespace litehtml
 
 	inline int litehtml::element::height() const
 	{
-		return m_pos.height + margin_top() + margin_bottom() + m_padding.height() + m_borders.height();
+		return margin_top() + margin_bottom() + box_height() + m_borders.height();
 	}
 
 	inline int litehtml::element::width() const
 	{
-		return m_pos.width + margin_left() + margin_right() + m_padding.width() + m_borders.width();
+		return margin_left() + margin_right() + box_width() + m_borders.width();
+	}
+
+	inline int litehtml::element::box_height() const
+	{
+		return m_pos.height + m_padding.height();
+	}
+
+	inline int litehtml::element::box_width() const
+	{
+		return m_pos.width + m_padding.width();
 	}
 
 	inline int litehtml::element::content_margins_top() const
