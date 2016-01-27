@@ -864,6 +864,8 @@ void litehtml::document::fix_tables_layout()
 		}
 		i++;
 	}
+
+	m_tabular_elements.clear();
 }
 
 void litehtml::document::fix_table_children(element::ptr el_ptr, style_display disp, const tchar_t* disp_str)
