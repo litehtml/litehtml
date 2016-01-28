@@ -525,7 +525,7 @@ void litehtml::table_grid::calc_rows_height(int blockHeight, int borderSpacingY)
 		else if (extra_height < 0)
 		{
 			extra_height = -extra_height;
-			for (auto& row = m_rows.rbegin(); row < m_rows.rend() && extra_height > 0; row++)
+			for (auto row = m_rows.rbegin(); row < m_rows.rend() && extra_height > 0; row++)
 			{
 				if (row->height > row->min_height)
 				{

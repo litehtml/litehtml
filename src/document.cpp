@@ -864,6 +864,8 @@ void litehtml::document::fix_tables_layout()
 		}
 		i++;
 	}
+
+	m_tabular_elements.clear();
 }
 
 void litehtml::document::fix_table_children(element::ptr el_ptr, style_display disp, const tchar_t* disp_str)
@@ -877,7 +879,7 @@ void litehtml::document::fix_table_children(element::ptr el_ptr, style_display d
 		element::ptr annon_tag = new html_tag(this);
 		style::ptr st = new style;
 		st->add_property(_t("display"), disp_str, 0, false);
-		annon_tag->add_style(st);
+		annon_tag->add_user_style(st);
 		annon_tag->parent(el_ptr);
 		annon_tag->parse_styles();
 		std::for_each(tmp.begin(), tmp.end(),
