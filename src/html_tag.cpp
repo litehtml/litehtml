@@ -535,6 +535,7 @@ void litehtml::html_tag::init()
 				i++;
 				while (i != m_children.end() && (*i)->is_white_space())
 				{
+					(*i)->parent(nullptr);
 					i = m_children.erase(i);
 				}
 			}
