@@ -32,9 +32,9 @@ bool litehtml::el_style::appendChild( litehtml::element* el )
 
 bool litehtml::el_style::addChildAfter( litehtml::element* new_el, litehtml::element* existing_el )
 {
-    auto iter = std::find( m_children.begin(), m_children.end(), existing_el );
-    m_children.insert( ++iter, new_el );
-    return true;
+	auto iter = std::find( m_children.begin(), m_children.end(), existing_el );
+	m_children.insert( ++iter, new_el );
+	return true;
 }
 
 
