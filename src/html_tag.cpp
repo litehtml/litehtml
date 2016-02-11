@@ -2452,6 +2452,13 @@ bool litehtml::html_tag::set_class( const tchar_t* pclass, bool add )
 
 }
 
+bool litehtml::html_tag::has_class( const tchar_t* pclass ) const
+{
+	const auto & end = m_class_values.cend();
+
+	return std::find(m_class_values.cbegin(), end, pclass) != end;
+}
+
 int litehtml::html_tag::line_height() const
 {
 	return m_line_height;

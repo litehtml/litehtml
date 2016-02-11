@@ -463,6 +463,7 @@ litehtml::white_space litehtml::element::get_white_space() const					LITEHTML_RE
 litehtml::style_display litehtml::element::get_display() const						LITEHTML_RETURN_FUNC(display_none)
 bool litehtml::element::set_pseudo_class( const tchar_t* pclass, bool add )			LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::set_class( const tchar_t* pclass, bool add )				LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::has_class( const tchar_t* pclass ) const					LITEHTML_RETURN_FUNC(false)
 litehtml::element_position litehtml::element::get_element_position(css_offsets* offsets) const			LITEHTML_RETURN_FUNC(element_position_static)
 bool litehtml::element::is_replaced() const											LITEHTML_RETURN_FUNC(false)
 int litehtml::element::line_height() const											LITEHTML_RETURN_FUNC(0)
