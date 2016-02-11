@@ -139,8 +139,9 @@ namespace litehtml
 		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
 		virtual const tchar_t*		get_cursor();
 		virtual void				init_font();
-		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add);
-		virtual bool				set_class(const tchar_t* pclass, bool add);
+		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add) override;
+		virtual bool				set_class(const tchar_t* pclass, bool add) override;
+		virtual bool				has_class(const tchar_t* pclass) const override;
 		virtual bool				is_replaced() const;
 		virtual int					line_height() const;
 		virtual white_space			get_white_space() const;
