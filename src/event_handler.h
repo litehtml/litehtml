@@ -5,7 +5,7 @@ namespace litehtml
 {
 	enum mouse_event_type
 	{
-		mouse_event_click,
+		mouse_event_click = 0,
 		mouse_event_contextmenu,
 		mouse_event_dblclick,
 		mouse_event_mousedown,
@@ -27,6 +27,7 @@ namespace litehtml
 
 	struct mouse_event
 	{
+		mouse_event( const mouse_event_type type ) : m_type(type) {};
 		mouse_event_type m_type;
 		point m_position;
 	};
@@ -43,6 +44,7 @@ namespace litehtml
 	public:
 		typedef litehtml::object_ptr<litehtml::event_handler>		ptr;
 
+		void 		 		handle_mouse_event( element & el, const mouse_event & event, bool & prevent_default );
 		virtual void 		on_mouse_event( element & el, event_response & response, const mouse_event & event ) = 0;
 		virtual void 		on_browser_event( element & el, event_response & response, const browser_event_type event ) = 0;
 	};

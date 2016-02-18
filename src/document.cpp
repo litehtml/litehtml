@@ -445,7 +445,7 @@ void litehtml::document::add_stylesheet( const tchar_t* str, const tchar_t* base
 	m_styles.sort_selectors();
 }
 
-bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
+bool litehtml::document::on_mouse_move( int x, int y, int client_x, int client_y )
 {
 	if(!m_root)
 	{
@@ -461,109 +461,118 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 
 	bool state_was_changed = false;
 
-	if(over_el != m_over_element)
+	if( over_el != m_over_element )
 	{
-		if(m_over_element && m_over_element->on_mouse_leave())
+		if( m_over_element )
 		{
-			state_was_changed = true;
+			bool
+				prevent_default_mouseleave = false,
+				prevent_default_mouseout = false;
+
+			if ( m_event_handler )
+			{
+				m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseleave, prevent_default_mouseleave );
+				m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseout, prevent_default_mouseout );
+			}
+
+			if ( !prevent_default_mouseleave && !prevent_default_mouseout )
+			{
+				state_was_changed = m_over_element->on_mouse_leave();
+			}
 		}
+
 		m_over_element = over_el;
 
-		if(m_over_element && m_over_element->on_mouse_over())
+		if( m_over_element )
 		{
-			state_was_changed = true;
-		}
+			bool
+				prevent_default_mouseenter = false,
+				prevent_default_mouseover = false;
 
-		const tchar_t* cursor = m_over_element ? m_over_element->get_cursor() : 0;
+			if ( m_event_handler )
+			{
+				m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseenter, prevent_default_mouseenter );
+				m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseover, prevent_default_mouseover );
+			}
 
-		m_container->set_cursor(cursor ? cursor : _t("auto"));
+			if ( !prevent_default_mouseenter && !prevent_default_mouseover )
+			{
+				state_was_changed |= m_over_element->on_mouse_over();
+			}
 
-		if(state_was_changed)
-		{
-			m_root->find_styles_changes(redraw_boxes, 0, 0);
+			const tchar_t* cursor = m_over_element->get_cursor();
+			m_container->set_cursor( cursor ? cursor : _t("auto") );
 		}
 	}
 
-	return over_el != nullptr;
+	return state_was_changed;
 }
 
-bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
-{
-	if(!m_root)
-	{
-		return false;
-	}
-	if(m_over_element)
-	{
-		if(m_over_element->on_mouse_leave())
-		{
-			return m_root->find_styles_changes(redraw_boxes, 0, 0);
-		}
-	}
-	return false;
-}
-
-bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
+bool litehtml::document::on_lbutton_down()
 {
 	if(!m_root)
 	{
 		return false;
 	}
 
-	element::ptr over_el = m_root->get_element_by_point(x, y, client_x, client_y);
-
-	if(over_el == m_root)
-	{
-		over_el = nullptr;
-	}
-
-	m_active_element = over_el;
+	m_active_element = m_over_element;
 
 	bool state_was_changed = false;
 
-	if(over_el != m_over_element)
+	if(m_over_element )
 	{
-		if(m_over_element && m_over_element->on_mouse_leave())
+		bool
+			prevent_default_mousedown = false;
+
+		if ( m_event_handler )
 		{
-			state_was_changed = true;
+			m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mousedown, prevent_default_mousedown );
 		}
-		m_over_element = over_el;
-		if(m_over_element && m_over_element->on_mouse_over())
+
+		if ( !prevent_default_mousedown )
 		{
-			state_was_changed = true;
+			state_was_changed = m_over_element->on_lbutton_down();
 		}
 	}
 
-	if(m_over_element && m_over_element->on_lbutton_down())
-	{
-		state_was_changed = true;
-	}
-
-	const tchar_t* cursor = m_over_element ? m_over_element->get_cursor() : 0;
-	m_container->set_cursor(cursor ? cursor : _t("auto"));
-
-	if(state_was_changed)
-	{
-		m_root->find_styles_changes(redraw_boxes, 0, 0);
-	}
-
-	return over_el != nullptr;
+	return state_was_changed;
 }
 
-bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
+bool litehtml::document::on_lbutton_up()
 {
-	if(!m_root)
+	// :TODO: check this behavior
+
+	if( !m_root || !m_over_element || m_over_element != m_active_element )
 	{
 		return false;
 	}
 
-	if(m_over_element && m_over_element == m_active_element && m_over_element->on_lbutton_up())
+	bool
+		state_was_changed = false,
+		prevent_default_mouseup = false,
+		prevent_default_mouseclick = false;
+
+	if ( m_event_handler )
 	{
-		m_root->find_styles_changes(redraw_boxes, 0, 0);
-		return true;
+		m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseup, prevent_default_mouseup );
 	}
 
-	return m_active_element != nullptr;
+	if ( !prevent_default_mouseup )
+	{
+		state_was_changed |= m_over_element->on_lbutton_up();
+	}
+
+	if ( m_event_handler )
+	{
+		m_event_handler->handle_mouse_event( *m_over_element, mouse_event_click, prevent_default_mouseclick );
+	}
+
+	if ( !prevent_default_mouseclick )
+	{
+		m_over_element->on_click();
+	}
+
+	return state_was_changed;
 }
 
 litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_name, const string_map& attributes)

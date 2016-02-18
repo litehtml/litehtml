@@ -1672,11 +1672,6 @@ void litehtml::html_tag::get_inline_boxes( position::vector& boxes )
 bool litehtml::html_tag::on_mouse_over()
 {
 	bool ret = false;
-	event_response response;
-	event_handler * handler = m_doc->get_event_handler();
-	mouse_event event;
-
-	event.m_type = mouse_event_mouseover;
 
 	element* el = this;
 	while(el)
@@ -1686,11 +1681,6 @@ bool litehtml::html_tag::on_mouse_over()
 		if(el->set_pseudo_class(_t("hover"), true))
 		{
 			ret = true;
-		}
-
-		if(handler && !response.m_stop_propagation)
-		{
-		   handler->on_mouse_event( *el, response, event );
 		}
 
 		el = el->parent();
@@ -1780,19 +1770,6 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 bool litehtml::html_tag::on_mouse_leave()
 {
 	bool ret = false;
-	event_response response;
-	event_handler * handler = m_doc->get_event_handler();
-	mouse_event event;
-
-	event.m_type = mouse_event_mouseleave;
-	//todo: event.m_position;
-
-	assert( get_pointer_events() != pointer_events_none );
-
-	event_response r;
-	handler->on_mouse_event( *this, r, event );
-
-	event.m_type = mouse_event_mouseout;
 
 	element* el = this;
 	while(el)
@@ -1808,11 +1785,6 @@ bool litehtml::html_tag::on_mouse_leave()
 			ret = true;
 		}
 
-		if(handler && !response.m_stop_propagation)
-		{
-		   handler->on_mouse_event( *el, response, event );
-		}
-
 		el = el->parent();
 	}
 
@@ -1821,10 +1793,6 @@ bool litehtml::html_tag::on_mouse_leave()
 
 bool litehtml::html_tag::on_lbutton_down()
 {
-	event_handler * h = m_doc->get_event_handler();
-	event_response response;
-	mouse_event event;
-	event.m_type = mouse_event_mousedown;
 	bool ret = false;
 
 	element* el = this;
@@ -1837,11 +1805,6 @@ bool litehtml::html_tag::on_lbutton_down()
 			ret = true;
 		}
 
-		if(h && !response.m_stop_propagation)
-		{
-			h->on_mouse_event( *el, response, event );
-		}
-
 		el = el->parent();
 	}
 
@@ -1851,27 +1814,8 @@ bool litehtml::html_tag::on_lbutton_down()
 bool litehtml::html_tag::on_lbutton_up()
 {
 	bool ret = false;
-	event_handler * h = m_doc->get_event_handler();
-	event_response response;
-	mouse_event event;
-	event.m_type = mouse_event_mouseup;
 
 	element* el = this;
-	while(el)
-	{
-		assert( el->get_pointer_events() != pointer_events_none );
-
-		if(h && !response.m_stop_propagation)
-		{
-			h->on_mouse_event( *el, response, event );
-		}
-
-		el = el->parent();
-	}
-
-	event.m_type = mouse_event_click;
-	el = this;
-
 	while(el)
 	{
 		assert( el->get_pointer_events() != pointer_events_none );
@@ -1881,17 +1825,7 @@ bool litehtml::html_tag::on_lbutton_up()
 			ret = true;
 		}
 
-		if(h && !response.m_stop_propagation)
-		{
-			h->on_mouse_event( *el, response, event );
-		}
-
 		el = el->parent();
-	}
-
-	if( !response.m_prevent_default )
-	{
-		on_click();
 	}
 
 	return ret;
