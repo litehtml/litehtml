@@ -28,6 +28,53 @@
 #include "utf8_strings.h"
 #include <assert.h>
 
+namespace litehtml
+{
+	void get_difference( element * previous_el, element * new_el, elements_vector & left_elements, elements_vector & entered_elements )
+	{
+		elements_vector previous_ancestors, new_ancestors;
+
+		while( previous_el )
+		{
+			previous_ancestors.push_back( previous_el );
+			previous_el = previous_el->parent();
+		}
+
+		while( new_el )
+		{
+			new_ancestors.push_back( new_el );
+			new_el = new_el->parent();
+		}
+
+		elements_vector::const_reverse_iterator previous_it, new_it;
+
+		for (
+			previous_it = previous_ancestors.crbegin(), new_it = new_ancestors.crbegin();
+			previous_it != previous_ancestors.crend() && new_it != new_ancestors.crend();
+			++previous_it, ++new_it
+			)
+		{
+			if ( *previous_it != *new_it )
+			{
+				break;
+			}
+		}
+
+		if ( !previous_ancestors.empty() )
+		{
+			previous_ancestors.erase( previous_it.base(), previous_ancestors.end() );
+		}
+
+		if ( !new_ancestors.empty() )
+		{
+			new_ancestors.erase( new_it.base(), new_ancestors.end() );
+		}
+
+		left_elements = std::move( previous_ancestors );
+		entered_elements = std::move( new_ancestors );
+	}
+}
+
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
 	m_container	= objContainer;
@@ -463,6 +510,10 @@ bool litehtml::document::on_mouse_move( int x, int y, int client_x, int client_y
 
 	if( over_el != m_over_element )
 	{
+		elements_vector left_elements, entered_elements;
+
+		get_difference(m_over_element, over_el, left_elements, entered_elements );
+
 		if( m_over_element )
 		{
 			bool
@@ -471,7 +522,11 @@ bool litehtml::document::on_mouse_move( int x, int y, int client_x, int client_y
 
 			if ( m_event_handler )
 			{
-				m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseleave, prevent_default_mouseleave );
+				for ( auto it : left_elements)
+				{
+					m_event_handler->handle_mouse_event( *it, mouse_event_mouseleave, prevent_default_mouseleave );
+				}
+
 				m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseout, prevent_default_mouseout );
 			}
 
@@ -491,7 +546,11 @@ bool litehtml::document::on_mouse_move( int x, int y, int client_x, int client_y
 
 			if ( m_event_handler )
 			{
-				m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseenter, prevent_default_mouseenter );
+				for ( auto it : entered_elements)
+				{
+					m_event_handler->handle_mouse_event( *it, mouse_event_mouseenter, prevent_default_mouseenter );
+				}
+
 				m_event_handler->handle_mouse_event( *m_over_element, mouse_event_mouseover, prevent_default_mouseover );
 			}
 
