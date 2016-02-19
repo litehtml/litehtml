@@ -194,18 +194,15 @@ int litehtml::element::calc_width(int defVal) const
 	return 	m_doc->cvt_units(w, get_font_size());
 }
 
-bool litehtml::element::is_ancestor( element* el )
+bool litehtml::element::is_ancestor( element* el ) const
 {
 	element* el_parent = parent();
 	while(el_parent && el_parent != el)
 	{
 		el_parent = el_parent->parent();
 	}
-	if(el_parent)
-	{
-		return true;
-	}
-	return false;
+
+	return el_parent != nullptr;
 }
 
 int litehtml::element::get_inline_shift_left()

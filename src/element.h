@@ -171,7 +171,7 @@ namespace litehtml
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
 		virtual element*			find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual bool				is_ancestor(element* el);
+		bool						is_ancestor(element* el) const;
 		virtual element*			find_adjacent_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual element*			find_sibling(element* el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
 		virtual bool				is_first_child_inline(const element* el);

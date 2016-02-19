@@ -69,8 +69,8 @@ namespace litehtml
 		element::ptr						m_active_element;
 		elements_vector						m_tabular_elements;
 		media_features						m_media;
-		tstring                             m_lang;
-		tstring                             m_culture;
+		tstring							 m_lang;
+		tstring							 m_culture;
 	public:
 		document(litehtml::document_container* objContainer, litehtml::context* ctx);
 		virtual ~document();
@@ -87,10 +87,9 @@ namespace litehtml
 		int								width() const;
 		int								height() const;
 		void							add_stylesheet(const tchar_t* str, const tchar_t* baseurl, const tchar_t* media);
-		bool							on_mouse_over(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
-		bool							on_lbutton_down(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
-		bool							on_lbutton_up(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
-		bool							on_mouse_leave(position::vector& redraw_boxes);
+		bool							on_mouse_move(int x, int y, int client_x, int client_y);
+		bool							on_lbutton_down();
+		bool							on_lbutton_up();
 		litehtml::element::ptr			create_element(const tchar_t* tag_name, const string_map& attributes);
 		element::ptr					root();
 		const element::ptr				root() const;
