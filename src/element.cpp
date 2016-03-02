@@ -294,7 +294,7 @@ void litehtml::element::finalize()
 	m_parent = nullptr;
 }
 
-const litehtml::tchar_t* litehtml::element::get_style_property( const string_hash & name, bool inherited, const tchar_t* def /*= 0*/ )
+const litehtml::tchar_t* litehtml::element::get_style_property( const string_hash & name, bool inherited, const tchar_t* def /*= 0*/ ) const
 {
 	const tchar_t* ret = m_style.get_property(name);
 	bool pass_parent = false;

@@ -1536,8 +1536,13 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 
 void litehtml::html_tag::calc_auto_margins(int parent_width)
 {
-	if (get_element_position() != element_position_absolute && (m_display == display_block || m_display == display_table))
+	if (m_display == display_block || m_display == display_table)
 	{
+		if ( get_element_position() == element_position_absolute && ( m_css_width.is_predefined() || m_css_offsets.left.is_predefined() || m_css_offsets.right.is_predefined() ) )
+		{
+			return;
+		}
+		
 		if (m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
 			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right;
