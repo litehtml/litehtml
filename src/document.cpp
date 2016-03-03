@@ -357,6 +357,11 @@ int litehtml::document::render( int max_width, render_type rt )
 	int ret = 0;
 	if(m_root)
 	{
+		litehtml::position::vector
+			redraw_box_table;
+
+		m_root->find_styles_changes( redraw_box_table, 0, 0 );
+
 		if(rt == render_fixed_only)
 		{
 			m_fixed_boxes.clear();

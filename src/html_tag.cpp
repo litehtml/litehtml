@@ -33,7 +33,7 @@ litehtml::html_tag::html_tag(litehtml::document* doc) : litehtml::element(doc)
 	m_border_spacing_x		= 0;
 	m_border_spacing_y		= 0;
 	m_border_collapse		= border_collapse_separate;
-	m_dirty_user_style		= false;
+	m_dirty_style			= false;
 }
 
 litehtml::html_tag::~html_tag()
@@ -214,6 +214,8 @@ void litehtml::html_tag::get_content_size( size& sz, int max_width )
 
 void litehtml::html_tag::draw( uint_ptr hdc, int x, int y, const position* clip )
 {
+	assert(!m_dirty_style);
+
 	position pos = m_pos;
 	pos.x	+= x;
 	pos.y	+= y;
@@ -462,12 +464,18 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 int litehtml::html_tag::render( int x, int y, int max_width, bool second_pass )
 {
+	int ret;
+
 	if (m_display == display_table || m_display == display_inline_table)
 	{
-		return render_table(x, y, max_width, second_pass);
+		ret = render_table(x, y, max_width, second_pass);
+	}
+	else
+	{
+		ret = render_box(x, y, max_width, second_pass);
 	}
 
-	return render_box(x, y, max_width, second_pass);
+	return ret;
 }
 
 bool litehtml::html_tag::is_white_space()
@@ -1703,22 +1711,25 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 
 	bool ret = false;
 	bool apply = false;
-	for (used_selector::vector::iterator iter = m_used_styles.begin(); iter != m_used_styles.end() && !apply; iter++)
-	{
-		if((*iter)->m_selector->is_media_valid())
-		{
-			int res = select(*((*iter)->m_selector), true);
-			if( (res == select_no_match && (*iter)->m_used) || (res == select_match && !(*iter)->m_used) )
-			{
-				apply = true;
-			}
-		}
-	}
 
-	if(m_dirty_user_style)
+	if(m_dirty_style)
 	{
 		apply = true;
-		m_dirty_user_style = false;
+	}
+	else
+	{
+		for (used_selector::vector::iterator iter = m_used_styles.begin(); iter != m_used_styles.end() && !apply; iter++)
+		{
+			if((*iter)->m_selector->is_media_valid())
+			{
+				int res = select(*((*iter)->m_selector), true);
+				if( (res == select_no_match && (*iter)->m_used) || (res == select_match && !(*iter)->m_used) )
+				{
+					apply = true;
+					break;
+				}
+			}
+		}
 	}
 
 	if(apply)
@@ -1769,6 +1780,9 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 			}
 		}
 	}
+
+	m_dirty_style = false;
+
 	return ret;
 }
 
@@ -2326,22 +2340,23 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 {
 	bool ret = false;
-	if(add)
+	auto pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
+
+	if(pi != m_pseudo_classes.end())
 	{
-		if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass) == m_pseudo_classes.end())
+		if(add)
 		{
 			m_pseudo_classes.push_back(pclass);
-			ret = true;
 		}
-	} else
-	{
-		auto pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
-		if(pi != m_pseudo_classes.end())
+		else
 		{
 			m_pseudo_classes.erase(pi);
-			ret = true;
 		}
+
+		m_dirty_style = true;
+		ret = true;
 	}
+
 	return ret;
 }
 
@@ -2381,6 +2396,7 @@ bool litehtml::html_tag::set_class( const tchar_t* pclass, bool add )
 		tstring class_string;
 		join_string(class_string, m_class_values, _t(" "));
 		set_attr(_t("class"), class_string.c_str());
+		m_dirty_style = true;
 
 		return true;
 	}
@@ -3578,12 +3594,13 @@ void litehtml::html_tag::add_user_style( litehtml::style::ptr st )
 {
 	m_user_style.combine(*st);
 	m_style.combine(m_user_style);
-	m_dirty_user_style = true;
+	m_dirty_style = true;
 }
 
 void litehtml::html_tag::add_style( litehtml::style::ptr st )
 {
 	m_style.combine(*st);
+	m_dirty_style = true;
 }
 
 bool litehtml::html_tag::have_inline_child()
