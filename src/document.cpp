@@ -506,8 +506,6 @@ bool litehtml::document::on_mouse_move( int x, int y, int client_x, int client_y
 		over_el = nullptr;
 	}
 
-	bool state_was_changed = false;
-
 	if( over_el != m_over_element )
 	{
 		elements_vector left_elements, entered_elements;
@@ -532,7 +530,7 @@ bool litehtml::document::on_mouse_move( int x, int y, int client_x, int client_y
 
 			if ( !prevent_default_mouseleave && !prevent_default_mouseout )
 			{
-				state_was_changed = m_over_element->on_mouse_leave();
+				m_over_element->on_mouse_leave();
 			}
 		}
 
@@ -556,7 +554,7 @@ bool litehtml::document::on_mouse_move( int x, int y, int client_x, int client_y
 
 			if ( !prevent_default_mouseenter && !prevent_default_mouseover )
 			{
-				state_was_changed |= m_over_element->on_mouse_over();
+				m_over_element->on_mouse_over();
 			}
 
 			const tchar_t* cursor = m_over_element->get_cursor();
@@ -564,7 +562,7 @@ bool litehtml::document::on_mouse_move( int x, int y, int client_x, int client_y
 		}
 	}
 
-	return state_was_changed;
+	return over_el != nullptr;
 }
 
 bool litehtml::document::on_lbutton_down()
@@ -575,8 +573,6 @@ bool litehtml::document::on_lbutton_down()
 	}
 
 	m_active_element = m_over_element;
-
-	bool state_was_changed = false;
 
 	if(m_over_element )
 	{
@@ -590,11 +586,11 @@ bool litehtml::document::on_lbutton_down()
 
 		if ( !prevent_default_mousedown )
 		{
-			state_was_changed = m_over_element->on_lbutton_down();
+			m_over_element->on_lbutton_down();
 		}
 	}
 
-	return state_was_changed;
+	return m_active_element != nullptr;
 }
 
 bool litehtml::document::on_lbutton_up()
@@ -607,7 +603,6 @@ bool litehtml::document::on_lbutton_up()
 	}
 
 	bool
-		state_was_changed = false,
 		prevent_default_mouseup = false,
 		prevent_default_mouseclick = false;
 
@@ -618,7 +613,7 @@ bool litehtml::document::on_lbutton_up()
 
 	if ( !prevent_default_mouseup )
 	{
-		state_was_changed |= m_over_element->on_lbutton_up();
+		m_over_element->on_lbutton_up();
 	}
 
 	if ( m_event_handler )
@@ -631,7 +626,7 @@ bool litehtml::document::on_lbutton_up()
 		m_over_element->on_click();
 	}
 
-	return state_was_changed;
+	return m_active_element != nullptr;
 }
 
 litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_name, const string_map& attributes)
