@@ -1550,7 +1550,7 @@ void litehtml::html_tag::calc_auto_margins(int parent_width)
 		{
 			return;
 		}
-		
+
 		if (m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
 			int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right;
@@ -2340,22 +2340,17 @@ int litehtml::html_tag::place_element( element* el, int max_width )
 bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 {
 	bool ret = false;
-	auto pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
 
-	if(pi != m_pseudo_classes.end())
+	if(add)
 	{
-		if(add)
-		{
-			m_pseudo_classes.push_back(pclass);
-		}
-		else
-		{
-			m_pseudo_classes.erase(pi);
-		}
-
-		m_dirty_style = true;
-		ret = true;
+		ret = m_pseudo_classes.insert(pclass).second;
 	}
+	else
+	{
+		ret = m_pseudo_classes.erase(pclass) > 0;
+	}
+
+	m_dirty_style |= ret;
 
 	return ret;
 }

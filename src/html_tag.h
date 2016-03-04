@@ -44,7 +44,7 @@ namespace litehtml
 		element_position		m_el_position;
 		int						m_line_height;
 		bool					m_lh_predefined;
-		string_hash_vector		m_pseudo_classes;
+		string_hash_set			m_pseudo_classes;
 		used_selector::vector	m_used_styles;
 
 		uint_ptr				m_font;
