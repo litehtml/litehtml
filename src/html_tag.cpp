@@ -2068,66 +2068,31 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 		position::vector boxes;
 		get_inline_boxes(boxes);
 
-		background_paint bg_paint;
-		position content_box;
+		if (!boxes.empty())
+        {
+            position box = boxes.back(); // only last box needed
+		    background_paint bg_paint;
+		    position content_box;
 
-		for(position::vector::iterator box = boxes.begin(); box != boxes.end(); box++)
-		{
-			box->x	+= x;
-			box->y	+= y;
+			box.x += x;
+			box.y += y;
 
-			if(box->does_intersect(clip))
+			if(box.does_intersect(clip))
 			{
-				content_box = *box;
+				content_box = box;
 				content_box -= m_borders;
 				content_box -= m_padding;
 
 				if(bg)
 				{
-					init_background_paint(content_box, bg_paint, bg);
-				}
-
-				css_borders bdr;
-
-				// set left borders radius for the first box
-				if(box == boxes.begin())
-				{
-					bdr.radius.bottom_left_x	= m_css_borders.radius.bottom_left_x;
-					bdr.radius.bottom_left_y	= m_css_borders.radius.bottom_left_y;
-					bdr.radius.top_left_x		= m_css_borders.radius.top_left_x;
-					bdr.radius.top_left_y		= m_css_borders.radius.top_left_y;
-				}
-
-				// set right borders radius for the last box
-				if(box == boxes.end() - 1)
-				{
-					bdr.radius.bottom_right_x	= m_css_borders.radius.bottom_right_x;
-					bdr.radius.bottom_right_y	= m_css_borders.radius.bottom_right_y;
-					bdr.radius.top_right_x		= m_css_borders.radius.top_right_x;
-					bdr.radius.top_right_y		= m_css_borders.radius.top_right_y;
-				}
-
-				
-				bdr.top		= m_css_borders.top;
-				bdr.bottom	= m_css_borders.bottom;
-				if(box == boxes.begin())
-				{
-					bdr.left	= m_css_borders.left;
-				}
-				if(box == boxes.end() - 1)
-				{
-					bdr.right	= m_css_borders.right;
-				}
-
-
-				if(bg)
-				{
-					bg_paint.border_radius = bdr.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
+                    init_background_paint(content_box, bg_paint, bg);
+                    bg_paint.border_radius = m_css_borders.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
 					get_document()->container()->draw_background(hdc, bg_paint);
 				}
-				borders b = bdr;
-				b.radius = bdr.radius.calc_percents(box->width, box->height);
-				get_document()->container()->draw_borders(hdc, b, *box, false);
+
+                borders brd = m_css_borders;
+                brd.radius = m_css_borders.radius.calc_percents(box.width, box.height);
+                get_document()->container()->draw_borders(hdc, brd, box, false);
 			}
 		}
 	}
