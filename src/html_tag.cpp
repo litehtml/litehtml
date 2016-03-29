@@ -2069,10 +2069,10 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 		get_inline_boxes(boxes);
 
 		if (!boxes.empty())
-        {
-            position box = boxes.back(); // only last box needed
-		    background_paint bg_paint;
-		    position content_box;
+		{
+			position box = boxes.back(); // only last box needed
+			background_paint bg_paint;
+			position content_box;
 
 			box.x += x;
 			box.y += y;
@@ -2085,14 +2085,14 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 
 				if(bg)
 				{
-                    init_background_paint(content_box, bg_paint, bg);
-                    bg_paint.border_radius = m_css_borders.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
+					init_background_paint(content_box, bg_paint, bg);
+					bg_paint.border_radius = m_css_borders.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
 					get_document()->container()->draw_background(hdc, bg_paint);
 				}
 
-                borders brd = m_css_borders;
-                brd.radius = m_css_borders.radius.calc_percents(box.width, box.height);
-                get_document()->container()->draw_borders(hdc, brd, box, false);
+				borders brd = m_css_borders;
+				brd.radius = m_css_borders.radius.calc_percents(box.width, box.height);
+				get_document()->container()->draw_borders(hdc, brd, box, false);
 			}
 		}
 	}
