@@ -30,6 +30,7 @@ namespace litehtml
 		pointer_events				m_pointer_events;
 		litehtml::style				m_style;
 		float						m_opacity;
+		bool						m_dirty_style;
 	public:
 		element(litehtml::document* doc);
 		virtual ~element();
@@ -373,6 +374,7 @@ namespace litehtml
 	inline void litehtml::element::parent(element* par)
 	{
 		m_parent = par;
+		m_dirty_style = true;
 	}
 
 	inline int litehtml::element::margin_top() const

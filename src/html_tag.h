@@ -27,7 +27,6 @@ namespace litehtml
 		string_vector	    	m_class_values;
 		tstring					m_tag;
 		litehtml::style			m_user_style;
-		bool					m_dirty_style;
 		strings_hash_map		m_attrs;
 		vertical_align			m_vertical_align;
 		text_align				m_text_align;
