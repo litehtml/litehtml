@@ -27,7 +27,7 @@ namespace litehtml
 		string_vector	    	m_class_values;
 		tstring					m_tag;
 		litehtml::style			m_user_style;
-		bool					m_dirty_user_style;
+		bool					m_dirty_style;
 		strings_hash_map		m_attrs;
 		vertical_align			m_vertical_align;
 		text_align				m_text_align;
@@ -44,7 +44,7 @@ namespace litehtml
 		element_position		m_el_position;
 		int						m_line_height;
 		bool					m_lh_predefined;
-		string_hash_vector		m_pseudo_classes;
+		string_hash_set			m_pseudo_classes;
 		used_selector::vector	m_used_styles;
 
 		uint_ptr				m_font;

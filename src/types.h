@@ -2,6 +2,7 @@
 
 #include <stdlib.h>
 #include <map>
+#include <set>
 #include <vector>
 #include "object.h"
 #include "os_types.h"
@@ -17,7 +18,8 @@ namespace litehtml
 	typedef std::vector< litehtml::object_ptr<litehtml::element> >	elements_vector;
 	typedef std::vector<int>										int_vector;
 	typedef std::vector<litehtml::tstring>							string_vector;
-	typedef std::vector<litehtml::string_hash>			string_hash_vector;
+	typedef std::vector<litehtml::string_hash>						string_hash_vector;
+	typedef std::set<litehtml::string_hash>							string_hash_set;
 
 	const unsigned int font_decoration_none			= 0x00;
 	const unsigned int font_decoration_underline	= 0x01;
