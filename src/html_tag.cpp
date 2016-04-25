@@ -46,7 +46,9 @@ bool litehtml::html_tag::appendChild( litehtml::element* el )
 	if(el)
 	{
 		el->parent(this);
+		el->m_dirty_style = true;
 		m_children.push_back(el);
+		m_dirty_style = true;
 		return true;
 	}
 	return false;
@@ -57,9 +59,11 @@ bool litehtml::html_tag::addChildAfter( litehtml::element* new_el, litehtml::ele
 	if(new_el)
 	{
 		new_el->parent(this);
+		new_el->m_dirty_style = true;
 
 		auto iter = std::find( m_children.begin(), m_children.end(), existing_el );
 		m_children.insert( ++iter, new_el );
+		m_dirty_style = true;
 		return true;
 	}
 	return false;
