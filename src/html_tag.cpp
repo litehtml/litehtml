@@ -1973,12 +1973,8 @@ bool litehtml::html_tag::is_break() const
 
 void litehtml::html_tag::set_tagName( const tchar_t* tag )
 {
-	tstring s_val = tag;
-	for(size_t i = 0; i < s_val.length(); i++)
-	{
-		s_val[i] = t_tolower(s_val[i]);
-	}
-	m_tag = s_val;
+	m_tag = tag;
+	lcase(m_tag);
 }
 
 void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const position* clip )

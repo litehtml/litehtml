@@ -47,26 +47,18 @@ void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl
 		trim(name);
 		trim(val);
 
-		lcase(name);
-
 		if(!name.empty() && !val.empty())
 		{
 			string_vector vals;
 			split_string(val, vals, _t("!"));
 			if(vals.size() == 1)
 			{
-				add_property(name.c_str(), val.c_str(), baseurl, false);
+				add_property( string_hash::normalizeFromString( name.c_str() ), val.c_str(), baseurl, false);
 			} else if(vals.size() > 1)
 			{
 				trim(vals[0]);
-				lcase(vals[1]);
-				if(vals[1] == _t("important"))
-				{
-					add_property(name.c_str(), vals[0].c_str(), baseurl, true);
-				} else
-				{
-					add_property(name.c_str(), vals[0].c_str(), baseurl, false);
-				}
+				add_property( string_hash::normalizeFromString( name.c_str() ), vals[0].c_str(), baseurl, t_strcasecmp( vals[1].c_str(), _t("important") ) == 0 );
+
 			}
 		}
 	}

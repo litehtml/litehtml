@@ -33,6 +33,12 @@ namespace litehtml
 
         }
 
+        explicit string_hash( unsigned int hash )
+            : HashCode( hash )
+        {
+
+        }
+
         string_hash( const string_hash & other )
             : HashCode( other.HashCode )
         {
@@ -96,6 +102,11 @@ namespace litehtml
             return HashCode == 0;
         }
 
+        static string_hash normalizeFromString( const litehtml::tchar_t * string )
+        {
+            return string_hash( LoopedHash<t_tolower>( string ) );
+        }
+
     private:
 
         template< unsigned int character_count, unsigned int index = character_count - 1 >
@@ -111,12 +122,15 @@ namespace litehtml
             }
         };
 
+        static int i(int i) {return i;}
+
+        template<int (_TRANSFROM_)(int) = i >
         inline static unsigned int LoopedHash( const litehtml::tchar_t * input )
         {
             unsigned int result = FNV_OffsetBase;
 
             while (*input) {
-                result ^= *input++;
+                result ^= _TRANSFROM_(*input++);
                 result *= FNV_Prime;
             }
 
@@ -148,4 +162,3 @@ namespace litehtml
         }
     };
 }
-

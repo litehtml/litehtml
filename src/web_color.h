@@ -1,14 +1,10 @@
 #pragma once
+#include <map>
+class string_hash;
 
 namespace litehtml
 {
-	struct def_color
-	{
-		const tchar_t*	name;
-		const tchar_t*	rgb;
-	};
-
-	extern def_color g_def_colors[];
+	extern std::map<string_hash, const tchar_t * > g_def_colors;
 
 	struct web_color
 	{
