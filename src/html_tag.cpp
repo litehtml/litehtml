@@ -3950,8 +3950,8 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 		}
 	}
 
-	// check for max-width
-	if (!m_css_max_width.is_predefined())
+	// check for max-width (on the first pass only)
+	if (!m_css_max_width.is_predefined() && !second_pass)
 	{
 		int mw = get_document()->cvt_units(m_css_max_width, m_font_size, parent_width);
 		if (m_box_sizing == box_sizing_border_box)
