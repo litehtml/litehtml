@@ -860,6 +860,7 @@ cairo_surface_t* container_linux::surface_from_pixbuf(const Glib::RefPtr<Gdk::Pi
 void container_linux::get_media_features(litehtml::media_features& media) const
 {
 	litehtml::position client;
+    get_client_rect(client);
 	media.type			= litehtml::media_type_screen;
 	media.width			= client.width;
 	media.height		= client.height;
