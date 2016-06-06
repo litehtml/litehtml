@@ -71,13 +71,8 @@ litehtml::tstring::size_type litehtml::find_close_bracket(const tstring &s, tstr
 	return tstring::npos;
 }
 
-int litehtml::value_index( const tstring& val, const std::vector<tstring>& strings, int defValue )
+int litehtml::value_index( const string_hash val, const std::vector<string_hash>& strings, int defValue )
 {
-	if(val.empty() || strings.empty())
-	{
-		return defValue;
-	}
-
     auto it = std::find(strings.begin(), strings.end(), val);
 
     if (it != strings.end())
@@ -88,7 +83,7 @@ int litehtml::value_index( const tstring& val, const std::vector<tstring>& strin
 	return defValue;
 }
 
-bool litehtml::value_in_list( const tstring& val, const std::vector<tstring>& strings )
+bool litehtml::value_in_list( const string_hash val, const std::vector<string_hash>& strings )
 {
 	int idx = value_index(val, strings, -1);
 	if(idx >= 0)

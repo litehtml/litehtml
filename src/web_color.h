@@ -1,9 +1,9 @@
 #pragma once
 #include <map>
-class string_hash;
 
 namespace litehtml
 {
+    class string_hash;
 	extern std::map<string_hash, const tchar_t * > g_def_colors;
 
 	struct web_color

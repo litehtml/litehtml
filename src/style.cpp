@@ -498,7 +498,7 @@ void litehtml::style::parse_short_border( const tstring& prefix, const tstring& 
 	}
 }
 
-static std::vector<litehtml::tstring> position_string = { _t( "left" ), _t( "right" ), _t( "top" ), _t( "bottom" ), _t( "center" ) };
+static std::vector<litehtml::string_hash> position_string = { _t( "left" ), _t( "right" ), _t( "top" ), _t( "bottom" ), _t( "center" ) };
 
 void litehtml::style::parse_short_background( const tstring& val, const tchar_t* baseurl, bool important )
 {
@@ -640,7 +640,7 @@ void litehtml::style::add_parsed_property( const string_hash & name, const tstri
 	bool is_valid = true;
 	if (name == _white_space)
 	{
-		if (!value_in_list(val, white_space_strings))
+		if (!value_in_list(val.c_str(), white_space_strings))
 		{
 			is_valid = false;
 		}

@@ -201,7 +201,7 @@ namespace litehtml
 		draw_positioned,
 	};
 
-extern const std::vector<tstring> style_display_strings;
+extern const std::vector<string_hash> style_display_strings;
 
 	enum style_display
 	{
@@ -234,7 +234,7 @@ extern const std::vector<tstring> style_display_strings;
 		borderDouble
 	};
 
-    extern const std::vector<tstring> font_size_strings;
+    extern const std::vector<string_hash> font_size_strings;
 
 	enum font_size
 	{
@@ -249,7 +249,7 @@ extern const std::vector<tstring> style_display_strings;
 		fontSize_larger,
 	};
 
-extern const std::vector<tstring> font_style_strings;
+extern const std::vector<string_hash> font_style_strings;
 
 	enum font_style
 	{
@@ -257,7 +257,7 @@ extern const std::vector<tstring> font_style_strings;
 		fontStyleItalic
 	};
 
-extern const std::vector<tstring> font_variant_strings;
+extern const std::vector<string_hash> font_variant_strings;
 
 	enum font_variant
 	{
@@ -265,7 +265,7 @@ extern const std::vector<tstring> font_variant_strings;
 		font_variant_italic
 	};
 
-extern const std::vector<tstring> font_weight_strings;
+extern const std::vector<string_hash> font_weight_strings;
 
 	enum font_weight
 	{
@@ -282,7 +282,7 @@ extern const std::vector<tstring> font_weight_strings;
 		fontWeight700
 	};
 
-extern const std::vector<tstring> list_style_type_strings;
+extern const std::vector<string_hash> list_style_type_strings;
 
 	enum list_style_type
 	{
@@ -309,7 +309,7 @@ extern const std::vector<tstring> list_style_type_strings;
 		list_style_type_upper_roman,
 	};
 
-extern const std::vector<tstring> list_style_position_strings;
+extern const std::vector<string_hash> list_style_position_strings;
 
 	enum list_style_position
 	{
@@ -317,7 +317,7 @@ extern const std::vector<tstring> list_style_position_strings;
 		list_style_position_outside
 	};
 
-extern const std::vector<tstring> vertical_align_strings;
+extern const std::vector<string_hash> vertical_align_strings;
 
 	enum vertical_align
 	{
@@ -331,7 +331,7 @@ extern const std::vector<tstring> vertical_align_strings;
 		va_text_bottom
 	};
 
-extern const std::vector<tstring> border_width_strings;
+extern const std::vector<string_hash> border_width_strings;
 
 	enum border_width
 	{
@@ -340,7 +340,7 @@ extern const std::vector<tstring> border_width_strings;
 		border_width_thick
 	};
 
-extern const std::vector<tstring> border_style_strings;
+extern const std::vector<string_hash> border_style_strings;
 
 	enum border_style
 	{
@@ -356,7 +356,7 @@ extern const std::vector<tstring> border_style_strings;
 		border_style_outset
 	};
 
-extern const std::vector<tstring> element_float_strings;
+extern const std::vector<string_hash> element_float_strings;
 
 	enum element_float
 	{
@@ -365,7 +365,7 @@ extern const std::vector<tstring> element_float_strings;
 		float_right
 	};
 
-extern const std::vector<tstring> element_clear_strings;
+extern const std::vector<string_hash> element_clear_strings;
 
 	enum element_clear
 	{
@@ -375,7 +375,7 @@ extern const std::vector<tstring> element_clear_strings;
 		clear_both
 	};
 
-extern const std::vector<tstring> css_units_strings;
+extern const std::vector<string_hash> css_units_strings;
 
 	enum css_units
 	{
@@ -397,7 +397,7 @@ extern const std::vector<tstring> css_units_strings;
 		css_units_vmax,
 	};
 
-extern const std::vector<tstring> background_attachment_strings;
+extern const std::vector<string_hash> background_attachment_strings;
 
 	enum background_attachment
 	{
@@ -405,7 +405,7 @@ extern const std::vector<tstring> background_attachment_strings;
 		background_attachment_fixed
 	};
 
-extern const std::vector<tstring> background_repeat_strings;
+extern const std::vector<string_hash> background_repeat_strings;
 
 	enum background_repeat
 	{
@@ -415,7 +415,7 @@ extern const std::vector<tstring> background_repeat_strings;
 		background_repeat_no_repeat
 	};
 
-extern const std::vector<tstring> background_box_strings;
+extern const std::vector<string_hash> background_box_strings;
 
 	enum background_box
 	{
@@ -424,7 +424,7 @@ extern const std::vector<tstring> background_box_strings;
 		background_box_content
 	};
 
-extern const std::vector<tstring> element_position_strings;
+extern const std::vector<string_hash> element_position_strings;
 
 	enum element_position
 	{
@@ -434,7 +434,7 @@ extern const std::vector<tstring> element_position_strings;
 		element_position_fixed,
 	};
 
-extern const std::vector<tstring> text_align_strings;
+extern const std::vector<string_hash> text_align_strings;
 
 	enum text_align
 	{
@@ -444,7 +444,7 @@ extern const std::vector<tstring> text_align_strings;
 		text_align_justify
 	};
 
-extern const std::vector<tstring> text_transform_strings;
+extern const std::vector<string_hash> text_transform_strings;
 
 	enum text_transform
 	{
@@ -454,7 +454,7 @@ extern const std::vector<tstring> text_transform_strings;
 		text_transform_lowercase
 	};
 
-extern const std::vector<tstring> white_space_strings;
+extern const std::vector<string_hash> white_space_strings;
 
 	enum white_space
 	{
@@ -465,7 +465,7 @@ extern const std::vector<tstring> white_space_strings;
 		white_space_pre_wrap
 	};
 
-extern const std::vector<tstring> overflow_strings;
+extern const std::vector<string_hash> overflow_strings;
 
 	enum overflow
 	{
@@ -477,7 +477,7 @@ extern const std::vector<tstring> overflow_strings;
 		overflow_no_content
 	};
 
-extern const std::vector<tstring> background_size_strings;
+extern const std::vector<string_hash> background_size_strings;
 
 	enum background_size
 	{
@@ -486,7 +486,7 @@ extern const std::vector<tstring> background_size_strings;
 		background_size_contain,
 	};
 
-extern const std::vector<tstring> visibility_strings;
+extern const std::vector<string_hash> visibility_strings;
 
 	enum visibility
 	{
@@ -495,7 +495,7 @@ extern const std::vector<tstring> visibility_strings;
 		visibility_collapse,
 	};
 
-extern const std::vector<tstring> border_collapse_strings;
+extern const std::vector<string_hash> border_collapse_strings;
 
 	enum border_collapse
 	{
@@ -504,7 +504,7 @@ extern const std::vector<tstring> border_collapse_strings;
 	};
 
 
-extern const std::vector<tstring> pseudo_class_strings;
+extern const std::vector<string_hash> pseudo_class_strings;
 
 	enum pseudo_class
 	{
@@ -522,7 +522,7 @@ extern const std::vector<tstring> pseudo_class_strings;
 		pseudo_class_lang,
 	};
 
-extern const std::vector<tstring> content_property_string;
+extern const std::vector<string_hash> content_property_string;
 
 	enum content_property
 	{
@@ -614,7 +614,7 @@ extern const std::vector<tstring> content_property_string;
 	};
 
 
-extern const std::vector<tstring> media_orientation_strings;
+extern const std::vector<string_hash> media_orientation_strings;
 
 	enum media_orientation
 	{
@@ -622,7 +622,7 @@ extern const std::vector<tstring> media_orientation_strings;
 		media_orientation_landscape,
 	};
 
-extern const std::vector<tstring> media_feature_strings;
+extern const std::vector<string_hash> media_feature_strings;
 
 	enum media_feature
 	{
@@ -671,7 +671,7 @@ extern const std::vector<tstring> media_feature_strings;
 		media_feature_max_resolution,
 	};
 
-extern const std::vector<tstring> box_sizing_strings;
+extern const std::vector<string_hash> box_sizing_strings;
 
 	enum box_sizing
 	{
@@ -679,7 +679,7 @@ extern const std::vector<tstring> box_sizing_strings;
 		box_sizing_border_box,
 	};
 
-extern const std::vector<tstring> pointer_events_strings;
+extern const std::vector<string_hash> pointer_events_strings;
 
 	enum pointer_events
 	{
@@ -695,7 +695,7 @@ extern const std::vector<tstring> pointer_events_strings;
 		pointer_events_all
 	};
 
-extern const std::vector<tstring> media_type_strings;
+extern const std::vector<string_hash> media_type_strings;
 
 	enum media_type
 	{
@@ -733,5 +733,5 @@ extern const std::vector<tstring> media_type_strings;
 	};
 
 	// List of the Void Elements (can't have any contents)
-	extern const std::vector<tstring> void_elements;
+	extern const std::vector<string_hash> void_elements;
 }

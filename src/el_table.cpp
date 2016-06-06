@@ -67,7 +67,7 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 	}
 }
 
-const std::vector<litehtml::tstring> align_values = { _t( "left" ), _t( "center"), _t( "right" ) };
+const std::vector<litehtml::string_hash> align_values = { _t( "left" ), _t( "center"), _t( "right" ) };
 
 void litehtml::el_table::parse_attributes()
 {

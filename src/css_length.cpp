@@ -1,10 +1,10 @@
 #include "html.h"
 #include "css_length.h"
 
-void litehtml::css_length::fromString( const tstring& str, const std::vector<tstring> & predefs, int defValue )
+void litehtml::css_length::fromString( const tchar_t * str, const std::vector<string_hash> & predefs, int defValue )
 {
 	// TODO: Make support for calc
-	if( str.length() >= 4 && t_strncmp( str.c_str(), _t("calc"), 4 ) == 0 )
+	if( t_strncmp( str, _t("calc"), 4 ) == 0 )
 	{
 		m_is_predefined = true;
 		m_predef		= 0;
@@ -21,9 +21,9 @@ void litehtml::css_length::fromString( const tstring& str, const std::vector<tst
 		m_is_predefined = false;
 
 		char * end_character;
-		float value = (float) t_strtod(str.c_str(), &end_character);
+		float value = (float) t_strtod(str, &end_character);
 
-		if( end_character != str.c_str() )
+		if( end_character != str )
 		{
 			m_value = value;
 			m_units	= (css_units) value_index( end_character, css_units_strings, css_units_none);

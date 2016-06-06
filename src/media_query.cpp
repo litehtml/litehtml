@@ -41,7 +41,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string( const tstr
 			if(!expr_tokens.empty())
 			{
 				trim(expr_tokens[0]);
-				expr.feature = (media_feature) value_index(expr_tokens[0], media_feature_strings, media_feature_none);
+				expr.feature = (media_feature) value_index(expr_tokens[0].c_str(), media_feature_strings, media_feature_none);
 				if(expr.feature != media_feature_none)
 				{
 					if(expr_tokens.size() == 1)
@@ -53,7 +53,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string( const tstr
 						expr.check_as_bool = false;
 						if(expr.feature == media_feature_orientation)
 						{
-							expr.val = value_index(expr_tokens[1], media_orientation_strings, media_orientation_landscape);
+							expr.val = value_index(expr_tokens[1].c_str(), media_orientation_strings, media_orientation_landscape);
 						} else
 						{
 							tstring::size_type slash_pos = expr_tokens[1].find(_t('/'));
@@ -68,7 +68,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string( const tstr
 							} else
 							{
 								css_length length;
-								length.fromString(expr_tokens[1]);
+								length.fromString(expr_tokens[1].c_str());
 								if(length.units() == css_units_dpcm)
 								{
 									expr.val = (int) (length.val() * 2.54);
@@ -91,7 +91,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string( const tstr
 			}
 		} else
 		{
-			query->m_media_type = (media_type) value_index((*tok), media_type_strings, media_type_all);
+			query->m_media_type = (media_type) value_index((*tok).c_str(), media_type_strings, media_type_all);
 
 		}
 	}

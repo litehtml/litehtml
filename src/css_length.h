@@ -25,7 +25,7 @@ namespace litehtml
 		float		val() const;
 		css_units	units() const;
 		int			calc_percent(int width) const;
-		void		fromString(const tstring& str, const std::vector<tstring>& predefs = std::vector<tstring>(), int defValue = 0);
+		void		fromString(const tchar_t* str, const std::vector<string_hash>& predefs = std::vector<string_hash>(), int defValue = 0);
 	};
 
 	// css_length inlines

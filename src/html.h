@@ -66,8 +66,8 @@ namespace litehtml
 	void trim(std::wstring &s);
 	void lcase(tstring &s);
 	void check_lower_case( const tchar_t* text);
-	int	 value_index(const tstring& val, const std::vector<tstring>& strings, int defValue = -1);
-	bool value_in_list(const tstring& val, const std::vector<tstring>& strings);
+	int	 value_index(const string_hash val, const std::vector<string_hash>& strings, int defValue = -1);
+	bool value_in_list(const string_hash val, const std::vector<string_hash>& strings);
 	tstring::size_type find_close_bracket(const tstring &s, tstring::size_type off, tchar_t open_b = _t('('), tchar_t close_b = _t(')'));
 	void join_string(tstring& str, const string_vector& tokens, const tstring& delims);
 	void split_string(const tstring& str, string_vector & tokens, const tstring& delims, const tstring& delims_preserve= _t(""), const tstring& quote = _t("\"") );

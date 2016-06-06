@@ -324,7 +324,7 @@ void litehtml::html_tag::parse_styles( bool is_reparse )
         }
     }
 
-    static std::vector<tstring>
+    static std::vector<string_hash>
         zero = { _t( "0" ) },
         none = { _t( "none" ) },
         _auto = { _t( "auto" ) },
@@ -422,7 +422,7 @@ void litehtml::html_tag::parse_styles( bool is_reparse )
 	m_borders.top		= m_doc->cvt_units(m_css_borders.top.width,		m_font_size);
 	m_borders.bottom	= m_doc->cvt_units(m_css_borders.bottom.width,	m_font_size);
 
-    static std::vector<tstring> normal = { _t( "normal" ) };
+    static std::vector<string_hash> normal = { _t( "normal" ) };
 
 	css_length line_height;
 	line_height.fromString(get_style_property(_t("line-height"),	true,	_t("normal")), normal );
@@ -1368,7 +1368,7 @@ int litehtml::html_tag::find_next_line_top( int top, int width, int def_right )
 	return new_top - m_pos.y;
 }
 
-static std::vector<litehtml::tstring>
+static std::vector<litehtml::string_hash>
     lr_values = { _t( "left" ), _t( "right" ) },
     lrc_values = { _t( "left"), _t( "right" ), _t( "center" ) },
     tb_values = { _t( "top" ), _t( "bottom" ) },
@@ -1391,39 +1391,39 @@ void litehtml::html_tag::parse_background()
 			{
 				if( value_in_list(res[0].c_str(), lrc_values ) )
 				{
-					m_bg.m_position.x.fromString(res[0], lrc_values );
+					m_bg.m_position.x.fromString(res[0].c_str(), lrc_values );
 					m_bg.m_position.y.set_value(50, css_units_percentage);
 				} else if( value_in_list(res[0].c_str(), tbc_values ) )
 				{
-					m_bg.m_position.y.fromString(res[0], tbc_values );
+					m_bg.m_position.y.fromString(res[0].c_str(), tbc_values );
 					m_bg.m_position.x.set_value(50, css_units_percentage);
 				} else
 				{
-					m_bg.m_position.x.fromString(res[0], lrc_values );
+					m_bg.m_position.x.fromString(res[0].c_str(), lrc_values );
 					m_bg.m_position.y.set_value(50, css_units_percentage);
 				}
 			} else
 			{
 				if(value_in_list(res[0].c_str(), lr_values ))
 				{
-					m_bg.m_position.x.fromString(res[0], lrc_values );
-					m_bg.m_position.y.fromString(res[1], tbc_values );
+					m_bg.m_position.x.fromString(res[0].c_str(), lrc_values );
+					m_bg.m_position.y.fromString(res[1].c_str(), tbc_values );
 				} else if(value_in_list(res[0].c_str(), tb_values ))
 				{
-					m_bg.m_position.x.fromString(res[1], lrc_values );
-					m_bg.m_position.y.fromString(res[0], tbc_values );
+					m_bg.m_position.x.fromString(res[1].c_str(), lrc_values );
+					m_bg.m_position.y.fromString(res[0].c_str(), tbc_values );
 				} else if(value_in_list(res[1].c_str(), lr_values ))
 				{
-					m_bg.m_position.x.fromString(res[1], lrc_values );
-					m_bg.m_position.y.fromString(res[0], tbc_values );
+					m_bg.m_position.x.fromString(res[1].c_str(), lrc_values );
+					m_bg.m_position.y.fromString(res[0].c_str(), tbc_values );
 				}else if(value_in_list(res[1].c_str(), tb_values ))
 				{
-					m_bg.m_position.x.fromString(res[0], lrc_values );
-					m_bg.m_position.y.fromString(res[1], tbc_values );
+					m_bg.m_position.x.fromString(res[0].c_str(), lrc_values );
+					m_bg.m_position.y.fromString(res[1].c_str(), tbc_values );
 				} else
 				{
-					m_bg.m_position.x.fromString(res[0], lrc_values );
-					m_bg.m_position.y.fromString(res[1], tbc_values );
+					m_bg.m_position.x.fromString(res[0].c_str(), lrc_values );
+					m_bg.m_position.y.fromString(res[1].c_str(), tbc_values );
 				}
 			}
 
@@ -1475,10 +1475,10 @@ void litehtml::html_tag::parse_background()
 		split_string(str, res, _t(" \t"));
 		if(!res.empty())
 		{
-			m_bg.m_position.width.fromString(res[0], background_size_strings);
+			m_bg.m_position.width.fromString(res[0].c_str(), background_size_strings);
 			if(res.size() > 1)
 			{
-				m_bg.m_position.height.fromString(res[1], background_size_strings);
+				m_bg.m_position.height.fromString(res[1].c_str(), background_size_strings);
 			} else
 			{
 				m_bg.m_position.height.predef(background_size_auto);
