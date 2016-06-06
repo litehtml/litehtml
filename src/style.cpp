@@ -7,17 +7,13 @@
 #include <locale>
 #endif
 
-litehtml::strings_hash_map litehtml::style::m_valid_values;
-
 litehtml::style::style()
 {
-	m_valid_values[ _t("white-space") ] = white_space_strings;
 }
 
 litehtml::style::style( const style& val )
 {
 	m_properties = val.m_properties;
-	m_valid_values[ _t("white-space") ] = white_space_strings;
 }
 
 litehtml::style::~style()
@@ -502,6 +498,8 @@ void litehtml::style::parse_short_border( const tstring& prefix, const tstring& 
 	}
 }
 
+static std::vector<litehtml::tstring> position_string = { _t( "left" ), _t( "right" ), _t( "top" ), _t( "bottom" ), _t( "center" ) };
+
 void litehtml::style::parse_short_background( const tstring& val, const tchar_t* baseurl, bool important )
 {
 	add_parsed_property(_t("background-color"),			_t("transparent"),	important);
@@ -549,7 +547,7 @@ void litehtml::style::parse_short_background( const tstring& val, const tchar_t*
 			{
 				add_parsed_property(_t("background-clip"),*tok, important);
 			}
-		} else if(	value_in_list(tok->c_str(), _t("left;right;top;bottom;center")) ||
+		} else if( value_in_list(tok->c_str(), position_string) ||
 					iswdigit((*tok)[0]) ||
 					(*tok)[0] == _t('-')	||
 					(*tok)[0] == _t('.')	||
@@ -635,13 +633,14 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 	add_parsed_property(_t("font-family"), font_family, important);
 }
 
+static litehtml::string_hash _white_space = _t( "white-space" );
+
 void litehtml::style::add_parsed_property( const string_hash & name, const tstring& val, bool important )
 {
 	bool is_valid = true;
-	strings_hash_map::iterator vals = m_valid_values.find(name);
-	if (vals != m_valid_values.end())
+	if (name == _white_space)
 	{
-		if (!value_in_list(val, vals->second))
+		if (!value_in_list(val, white_space_strings))
 		{
 			is_valid = false;
 		}

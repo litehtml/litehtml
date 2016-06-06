@@ -67,6 +67,8 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 	}
 }
 
+const std::vector<litehtml::tstring> align_values = { _t( "left" ), _t( "center"), _t( "right" ) };
+
 void litehtml::el_table::parse_attributes()
 {
 	const tchar_t* str = get_attr(_t("width"));
@@ -78,7 +80,7 @@ void litehtml::el_table::parse_attributes()
 	str = get_attr(_t("align"));
 	if(str)
 	{
-		int align = value_index(str, _t("left;center;right"));
+		int align = value_index(str, align_values);
 		switch(align)
 		{
 		case 1:

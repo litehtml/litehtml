@@ -130,9 +130,11 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 	}
 }
 
+static std::vector<litehtml::tstring> function_list = { _t( "attr" ), _t( "counter" ), _t( "url" ) };
+
 void litehtml::el_before_after_base::add_function( const tstring& fnc, const tstring& params )
 {
-	int idx = value_index(fnc.c_str(), _t("attr;counter;url"));
+	int idx = value_index(fnc.c_str(), function_list );
 	switch(idx)
 	{
 	// attr

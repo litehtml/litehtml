@@ -1,7 +1,7 @@
 #include "html.h"
 #include "css_length.h"
 
-void litehtml::css_length::fromString( const tstring& str, const tstring& predefs, int defValue )
+void litehtml::css_length::fromString( const tstring& str, const std::vector<tstring> & predefs, int defValue )
 {
 	// TODO: Make support for calc
 	if( str.length() >= 4 && t_strncmp( str.c_str(), _t("calc"), 4 ) == 0 )

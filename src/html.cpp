@@ -71,46 +71,26 @@ litehtml::tstring::size_type litehtml::find_close_bracket(const tstring &s, tstr
 	return tstring::npos;
 }
 
-int litehtml::value_index( const tstring& val, const tstring& strings, int defValue, tchar_t delim )
+int litehtml::value_index( const tstring& val, const std::vector<tstring>& strings, int defValue )
 {
-	if(val.empty() || strings.empty() || !delim)
+	if(val.empty() || strings.empty())
 	{
 		return defValue;
 	}
 
-	int idx = 0;
-	tstring::size_type delim_start	= 0;
-	tstring::size_type delim_end	= strings.find(delim, delim_start);
-	tstring::size_type item_len		= 0;
-	while(true)
-	{
-		if(delim_end == tstring::npos)
-		{
-			item_len = strings.length() - delim_start;
-		} else
-		{
-			item_len = delim_end - delim_start;
-		}
-		if(item_len == val.length())
-		{
-			if( t_strncmp( val.c_str(), strings.c_str() + delim_start, item_len ) == 0 )
-			{
-				return idx;
-			}
-		}
-		idx++;
-		delim_start = delim_end;
-		if(delim_start == tstring::npos) break;
-		delim_start++;
-		if(delim_start == strings.length()) break;
-		delim_end = strings.find(delim, delim_start);
-	}
+    auto it = std::find(strings.begin(), strings.end(), val);
+
+    if (it != strings.end())
+    {
+        return it - strings.begin();
+    }
+
 	return defValue;
 }
 
-bool litehtml::value_in_list( const tstring& val, const tstring& strings, tchar_t delim )
+bool litehtml::value_in_list( const tstring& val, const std::vector<tstring>& strings )
 {
-	int idx = value_index(val, strings, -1, delim);
+	int idx = value_index(val, strings, -1);
 	if(idx >= 0)
 	{
 		return true;
