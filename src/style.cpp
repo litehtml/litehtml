@@ -76,385 +76,450 @@ void litehtml::style::add_property( const string_hash & name, const tchar_t* val
 	}
 
 	// Add baseurl for background image
-	if(	name == _t("background-image"))
-	{
-		add_parsed_property(name, val, important);
-		if(baseurl)
-		{
-			add_parsed_property(_t("background-image-baseurl"), baseurl, important);
-		}
-	} else
+    switch ( name.GetHashCode() )
+    {
+        case "background-image"_hash:
+        {
+            add_parsed_property( name, val, important );
+            if ( baseurl )
+            {
+                add_parsed_property( _t( "background-image-baseurl" ), baseurl, important );
+            }
+        }
+        break;
 
-	// Parse border spacing properties
-	if(	name == _t("border-spacing"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
-		if(tokens.size() == 1)
-		{
-			add_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("-litehtml-border-spacing-y"), tokens[0].c_str(), baseurl, important);
-		} else if(tokens.size() == 2)
-		{
-			add_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("-litehtml-border-spacing-y"), tokens[1].c_str(), baseurl, important);
-		}
-	} else
+        case "border-spacing"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
+            if ( tokens.size() == 1 )
+            {
+                add_property( _t( "-litehtml-border-spacing-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "-litehtml-border-spacing-y" ), tokens[ 0 ].c_str(), baseurl, important );
+            }
+            else if ( tokens.size() == 2 )
+            {
+                add_property( _t( "-litehtml-border-spacing-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "-litehtml-border-spacing-y" ), tokens[ 1 ].c_str(), baseurl, important );
+            }
+        }
+        break;
 
-	// Parse borders shorthand properties
+        // Parse borders shorthand properties
 
-	if(	name == _t("border"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "), _t(""), _t("("));
-		int idx;
-		tstring str;
-		for(string_vector::const_iterator tok = tokens.cbegin(); tok != tokens.cend(); tok++)
-		{
-			idx = value_index(tok->c_str(), border_style_strings, -1);
-			if(idx >= 0)
-			{
-				add_property(_t("border-left-style"), tok->c_str(), baseurl, important);
-				add_property(_t("border-right-style"), tok->c_str(), baseurl, important);
-				add_property(_t("border-top-style"), tok->c_str(), baseurl, important);
-				add_property(_t("border-bottom-style"), tok->c_str(), baseurl, important);
-			} else
-			{
-				if(web_color::is_color(tok->c_str()))
-				{
-					add_property(_t("border-left-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-right-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-top-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-bottom-color"), tok->c_str(), baseurl, important);
-				} else
-				{
-					add_property(_t("border-left-width"), tok->c_str(), baseurl, important);
-					add_property(_t("border-right-width"), tok->c_str(), baseurl, important);
-					add_property(_t("border-top-width"), tok->c_str(), baseurl, important);
-					add_property(_t("border-bottom-width"), tok->c_str(), baseurl, important);
-				}
-			}
-		}
-	} else if(	 name == _t("border-left")	||
-		 name == _t("border-right")	||
-		 name == _t("border-top")	||
-		 name == _t("border-bottom"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "), _t(""), _t("("));
+        case "border"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ), _t( "" ), _t( "(" ) );
+            int idx;
+            tstring str;
+            for ( string_vector::const_iterator tok = tokens.cbegin(); tok != tokens.cend(); tok++ )
+            {
+                idx = value_index( tok->c_str(), border_style_strings, -1 );
+                if ( idx >= 0 )
+                {
+                    add_property( _t( "border-left-style" ), tok->c_str(), baseurl, important );
+                    add_property( _t( "border-right-style" ), tok->c_str(), baseurl, important );
+                    add_property( _t( "border-top-style" ), tok->c_str(), baseurl, important );
+                    add_property( _t( "border-bottom-style" ), tok->c_str(), baseurl, important );
+                }
+                else
+                {
+                    if ( web_color::is_color( tok->c_str() ) )
+                    {
+                        add_property( _t( "border-left-color" ), tok->c_str(), baseurl, important );
+                        add_property( _t( "border-right-color" ), tok->c_str(), baseurl, important );
+                        add_property( _t( "border-top-color" ), tok->c_str(), baseurl, important );
+                        add_property( _t( "border-bottom-color" ), tok->c_str(), baseurl, important );
+                    }
+                    else
+                    {
+                        add_property( _t( "border-left-width" ), tok->c_str(), baseurl, important );
+                        add_property( _t( "border-right-width" ), tok->c_str(), baseurl, important );
+                        add_property( _t( "border-top-width" ), tok->c_str(), baseurl, important );
+                        add_property( _t( "border-bottom-width" ), tok->c_str(), baseurl, important );
+                    }
+                }
+            }
+        }
+        break;
 
-		static const string_hash border_table[ 12 ] =
-		{
-			_t("border-left-style") ,
-			_t("border-left-color") ,
-			_t("border-left-width") ,
-			_t("border-right-style") ,
-			_t("border-right-color") ,
-			_t("border-right-width") ,
-			_t("border-top-style") ,
-			_t("border-top-color") ,
-			_t("border-top-width") ,
-			_t("border-bottom-style") ,
-			_t("border-bottom-color") ,
-			_t("border-bottom-width")
-		};
+        case "border-left"_hash:
+        case "border-right"_hash:
+        case "border-top"_hash:
+        case "border-bottom"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ), _t( "" ), _t( "(" ) );
 
-		const string_hash * name_table;
+            static const string_hash border_table[ 12 ] =
+            {
+                _t( "border-left-style" ),
+                _t( "border-left-color" ),
+                _t( "border-left-width" ),
+                _t( "border-right-style" ),
+                _t( "border-right-color" ),
+                _t( "border-right-width" ),
+                _t( "border-top-style" ),
+                _t( "border-top-color" ),
+                _t( "border-top-width" ),
+                _t( "border-bottom-style" ),
+                _t( "border-bottom-color" ),
+                _t( "border-bottom-width" )
+            };
 
-		if ( name == _t("border-left") )
-		{
-			name_table = &border_table[ 0 ];
-		}
-		else if ( name == _t("border-right") )
-		{
-			name_table = &border_table[ 3 ];
-		}
-		else if ( name == _t("border-top") )
-		{
-			name_table = &border_table[ 6 ];
-		}
-		else if ( name == _t("border-bottom") )
-		{
-			name_table = &border_table[ 9 ];
-		}
+            const string_hash * name_table;
 
-		int idx;
+            switch ( name.GetHashCode() )
+            {
+                case "border-left"_hash:
+                {
+                    name_table = &border_table[ 0 ];
+                }
+                break;
 
-		for(string_vector::const_iterator tok = tokens.cbegin(); tok != tokens.cend(); tok++)
-		{
-			const tchar_t * c_string = tok->c_str();
+                case "border-right"_hash:
+                {
+                    name_table = &border_table[ 3 ];
+                }
+                break;
 
-			idx = value_index(c_string, border_style_strings, -1);
-			if(idx >= 0)
-			{
-				add_property(name_table[0], c_string, baseurl, important);
-			} else
-			{
-				if(web_color::is_color(c_string))
-				{
-					add_property(name_table[1], c_string, baseurl, important);
-				} else
-				{
-					add_property(name_table[2], c_string, baseurl, important);
-				}
-			}
-		}
-	} else
+                case "border-top"_hash:
+                {
+                    name_table = &border_table[ 6 ];
+                }
+                break;
 
-	// Parse border radius shorthand properties
-	if( name == _t("border-bottom-left-radius"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
-		if(tokens.size() >= 2)
-		{
-			add_property(_t("border-bottom-left-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"), tokens[1].c_str(), baseurl, important);
-		} else if(tokens.size() == 1)
-		{
-			add_property(_t("border-bottom-left-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"), tokens[0].c_str(), baseurl, important);
-		}
+                case "border-bottom"_hash:
+                {
+                    name_table = &border_table[ 9 ];
+                }
+                break;
+            }
 
-	} else if( name == _t("border-bottom-right-radius"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
-		if(tokens.size() >= 2)
-		{
-			add_property(_t("border-bottom-right-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"), tokens[1].c_str(), baseurl, important);
-		} else if(tokens.size() == 1)
-		{
-			add_property(_t("border-bottom-right-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"), tokens[0].c_str(), baseurl, important);
-		}
+            int idx;
 
-	} else if( name == _t("border-top-right-radius"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
-		if(tokens.size() >= 2)
-		{
-			add_property(_t("border-top-right-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"), tokens[1].c_str(), baseurl, important);
-		} else if(tokens.size() == 1)
-		{
-			add_property(_t("border-top-right-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"), tokens[0].c_str(), baseurl, important);
-		}
+            for ( string_vector::const_iterator tok = tokens.cbegin(); tok != tokens.cend(); tok++ )
+            {
+                const tchar_t * c_string = tok->c_str();
 
-	} else if( name == _t("border-top-left-radius"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
-		if(tokens.size() >= 2)
-		{
-			add_property(_t("border-top-left-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-left-radius-y"), tokens[1].c_str(), baseurl, important);
-		} else if(tokens.size() == 1)
-		{
-			add_property(_t("border-top-left-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-left-radius-y"), tokens[0].c_str(), baseurl, important);
-		}
+                idx = value_index( c_string, border_style_strings, -1 );
+                if ( idx >= 0 )
+                {
+                    add_property( name_table[ 0 ], c_string, baseurl, important );
+                }
+                else
+                {
+                    if ( web_color::is_color( c_string ) )
+                    {
+                        add_property( name_table[ 1 ], c_string, baseurl, important );
+                    }
+                    else
+                    {
+                        add_property( name_table[ 2 ], c_string, baseurl, important );
+                    }
+                }
+            }
+        }
+        break;
 
-	} else
+        // Parse border radius shorthand properties
+        case "border-bottom-left-radius"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
+            if ( tokens.size() >= 2 )
+            {
+                add_property( _t( "border-bottom-left-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-bottom-left-radius-y" ), tokens[ 1 ].c_str(), baseurl, important );
+            }
+            else if ( tokens.size() == 1 )
+            {
+                add_property( _t( "border-bottom-left-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-bottom-left-radius-y" ), tokens[ 0 ].c_str(), baseurl, important );
+            }
 
-	// Parse border-radius shorthand properties
-	if( name == _t("border-radius"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t("/"));
-		if(tokens.size() == 1)
-		{
-			add_property(_t("border-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-radius-y"), tokens[0].c_str(), baseurl, important);
-		} else if(tokens.size() >= 2)
-		{
-			add_property(_t("border-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-radius-y"), tokens[1].c_str(), baseurl, important);
-		}
-	} else if( name == _t("border-radius-x"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+        }
+        break;
 
-		static const string_hash border_radius_x_table[4] =
-		{
-			_t("border-top-left-radius-x"),
-			_t("border-top-right-radius-x"),
-			_t("border-bottom-right-radius-x"),
-			_t("border-bottom-left-radius-x")
-		};
+        case "border-bottom-right-radius"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
+            if ( tokens.size() >= 2 )
+            {
+                add_property( _t( "border-bottom-right-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-bottom-right-radius-y" ), tokens[ 1 ].c_str(), baseurl, important );
+            }
+            else if ( tokens.size() == 1 )
+            {
+                add_property( _t( "border-bottom-right-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-bottom-right-radius-y" ), tokens[ 0 ].c_str(), baseurl, important );
+            }
 
-		expand_shorthand_properties(tokens, border_radius_x_table, important);
-	} else if( name == _t("border-radius-y"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+        }
+        break;
 
-		static const string_hash border_radius_y_table[4] =
-		{
-			_t("border-top-left-radius-y"),
-			_t("border-top-right-radius-y"),
-			_t("border-bottom-right-radius-y"),
-			_t("border-bottom-left-radius-y")
-		};
+        case "border-top-right-radius"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
+            if ( tokens.size() >= 2 )
+            {
+                add_property( _t( "border-top-right-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-top-right-radius-y" ), tokens[ 1 ].c_str(), baseurl, important );
+            }
+            else if ( tokens.size() == 1 )
+            {
+                add_property( _t( "border-top-right-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-top-right-radius-y" ), tokens[ 0 ].c_str(), baseurl, important );
+            }
 
-		expand_shorthand_properties(tokens, border_radius_y_table, important);
-	}
+        }
+        break;
 
+        case "border-top-left-radius"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
+            if ( tokens.size() >= 2 )
+            {
+                add_property( _t( "border-top-left-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-top-left-radius-y" ), tokens[ 1 ].c_str(), baseurl, important );
+            }
+            else if ( tokens.size() == 1 )
+            {
+                add_property( _t( "border-top-left-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-top-left-radius-y" ), tokens[ 0 ].c_str(), baseurl, important );
+            }
 
-	// Parse list-style shorthand properties
-	if( name == _t("list-style"))
-	{
-		add_parsed_property(_t("list-style-type"),			_t("disc"),		important);
-		add_parsed_property(_t("list-style-position"),		_t("outside"),	important);
-		add_parsed_property(_t("list-style-image"),			_t(""),			important);
-		add_parsed_property(_t("list-style-image-baseurl"),	_t(""),			important);
+        }
+        break;
 
-		string_vector tokens;
-		split_string(val, tokens, _t(" "), _t(""), _t("("));
-		for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
-		{
-			int idx = value_index(tok->c_str(), list_style_type_strings, -1);
-			if(idx >= 0)
-			{
-				add_parsed_property(_t("list-style-type"), *tok, important);
-			} else
-			{
-				idx = value_index(tok->c_str(), list_style_position_strings, -1);
-				if(idx >= 0)
-				{
-					add_parsed_property(_t("list-style-position"), *tok, important);
-				} else if(!t_strncmp(val, _t("url"), 3))
-				{
-					add_parsed_property(_t("list-style-image"), *tok, important);
-					if(baseurl)
-					{
-						add_parsed_property(_t("list-style-image-baseurl"), baseurl, important);
-					}
-				}
-			}
-		}
-	} else
+        // Parse border-radius shorthand properties
+        case "border-radius"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( "/" ) );
+            if ( tokens.size() == 1 )
+            {
+                add_property( _t( "border-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-radius-y" ), tokens[ 0 ].c_str(), baseurl, important );
+            }
+            else if ( tokens.size() >= 2 )
+            {
+                add_property( _t( "border-radius-x" ), tokens[ 0 ].c_str(), baseurl, important );
+                add_property( _t( "border-radius-y" ), tokens[ 1 ].c_str(), baseurl, important );
+            }
+        }
+        break;
 
-	// Add baseurl for background image
-	if(	 name == _t("list-style-image"))
-	{
-		add_parsed_property(name, val, important);
-		if(baseurl)
-		{
-			add_parsed_property(_t("list-style-image-baseurl"), baseurl, important);
-		}
-	} else
+        case "border-radius-x"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
 
-	// Parse background shorthand properties
-	if( name == _t("background"))
-	{
-		parse_short_background(val, baseurl, important);
+            static const string_hash border_radius_x_table[ 4 ] =
+            {
+                _t( "border-top-left-radius-x" ),
+                _t( "border-top-right-radius-x" ),
+                _t( "border-bottom-right-radius-x" ),
+                _t( "border-bottom-left-radius-x" )
+            };
 
-	} else
+            expand_shorthand_properties( tokens, border_radius_x_table, important );
+        }
+        break;
 
-	// Parse margin and padding shorthand properties
-	if( name == _t("margin") ||  name == _t("padding"))
-	{
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+        case "border-radius-y"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
 
-		static const string_hash margin_table[ 4 ] =
-		{
-			_t("margin-top") ,
-			_t("margin-right"),
-			_t("margin-bottom"),
-			_t("margin-left")
-		};
+            static const string_hash border_radius_y_table[ 4 ] =
+            {
+                _t( "border-top-left-radius-y" ),
+                _t( "border-top-right-radius-y" ),
+                _t( "border-bottom-right-radius-y" ),
+                _t( "border-bottom-left-radius-y" )
+            };
 
-		static const string_hash padding_table[ 4 ] =
-		{
-			_t("padding-top"),
-			_t("padding-right"),
-			_t("padding-bottom"),
-			_t("padding-left")
-		};
+            expand_shorthand_properties( tokens, border_radius_y_table, important );
+        }
+        break;
+    }
 
-		const string_hash ( & name_table )[ 4 ] = ( name == _t("margin") ) ? margin_table : padding_table;
+    switch( name.GetHashCode() )
+    {
+        // Parse list-style shorthand properties
+        case "list-style"_hash:
+        {
+            add_parsed_property( _t( "list-style-type" ), _t( "disc" ), important );
+            add_parsed_property( _t( "list-style-position" ), _t( "outside" ), important );
+            add_parsed_property( _t( "list-style-image" ), _t( "" ), important );
+            add_parsed_property( _t( "list-style-image-baseurl" ), _t( "" ), important );
 
-		expand_shorthand_properties(tokens, name_table, important);
-	} else
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ), _t( "" ), _t( "(" ) );
+            for ( string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++ )
+            {
+                int idx = value_index( tok->c_str(), list_style_type_strings, -1 );
+                if ( idx >= 0 )
+                {
+                    add_parsed_property( _t( "list-style-type" ), *tok, important );
+                }
+                else
+                {
+                    idx = value_index( tok->c_str(), list_style_position_strings, -1 );
+                    if ( idx >= 0 )
+                    {
+                        add_parsed_property( _t( "list-style-position" ), *tok, important );
+                    }
+                    else if ( !t_strncmp( val, _t( "url" ), 3 ) )
+                    {
+                        add_parsed_property( _t( "list-style-image" ), *tok, important );
+                        if ( baseurl )
+                        {
+                            add_parsed_property( _t( "list-style-image-baseurl" ), baseurl, important );
+                        }
+                    }
+                }
+            }
+        }
+        break;
 
+        // Add baseurl for background image
+        case "list-style-image"_hash:
+        {
+            add_parsed_property( name, val, important );
+            if ( baseurl )
+            {
+                add_parsed_property( _t( "list-style-image-baseurl" ), baseurl, important );
+            }
+        }
+        break;
 
-	// Parse border-* shorthand properties
-	if(	 name == _t("border-left") )
-	{
-		parse_short_border(_t("border-left"), val, important);
-	} else if( name == _t("border-right") )
-	{
-		parse_short_border(_t("border-right"), val, important);
-	} else if( name == _t("border-top") )
-	{
-		parse_short_border(_t("border-top"), val, important);
-	} else if( name == _t("border-bottom") )
-	{
-		parse_short_border(_t("border-bottom"), val, important);
-	} else
+        // Parse background shorthand properties
+        case "background"_hash:
+        {
+            parse_short_background( val, baseurl, important );
 
-	// Parse border-width/style/color shorthand properties
-	if(	 name == _t("border-width") ||
-		 name == _t("border-style")  ||
-		 name == _t("border-color"))
-	{
-		static const string_hash border_width_table[ 4 ] =
-		{
-			_t("border-top-width"),
-			_t("border-right-width"),
-			_t("border-bottom-width"),
-			_t("border-left-width"),
-		};
+        }
+        break;
 
-		static const string_hash border_style_table[ 4 ] =
-		{
-			_t("border-top-style"),
-			_t("border-right-style"),
-			_t("border-bottom-style"),
-			_t("border-left-style"),
-		};
+        // Parse margin and padding shorthand properties
+        case "margin"_hash:
+        case "padding"_hash:
+        {
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
 
-		static const string_hash border_color_table[ 4 ] =
-		{
-			_t("border-top-color"),
-			_t("border-right-color"),
-			_t("border-bottom-color"),
-			_t("border-left-color"),
-		};
+            static const string_hash margin_table[ 4 ] =
+            {
+                _t( "margin-top" ),
+                _t( "margin-right" ),
+                _t( "margin-bottom" ),
+                _t( "margin-left" )
+            };
 
+            static const string_hash padding_table[ 4 ] =
+            {
+                _t( "padding-top" ),
+                _t( "padding-right" ),
+                _t( "padding-bottom" ),
+                _t( "padding-left" )
+            };
 
-		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+            const string_hash( &name_table )[ 4 ] = ( name.GetHashCode() == "margin"_hash  ) ? margin_table : padding_table;
 
-		if ( name == _t("border-width") )
-		{
-			expand_shorthand_properties(tokens, border_width_table, important);
-		} else if ( name == _t("border-style") )
-		{
-			expand_shorthand_properties(tokens, border_style_table, important);
-		} else
-		{
-			expand_shorthand_properties(tokens, border_color_table, important);
-		}
+            expand_shorthand_properties( tokens, name_table, important );
+        }
+        break;
 
+        // Parse border-* shorthand properties
+        case "border-left"_hash:
+        {
+            parse_short_border( _t( "border-left" ), val, important );
+        }
+        break;
 
+        case "border-right"_hash:
+        {
+            parse_short_border( _t( "border-right" ), val, important );
+        }
+        break;
 
-	} else
+        case "border-top"_hash:
+        {
+            parse_short_border( _t( "border-top" ), val, important );
+        }
+        break;
 
-	// Parse font shorthand properties
-	if( name == _t("font"))
-	{
-		parse_short_font(val, important);
-	} else
-	{
-		add_parsed_property(name, val, important);
-	}
+        case "border-bottom"_hash:
+        {
+            parse_short_border( _t( "border-bottom" ), val, important );
+        }
+        break;
+
+        // Parse border-width/style/color shorthand properties
+        case "border-width"_hash:
+        case "border-style"_hash:
+        case "border-color"_hash:
+        {
+            static const string_hash border_width_table[ 4 ] =
+            {
+                _t( "border-top-width" ),
+                _t( "border-right-width" ),
+                _t( "border-bottom-width" ),
+                _t( "border-left-width" ),
+            };
+
+            static const string_hash border_style_table[ 4 ] =
+            {
+                _t( "border-top-style" ),
+                _t( "border-right-style" ),
+                _t( "border-bottom-style" ),
+                _t( "border-left-style" ),
+            };
+
+            static const string_hash border_color_table[ 4 ] =
+            {
+                _t( "border-top-color" ),
+                _t( "border-right-color" ),
+                _t( "border-bottom-color" ),
+                _t( "border-left-color" ),
+            };
+
+            string_vector tokens;
+            split_string( val, tokens, _t( " " ) );
+
+            if ( name.GetHashCode() == "border-width"_hash )
+            {
+                expand_shorthand_properties( tokens, border_width_table, important );
+            }
+            else if ( name.GetHashCode() == "border-style"_hash )
+            {
+                expand_shorthand_properties( tokens, border_style_table, important );
+            }
+            else
+            {
+                expand_shorthand_properties( tokens, border_color_table, important );
+            }
+        }
+        break;
+
+        // Parse font shorthand properties
+        case "font"_hash:
+        {
+            parse_short_font( val, important );
+        }
+        break;
+
+        default:
+        {
+            add_parsed_property( name, val, important );
+        }
+    }
 }
 
 void litehtml::style::expand_shorthand_properties( const string_vector &tokens, const string_hash (& name_array)[4], bool important )

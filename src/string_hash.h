@@ -4,6 +4,32 @@
 
 namespace litehtml
 {
+
+    constexpr hash_code GetHashCodeConstexp(
+       const hash_code code,
+       const tchar_t * text
+       )
+    {
+       return *text ? GetHashCodeConstexp( static_cast<hash_code>( ( static_cast<unsigned long long>( code ) ^ *text ) * 16777619u ), text + 1 ) : code;
+    }
+
+    // ~~
+
+    constexpr hash_code GetHashCodeConstexp(
+       const tchar_t * text
+       )
+    {
+       return GetHashCodeConstexp( 2166136261u, text );
+    }
+
+    constexpr hash_code operator ""_hash(
+        const char* text,
+        size_t /*size*/
+        )
+    {
+        return GetHashCodeConstexp( text );
+    }
+
     class string_hash
     {
     public:
@@ -15,8 +41,8 @@ namespace litehtml
         }
 
         template< unsigned int character_count >
-        string_hash( const litehtml::tchar_t ( &text )[ character_count ] )
-            : HashCode( string_hash::HashGenerator< character_count >::Hash( text ) )
+        string_hash( const char ( &text )[ character_count ] )
+            : HashCode( GetHashCodeConstexp( text ) )
         {
 
         }
@@ -69,16 +95,20 @@ namespace litehtml
         }
 
         template< unsigned int character_count >
-        bool operator==( const litehtml::tchar_t ( &text )[ character_count ] )
+        bool operator==( const char( &text )[ character_count ] ) const
         {
-            hash_code temp_hash( string_hash::HashGenerator< character_count >::Hash( text ) );
-            return HashCode == temp_hash;
+            return HashCode == GetHashCodeConstexp( text );
         }
 
-        bool operator==( const litehtml::tchar_t * text )
+        bool operator==( const litehtml::tchar_t * text ) const
         {
             hash_code temp_hash( string_hash::LoopedHash( text ) );
             return HashCode == temp_hash;
+        }
+
+        bool operator==( const hash_code code ) const
+        {
+            return HashCode == code;
         }
 
         bool operator!=( const string_hash & other ) const
@@ -96,10 +126,14 @@ namespace litehtml
             return HashCode != 0;
         }
 
-
         bool empty() const
         {
             return HashCode == 0;
+        }
+
+        hash_code GetHashCode() const
+        {
+            return HashCode;
         }
 
         static string_hash normalizeFromString( const litehtml::tchar_t * string )
@@ -108,19 +142,6 @@ namespace litehtml
         }
 
     private:
-
-        template< unsigned int character_count, unsigned int index = character_count - 1 >
-        struct HashGenerator
-        {
-            inline static hash_code Hash( const litehtml::tchar_t ( &character_array )[ character_count ] )
-            {
-                #ifdef NDEBUG
-                    return ( HashGenerator< character_count, index - 1 >::Hash( character_array ) ^ character_array[ index - 1 ] ) * FNV_Prime;
-                #else
-                    return LoopedHash( character_array );
-                #endif
-            }
-        };
 
         static int i(int i) {return i;}
 
@@ -141,24 +162,5 @@ namespace litehtml
 
         static const unsigned int FNV_OffsetBase = 2166136261u;
         static const unsigned int FNV_Prime = 16777619u;
-    };
-
-    template< unsigned int character_count >
-    struct string_hash::HashGenerator< character_count, 0 >
-    {
-        inline static hash_code Hash( const litehtml::tchar_t ( &character_array )[ character_count ] )
-        {
-            return FNV_OffsetBase;
-        }
-    };
-
-    // Special case: Hash empty string as 0 to make it more human readable
-    template<>
-    struct string_hash::HashGenerator<1, 0>
-    {
-        inline static hash_code Hash( const litehtml::tchar_t ( & )[ 1 ] )
-        {
-            return 0u;
-        }
     };
 }
