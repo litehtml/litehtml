@@ -164,7 +164,7 @@ namespace litehtml
 		virtual void				parse_styles(bool is_reparse = false);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
-		virtual const tchar_t*		get_style_property(const string_hash & name, bool inherited, const tchar_t* def = 0) const;
+		const tchar_t*		        get_style_property(const string_hash & name, bool inherited, const tchar_t* def = 0) const;
 		virtual uint_ptr			get_font(font_metrics* fm = 0);
 		virtual int					get_font_size() const;
 		virtual void				get_text(tstring& text);

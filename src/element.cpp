@@ -296,21 +296,22 @@ void litehtml::element::finalize()
 
 const litehtml::tchar_t* litehtml::element::get_style_property( const string_hash & name, bool inherited, const tchar_t* def /*= 0*/ ) const
 {
-	const tchar_t* ret = m_style.get_property(name);
-	bool pass_parent = false;
-	if(m_parent)
+	const element * el = this;
+	const tchar_t* ret = nullptr;
+
+	while ( el )
 	{
-		if(ret && !t_strcasecmp(ret, _t("inherit")))
+		ret = el->m_style.get_property( name );
+		bool pass_parent =
+			ret && !t_strcasecmp( ret, _t( "inherit" ) )
+			|| ( !ret && inherited );
+
+		if ( !pass_parent )
 		{
-			pass_parent = true;
-		} else if(!ret && inherited)
-		{
-			pass_parent = true;
+			break;
 		}
-	}
-	if(pass_parent)
-	{
-		ret = m_parent->get_style_property(name, inherited, def);
+
+		el = el->m_parent;
 	}
 
 	if(!ret)
