@@ -2,6 +2,11 @@ cmake_minimum_required(VERSION 2.8)
 
 project(litehtml)
 
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    message(STATUS "No build type selected, default to Release")
+    set(CMAKE_BUILD_TYPE "Release")
+endif()
+
 if(NOT MSVC)
 	set(CMAKE_CXX_FLAGS "-std=c++11")
 	set(CMAKE_CXX_FLAGS_DEBUG "-O0 -DDEBUG -g")
