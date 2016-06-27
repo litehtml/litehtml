@@ -23,12 +23,12 @@ Unfortunately **litehtml** is not fully compatible with HTML/CSS standards. Ther
 You can [download the simple browser](http://www.litehtml.com/download.html) (**litebrowser**) to test the **litehtml** rendering engine. 
 
 The litebrowser source codes are available on GitHub:
-  * [For Windows](https://github.com/tordex/litebrowser)
-  * [For Linux](https://github.com/tordex/litebrowser-linux)
+  * [For Windows](https://github.com/litehtml/litebrowser)
+  * [For Linux](https://github.com/litehtml/litebrowser-linux)
 
 ##License
 
-**litehtml** is distributed under [New BSD License](http://opensource.org/licenses/BSD-3-Clause).
+**litehtml** is distributed under [New BSD License](https://opensource.org/licenses/BSD-3-Clause).
 The **gumbo-parser** is disributed under [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 ##Support litehtml project
