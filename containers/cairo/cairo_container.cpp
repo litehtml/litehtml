@@ -2,6 +2,7 @@
 #define _USE_MATH_DEFINES
 #include <math.h>
 #include "cairo_font.h"
+#include <strsafe.h>
 
 cairo_container::cairo_container(void)
 {
@@ -961,4 +962,66 @@ void cairo_container::transform_text( litehtml::tstring& text, litehtml::text_tr
 
 void cairo_container::link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el)
 {
+}
+
+litehtml::tstring cairo_container::resolve_color(const litehtml::tstring& color) const
+{
+	struct custom_color 
+	{
+		litehtml::tchar_t*	name;
+		int					color_index;
+	};
+
+	static custom_color colors[] = {
+		{ _t("ActiveBorder"),          COLOR_ACTIVEBORDER},
+		{ _t("ActiveCaption"),         COLOR_ACTIVECAPTION},
+		{ _t("AppWorkspace"),          COLOR_APPWORKSPACE },
+		{ _t("Background"),            COLOR_BACKGROUND },
+		{ _t("ButtonFace"),            COLOR_BTNFACE },
+		{ _t("ButtonHighlight"),       COLOR_BTNHIGHLIGHT },
+		{ _t("ButtonShadow"),          COLOR_BTNSHADOW },
+		{ _t("ButtonText"),            COLOR_BTNTEXT },
+		{ _t("CaptionText"),           COLOR_CAPTIONTEXT },
+        { _t("GrayText"),              COLOR_GRAYTEXT },
+		{ _t("Highlight"),             COLOR_HIGHLIGHT },
+		{ _t("HighlightText"),         COLOR_HIGHLIGHTTEXT },
+		{ _t("InactiveBorder"),        COLOR_INACTIVEBORDER },
+		{ _t("InactiveCaption"),       COLOR_INACTIVECAPTION },
+		{ _t("InactiveCaptionText"),   COLOR_INACTIVECAPTIONTEXT },
+		{ _t("InfoBackground"),        COLOR_INFOBK },
+		{ _t("InfoText"),              COLOR_INFOTEXT },
+		{ _t("Menu"),                  COLOR_MENU },
+		{ _t("MenuText"),              COLOR_MENUTEXT },
+		{ _t("Scrollbar"),             COLOR_SCROLLBAR },
+		{ _t("ThreeDDarkShadow"),      COLOR_3DDKSHADOW },
+		{ _t("ThreeDFace"),            COLOR_3DFACE },
+		{ _t("ThreeDHighlight"),       COLOR_3DHILIGHT },
+		{ _t("ThreeDLightShadow"),     COLOR_3DLIGHT },
+		{ _t("ThreeDShadow"),          COLOR_3DSHADOW },
+		{ _t("Window"),                COLOR_WINDOW },
+		{ _t("WindowFrame"),           COLOR_WINDOWFRAME },
+		{ _t("WindowText"),            COLOR_WINDOWTEXT }
+	};
+
+    if (color == L"Highlight")
+    {
+        int iii = 0;
+        iii++;
+    }
+
+    for (auto& clr : colors)
+    {
+        if (!t_strcasecmp(clr.name, color.c_str()))
+        {
+            litehtml::tchar_t  str_clr[20];
+            DWORD rgb_color =  GetSysColor(clr.color_index);
+#ifdef LITEHTML_UTF8
+            StringCchPrintfA(str_clr, 20, "#%02X%02X%02X", GetRValue(rgb_color), GetGValue(rgb_color), GetBValue(rgb_color));
+#else
+            StringCchPrintf(str_clr, 20, L"#%02X%02X%02X", GetRValue(rgb_color), GetGValue(rgb_color), GetBValue(rgb_color));
+#endif // LITEHTML_UTF8
+            return std::move(litehtml::tstring(str_clr));
+        }
+    }
+    return std::move(litehtml::tstring());
 }

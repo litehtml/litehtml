@@ -415,16 +415,16 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 	m_css_borders.top.width.fromString(		get_style_property(_t("border-top-width"),		false,	_t("medium")), border_width_strings);
 	m_css_borders.bottom.width.fromString(	get_style_property(_t("border-bottom-width"),	false,	_t("medium")), border_width_strings);
 
-	m_css_borders.left.color = web_color::from_string(get_style_property(_t("border-left-color"),	false,	_t("")));
+	m_css_borders.left.color = web_color::from_string(get_style_property(_t("border-left-color"),	false,	_t("")), doc->container());
 	m_css_borders.left.style = (border_style) value_index(get_style_property(_t("border-left-style"), false, _t("none")), border_style_strings, border_style_none);
 
-	m_css_borders.right.color = web_color::from_string(get_style_property(_t("border-right-color"),	false,	_t("")));
+    m_css_borders.right.color = web_color::from_string(get_style_property(_t("border-right-color"), false, _t("")), doc->container());
 	m_css_borders.right.style = (border_style) value_index(get_style_property(_t("border-right-style"), false, _t("none")), border_style_strings, border_style_none);
 
-	m_css_borders.top.color = web_color::from_string(get_style_property(_t("border-top-color"),	false,	_t("")));
+    m_css_borders.top.color = web_color::from_string(get_style_property(_t("border-top-color"), false, _t("")), doc->container());
 	m_css_borders.top.style = (border_style) value_index(get_style_property(_t("border-top-style"), false, _t("none")), border_style_strings, border_style_none);
 
-	m_css_borders.bottom.color = web_color::from_string(get_style_property(_t("border-bottom-color"),	false,	_t("")));
+    m_css_borders.bottom.color = web_color::from_string(get_style_property(_t("border-bottom-color"), false, _t("")), doc->container());
 	m_css_borders.bottom.style = (border_style) value_index(get_style_property(_t("border-bottom-style"), false, _t("none")), border_style_strings, border_style_none);
 
 	m_css_borders.radius.top_left_x.fromString(get_style_property(_t("border-top-left-radius-x"), false, _t("0")));

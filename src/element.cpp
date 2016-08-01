@@ -53,7 +53,7 @@ litehtml::web_color litehtml::element::get_color( const tchar_t* prop_name, bool
 	{
 		return def_color;
 	}
-	return web_color::from_string(clrstr);
+	return web_color::from_string(clrstr, get_document()->container());
 }
 
 litehtml::position litehtml::element::get_placement() const

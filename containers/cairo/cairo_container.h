@@ -83,6 +83,7 @@ public:
 	virtual void						get_media_features(litehtml::media_features& media) const override;
 	virtual void						get_language(litehtml::tstring& language, litehtml::tstring & culture) const override;
 	virtual void						link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el) override;
+    virtual litehtml::tstring			resolve_color(const litehtml::tstring& color) const override;
 
 
 	virtual void						make_url( LPCWSTR url, LPCWSTR basepath, std::wstring& out ) = 0;

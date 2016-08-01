@@ -10,6 +10,8 @@ namespace litehtml
 
 	extern def_color g_def_colors[];
 
+    class document_container;
+
 	struct web_color
 	{
 		byte    blue;
@@ -49,8 +51,8 @@ namespace litehtml
 			alpha	= val.alpha;
 			return *this;
 		}
-		static web_color		from_string(const tchar_t* str);
-		static const tchar_t*	resolve_name(const tchar_t* name);
-		static bool				is_color(const tchar_t* str);
+        static web_color            from_string(const tchar_t* str, litehtml::document_container* callback);
+		static litehtml::tstring    resolve_name(const tchar_t* name, litehtml::document_container* callback);
+        static bool                 is_color(const tchar_t* str);
 	};
 }

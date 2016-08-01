@@ -154,9 +154,9 @@ litehtml::def_color litehtml::g_def_colors[] =
 };
 
 
-litehtml::web_color litehtml::web_color::from_string( const tchar_t* str )
+litehtml::web_color litehtml::web_color::from_string(const tchar_t* str, litehtml::document_container* callback)
 {
-	if(!str)
+	if(!str || !str[0])
 	{
 		return web_color(0, 0, 0);
 	}
@@ -216,34 +216,39 @@ litehtml::web_color litehtml::web_color::from_string( const tchar_t* str )
 		return clr;
 	} else
 	{
-		const tchar_t* rgb = resolve_name(str);
-		if(rgb)
+		tstring rgb = resolve_name(str, callback);
+		if(!rgb.empty())
 		{
-			return from_string(rgb);
+			return from_string(rgb.c_str(), callback);
 		}
 	}
 	return web_color(0, 0, 0);
 }
 
-const litehtml::tchar_t* litehtml::web_color::resolve_name( const tchar_t* name )
+litehtml::tstring litehtml::web_color::resolve_name(const tchar_t* name, litehtml::document_container* callback)
 {
 	for(int i=0; g_def_colors[i].name; i++)
 	{
 		if(!t_strcasecmp(name, g_def_colors[i].name))
 		{
-			return g_def_colors[i].rgb;
+            return std::move(litehtml::tstring(g_def_colors[i].rgb));
 		}
 	}
-	return 0;
+    if (callback)
+    {
+        litehtml::tstring clr = callback->resolve_color(name);
+        return std::move(clr);
+    }
+    return std::move(litehtml::tstring());
 }
 
-bool litehtml::web_color::is_color( const tchar_t* str )
+bool litehtml::web_color::is_color(const tchar_t* str)
 {
 	if(!t_strncasecmp(str, _t("rgb"), 3) || str[0] == _t('#'))
 	{
 		return true;
 	}
-	if(resolve_name(str))
+    if (!t_isdigit(str[0]) && str[0] != _t('.'))
 	{
 		return true;
 	}
