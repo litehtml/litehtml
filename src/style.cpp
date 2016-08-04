@@ -132,18 +132,20 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 				add_property(_t("border-bottom-style"), tok->c_str(), baseurl, important);
 			} else
 			{
-				if(web_color::is_color(tok->c_str()))
-				{
-					add_property(_t("border-left-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-right-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-top-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-bottom-color"), tok->c_str(), baseurl, important);
-				} else
+				if (t_isdigit((*tok)[0]) || (*tok)[0] == _t('.') ||
+					value_in_list((*tok), _t("thin;medium;thick")))
 				{
 					add_property(_t("border-left-width"), tok->c_str(), baseurl, important);
 					add_property(_t("border-right-width"), tok->c_str(), baseurl, important);
 					add_property(_t("border-top-width"), tok->c_str(), baseurl, important);
 					add_property(_t("border-bottom-width"), tok->c_str(), baseurl, important);
+				} 
+				else
+				{
+					add_property(_t("border-left-color"), tok->c_str(), baseurl, important);
+					add_property(_t("border-right-color"), tok->c_str(), baseurl, important);
+					add_property(_t("border-top-color"), tok->c_str(), baseurl, important);
+					add_property(_t("border-bottom-color"), tok->c_str(), baseurl, important);
 				}
 			}
 		}
@@ -498,10 +500,7 @@ void litehtml::style::parse_short_background( const tstring& val, const tchar_t*
 	bool origin_found = false;
 	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
 	{
-		if(web_color::is_color(tok->c_str()))
-		{
-			add_parsed_property(_t("background-color"), *tok, important);
-		} else if(tok->substr(0, 3) == _t("url"))
+		if(tok->substr(0, 3) == _t("url"))
 		{
 			add_parsed_property(_t("background-image"), *tok, important);
 			if(baseurl)
@@ -538,6 +537,9 @@ void litehtml::style::parse_short_background( const tstring& val, const tchar_t*
 			{
 				add_parsed_property(_t("background-position"), *tok, important);
 			}
+		} else if (web_color::is_color(tok->c_str()))
+		{
+			add_parsed_property(_t("background-color"), *tok, important);
 		}
 	}
 }
