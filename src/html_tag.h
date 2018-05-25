@@ -95,7 +95,7 @@ namespace litehtml
 		int						m_border_spacing_y;
 		border_collapse			m_border_collapse;
 
-		virtual void			select_all(const css_selector& selector, elements_vector& res);
+		virtual void			select_all(const css_selector& selector, elements_vector& res) override;
 
 	public:
 		html_tag(const std::shared_ptr<litehtml::document>& doc);
