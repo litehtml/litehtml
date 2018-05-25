@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_HTML_H
+#define LH_HTML_H
 
 #include <stdlib.h>
 #include <string>
@@ -91,3 +92,5 @@ namespace litehtml
 		return int_val;
 	}
 }
+
+#endif  // LH_HTML_H

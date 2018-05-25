@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_CSS_POSITION_H
+#define LH_CSS_POSITION_H
+
 #include "css_length.h"
 
 namespace litehtml
@@ -33,3 +35,5 @@ namespace litehtml
 		}
 	};
 }
+
+#endif  // LH_CSS_POSITION_H

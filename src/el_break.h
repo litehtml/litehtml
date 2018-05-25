@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_EL_BREAK_H
+#define LH_EL_BREAK_H
+
 #include "html_tag.h"
 
 namespace litehtml
@@ -12,3 +14,5 @@ namespace litehtml
 		virtual bool is_break() const override;
 	};
 }
+
+#endif  // LH_EL_BREAK_H

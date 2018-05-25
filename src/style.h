@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_STYLE_H
+#define LH_STYLE_H
+
 #include "attributes.h"
 #include <string>
 
@@ -89,3 +91,5 @@ namespace litehtml
 		void remove_property(const tstring& name, bool important);
 	};
 }
+
+#endif  // LH_STYLE_H

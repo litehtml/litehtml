@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_HTML_TAG_H
+#define LH_HTML_TAG_H
 
 #include "element.h"
 #include "style.h"
@@ -244,3 +245,4 @@ namespace litehtml
 	}
 }
 
+#endif  // LH_HTML_TAG_H

@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_TABLE_H
+#define LH_TABLE_H
 
 namespace litehtml
 {
@@ -236,3 +237,5 @@ namespace litehtml
 		void			calc_rows_height(int blockHeight, int borderSpacingY);
 	};
 }
+
+#endif  // LH_TABLE_H

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_BACKGROUND_H
+#define LH_BACKGROUND_H
+
 #include "types.h"
 #include "attributes.h"
 #include "css_length.h"
@@ -52,3 +54,5 @@ namespace litehtml
 	};
 
 }
+
+#endif  // LH_BACKGROUND_H

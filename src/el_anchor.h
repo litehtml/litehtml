@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_EL_ANCHOR_H
+#define LH_EL_ANCHOR_H
+
 #include "html_tag.h"
 
 namespace litehtml
@@ -13,3 +15,5 @@ namespace litehtml
 		virtual void	apply_stylesheet(const litehtml::css& stylesheet) override;
 	};
 }
+
+#endif  // LH_EL_ANCHOR_H

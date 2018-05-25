@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_BOX_H
+#define LH_BOX_H
 
 namespace litehtml
 {
@@ -115,3 +116,5 @@ namespace litehtml
 		bool						is_break_only();
 	};
 }
+
+#endif  // LH_BOX_H
