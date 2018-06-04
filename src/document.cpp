@@ -21,11 +21,20 @@
 #include "el_div.h"
 #include "el_font.h"
 #include "el_tr.h"
+#include "gumbo/gumbo.h"
+#include "utf8_strings.h"
+
+
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
-#include "gumbo/gumbo.h"
-#include "utf8_strings.h"
+
+#include <locale>
+#include <locale>
+#include <codecvt>
+#include <fribidi/fribidi.h>
+
+
 
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
@@ -692,7 +701,7 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 	case GUMBO_NODE_TEXT:
 		{
 			std::wstring str;
-			std::wstring str_in = (const wchar_t*) (utf8_to_wchar(node->v.text.text));
+			std::wstring str_in = this->fribidi_convert((const wchar_t*)(utf8_to_wchar(node->v.text.text)));
 			ucode_t c;
 			for (size_t i = 0; i < str_in.length(); i++)
 			{
@@ -927,4 +936,43 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 			parent->m_children.insert(first, annon_tag);
 		}
 	}
+}
+
+
+std::wstring litehtml::document::fribidi_convert(const wchar_t* s)
+{
+	const FriBidiFlags flags = FRIBIDI_FLAGS_DEFAULT | FRIBIDI_FLAGS_ARABIC;
+	std::wstring result;
+	if (s != nullptr) {
+		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+		std::string byte_str = converter.to_bytes(s);
+
+		FriBidiChar unicodestr[byte_str.size() * sizeof(FriBidiChar)] = {0};
+		int unicodestr_len = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, byte_str.c_str(),
+														byte_str.size(), unicodestr);
+
+		FriBidiCharType bidi_types[unicodestr_len * sizeof(FriBidiCharType)] = {0};
+		fribidi_get_bidi_types(unicodestr, unicodestr_len, bidi_types);
+
+		FriBidiParType direction = FRIBIDI_PAR_LTR;
+		FriBidiLevel embedding_levels[unicodestr_len * sizeof(FriBidiLevel)];
+		fribidi_get_par_embedding_levels(bidi_types, unicodestr_len, &direction, embedding_levels);
+
+		FriBidiArabicProp ar_props[unicodestr_len * sizeof(FriBidiArabicProp)];
+		fribidi_get_joining_types(unicodestr, unicodestr_len, ar_props);
+		fribidi_join_arabic(bidi_types, unicodestr_len, embedding_levels, ar_props);
+		fribidi_shape(flags, embedding_levels, unicodestr_len, ar_props, unicodestr);
+
+		int i = 0, j = 0;
+		for (i = 0, j = 0; i < unicodestr_len; i++) {
+			if (unicodestr[i] != FRIBIDI_CHAR_FILL)
+				unicodestr[j++] = unicodestr[i];
+		}
+		int result_len = j;
+		char swap_str[(result_len * 4 + 1) * sizeof(s)];
+		result_len = fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, unicodestr, result_len, swap_str);
+
+		result = converter.from_bytes(swap_str);
+	}
+	return result;
 }
