@@ -942,7 +942,7 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 std::wstring litehtml::document::fribidi_convert(const wchar_t* s)
 {
 	const FriBidiFlags flags = FRIBIDI_FLAGS_DEFAULT | FRIBIDI_FLAGS_ARABIC;
-	std::wstring result;
+	std::wstring result(s);
 	if (s != nullptr) {
 		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
 		std::string byte_str = converter.to_bytes(s);
@@ -955,21 +955,28 @@ std::wstring litehtml::document::fribidi_convert(const wchar_t* s)
 		fribidi_get_bidi_types(unicodestr, unicodestr_len, bidi_types);
 
 		FriBidiParType direction = FRIBIDI_PAR_LTR;
-		FriBidiLevel embedding_levels[unicodestr_len * sizeof(FriBidiLevel)];
-		fribidi_get_par_embedding_levels(bidi_types, unicodestr_len, &direction, embedding_levels);
+		FriBidiLevel embedding_levels[unicodestr_len * sizeof(FriBidiLevel)] = {0};
+		if (!fribidi_get_par_embedding_levels(bidi_types, unicodestr_len,
+                                              &direction, embedding_levels)) {
+            return result;
+		}
 
-		FriBidiArabicProp ar_props[unicodestr_len * sizeof(FriBidiArabicProp)];
+		FriBidiArabicProp ar_props[unicodestr_len * sizeof(FriBidiArabicProp)] = {0};
 		fribidi_get_joining_types(unicodestr, unicodestr_len, ar_props);
 		fribidi_join_arabic(bidi_types, unicodestr_len, embedding_levels, ar_props);
 		fribidi_shape(flags, embedding_levels, unicodestr_len, ar_props, unicodestr);
 
+        if (!fribidi_reorder_line(flags, bidi_types, unicodestr_len, 0,
+                                  direction, embedding_levels, unicodestr, nullptr)) {
+            return result;
+        }
 		int i = 0, j = 0;
 		for (i = 0, j = 0; i < unicodestr_len; i++) {
 			if (unicodestr[i] != FRIBIDI_CHAR_FILL)
 				unicodestr[j++] = unicodestr[i];
 		}
 		int result_len = j;
-		char swap_str[(result_len * 4 + 1) * sizeof(s)];
+		char swap_str[(result_len * 4 + 1) * sizeof(char)] = {0};
 		result_len = fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, unicodestr, result_len, swap_str);
 
 		result = converter.from_bytes(swap_str);
