@@ -30,10 +30,8 @@
 #include <algorithm>
 
 #include <locale>
-#include <locale>
 #include <codecvt>
 #include <fribidi/fribidi.h>
-
 
 
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
@@ -938,48 +936,149 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 	}
 }
 
+static bool convBidiString(const std::string &in_str, std::string &out_str, bool bArabic) {
+
+	bool ret = false;
+	const char *char_set = "UTF-8";
+	FriBidiCharSet char_set_num;
+
+	// get charset and init
+	if (!(char_set_num = fribidi_parse_charset((char *)char_set))) {
+		printf("DISKO: FriBidi error, unrecognized character set '%s'\n", char_set);
+		return false;
+	}
+	fribidi_set_mirroring(true);
+	fribidi_set_reorder_nsm(false);
+
+	// check input length
+	FriBidiStrIndex len = in_str.length();
+	if (len <= 0) {
+		out_str = "";
+		return true;
+	}
+
+	// allocate temp buffers
+	int memsize = sizeof(FriBidiChar) * (len + 1);
+	FriBidiChar *logical = (FriBidiChar *)malloc(memsize);
+	FriBidiChar *visual  = (FriBidiChar *)malloc(memsize);
+	char        *ostr    = (char *)malloc(memsize);
+
+	if (logical && visual && ostr) {
+		// convert input string into FriBidiChar buffer
+		len = fribidi_charset_to_unicode(char_set_num, (char *)in_str.c_str(), len, logical);
+
+		// create a bidi visual string
+		FriBidiCharType base = FRIBIDI_TYPE_ON;
+		if ((ret = fribidi_log2vis(logical, len, &base, visual, NULL, NULL, NULL))) {
+
+			if (bArabic) {
+				FriBidiLevel *embedding_levels = (FriBidiLevel *)malloc(sizeof(FriBidiLevel) * len);
+				if (!embedding_levels) {
+					printf("DISKO: FriBidi error, embedding_levels malloc failed\n");
+					ret = false;
+				}
+
+				FriBidiCharType ctype = FRIBIDI_TYPE_AL;
+				FriBidiParType ptype = FRIBIDI_PAR_ON;
+
+				if (ret) {
+					if (!fribidi_get_par_embedding_levels(&ctype, len, &ptype, embedding_levels)) {
+						printf("DISKO: FriBidi error, fribidi_get_par_embedding_levels() failed\n");
+						ret = false;
+					}
+				}
+
+				FriBidiJoiningType *join_types = NULL;
+				if (ret) {
+					join_types = (FriBidiJoiningType *) malloc(sizeof(FriBidiJoiningType) * len);
+					if (!join_types) {
+						printf("DISKO: FriBidi error, join_types malloc failed\n");
+						ret = false;
+					}
+				}
+
+				if (ret) {
+					fribidi_get_joining_types(visual, len, join_types);
+
+					fribidi_join_arabic(&ctype, len, embedding_levels, join_types);
+
+					/* Actually modify the string */
+					fribidi_shape(FRIBIDI_FLAGS_DEFAULT | FRIBIDI_FLAGS_ARABIC,
+							embedding_levels, len, join_types, visual);
+				}
+
+				/* clean up */
+				if (embedding_levels) free(embedding_levels);
+				if (join_types) free(join_types);
+			}
+
+			// convert it back to output string
+			FriBidiStrIndex new_len = fribidi_unicode_to_charset(char_set_num, visual, len, ostr);
+			if (new_len <= 0) {
+				printf("DISKO: FriBidi error, fribidi_unicode_to_charset() failed\n");
+				ret = false;
+			}
+			else {
+				out_str = ostr;
+			}
+		}
+	}
+
+	// free temp buffers
+	if (logical) free(logical);
+	if (visual)  free(visual);
+	if (ostr)    free(ostr);
+
+	return ret;
+
+	// no bidi conversion lib
+	return false;
+
+}
+
+static std::string trim_str(const std::string &s)
+{
+	auto is_space = [](int c)
+	{
+		if (std::isspace(c)) {
+			return true;
+		} else if (c == '\n'){
+			return true;
+		} else if (c == '\t') {
+			return true;
+		} else if (c == '\r') {
+			return true;
+		}
+		return false;
+	};
+	auto wsfront = std::find_if_not(s.begin(),s.end(), is_space);
+	return std::string(wsfront, std::find_if_not(s.rbegin(), std::string::const_reverse_iterator(wsfront), is_space).base());
+}
 
 std::wstring litehtml::document::fribidi_convert(const wchar_t* s)
 {
 	const FriBidiFlags flags = FRIBIDI_FLAGS_DEFAULT | FRIBIDI_FLAGS_ARABIC;
-	std::wstring result(s);
-	if (s != nullptr) {
-		std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
-		std::string byte_str = converter.to_bytes(s);
+	std::wstring result;
 
-		FriBidiChar unicodestr[byte_str.size() * sizeof(FriBidiChar)] = {0};
-		int unicodestr_len = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, byte_str.c_str(),
-														byte_str.size(), unicodestr);
+    if (s != nullptr) {
+		result = s;
+	    std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> converter;
+		std::string byte_str = trim_str(converter.to_bytes(result));
 
-		FriBidiCharType bidi_types[unicodestr_len * sizeof(FriBidiCharType)] = {0};
-		fribidi_get_bidi_types(unicodestr, unicodestr_len, bidi_types);
+        FriBidiParType base = FRIBIDI_PAR_ON;
+        int len = byte_str.size();
+		FriBidiChar	logical[len*5] = {0};
+        len = fribidi_charset_to_unicode(FRIBIDI_CHAR_SET_UTF8, byte_str.c_str(), len, logical);
 
-		FriBidiParType direction = FRIBIDI_PAR_LTR;
-		FriBidiLevel embedding_levels[unicodestr_len * sizeof(FriBidiLevel)] = {0};
-		if (!fribidi_get_par_embedding_levels(bidi_types, unicodestr_len,
-                                              &direction, embedding_levels)) {
-            return result;
+		FriBidiChar	visual[len*5] = {0};
+		if (!fribidi_log2vis(logical, len, &base, visual, nullptr, nullptr, nullptr)) {
+			return result;
 		}
+        len = fribidi_remove_bidi_marks(visual, len, nullptr, nullptr, nullptr);
 
-		FriBidiArabicProp ar_props[unicodestr_len * sizeof(FriBidiArabicProp)] = {0};
-		fribidi_get_joining_types(unicodestr, unicodestr_len, ar_props);
-		fribidi_join_arabic(bidi_types, unicodestr_len, embedding_levels, ar_props);
-		fribidi_shape(flags, embedding_levels, unicodestr_len, ar_props, unicodestr);
-
-        if (!fribidi_reorder_line(flags, bidi_types, unicodestr_len, 0,
-                                  direction, embedding_levels, unicodestr, nullptr)) {
-            return result;
-        }
-		int i = 0, j = 0;
-		for (i = 0, j = 0; i < unicodestr_len; i++) {
-			if (unicodestr[i] != FRIBIDI_CHAR_FILL)
-				unicodestr[j++] = unicodestr[i];
-		}
-		int result_len = j;
-		char swap_str[(result_len * 4 + 1) * sizeof(char)] = {0};
-		result_len = fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, unicodestr, result_len, swap_str);
-
-		result = converter.from_bytes(swap_str);
+		char utf8str[len*5] = {0};
+		fribidi_unicode_to_charset(FRIBIDI_CHAR_SET_UTF8, visual, len, utf8str);
+        result = converter.from_bytes(utf8str);
 	}
 	return result;
 }

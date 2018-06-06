@@ -123,6 +123,7 @@ int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_p
 	return (int) ext.x_advance;
 }
 
+#include <iostream>
 void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
 	cairo_font* fnt = (cairo_font*) hFont;
@@ -141,8 +142,9 @@ void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
 
 	set_color(cr, color);
 
-	cairo_move_to(cr, x, y);
+    cairo_move_to(cr, x, y);
 	cairo_show_text(cr, text);
+
 
 	int tw = 0;
 
