@@ -1055,9 +1055,9 @@ static std::string trim_str(const std::string &s)
 	return std::string(wsfront, std::find_if_not(s.rbegin(), std::string::const_reverse_iterator(wsfront), is_space).base());
 }
 
+#include <iostream>
 std::wstring litehtml::document::fribidi_convert(const wchar_t* s)
 {
-	const FriBidiFlags flags = FRIBIDI_FLAGS_DEFAULT | FRIBIDI_FLAGS_ARABIC;
 	std::wstring result;
 
     if (s != nullptr) {

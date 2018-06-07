@@ -6,6 +6,8 @@
 #       define M_PI    3.14159265358979323846
 #endif
 
+#include <iostream>
+
 container_linux::container_linux(void)
 {
 	m_temp_surface	= cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 2, 2);
@@ -28,6 +30,12 @@ litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceNa
 	cairo_font_face_t* fnt = 0;
 
 	FcPattern *pattern = FcPatternCreate();
+
+    FcLangSet *ls = FcLangSetCreate();
+    FcLangSetAdd(ls, (const FcChar8*)"");
+    FcPatternAddLangSet(pattern, FC_LANG, ls);
+
+
 	bool found = false;
 	for(litehtml::string_vector::iterator i = fonts.begin(); i != fonts.end(); i++)
 	{
@@ -145,9 +153,7 @@ void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
     cairo_move_to(cr, x, y);
 	cairo_show_text(cr, text);
 
-
 	int tw = 0;
-
 	if(fnt->underline || fnt->strikeout)
 	{
 		tw = text_width(text, hFont);
