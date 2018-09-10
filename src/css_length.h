@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_CSS_LENGTH_H
+#define LH_CSS_LENGTH_H
+
 #include "types.h"
 
 namespace litehtml
@@ -129,3 +131,5 @@ namespace litehtml
 		return 0;
 	}
 }
+
+#endif  // LH_CSS_LENGTH_H

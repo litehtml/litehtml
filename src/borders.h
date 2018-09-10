@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_BORDERS_H
+#define LH_BORDERS_H
+
 #include "css_length.h"
 #include "types.h"
 
@@ -294,3 +296,5 @@ namespace litehtml
 		}
 	};
 }
+
+#endif  // LH_BORDERS_H

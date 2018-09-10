@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_UTF8_STRINGS_H
+#define LH_UTF8_STRINGS_H
 
 namespace litehtml
 {
@@ -46,3 +47,5 @@ namespace litehtml
 #define litehtml_to_utf8(str)		wchar_to_utf8(str)
 #endif
 }
+
+#endif  // LH_UTF8_STRINGS_H

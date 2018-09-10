@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_STYLESHEET_H
+#define LH_STYLESHEET_H
+
 #include "style.h"
 #include "css_selector.h"
 
@@ -48,3 +50,5 @@ namespace litehtml
 	}
 
 }
+
+#endif  // LH_STYLESHEET_H

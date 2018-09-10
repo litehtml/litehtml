@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_ELEMENT_H
+#define LH_ELEMENT_H
+
 #include <memory>
 #include "stylesheet.h"
 #include "css_offsets.h"
@@ -397,3 +399,5 @@ namespace litehtml
 		return m_doc.lock();
 	}
 }
+
+#endif  // LH_ELEMENT_H

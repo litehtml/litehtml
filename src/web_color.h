@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_WEB_COLOR_H
+#define LH_WEB_COLOR_H
 
 namespace litehtml
 {
@@ -56,3 +57,5 @@ namespace litehtml
         static bool                 is_color(const tchar_t* str);
 	};
 }
+
+#endif  // LH_WEB_COLOR_H

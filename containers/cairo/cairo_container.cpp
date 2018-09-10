@@ -1003,7 +1003,7 @@ litehtml::tstring cairo_container::resolve_color(const litehtml::tstring& color)
 		{ _t("WindowText"),            COLOR_WINDOWTEXT }
 	};
 
-    if (color == L"Highlight")
+    if (color == _t("Highlight"))
     {
         int iii = 0;
         iii++;

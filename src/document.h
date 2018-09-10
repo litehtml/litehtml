@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_DOCUMENT_H
+#define LH_DOCUMENT_H
+
 #include "style.h"
 #include "types.h"
 #include "context.h"
@@ -122,3 +124,5 @@ namespace litehtml
 		return lang == m_lang || lang == m_culture;
 	}
 }
+
+#endif  // LH_DOCUMENT_H

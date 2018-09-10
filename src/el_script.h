@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_EL_SCRIPT_H
+#define LH_EL_SCRIPT_H
+
 #include "html_tag.h"
 
 namespace litehtml
@@ -15,3 +17,5 @@ namespace litehtml
 		virtual const tchar_t*	get_tagName() const override;
 	};
 }
+
+#endif  // LH_EL_SCRIPT_H

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_EL_SPACE_H
+#define LH_EL_SPACE_H
+
 #include "html_tag.h"
 #include "el_text.h"
 
@@ -14,3 +16,5 @@ namespace litehtml
 		virtual bool	is_break() const override;
 	};
 }
+
+#endif  // LH_EL_SPACE_H

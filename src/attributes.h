@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_ATTRIBUTES_H
+#define LH_ATTRIBUTES_H
 
 namespace litehtml
 {
@@ -30,3 +31,5 @@ namespace litehtml
 		}
 	};
 }
+
+#endif  // LH_ATTRIBUTES_H

@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_EL_TABLE_H
+#define LH_EL_TABLE_H
+
 #include "html_tag.h"
 
 namespace litehtml
@@ -21,3 +23,5 @@ namespace litehtml
 		virtual void	parse_attributes() override;
 	};
 }
+
+#endif  // LH_EL_TABLE_H
