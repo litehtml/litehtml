@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_EL_BODY_H
+#define LH_EL_BODY_H
+
 #include "html_tag.h"
 
 namespace litehtml
@@ -12,3 +14,5 @@ namespace litehtml
 		virtual bool is_body() const override;
 	};
 }
+
+#endif  // LH_EL_BODY_H

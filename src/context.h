@@ -1,4 +1,6 @@
-#pragma once
+#ifndef LH_CONTEXT_H
+#define LH_CONTEXT_H
+
 #include "stylesheet.h"
 
 namespace litehtml
@@ -14,3 +16,5 @@ namespace litehtml
 		}
 	};
 }
+
+#endif  // LH_CONTEXT_H

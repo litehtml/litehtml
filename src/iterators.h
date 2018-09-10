@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_ITERATORS_H
+#define LH_ITERATORS_H
 
 #include "types.h"
 
@@ -85,3 +86,5 @@ namespace litehtml
 		virtual bool select(const element::ptr& el);
 	};
 }
+
+#endif  // LH_ITERATORS_H

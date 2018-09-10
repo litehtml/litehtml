@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_HTML_TAG_H
+#define LH_HTML_TAG_H
 
 #include "element.h"
 #include "style.h"
@@ -94,7 +95,7 @@ namespace litehtml
 		int						m_border_spacing_y;
 		border_collapse			m_border_collapse;
 
-		virtual void			select_all(const css_selector& selector, elements_vector& res);
+		virtual void			select_all(const css_selector& selector, elements_vector& res) override;
 
 	public:
 		html_tag(const std::shared_ptr<litehtml::document>& doc);
@@ -244,3 +245,4 @@ namespace litehtml
 	}
 }
 
+#endif  // LH_HTML_TAG_H

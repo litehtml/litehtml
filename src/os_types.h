@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_OS_TYPES_H
+#define LH_OS_TYPES_H
 
 namespace litehtml
 {
@@ -81,3 +82,5 @@ namespace litehtml
 
 #endif
 }
+
+#endif  // LH_OS_TYPES_H

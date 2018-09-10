@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_MEDIA_QUERY_H
+#define LH_MEDIA_QUERY_H
 
 namespace litehtml
 {
@@ -72,3 +73,5 @@ namespace litehtml
 	}
 
 }
+
+#endif  // LH_MEDIA_QUERY_H
