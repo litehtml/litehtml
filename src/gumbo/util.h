@@ -41,12 +41,12 @@ struct GumboInternalParser;
 char* gumbo_copy_stringz(struct GumboInternalParser* parser, const char* str);
 
 // Allocate a chunk of memory, using the allocator specified in the Parser's
-// config options.
+// ~config options.
 void* gumbo_parser_allocate(
     struct GumboInternalParser* parser, size_t num_bytes);
 
 // Deallocate a chunk of memory, using the deallocator specified in the Parser's
-// config options.
+// ~config options.
 void gumbo_parser_deallocate(struct GumboInternalParser* parser, void* ptr);
 
 // Debug wrapper for printf, to make it easier to turn off debugging info when
