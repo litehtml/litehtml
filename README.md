@@ -35,7 +35,7 @@ The **gumbo-parser** is disributed under [Apache License, Version 2.0](http://ww
 
 If you like the work **litehtml** is doing please consider a small donation:
 
-[ ![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif) ](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UHBQG6EAFCRBA)
+[ ![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif) ](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UHBQG6EAFCRBA) [ ![Patreon](https://img.shields.io/badge/patreon-Become%20a%20Patron!-red.png?style=for-the-badge&logo=patreon) ](https://www.patreon.com/bePatron?u=21429218)
 
 Bitcoin: **1CS1174GVSLbP33TBp8RFwqPS6KmQK6kLY**
 
