@@ -41,13 +41,11 @@ void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl
 	tstring::size_type pos = txt.find_first_of(_t(":"));
 	if(pos != tstring::npos)
 	{
-		tstring name	= txt.substr(0, pos);
+		tstring name = txt.substr(0, pos);
 		tstring val	= txt.substr(pos + 1);
 
-		trim(name);
+		trim(name); lcase(name);
 		trim(val);
-
-		lcase(name);
 
 		if(!name.empty() && !val.empty())
 		{
@@ -60,13 +58,7 @@ void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl
 			{
 				trim(vals[0]);
 				lcase(vals[1]);
-				if(vals[1] == _t("important"))
-				{
-					add_property(name.c_str(), vals[0].c_str(), baseurl, true);
-				} else
-				{
-					add_property(name.c_str(), vals[0].c_str(), baseurl, false);
-				}
+				add_property(name.c_str(), vals[0].c_str(), baseurl, vals[1] == _t("important"));
 			}
 		}
 	}
@@ -104,12 +96,12 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() == 1)
 		{
-			add_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("-litehtml-border-spacing-y"), tokens[0].c_str(), baseurl, important);
+			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), baseurl, important);
+			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[0].c_str(), baseurl, important);
 		} else if(tokens.size() == 2)
 		{
-			add_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("-litehtml-border-spacing-y"), tokens[1].c_str(), baseurl, important);
+			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), baseurl, important);
+			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[1].c_str(), baseurl, important);
 		}
 	} else
 
@@ -315,7 +307,7 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 			add_property(_t("border-bottom-left-radius-y"),	tokens[3].c_str(), baseurl, important);
 		}
 	}
-	
+	else
 
 	// Parse list-style shorthand properties 
 	if(!t_strcmp(name, _t("list-style")))

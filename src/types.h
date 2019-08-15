@@ -182,7 +182,7 @@ namespace litehtml
 		draw_positioned,
 	};
 
-#define  style_display_strings		_t("none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group")
+#define  style_display_strings		_t("none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text")
 
 	enum style_display
 	{
@@ -246,7 +246,7 @@ namespace litehtml
 		font_variant_italic
 	};
 
-#define  font_weight_strings	_t("normal;bold;bolder;lighter100;200;300;400;500;600;700")
+#define  font_weight_strings	_t("normal;bold;bolder;lighter;100;200;300;400;500;600;700")
 
 	enum font_weight
 	{

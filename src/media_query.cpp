@@ -245,7 +245,7 @@ bool litehtml::media_query_expression::check( const media_features& features ) c
 		}
 		break;
 	case media_feature_min_device_height:
-		if(features.device_height <= val)
+		if(features.device_height >= val)
 		{
 			return true;
 		}
