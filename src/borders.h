@@ -148,6 +148,7 @@ namespace litehtml
 			if (top_left_x < 0)	top_left_x = 0;
 			if (top_left_y < 0)	top_left_y = 0;
 			if (top_right_x < 0) top_right_x = 0;
+			if (top_right_y < 0) top_right_y = 0;
 			if (bottom_right_x < 0) bottom_right_x = 0;
 			if (bottom_right_y < 0) bottom_right_y = 0;
 			if (bottom_left_x < 0) bottom_left_x = 0;
