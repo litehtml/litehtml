@@ -7,8 +7,8 @@ static void AddFontTest() {
   container_test container;
   litehtml::document::ptr doc = std::make_shared<litehtml::document>(&container, nullptr);
   font_metrics fm;
-  doc->get_font(nullptr, 0, _t("normal"), _t("normal"), nullptr, &fm);
-  doc->get_font(_t("inherit"), 0, _t("normal"), _t("normal"), nullptr, &fm);
+  doc->get_font(nullptr, 0, _t("normal"), _t("normal"), _t(""), &fm);
+  doc->get_font(_t("inherit"), 0, _t("normal"), _t("normal"), _t(""), &fm);
   doc->get_font(_t("Arial"), 0, _t("bold"), _t("normal"), _t("underline"), &fm);
   doc->get_font(_t("Arial"), 0, _t("bold"), _t("normal"), _t("line-through"), &fm);
   doc->get_font(_t("Arial"), 0, _t("bold"), _t("normal"), _t("overline"), &fm);
@@ -97,7 +97,6 @@ static void ParseTest() {
 }
 
 void documentTest() {
-  printf("documentTest\n");
   AddFontTest();
   RenderTest();
   DrawTest();

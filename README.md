@@ -1,4 +1,4 @@
-[![Travis Build Status](https://travis-ci.org/smorey2/litehtml.svg?branch=master)](https://travis-ci.org/smorey2/litehtml)
+[![Travis Build Status](https://travis-ci.org/litehtml/litehtml.svg?branch=master)](https://travis-ci.org/litehtml/litehtml)
 
 # What is litehtml?
 

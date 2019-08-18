@@ -7,6 +7,7 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 	tstring::size_type el_end = txt.find_first_of(_t(".#[:"));
 	m_tag = txt.substr(0, el_end);
 	litehtml::lcase(m_tag);
+	m_attrs.clear();
 	while(el_end != tstring::npos)
 	{
 		if(txt[el_end] == _t('.'))

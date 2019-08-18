@@ -6,7 +6,6 @@ enable_testing()
 
 add_subdirectory(src/gumbo)
 
-set(SOURCE_LITEHTML_ empty.cc)
 set(SOURCE_LITEHTML
     src/background.cpp
     src/box.cpp
@@ -138,8 +137,7 @@ if (WIN32)
     file(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/include/master.css MASTER_FILE)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc
         COMMAND type ${MASTER_FILE} | "${XXD_COMMAND}" -i > ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)
-endif()
-if (Unix)
+else()
     find_program(XXD_COMMAND xxd)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc
         COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/include/master.css | xxd -i > ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)

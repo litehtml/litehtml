@@ -12,6 +12,5 @@ static void Test()
 
 void contextTest()
 {
-    printf("contextTest\n");
     Test();
 }

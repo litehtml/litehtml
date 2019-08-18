@@ -16,6 +16,5 @@ static void WebColorParseTest() {
 }
 
 void webColorTest() {
-  printf("webColorTest\n");
   WebColorParseTest();
 }
