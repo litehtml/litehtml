@@ -92,6 +92,7 @@ newaction
             "_build",
             "_build32",
             "_build64",
+            "Testing",
             "obj",
             "ipch",
             "bin",
