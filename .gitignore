@@ -15,10 +15,15 @@ build/
 bld/
 [Bb]in/
 [Oo]bj/
+_build/
+_build32/
+_build64/
+*.inc
 
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*
+[Tt]esting/
 
 #NUNIT
 *.VisualState.xml
@@ -139,6 +144,8 @@ csx/
 AppPackages/
 
 # Others
+.vs/
+.vscode/
 sql/
 *.Cache
 ClientBin/
