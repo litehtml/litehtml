@@ -96,12 +96,12 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() == 1)
 		{
-			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), baseurl, important);
-			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[0].c_str(), baseurl, important);
+			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), important);
+			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[0].c_str(), important);
 		} else if(tokens.size() == 2)
 		{
-			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), baseurl, important);
-			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[1].c_str(), baseurl, important);
+			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), important);
+			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[1].c_str(), important);
 		}
 	} else
 
