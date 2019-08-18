@@ -60,7 +60,7 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 
 	// Create litehtml::elements.
 	elements_vector root_elements;
-	doc->create_node(output->root, root_elements);
+	doc->create_node(output->root, root_elements, true);
 	if (!root_elements.empty())
 	{
 		doc->m_root = root_elements.back();
@@ -226,7 +226,7 @@ litehtml::uint_ptr litehtml::document::get_font( const tchar_t* name, int size, 
 
 	if(!size)
 	{
-		size = container()->get_default_font_size();
+		size = m_container->get_default_font_size();
 	}
 
 	tchar_t strSize[20];
@@ -640,7 +640,7 @@ void litehtml::document::add_media_list( media_query_list::ptr list )
 	}
 }
 
-void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
+void litehtml::document::create_node(GumboNode* node, elements_vector& elements, bool parseTextNode)
 {
 	switch (node->type)
 	{
@@ -671,13 +671,17 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 					ret = create_element(litehtml_from_utf8(strA.c_str()), attrs);
 				}
 			}
+			if (!strcmp(tag, "script"))
+			{
+				parseTextNode = false;
+			}
 			if (ret)
 			{
 				elements_vector child;
 				for (unsigned int i = 0; i < node->v.element.children.length; i++)
 				{
 					child.clear();
-					create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child);
+					create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child, parseTextNode);
 					std::for_each(child.begin(), child.end(), 
 						[&ret](element::ptr& el)
 						{
@@ -693,6 +697,11 @@ void litehtml::document::create_node(GumboNode* node, elements_vector& elements)
 		{
 			std::wstring str;
 			std::wstring str_in = (const wchar_t*) (utf8_to_wchar(node->v.text.text));
+			if (!parseTextNode)
+			{
+				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str_in.c_str()), shared_from_this()));
+				break;
+			}
 			ucode_t c;
 			for (size_t i = 0; i < str_in.length(); i++)
 			{

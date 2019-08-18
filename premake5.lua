@@ -6,19 +6,16 @@ if os.ishost "windows" then
         trigger     = "build",
         description = "Build the litehtml library",
         execute = function ()
-            -- x86
 --             os.rmdir "_build32"
 --             os.execute "mkdir _build32 & pushd _build32 \z
 -- && cmake -G \"Visual Studio 15 2017\" ..\\ \z
 -- && popd \z
 -- && cmake --build _build32 --config Debug"
-            -- x64
 --             os.rmdir "_build64"
 --             os.execute "mkdir _build & pushd _build \z
 -- && cmake -G \"Visual Studio 15 2017 Win64\" ..\\ \z
 -- && popd \z
 -- && cmake --build _build --config Debug"
-            --
              os.rmdir "_build"
              os.execute "mkdir _build & pushd _build \z
 && cmake ..\\ \z
@@ -100,6 +97,7 @@ newaction
             "bin",
             "nupkgs",
             ".vs",
+            ".vscode",
             "Debug",
             "Release",
             "release"

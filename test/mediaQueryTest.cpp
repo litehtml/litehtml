@@ -159,7 +159,6 @@ static void MediaQueryParseTest() {
 }
 
 void mediaQueryTest() {
-  printf("mediaQueryTest\n");
   MediaQueryCheckTest();
   MediaQueryParseTest();
 }

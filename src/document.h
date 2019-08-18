@@ -105,7 +105,7 @@ namespace litehtml
 	private:
 		litehtml::uint_ptr	add_font(const tchar_t* name, int size, const tchar_t* weight, const tchar_t* style, const tchar_t* decoration, font_metrics* fm);
 
-		void create_node(GumboNode* node, elements_vector& elements);
+		void create_node(GumboNode* node, elements_vector& elements, bool parseTextNode);
 		bool update_media_lists(const media_features& features);
 		void fix_tables_layout();
 		void fix_table_children(element::ptr& el_ptr, style_display disp, const tchar_t* disp_str);

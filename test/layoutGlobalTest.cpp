@@ -11,6 +11,5 @@ static void Test() {
 }
 
 void layoutGlobalTest() {
-  printf("layoutGlobalTest\n");
   Test();
 }
