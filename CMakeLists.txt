@@ -118,6 +118,11 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
 )
 
+option(LITEHTML_UTF8 "Build litehtml with UTF-8 text conversion functions." OFF)
+if (LITEHTML_UTF8)
+  target_compile_definitions(${PROJECT_NAME} PUBLIC LITEHTML_UTF8)
+endif()
+
 # Gumbo
 target_link_libraries(${PROJECT_NAME} PUBLIC gumbo)
 
