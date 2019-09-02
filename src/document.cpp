@@ -784,8 +784,15 @@ void litehtml::document::fix_tables_layout()
 		case display_table_footer_group:
 		case display_table_row_group:
 		case display_table_header_group:
-			fix_table_parent(el_ptr, display_table, _t("table"));
-			fix_table_children(el_ptr, display_table_row, _t("table-row"));
+			{
+				element::ptr parent = el_ptr->parent();
+				if (parent)
+				{
+					if (parent->get_display() != display_inline_table)
+						fix_table_parent(el_ptr, display_table, _t("table"));
+				}
+				fix_table_children(el_ptr, display_table_row, _t("table-row"));
+			}
 			break;
 		case display_table_row:
 			fix_table_parent(el_ptr, display_table_row_group, _t("table-row-group"));

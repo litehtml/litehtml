@@ -352,6 +352,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 		}
 	}
 	else if (m_display == display_table ||
+		m_display == display_inline_table ||
 		m_display == display_table_caption ||
 		m_display == display_table_cell ||
 		m_display == display_table_column ||
@@ -2304,6 +2305,7 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 			switch(el->get_display())
 			{
 			case display_inline_block:
+			case display_inline_table:
 				ret_width = el->render(line_ctx.left, line_ctx.top, line_ctx.right);
 				break;
 			case display_block:		
