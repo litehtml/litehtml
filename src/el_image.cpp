@@ -48,7 +48,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		m_pos.height	= sz.height;
 		m_pos.width		= sz.width;
 
-		// check for max-height
+		// check for max-width
 		if(!m_css_max_width.is_predefined())
 		{
 			int max_width = doc->cvt_units(m_css_max_width, m_font_size, parent_width);
