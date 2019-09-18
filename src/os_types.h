@@ -60,7 +60,7 @@ namespace litehtml
 
 	typedef std::string			tstring;
 	typedef char				tchar_t;
-	typedef void*				uint_ptr;
+	typedef std::uintptr_t			uint_ptr;
 	typedef std::stringstream	tstringstream;
 
 	#define _t(quote)			quote
