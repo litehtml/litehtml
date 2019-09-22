@@ -7,6 +7,7 @@
 *.sln.docstates
 
 # Build results
+cmake-build-*/
 [Dd]ebug/
 [Dd]ebugPublic/
 [Rr]elease/
@@ -144,6 +145,7 @@ csx/
 AppPackages/
 
 # Others
+.idea/
 .vs/
 .vscode/
 sql/

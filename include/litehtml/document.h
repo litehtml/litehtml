@@ -4,7 +4,7 @@
 #include "style.h"
 #include "types.h"
 #include "context.h"
-#include "gumbo/gumbo.h"
+#include "gumbo.h"
 
 namespace litehtml
 {

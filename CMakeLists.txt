@@ -47,49 +47,49 @@ set(SOURCE_LITEHTML
 
 set(HEADER_LITEHTML
     include/litehtml.h
-    src/attributes.h
-    src/background.h
-    src/borders.h
-    src/box.h
-    src/context.h
-    src/css_length.h
-    src/css_margins.h
-    src/css_offsets.h
-    src/css_position.h
-    src/css_selector.h
-    src/document.h
-    src/el_anchor.h
-    src/el_base.h
-    src/el_before_after.h
-    src/el_body.h
-    src/el_break.h
-    src/el_cdata.h
-    src/el_comment.h
-    src/el_div.h
-    src/el_font.h
-    src/el_image.h
-    src/el_link.h
-    src/el_para.h
-    src/el_script.h
-    src/el_space.h
-    src/el_style.h
-    src/el_table.h
-    src/el_td.h
-    src/el_text.h
-    src/el_title.h
-    src/el_tr.h
-    src/element.h
-    src/html.h
-    src/html_tag.h
-    src/iterators.h
-    src/media_query.h
-    src/os_types.h
-    src/style.h
-    src/stylesheet.h
-    src/table.h
-    src/types.h
-    src/utf8_strings.h
-    src/web_color.h
+    include/litehtml/attributes.h
+    include/litehtml/background.h
+    include/litehtml/borders.h
+    include/litehtml/box.h
+    include/litehtml/context.h
+    include/litehtml/css_length.h
+    include/litehtml/css_margins.h
+    include/litehtml/css_offsets.h
+    include/litehtml/css_position.h
+    include/litehtml/css_selector.h
+    include/litehtml/document.h
+    include/litehtml/el_anchor.h
+    include/litehtml/el_base.h
+    include/litehtml/el_before_after.h
+    include/litehtml/el_body.h
+    include/litehtml/el_break.h
+    include/litehtml/el_cdata.h
+    include/litehtml/el_comment.h
+    include/litehtml/el_div.h
+    include/litehtml/el_font.h
+    include/litehtml/el_image.h
+    include/litehtml/el_link.h
+    include/litehtml/el_para.h
+    include/litehtml/el_script.h
+    include/litehtml/el_space.h
+    include/litehtml/el_style.h
+    include/litehtml/el_table.h
+    include/litehtml/el_td.h
+    include/litehtml/el_text.h
+    include/litehtml/el_title.h
+    include/litehtml/el_tr.h
+    include/litehtml/element.h
+    include/litehtml/html.h
+    include/litehtml/html_tag.h
+    include/litehtml/iterators.h
+    include/litehtml/media_query.h
+    include/litehtml/os_types.h
+    include/litehtml/style.h
+    include/litehtml/stylesheet.h
+    include/litehtml/table.h
+    include/litehtml/types.h
+    include/litehtml/utf8_strings.h
+    include/litehtml/web_color.h
 )
 
 set(TEST_LITEHTML
@@ -115,8 +115,8 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
 target_include_directories(${PROJECT_NAME} PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>
-)
+    $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
+target_include_directories(${PROJECT_NAME} PRIVATE include/${PROJECT_NAME})
 
 option(LITEHTML_UTF8 "Build litehtml with UTF-8 text conversion functions." OFF)
 if (LITEHTML_UTF8)

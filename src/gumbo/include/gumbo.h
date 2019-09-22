@@ -155,7 +155,7 @@ int gumbo_vector_index_of(GumboVector* vector, const void* element);
  */
 typedef enum {
 // Load all the tags from an external source, generated from tag.in.
-#include "tag_enum.h"
+#include "gumbo/tag_enum.h"
   // Used for all tags that don't have special handling in HTML.  Add new tags
   // to the end of tag.in so as to preserve backwards-compatibility.
   GUMBO_TAG_UNKNOWN,
