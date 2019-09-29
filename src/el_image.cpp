@@ -17,6 +17,24 @@ void litehtml::el_image::get_content_size( size& sz, int max_width )
 	get_document()->container()->get_image_size(m_src.c_str(), 0, sz);
 }
 
+int litehtml::el_image::calc_max_height(int image_height)
+{
+	document::ptr doc = get_document();
+	int percentSize = 0;
+	if (m_css_max_height.units() == css_units_percentage)
+	{
+		auto el_parent = parent();
+		if (el_parent)
+		{
+			if (!el_parent->get_predefined_height(percentSize))
+			{
+				return image_height;
+			}
+		}
+	}
+	return doc->cvt_units(m_css_max_height, m_font_size, percentSize);
+}
+
 int litehtml::el_image::line_height() const
 {
 	return height();
@@ -68,7 +86,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
 		{
-			int max_height = doc->cvt_units(m_css_max_height, m_font_size);
+			int max_height = calc_max_height(sz.height);
 			if(m_pos.height > max_height)
 			{
 				m_pos.height = max_height;
@@ -91,7 +109,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
 		{
-			int max_height = doc->cvt_units(m_css_max_height, m_font_size);
+			int max_height = calc_max_height(sz.height);
 			if(m_pos.height > max_height)
 			{
 				m_pos.height = max_height;
@@ -138,7 +156,7 @@ int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
 		// check for max-height
 		if(!m_css_max_height.is_predefined())
 		{
-			int max_height = doc->cvt_units(m_css_max_height, m_font_size);
+			int max_height = calc_max_height(sz.height);
 			if(m_pos.height > max_height)
 			{
 				m_pos.height = max_height;
