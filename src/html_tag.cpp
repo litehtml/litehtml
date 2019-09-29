@@ -4162,7 +4162,7 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 			m_display == display_table ||
 			m_el_position == element_position_absolute ||
 			m_el_position == element_position_fixed
-			)
+			))
 			)
 			)
 		{

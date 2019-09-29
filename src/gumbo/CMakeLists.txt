@@ -17,24 +17,24 @@ set(SOURCE_GUMBO
 )
 
 set(HEADER_GUMBO
-    attribute.h
-    char_ref.h
-    error.h
-    gumbo.h
-    insertion_mode.h
-    parser.h
-    string_buffer.h
-    string_piece.h
-    tag_enum.h
-    tag_gperf.h
-    tag_sizes.h
-    tag_strings.h
-    token_type.h
-    tokenizer.h
-    tokenizer_states.h
-    utf8.h
-    util.h
-    vector.h
+        include/gumbo/attribute.h
+        include/gumbo/char_ref.h
+        include/gumbo/error.h
+        include/gumbo.h
+        include/gumbo/insertion_mode.h
+        include/gumbo/parser.h
+        include/gumbo/string_buffer.h
+        include/gumbo/string_piece.h
+        include/gumbo/tag_enum.h
+        include/gumbo/tag_gperf.h
+        include/gumbo/tag_sizes.h
+        include/gumbo/tag_strings.h
+        include/gumbo/token_type.h
+        include/gumbo/tokenizer.h
+        include/gumbo/tokenizer_states.h
+        include/gumbo/utf8.h
+        include/gumbo/util.h
+        include/gumbo/vector.h
 )
 
 add_library(${PROJECT_NAME} ${SOURCE_GUMBO})
@@ -50,9 +50,9 @@ endif()
 
 # Export gumbo includes.
 target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
-    $<INSTALL_INTERFACE:include>
-)
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<INSTALL_INTERFACE:include>)
+target_include_directories(${PROJECT_NAME} PRIVATE include/gumbo)
 
 # install and export
 install(TARGETS ${PROJECT_NAME}

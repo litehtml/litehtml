@@ -24,7 +24,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
-#include "gumbo/gumbo.h"
+#include "gumbo.h"
 #include "utf8_strings.h"
 
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
