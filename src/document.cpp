@@ -348,6 +348,7 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 		break;
 	case css_units_rem:
 		ret = (int) ((double) m_root->get_font_size() * (double) val.val());
+		val.set_value((float) ret, css_units_px);
 		break;
 	default:
 		ret = (int) val.val();
