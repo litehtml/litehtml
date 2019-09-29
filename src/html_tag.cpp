@@ -4164,7 +4164,6 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 			m_el_position == element_position_fixed
 			))
 			)
-			)
 		{
 			render(x, y, ret_width, true);
 			m_pos.width = ret_width - (content_margins_left() + content_margins_right());

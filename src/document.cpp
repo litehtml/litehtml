@@ -643,8 +643,9 @@ void litehtml::document::add_media_list( media_query_list::ptr list )
 	}
 }
 
-void litehtml::document::create_node(GumboNode* node, elements_vector& elements, bool parseTextNode)
+void litehtml::document::create_node(void* gnode, elements_vector& elements, bool parseTextNode)
 {
+	GumboNode* node = (GumboNode*)gnode;
 	switch (node->type)
 	{
 	case GUMBO_NODE_ELEMENT:
