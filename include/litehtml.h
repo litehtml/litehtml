@@ -5,8 +5,6 @@
 #include <litehtml/document.h>
 #include <litehtml/html_tag.h>
 #include <litehtml/stylesheet.h>
-#include <litehtml/stylesheet.h>
 #include <litehtml/element.h>
-#include <litehtml/html_tag.h>
 
 #endif  // LITEHTML_H
