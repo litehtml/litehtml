@@ -23,20 +23,15 @@ LiteHtmlView::LiteHtmlView(BRect frame, const char *name)
 	
 	BRect bounds(Bounds());
 	BPoint topLeft = bounds.LeftTop();
-	std::cout << "Initial bounds: topLeft x: " << +topLeft.x << ", y: " << +topLeft.y << ", width: " << +bounds.Width() << ", height: " << +bounds.Height() << std::endl;
+	std::cout << "Initial bounds: topLeft x: " << +topLeft.x << ", y: " 
+		<< +topLeft.y << ", width: " << +bounds.Width() << ", height: " 
+		<< +bounds.Height() << std::endl;
 	
 	SetDrawingMode(B_OP_OVER);
 	SetFont(be_plain_font);
 	
 	//FillRect(bounds,B_SOLID_LOW);
 	
-	BRect rect(50,50,100,100);
-	rgb_color black;
-	black.red = 0;
-	black.green = 0;
-	black.blue = 0;
-	black.alpha = 255;
-
 	//SetLowColor(B_DOCUMENT_PANEL_COLOR);
 	//FillRect(rect);
 }
@@ -73,7 +68,8 @@ LiteHtmlView::RenderFile(const char* localFilePath)
 	//std::cout << "    base url now:" << m_base_url << std::endl;
 	
 	// now use this string
-	m_html = litehtml::document::createFromString(html.c_str(), this, fContext);
+	m_html = litehtml::document::createFromString(
+		html.c_str(), this, fContext);
 	if (m_html) 
 	{
 		std::cout << "Successfully read html" << std::endl;
@@ -83,6 +79,8 @@ LiteHtmlView::RenderFile(const char* localFilePath)
 	} else {
 		std::cout << "Failed to read html" << std::endl;
 	}
+	// always fire the rendering complete message
+	std::cout << "Sending html rendered message: " << M_HTML_RENDERED << std::endl;
 }
 
 void
@@ -97,14 +95,32 @@ LiteHtmlView::Draw(BRect b)
 	
 	if (NULL != m_html) {
 		BPoint leftTop = bounds.LeftTop();
-		litehtml::position clip(leftTop.x,leftTop.y,bounds.Width(),bounds.Height());
+		litehtml::position clip(leftTop.x,leftTop.y,
+			bounds.Width(),bounds.Height());
 		m_html->render(bounds.Width());
 		m_html->draw((litehtml::uint_ptr) this,0,0,&clip);
+	}
+	SendNotices(M_HTML_RENDERED,new BMessage(M_HTML_RENDERED));
+}
+
+void
+LiteHtmlView::GetPreferredSize(float* width,float* height)
+{
+	if (NULL == m_html)
+	{
+		BRect bounds(Bounds());
+		*width = bounds.Width(); 
+		*height = bounds.Height();
+	} else {
+		*width = m_html->width();
+		*height = m_html->height();
 	}
 }
 
 litehtml::uint_ptr 
-LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
+LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size, 
+	int weight, litehtml::font_style italic, unsigned int decoration, 
+	litehtml::font_metrics* fm )
 {
 	//std::cout << "create_font" << std::endl;
 	litehtml::string_vector fonts;
@@ -125,7 +141,7 @@ LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size, int weig
 		face |= B_STRIKEOUT_FACE;
 	}
 	// Note: LIGHT, HEAVY, CONDENSED not supported in BeOS R5
-#ifdef HAIKU
+#ifdef __HAIKU__
 	if(weight >= 0 && weight < 150)			face |= B_LIGHT_FACE;
 	else if(weight >= 150 && weight < 250)	face |= B_LIGHT_FACE;
 	else if(weight >= 250 && weight < 350)	face |= B_LIGHT_FACE;
@@ -136,7 +152,7 @@ LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size, int weig
 	else if(weight >= 550 && weight < 650)	face |= B_BOLD_FACE;
 #endif
 	else if(weight >= 650 && weight < 750)	face |= B_BOLD_FACE;
-#ifndef HAIKU
+#ifndef __HAIKU__
 	else if(weight >= 750 && weight < 850)	face |= B_BOLD_FACE;
 	else if(weight >= 950)					face |= B_BOLD_FACE;
 #else
@@ -146,7 +162,8 @@ LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size, int weig
 
 	BFont* tempFont = new BFont();
 	bool found = false;
-	for(litehtml::string_vector::iterator i = fonts.begin(); i != fonts.end(); i++)
+	for(litehtml::string_vector::iterator i = fonts.begin(); 
+		i != fonts.end(); i++)
 	{
 		if (B_OK == tempFont->SetFamilyAndFace(i->c_str(),face))
 		{
@@ -185,7 +202,8 @@ LiteHtmlView::delete_font( litehtml::uint_ptr hFont )
 }
 
 int 
-LiteHtmlView::text_width( const litehtml::tchar_t* text, litehtml::uint_ptr hFont )
+LiteHtmlView::text_width( const litehtml::tchar_t* text, 
+	litehtml::uint_ptr hFont )
 {
 	//std::cout << "text_width" << std::endl;
 	BFont* fnt = (BFont*)hFont;
@@ -195,7 +213,9 @@ LiteHtmlView::text_width( const litehtml::tchar_t* text, litehtml::uint_ptr hFon
 }
 
 void 
-LiteHtmlView::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
+LiteHtmlView::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text,
+	litehtml::uint_ptr hFont, litehtml::web_color color, 
+	const litehtml::position& pos )
 {
 	//std::cout << "draw_text" << std::endl;
 	if (!text) return;
@@ -215,8 +235,8 @@ LiteHtmlView::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, 
 	
 	font_height fh;
 	fnt->GetHeight(&fh);
-	int baseline = fh.ascent + fh.descent + 10;
-	int leftbase = 10;
+	int baseline = fh.ascent + fh.descent;// + 10;
+	int leftbase = 0; //10;
 	MovePenTo(pos.left() + leftbase,pos.top() + baseline);//leftTop.x,leftTop.y);
 	SetFont(fnt);
 	//SetFont(be_plain_font);
@@ -260,7 +280,7 @@ const litehtml::tchar_t*
 LiteHtmlView::get_default_font_name() const
 {
 	//std::cout << "get_default_font_name" << std::endl;
-	font_family fam; // = new font_family;  //char[B_FONT_FAMILY_LENGTH + 1]; // or new font_family?
+	font_family fam;
 	font_style style;
 	be_plain_font->GetFamilyAndStyle(&fam,&style);
 	char* cp = strdup(fam);
@@ -268,7 +288,8 @@ LiteHtmlView::get_default_font_name() const
 }
 
 void 
-LiteHtmlView::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::list_marker& marker )
+LiteHtmlView::draw_list_marker( litehtml::uint_ptr hdc, 
+	const litehtml::list_marker& marker )
 {
 	std::cout << "draw_list_marker" << std::endl;
 	if (!marker.image.empty())
@@ -278,7 +299,8 @@ LiteHtmlView::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::list_mar
 }
 
 void 
-LiteHtmlView::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready )
+LiteHtmlView::load_image( const litehtml::tchar_t* src, 
+	const litehtml::tchar_t* baseurl, bool redraw_on_ready )
 {
 	std::cout << "load_image" << std::endl;
 	
@@ -296,7 +318,8 @@ LiteHtmlView::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t*
 }
 
 void
-LiteHtmlView::make_url(const litehtml::tchar_t* url, const litehtml::tchar_t* basepath, litehtml::tstring& out)
+LiteHtmlView::make_url(const litehtml::tchar_t* url, 
+	const litehtml::tchar_t* basepath, litehtml::tstring& out)
 {
 	std::cout << "make_url" << std::endl;
 	std::cout << "    url: " << url << std::endl;
@@ -343,7 +366,8 @@ LiteHtmlView::set_base_url(const litehtml::tchar_t* base_url)
 
 
 void 
-LiteHtmlView::get_image_size( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz )
+LiteHtmlView::get_image_size( const litehtml::tchar_t* src, 
+	const litehtml::tchar_t* baseurl, litehtml::size& sz )
 {
 	std::cout << "get_image_size" << std::endl;
 	std::string url;
@@ -360,7 +384,8 @@ LiteHtmlView::get_image_size( const litehtml::tchar_t* src, const litehtml::tcha
 }
 
 void
-LiteHtmlView::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos )
+LiteHtmlView::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src,
+	const litehtml::tchar_t* baseurl, const litehtml::position& pos )
 {
 	std::string url;
 	make_url(src, baseurl, url);
@@ -376,7 +401,8 @@ LiteHtmlView::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src, 
 }
 
 void 
-LiteHtmlView::draw_background( litehtml::uint_ptr hdc, const litehtml::background_paint& bg )
+LiteHtmlView::draw_background( litehtml::uint_ptr hdc, 
+	const litehtml::background_paint& bg )
 {
 	std::cout << "draw_background" << std::endl;
 	if (0 < bg.image.length())

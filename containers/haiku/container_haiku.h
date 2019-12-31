@@ -10,6 +10,11 @@
 
 class BBitmap;
 
+
+enum {
+	M_HTML_RENDERED = 'hrnd'
+};
+
 class LiteHtmlView : public BView, public litehtml::document_container
 {
 public:
@@ -57,7 +62,8 @@ public:
 	virtual void 						get_language(litehtml::tstring&, litehtml::tstring&) const;
 	
 	//BView
-	virtual void 						Draw(BRect updateRect); 	
+	virtual void 						Draw(BRect updateRect) override;
+	virtual void						GetPreferredSize(float* width, float* height) override;
 	
 protected:
 	void								make_url(const litehtml::tchar_t* url, const litehtml::tchar_t* basepath, litehtml::tstring& out);
