@@ -14,7 +14,7 @@
 
 ## Compatibility
 
-**litehtml** is compatible with any platform suported by C++ and STL. For Windows MS Visual Studio 2013 is recommended. **litehtml** supports both UTF-8 and Unicode strings on Windows and UTF-8 strings on Linux.
+**litehtml** is compatible with any platform suported by C++ and STL. For Windows MS Visual Studio 2013 is recommended. **litehtml** supports both UTF-8 and Unicode strings on Windows and UTF-8 strings on Linux and Haiku.
 
 ## Support for HTML and CSS standards
 
@@ -27,6 +27,7 @@ You can [download the simple browser](http://www.litehtml.com/download.html) (**
 The litebrowser source codes are available on GitHub:
   * [For Windows](https://github.com/litehtml/litebrowser)
   * [For Linux](https://github.com/litehtml/litebrowser-linux)
+  * [For Haiku](https://github.com/adamfowleruk/litebrowser-haiku)
 
 ## License
 
