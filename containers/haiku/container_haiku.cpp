@@ -1,3 +1,9 @@
+/*
+ * Copyright 2019-2020 Haiku Inc.
+ * All rights reserved. Distributed under the terms of the BSD 3-clause license.
+ * Constributors
+ * 2019-2020	Adam Fowler <adamfowleruk@gmail.com>
+ */
 #include "container_haiku.h"
 
 #include <string>
@@ -67,9 +73,17 @@ LiteHtmlView::RenderFile(const char* localFilePath)
 	set_base_url(dirPath.Path());
 	//std::cout << "    base url now:" << m_base_url << std::endl;
 	
+	RenderHTML(html);
+}
+
+void
+LiteHtmlView::RenderHTML(const std::string& htmlText)
+{
+	std::cout << "RenderHTML" << std::endl;
+	
 	// now use this string
 	m_html = litehtml::document::createFromString(
-		html.c_str(), this, fContext);
+		htmlText.c_str(), this, fContext);
 	if (m_html) 
 	{
 		std::cout << "Successfully read html" << std::endl;
