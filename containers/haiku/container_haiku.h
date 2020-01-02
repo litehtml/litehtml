@@ -1,3 +1,9 @@
+/*
+ * Copyright 2019-2020 Haiku Inc.
+ * All rights reserved. Distributed under the terms of the BSD 3-clause license.
+ * Constributors
+ * 2019-2020	Adam Fowler <adamfowleruk@gmail.com>
+ */
 #ifndef LITEHTMLVIEW_H
 #define LITEHTMLVIEW_H
 
@@ -26,6 +32,7 @@ public:
 	
 			void						SetContext(litehtml::context* ctx);
 			void						RenderFile(const char* localFilePath);
+			void						RenderHTML(const std::string& htmlText);
 			
 			
 	virtual litehtml::uint_ptr			create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm) override;
