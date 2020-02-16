@@ -7,8 +7,8 @@
 #include <tchar.h>
 #include <mlang.h>
 #include <vector>
-#include <cairo.h>
-#include <cairo-win32.h>
+#include "cairo.h"
+#include "cairo-win32.h"
 #include <litehtml.h>
 #include <dib.h>
 #include <txdib.h>
