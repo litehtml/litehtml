@@ -325,6 +325,7 @@
     <ClCompile Include="src\el_div.cpp" />
     <ClCompile Include="src\el_font.cpp" />
     <ClCompile Include="src\el_image.cpp" />
+    <ClCompile Include="src\el_li.cpp" />
     <ClCompile Include="src\el_link.cpp" />
     <ClCompile Include="src\el_para.cpp" />
     <ClCompile Include="src\el_script.cpp" />
@@ -379,6 +380,7 @@
     <ClInclude Include="include\litehtml\el_div.h" />
     <ClInclude Include="include\litehtml\el_font.h" />
     <ClInclude Include="include\litehtml\el_image.h" />
+    <ClInclude Include="include\litehtml\el_li.h" />
     <ClInclude Include="include\litehtml\el_link.h" />
     <ClInclude Include="include\litehtml\el_para.h" />
     <ClInclude Include="include\litehtml\el_script.h" />

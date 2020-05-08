@@ -21,6 +21,7 @@
 #include "el_div.h"
 #include "el_font.h"
 #include "el_tr.h"
+#include "el_li.h"
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
@@ -556,6 +557,9 @@ litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_nam
 		} else if(!t_strcmp(tag_name, _t("font")))
 		{
 			newTag = std::make_shared<litehtml::el_font>(this_doc);
+		} else if(!t_strcmp(tag_name, _t("li")))
+		{
+			newTag = std::make_shared<litehtml::el_li>(this_doc);
 		} else
 		{
 			newTag = std::make_shared<litehtml::html_tag>(this_doc);
