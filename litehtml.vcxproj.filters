@@ -164,6 +164,9 @@
     <ClCompile Include="src\gumbo\vector.c">
       <Filter>Source Files\gumbo</Filter>
     </ClCompile>
+    <ClCompile Include="src\el_li.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\litehtml\attributes.h">
@@ -351,6 +354,9 @@
     </ClInclude>
     <ClInclude Include="src\gumbo\include\gumbo\vector.h">
       <Filter>Header Files\gumbo</Filter>
+    </ClInclude>
+    <ClInclude Include="include\litehtml\el_li.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
 </Project>

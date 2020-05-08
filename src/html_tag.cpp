@@ -2947,8 +2947,19 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 	int sz_font		= get_font_size();
 	lm.pos.x		= pos.x;
 	lm.pos.width	= sz_font	- sz_font * 2 / 3;
-	lm.pos.height	= sz_font	- sz_font * 2 / 3;
-	lm.pos.y		= pos.y		+ ln_height / 2 - lm.pos.height / 2;
+
+	if (m_list_style_type >= list_style_type_armenian)
+	{
+		lm.pos.y = pos.y;
+		lm.pos.height = pos.height;
+		lm.index = get_attr(_t("list_index"), _t(""))[0];
+	}
+	else
+	{
+		lm.pos.height = sz_font - sz_font * 2 / 3;
+		lm.pos.y = pos.y + ln_height / 2 - lm.pos.height / 2;
+		lm.index = -1;
+	}
 
 	if(img_size.width && img_size.height)
 	{
