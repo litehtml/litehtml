@@ -43,6 +43,7 @@ set(SOURCE_LITEHTML
     src/table.cpp
     src/utf8_strings.cpp
     src/web_color.cpp
+    src/num_cvt.cpp
 )
 
 set(HEADER_LITEHTML
@@ -90,6 +91,7 @@ set(HEADER_LITEHTML
     include/litehtml/types.h
     include/litehtml/utf8_strings.h
     include/litehtml/web_color.h
+    include/litehtml/num_cvt.h
 )
 
 set(TEST_LITEHTML

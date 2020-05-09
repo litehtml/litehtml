@@ -157,17 +157,6 @@ void litehtml::win32_container::draw_list_marker(uint_ptr hdc, const litehtml::l
 			fill_rect((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color, css_border_radius());
 		}
 		break;
-	case list_style_type_decimal:
-		{
-			auto oldColor = SetTextColor((HDC)hdc, RGB(marker.color.red, marker.color.green, marker.color.blue));
-
-			RECT rcText = { marker.pos.x, marker.pos.y, marker.pos.x + marker.pos.width, marker.pos.y + marker.pos.height };
-			auto text = to_string(marker.index) + '.';
-			DrawText((HDC)hdc, text.c_str(), -1, &rcText, DT_SINGLELINE | DT_NOPREFIX | DT_VCENTER | DT_NOCLIP | DT_RIGHT);
-
-			SetTextColor((HDC)hdc, oldColor);
-		}
-		break;
 	}
 	release_clip((HDC)hdc);
 }

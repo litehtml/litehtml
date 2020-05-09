@@ -25,6 +25,7 @@ namespace litehtml
 	#define t_strstr			wcsstr
 	#define t_tolower			towlower
 	#define t_isdigit			iswdigit
+	#define t_to_string(val)	std::to_wstring(val)
 
 #else
 
@@ -46,6 +47,7 @@ namespace litehtml
 	#define t_strstr			strstr
 	#define t_tolower			tolower
 	#define t_isdigit			isdigit
+	#define t_to_string(val)	std::to_string(val)
 
 #endif
 
@@ -79,6 +81,7 @@ namespace litehtml
 	#define t_strstr			strstr
 	#define t_tolower			tolower
 	#define t_isdigit			isdigit
+	#define t_to_string(val)	std::to_string(val)
 
 #endif
 }

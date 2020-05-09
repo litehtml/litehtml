@@ -61,7 +61,7 @@ litehtml::ucode_t litehtml::utf8_to_wchar::get_char()
 	return '?';
 }
 
-litehtml::wchar_to_utf8::wchar_to_utf8(const wchar_t* val)
+litehtml::wchar_to_utf8::wchar_to_utf8(const std::wstring& val)
 {
 	unsigned int code;
 	for (int i = 0; val[i]; i++)
