@@ -17,7 +17,7 @@ int litehtml::el_li::render(int x, int y, int max_width, bool second_pass)
 	{
 		if (auto p = parent())
 		{
-			tchar_t val[2] = { 1, 0 };
+			tchar_t val[2] = { 0, 0 };
 			for (int i = 0, n = (int)p->get_children_count(); i < n; ++i)
 			{
 				auto child = p->get_child(i);

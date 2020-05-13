@@ -3021,10 +3021,10 @@ litehtml::tstring litehtml::html_tag::get_list_marker_text(int index)
 	switch (m_list_style_type)
 	{
 	case litehtml::list_style_type_decimal:
-		return t_to_string(index);
+		return t_to_string(index + 1);
 	case litehtml::list_style_type_decimal_leading_zero:
 		{
-			auto txt = t_to_string(index);
+			auto txt = t_to_string(index + 1);
 			if (txt.length() == 1)
 			{
 				txt = _t("0") + txt;
