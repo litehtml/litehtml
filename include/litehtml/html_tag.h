@@ -229,6 +229,7 @@ namespace litehtml
 		void						parse_background();
 		void						init_background_paint( position pos, background_paint &bg_paint, const background* bg );
 		void						draw_list_marker( uint_ptr hdc, const position &pos );
+		tstring						get_list_marker_text(int index);
 		void						parse_nth_child_params( tstring param, int &num, int &off );
 		void						remove_before_after();
 		litehtml::element::ptr		get_element_before();

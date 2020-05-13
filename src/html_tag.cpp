@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <locale>
 #include "el_before_after.h"
+#include "num_cvt.h"
 
 litehtml::html_tag::html_tag(const std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
 {
@@ -2942,11 +2943,13 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 		lm.baseurl = 0;
 	}
 
-
 	int ln_height	= line_height();
 	int sz_font		= get_font_size();
 	lm.pos.x		= pos.x;
-	lm.pos.width	= sz_font	- sz_font * 2 / 3;
+	lm.pos.width = sz_font - sz_font * 2 / 3;
+	lm.color = get_color(_t("color"), true, web_color(0, 0, 0));
+	lm.marker_type = m_list_style_type;
+	lm.font = get_font();
 
 	if (m_list_style_type >= list_style_type_armenian)
 	{
@@ -2975,14 +2978,87 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 		lm.pos.width	= img_size.width;
 		lm.pos.height	= img_size.height;
 	}
-	if(m_list_style_position == list_style_position_outside)
+
+	if (m_list_style_position == list_style_position_outside)
 	{
-		lm.pos.x -= sz_font;
+		if (m_list_style_type >= list_style_type_armenian)
+		{
+			auto tw_space = get_document()->container()->text_width(_t(" "), lm.font);
+			lm.pos.x = pos.x - tw_space * 2;
+			lm.pos.width = tw_space;
+		}
+		else
+		{
+			lm.pos.x -= sz_font;
+		}
 	}
 
-	lm.color = get_color(_t("color"), true, web_color(0, 0, 0));
-	lm.marker_type = m_list_style_type;
-	get_document()->container()->draw_list_marker(hdc, lm);
+	if (m_list_style_type >= list_style_type_armenian)
+	{
+		auto marker_text = get_list_marker_text(lm.index);
+		lm.pos.height = ln_height;
+		if (marker_text.empty())
+		{
+			get_document()->container()->draw_list_marker(hdc, lm);
+		}
+		else
+		{
+			marker_text += _t(".");
+			auto tw = get_document()->container()->text_width(marker_text.c_str(), lm.font);
+			auto text_pos = lm.pos;
+			text_pos.move_to(text_pos.right() - tw, text_pos.y);
+			get_document()->container()->draw_text(hdc, marker_text.c_str(), lm.font, lm.color, text_pos);
+		}
+	}
+	else
+	{
+		get_document()->container()->draw_list_marker(hdc, lm);
+	}
+}
+
+litehtml::tstring litehtml::html_tag::get_list_marker_text(int index)
+{
+	switch (m_list_style_type)
+	{
+	case litehtml::list_style_type_decimal:
+		return t_to_string(index);
+	case litehtml::list_style_type_decimal_leading_zero:
+		{
+			auto txt = t_to_string(index);
+			if (txt.length() == 1)
+			{
+				txt = _t("0") + txt;
+			}
+			return txt;
+		}
+	case litehtml::list_style_type_lower_latin:
+	case litehtml::list_style_type_lower_alpha:
+		return num_cvt::to_latin_lower(index);
+	case litehtml::list_style_type_lower_greek:
+		return num_cvt::to_greek_lower(index);
+	case litehtml::list_style_type_upper_alpha:
+	case litehtml::list_style_type_upper_latin:
+		return num_cvt::to_latin_upper(index);
+	case litehtml::list_style_type_lower_roman:
+		return num_cvt::to_roman_lower(index);
+	case litehtml::list_style_type_upper_roman:
+		return num_cvt::to_roman_upper(index);
+	case litehtml::list_style_type_armenian:
+		break;
+	case litehtml::list_style_type_georgian:
+		break;
+	case litehtml::list_style_type_hebrew:
+		break;
+	case litehtml::list_style_type_hiragana:
+		break;
+	case litehtml::list_style_type_hiragana_iroha:
+		break;
+	case litehtml::list_style_type_katakana:
+		break;
+	case litehtml::list_style_type_katakana_iroha:
+		break;
+	}
+	return _t("");
 }
 
 void litehtml::html_tag::draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex )
