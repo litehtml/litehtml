@@ -25,6 +25,7 @@ set(SOURCE_LITEHTML
     src/el_font.cpp
     src/el_image.cpp
     src/el_link.cpp
+    src/el_li.cpp
     src/el_para.cpp
     src/el_script.cpp
     src/el_space.cpp
