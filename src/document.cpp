@@ -984,7 +984,7 @@ void litehtml::document::append_children_from_utf8(element& parent, const char* 
 		parent.appendChild(child);
 
 		// apply master CSS
-		//TEMP_TODO: THIS? child->apply_stylesheet(m_context->master_css());
+		child->apply_stylesheet(m_context->master_css());
 
 		// parse elements attributes
 		child->parse_attributes();
