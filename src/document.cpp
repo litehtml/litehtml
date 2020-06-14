@@ -953,3 +953,54 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 		}
 	}
 }
+
+void litehtml::document::append_children_from_string(element& parent, const tchar_t* str)
+{
+	append_children_from_utf8(parent, litehtml_to_utf8(str));
+}
+
+void litehtml::document::append_children_from_utf8(element& parent, const char* str)
+{
+	// parent must belong to this document
+	if (parent.get_document().get() != this)
+	{
+		return;
+	}
+
+	// parse document into GumboOutput
+	GumboOutput* output = gumbo_parse((const char*) str);
+
+	// Create litehtml::elements.
+	elements_vector child_elements;
+	create_node(output->root, child_elements, true);
+
+	// Destroy GumboOutput
+	gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+	// Let's process created elements tree
+	for (litehtml::element::ptr child : child_elements)
+	{
+		// Add the child element to parent
+		parent.appendChild(child);
+
+		// apply master CSS
+		child->apply_stylesheet(m_context->master_css());
+
+		// parse elements attributes
+		child->parse_attributes();
+
+		// Apply parsed styles.
+		child->apply_stylesheet(m_styles);
+
+		// Parse applied styles in the elements
+		child->parse_styles();
+
+		// Now the m_tabular_elements is filled with tabular elements.
+		// We have to check the tabular elements for missing table elements 
+		// and create the anonymous boxes in visual table layout
+		fix_tables_layout();
+
+		// Fanaly initialize elements
+		child->init();
+	}
+}
