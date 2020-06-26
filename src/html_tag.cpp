@@ -1180,12 +1180,18 @@ void litehtml::html_tag::get_line_left_right( int y, int def_right, int& ln_left
 			el_parent->get_line_left_right(y + m_pos.y, def_right + m_pos.x, ln_left, ln_right);
 		}
 		ln_right -= m_pos.x;
-		ln_left -= m_pos.x;
 
 		if(ln_left < 0)
 		{
 			ln_left = 0;
-		}
+        } else if (ln_left > 0)
+		{
+			ln_left -= m_pos.x;
+			if (ln_left < 0)
+			{
+				ln_left = 0;
+			}
+        }
 	}
 }
 
