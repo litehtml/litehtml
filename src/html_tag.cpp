@@ -1184,7 +1184,7 @@ void litehtml::html_tag::get_line_left_right( int y, int def_right, int& ln_left
 		if(ln_left < 0)
 		{
 			ln_left = 0;
-        } else if (ln_left > 0)
+		} else if (ln_left > 0)
 		{
 			ln_left -= m_pos.x;
 			if (ln_left < 0)
