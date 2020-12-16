@@ -56,7 +56,7 @@ litehtml::tstring litehtml::num_cvt::to_greek_lower(int val)
 
 litehtml::tstring litehtml::num_cvt::to_roman_lower(int value)
 {
-	struct romandata_t { int value; litehtml::tchar_t* numeral; };
+	struct romandata_t { int value; const litehtml::tchar_t* numeral; };
 	const struct romandata_t romandata[] =
 	{
 		{ 1000, _t("m") }, { 900, _t("cm" )},
@@ -83,7 +83,7 @@ litehtml::tstring litehtml::num_cvt::to_roman_lower(int value)
 
 litehtml::tstring litehtml::num_cvt::to_roman_upper(int value)
 {
-	struct romandata_t { int value; litehtml::tchar_t* numeral; };
+	struct romandata_t { int value; const litehtml::tchar_t* numeral; };
 	const struct romandata_t romandata[] =
 	{
 		{ 1000, _t("M") }, { 900, _t("CM") },
