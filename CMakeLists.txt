@@ -4,6 +4,12 @@ project(litehtml CXX)
 include(CTest)
 enable_testing()
 
+# Soname
+# MAJOR is incremented when symbols are removed or changed in an incompatible way
+# MINOR is incremented when new symbols are added
+set(PROJECT_MAJOR 0)
+set(PROJECT_MINOR 0)
+
 add_subdirectory(src/gumbo)
 
 set(SOURCE_LITEHTML
@@ -106,7 +112,11 @@ set(TEST_LITEHTML
     test/program.cpp
 )
 
+set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
+set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
+
 add_library(${PROJECT_NAME} ${SOURCE_LITEHTML})
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_LIB_VERSION} SOVERSION ${PROJECT_SO_VERSION})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 11
@@ -132,11 +142,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC gumbo)
 # install and export
 install(TARGETS ${PROJECT_NAME}
     EXPORT litehtmlTargets
-    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin COMPONENT libraries
+    ARCHIVE DESTINATION lib${LIB_SUFFIX} COMPONENT libraries
+    LIBRARY DESTINATION lib${LIB_SUFFIX} COMPONENT libraries
     PUBLIC_HEADER DESTINATION include/litehtml
 )
-install(FILES cmake/litehtmlConfig.cmake DESTINATION lib/cmake/litehtml)
-install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib/cmake/litehtml)
+install(FILES cmake/litehtmlConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
+install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
 
 # Binary Master.css
 if (WIN32)
