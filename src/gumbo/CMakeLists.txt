@@ -67,7 +67,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE include/gumbo)
 # install and export
 install(TARGETS ${PROJECT_NAME}
     EXPORT gumbo
-    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin COMPONENT libraries
+    ARCHIVE DESTINATION lib${LIB_SUFFIX} COMPONENT libraries
+    LIBRARY DESTINATION lib${LIB_SUFFIX} COMPONENT libraries
     PUBLIC_HEADER DESTINATION include/gumbo
 )
-install(EXPORT gumbo FILE gumboConfig.cmake DESTINATION lib/cmake/gumbo)
+install(EXPORT gumbo FILE gumboConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/gumbo)

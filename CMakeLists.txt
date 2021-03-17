@@ -142,11 +142,13 @@ target_link_libraries(${PROJECT_NAME} PUBLIC gumbo)
 # install and export
 install(TARGETS ${PROJECT_NAME}
     EXPORT litehtmlTargets
-    ARCHIVE DESTINATION lib
+    RUNTIME DESTINATION bin COMPONENT libraries
+    ARCHIVE DESTINATION lib${LIB_SUFFIX} COMPONENT libraries
+    LIBRARY DESTINATION lib${LIB_SUFFIX} COMPONENT libraries
     PUBLIC_HEADER DESTINATION include/litehtml
 )
-install(FILES cmake/litehtmlConfig.cmake DESTINATION lib/cmake/litehtml)
-install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib/cmake/litehtml)
+install(FILES cmake/litehtmlConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
+install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
 
 # Binary Master.css
 if (WIN32)
