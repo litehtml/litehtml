@@ -4,6 +4,12 @@ project(litehtml CXX)
 include(CTest)
 enable_testing()
 
+# Soname
+# MAJOR is incremented when symbols are removed or changed in an incompatible way
+# MINOR is incremented when new symbols are added
+set(PROJECT_MAJOR 0)
+set(PROJECT_MINOR 0)
+
 add_subdirectory(src/gumbo)
 
 set(SOURCE_LITEHTML
@@ -106,7 +112,11 @@ set(TEST_LITEHTML
     test/program.cpp
 )
 
+set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
+set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
+
 add_library(${PROJECT_NAME} ${SOURCE_LITEHTML})
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_LIB_VERSION} SOVERSION ${PROJECT_SO_VERSION})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     CXX_STANDARD 11

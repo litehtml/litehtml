@@ -2,6 +2,12 @@ cmake_minimum_required(VERSION 3.5)
 
 project(gumbo C)
 
+# Soname
+# MAJOR is incremented when symbols are removed or changed in an incompatible way
+# MINOR is incremented when new symbols are added
+set(PROJECT_MAJOR 0)
+set(PROJECT_MINOR 0)
+
 set(SOURCE_GUMBO
     attribute.c
     char_ref.c
@@ -37,7 +43,11 @@ set(HEADER_GUMBO
         include/gumbo/vector.h
 )
 
+set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
+set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
+
 add_library(${PROJECT_NAME} ${SOURCE_GUMBO})
+set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_LIB_VERSION} SOVERSION ${PROJECT_SO_VERSION})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
     C_STANDARD 99
