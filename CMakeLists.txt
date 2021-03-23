@@ -10,7 +10,11 @@ enable_testing()
 set(PROJECT_MAJOR 0)
 set(PROJECT_MINOR 0)
 
+option(EXTERNAL_GUMBO "Link against external gumbo instead of shipping a bundled copy" OFF)
+
+if(NOT EXTERNAL_GUMBO)
 add_subdirectory(src/gumbo)
+endif()
 
 set(SOURCE_LITEHTML
     src/background.cpp
