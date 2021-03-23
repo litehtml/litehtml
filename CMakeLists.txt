@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
-project(litehtml CXX)
+project(litehtml LANGUAGES C CXX)
 include(CTest)
 enable_testing()
 
@@ -11,6 +11,11 @@ set(PROJECT_MAJOR 0)
 set(PROJECT_MINOR 0)
 
 option(EXTERNAL_GUMBO "Link against external gumbo instead of shipping a bundled copy" OFF)
+if(WIN32)
+  option(EXTERNAL_XXD "Use external xxd" OFF)
+else()
+  option(EXTERNAL_XXD "Use external xxd" ON)
+endif()
 
 if(NOT EXTERNAL_GUMBO)
 add_subdirectory(src/gumbo)
@@ -155,14 +160,18 @@ install(FILES cmake/litehtmlConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/lite
 install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
 
 # Binary Master.css
-if (WIN32)
-    find_program(XXD_COMMAND xxd.exe ${CMAKE_CURRENT_SOURCE_DIR}/tool)
+if (NOT EXTERNAL_XXD)
+    add_executable(xxd xxd/xxd.c)
+    set(XXD_COMMAND $<TARGET_FILE:xxd>)
+else()
+    find_program(XXD_COMMAND xxd)
+endif()
+if(WIN32)
     file(TO_NATIVE_PATH ${XXD_COMMAND} XXD_COMMAND)
     file(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/include/master.css MASTER_FILE)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc
         COMMAND type ${MASTER_FILE} | "${XXD_COMMAND}" -i > ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)
 else()
-    find_program(XXD_COMMAND xxd)
     add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc
         COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/include/master.css | xxd -i > ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)
 endif()
