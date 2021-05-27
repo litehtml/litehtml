@@ -33,7 +33,7 @@
 static int print_message(
     GumboParser* parser, GumboStringBuffer* output, const char* format, ...) {
   va_list args;
-  int remaining_capacity = output->capacity - output->length;
+  size_t remaining_capacity = output->capacity - output->length;
   va_start(args, format);
   int bytes_written = vsnprintf(
       output->data + output->length, remaining_capacity, format, args);
