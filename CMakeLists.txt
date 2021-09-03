@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.5)
+cmake_minimum_required(VERSION 3.11)
 
 project(litehtml LANGUAGES C CXX)
 include(CTest)
@@ -118,7 +118,6 @@ set(TEST_LITEHTML
     test/layoutGlobalTest.cpp
     test/mediaQueryTest.cpp
     test/webColorTest.cpp
-    test/program.cpp
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
@@ -178,21 +177,66 @@ endif()
 set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc PROPERTIES GENERATED TRUE)
 
 # Tests
+
+include(FetchContent)
+FetchContent_Declare(
+  googletest
+  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+)
+# For Windows: Prevent overriding the parent project's compiler/linker settings
+set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+FetchContent_GetProperties(googletest)
+if(NOT googletest_POPULATED)
+  FetchContent_Populate(googletest)
+  add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+endif()
+
 if (BUILD_TESTING)
+    enable_testing()
+
     set(TEST_NAME ${PROJECT_NAME}_tests)
-    add_executable(${TEST_NAME} ${TEST_LITEHTML} ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)
+
+    add_executable(
+        ${TEST_NAME}
+        ${TEST_LITEHTML}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc
+    )
+
     set_target_properties(${TEST_NAME} PROPERTIES
         CXX_STANDARD 11
         C_STANDARD 99
         PUBLIC_HEADER "${HEADER_LITEHTML}"
     )
-    target_include_directories(${TEST_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/containers)
-    target_link_libraries(${TEST_NAME} PRIVATE ${PROJECT_NAME})
-    # tests
-    add_test(NAME contextTest COMMAND ${TEST_NAME} 1)
-    add_test(NAME cssTest COMMAND ${TEST_NAME} 2)
-    add_test(NAME documentTest COMMAND ${TEST_NAME} 3)
-    add_test(NAME layoutGlobalTest COMMAND ${TEST_NAME} 4)
-    add_test(NAME mediaQueryTest COMMAND ${TEST_NAME} 5)
-    add_test(NAME webColorTest COMMAND ${TEST_NAME} 6)
+
+    target_include_directories(
+        ${TEST_NAME}
+        PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/containers
+    )
+
+    target_link_libraries(
+        ${TEST_NAME}
+        ${PROJECT_NAME}
+        gtest_main
+    )
+
+    include(GoogleTest)
+    gtest_discover_tests(${TEST_NAME})
 endif()
+
+#     set(TEST_NAME ${PROJECT_NAME}_tests)
+#     add_executable(${TEST_NAME} ${TEST_LITEHTML} ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)
+#     set_target_properties(${TEST_NAME} PROPERTIES
+#         CXX_STANDARD 11
+#         C_STANDARD 99
+#         PUBLIC_HEADER "${HEADER_LITEHTML}"
+#     )
+#     target_include_directories(${TEST_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/containers)
+#     target_link_libraries(${TEST_NAME} PRIVATE ${PROJECT_NAME})
+#     # tests
+#     add_test(NAME contextTest COMMAND ${TEST_NAME} 1)
+#     add_test(NAME cssTest COMMAND ${TEST_NAME} 2)
+#     add_test(NAME documentTest COMMAND ${TEST_NAME} 3)
+#     add_test(NAME layoutGlobalTest COMMAND ${TEST_NAME} 4)
+#     add_test(NAME mediaQueryTest COMMAND ${TEST_NAME} 5)
+#     add_test(NAME webColorTest COMMAND ${TEST_NAME} 6)
+# endif()

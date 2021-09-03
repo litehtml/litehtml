@@ -1,16 +1,18 @@
-#include <assert.h>
+#include <gtest/gtest.h>
+
 #include "litehtml.h"
+
 using namespace litehtml;
 
-extern const tchar_t master_css[];
+extern const litehtml::tchar_t master_css[] =
+{
+#include "master.css.inc"
+, 0
+};
 
-static void Test()
+
+TEST(ContextTest, LoadMasterStylesheet)
 {
     context ctx;
     ctx.load_master_stylesheet(master_css);
-}
-
-void contextTest()
-{
-    Test();
 }
