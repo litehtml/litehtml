@@ -28,6 +28,58 @@
 #include "gumbo.h"
 #include "utf8_strings.h"
 
+namespace litehtml {
+namespace {
+
+// Split a Gumbo text node into one or more litehtml text elements.  Each text
+// element contains a single indivisible string of text (e.g., a word).  This
+// approach simplifies the renderer as the parser computes and caches the text
+// extents while the renderer only has to draw each individual element.
+
+void split_text_node(document* document, elements_vector& elements, std::wstring& str_in)
+{
+	std::wstring str;
+	ucode_t c;
+	for (size_t i = 0; i < str_in.length(); i++)
+	{
+		c = (ucode_t) str_in[i];
+		if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
+		{
+			if (!str.empty())
+			{
+				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+				str.clear();
+			}
+			str += c;
+			elements.push_back(std::make_shared<el_space>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+			str.clear();
+		}
+		// CJK character range
+		else if (c >= 0x4E00 && c <= 0x9FCC)
+		{
+			if (!str.empty())
+			{
+				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+				str.clear();
+			}
+			str += c;
+			elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+			str.clear();
+		}
+		else
+		{
+			str += c;
+		}
+	}
+	if (!str.empty())
+	{
+		elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+	}
+}
+
+} // namespace
+} // namespace litehtml
+
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
 	m_container	= objContainer;
@@ -704,48 +756,12 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 		break;
 	case GUMBO_NODE_TEXT:
 		{
-			std::wstring str;
 			std::wstring str_in = (const wchar_t*) (utf8_to_wchar(node->v.text.text));
-			if (!parseTextNode)
-			{
+			if (!parseTextNode) {
 				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str_in.c_str()), shared_from_this()));
 				break;
-			}
-			ucode_t c;
-			for (size_t i = 0; i < str_in.length(); i++)
-			{
-				c = (ucode_t) str_in[i];
-				if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
-				{
-					if (!str.empty())
-					{
-						elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-						str.clear();
-					}
-					str += c;
-					elements.push_back(std::make_shared<el_space>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-					str.clear();
-				}
-				// CJK character range
-				else if (c >= 0x4E00 && c <= 0x9FCC)
-				{
-					if (!str.empty())
-					{
-						elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-						str.clear();
-					}
-					str += c;
-					elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-					str.clear();
-				}
-				else
-				{
-					str += c;
-				}
-			}
-			if (!str.empty())
-			{
-				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
+			} else {
+				split_text_node(this, elements, str_in);
 			}
 		}
 		break;
