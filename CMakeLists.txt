@@ -144,6 +144,13 @@ if (LITEHTML_UTF8)
   target_compile_definitions(${PROJECT_NAME} PUBLIC LITEHTML_UTF8)
 endif()
 
+# ICU
+option(USE_ICU "Use ICU to locate word boundaries in text elements" OFF)
+if (USE_ICU)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_ICU)
+    target_link_libraries(${PROJECT_NAME} PUBLIC icui18n icuuc icudata)
+endif()
+
 # Gumbo
 target_link_libraries(${PROJECT_NAME} PUBLIC gumbo)
 
