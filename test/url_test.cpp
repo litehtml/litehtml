@@ -183,8 +183,14 @@ TEST(URLTest, Build)
 TEST(URLTest, Resolve)
 {
     std::vector<url_resolve_testcase> testcases = {
-        { _t("https://www.twitter.com/"), _t("/foo"), _t("https://www.twitter.com/foo") },
-        { _t("https://www.twitter.com/"), _t("https://www.facebook.com/"), _t("https://www.facebook.com/") },
+        { _t("https://www.twitter.com/"), _t("/foo"),
+            _t("https://www.twitter.com/foo") },
+
+        { _t("https://www.twitter.com/"), _t("https://www.facebook.com/"),
+            _t("https://www.facebook.com/") },
+
+        { _t("https://www.example.com/index.html"), _t("about.html"),
+            _t("https://www.example.com/about.html") },
     };
 
     for (auto& testcase : testcases) {

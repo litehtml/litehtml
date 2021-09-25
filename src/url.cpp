@@ -33,6 +33,7 @@
 #include <sstream>
 
 #include "litehtml/codepoint.h"
+#include "litehtml/url_path.h"
 
 namespace litehtml {
 
@@ -137,13 +138,16 @@ url resolve(const url& b, const url& r)
         return url(b.scheme(), r.authority(), r.path(), r.query(), r.fragment());
     } else if (r.has_path()) {
 
+        // The relative URL path is either an absolute path or a relative
+        // path. If it is an absolute path, build the URL using only the
+        // relative path.  If it is a relative path, resolve the relative path
+        // against the base path and build the URL using the resolved path.
 
-        if (r.path()[0] == _t('/')) {
+        if (is_url_path_absolute(r.path())) {
             return url(b.scheme(), b.authority(), r.path(), r.query(), r.fragment());
         } else {
-            // TODO: Merge the path
-            assert(false);
-            return url(b.scheme(), b.authority(), r.path(), r.query(), r.fragment());
+            tstring path = url_path_resolve(b.path(), r.path());
+            return url(b.scheme(), b.authority(), path, r.query(), r.fragment());
         }
 
     } else if (r.has_query()) {

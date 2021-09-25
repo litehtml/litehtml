@@ -59,6 +59,7 @@ set(SOURCE_LITEHTML
     src/stylesheet.cpp
     src/table.cpp
     src/url.cpp
+    src/url_path.cpp
     src/utf8_strings.cpp
     src/web_color.cpp
     src/num_cvt.cpp
@@ -107,8 +108,9 @@ set(HEADER_LITEHTML
     include/litehtml/style.h
     include/litehtml/stylesheet.h
     include/litehtml/table.h
-    include/litehtml/url.h
     include/litehtml/types.h
+    include/litehtml/url.h
+    include/litehtml/url_path.h
     include/litehtml/utf8_strings.h
     include/litehtml/web_color.h
     include/litehtml/num_cvt.h
@@ -123,6 +125,7 @@ set(TEST_LITEHTML
     test/layoutGlobalTest.cpp
     test/mediaQueryTest.cpp
     test/url_test.cpp
+    test/url_path_test.cpp
     test/webColorTest.cpp
 )
 
