@@ -24,6 +24,7 @@ endif()
 set(SOURCE_LITEHTML
     src/background.cpp
     src/box.cpp
+    src/codepoint.cpp
     src/context.cpp
     src/css_length.cpp
     src/css_selector.cpp
@@ -68,6 +69,7 @@ set(HEADER_LITEHTML
     include/litehtml/background.h
     include/litehtml/borders.h
     include/litehtml/box.h
+    include/litehtml/codepoint.h
     include/litehtml/context.h
     include/litehtml/css_length.h
     include/litehtml/css_margins.h
@@ -112,6 +114,7 @@ set(HEADER_LITEHTML
 
 set(TEST_LITEHTML
     containers/test/container_test.cpp
+    test/codepoint_test.cpp
     test/contextTest.cpp
     test/cssTest.cpp
     test/documentTest.cpp
