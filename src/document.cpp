@@ -28,6 +28,88 @@
 #include "gumbo.h"
 #include "utf8_strings.h"
 
+#if defined(USE_ICU)
+
+#include "unicode/brkiter.h"
+#include "unicode/udata.h"
+
+using namespace icu;
+
+#endif
+
+namespace litehtml {
+namespace {
+
+// Split a Gumbo text node into one or more litehtml text elements.  Each text
+// element contains a single indivisible string of text (e.g., a word).  This
+// approach simplifies the renderer as the parser computes and caches the text
+// extents while the renderer only has to draw each individual element.
+
+#if defined(USE_ICU)
+
+void split_text_node(document* document, elements_vector& elements, const char* text)
+{
+	UErrorCode code = U_ZERO_ERROR;
+	BreakIterator* break_iterator = BreakIterator::createLineInstance(Locale::getEnglish(), code);
+
+	break_iterator->setText(text);
+
+	int32_t start = break_iterator->first();
+	for (int32_t end = break_iterator->next(); end != BreakIterator::DONE; start = end, end = break_iterator->next()) {
+		std::string str(text + start, end - start);
+		elements.push_back(std::make_shared<el_text>(litehtml_from_utf8(str.c_str()), document->shared_from_this()));
+	}
+}
+
+#else
+
+void split_text_node(document* document, elements_vector& elements, const char* text)
+{
+	std::wstring str_in = (const wchar_t*)utf8_to_wchar(text);
+	std::wstring str;
+	ucode_t c;
+	for (size_t i = 0; i < str_in.length(); i++)
+	{
+		c = (ucode_t) str_in[i];
+		if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
+		{
+			if (!str.empty())
+			{
+				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+				str.clear();
+			}
+			str += c;
+			elements.push_back(std::make_shared<el_space>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+			str.clear();
+		}
+		// CJK character range
+		else if (c >= 0x4E00 && c <= 0x9FCC)
+		{
+			if (!str.empty())
+			{
+				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+				str.clear();
+			}
+			str += c;
+			elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+			str.clear();
+		}
+		else
+		{
+			str += c;
+		}
+	}
+	if (!str.empty())
+	{
+		elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), document->shared_from_this()));
+	}
+}
+
+#endif
+
+} // namespace
+} // namespace litehtml
+
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
 	m_container	= objContainer;
@@ -116,7 +198,7 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 		doc->m_root->parse_styles();
 
 		// Now the m_tabular_elements is filled with tabular elements.
-		// We have to check the tabular elements for missing table elements 
+		// We have to check the tabular elements for missing table elements
 		// and create the anonymous boxes in visual table layout
 		doc->fix_tables_layout();
 
@@ -293,7 +375,7 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 int litehtml::document::cvt_units( const tchar_t* str, int fontSize, bool* is_percent/*= 0*/ ) const
 {
 	if(!str)	return 0;
-	
+
 	css_length val;
 	val.fromString(str);
 	if(is_percent && val.units() == css_units_percentage && !val.is_predefined())
@@ -409,9 +491,9 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 		}
 		cursor = m_over_element->get_cursor();
 	}
-	
+
 	m_container->set_cursor(cursor ? cursor : _t("auto"));
-	
+
 	if(state_was_changed)
 	{
 		return m_root->find_styles_changes(redraw_boxes, 0, 0);
@@ -691,7 +773,7 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 				{
 					child.clear();
 					create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child, parseTextNode);
-					std::for_each(child.begin(), child.end(), 
+					std::for_each(child.begin(), child.end(),
 						[&ret](element::ptr& el)
 						{
 							ret->appendChild(el);
@@ -704,48 +786,13 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 		break;
 	case GUMBO_NODE_TEXT:
 		{
-			std::wstring str;
-			std::wstring str_in = (const wchar_t*) (utf8_to_wchar(node->v.text.text));
-			if (!parseTextNode)
-			{
-				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str_in.c_str()), shared_from_this()));
+			const char* text = node->v.text.text;
+
+			if (!parseTextNode) {
+				elements.push_back(std::make_shared<el_text>(litehtml_from_utf8(text), shared_from_this()));
 				break;
-			}
-			ucode_t c;
-			for (size_t i = 0; i < str_in.length(); i++)
-			{
-				c = (ucode_t) str_in[i];
-				if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
-				{
-					if (!str.empty())
-					{
-						elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-						str.clear();
-					}
-					str += c;
-					elements.push_back(std::make_shared<el_space>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-					str.clear();
-				}
-				// CJK character range
-				else if (c >= 0x4E00 && c <= 0x9FCC)
-				{
-					if (!str.empty())
-					{
-						elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-						str.clear();
-					}
-					str += c;
-					elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-					str.clear();
-				}
-				else
-				{
-					str += c;
-				}
-			}
-			if (!str.empty())
-			{
-				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
+			} else {
+				split_text_node(this, elements, text);
 			}
 		}
 		break;
@@ -996,7 +1043,7 @@ void litehtml::document::append_children_from_utf8(element& parent, const char* 
 		child->parse_styles();
 
 		// Now the m_tabular_elements is filled with tabular elements.
-		// We have to check the tabular elements for missing table elements 
+		// We have to check the tabular elements for missing table elements
 		// and create the anonymous boxes in visual table layout
 		fix_tables_layout();
 

@@ -58,6 +58,7 @@ set(SOURCE_LITEHTML
     src/style.cpp
     src/stylesheet.cpp
     src/table.cpp
+    src/tstring_view.cpp
     src/url.cpp
     src/url_path.cpp
     src/utf8_strings.cpp
@@ -108,6 +109,7 @@ set(HEADER_LITEHTML
     include/litehtml/style.h
     include/litehtml/stylesheet.h
     include/litehtml/table.h
+    include/litehtml/tstring_view.h
     include/litehtml/types.h
     include/litehtml/url.h
     include/litehtml/url_path.h
@@ -124,6 +126,7 @@ set(TEST_LITEHTML
     test/documentTest.cpp
     test/layoutGlobalTest.cpp
     test/mediaQueryTest.cpp
+    test/tstring_view_test.cpp
     test/url_test.cpp
     test/url_path_test.cpp
     test/webColorTest.cpp
@@ -151,6 +154,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE include/${PROJECT_NAME})
 option(LITEHTML_UTF8 "Build litehtml with UTF-8 text conversion functions." OFF)
 if (LITEHTML_UTF8)
   target_compile_definitions(${PROJECT_NAME} PUBLIC LITEHTML_UTF8)
+endif()
+
+# ICU
+option(USE_ICU "Use ICU to locate word boundaries in text elements" OFF)
+if (USE_ICU)
+    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_ICU)
+    target_link_libraries(${PROJECT_NAME} PUBLIC icui18n icuuc icudata)
 endif()
 
 # Gumbo
