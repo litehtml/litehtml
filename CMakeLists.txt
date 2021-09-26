@@ -57,6 +57,7 @@ set(SOURCE_LITEHTML
     src/style.cpp
     src/stylesheet.cpp
     src/table.cpp
+    src/tstring_view.cpp
     src/utf8_strings.cpp
     src/web_color.cpp
     src/num_cvt.cpp
@@ -104,6 +105,7 @@ set(HEADER_LITEHTML
     include/litehtml/style.h
     include/litehtml/stylesheet.h
     include/litehtml/table.h
+    include/litehtml/tstring_view.h
     include/litehtml/types.h
     include/litehtml/utf8_strings.h
     include/litehtml/web_color.h
@@ -117,6 +119,7 @@ set(TEST_LITEHTML
     test/documentTest.cpp
     test/layoutGlobalTest.cpp
     test/mediaQueryTest.cpp
+    test/tstring_view_test.cpp
     test/webColorTest.cpp
 )
 
