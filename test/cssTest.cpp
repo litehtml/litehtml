@@ -442,7 +442,7 @@ TEST(CSSTest, ElementSelectorParse) {
   EXPECT_TRUE(selector.m_attrs.size() == 2);
 }
 
-TEST(CSSTest, SelectorParse) {
+TEST(CSSTest, DISABLED_SelectorParse) {
   css_selector selector(nullptr);
   // https://www.w3schools.com/cssref/css_selectors.asp
   assert(!selector.parse(_t("")));

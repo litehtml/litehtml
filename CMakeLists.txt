@@ -24,6 +24,7 @@ endif()
 set(SOURCE_LITEHTML
     src/background.cpp
     src/box.cpp
+    src/codepoint.cpp
     src/context.cpp
     src/css_length.cpp
     src/css_selector.cpp
@@ -57,6 +58,9 @@ set(SOURCE_LITEHTML
     src/style.cpp
     src/stylesheet.cpp
     src/table.cpp
+    src/tstring_view.cpp
+    src/url.cpp
+    src/url_path.cpp
     src/utf8_strings.cpp
     src/web_color.cpp
     src/num_cvt.cpp
@@ -68,6 +72,7 @@ set(HEADER_LITEHTML
     include/litehtml/background.h
     include/litehtml/borders.h
     include/litehtml/box.h
+    include/litehtml/codepoint.h
     include/litehtml/context.h
     include/litehtml/css_length.h
     include/litehtml/css_margins.h
@@ -104,7 +109,10 @@ set(HEADER_LITEHTML
     include/litehtml/style.h
     include/litehtml/stylesheet.h
     include/litehtml/table.h
+    include/litehtml/tstring_view.h
     include/litehtml/types.h
+    include/litehtml/url.h
+    include/litehtml/url_path.h
     include/litehtml/utf8_strings.h
     include/litehtml/web_color.h
     include/litehtml/num_cvt.h
@@ -112,11 +120,15 @@ set(HEADER_LITEHTML
 
 set(TEST_LITEHTML
     containers/test/container_test.cpp
+    test/codepoint_test.cpp
     test/contextTest.cpp
     test/cssTest.cpp
     test/documentTest.cpp
     test/layoutGlobalTest.cpp
     test/mediaQueryTest.cpp
+    test/tstring_view_test.cpp
+    test/url_test.cpp
+    test/url_path_test.cpp
     test/webColorTest.cpp
 )
 
