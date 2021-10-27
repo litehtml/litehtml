@@ -2,6 +2,7 @@
 #define LH_OS_TYPES_H
 
 #include <string>
+#include <cstdint>
 
 namespace litehtml
 {
