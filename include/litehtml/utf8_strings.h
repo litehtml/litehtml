@@ -1,6 +1,9 @@
 #ifndef LH_UTF8_STRINGS_H
 #define LH_UTF8_STRINGS_H
 
+#include "os_types.h"
+#include "types.h"
+
 namespace litehtml
 {
 	class utf8_to_wchar
