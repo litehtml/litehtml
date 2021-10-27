@@ -30,6 +30,7 @@
 #ifndef LITEHTML_TSTRING_VIEW_H__
 #define LITEHTML_TSTRING_VIEW_H__
 
+#include <cstddef>
 #include <ostream>
 
 #include "litehtml/os_types.h"
@@ -62,7 +63,7 @@ public:
 
     using size_type = size_t;
 
-    using difference_type = ptrdiff_t;
+    using difference_type = std::ptrdiff_t;
 
 public:
     tstring_view() = default;
