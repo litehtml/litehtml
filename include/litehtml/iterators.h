@@ -11,6 +11,9 @@ namespace litehtml
 	{
 	public:
 		virtual bool select(const element::ptr& el) = 0;
+
+        protected:
+		~iterator_selector() = default;
 	};
 
 	class elements_iterator
@@ -62,28 +65,28 @@ namespace litehtml
 		void next_idx();
 	};
 
-	class go_inside_inline : public iterator_selector
+	class go_inside_inline final : public iterator_selector
 	{
 	public:
-		virtual bool select(const element::ptr& el);
+		bool select(const element::ptr& el) override;
 	};
 
-	class go_inside_table : public iterator_selector
+	class go_inside_table final : public iterator_selector
 	{
 	public:
-		virtual bool select(const element::ptr& el);
+		bool select(const element::ptr& el) override;
 	};
 
-	class table_rows_selector : public iterator_selector
+	class table_rows_selector final : public iterator_selector
 	{
 	public:
-		virtual bool select(const element::ptr& el);
+		bool select(const element::ptr& el) override;
 	};
 
-	class table_cells_selector : public iterator_selector
+	class table_cells_selector final : public iterator_selector
 	{
 	public:
-		virtual bool select(const element::ptr& el);
+		bool select(const element::ptr& el) override;
 	};
 }
 

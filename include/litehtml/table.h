@@ -122,24 +122,27 @@ namespace litehtml
 	{
 	public:
 		virtual int& get(table_column& col) = 0;
+
+	protected:
+		~table_column_accessor() = default;
 	};
 
-	class table_column_accessor_max_width : public table_column_accessor
+	class table_column_accessor_max_width final : public table_column_accessor
 	{
 	public:
-		virtual int& get(table_column& col);
+		int& get(table_column& col) override;
 	};
 
-	class table_column_accessor_min_width : public table_column_accessor
+	class table_column_accessor_min_width final : public table_column_accessor
 	{
 	public:
-		virtual int& get(table_column& col);
+		int& get(table_column& col) override;
 	};
 
-	class table_column_accessor_width : public table_column_accessor
+	class table_column_accessor_width final : public table_column_accessor
 	{
 	public:
-		virtual int& get(table_column& col);
+		int& get(table_column& col) override;
 	};
 
 	struct table_cell

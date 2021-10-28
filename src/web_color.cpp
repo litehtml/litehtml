@@ -231,15 +231,15 @@ litehtml::tstring litehtml::web_color::resolve_name(const tchar_t* name, litehtm
 	{
 		if(!t_strcasecmp(name, g_def_colors[i].name))
 		{
-            return std::move(litehtml::tstring(g_def_colors[i].rgb));
+            return litehtml::tstring(g_def_colors[i].rgb);
 		}
 	}
     if (callback)
     {
         litehtml::tstring clr = callback->resolve_color(name);
-        return std::move(clr);
+        return clr;
     }
-    return std::move(litehtml::tstring());
+    return litehtml::tstring();
 }
 
 bool litehtml::web_color::is_color(const tchar_t* str)
