@@ -997,7 +997,7 @@ int litehtml::html_tag::get_floats_height(element_float el_float) const
 		}
 
 
-		for(const auto fb : m_floats_right)
+		for(const auto& fb : m_floats_right)
 		{
 			process = false;
 			switch(el_float)
@@ -1674,7 +1674,7 @@ bool litehtml::html_tag::is_body()  const
 	return false;
 }
 
-void litehtml::html_tag::set_data( const tchar_t* data )
+void litehtml::html_tag::set_data( const tchar_t* /*data*/ )
 {
 
 }
@@ -4276,7 +4276,7 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 	return ret_width;
 }
 
-int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pass /*= false*/)
+int litehtml::html_tag::render_table(int x, int y, int max_width, bool /*second_pass = false*/)
 {
 	if (!m_grid) return 0;
 
@@ -4568,7 +4568,6 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool second_pa
 		min_height = (int)m_css_min_height.val();
 	}
 
-	int extra_row_height = 0;
 	int minimum_table_height = std::max(block_height, min_height);
 
 	m_grid->calc_rows_height(minimum_table_height - table_height_spacing, m_border_spacing_y);
