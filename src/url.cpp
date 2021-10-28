@@ -31,6 +31,7 @@
 
 #include <iostream>
 #include <sstream>
+#include <algorithm>
 
 #include "litehtml/codepoint.h"
 #include "litehtml/url_path.h"
