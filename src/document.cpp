@@ -398,7 +398,7 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 		ret = val.calc_percent(size);
 		break;
 	case css_units_em:
-		ret = round_f(val.val() * fontSize);
+		ret = m_container->pt_to_px(round_f(val.val() * fontSize));
 		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_pt:
@@ -430,7 +430,7 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 		ret = (int)((double)std::max(m_media.height, m_media.width) * (double)val.val() / 100.0);
 		break;
 	case css_units_rem:
-		ret = (int) ((double) m_root->get_font_size() * (double) val.val());
+		ret = m_container->pt_to_px(round_f(val.val() * m_root->get_font_size()));
 		val.set_value((float) ret, css_units_px);
 		break;
 	default:
