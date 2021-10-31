@@ -904,11 +904,14 @@ void litehtml::document::fix_table_children(element::ptr& el_ptr, style_display 
 		{
 			if (!(*cur_iter)->is_white_space() || ((*cur_iter)->is_white_space() && !tmp.empty()))
 			{
-				if (tmp.empty())
+				if (disp != display_table_row_group || (*cur_iter)->get_display() != display_table_caption)
 				{
-					first_iter = cur_iter;
+					if (tmp.empty())
+					{
+						first_iter = cur_iter;
+					}
+					tmp.push_back((*cur_iter));
 				}
-				tmp.push_back((*cur_iter));
 			}
 			cur_iter++;
 		}

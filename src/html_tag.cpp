@@ -583,6 +583,14 @@ void litehtml::html_tag::init()
 			row = row_iter.next(false);
 		}
 
+		for (auto& el : m_children)
+		{
+			if (el->get_display() == display_table_caption)
+			{
+				m_grid->captions().push_back(el);
+			}
+		}
+
 		m_grid->finish();
 	}
 
@@ -2045,6 +2053,13 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 	{
 		if(el_pos.does_intersect(clip))
 		{
+			if (m_grid)
+			{
+				int captions_height = m_grid->captions_height();
+				pos.y += captions_height;
+				pos.height -= captions_height;
+			}
+
 			const background* bg = get_background();
 			if(bg)
 			{
@@ -4610,13 +4625,46 @@ int litehtml::html_tag::render_table(int x, int y, int max_width, bool /*second_
 
 	m_pos.width = table_width;
 
+	// Render table captions
+	// Table border doesn't round the caption so we have to start caption in the border position
+	int captions_height = -border_top();
+
+	for (auto& caption : m_grid->captions())
+	{
+		caption->render(-border_left(), captions_height, table_width + border_left() + border_right());
+		captions_height += caption->height();
+	}
+
+	if (captions_height)
+	{
+		// Add border height to get the top of cells
+		captions_height += border_top();
+
+		// Save caption height for draw_background
+		m_grid->captions_height(captions_height);
+
+		// Move table cells to the bottom side
+		for (int row = 0; row < m_grid->rows_count(); row++)
+		{
+			m_grid->row(row).el_row->m_pos.y += captions_height;
+			for (int col = 0; col < m_grid->cols_count(); col++)
+			{
+				table_cell* cell = m_grid->cell(col, row);
+				if (cell->el)
+				{
+					cell->el->m_pos.y += captions_height;
+				}
+			}
+		}
+	}
+
 	calc_auto_margins(parent_width);
 
 	m_pos.move_to(x, y);
 	m_pos.x += content_margins_left();
 	m_pos.y += content_margins_top();
 	m_pos.width = table_width;
-	m_pos.height = table_height;
+	m_pos.height = table_height + captions_height;
 
 	return max_table_width;
 }
@@ -4734,6 +4782,11 @@ void litehtml::html_tag::draw_children_table(uint_ptr hdc, int x, int y, const p
 	position pos = m_pos;
 	pos.x += x;
 	pos.y += y;
+	for (auto& caption : m_grid->captions())
+	{
+		caption->draw(hdc, pos.x, pos.y, clip);
+		caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
+	}
 	for (int row = 0; row < m_grid->rows_count(); row++)
 	{
 		if (flag == draw_block)
