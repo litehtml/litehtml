@@ -25,6 +25,7 @@
 #include <math.h>
 #include <stdio.h>
 #include <algorithm>
+#include <functional>
 #include "gumbo.h"
 #include "utf8_strings.h"
 
@@ -709,43 +710,12 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 			if (!parseTextNode)
 			{
 				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str_in.c_str()), shared_from_this()));
-				break;
 			}
-			ucode_t c;
-			for (size_t i = 0; i < str_in.length(); i++)
+			else
 			{
-				c = (ucode_t) str_in[i];
-				if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
-				{
-					if (!str.empty())
-					{
-						elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-						str.clear();
-					}
-					str += c;
-					elements.push_back(std::make_shared<el_space>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-					str.clear();
-				}
-				// CJK character range
-				else if (c >= 0x4E00 && c <= 0x9FCC)
-				{
-					if (!str.empty())
-					{
-						elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-						str.clear();
-					}
-					str += c;
-					elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
-					str.clear();
-				}
-				else
-				{
-					str += c;
-				}
-			}
-			if (!str.empty())
-			{
-				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str.c_str()), shared_from_this()));
+				m_container->split_text(node->v.text.text,
+					[this, &elements](const tchar_t* text) { elements.push_back(std::make_shared<el_text>(text, shared_from_this())); },
+					[this, &elements](const tchar_t* text) { elements.push_back(std::make_shared<el_space>(text, shared_from_this())); });
 			}
 		}
 		break;
