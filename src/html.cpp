@@ -167,3 +167,37 @@ void litehtml::join_string(tstring& str, const string_vector& tokens, const tstr
 
 	str = ss.str();
 }
+
+int litehtml::strcasecmp(const char *s1, const char *s2)
+{
+	int i, d, c;
+
+	for (i = 0;; i++)
+	{
+		c = t_tolower((unsigned char)s1[i]);
+		d = c - t_tolower((unsigned char)s2[i]);
+		if (d < 0)
+			return -1;
+		else if (d > 0)
+			return 1;
+		else if (c == 0)
+			return 0;
+	}
+}
+
+int litehtml::strncasecmp(const char *s1, const char *s2, size_t n)
+{
+	int i, d, c;
+
+	for (i = 0; i < n; i++)
+	{
+		c = t_tolower((unsigned char)s1[i]);
+		d = c - t_tolower((unsigned char)s2[i]);
+		if (d < 0)
+			return -1;
+		else if (d > 0)
+			return 1;
+	}
+
+	return 0;
+}
