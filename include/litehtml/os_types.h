@@ -74,16 +74,16 @@ namespace litehtml
 	#define t_strcmp			strcmp
 	#define t_strncmp			strncmp
 
-	#define t_strcasecmp		strcasecmp
-	#define t_strncasecmp		strncasecmp
+	#define t_strcasecmp	litehtml::strcasecmp
+	#define t_strncasecmp	litehtml::strncasecmp
 	#define t_itoa(value, buffer, size, radix)	snprintf(buffer, size, "%d", value)
 
 	#define t_strtol			strtol
 	#define t_atoi				atoi
 	#define t_strtod			strtod
 	#define t_strstr			strstr
-	#define t_tolower			tolower
-	#define t_isdigit			isdigit
+	#define t_tolower			litehtml::tolower
+	#define t_isdigit			litehtml::isdigit
 	#define t_to_string(val)	std::to_string(val)
 
 #endif
