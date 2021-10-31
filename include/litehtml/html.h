@@ -77,6 +77,19 @@ namespace litehtml
 	void split_string(const tstring& str, string_vector& tokens, const tstring& delims, const tstring& delims_preserve = _t(""), const tstring& quote = _t("\""));
 	void join_string(tstring& str, const string_vector& tokens, const tstring& delims);
 
+	int strcasecmp(const char *s1, const char *s2);
+	int strncasecmp(const char *s1, const char *s2, size_t n);
+	
+	inline int isdigit(int c)
+	{
+		return (c >= '0' && c <= '9');
+	}
+	
+	inline int tolower(int c)
+	{
+		return (c >= 'A' && c <= 'Z' ? c + 'a' - 'A' : c);
+	}
+	
 	inline int round_f(float val)
 	{
 		int int_val = (int) val;
