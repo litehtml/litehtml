@@ -169,67 +169,6 @@ void litehtml::join_string(tstring& str, const string_vector& tokens, const tstr
 	str = ss.str();
 }
 
-double litehtml::strtod(const char *nptr, char **endptr)
-{
-	tstring num;
-	tstring dec;
-	const char *p;
-	double val = 0;
-	bool neg;
-	double f;
-	int i;
-	
-	p = nptr;
-	
-	if (*p == '+')
-	{
-		neg = false;
-		p++;
-	}
-	else if (*p == '-')
-	{
-		neg = true;
-		p++;
-	}
-	
-	while (*p)
-	{
-		if (*p == '.' || !t_isdigit(*p))
-			break;
-		num += *p++;
-	}
-	
-	f = 1.0;
-	for (i = num.length() - 1; i >= 0; i--)
-	{
-		val += (num[i] - '0') * f;
-		f *= 10.0;
-	}
-	
-	if (*p == '.')
-	{
-		p++;
-		while(*p)
-		{
-			if (!t_isdigit(*p))
-				break;
-			dec += *p++;
-		}
-		
-		f = 1.0;
-		for (i = 0; i < dec.length(); i++)
-		{
-			f /= 10.0;
-			val += (dec[i] - '0') * f;
-		}
-	}
-	
-	if (endptr)
-		*endptr = (char *)p;
-	
-	return neg ? (-val) : val;
-}
-
 void litehtml::document_container::split_text(const char* text, std::function<void(const tchar_t*)> on_word, std::function<void(const tchar_t*)> on_space)
 {
 	std::wstring str;
