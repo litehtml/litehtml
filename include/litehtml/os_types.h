@@ -80,7 +80,7 @@ namespace litehtml
 
 	#define t_strtol			strtol
 	#define t_atoi				atoi
-	#define t_strtod			strtod
+	#define t_strtod			litehtml::strtod
 	#define t_strstr			strstr
 	#define t_tolower			tolower
 	#define t_isdigit			isdigit
