@@ -64,6 +64,7 @@ set(SOURCE_LITEHTML
     src/utf8_strings.cpp
     src/web_color.cpp
     src/num_cvt.cpp
+    src/strtod.cpp
 )
 
 set(HEADER_LITEHTML

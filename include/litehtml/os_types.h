@@ -23,11 +23,11 @@ namespace litehtml
 	#define t_strncasecmp		_wcsnicmp
 	#define t_strtol			wcstol
 	#define t_atoi				_wtoi
-	#define t_strtod			wcstod
 	#define t_itoa(value, buffer, size, radix)	_itow_s(value, buffer, size, radix)
 	#define t_strstr			wcsstr
 	#define t_tolower			towlower
 	#define t_isdigit			iswdigit
+	#define t_isspace			iswspace
 	#define t_to_string(val)	std::to_wstring(val)
 
 #else
@@ -45,11 +45,11 @@ namespace litehtml
 	#define t_strncasecmp		_strnicmp
 	#define t_strtol			strtol
 	#define t_atoi				atoi
-	#define t_strtod			strtod
 	#define t_itoa(value, buffer, size, radix)	_itoa_s(value, buffer, size, radix)
 	#define t_strstr			strstr
 	#define t_tolower			tolower
 	#define t_isdigit			isdigit
+	#define t_isspace			isspace
 	#define t_to_string(val)	std::to_string(val)
 
 #endif
@@ -65,7 +65,7 @@ namespace litehtml
 
 	typedef std::string			tstring;
 	typedef char				tchar_t;
-	typedef std::uintptr_t			uint_ptr;
+	typedef std::uintptr_t		uint_ptr;
 	typedef std::stringstream	tstringstream;
 
 	#define _t(quote)			quote
@@ -80,10 +80,10 @@ namespace litehtml
 
 	#define t_strtol			strtol
 	#define t_atoi				atoi
-	#define t_strtod			strtod
 	#define t_strstr			strstr
 	#define t_tolower			tolower
 	#define t_isdigit			isdigit
+    #define t_isspace			isspace
 	#define t_to_string(val)	std::to_string(val)
 
 #endif
