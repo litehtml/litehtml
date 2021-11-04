@@ -21,7 +21,10 @@ litehtml::el_table::~el_table()
 bool litehtml::el_table::appendChild(const litehtml::element::ptr& el)
 {
 	if(!el)	return false;
-	if(!t_strcmp(el->get_tagName(), _t("tbody")) || !t_strcmp(el->get_tagName(), _t("thead")) || !t_strcmp(el->get_tagName(), _t("tfoot")))
+	if( !t_strcmp(el->get_tagName(), _t("tbody")) || 
+		!t_strcmp(el->get_tagName(), _t("thead")) || 
+		!t_strcmp(el->get_tagName(), _t("tfoot")) ||
+		!t_strcmp(el->get_tagName(), _t("caption")))
 	{
 		return html_tag::appendChild(el);
 	}

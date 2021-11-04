@@ -210,12 +210,15 @@ namespace litehtml
 		rows					m_cells;
 		table_column::vector	m_columns;
 		table_row::vector		m_rows;
+		elements_vector			m_captions;
+		int						m_captions_height;
 	public:
 
 		table_grid()
 		{
 			m_rows_count	= 0;
 			m_cols_count	= 0;
+			m_captions_height = 0;
 		}
 
 		void			clear();
@@ -226,9 +229,13 @@ namespace litehtml
 		table_cell*		cell(int t_col, int t_row);
 		table_column&	column(int c)	{ return m_columns[c];	}
 		table_row&		row(int r)		{ return m_rows[r];		}
+		elements_vector& captions()		{ return m_captions; }
 
-		int				rows_count()	{ return m_rows_count;	}
-		int				cols_count()	{ return m_cols_count;	}
+		int				rows_count() const	{ return m_rows_count;	}
+		int				cols_count() const	{ return m_cols_count; }
+
+		void			captions_height(int height) { m_captions_height = height; }
+		int				captions_height() const { return m_captions_height; }
 
 		void			distribute_max_width(int width, int start, int end);
 		void			distribute_min_width(int width, int start, int end);

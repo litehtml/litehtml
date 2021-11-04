@@ -64,6 +64,7 @@ set(SOURCE_LITEHTML
     src/utf8_strings.cpp
     src/web_color.cpp
     src/num_cvt.cpp
+    src/strtod.cpp
 )
 
 set(HEADER_LITEHTML
@@ -154,13 +155,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE include/${PROJECT_NAME})
 option(LITEHTML_UTF8 "Build litehtml with UTF-8 text conversion functions." OFF)
 if (LITEHTML_UTF8)
   target_compile_definitions(${PROJECT_NAME} PUBLIC LITEHTML_UTF8)
-endif()
-
-# ICU
-option(USE_ICU "Use ICU to locate word boundaries in text elements" OFF)
-if (USE_ICU)
-    target_compile_definitions(${PROJECT_NAME} PUBLIC USE_ICU)
-    target_link_libraries(${PROJECT_NAME} PUBLIC icui18n icuuc icudata)
 endif()
 
 # Gumbo
