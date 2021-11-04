@@ -1,18 +1,18 @@
 #include "container_linux.h"
 #define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 
 #ifndef M_PI
 #       define M_PI    3.14159265358979323846
 #endif
 
-container_linux::container_linux(void)
+container_linux::container_linux()
 {
 	m_temp_surface	= cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 2, 2);
 	m_temp_cr		= cairo_create(m_temp_surface);
 }
 
-container_linux::~container_linux(void)
+container_linux::~container_linux()
 {
 	clear_images();
 	cairo_surface_destroy(m_temp_surface);
@@ -25,13 +25,13 @@ litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceNa
 	litehtml::split_string(faceName, fonts, ",");
 	litehtml::trim(fonts[0]);
 
-	cairo_font_face_t* fnt = 0;
+	cairo_font_face_t* fnt = nullptr;
 
 	FcPattern *pattern = FcPatternCreate();
 	bool found = false;
-	for(litehtml::string_vector::iterator i = fonts.begin(); i != fonts.end(); i++)
+	for(auto& item : fonts)
 	{
-		if(FcPatternAddString(pattern, FC_FAMILY, (unsigned char *) i->c_str()))
+		if(FcPatternAddString(pattern, FC_FAMILY, (unsigned char *) item.c_str()))
 		{
 			found = true;
 			break;
@@ -65,7 +65,7 @@ litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceNa
 
 	FcPatternDestroy(pattern);
 
-	cairo_font* ret = 0;
+	cairo_font* ret = nullptr;
 
 	if(fm && fnt)
 	{
@@ -89,8 +89,8 @@ litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceNa
 		ret = new cairo_font;
 		ret->font		= fnt;
 		ret->size		= size;
-		ret->strikeout 	= (decoration & litehtml::font_decoration_linethrough) ? true : false;
-		ret->underline	= (decoration & litehtml::font_decoration_underline) ? true : false;
+		ret->strikeout 	= (decoration & litehtml::font_decoration_linethrough) != 0;
+		ret->underline	= (decoration & litehtml::font_decoration_underline) != 0;
 
 	}
 
@@ -99,7 +99,7 @@ litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceNa
 
 void container_linux::delete_font( litehtml::uint_ptr hFont )
 {
-	cairo_font* fnt = (cairo_font*) hFont;
+	auto* fnt = (cairo_font*) hFont;
 	if(fnt)
 	{
 		cairo_font_face_destroy(fnt->font);
@@ -109,7 +109,7 @@ void container_linux::delete_font( litehtml::uint_ptr hFont )
 
 int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_ptr hFont )
 {
-	cairo_font* fnt = (cairo_font*) hFont;
+	auto* fnt = (cairo_font*) hFont;
 
 	cairo_save(m_temp_cr);
 
@@ -125,8 +125,8 @@ int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_p
 
 void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
-	cairo_font* fnt = (cairo_font*) hFont;
-	cairo_t* cr		= (cairo_t*) hdc;
+	auto* fnt = (cairo_font*) hFont;
+	auto* cr		= (cairo_t*) hdc;
 	cairo_save(cr);
 
 	apply_clip(cr);
@@ -137,7 +137,7 @@ void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
 	cairo_font_extents(cr, &ext);
 
 	int x = pos.left();
-	int y = pos.bottom()	- ext.descent;
+	int y = pos.bottom() - ext.descent;
 
 	set_color(cr, color);
 
@@ -210,7 +210,7 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 		{
 		case litehtml::list_style_type_circle:
 			{
-				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 0.5);
+				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 1);
 			}
 			break;
 		case litehtml::list_style_type_disc:
@@ -221,7 +221,7 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 		case litehtml::list_style_type_square:
 			if(hdc)
 			{
-				cairo_t* cr = (cairo_t*) hdc;
+				auto* cr = (cairo_t*) hdc;
 				cairo_save(cr);
 
 				cairo_new_path(cr);
@@ -243,7 +243,7 @@ void container_linux::load_image( const litehtml::tchar_t* src, const litehtml::
 {
 	litehtml::tstring url;
 	make_url(src, baseurl, url);
-	if(m_images.find(url.c_str()) == m_images.end())
+	if(m_images.find(url) == m_images.end())
 	{
 		try
 		{
@@ -265,7 +265,7 @@ void container_linux::get_image_size( const litehtml::tchar_t* src, const liteht
 	litehtml::tstring url;
 	make_url(src, baseurl, url);
 
-	images_map::iterator img = m_images.find(url.c_str());
+	auto img = m_images.find(url);
 	if(img != m_images.end())
 	{
 		sz.width	= img->second->get_width();
@@ -279,7 +279,7 @@ void container_linux::get_image_size( const litehtml::tchar_t* src, const liteht
 
 void container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::background_paint& bg )
 {
-	cairo_t* cr = (cairo_t*) hdc;
+	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
@@ -299,7 +299,7 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 	make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
 
 	//lock_images_cache();
-	images_map::iterator img_i = m_images.find(url.c_str());
+	auto img_i = m_images.find(url);
 	if(img_i != m_images.end() && img_i->second)
 	{
 		Glib::RefPtr<Gdk::Pixbuf> bgbmp = img_i->second;
@@ -385,7 +385,7 @@ void container_linux::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 
 void container_linux::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root)
 {
-	cairo_t* cr = (cairo_t*) hdc;
+	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
@@ -717,7 +717,7 @@ void container_linux::apply_clip( cairo_t* cr )
 
 void container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width )
 {
-	if(!cr) return;
+	if(!cr || !width || !height) return;
 	cairo_save(cr);
 
 	apply_clip(cr);
@@ -737,7 +737,7 @@ void container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, int he
 
 void container_linux::fill_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color )
 {
-	if(!cr) return;
+	if(!cr || !width || !height) return;
 	cairo_save(cr);
 
 	apply_clip(cr);
@@ -776,7 +776,7 @@ std::shared_ptr<litehtml::element>	container_linux::create_element(const litehtm
 																	  const litehtml::string_map &attributes,
 																	  const std::shared_ptr<litehtml::document> &doc)
 {
-	return 0;
+	return nullptr;
 }
 
 void container_linux::rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius )
@@ -824,7 +824,7 @@ void container_linux::draw_pixbuf(cairo_t* cr, const Glib::RefPtr<Gdk::Pixbuf>& 
 
 		if(cx != bmp->get_width() || cy != bmp->get_height())
 		{
-			Glib::RefPtr<Gdk::Pixbuf> new_img = bmp->scale_simple(cx, cy, Gdk::INTERP_BILINEAR);;
+			Glib::RefPtr<Gdk::Pixbuf> new_img = bmp->scale_simple(cx, cy, Gdk::INTERP_BILINEAR);
 			Gdk::Cairo::set_source_pixbuf(crobj, new_img, x, y);
 			crobj->paint();
 		} else
@@ -839,7 +839,7 @@ void container_linux::draw_pixbuf(cairo_t* cr, const Glib::RefPtr<Gdk::Pixbuf>& 
 
 cairo_surface_t* container_linux::surface_from_pixbuf(const Glib::RefPtr<Gdk::Pixbuf>& bmp)
 {
-	cairo_surface_t* ret = NULL;
+	cairo_surface_t* ret;
 
 	if(bmp->get_has_alpha())
 	{
