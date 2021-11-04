@@ -80,15 +80,15 @@ namespace litehtml
 	void join_string(tstring& str, const string_vector& tokens, const tstring& delims);
     double t_strtod(const tchar_t* string, tchar_t** endPtr);
 
-	int strcasecmp(const char *s1, const char *s2);
-	int strncasecmp(const char *s1, const char *s2, size_t n);
+	int t_strcasecmp(const tchar_t *s1, const tchar_t *s2);
+	int t_strncasecmp(const tchar_t *s1, const tchar_t *s2, size_t n);
 	
-	inline int isdigit(int c)
+	inline int t_isdigit(int c)
 	{
 		return (c >= '0' && c <= '9');
 	}
 	
-	inline int tolower(int c)
+	inline int t_tolower(int c)
 	{
 		return (c >= 'A' && c <= 'Z' ? c + 'a' - 'A' : c);
 	}
