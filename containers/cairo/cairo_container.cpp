@@ -1011,7 +1011,7 @@ litehtml::tstring cairo_container::resolve_color(const litehtml::tstring& color)
 
     for (auto& clr : colors)
     {
-        if (!t_strcasecmp(clr.name, color.c_str()))
+		if (!litehtml::t_strcasecmp(clr.name, color.c_str()))
         {
             litehtml::tchar_t  str_clr[20];
             DWORD rgb_color =  GetSysColor(clr.color_index);

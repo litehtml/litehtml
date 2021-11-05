@@ -265,7 +265,7 @@ double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** e
 done:
     if (endPtr != nullptr)
     {
-	    *endPtr = (char *) p;
+	    *endPtr = (litehtml::tchar_t *) p;
     }
 
     if (sign)

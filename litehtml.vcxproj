@@ -352,6 +352,7 @@
     <ClCompile Include="src\iterators.cpp" />
     <ClCompile Include="src\media_query.cpp" />
     <ClCompile Include="src\num_cvt.cpp" />
+    <ClCompile Include="src\strtod.cpp" />
     <ClCompile Include="src\style.cpp" />
     <ClCompile Include="src\stylesheet.cpp" />
     <ClCompile Include="src\table.cpp" />
