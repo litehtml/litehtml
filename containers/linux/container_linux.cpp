@@ -23,7 +23,8 @@ litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceNa
 {
 	litehtml::string_vector fonts;
 	litehtml::split_string(faceName, fonts, ",");
-	litehtml::trim(fonts[0]);
+
+    fonts.push_back(get_default_font_name());
 
 	cairo_font_face_t* fnt = nullptr;
 
@@ -31,6 +32,15 @@ litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceNa
 	bool found = false;
 	for(auto& item : fonts)
 	{
+        litehtml::trim(item);
+        if (item.front() == '"' || item.front() == '\'')
+        {
+            item.erase(0, 1);
+        }
+        if (item.back() == '"' || item.front() == '\'')
+        {
+            item.erase(item.length() - 1, 1);
+        }
 		if(FcPatternAddString(pattern, FC_FAMILY, (unsigned char *) item.c_str()))
 		{
 			found = true;
@@ -126,7 +136,7 @@ int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_p
 void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
 	auto* fnt = (cairo_font*) hFont;
-	auto* cr		= (cairo_t*) hdc;
+	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 
 	apply_clip(cr);
@@ -137,7 +147,7 @@ void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
 	cairo_font_extents(cr, &ext);
 
 	int x = pos.left();
-	int y = pos.bottom() - ext.descent;
+	int y = pos.bottom() - litehtml::round_d(ext.descent);
 
 	set_color(cr, color);
 
@@ -769,7 +779,7 @@ void container_linux::clear_images()
 
 const litehtml::tchar_t* container_linux::get_default_font_name() const
 {
-	return "Times New Roman";
+	return "sans-serif";
 }
 
 std::shared_ptr<litehtml::element>	container_linux::create_element(const litehtml::tchar_t *tag_name,
