@@ -16,7 +16,7 @@ namespace litehtml
 	private:
 		void	add_text(const tstring& txt);
 		void	add_function(const tstring& fnc, const tstring& params);
-		tchar_t convert_escape(const tchar_t* txt);
+		tstring convert_escape(const tchar_t* txt);
 	};
 
 	class el_before : public el_before_after_base

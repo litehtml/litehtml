@@ -3,6 +3,7 @@
 #include "el_text.h"
 #include "el_space.h"
 #include "el_image.h"
+#include "utf8_strings.h"
 
 litehtml::el_before_after_base::el_before_after_base(const std::shared_ptr<litehtml::document>& doc, bool before) : html_tag(doc)
 {
@@ -188,10 +189,13 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 	}
 }
 
-litehtml::tchar_t litehtml::el_before_after_base::convert_escape( const tchar_t* txt )
+litehtml::tstring litehtml::el_before_after_base::convert_escape( const tchar_t* txt )
 {
-	tchar_t* sss = 0;
-	return (tchar_t) t_strtol(txt, &sss, 16);
+    tchar_t* str_end;
+	wchar_t u_str[2];
+    u_str[0] = (wchar_t) t_strtol(txt, &str_end, 16);
+    u_str[1] = 0;
+    return litehtml_from_wchar(u_str).c_str();
 }
 
 void litehtml::el_before_after_base::apply_stylesheet( const litehtml::css& stylesheet )
