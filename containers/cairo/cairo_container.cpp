@@ -40,11 +40,11 @@ litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceNa
 		delete f;
 #else
 		fnt_name = fonts[0];
-		if (fnt_name.front() == '"')
+		if (fnt_name.front() == L'"' || fnt_name.front() == L'\'')
 		{
 			fnt_name.erase(0, 1);
 		}
-		if (fnt_name.back() == '"')
+		if (fnt_name.back() == L'"' || fnt_name.back() == L'\'')
 		{
 			fnt_name.erase(fnt_name.length() - 1, 1);
 		}
