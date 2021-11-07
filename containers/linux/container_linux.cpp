@@ -259,8 +259,7 @@ void container_linux::load_image( const litehtml::tchar_t* src, const litehtml::
 			}
 		} catch(...)
 		{
-			int iii=0;
-			iii++;
+            m_images[url.c_str()] = Glib::RefPtr<Gdk::Pixbuf>(nullptr);
 		}
 	}
 }
@@ -273,8 +272,15 @@ void container_linux::get_image_size( const litehtml::tchar_t* src, const liteht
 	auto img = m_images.find(url);
 	if(img != m_images.end())
 	{
-		sz.width	= img->second->get_width();
-		sz.height	= img->second->get_height();
+        if(img->second)
+        {
+            sz.width = img->second->get_width();
+            sz.height = img->second->get_height();
+        } else
+        {
+            sz.width	= 0;
+            sz.height	= 0;
+        }
 	} else
 	{
 		sz.width	= 0;
