@@ -195,7 +195,7 @@ litehtml::tstring litehtml::el_before_after_base::convert_escape( const tchar_t*
 	wchar_t u_str[2];
     u_str[0] = (wchar_t) t_strtol(txt, &str_end, 16);
     u_str[1] = 0;
-    return litehtml_from_wchar(u_str).c_str();
+	return litehtml::tstring(litehtml_from_wchar(u_str));
 }
 
 void litehtml::el_before_after_base::apply_stylesheet( const litehtml::css& stylesheet )
