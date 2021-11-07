@@ -121,7 +121,7 @@ void cairo_container::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
 	}
 }
 
-int cairo_container::pt_to_px( int pt )
+int cairo_container::pt_to_px( int pt ) const
 {
 	HDC dc = GetDC(NULL);
 	int ret = MulDiv(pt, GetDeviceCaps(dc, LOGPIXELSY), 72);

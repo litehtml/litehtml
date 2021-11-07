@@ -4,6 +4,7 @@
 #include "../../include/litehtml.h"
 #include <cairo.h>
 #include <gtkmm.h>
+#include <pango/pangocairo.h>
 
 struct cairo_clip_box
 {
@@ -32,10 +33,16 @@ struct cairo_clip_box
 
 struct cairo_font
 {
-	cairo_font_face_t*	font;
-	int					size;
-	bool				underline;
-	bool				strikeout;
+    PangoFontDescription* font;
+	int size;
+	bool underline;
+	bool strikeout;
+    int ascent;
+    int descent;
+    int underline_thickness;
+    int underline_position;
+    int strikethrough_thickness;
+    int strikethrough_position;
 };
 
 class container_linux :	public litehtml::document_container
@@ -55,7 +62,7 @@ public:
 	void delete_font(litehtml::uint_ptr hFont) override;
 	int text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont) override;
 	void draw_text(litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) override;
-	int pt_to_px(int pt) override;
+	int pt_to_px(int pt) const override;
 	int get_default_font_size() const override;
 	const litehtml::tchar_t*	get_default_font_name() const override;
 	void load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready) override;

@@ -14,7 +14,7 @@ litehtml::uint_ptr container_test::create_font(const litehtml::tchar_t* faceName
 void container_test::delete_font(litehtml::uint_ptr hFont) {}
 int container_test::text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont) { return 0; }
 void container_test::draw_text(litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) {}
-int container_test::pt_to_px(int pt) { return (int)((double)pt * 96 / 72.0); }
+int container_test::pt_to_px(int pt) const { return (int)((double)pt * 96 / 72.0); }
 int container_test::get_default_font_size() const { return 16; }
 const litehtml::tchar_t* container_test::get_default_font_name() const { return _t("Times New Roman"); }
 void container_test::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) {}
