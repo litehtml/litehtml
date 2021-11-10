@@ -33,8 +33,8 @@ namespace litehtml
 		
 		virtual void select_all(const css_selector& selector, elements_vector& res);
 	public:
-		element(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~element();
+		explicit element(const std::shared_ptr<litehtml::document>& doc);
+        virtual ~element() = default;
 
 		// returns refer to m_pos member;
 		position&					get_position();
@@ -79,11 +79,11 @@ namespace litehtml
 		bool						collapse_bottom_margin()	const;
 		bool						is_positioned()				const;
 
-		bool						skip();
+		bool						skip() const;
 		void						skip(bool val);
 		bool						have_parent() const;
 		element::ptr				parent() const;
-		void						parent(element::ptr par);
+		void						parent(const element::ptr& par);
 		bool						is_visible() const;
 		int							calc_width(int defVal) const;
 		int							get_inline_shift_left();
@@ -131,7 +131,7 @@ namespace litehtml
 		virtual css_length			get_css_height() const;
 
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
-		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = 0) const;
+		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = nullptr) const;
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				refresh_styles();
 		virtual bool				is_white_space() const;
@@ -154,22 +154,22 @@ namespace litehtml
 		virtual white_space			get_white_space() const;
 		virtual style_display		get_display() const;
 		virtual visibility			get_visibility() const;
-		virtual element_position	get_element_position(css_offsets* offsets = 0) const;
+		virtual element_position	get_element_position(css_offsets* offsets = nullptr) const;
 		virtual void				get_inline_boxes(position::vector& boxes);
 		virtual void				parse_styles(bool is_reparse = false);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
-		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = 0);
-		virtual uint_ptr			get_font(font_metrics* fm = 0);
+		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = nullptr);
+		virtual uint_ptr			get_font(font_metrics* fm = nullptr);
 		virtual int					get_font_size() const;
 		virtual void				get_text(tstring& text);
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
-		virtual element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
 		virtual bool				is_ancestor(const ptr &el) const;
-		virtual element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
-		virtual element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = 0);
+		virtual element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
+		virtual element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
 		virtual bool				is_first_child_inline(const element::ptr& el) const;
 		virtual bool				is_last_child_inline(const element::ptr& el);
 		virtual bool				have_inline_child() const;
@@ -324,7 +324,7 @@ namespace litehtml
 		return m_borders.right;
 	}
 
-	inline bool litehtml::element::skip()
+	inline bool litehtml::element::skip() const
 	{
 		return m_skip;
 	}
@@ -344,7 +344,7 @@ namespace litehtml
 		return m_parent.lock();
 	}
 
-	inline void litehtml::element::parent(element::ptr par)
+	inline void litehtml::element::parent(const element::ptr& par)
 	{
 		m_parent = par;
 	}

@@ -23,21 +23,21 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string(const tstri
 	string_vector tokens;
 	split_string(str, tokens, _t(" \t\r\n"), _t(""), _t("("));
 
-	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+	for(auto & token : tokens)
 	{
-		if((*tok) == _t("not"))
+		if(token == _t("not"))
 		{
 			query->m_not = true;
-		} else if(tok->at(0) == _t('('))
+		} else if(token.at(0) == _t('('))
 		{
-			tok->erase(0, 1);
-			if(tok->at(tok->length() - 1) == _t(')'))
+			token.erase(0, 1);
+			if(token.at(token.length() - 1) == _t(')'))
 			{
-				tok->erase(tok->length() - 1, 1);
+				token.erase(token.length() - 1, 1);
 			}
 			media_query_expression expr;
 			string_vector expr_tokens;
-			split_string((*tok), expr_tokens, _t(":"));
+			split_string(token, expr_tokens, _t(":"));
 			if(!expr_tokens.empty())
 			{
 				trim(expr_tokens[0]);
@@ -69,10 +69,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string(const tstri
 							{
 								css_length length;
 								length.fromString(expr_tokens[1]);
-								if(length.units() == css_units_dpcm)
-								{
-									expr.val = (int) (length.val() * 2.54);
-								} else if(length.units() == css_units_dpi)
+								if(length.units() == css_units_dpcm || length.units() == css_units_dpi)
 								{
 									expr.val = (int) (length.val() * 2.54);
 								} else
@@ -91,7 +88,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string(const tstri
 			}
 		} else
 		{
-			query->m_media_type = (media_type) value_index((*tok), media_type_strings, media_type_all);
+			query->m_media_type = (media_type) value_index(token, media_type_strings, media_type_all);
 
 		}
 	}
@@ -105,11 +102,12 @@ bool litehtml::media_query::check( const media_features& features ) const
 	if(m_media_type == media_type_all || m_media_type == features.type)
 	{
 		res = true;
-		for(media_query_expression::vector::const_iterator expr = m_expressions.begin(); expr != m_expressions.end() && res; expr++)
+		for(auto m_expression : m_expressions)
 		{
-			if(!expr->check(features))
+			if(!m_expression.check(features))
 			{
 				res = false;
+                break;
 			}
 		}
 	}
@@ -131,12 +129,12 @@ litehtml::media_query_list::ptr litehtml::media_query_list::create_from_string(c
 	string_vector tokens;
 	split_string(str, tokens, _t(","));
 
-	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+	for(auto & token : tokens)
 	{
-		trim(*tok);
-		lcase(*tok);
+		trim(token);
+		lcase(token);
 
-		litehtml::media_query::ptr query = media_query::create_from_string(*tok, doc);
+		litehtml::media_query::ptr query = media_query::create_from_string(token, doc);
 		if(query)
 		{
 			list->m_queries.push_back(query);
@@ -144,7 +142,7 @@ litehtml::media_query_list::ptr litehtml::media_query_list::create_from_string(c
 	}
 	if(list->m_queries.empty())
 	{
-		list = 0;
+		list = nullptr;
 	}
 
 	return list;
@@ -154,11 +152,12 @@ bool litehtml::media_query_list::apply_media_features( const media_features& fea
 {
 	bool apply = false;
 	
-	for(media_query::vector::iterator iter = m_queries.begin(); iter != m_queries.end() && !apply; iter++)
+	for(auto & query : m_queries)
 	{
-		if((*iter)->check(features))
+		if(query->check(features))
 		{
 			apply = true;
+            break;
 		}
 	}
 

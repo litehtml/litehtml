@@ -12,15 +12,8 @@ namespace litehtml
 	{
 		css_selector::vector	m_selectors;
 	public:
-		css()
-		{
-
-		}
-		
-		~css()
-		{
-
-		}
+		css() = default;
+		~css() = default;
 
 		const css_selector::vector& selectors() const
 		{
@@ -38,12 +31,12 @@ namespace litehtml
 
 	private:
 		void	parse_atrule(const tstring& text, const tchar_t* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media);
-		void	add_selector(css_selector::ptr selector);
+		void	add_selector(const css_selector::ptr& selector);
 		bool	parse_selectors(const tstring& txt, const litehtml::style::ptr& styles, const media_query_list::ptr& media);
 
 	};
 
-	inline void litehtml::css::add_selector( css_selector::ptr selector )
+	inline void litehtml::css::add_selector( const css_selector::ptr& selector )
 	{
 		selector->m_order = (int) m_selectors.size();
 		m_selectors.push_back(selector);

@@ -8,10 +8,9 @@ namespace litehtml
 	class el_para : public html_tag
 	{
 	public:
-		el_para(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_para();
+		explicit el_para(const std::shared_ptr<litehtml::document>& doc);
 
-		virtual void	parse_attributes() override;
+		void parse_attributes() override;
 
 	};
 }

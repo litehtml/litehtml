@@ -62,8 +62,8 @@ tstring url_path_append(const tstring& base, const tstring& path)
 
     // Only append a separator if both base and path are not empty and if the
     // last character of base is not already a separator.
-    if (result.size() > 0 && path.size() > 0 && result.back() != _t('/')) {
-        result.append(1, '/');
+    if (!result.empty() && !path.empty() && result.back() != _t('/')) {
+        result.append(1, _t('/'));
     }
 
     result.append(path);

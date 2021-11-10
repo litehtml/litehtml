@@ -1,7 +1,5 @@
 #include "html.h"
 #include "style.h"
-#include <functional>
-#include <algorithm>
 #ifndef WINCE
 #include <locale>
 #endif
@@ -11,18 +9,9 @@ litehtml::string_map litehtml::style::m_valid_values =
 	{ _t("white-space"), white_space_strings }
 };
 
-litehtml::style::style()
-{
-}
-
 litehtml::style::style( const style& val )
 {
 	m_properties = val.m_properties;
-}
-
-litehtml::style::~style()
-{
-
 }
 
 void litehtml::style::parse( const tchar_t* txt, const tchar_t* baseurl )
@@ -30,15 +19,15 @@ void litehtml::style::parse( const tchar_t* txt, const tchar_t* baseurl )
 	std::vector<tstring> properties;
 	split_string(txt, properties, _t(";"), _t(""), _t("\"'"));
 
-	for(std::vector<tstring>::const_iterator i = properties.begin(); i != properties.end(); i++)
+	for(const auto & property : properties)
 	{
-		parse_property(*i, baseurl);
+		parse_property(property, baseurl);
 	}
 }
 
 void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl )
 {
-	tstring::size_type pos = txt.find_first_of(_t(":"));
+	tstring::size_type pos = txt.find_first_of(_t(':'));
 	if(pos != tstring::npos)
 	{
 		tstring name = txt.substr(0, pos);
@@ -66,9 +55,9 @@ void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl
 
 void litehtml::style::combine( const litehtml::style& src )
 {
-	for(props_map::const_iterator i = src.m_properties.begin(); i != src.m_properties.end(); i++)
+	for(const auto& property : src.m_properties)
 	{
-		add_parsed_property(i->first.c_str(), i->second.m_value.c_str(), i->second.m_important);
+		add_parsed_property(property.first, property.second.m_value, property.second.m_important);
 	}
 }
 
@@ -96,12 +85,12 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() == 1)
 		{
-			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), important);
-			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[0].c_str(), important);
+			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0], important);
+			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[0], important);
 		} else if(tokens.size() == 2)
 		{
-			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0].c_str(), important);
-			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[1].c_str(), important);
+			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0], important);
+			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[1], important);
 		}
 	} else
 
@@ -113,31 +102,31 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "), _t(""), _t("("));
 		int idx;
 		tstring str;
-		for(string_vector::const_iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+		for(const auto& token : tokens)
 		{
-			idx = value_index(tok->c_str(), border_style_strings, -1);
+			idx = value_index(token, border_style_strings, -1);
 			if(idx >= 0)
 			{
-				add_property(_t("border-left-style"), tok->c_str(), baseurl, important);
-				add_property(_t("border-right-style"), tok->c_str(), baseurl, important);
-				add_property(_t("border-top-style"), tok->c_str(), baseurl, important);
-				add_property(_t("border-bottom-style"), tok->c_str(), baseurl, important);
+				add_property(_t("border-left-style"), token.c_str(), baseurl, important);
+				add_property(_t("border-right-style"), token.c_str(), baseurl, important);
+				add_property(_t("border-top-style"), token.c_str(), baseurl, important);
+				add_property(_t("border-bottom-style"), token.c_str(), baseurl, important);
 			} else
 			{
-				if (t_isdigit((*tok)[0]) || (*tok)[0] == _t('.') ||
-					value_in_list((*tok), _t("thin;medium;thick")))
+				if (t_isdigit(token[0]) || token[0] == _t('.') ||
+					value_in_list(token, _t("thin;medium;thick")))
 				{
-					add_property(_t("border-left-width"), tok->c_str(), baseurl, important);
-					add_property(_t("border-right-width"), tok->c_str(), baseurl, important);
-					add_property(_t("border-top-width"), tok->c_str(), baseurl, important);
-					add_property(_t("border-bottom-width"), tok->c_str(), baseurl, important);
+					add_property(_t("border-left-width"), token.c_str(), baseurl, important);
+					add_property(_t("border-right-width"), token.c_str(), baseurl, important);
+					add_property(_t("border-top-width"), token.c_str(), baseurl, important);
+					add_property(_t("border-bottom-width"), token.c_str(), baseurl, important);
 				} 
 				else
 				{
-					add_property(_t("border-left-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-right-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-top-color"), tok->c_str(), baseurl, important);
-					add_property(_t("border-bottom-color"), tok->c_str(), baseurl, important);
+					add_property(_t("border-left-color"), token.c_str(), baseurl, important);
+					add_property(_t("border-right-color"), token.c_str(), baseurl, important);
+					add_property(_t("border-top-color"), token.c_str(), baseurl, important);
+					add_property(_t("border-bottom-color"), token.c_str(), baseurl, important);
 				}
 			}
 		}
@@ -150,26 +139,26 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "), _t(""), _t("("));
 		int idx;
 		tstring str;
-		for(string_vector::const_iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+		for(const auto& token : tokens)
 		{
-			idx = value_index(tok->c_str(), border_style_strings, -1);
+			idx = value_index(token, border_style_strings, -1);
 			if(idx >= 0)
 			{
 				str = name;
 				str += _t("-style");
-				add_property(str.c_str(), tok->c_str(), baseurl, important);
+				add_property(str.c_str(), token.c_str(), baseurl, important);
 			} else
 			{
-				if(web_color::is_color(tok->c_str()))
+				if(web_color::is_color(token.c_str()))
 				{
 					str = name;
 					str += _t("-color");
-					add_property(str.c_str(), tok->c_str(), baseurl, important);
+					add_property(str.c_str(), token.c_str(), baseurl, important);
 				} else
 				{
 					str = name;
 					str += _t("-width");
-					add_property(str.c_str(), tok->c_str(), baseurl, important);
+					add_property(str.c_str(), token.c_str(), baseurl, important);
 				}
 			}
 		}
@@ -319,21 +308,21 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 
 		string_vector tokens;
 		split_string(val, tokens, _t(" "), _t(""), _t("("));
-		for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+		for(const auto& token : tokens)
 		{
-			int idx = value_index(tok->c_str(), list_style_type_strings, -1);
+			int idx = value_index(token, list_style_type_strings, -1);
 			if(idx >= 0)
 			{
-				add_parsed_property(_t("list-style-type"), *tok, important);
+				add_parsed_property(_t("list-style-type"), token, important);
 			} else
 			{
-				idx = value_index(tok->c_str(), list_style_position_strings, -1);
+				idx = value_index(token, list_style_position_strings, -1);
 				if(idx >= 0)
 				{
-					add_parsed_property(_t("list-style-position"), *tok, important);
+					add_parsed_property(_t("list-style-position"), token, important);
 				} else if(!t_strncmp(val, _t("url"), 3))
 				{
-					add_parsed_property(_t("list-style-image"), *tok, important);
+					add_parsed_property(_t("list-style-image"), token, important);
 					if(baseurl)
 					{
 						add_parsed_property(_t("list-style-image-baseurl"), baseurl, important);
@@ -460,7 +449,7 @@ void litehtml::style::parse_short_border( const tstring& prefix, const tstring& 
 		add_parsed_property(prefix + _t("-color"),	tokens[2], important);
 	} else if(tokens.size() == 2)
 	{
-		if(iswdigit(tokens[0][0]) || value_index(val.c_str(), border_width_strings) >= 0)
+		if(iswdigit(tokens[0][0]) || value_index(val, border_width_strings) >= 0)
 		{
 			add_parsed_property(prefix + _t("-width"),	tokens[0], important);
 			add_parsed_property(prefix + _t("-style"),	tokens[1], important);
@@ -490,48 +479,48 @@ void litehtml::style::parse_short_background( const tstring& val, const tchar_t*
 	string_vector tokens;
 	split_string(val, tokens, _t(" "), _t(""), _t("("));
 	bool origin_found = false;
-	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+	for(const auto& token : tokens)
 	{
-		if(tok->substr(0, 3) == _t("url"))
+		if(token.substr(0, 3) == _t("url"))
 		{
-			add_parsed_property(_t("background-image"), *tok, important);
+			add_parsed_property(_t("background-image"), token, important);
 			if(baseurl)
 			{
 				add_parsed_property(_t("background-image-baseurl"), baseurl, important);
 			}
 
-		} else if( value_in_list(tok->c_str(), background_repeat_strings) )
+		} else if( value_in_list(token, background_repeat_strings) )
 		{
-			add_parsed_property(_t("background-repeat"), *tok, important);
-		} else if( value_in_list(tok->c_str(), background_attachment_strings) )
+			add_parsed_property(_t("background-repeat"), token, important);
+		} else if( value_in_list(token, background_attachment_strings) )
 		{
-			add_parsed_property(_t("background-attachment"), *tok, important);
-		} else if( value_in_list(tok->c_str(), background_box_strings) )
+			add_parsed_property(_t("background-attachment"), token, important);
+		} else if( value_in_list(token, background_box_strings) )
 		{
 			if(!origin_found)
 			{
-				add_parsed_property(_t("background-origin"), *tok, important);
+				add_parsed_property(_t("background-origin"), token, important);
 				origin_found = true;
 			} else
 			{
-				add_parsed_property(_t("background-clip"),*tok, important);
+				add_parsed_property(_t("background-clip"), token, important);
 			}
-		} else if(	value_in_list(tok->c_str(), _t("left;right;top;bottom;center")) ||
-					iswdigit((*tok)[0]) ||
-					(*tok)[0] == _t('-')	||
-					(*tok)[0] == _t('.')	||
-					(*tok)[0] == _t('+'))
+		} else if(	value_in_list(token, _t("left;right;top;bottom;center")) ||
+					iswdigit(token[0]) ||
+					token[0] == _t('-')	||
+					token[0] == _t('.')	||
+					token[0] == _t('+'))
 		{
 			if(m_properties.find(_t("background-position")) != m_properties.end())
 			{
-				m_properties[_t("background-position")].m_value = m_properties[_t("background-position")].m_value + _t(" ") + *tok;
+				m_properties[_t("background-position")].m_value = m_properties[_t("background-position")].m_value + _t(" ") + token;
 			} else
 			{
-				add_parsed_property(_t("background-position"), *tok, important);
+				add_parsed_property(_t("background-position"), token, important);
 			}
-		} else if (web_color::is_color(tok->c_str()))
+		} else if (web_color::is_color(token.c_str()))
 		{
-			add_parsed_property(_t("background-color"), *tok, important);
+			add_parsed_property(_t("background-color"), token, important);
 		}
 	}
 }
@@ -547,40 +536,39 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 	string_vector tokens;
 	split_string(val, tokens, _t(" "), _t(""), _t("\""));
 
-	int idx = 0;
-	bool was_normal = false;
+	int idx;
 	bool is_family = false;
 	tstring font_family;
-	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+	for(const auto& token : tokens)
 	{
-		idx = value_index(tok->c_str(), font_style_strings);
+		idx = value_index(token, font_style_strings);
 		if(!is_family)
 		{
 			if(idx >= 0)
 			{
-				if(idx == 0 && !was_normal)
+				if(idx == 0)
 				{
-					add_parsed_property(_t("font-weight"),		*tok, important);
-					add_parsed_property(_t("font-variant"),		*tok, important);
-					add_parsed_property(_t("font-style"),		*tok, important);
+					add_parsed_property(_t("font-weight"), token, important);
+					add_parsed_property(_t("font-variant"), token, important);
+					add_parsed_property(_t("font-style"), token, important);
 				} else
 				{
-					add_parsed_property(_t("font-style"),		*tok, important);
+					add_parsed_property(_t("font-style"), token, important);
 				}
 			} else
 			{
-				if(value_in_list(tok->c_str(), font_weight_strings))
+				if(value_in_list(token, font_weight_strings))
 				{
-					add_parsed_property(_t("font-weight"),		*tok, important);
+					add_parsed_property(_t("font-weight"), token, important);
 				} else
 				{
-					if(value_in_list(tok->c_str(), font_variant_strings))
+					if(value_in_list(token, font_variant_strings))
 					{
-						add_parsed_property(_t("font-variant"),	*tok, important);
-					} else if( iswdigit((*tok)[0]) )
+						add_parsed_property(_t("font-variant"), token, important);
+					} else if( iswdigit(token[0]) )
 					{
 						string_vector szlh;
-						split_string(*tok, szlh, _t("/"));
+						split_string(token, szlh, _t("/"));
 
 						if(szlh.size() == 1)
 						{
@@ -593,13 +581,13 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 					} else
 					{
 						is_family = true;
-						font_family += *tok;
+						font_family += token;
 					}
 				}
 			}
 		} else
 		{
-			font_family += *tok;
+			font_family += token;
 		}
 	}
 	add_parsed_property(_t("font-family"), font_family, important);
@@ -608,7 +596,7 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 void litehtml::style::add_parsed_property( const tstring& name, const tstring& val, bool important )
 {
 	bool is_valid = true;
-	string_map::iterator vals = m_valid_values.find(name);
+	auto vals = m_valid_values.find(name);
 	if (vals != m_valid_values.end())
 	{
 		if (!value_in_list(val, vals->second))
@@ -619,7 +607,7 @@ void litehtml::style::add_parsed_property( const tstring& name, const tstring& v
 
 	if (is_valid)
 	{
-		props_map::iterator prop = m_properties.find(name);
+		auto prop = m_properties.find(name);
 		if (prop != m_properties.end())
 		{
 			if (!prop->second.m_important || (important && prop->second.m_important))
@@ -637,7 +625,7 @@ void litehtml::style::add_parsed_property( const tstring& name, const tstring& v
 
 void litehtml::style::remove_property( const tstring& name, bool important )
 {
-	props_map::iterator prop = m_properties.find(name);
+	auto prop = m_properties.find(name);
 	if(prop != m_properties.end())
 	{
 		if( !prop->second.m_important || (important && prop->second.m_important) )

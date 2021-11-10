@@ -7,11 +7,6 @@ litehtml::el_base::el_base(const std::shared_ptr<litehtml::document>& doc) : htm
 	
 }
 
-litehtml::el_base::~el_base()
-{
-
-}
-
 void litehtml::el_base::parse_attributes()
 {
 	get_document()->container()->set_base_url(get_attr(_t("href")));

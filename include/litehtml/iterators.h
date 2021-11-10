@@ -23,9 +23,8 @@ namespace litehtml
 		{
 			int				idx;
 			element::ptr	el;
-			stack_item()
+			stack_item() : idx(0)
 			{
-
 			}
 			stack_item(const stack_item& val)
 			{
@@ -54,10 +53,7 @@ namespace litehtml
 			m_select		= select;
 		}
 
-		~elements_iterator()
-		{
-
-		}
+		~elements_iterator() = default;
 
 		element::ptr next(bool ret_parent = true);
 	

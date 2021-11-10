@@ -1,6 +1,6 @@
 #include "html.h"
 #include "web_color.h"
-#include <string.h>
+#include <cstring>
 
 litehtml::def_color litehtml::g_def_colors[] = 
 {
@@ -150,7 +150,7 @@ litehtml::def_color litehtml::g_def_colors[] =
 	{_t("WhiteSmoke"),_t("#F5F5F5")},
 	{_t("Yellow"),_t("#FFFF00")},
 	{_t("YellowGreen"),_t("#9ACD32")},
-	{0,0}
+	{nullptr,nullptr}
 };
 
 
@@ -162,9 +162,9 @@ litehtml::web_color litehtml::web_color::from_string(const tchar_t* str, litehtm
 	}
 	if(str[0] == _t('#'))
 	{
-		tstring red		= _t("");
-		tstring green		= _t("");
-		tstring blue		= _t("");
+		tstring red;
+		tstring green;
+		tstring blue;
 		if(t_strlen(str + 1) == 3)
 		{
 			red		+= str[1];
@@ -182,7 +182,7 @@ litehtml::web_color litehtml::web_color::from_string(const tchar_t* str, litehtm
 			blue	+= str[5];
 			blue	+= str[6];
 		}
-		tchar_t* sss = 0;
+		tchar_t* sss = nullptr;
 		web_color clr;
 		clr.red		= (byte) t_strtol(red.c_str(),	&sss, 16);
 		clr.green	= (byte) t_strtol(green.c_str(),	&sss, 16);
@@ -192,12 +192,12 @@ litehtml::web_color litehtml::web_color::from_string(const tchar_t* str, litehtm
 	{
 		tstring s = str;
 
-		tstring::size_type pos = s.find_first_of(_t("("));
+		tstring::size_type pos = s.find_first_of(_t('('));
 		if(pos != tstring::npos)
 		{
 			s.erase(s.begin(), s.begin() + pos + 1);
 		}
-		pos = s.find_last_of(_t(")"));
+		pos = s.find_last_of(_t(')'));
 		if(pos != tstring::npos)
 		{
 			s.erase(s.begin() + pos, s.end());
@@ -211,7 +211,7 @@ litehtml::web_color litehtml::web_color::from_string(const tchar_t* str, litehtm
 		if(tokens.size() >= 1)	clr.red		= (byte) t_atoi(tokens[0].c_str());
 		if(tokens.size() >= 2)	clr.green	= (byte) t_atoi(tokens[1].c_str());
 		if(tokens.size() >= 3)	clr.blue	= (byte) t_atoi(tokens[2].c_str());
-		if(tokens.size() >= 4)	clr.alpha	= (byte) (t_strtod(tokens[3].c_str(), 0) * 255.0);
+		if(tokens.size() >= 4)	clr.alpha	= (byte) (t_strtod(tokens[3].c_str(), nullptr) * 255.0);
 
 		return clr;
 	} else

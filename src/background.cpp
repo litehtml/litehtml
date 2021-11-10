@@ -1,7 +1,7 @@
 #include "html.h"
 #include "background.h"
 
-litehtml::background::background(void)
+litehtml::background::background()
 {
 	m_attachment	= background_attachment_scroll;
 	m_repeat		= background_repeat_repeat;
@@ -23,10 +23,6 @@ litehtml::background::background( const background& val )
 	m_repeat		= val.m_repeat;
 	m_clip			= val.m_clip;
 	m_origin		= val.m_origin;
-}
-
-litehtml::background::~background(void)
-{
 }
 
 litehtml::background& litehtml::background::operator=( const background& val )
@@ -69,11 +65,12 @@ litehtml::background_paint::background_paint( const background_paint& val )
 	is_root			= val.is_root;
 }
 
-void litehtml::background_paint::operator=( const background& val )
+litehtml::background_paint& litehtml::background_paint::operator=( const background& val )
 {
 	attachment	= val.m_attachment;
 	baseurl		= val.m_baseurl;
 	image		= val.m_image;
 	repeat		= val.m_repeat;
 	color		= val.m_color;
+    return *this;
 }

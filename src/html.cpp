@@ -1,6 +1,5 @@
 #include "html.h"
 #include "types.h"
-#include "html_tag.h"
 #include "utf8_strings.h"
 
 void litehtml::trim(tstring &s) 
@@ -19,9 +18,9 @@ void litehtml::trim(tstring &s)
 
 void litehtml::lcase(tstring &s) 
 {
-	for(tstring::iterator i = s.begin(); i != s.end(); i++)
+	for(char & i : s)
 	{
-		(*i) = t_tolower(*i);
+		i = t_tolower(i);
 	}
 }
 
@@ -55,7 +54,7 @@ int litehtml::value_index( const tstring& val, const tstring& strings, int defVa
 	int idx = 0;
 	tstring::size_type delim_start	= 0;
 	tstring::size_type delim_end	= strings.find(delim, delim_start);
-	tstring::size_type item_len		= 0;
+	tstring::size_type item_len;
 	while(true)
 	{
 		if(delim_end == tstring::npos)
@@ -103,7 +102,7 @@ void litehtml::split_string(const tstring& str, string_vector& tokens, const tst
 
 	tstring::size_type token_start	= 0;
 	tstring::size_type token_end	= str.find_first_of(all_delims, token_start);
-	tstring::size_type token_len	= 0;
+	tstring::size_type token_len;
 	tstring token;
 	while(true)
 	{
@@ -203,7 +202,7 @@ int litehtml::t_strncasecmp(const litehtml::tchar_t *s1, const litehtml::tchar_t
 	return 0;
 }
 
-void litehtml::document_container::split_text(const char* text, std::function<void(const tchar_t*)> on_word, std::function<void(const tchar_t*)> on_space)
+void litehtml::document_container::split_text(const char* text, const std::function<void(const tchar_t*)>& on_word, const std::function<void(const tchar_t*)>& on_space)
 {
 	std::wstring str;
 	std::wstring str_in = (const wchar_t*)(utf8_to_wchar(text));

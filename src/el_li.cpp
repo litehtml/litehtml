@@ -6,11 +6,6 @@ litehtml::el_li::el_li(const std::shared_ptr<litehtml::document>& doc) : litehtm
 {
 }
 
-litehtml::el_li::~el_li()
-{
-
-}
-
 int litehtml::el_li::render(int x, int y, int max_width, bool second_pass)
 {
 	if (m_list_style_type >= list_style_type_armenian && !m_index_initialized)

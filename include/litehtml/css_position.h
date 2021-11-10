@@ -12,10 +12,7 @@ namespace litehtml
 		css_length	width;
 		css_length	height;
 
-		css_position()
-		{
-
-		}
+		css_position() = default;
 
 		css_position(const css_position& val)
 		{

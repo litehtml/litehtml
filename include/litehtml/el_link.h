@@ -8,11 +8,10 @@ namespace litehtml
 	class el_link : public html_tag
 	{
 	public:
-		el_link(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_link();
+		explicit el_link(const std::shared_ptr<litehtml::document>& doc);
 
 	protected:
-		virtual void	parse_attributes() override;
+		void parse_attributes() override;
 	};
 }
 

@@ -222,10 +222,12 @@ namespace litehtml
 		css_border			bottom;
 		css_border_radius	radius;
 
-		css_borders()
-		{
+		css_borders() = default;
 
-		}
+        bool is_visible() const
+        {
+            return left.width.val() != 0 || right.width.val() != 0 || top.width.val() != 0 || bottom.width.val() != 0;
+        }
 
 		css_borders(const css_borders& val)
 		{
@@ -255,10 +257,7 @@ namespace litehtml
 		border			bottom;
 		border_radiuses	radius;
 
-		borders()
-		{
-
-		}
+		borders() = default;
 
 		borders(const borders& val)
 		{
@@ -276,6 +275,11 @@ namespace litehtml
 			top = val.top;
 			bottom = val.bottom;
 		}
+
+        bool is_visible() const
+        {
+            return left.width != 0 || right.width != 0 || top.width != 0 || bottom.width != 0;
+        }
 
 		borders& operator=(const borders& val)
 		{

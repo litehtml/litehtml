@@ -1,5 +1,4 @@
 ﻿#include "num_cvt.h"
-#include "types.h"
 #include "utf8_strings.h"
 #include <vector>
 
@@ -66,7 +65,7 @@ litehtml::tstring litehtml::num_cvt::to_roman_lower(int value)
 		{ 10, _t("x") }, { 9, _t("ix") },
 		{ 5, _t("v") }, { 4, _t("iv") },
 		{ 1, _t("i") },
-		{ 0, NULL } // end marker
+		{ 0, nullptr } // end marker
 	};
 
 	litehtml::tstring result;
@@ -93,7 +92,7 @@ litehtml::tstring litehtml::num_cvt::to_roman_upper(int value)
 		{ 10, _t("X") }, { 9, _t("IX") },
 		{ 5, _t("V") }, { 4, _t("IV") },
 		{ 1, _t("I") },
-		{ 0, NULL } // end marker
+		{ 0, nullptr } // end marker
 	};
 
 	litehtml::tstring result;

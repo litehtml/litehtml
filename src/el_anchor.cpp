@@ -6,11 +6,6 @@ litehtml::el_anchor::el_anchor(const std::shared_ptr<litehtml::document>& doc) :
 {
 }
 
-litehtml::el_anchor::~el_anchor()
-{
-
-}
-
 void litehtml::el_anchor::on_click()
 {
 	const tchar_t* href = get_attr(_t("href"));

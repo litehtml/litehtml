@@ -721,7 +721,20 @@ namespace litehtml
 		int			color_index;	// The number of entries in the color lookup table of the output device. If the device does not use a color lookup table, the value is zero.
 		int			monochrome;		// The number of bits per pixel in a monochrome frame buffer. If the device is not a monochrome device, the output device value will be 0.
 		int			resolution;		// The resolution of the output device (in DPI)
-	};
+
+        media_features()
+        {
+            type = media_type::media_type_none,
+            width =0;
+            height = 0;
+            device_width = 0;
+            device_height = 0;
+            color = 0;
+            color_index = 0;
+            monochrome = 0;
+            resolution = 0;
+        }
+    };
 
 	enum render_type
 	{

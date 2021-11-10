@@ -43,10 +43,6 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 					if(pos != tstring::npos)
 					{
 						pos++;
-					} else
-					{
-						int iii = 0;
-						iii++;
 					}
 				}
 				if(pos != tstring::npos)
@@ -125,7 +121,7 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 				{
 					if(txt[pos] == _t('"'))
 					{
-						tstring::size_type pos2 = txt.find_first_of(_t("\""), pos + 1);
+						tstring::size_type pos2 = txt.find_first_of(_t('\"'), pos + 1);
 						attribute.val = txt.substr(pos + 1, pos2 == tstring::npos ? pos2 : (pos2 - pos - 1));
 						pos = pos2 == tstring::npos ? pos2 : (pos2 + 1);
 					} else if(txt[pos] == _t(']'))
@@ -133,7 +129,7 @@ void litehtml::css_element_selector::parse( const tstring& txt )
 						pos ++;
 					} else
 					{
-						tstring::size_type pos2 = txt.find_first_of(_t("]"), pos + 1);
+						tstring::size_type pos2 = txt.find_first_of(_t(']'), pos + 1);
 						attribute.val = txt.substr(pos, pos2 == tstring::npos ? pos2 : (pos2 - pos));
 						trim(attribute.val);
 						pos = pos2 == tstring::npos ? pos2 : (pos2 + 1);
@@ -183,9 +179,9 @@ bool litehtml::css_selector::parse( const tstring& text )
 		tokens.pop_back();
 	}
 
-	for(string_vector::const_iterator i = tokens.begin(); i != tokens.end(); i++)
+	for(const auto & token : tokens)
 	{
-		left += *i;
+		left += token;
 	}
 
 	trim(left);
@@ -214,11 +210,11 @@ bool litehtml::css_selector::parse( const tstring& text )
 		break;
 	}
 
-	m_left = 0;
+	m_left = nullptr;
 
 	if(!left.empty())
 	{
-		m_left = std::make_shared<css_selector>(media_query_list::ptr(0));
+		m_left = std::make_shared<css_selector>(media_query_list::ptr(nullptr));
 		if(!m_left->parse(left))
 		{
 			return false;
@@ -234,16 +230,16 @@ void litehtml::css_selector::calc_specificity()
 	{
 		m_specificity.d = 1;
 	}
-	for(css_attribute_selector::vector::iterator i = m_right.m_attrs.begin(); i != m_right.m_attrs.end(); i++)
+	for(const auto& attr : m_right.m_attrs)
 	{
-		if(i->attribute == _t("id"))
+		if(attr.attribute == _t("id"))
 		{
 			m_specificity.b++;
 		} else
 		{
-			if(i->attribute == _t("class"))
+			if(attr.attribute == _t("class"))
 			{
-				m_specificity.c += (int) i->class_val.size();
+				m_specificity.c += (int) attr.class_val.size();
 			} else
 			{
 				m_specificity.c++;

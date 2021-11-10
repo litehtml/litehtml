@@ -7,11 +7,6 @@ litehtml::el_div::el_div(const std::shared_ptr<litehtml::document>& doc) : html_
 
 }
 
-litehtml::el_div::~el_div()
-{
-
-}
-
 void litehtml::el_div::parse_attributes()
 {
 	const tchar_t* str = get_attr(_t("align"));

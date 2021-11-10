@@ -55,7 +55,7 @@ namespace litehtml
 			el_row = val.el_row;
 		}
 
-		table_row(table_row&& val)
+		table_row(table_row&& val) noexcept
 		{
 			min_height = val.min_height;
 			top = val.top;
@@ -185,8 +185,8 @@ namespace litehtml
 			borders			= val.borders;
 		}
 
-		table_cell(const table_cell&& val)
-		{
+		table_cell(table_cell&& val) noexcept
+        {
 			el = std::move(val.el);
 			colspan = val.colspan;
 			rowspan = val.rowspan;

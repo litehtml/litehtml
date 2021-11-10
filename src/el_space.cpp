@@ -6,11 +6,6 @@ litehtml::el_space::el_space(const tchar_t* text, const std::shared_ptr<litehtml
 {
 }
 
-litehtml::el_space::~el_space()
-{
-
-}
-
 bool litehtml::el_space::is_white_space() const
 {
 	white_space ws = get_white_space();

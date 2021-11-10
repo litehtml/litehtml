@@ -8,11 +8,10 @@ namespace litehtml
 	class el_title : public html_tag
 	{
 	public:
-		el_title(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_title();
+		explicit el_title(const std::shared_ptr<litehtml::document>& doc);
 
 	protected:
-		virtual void	parse_attributes() override;
+		void parse_attributes() override;
 	};
 }
 

@@ -8,11 +8,6 @@ litehtml::el_style::el_style(const std::shared_ptr<litehtml::document>& doc) : l
 
 }
 
-litehtml::el_style::~el_style()
-{
-
-}
-
 void litehtml::el_style::parse_attributes()
 {
 	tstring text;
@@ -21,7 +16,7 @@ void litehtml::el_style::parse_attributes()
 	{
 		el->get_text(text);
 	}
-	get_document()->add_stylesheet( text.c_str(), 0, get_attr(_t("media")) );
+	get_document()->add_stylesheet( text.c_str(), nullptr, get_attr(_t("media")) );
 }
 
 bool litehtml::el_style::appendChild(const ptr &el)

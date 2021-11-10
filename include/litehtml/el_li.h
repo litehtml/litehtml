@@ -8,10 +8,9 @@ namespace litehtml
 	class el_li : public html_tag
 	{
 	public:
-		el_li(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_li();
+		explicit el_li(const std::shared_ptr<litehtml::document>& doc);
 
-		virtual int render(int x, int y, int max_width, bool second_pass = false) override;
+		int render(int x, int y, int max_width, bool second_pass = false) override;
 
 	private:
 		bool m_index_initialized = false;

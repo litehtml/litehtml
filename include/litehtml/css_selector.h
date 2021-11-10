@@ -15,7 +15,7 @@ namespace litehtml
 		int		c;
 		int		d;
 
-		selector_specificity(int va = 0, int vb = 0, int vc = 0, int vd = 0)
+		explicit selector_specificity(int va = 0, int vb = 0, int vc = 0, int vd = 0)
 		{
 			a	= va;
 			b	= vb;
@@ -183,26 +183,24 @@ namespace litehtml
 		int						m_order;
 		media_query_list::ptr	m_media_query;
 	public:
-		css_selector(media_query_list::ptr media)
+		explicit css_selector(const media_query_list::ptr& media)
 		{
 			m_media_query	= media;
 			m_combinator	= combinator_descendant;
 			m_order			= 0;
 		}
 
-		~css_selector()
-		{
-		}
+		~css_selector() = default;
 
 		css_selector(const css_selector& val)
 		{
 			m_right			= val.m_right;
 			if(val.m_left)
 			{
-				m_left			= std::make_shared<css_selector>(*val.m_left);
+				m_left = std::make_shared<css_selector>(*val.m_left);
 			} else
 			{
-				m_left = 0;
+				m_left = nullptr;
 			}
 			m_combinator	= val.m_combinator;
 			m_specificity	= val.m_specificity;

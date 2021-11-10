@@ -24,9 +24,9 @@ namespace litehtml
 		css_border_radius		m_radius;
 
 	public:
-		background(void);
+		background();
 		background(const background& val);
-		~background(void);
+		~background() = default;
 
 		background& operator=(const background& val);
 	};
@@ -50,7 +50,7 @@ namespace litehtml
 	public:
 		background_paint();
 		background_paint(const background_paint& val);
-		void operator=(const background& val);
+        background_paint& operator=(const background& val);
 	};
 
 }

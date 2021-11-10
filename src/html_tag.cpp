@@ -14,7 +14,7 @@ litehtml::html_tag::html_tag(const std::shared_ptr<litehtml::document>& doc) : l
 	m_box_sizing			= box_sizing_content_box;
 	m_z_index				= 0;
 	m_overflow				= overflow_visible;
-	m_box					= 0;
+	m_box					= nullptr;
 	m_text_align			= text_align_left;
 	m_el_position			= element_position_static;
 	m_display				= display_inline;
@@ -32,11 +32,6 @@ litehtml::html_tag::html_tag(const std::shared_ptr<litehtml::document>& doc) : l
 	m_border_spacing_x		= 0;
 	m_border_spacing_y		= 0;
 	m_border_collapse		= border_collapse_separate;
-}
-
-litehtml::html_tag::~html_tag()
-{
-
 }
 
 bool litehtml::html_tag::appendChild(const element::ptr &el)
@@ -82,9 +77,9 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 	if(name && val)
 	{
 		tstring s_val = name;
-		for(size_t i = 0; i < s_val.length(); i++)
+		for(char& i : s_val)
 		{
-			s_val[i] = std::tolower(s_val[i], std::locale::classic());
+			i = std::tolower(i, std::locale::classic());
 		}
 		m_attrs[s_val] = val;
 
@@ -98,7 +93,7 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 
 const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, const tchar_t* def ) const
 {
-	string_map::const_iterator attr = m_attrs.find(name);
+	auto attr = m_attrs.find(name);
 	if(attr != m_attrs.end())
 	{
 		return attr->second.c_str();
@@ -108,7 +103,7 @@ const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, cons
 
 litehtml::elements_vector litehtml::html_tag::select_all( const tstring& selector )
 {
-	css_selector sel(media_query_list::ptr(0));
+	css_selector sel(media_query_list::ptr(nullptr));
 	sel.parse(selector);
 	
 	return select_all(sel);
@@ -137,7 +132,7 @@ void litehtml::html_tag::select_all(const css_selector& selector, elements_vecto
 
 litehtml::element::ptr litehtml::html_tag::select_one( const tstring& selector )
 {
-	css_selector sel(media_query_list::ptr(0));
+	css_selector sel(media_query_list::ptr(nullptr));
 	sel.parse(selector);
 
 	return select_one(sel);
@@ -158,7 +153,7 @@ litehtml::element::ptr litehtml::html_tag::select_one( const css_selector& selec
 			return res;
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
@@ -313,7 +308,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	if(style)
 	{
-		m_style.add(style, NULL);
+		m_style.add(style, nullptr);
 	}
 
 	init_font();
@@ -329,7 +324,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	if(m_el_position != element_position_static)
 	{
-		const tchar_t* val = get_style_property(_t("z-index"), false, 0);
+		const tchar_t* val = get_style_property(_t("z-index"), false, nullptr);
 		if(val)
 		{
 			m_z_index = t_atoi(val);
@@ -474,7 +469,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 		m_lh_predefined = true;
 	} else if(line_height.units() == css_units_none)
 	{
-		m_line_height = (int) (line_height.val() * m_font_size);
+		m_line_height = (int) (line_height.val() * (float) m_font_size);
 		m_lh_predefined = false;
 	} else
 	{
@@ -491,13 +486,13 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 		const tchar_t* list_pos = get_style_property(_t("list-style-position"), true, _t("outside"));
 		m_list_style_position = (list_style_position) value_index(list_pos, list_style_position_strings, list_style_position_outside);
 
-		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
+		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, nullptr);
 		if(list_image && list_image[0])
 		{
 			tstring url;
 			css::parse_css_url(list_image, url);
 
-			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
+			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, nullptr);
 			doc->container()->load_image(url.c_str(), list_image_baseurl, true);
 		}
 
@@ -699,10 +694,10 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 	int res = select_match;
 	element::ptr el_parent = parent();
 
-	for(css_attribute_selector::vector::const_iterator i = selector.m_attrs.begin(); i != selector.m_attrs.end(); i++)
+	for(const auto& attr : selector.m_attrs)
 	{
-		const tchar_t* attr_value = get_attr(i->attribute.c_str());
-		switch(i->condition)
+		const tchar_t* attr_value = get_attr(attr.attribute.c_str());
+		switch(attr.condition)
 		{
 		case select_exists:
 			if(!attr_value)
@@ -716,17 +711,17 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				return select_no_match;
 			} else 
 			{
-				if(i->attribute == _t("class"))
+				if(attr.attribute == _t("class"))
 				{
 					const string_vector & tokens1 = m_class_values;
-					const string_vector & tokens2 = i->class_val;
+					const string_vector & tokens2 = attr.class_val;
 					bool found = true;
-					for(string_vector::const_iterator str1 = tokens2.begin(); str1 != tokens2.end() && found; str1++)
+					for(const auto& str1 : tokens2)
 					{
 						bool f = false;
-						for(string_vector::const_iterator str2 = tokens1.begin(); str2 != tokens1.end() && !f; str2++)
+						for(const auto& str2 : tokens1)
 						{
-							if( !t_strcasecmp(str1->c_str(), str2->c_str()) )
+							if( !t_strcasecmp(str1.c_str(), str2.c_str()) )
 							{
 								f = true;
 							}
@@ -742,7 +737,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 					}
 				} else
 				{
-					if( t_strcasecmp(i->val.c_str(), attr_value) )
+					if( t_strcasecmp(attr.val.c_str(), attr_value) )
 					{
 						return select_no_match;
 					}
@@ -750,19 +745,13 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			}
 			break;
 		case select_contain_str:
-			if(!attr_value)
-			{
-				return select_no_match;
-			} else if(!t_strstr(attr_value, i->val.c_str()))
+			if(!attr_value || !t_strstr(attr_value, attr.val.c_str()))
 			{
 				return select_no_match;
 			}
 			break;
 		case select_start_str:
-			if(!attr_value)
-			{
-				return select_no_match;
-			} else if(t_strncmp(attr_value, i->val.c_str(), i->val.length()))
+			if(!attr_value || t_strncmp(attr_value, attr.val.c_str(), attr.val.length()))
 			{
 				return select_no_match;
 			}
@@ -771,24 +760,24 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			if(!attr_value)
 			{
 				return select_no_match;
-			} else if(t_strncmp(attr_value, i->val.c_str(), i->val.length()))
+			} else if(t_strncmp(attr_value, attr.val.c_str(), attr.val.length()))
 			{
-				const tchar_t* s = attr_value + t_strlen(attr_value) - i->val.length() - 1;
+				const tchar_t* s = attr_value + t_strlen(attr_value) - attr.val.length() - 1;
 				if(s < attr_value)
 				{
 					return select_no_match;
 				}
-				if(i->val != s)
+				if(attr.val != s)
 				{
 					return select_no_match;
 				}
 			}
 			break;
 		case select_pseudo_element:
-			if(i->val == _t("after"))
+			if(attr.val == _t("after"))
 			{
 				res |= select_match_with_after;
-			} else if(i->val == _t("before"))
+			} else if(attr.val == _t("before"))
 			{
 				res |= select_match_with_before;
 			} else
@@ -804,24 +793,24 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				tstring selector_param;
 				tstring	selector_name;
 
-				tstring::size_type begin	= i->val.find_first_of(_t('('));
-				tstring::size_type end		= (begin == tstring::npos) ? tstring::npos : find_close_bracket(i->val, begin);
+				tstring::size_type begin	= attr.val.find_first_of(_t('('));
+				tstring::size_type end		= (begin == tstring::npos) ? tstring::npos : find_close_bracket(attr.val, begin);
 				if(begin != tstring::npos && end != tstring::npos)
 				{
-					selector_param = i->val.substr(begin + 1, end - begin - 1);
+					selector_param = attr.val.substr(begin + 1, end - begin - 1);
 				}
 				if(begin != tstring::npos)
 				{
-					selector_name = i->val.substr(0, begin);
+					selector_name = attr.val.substr(0, begin);
 					litehtml::trim(selector_name);
 				} else
 				{
-					selector_name = i->val;
+					selector_name = attr.val;
 				}
 
-				int selector = value_index(selector_name.c_str(), pseudo_class_strings);
+				int pseudo_selector = value_index(selector_name, pseudo_class_strings);
 				
-				switch(selector)
+				switch(pseudo_selector)
 				{
 				case pseudo_class_only_child:
 					if (!el_parent->is_only_child(shared_from_this(), false))
@@ -871,7 +860,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 
 						parse_nth_child_params(selector_param, num, off);
 						if(!num && !off) return select_no_match;
-						switch(selector)
+						switch(pseudo_selector)
 						{
 						case pseudo_class_nth_child:
 							if (!el_parent->is_nth_child(shared_from_this(), num, off, false))
@@ -922,7 +911,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 					}
 					break;
 				default:
-					if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), i->val) == m_pseudo_classes.end())
+					if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), attr.val) == m_pseudo_classes.end())
 					{
 						return select_no_match;
 					}
@@ -1230,9 +1219,9 @@ int litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 		{
 			m_boxes.pop_back();
 
-			for(elements_vector::iterator i = els.begin(); i != els.end(); i++)
+			for(const auto& el : els)
 			{
-				int rw = place_element((*i), max_width);
+				int rw = place_element(el, max_width);
 				if(rw > ret_width)
 				{
 					ret_width = rw;
@@ -1264,9 +1253,9 @@ int litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 				if(m_css_text_indent.val() != 0)
 				{
 					bool line_box_found = false;
-					for(box::vector::iterator iter = m_boxes.begin(); iter < m_boxes.end(); iter++)
+					for(const auto& box : m_boxes)
 					{
-						if((*iter)->get_type() == box_line)
+						if(box->get_type() == box_line)
 						{
 							line_box_found = true;
 							break;
@@ -1280,7 +1269,7 @@ int litehtml::html_tag::fix_line_width( int max_width, element_float flt )
 
 			}
 
-			elements_vector els;
+			els.clear();
 			m_boxes.back()->new_width(line_left, line_right, els);
 			for(auto& el : els)
 			{
@@ -1317,7 +1306,7 @@ void litehtml::html_tag::add_float(const element::ptr &el, int x, int y)
 			} else
 			{
 				bool inserted = false;
-				for(floated_box::vector::iterator i = m_floats_left.begin(); i != m_floats_left.end(); i++)
+				for(auto i = m_floats_left.begin(); i != m_floats_left.end(); i++)
 				{
 					if(fb.pos.right() > i->pos.right())
 					{
@@ -1340,7 +1329,7 @@ void litehtml::html_tag::add_float(const element::ptr &el, int x, int y)
 			} else
 			{
 				bool inserted = false;
-				for(floated_box::vector::iterator i = m_floats_right.begin(); i != m_floats_right.end(); i++)
+				for(auto i = m_floats_right.begin(); i != m_floats_right.end(); i++)
 				{
 					if(fb.pos.left() < i->pos.left())
 					{
@@ -1449,15 +1438,15 @@ void litehtml::html_tag::parse_background()
 	{
 		string_vector res;
 		split_string(str, res, _t(" \t"));
-		if(res.size() > 0)
+		if(!res.empty())
 		{
 			if(res.size() == 1)
 			{
-				if( value_in_list(res[0].c_str(), _t("left;right;center")) )
+				if( value_in_list(res[0], _t("left;right;center")) )
 				{
 					m_bg.m_position.x.fromString(res[0], _t("left;right;center"));
 					m_bg.m_position.y.set_value(50, css_units_percentage);
-				} else if( value_in_list(res[0].c_str(), _t("top;bottom;center")) )
+				} else if( value_in_list(res[0], _t("top;bottom;center")) )
 				{
 					m_bg.m_position.y.fromString(res[0], _t("top;bottom;center"));
 					m_bg.m_position.x.set_value(50, css_units_percentage);
@@ -1468,19 +1457,19 @@ void litehtml::html_tag::parse_background()
 				}
 			} else
 			{
-				if(value_in_list(res[0].c_str(), _t("left;right")))
+				if(value_in_list(res[0], _t("left;right")))
 				{
 					m_bg.m_position.x.fromString(res[0], _t("left;right;center"));
 					m_bg.m_position.y.fromString(res[1], _t("top;bottom;center"));
-				} else if(value_in_list(res[0].c_str(), _t("top;bottom")))
+				} else if(value_in_list(res[0], _t("top;bottom")))
 				{
 					m_bg.m_position.x.fromString(res[1], _t("left;right;center"));
 					m_bg.m_position.y.fromString(res[0], _t("top;bottom;center"));
-				} else if(value_in_list(res[1].c_str(), _t("left;right")))
+				} else if(value_in_list(res[1], _t("left;right")))
 				{
 					m_bg.m_position.x.fromString(res[1], _t("left;right;center"));
 					m_bg.m_position.y.fromString(res[0], _t("top;bottom;center"));
-				}else if(value_in_list(res[1].c_str(), _t("top;bottom")))
+				}else if(value_in_list(res[1], _t("top;bottom")))
 				{
 					m_bg.m_position.x.fromString(res[0], _t("left;right;center"));
 					m_bg.m_position.y.fromString(res[1], _t("top;bottom;center"));
@@ -1591,7 +1580,7 @@ void litehtml::html_tag::parse_background()
 
 	if(!m_bg.m_image.empty())
 	{
-		doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.empty() ? 0 : m_bg.m_baseurl.c_str(), true);
+		doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.empty() ? nullptr : m_bg.m_baseurl.c_str(), true);
 	}
 }
 
@@ -1689,7 +1678,7 @@ void litehtml::html_tag::set_data( const tchar_t* /*data*/ )
 
 void litehtml::html_tag::get_inline_boxes( position::vector& boxes )
 {
-	litehtml::box* old_box = 0;
+	litehtml::box* old_box = nullptr;
 	position pos;
 	for(auto& el : m_children)
 	{
@@ -1785,14 +1774,15 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 
 	bool ret = false;
 	bool apply = false;
-	for (used_selector::vector::iterator iter = m_used_styles.begin(); iter != m_used_styles.end() && !apply; iter++)
+	for (const auto& used_style : m_used_styles)
 	{
-		if((*iter)->m_selector->is_media_valid())
+		if(used_style->m_selector->is_media_valid())
 		{
-			int res = select(*((*iter)->m_selector), true);
-			if( (res == select_no_match && (*iter)->m_used) || (res == select_match && !(*iter)->m_used) )
+			int res = select(*(used_style->m_selector), true);
+			if( (res == select_no_match && used_style->m_used) || (res == select_match && !used_style->m_used) )
 			{
 				apply = true;
+                break;
 			}
 		}
 	}
@@ -1803,11 +1793,11 @@ bool litehtml::html_tag::find_styles_changes( position::vector& redraw_boxes, in
 		{
 			position::vector boxes;
 			get_inline_boxes(boxes);
-			for(position::vector::iterator pos = boxes.begin(); pos != boxes.end(); pos++)
+			for(auto & box : boxes)
 			{
-				pos->x	+= x;
-				pos->y	+= y;
-				redraw_boxes.push_back(*pos);
+                box.x	+= x;
+                box.y	+= y;
+				redraw_boxes.push_back(box);
 			}
 		} else
 		{
@@ -1919,7 +1909,7 @@ void litehtml::html_tag::on_click()
 
 const litehtml::tchar_t* litehtml::html_tag::get_cursor()
 {
-	return get_style_property(_t("cursor"), true, 0);
+	return get_style_property(_t("cursor"), true, nullptr);
 }
 
 static const int font_size_table[8][7] =
@@ -1938,7 +1928,7 @@ static const int font_size_table[8][7] =
 void litehtml::html_tag::init_font()
 {
 	// initialize font size
-	const tchar_t* str = get_style_property(_t("font-size"), false, 0);
+	const tchar_t* str = get_style_property(_t("font-size"), false, nullptr);
 
 	int parent_sz = 0;
 	int doc_font_size = get_document()->container()->get_default_font_size();
@@ -2032,9 +2022,9 @@ bool litehtml::html_tag::is_break() const
 void litehtml::html_tag::set_tagName( const tchar_t* tag )
 {
 	tstring s_val = tag;
-	for(size_t i = 0; i < s_val.length(); i++)
+	for(char& i : s_val)
 	{
-		s_val[i] = std::tolower(s_val[i], std::locale::classic());
+		i = std::tolower(i, std::locale::classic());
 	}
 	m_tag = s_val;
 }
@@ -2073,9 +2063,11 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 			border_box += m_borders;
 
 			borders bdr = m_css_borders;
-			bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
-
-			get_document()->container()->draw_borders(hdc, bdr, border_box, have_parent() ? false : true);
+            if(bdr.is_visible())
+            {
+                bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
+                get_document()->container()->draw_borders(hdc, bdr, border_box, !have_parent());
+            }
 		}
 	} else
 	{
@@ -2087,7 +2079,7 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 		background_paint bg_paint;
 		position content_box;
 
-		for(position::vector::iterator box = boxes.begin(); box != boxes.end(); box++)
+		for(auto box = boxes.begin(); box != boxes.end(); box++)
 		{
 			box->x	+= x;
 			box->y	+= y;
@@ -2135,16 +2127,18 @@ void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const posi
 					bdr.right	= m_css_borders.right;
 				}
 
-
 				if(bg)
 				{
 					bg_paint.border_radius = bdr.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
 					get_document()->container()->draw_background(hdc, bg_paint);
 				}
-				borders b = bdr;
-				b.radius = bdr.radius.calc_percents(box->width, box->height);
-				get_document()->container()->draw_borders(hdc, b, *box, false);
-			}
+                if(bdr.is_visible())
+                {
+                    borders b = bdr;
+                    b.radius = bdr.radius.calc_percents(box->width, box->height);
+                    get_document()->container()->draw_borders(hdc, b, *box, false);
+                }
+            }
 		}
 	}
 }
@@ -2313,7 +2307,7 @@ int litehtml::html_tag::place_element(const element::ptr &el, int max_width)
 		break;
 	default:
 		{
-			line_context line_ctx;
+			line_context line_ctx = {0};
 			line_ctx.top = 0;
 			if (!m_boxes.empty())
 			{
@@ -2456,7 +2450,7 @@ bool litehtml::html_tag::set_pseudo_class( const tchar_t* pclass, bool add )
 		}
 	} else
 	{
-		string_vector::iterator pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
+		auto pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
 		if(pi != m_pseudo_classes.end())
 		{
 			m_pseudo_classes.erase(pi);
@@ -2578,9 +2572,9 @@ int litehtml::html_tag::new_box(const element::ptr &el, int max_width, line_cont
 		if(m_css_text_indent.val() != 0)
 		{
 			bool line_box_found = false;
-			for(box::vector::iterator iter = m_boxes.begin(); iter != m_boxes.end(); iter++)
+			for(auto & box : m_boxes)
 			{
-				if((*iter)->get_type() == box_line)
+				if(box->get_type() == box_line)
 				{
 					line_box_found = true;
 					break;
@@ -2821,9 +2815,9 @@ void litehtml::html_tag::apply_vertical_align()
 
 		if(add)
 		{
-			for(size_t i = 0; i < m_boxes.size(); i++)
+			for(auto & box : m_boxes)
 			{
-				m_boxes[i]->y_shift(add);
+				box->y_shift(add);
 			}
 		}
 	}
@@ -2938,9 +2932,9 @@ void litehtml::html_tag::init_background_paint(position pos, background_paint &b
 		}
 
 	}
-	bg_paint.border_radius	= m_css_borders.radius.calc_percents(border_box.width, border_box.height);;
+	bg_paint.border_radius	= m_css_borders.radius.calc_percents(border_box.width, border_box.height);
 	bg_paint.border_box		= border_box;
-	bg_paint.is_root		= have_parent() ? false : true;
+	bg_paint.is_root		= !have_parent();
 }
 
 litehtml::visibility litehtml::html_tag::get_visibility() const
@@ -2952,16 +2946,16 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 {
 	list_marker lm;
 
-	const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
+	const tchar_t* list_image = get_style_property(_t("list-style-image"), true, nullptr);
 	size img_size;
 	if(list_image)
 	{
 		css::parse_css_url(list_image, lm.image);
-		lm.baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
+		lm.baseurl = get_style_property(_t("list-style-image-baseurl"), true, nullptr);
 		get_document()->container()->get_image_size(lm.image.c_str(), lm.baseurl, img_size);
 	} else
 	{
-		lm.baseurl = 0;
+		lm.baseurl = nullptr;
 	}
 
 	int ln_height	= line_height();
@@ -2976,7 +2970,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 	{
 		lm.pos.y = pos.y;
 		lm.pos.height = pos.height;
-		lm.index = get_attr(_t("list_index"), _t(""))[0];
+		lm.index = (unsigned char) get_attr(_t("list_index"), _t(""))[0];
 	}
 	else
 	{
@@ -3065,22 +3059,22 @@ litehtml::tstring litehtml::html_tag::get_list_marker_text(int index)
 		return num_cvt::to_roman_lower(index);
 	case litehtml::list_style_type_upper_roman:
 		return num_cvt::to_roman_upper(index);
-	case litehtml::list_style_type_armenian:
-		break;
-	case litehtml::list_style_type_georgian:
-		break;
-	case litehtml::list_style_type_hebrew:
-		break;
-	case litehtml::list_style_type_hiragana:
-		break;
-	case litehtml::list_style_type_hiragana_iroha:
-		break;
-	case litehtml::list_style_type_katakana:
-		break;
-	case litehtml::list_style_type_katakana_iroha:
-		break;
-	}
-	return _t("");
+    default:
+        return _t("");
+//	case litehtml::list_style_type_armenian:
+//	case litehtml::list_style_type_georgian:
+//	case litehtml::list_style_type_hebrew:
+//	case litehtml::list_style_type_hiragana:
+//	case litehtml::list_style_type_hiragana_iroha:
+//	case litehtml::list_style_type_katakana:
+//	case litehtml::list_style_type_katakana_iroha:
+//  case litehtml::list_style_type_none:
+//  case litehtml::list_style_type_circle:
+//  case litehtml::list_style_type_disc:
+//  case litehtml::list_style_type_square:
+//  case litehtml::list_style_type_cjk_ideographic:
+//      break;
+    }
 }
 
 void litehtml::html_tag::draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex )
@@ -3329,9 +3323,9 @@ void litehtml::html_tag::render_positioned(render_type rt)
 
 	if(!m_positioned.empty())
 	{
-		std::stable_sort(m_positioned.begin(), m_positioned.end(), [](const litehtml::element::ptr& _Left, const litehtml::element::ptr& _Right)
+		std::stable_sort(m_positioned.begin(), m_positioned.end(), [](const litehtml::element::ptr& Left, const litehtml::element::ptr& Right)
 		{
-			return (_Left->get_zindex() < _Right->get_zindex());
+			return (Left->get_zindex() < Right->get_zindex());
 		});
 	}
 }
@@ -3340,19 +3334,19 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 {
 	if(!is_visible()) return;
 
-	std::map<int, bool> zindexes;
+	std::map<int, bool> z_indexes;
 	if(with_positioned)
 	{
-		for(elements_vector::iterator i = m_positioned.begin(); i != m_positioned.end(); i++)
+		for(const auto& idx : m_positioned)
 		{
-			zindexes[(*i)->get_zindex()];
+			z_indexes[idx->get_zindex()];
 		}
 
-		for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end(); idx++)
+        for(const auto& idx : z_indexes)
 		{
-			if(idx->first < 0)
+			if(idx.first < 0)
 			{
-				draw_children(hdc, x, y, clip, draw_positioned, idx->first);
+				draw_children(hdc, x, y, clip, draw_positioned, idx.first);
 			}
 		}
 	}
@@ -3361,19 +3355,19 @@ void litehtml::html_tag::draw_stacking_context( uint_ptr hdc, int x, int y, cons
 	draw_children(hdc, x, y, clip, draw_inlines, 0);
 	if(with_positioned)
 	{
-		for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end(); idx++)
+		for(auto& z_index : z_indexes)
 		{
-			if(idx->first == 0)
+			if(z_index.first == 0)
 			{
-				draw_children(hdc, x, y, clip, draw_positioned, idx->first);
+				draw_children(hdc, x, y, clip, draw_positioned, z_index.first);
 			}
 		}
 
-		for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end(); idx++)
+		for(auto& z_index : z_indexes)
 		{
-			if(idx->first > 0)
+			if(z_index.first > 0)
 			{
-				draw_children(hdc, x, y, clip, draw_positioned, idx->first);
+				draw_children(hdc, x, y, clip, draw_positioned, z_index.first);
 			}
 		}
 	}
@@ -3419,7 +3413,7 @@ bool litehtml::html_tag::is_nth_child(const element::ptr& el, int num, int off, 
 bool litehtml::html_tag::is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const
 {
 	int idx = 1;
-	for(elements_vector::const_reverse_iterator child = m_children.rbegin(); child != m_children.rend(); child++)
+	for(auto child = m_children.rbegin(); child != m_children.rend(); child++)
 	{
 		if((*child)->get_display() != display_inline_text)
 		{
@@ -3448,7 +3442,7 @@ bool litehtml::html_tag::is_nth_last_child(const element::ptr& el, int num, int 
 	return false;
 }
 
-void litehtml::html_tag::parse_nth_child_params( tstring param, int &num, int &off )
+void litehtml::html_tag::parse_nth_child_params( const tstring& param, int &num, int &off )
 {
 	if(param == _t("odd"))
 	{
@@ -3467,15 +3461,15 @@ void litehtml::html_tag::parse_nth_child_params( tstring param, int &num, int &o
 		tstring s_off;
 
 		tstring s_int;
-		for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+		for(const auto& token : tokens)
 		{
-			if((*tok) == _t("n"))
+			if(token == _t("n"))
 			{
 				s_num = s_int;
 				s_int.clear();
 			} else
 			{
-				s_int += (*tok);
+				s_int += token;
 			}
 		}
 		s_off = s_int;
@@ -3557,19 +3551,19 @@ litehtml::element::ptr litehtml::html_tag::find_adjacent_sibling( const element:
 						return ret;
 					}
 				}
-				return 0;
+				return nullptr;
 			} else
 			{
 				ret = e;
 			}
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 litehtml::element::ptr litehtml::html_tag::find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/)
 {
-	element::ptr ret = 0;
+	element::ptr ret = nullptr;
 	for(auto& e : m_children)
 	{
 		if(e->get_display() != display_inline_text)
@@ -3597,7 +3591,7 @@ litehtml::element::ptr litehtml::html_tag::find_sibling(const element::ptr& el, 
 			}
 		}
 	}
-	return 0;
+	return nullptr;
 }
 
 bool litehtml::html_tag::is_only_child(const element::ptr& el, bool of_type) const
@@ -3626,7 +3620,7 @@ void litehtml::html_tag::update_floats(int dy, const element::ptr &parent)
 	if(is_floats_holder())
 	{
 		bool reset_cache = false;
-		for(floated_box::vector::reverse_iterator fb = m_floats_left.rbegin(); fb != m_floats_left.rend(); fb++)
+		for(auto fb = m_floats_left.rbegin(); fb != m_floats_left.rend(); fb++)
 		{
 			if(fb->el->is_ancestor(parent))
 			{
@@ -3639,7 +3633,7 @@ void litehtml::html_tag::update_floats(int dy, const element::ptr &parent)
 			m_cahe_line_left.invalidate();
 		}
 		reset_cache = false;
-		for(floated_box::vector::reverse_iterator fb = m_floats_right.rbegin(); fb != m_floats_right.rend(); fb++)
+		for(auto fb = m_floats_right.rbegin(); fb != m_floats_right.rend(); fb++)
 		{
 			if(fb->el->is_ancestor(parent))
 			{
@@ -3803,7 +3797,7 @@ void litehtml::html_tag::refresh_styles()
 
 litehtml::element::ptr litehtml::html_tag::get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex)
 {
-	element::ptr ret = 0;
+	element::ptr ret = nullptr;
 
 	if(m_overflow > overflow_visible)
 	{
@@ -3817,7 +3811,7 @@ litehtml::element::ptr litehtml::html_tag::get_child_by_point(int x, int y, int 
 	pos.x	= x - pos.x;
 	pos.y	= y - pos.y;
 
-	for(elements_vector::reverse_iterator i = m_children.rbegin(); i != m_children.rend() && !ret; i++)
+	for(auto i = m_children.rbegin(); i != m_children.rend() && !ret; i++)
 	{
 		element::ptr el = (*i);
 
@@ -3843,7 +3837,7 @@ litehtml::element::ptr litehtml::html_tag::get_child_by_point(int x, int y, int 
 							ret = (*i);
 						}
 					}
-					el = 0;
+					el = nullptr;
 				}
 				break;
 			case draw_block:
@@ -3864,7 +3858,7 @@ litehtml::element::ptr litehtml::html_tag::get_child_by_point(int x, int y, int 
 					{
 						ret = (*i);
 					}
-					el = 0;
+					el = nullptr;
 				}
 				break;
 			case draw_inlines:
@@ -3873,7 +3867,7 @@ litehtml::element::ptr litehtml::html_tag::get_child_by_point(int x, int y, int 
 					if(el->get_display() == display_inline_block)
 					{
 						ret = el->get_element_by_point(pos.x, pos.y, client_x, client_y);
-						el = 0;
+						el = nullptr;
 					}
 					if(!ret && (*i)->is_point_inside(pos.x, pos.y))
 					{
@@ -3915,31 +3909,33 @@ litehtml::element::ptr litehtml::html_tag::get_child_by_point(int x, int y, int 
 
 litehtml::element::ptr litehtml::html_tag::get_element_by_point(int x, int y, int client_x, int client_y)
 {
-	if(!is_visible()) return 0;
+	if(!is_visible()) return nullptr;
 
 	element::ptr ret;
 
-	std::map<int, bool> zindexes;
+	std::map<int, bool> z_indexes;
 
-	for(elements_vector::iterator i = m_positioned.begin(); i != m_positioned.end(); i++)
+	for(const auto& i : m_positioned)
 	{
-		zindexes[(*i)->get_zindex()];
+		z_indexes[i->get_zindex()];
 	}
 
-	for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end() && !ret; idx++)
+	for(const auto& zindex : z_indexes)
 	{
-		if(idx->first > 0)
+		if(zindex.first > 0)
 		{
-			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
+			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, zindex.first);
+            break;
 		}
 	}
 	if(ret) return ret;
 
-	for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end() && !ret; idx++)
+	for(const auto& z_index : z_indexes)
 	{
-		if(idx->first == 0)
+		if(z_index.first == 0)
 		{
-			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
+			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, z_index.first);
+            break;
 		}
 	}
 	if(ret) return ret;
@@ -3954,11 +3950,12 @@ litehtml::element::ptr litehtml::html_tag::get_element_by_point(int x, int y, in
 	if(ret) return ret;
 
 
-	for(std::map<int, bool>::iterator idx = zindexes.begin(); idx != zindexes.end() && !ret; idx++)
+	for(const auto& z_index : z_indexes)
 	{
-		if(idx->first < 0)
+		if(z_index.first < 0)
 		{
-			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, idx->first);
+			ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, z_index.first);
+            break;
 		}
 	}
 	if(ret) return ret;
@@ -3987,7 +3984,7 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 		// return own background with check for empty one
 		if(m_bg.m_image.empty() && !m_bg.m_color.alpha)
 		{
-			return 0;
+			return nullptr;
 		}
 		return &m_bg;
 	}
@@ -4006,7 +4003,7 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 				}
 			}
 		}
-		return 0;
+		return nullptr;
 	}
 	
 	if(is_body())
@@ -4017,7 +4014,7 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 			if (!el_parent->get_background(true))
 			{
 				// parent of body will draw background for body
-				return 0;
+				return nullptr;
 			}
 		}
 	}
@@ -4101,9 +4098,9 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 
 	bool was_space = false;
 
-	for (auto el : m_children)
+	for (const auto& el : m_children)
 	{
-		// we don't need process absolute and fixed positioned element on the second pass
+		// we don't need to process absolute and fixed positioned element on the second pass
 		if (second_pass)
 		{
 			el_position = el->get_element_position();
@@ -4218,14 +4215,14 @@ int litehtml::html_tag::render_box(int x, int y, int max_width, bool second_pass
 
 	if (m_display == display_list_item)
 	{
-		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, 0);
+		const tchar_t* list_image = get_style_property(_t("list-style-image"), true, nullptr);
 		if (list_image)
 		{
 			tstring url;
 			css::parse_css_url(list_image, url);
 
 			size sz;
-			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, 0);
+			const tchar_t* list_image_baseurl = get_style_property(_t("list-style-image-baseurl"), true, nullptr);
 			get_document()->container()->get_image_size(url.c_str(), list_image_baseurl, sz);
 			if (min_height < sz.height)
 			{
@@ -4691,9 +4688,6 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 		doc->container()->set_clip(pos, bdr_radius, true, true);
 	}
 
-	position browser_wnd;
-	doc->container()->get_client_rect(browser_wnd);
-
 	element::ptr el;
 	for (auto& item : m_children)
 	{
@@ -4707,6 +4701,9 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 				{
 					if (el->get_element_position() == element_position_fixed)
 					{
+                        position browser_wnd;
+                        doc->container()->get_client_rect(browser_wnd);
+
 						el->draw(hdc, browser_wnd.x, browser_wnd.y, clip);
 						el->draw_stacking_context(hdc, browser_wnd.x, browser_wnd.y, clip, true);
 					}
@@ -4715,7 +4712,7 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 						el->draw(hdc, pos.x, pos.y, clip);
 						el->draw_stacking_context(hdc, pos.x, pos.y, clip, true);
 					}
-					el = 0;
+					el = nullptr;
 				}
 				break;
 			case draw_block:
@@ -4729,7 +4726,7 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 				{
 					el->draw(hdc, pos.x, pos.y, clip);
 					el->draw_stacking_context(hdc, pos.x, pos.y, clip, false);
-					el = 0;
+					el = nullptr;
 				}
 				break;
 			case draw_inlines:
@@ -4739,7 +4736,7 @@ void litehtml::html_tag::draw_children_box(uint_ptr hdc, int x, int y, const pos
 					if (el->get_display() == display_inline_block)
 					{
 						el->draw_stacking_context(hdc, pos.x, pos.y, clip, false);
-						el = 0;
+						el = nullptr;
 					}
 				}
 				break;

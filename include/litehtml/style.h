@@ -46,13 +46,13 @@ namespace litehtml
 		props_map			m_properties;
 		static string_map	m_valid_values;
 	public:
-		style();
+		style() = default;
 		style(const style& val);
-		virtual ~style();
 
-		void operator=(const style& val)
+		style& operator=(const style& val)
 		{
 			m_properties = val.m_properties;
+            return *this;
 		}
 
 		void add(const tchar_t* txt, const tchar_t* baseurl)
@@ -66,13 +66,13 @@ namespace litehtml
 		{
 			if(name)
 			{
-				props_map::const_iterator f = m_properties.find(name);
+				auto f = m_properties.find(name);
 				if(f != m_properties.end())
 				{
 					return f->second.m_value.c_str();
 				}
 			}
-			return 0;
+			return nullptr;
 		}
 
 		void combine(const litehtml::style& src);

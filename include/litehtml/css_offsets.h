@@ -12,10 +12,7 @@ namespace litehtml
 		css_length	right;
 		css_length	bottom;
 
-		css_offsets()
-		{
-
-		}
+		css_offsets() = default;
 
 		css_offsets(const css_offsets& val)
 		{

@@ -9,16 +9,11 @@ litehtml::el_before_after_base::el_before_after_base(const std::shared_ptr<liteh
 {
 	if(before)
 	{
-		set_tagName(_t("::before"));
+		m_tag = _t("::before");
 	} else
 	{
-		set_tagName(_t("::after"));
+        m_tag = _t("::after");
 	}
-}
-
-litehtml::el_before_after_base::~el_before_after_base()
-{
-
 }
 
 void litehtml::el_before_after_base::add_style(const litehtml::style& st)
@@ -28,7 +23,7 @@ void litehtml::el_before_after_base::add_style(const litehtml::style& st)
 	tstring content = get_style_property(_t("content"), false, _t(""));
 	if(!content.empty())
 	{
-		int idx = value_index(content.c_str(), content_property_string);
+		int idx = value_index(content, content_property_string);
 		if(idx < 0)
 		{
 			tstring fnc;
@@ -133,7 +128,7 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 
 void litehtml::el_before_after_base::add_function( const tstring& fnc, const tstring& params )
 {
-	int idx = value_index(fnc.c_str(), _t("attr;counter;url"));
+	int idx = value_index(fnc, _t("attr;counter;url"));
 	switch(idx)
 	{
 	// attr
