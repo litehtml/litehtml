@@ -77,7 +77,7 @@ void litehtml::html_tag::set_attr( const tchar_t* name, const tchar_t* val )
 	if(name && val)
 	{
 		tstring s_val = name;
-		for(char& i : s_val)
+		for(tchar_t& i : s_val)
 		{
 			i = std::tolower(i, std::locale::classic());
 		}
@@ -2021,12 +2021,11 @@ bool litehtml::html_tag::is_break() const
 
 void litehtml::html_tag::set_tagName( const tchar_t* tag )
 {
-	tstring s_val = tag;
-	for(char& i : s_val)
+	m_tag = tag;
+	for (tchar_t& i : m_tag)
 	{
 		i = std::tolower(i, std::locale::classic());
 	}
-	m_tag = s_val;
 }
 
 void litehtml::html_tag::draw_background( uint_ptr hdc, int x, int y, const position* clip )

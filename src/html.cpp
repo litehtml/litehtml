@@ -18,7 +18,7 @@ void litehtml::trim(tstring &s)
 
 void litehtml::lcase(tstring &s) 
 {
-	for(char & i : s)
+	for(tchar_t & i : s)
 	{
 		i = t_tolower(i);
 	}

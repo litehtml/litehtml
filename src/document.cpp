@@ -709,7 +709,7 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 			std::wstring str_in = (const wchar_t*) (utf8_to_wchar(node->v.text.text));
 			if (!parseTextNode)
 			{
-				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str_in), shared_from_this()));
+				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str_in).c_str(), shared_from_this()));
 			}
 			else
 			{

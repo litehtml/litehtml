@@ -23,7 +23,7 @@ void litehtml::css_length::fromString( const tstring& str, const tstring& predef
 		tstring num;
 		tstring un;
 		bool is_unit = false;
-		for(char chr : str)
+		for(tchar_t chr : str)
 		{
 			if(!is_unit)
 			{
