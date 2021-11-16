@@ -4780,7 +4780,10 @@ void litehtml::html_tag::draw_children_table(uint_ptr hdc, int x, int y, const p
 	pos.y += y;
 	for (auto& caption : m_grid->captions())
 	{
-		caption->draw(hdc, pos.x, pos.y, clip);
+        if (flag == draw_block)
+        {
+		    caption->draw(hdc, pos.x, pos.y, clip);
+        }
 		caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
 	}
 	for (int row = 0; row < m_grid->rows_count(); row++)
