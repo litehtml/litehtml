@@ -172,7 +172,7 @@ int litehtml::element::calc_width(int defVal) const
 		{
 			position client_pos;
 			get_document()->container()->get_client_rect(client_pos);
-			return w.calc_percent(client_pos.width);
+			return w.calc_percent(client_pos.width) - content_margins_width();
 		} else
 		{
 			int pw = el_parent->calc_width(defVal);
