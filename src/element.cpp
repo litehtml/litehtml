@@ -373,6 +373,7 @@ void litehtml::element::get_inline_boxes( position::vector& boxes )					LITEHTML
 void litehtml::element::parse_styles( bool is_reparse /*= false*/ )					LITEHTML_EMPTY_FUNC
 const litehtml::tchar_t* litehtml::element::get_attr( const tchar_t* name, const tchar_t* def /*= 0*/ ) const LITEHTML_RETURN_FUNC(def)
 bool litehtml::element::is_white_space() const										LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::is_space() const										    LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_body() const												LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_break() const											LITEHTML_RETURN_FUNC(false)
 int litehtml::element::get_base_line()												LITEHTML_RETURN_FUNC(0)

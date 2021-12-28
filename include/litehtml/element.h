@@ -135,6 +135,7 @@ namespace litehtml
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				refresh_styles();
 		virtual bool				is_white_space() const;
+        virtual bool                is_space() const;
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
 		virtual int					get_base_line();

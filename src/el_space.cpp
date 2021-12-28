@@ -32,3 +32,9 @@ bool litehtml::el_space::is_break() const
 	}
 	return false;
 }
+
+bool litehtml::el_space::is_space() const
+{
+    return true;
+}
+
