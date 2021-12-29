@@ -302,7 +302,7 @@ bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws) const
 		return false;
 	}
 
-	if(ws == white_space_nowrap || ws == white_space_pre)
+	if(ws == white_space_nowrap || ws == white_space_pre || (ws == white_space_pre_wrap && el->is_space()))
 	{
 		return true;
 	}
