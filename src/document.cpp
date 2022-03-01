@@ -591,15 +591,12 @@ void litehtml::document::add_fixed_box( const position& pos )
 
 bool litehtml::document::media_changed()
 {
-	if(!m_media_lists.empty())
+	container()->get_media_features(m_media);
+	if (update_media_lists(m_media))
 	{
-		container()->get_media_features(m_media);
-		if (update_media_lists(m_media))
-		{
-			m_root->refresh_styles();
-			m_root->parse_styles();
-			return true;
-		}
+		m_root->refresh_styles();
+		m_root->parse_styles();
+		return true;
 	}
 	return false;
 }
