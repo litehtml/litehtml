@@ -20,6 +20,9 @@ void litehtml::el_before_after_base::add_style(const litehtml::style& st)
 {
 	html_tag::add_style(st);
 
+	auto children = m_children;
+	m_children.clear();
+
 	tstring content = get_style_property(_t("content"), false, _t(""));
 	if(!content.empty())
 	{
@@ -71,6 +74,11 @@ void litehtml::el_before_after_base::add_style(const litehtml::style& st)
 				}
 			}
 		}
+	}
+
+	if(m_children.empty())
+	{
+		m_children = children;
 	}
 }
 
