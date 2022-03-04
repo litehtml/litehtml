@@ -89,6 +89,8 @@ namespace litehtml
 		int							get_inline_shift_left();
 		int							get_inline_shift_right();
 		void						apply_relative_shift(int parent_width);
+		// returns true for elements inside a table (but outside cells) that don't participate in table rendering
+		bool						is_table_skip() const;
 
 		std::shared_ptr<document>	get_document() const;
 
@@ -136,6 +138,7 @@ namespace litehtml
 		virtual void				refresh_styles();
 		virtual bool				is_white_space() const;
         virtual bool                is_space() const;
+		virtual bool				is_comment() const;
 		virtual bool				is_body() const;
 		virtual bool				is_break() const;
 		virtual int					get_base_line();

@@ -129,7 +129,7 @@ void litehtml::table_grid::finish()
 	{
 		for(int row = 0; row < m_rows_count; row++)
 		{
-			if(cell(col, row)->el)
+			if(cell(col, row)->el && cell(col, row)->colspan == 1)
 			{
 				cell(col, row)->el->set_css_width(m_columns[col].css_width);
 			}
