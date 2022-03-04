@@ -822,7 +822,7 @@ void litehtml::document::fix_table_children(element::ptr& el_ptr, style_display 
 	{
 		if ((*cur_iter)->get_display() != disp)
 		{
-			if (!(*cur_iter)->is_white_space() || ((*cur_iter)->is_white_space() && !tmp.empty()))
+			if (!(*cur_iter)->is_table_skip() || ((*cur_iter)->is_table_skip() && !tmp.empty()))
 			{
 				if (disp != display_table_row_group || (*cur_iter)->get_display() != display_table_caption)
 				{
@@ -878,7 +878,7 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 			{
 				if (cur == parent->m_children.begin()) break;
 				cur--;
-				if ((*cur)->is_white_space() || (*cur)->get_display() == el_disp)
+				if ((*cur)->is_table_skip() || (*cur)->get_display() == el_disp)
 				{
 					first = cur;
 				}
@@ -895,7 +895,7 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 				cur++;
 				if (cur == parent->m_children.end()) break;
 
-				if ((*cur)->is_white_space() || (*cur)->get_display() == el_disp)
+				if ((*cur)->is_table_skip() || (*cur)->get_display() == el_disp)
 				{
 					last = cur;
 				}

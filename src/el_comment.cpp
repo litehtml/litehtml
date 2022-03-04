@@ -6,6 +6,11 @@ litehtml::el_comment::el_comment(const std::shared_ptr<litehtml::document>& doc)
 	m_skip = true;
 }
 
+bool litehtml::el_comment::is_comment() const
+{
+	return true;
+}
+
 void litehtml::el_comment::get_text( tstring& text )
 {
 	text += m_text;
