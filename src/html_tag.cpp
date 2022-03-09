@@ -1647,6 +1647,20 @@ void litehtml::html_tag::calc_auto_margins(int parent_width)
 			m_margins.right = parent_width - el_width;
 			if (m_margins.right < 0) m_margins.right = 0;
 		}
+		else if (m_text_align != text_align_left && m_display == display_table)
+		{
+			if (width() < parent_width)
+			{
+				if (m_text_align == text_align_center)
+				{
+					m_margins.left += (parent_width - width()) / 2;
+				}
+				else if (m_text_align == text_align_right)
+				{
+					m_margins.left += (parent_width - width());
+				}
+			}
+		}
 	}
 }
 
