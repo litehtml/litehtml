@@ -375,6 +375,34 @@ int litehtml::table_grid::calc_table_width(int block_width, bool is_auto, int& m
 			}
 			cur_width += m_columns[col].width;
 		}
+		// If the table is still too wide shrink columns with % widths
+		if(cur_width > block_width)
+		{
+			while(true)
+			{
+				bool shrunk = false;
+				for(int col = 0; col < m_cols_count; col++)
+				{
+					if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage)
+					{
+						if(m_columns[col].width > m_columns[col].min_width)
+						{
+							m_columns[col].width--;
+							cur_width--;
+							shrunk = true;
+							if(cur_width == block_width)
+							{
+								break;
+							}
+						}
+					}
+				}
+				if(cur_width == block_width || !shrunk)
+				{
+					break;
+				}
+			}
+		}
 	}
 	return cur_width;
 }
