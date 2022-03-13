@@ -161,7 +161,7 @@ void litehtml::element::get_redraw_box(litehtml::position& pos, int x /*= 0*/, i
 int litehtml::element::calc_width(int defVal) const
 {
 	css_length w = get_css_width();
-	if(w.is_predefined())
+	if(w.is_predefined() || get_display() == display_table_cell)
 	{
 		return defVal;
 	}
