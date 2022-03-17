@@ -11,14 +11,9 @@ set(PROJECT_MAJOR 0)
 set(PROJECT_MINOR 0)
 
 option(EXTERNAL_GUMBO "Link against external gumbo instead of shipping a bundled copy" OFF)
-if(WIN32)
-  option(EXTERNAL_XXD "Use external xxd" OFF)
-else()
-  option(EXTERNAL_XXD "Use external xxd" ON)
-endif()
 
 if(NOT EXTERNAL_GUMBO)
-add_subdirectory(src/gumbo)
+    add_subdirectory(src/gumbo)
 endif()
 
 set(SOURCE_LITEHTML
@@ -171,23 +166,13 @@ install(TARGETS ${PROJECT_NAME}
 install(FILES cmake/litehtmlConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
 install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
 
-# Binary Master.css
-if (NOT EXTERNAL_XXD)
-    add_executable(xxd xxd/xxd.c)
-    set(XXD_COMMAND $<TARGET_FILE:xxd>)
-else()
-    find_program(XXD_COMMAND xxd)
-endif()
-if(WIN32)
-    file(TO_NATIVE_PATH ${XXD_COMMAND} XXD_COMMAND)
-    file(TO_NATIVE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/include/master.css MASTER_FILE)
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc
-        COMMAND type ${MASTER_FILE} | "${XXD_COMMAND}" -i > ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)
-else()
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc
-        COMMAND cat ${CMAKE_CURRENT_SOURCE_DIR}/include/master.css | xxd -i > ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)
-endif()
-set_source_files_properties(${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc PROPERTIES GENERATED TRUE)
+# Generate master.css.inc
+function(make_inc src dst)
+    file(READ  ${src} data)
+    file(WRITE ${dst} "R\"##(\n${data})##\"")
+endfunction(make_inc)
+make_inc(include/master.css src/master.css.inc)
+set_source_files_properties(src/master.css.inc PROPERTIES GENERATED TRUE)
 
 # Tests
 
