@@ -75,6 +75,8 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 	{
 		doc->container()->get_media_features(doc->m_media);
 
+		doc->m_root->set_pseudo_class(_t("root"), true);
+
 		// apply master CSS
 		doc->m_root->apply_stylesheet(ctx->master_css());
 

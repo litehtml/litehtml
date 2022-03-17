@@ -788,8 +788,6 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		case select_pseudo_class:
 			if(apply_pseudo)
 			{
-				if (!el_parent) return select_no_match;
-
 				tstring selector_param;
 				tstring	selector_name;
 
@@ -813,37 +811,37 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				switch(pseudo_selector)
 				{
 				case pseudo_class_only_child:
-					if (!el_parent->is_only_child(shared_from_this(), false))
+					if (!el_parent || !el_parent->is_only_child(shared_from_this(), false))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_only_of_type:
-					if (!el_parent->is_only_child(shared_from_this(), true))
+					if (!el_parent || !el_parent->is_only_child(shared_from_this(), true))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_first_child:
-					if (!el_parent->is_nth_child(shared_from_this(), 0, 1, false))
+					if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, false))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_first_of_type:
-					if (!el_parent->is_nth_child(shared_from_this(), 0, 1, true))
+					if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, true))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_last_child:
-					if (!el_parent->is_nth_last_child(shared_from_this(), 0, 1, false))
+					if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, false))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_last_of_type:
-					if (!el_parent->is_nth_last_child(shared_from_this(), 0, 1, true))
+					if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, true))
 					{
 						return select_no_match;
 					}
@@ -853,7 +851,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				case pseudo_class_nth_last_child:
 				case pseudo_class_nth_last_of_type:
 					{
-						if(selector_param.empty()) return select_no_match;
+						if(!el_parent || selector_param.empty()) return select_no_match;
 
 						int num = 0;
 						int off = 0;
