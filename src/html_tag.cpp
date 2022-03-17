@@ -103,7 +103,7 @@ const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, cons
 
 litehtml::elements_vector litehtml::html_tag::select_all( const tstring& selector )
 {
-	css_selector sel(media_query_list::ptr(nullptr));
+	css_selector sel(media_query_list::ptr(nullptr), _t(""));
 	sel.parse(selector);
 	
 	return select_all(sel);
@@ -132,7 +132,7 @@ void litehtml::html_tag::select_all(const css_selector& selector, elements_vecto
 
 litehtml::element::ptr litehtml::html_tag::select_one( const tstring& selector )
 {
-	css_selector sel(media_query_list::ptr(nullptr));
+	css_selector sel(media_query_list::ptr(nullptr), _t(""));
 	sel.parse(selector);
 
 	return select_one(sel);
@@ -179,19 +179,19 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 							element::ptr el = get_element_after();
 							if(el)
 							{
-								el->add_style(*sel->m_style);
+								el->add_style(sel->m_style, sel->m_baseurl);
 							}
 						} else if(apply & select_match_with_before)
 						{
 							element::ptr el = get_element_before();
 							if(el)
 							{
-								el->add_style(*sel->m_style);
+								el->add_style(sel->m_style, sel->m_baseurl);
 							}
 						}
 						else
 						{
-							add_style(*sel->m_style);
+							add_style(sel->m_style, sel->m_baseurl);
 							us->m_used = true;
 						}
 					}
@@ -200,18 +200,18 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 					element::ptr el = get_element_after();
 					if(el)
 					{
-						el->add_style(*sel->m_style);
+						el->add_style(sel->m_style, sel->m_baseurl);
 					}
 				} else if(apply & select_match_with_before)
 				{
 					element::ptr el = get_element_before();
 					if(el)
 					{
-						el->add_style(*sel->m_style);
+						el->add_style(sel->m_style, sel->m_baseurl);
 					}
 				} else
 				{
-					add_style(*sel->m_style);
+					add_style(sel->m_style, sel->m_baseurl);
 					us->m_used = true;
 				}
 			}
@@ -282,7 +282,7 @@ litehtml::uint_ptr litehtml::html_tag::get_font(font_metrics* fm)
 	return m_font;
 }
 
-const litehtml::tchar_t* litehtml::html_tag::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
+const litehtml::tchar_t* litehtml::html_tag::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ ) const
 {
 	const tchar_t* ret = m_style.get_property(name);
 	element::ptr el_parent = parent();
@@ -308,7 +308,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	if(style)
 	{
-		m_style.add(style, nullptr);
+		m_style.add(style, nullptr, this);
 	}
 
 	init_font();
@@ -3701,9 +3701,9 @@ litehtml::element::ptr litehtml::html_tag::get_element_after()
 	return el;
 }
 
-void litehtml::html_tag::add_style( const litehtml::style& st )
+void litehtml::html_tag::add_style(const tstring& style, const tstring& baseurl)
 {
-	m_style.combine(st);
+	m_style.add(style.c_str(), baseurl.c_str(), this);
 }
 
 bool litehtml::html_tag::have_inline_child() const
@@ -3754,19 +3754,19 @@ void litehtml::html_tag::refresh_styles()
 							element::ptr el = get_element_after();
 							if(el)
 							{
-								el->add_style(*usel->m_selector->m_style);
+								el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 							}
 						} else if(apply & select_match_with_before)
 						{
 							element::ptr el = get_element_before();
 							if(el)
 							{
-								el->add_style(*usel->m_selector->m_style);
+								el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 							}
 						}
 						else
 						{
-							add_style(*usel->m_selector->m_style);
+							add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 							usel->m_used = true;
 						}
 					}
@@ -3775,18 +3775,18 @@ void litehtml::html_tag::refresh_styles()
 					element::ptr el = get_element_after();
 					if(el)
 					{
-						el->add_style(*usel->m_selector->m_style);
+						el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 					}
 				} else if(apply & select_match_with_before)
 				{
 					element::ptr el = get_element_before();
 					if(el)
 					{
-						el->add_style(*usel->m_selector->m_style);
+						el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 					}
 				} else
 				{
-					add_style(*usel->m_selector->m_style);
+					add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 					usel->m_used = true;
 				}
 			}

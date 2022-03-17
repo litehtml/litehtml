@@ -179,13 +179,15 @@ namespace litehtml
 		css_element_selector	m_right;
 		css_selector::ptr		m_left;
 		css_combinator			m_combinator;
-		style::ptr				m_style;
+		tstring					m_style;
 		int						m_order;
 		media_query_list::ptr	m_media_query;
+		tstring					m_baseurl;
 	public:
-		explicit css_selector(const media_query_list::ptr& media)
+		explicit css_selector(const media_query_list::ptr& media, const tstring& baseurl)
 		{
 			m_media_query	= media;
+			m_baseurl		= baseurl;
 			m_combinator	= combinator_descendant;
 			m_order			= 0;
 		}
