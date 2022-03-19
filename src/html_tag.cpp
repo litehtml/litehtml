@@ -339,15 +339,23 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	m_clear = (element_clear) value_index(get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
-	if (m_float != float_none)
+	if (m_display != display_none &&
+		m_display != display_table &&
+		m_display != display_inline_table)
 	{
 		// reset display in to block for floating elements
-		if (m_display != display_none)
+		if (m_float != float_none)
+		{
+			m_display = display_block;
+		}
+		// fix elements with absolute/fixed positions
+		else if (m_el_position == element_position_absolute || m_el_position == element_position_fixed)
 		{
 			m_display = display_block;
 		}
 	}
-	else if (m_display == display_table ||
+
+	if (m_display == display_table ||
 		m_display == display_inline_table ||
 		m_display == display_table_caption ||
 		m_display == display_table_cell ||
@@ -359,14 +367,6 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 		m_display == display_table_row_group)
 	{
 		doc->add_tabular(shared_from_this());
-	}
-	// fix inline boxes with absolute/fixed positions
-	else if (m_display != display_none && is_inline_box())
-	{
-		if (m_el_position == element_position_absolute || m_el_position == element_position_fixed)
-		{
-			m_display = display_block;
-		}
 	}
 
 	m_css_text_indent.fromString(	get_style_property(_t("text-indent"),	true,	_t("0")),	_t("0"));
@@ -1617,7 +1617,9 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 
 void litehtml::html_tag::calc_auto_margins(int parent_width)
 {
-	if (get_element_position() != element_position_absolute && (m_display == display_block || m_display == display_table))
+	if ((m_display == display_block || m_display == display_table) &&
+		get_element_position() != element_position_absolute &&
+		m_float == float_none)
 	{
 		if (m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
