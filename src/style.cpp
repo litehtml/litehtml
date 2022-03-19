@@ -63,6 +63,8 @@ void litehtml::style::combine( const litehtml::style& src )
 
 void litehtml::style::subst_vars( tstring& str, const element* el )
 {
+	if (!el) return;
+
 	while (1)
 	{
 		auto start = str.find(_t("var("));
