@@ -1,5 +1,3 @@
-[![Travis Build Status](https://travis-ci.org/litehtml/litehtml.svg?branch=master)](https://travis-ci.org/litehtml/litehtml)
-
 # What is litehtml?
 
 **litehtml** is the lightweight HTML rendering engine with CSS2/CSS3 support. Note that **litehtml** itself does not draw any text, pictures or other graphics and that **litehtml** does not depend on any image/draw/font library. You are free to use any library to draw images, fonts and any other graphics. **litehtml** just parses HTML/CSS and places the HTML elements into the correct positions (renders HTML). To draw the HTML elements you have to implement the simple callback interface [document_container](https://github.com/litehtml/litehtml/wiki/document_container). This interface is really simple, check it out! The [document_container](https://github.com/litehtml/litehtml/wiki/document_container) implementation is required to render HTML correctly.
@@ -34,12 +32,7 @@ The litebrowser source codes are available on GitHub:
 **litehtml** is distributed under [New BSD License](https://opensource.org/licenses/BSD-3-Clause).
 The **gumbo-parser** is disributed under [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
-## Support litehtml project
+## Links
 
-If you like the work **litehtml** is doing please consider a small donation:
-
-[ ![PayPal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif) ](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=UHBQG6EAFCRBA) [ ![Patreon](https://img.shields.io/badge/patreon-Become%20a%20Patron!-red.png?style=for-the-badge&logo=patreon) ](https://www.patreon.com/tordex)
-
-Bitcoin: **1CS1174GVSLbP33TBp8RFwqPS6KmQK6kLY**
-
-![BitCoin](https://www.tordex.com/assets/images/litehtml-bitcoin.png)
+  * [source code](https://github.com/litehtml/litehtml)
+  * [website](http://www.litehtml.com/)
