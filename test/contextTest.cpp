@@ -1,18 +1,16 @@
 #include <gtest/gtest.h>
 
 #include "litehtml.h"
+#include "litehtml/utf8_strings.h"
 
 using namespace litehtml;
 
-extern const litehtml::tchar_t master_css[] =
-{
+const char* master_css =
 #include "master.css.inc"
-, 0
-};
-
+;
 
 TEST(ContextTest, LoadMasterStylesheet)
 {
     context ctx;
-    ctx.load_master_stylesheet(master_css);
+    ctx.load_master_stylesheet(litehtml_from_utf8(master_css));
 }

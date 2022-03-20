@@ -14,18 +14,18 @@ litehtml::style::style( const style& val )
 	m_properties = val.m_properties;
 }
 
-void litehtml::style::parse( const tchar_t* txt, const tchar_t* baseurl )
+void litehtml::style::parse( const tchar_t* txt, const tchar_t* baseurl, const element* el )
 {
 	std::vector<tstring> properties;
 	split_string(txt, properties, _t(";"), _t(""), _t("\"'"));
 
 	for(const auto & property : properties)
 	{
-		parse_property(property, baseurl);
+		parse_property(property, baseurl, el);
 	}
 }
 
-void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl )
+void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl, const element* el )
 {
 	tstring::size_type pos = txt.find_first_of(_t(':'));
 	if(pos != tstring::npos)
@@ -42,12 +42,12 @@ void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl
 			split_string(val, vals, _t("!"));
 			if(vals.size() == 1)
 			{
-				add_property(name.c_str(), val.c_str(), baseurl, false);
+				add_property(name.c_str(), val.c_str(), baseurl, false, el);
 			} else if(vals.size() > 1)
 			{
 				trim(vals[0]);
 				lcase(vals[1]);
-				add_property(name.c_str(), vals[0].c_str(), baseurl, vals[1] == _t("important"));
+				add_property(name.c_str(), vals[0].c_str(), baseurl, vals[1] == _t("important"), el);
 			}
 		}
 	}
@@ -61,12 +61,34 @@ void litehtml::style::combine( const litehtml::style& src )
 	}
 }
 
-void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, const tchar_t* baseurl, bool important )
+void litehtml::style::subst_vars( tstring& str, const element* el )
 {
-	if(!name || !val)
+	if (!el) return;
+
+	while (1)
+	{
+		auto start = str.find(_t("var("));
+		if (start == -1) break;
+		if (start > 0 && isalnum(str[start - 1])) break;
+		auto end = str.find(_t(")"), start + 4);
+		if (end == -1) break;
+		auto name = str.substr(start + 4, end - start - 4);
+		trim(name);
+		auto val = el->get_style_property(name.c_str(), true);
+		if (!val) break;
+		str.replace(start, end - start + 1, val);
+	}
+}
+
+void litehtml::style::add_property( const tchar_t* name, const tchar_t* _val, const tchar_t* baseurl, bool important, const element* el )
+{
+	if(!name || !_val)
 	{
 		return;
 	}
+
+	tstring val = _val;
+	subst_vars(val, el);
 
 	// Add baseurl for background image 
 	if(	!t_strcmp(name, _t("background-image")))
@@ -107,26 +129,26 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 			idx = value_index(token, border_style_strings, -1);
 			if(idx >= 0)
 			{
-				add_property(_t("border-left-style"), token.c_str(), baseurl, important);
-				add_property(_t("border-right-style"), token.c_str(), baseurl, important);
-				add_property(_t("border-top-style"), token.c_str(), baseurl, important);
-				add_property(_t("border-bottom-style"), token.c_str(), baseurl, important);
+				add_property(_t("border-left-style"), token.c_str(), baseurl, important, el);
+				add_property(_t("border-right-style"), token.c_str(), baseurl, important, el);
+				add_property(_t("border-top-style"), token.c_str(), baseurl, important, el);
+				add_property(_t("border-bottom-style"), token.c_str(), baseurl, important, el);
 			} else
 			{
 				if (t_isdigit(token[0]) || token[0] == _t('.') ||
 					value_in_list(token, _t("thin;medium;thick")))
 				{
-					add_property(_t("border-left-width"), token.c_str(), baseurl, important);
-					add_property(_t("border-right-width"), token.c_str(), baseurl, important);
-					add_property(_t("border-top-width"), token.c_str(), baseurl, important);
-					add_property(_t("border-bottom-width"), token.c_str(), baseurl, important);
+					add_property(_t("border-left-width"), token.c_str(), baseurl, important, el);
+					add_property(_t("border-right-width"), token.c_str(), baseurl, important, el);
+					add_property(_t("border-top-width"), token.c_str(), baseurl, important, el);
+					add_property(_t("border-bottom-width"), token.c_str(), baseurl, important, el);
 				} 
 				else
 				{
-					add_property(_t("border-left-color"), token.c_str(), baseurl, important);
-					add_property(_t("border-right-color"), token.c_str(), baseurl, important);
-					add_property(_t("border-top-color"), token.c_str(), baseurl, important);
-					add_property(_t("border-bottom-color"), token.c_str(), baseurl, important);
+					add_property(_t("border-left-color"), token.c_str(), baseurl, important, el);
+					add_property(_t("border-right-color"), token.c_str(), baseurl, important, el);
+					add_property(_t("border-top-color"), token.c_str(), baseurl, important, el);
+					add_property(_t("border-bottom-color"), token.c_str(), baseurl, important, el);
 				}
 			}
 		}
@@ -146,19 +168,19 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 			{
 				str = name;
 				str += _t("-style");
-				add_property(str.c_str(), token.c_str(), baseurl, important);
+				add_property(str.c_str(), token.c_str(), baseurl, important, el);
 			} else
 			{
 				if(web_color::is_color(token.c_str()))
 				{
 					str = name;
 					str += _t("-color");
-					add_property(str.c_str(), token.c_str(), baseurl, important);
+					add_property(str.c_str(), token.c_str(), baseurl, important, el);
 				} else
 				{
 					str = name;
 					str += _t("-width");
-					add_property(str.c_str(), token.c_str(), baseurl, important);
+					add_property(str.c_str(), token.c_str(), baseurl, important, el);
 				}
 			}
 		}
@@ -171,12 +193,12 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() >= 2)
 		{
-			add_property(_t("border-bottom-left-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"), tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-bottom-left-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-y"), tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 1)
 		{
-			add_property(_t("border-bottom-left-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"), tokens[0].c_str(), baseurl, important);
+			add_property(_t("border-bottom-left-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-y"), tokens[0].c_str(), baseurl, important, el);
 		}
 
 	} else if(!t_strcmp(name, _t("border-bottom-right-radius")))
@@ -185,12 +207,12 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() >= 2)
 		{
-			add_property(_t("border-bottom-right-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"), tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-bottom-right-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-y"), tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 1)
 		{
-			add_property(_t("border-bottom-right-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"), tokens[0].c_str(), baseurl, important);
+			add_property(_t("border-bottom-right-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-y"), tokens[0].c_str(), baseurl, important, el);
 		}
 
 	} else if(!t_strcmp(name, _t("border-top-right-radius")))
@@ -199,12 +221,12 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() >= 2)
 		{
-			add_property(_t("border-top-right-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"), tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-top-right-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-y"), tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 1)
 		{
-			add_property(_t("border-top-right-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"), tokens[0].c_str(), baseurl, important);
+			add_property(_t("border-top-right-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-y"), tokens[0].c_str(), baseurl, important, el);
 		}
 
 	} else if(!t_strcmp(name, _t("border-top-left-radius")))
@@ -213,12 +235,12 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() >= 2)
 		{
-			add_property(_t("border-top-left-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-left-radius-y"), tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-left-radius-y"), tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 1)
 		{
-			add_property(_t("border-top-left-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-left-radius-y"), tokens[0].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-left-radius-y"), tokens[0].c_str(), baseurl, important, el);
 		}
 
 	} else 
@@ -230,12 +252,12 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t("/"));
 		if(tokens.size() == 1)
 		{
-			add_property(_t("border-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-radius-y"), tokens[0].c_str(), baseurl, important);
+			add_property(_t("border-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-radius-y"), tokens[0].c_str(), baseurl, important, el);
 		} else if(tokens.size() >= 2)
 		{
-			add_property(_t("border-radius-x"), tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-radius-y"), tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-radius-x"), tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-radius-y"), tokens[1].c_str(), baseurl, important, el);
 		}
 	} else if(!t_strcmp(name, _t("border-radius-x")))
 	{
@@ -243,28 +265,28 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() == 1)
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[0].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-x"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-x"),	tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-x"),	tokens[0].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 2)
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-x"),	tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-x"),	tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 3)
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[2].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-x"),	tokens[2].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-x"),	tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 4)
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[2].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[3].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-x"),	tokens[2].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-x"),	tokens[3].c_str(), baseurl, important, el);
 		}
 	} else if(!t_strcmp(name, _t("border-radius-y")))
 	{
@@ -272,28 +294,28 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 		split_string(val, tokens, _t(" "));
 		if(tokens.size() == 1)
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[0].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-y"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-y"),	tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-y"),	tokens[0].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 2)
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-y"),	tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-y"),	tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 3)
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[2].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[1].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-y"),	tokens[2].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-y"),	tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 4)
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[2].c_str(), baseurl, important);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[3].c_str(), baseurl, important);
+			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important, el);
+			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-right-radius-y"),	tokens[2].c_str(), baseurl, important, el);
+			add_property(_t("border-bottom-left-radius-y"),	tokens[3].c_str(), baseurl, important, el);
 		}
 	}
 	else
@@ -320,7 +342,7 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* val, con
 				if(idx >= 0)
 				{
 					add_parsed_property(_t("list-style-position"), token, important);
-				} else if(!t_strncmp(val, _t("url"), 3))
+				} else if(!t_strncmp(val.c_str(), _t("url"), 3))
 				{
 					add_parsed_property(_t("list-style-image"), token, important);
 					if(baseurl)

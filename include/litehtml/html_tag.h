@@ -164,11 +164,11 @@ namespace litehtml
 		void				draw(uint_ptr hdc, int x, int y, const position* clip) override;
 		void				draw_background(uint_ptr hdc, int x, int y, const position* clip) override;
 
-		const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = nullptr) override;
+		const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = nullptr) const override;
 		uint_ptr			get_font(font_metrics* fm = nullptr) override;
 		int					get_font_size() const override;
 
-		elements_vector&			children();
+		elements_vector&	children();
 		void				calc_outlines(int parent_width) override;
 		void				calc_auto_margins(int parent_width) override;
 
@@ -210,7 +210,7 @@ namespace litehtml
 		void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned) override;
 		void				calc_document_size(litehtml::size& sz, int x = 0, int y = 0) override;
 		void				get_redraw_box(litehtml::position& pos, int x = 0, int y = 0) override;
-		void				add_style(const litehtml::style& st) override;
+		void				add_style(const tstring& style, const tstring& baseurl) override;
 		element::ptr		get_element_by_point(int x, int y, int client_x, int client_y) override;
 		element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex) override;
 

@@ -75,6 +75,8 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 	{
 		doc->container()->get_media_features(doc->m_media);
 
+		doc->m_root->set_pseudo_class(_t("root"), true);
+
 		// apply master CSS
 		doc->m_root->apply_stylesheet(ctx->master_css());
 
@@ -797,9 +799,7 @@ void litehtml::document::fix_table_children(element::ptr& el_ptr, style_display 
 	auto flush_elements = [&]()
 	{
 		element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-		style st;
-		st.add_property(_t("display"), disp_str, nullptr, false);
-		annon_tag->add_style(st);
+		annon_tag->add_style(tstring(_t("display:")) + disp_str, _t(""));
 		annon_tag->parent(el_ptr);
 		annon_tag->parse_styles();
 		std::for_each(tmp.begin(), tmp.end(),
@@ -907,9 +907,7 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 
 			// extract elements with the same display and wrap them with anonymous object
 			element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-			style st;
-			st.add_property(_t("display"), disp_str, nullptr, false);
-			annon_tag->add_style(st);
+			annon_tag->add_style(tstring(_t("display:")) + disp_str, _t(""));
 			annon_tag->parent(parent);
 			annon_tag->parse_styles();
 			std::for_each(first, last + 1,

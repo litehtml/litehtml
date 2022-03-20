@@ -60,7 +60,7 @@ void litehtml::el_table::parse_attributes()
 	const tchar_t* str = get_attr(_t("width"));
 	if(str)
 	{
-		m_style.add_property(_t("width"), str, nullptr, false);
+		m_style.add_property(_t("width"), str, nullptr, false, this);
 	}
 
 	str = get_attr(_t("align"));
@@ -70,12 +70,12 @@ void litehtml::el_table::parse_attributes()
 		switch(align)
 		{
 		case 1:
-			m_style.add_property(_t("margin-left"), _t("auto"), nullptr, false);
-			m_style.add_property(_t("margin-right"), _t("auto"), nullptr, false);
+			m_style.add_property(_t("margin-left"), _t("auto"), nullptr, false, this);
+			m_style.add_property(_t("margin-right"), _t("auto"), nullptr, false, this);
 			break;
 		case 2:
-			m_style.add_property(_t("margin-left"), _t("auto"), nullptr, false);
-			m_style.add_property(_t("margin-right"), _t("0"), nullptr, false);
+			m_style.add_property(_t("margin-left"), _t("auto"), nullptr, false, this);
+			m_style.add_property(_t("margin-right"), _t("0"), nullptr, false, this);
 			break;
 		}
 	}
@@ -86,19 +86,19 @@ void litehtml::el_table::parse_attributes()
 		tstring val = str;
 		val += _t(" ");
 		val += str;
-		m_style.add_property(_t("border-spacing"), val.c_str(), nullptr, false);
+		m_style.add_property(_t("border-spacing"), val.c_str(), nullptr, false, this);
 	}
 	
 	str = get_attr(_t("border"));
 	if(str)
 	{
-		m_style.add_property(_t("border-width"), str, nullptr, false);
+		m_style.add_property(_t("border-width"), str, nullptr, false, this);
 	}
 
 	str = get_attr(_t("bgcolor"));
 	if (str)
 	{
-		m_style.add_property(_t("background-color"), str, nullptr, false);
+		m_style.add_property(_t("background-color"), str, nullptr, false, this);
 	}
 
 	html_tag::parse_attributes();

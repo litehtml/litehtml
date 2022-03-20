@@ -103,7 +103,7 @@ const litehtml::tchar_t* litehtml::html_tag::get_attr( const tchar_t* name, cons
 
 litehtml::elements_vector litehtml::html_tag::select_all( const tstring& selector )
 {
-	css_selector sel(media_query_list::ptr(nullptr));
+	css_selector sel(media_query_list::ptr(nullptr), _t(""));
 	sel.parse(selector);
 	
 	return select_all(sel);
@@ -132,7 +132,7 @@ void litehtml::html_tag::select_all(const css_selector& selector, elements_vecto
 
 litehtml::element::ptr litehtml::html_tag::select_one( const tstring& selector )
 {
-	css_selector sel(media_query_list::ptr(nullptr));
+	css_selector sel(media_query_list::ptr(nullptr), _t(""));
 	sel.parse(selector);
 
 	return select_one(sel);
@@ -179,19 +179,19 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 							element::ptr el = get_element_after();
 							if(el)
 							{
-								el->add_style(*sel->m_style);
+								el->add_style(sel->m_style, sel->m_baseurl);
 							}
 						} else if(apply & select_match_with_before)
 						{
 							element::ptr el = get_element_before();
 							if(el)
 							{
-								el->add_style(*sel->m_style);
+								el->add_style(sel->m_style, sel->m_baseurl);
 							}
 						}
 						else
 						{
-							add_style(*sel->m_style);
+							add_style(sel->m_style, sel->m_baseurl);
 							us->m_used = true;
 						}
 					}
@@ -200,18 +200,18 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 					element::ptr el = get_element_after();
 					if(el)
 					{
-						el->add_style(*sel->m_style);
+						el->add_style(sel->m_style, sel->m_baseurl);
 					}
 				} else if(apply & select_match_with_before)
 				{
 					element::ptr el = get_element_before();
 					if(el)
 					{
-						el->add_style(*sel->m_style);
+						el->add_style(sel->m_style, sel->m_baseurl);
 					}
 				} else
 				{
-					add_style(*sel->m_style);
+					add_style(sel->m_style, sel->m_baseurl);
 					us->m_used = true;
 				}
 			}
@@ -282,7 +282,7 @@ litehtml::uint_ptr litehtml::html_tag::get_font(font_metrics* fm)
 	return m_font;
 }
 
-const litehtml::tchar_t* litehtml::html_tag::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ )
+const litehtml::tchar_t* litehtml::html_tag::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ ) const
 {
 	const tchar_t* ret = m_style.get_property(name);
 	element::ptr el_parent = parent();
@@ -308,7 +308,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	if(style)
 	{
-		m_style.add(style, nullptr);
+		m_style.add(style, nullptr, this);
 	}
 
 	init_font();
@@ -339,15 +339,23 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	m_clear = (element_clear) value_index(get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
-	if (m_float != float_none)
+	if (m_display != display_none &&
+		m_display != display_table &&
+		m_display != display_inline_table)
 	{
 		// reset display in to block for floating elements
-		if (m_display != display_none)
+		if (m_float != float_none)
+		{
+			m_display = display_block;
+		}
+		// fix elements with absolute/fixed positions
+		else if (m_el_position == element_position_absolute || m_el_position == element_position_fixed)
 		{
 			m_display = display_block;
 		}
 	}
-	else if (m_display == display_table ||
+
+	if (m_display == display_table ||
 		m_display == display_inline_table ||
 		m_display == display_table_caption ||
 		m_display == display_table_cell ||
@@ -359,14 +367,6 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 		m_display == display_table_row_group)
 	{
 		doc->add_tabular(shared_from_this());
-	}
-	// fix inline boxes with absolute/fixed positions
-	else if (m_display != display_none && is_inline_box())
-	{
-		if (m_el_position == element_position_absolute || m_el_position == element_position_fixed)
-		{
-			m_display = display_block;
-		}
 	}
 
 	m_css_text_indent.fromString(	get_style_property(_t("text-indent"),	true,	_t("0")),	_t("0"));
@@ -788,8 +788,6 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		case select_pseudo_class:
 			if(apply_pseudo)
 			{
-				if (!el_parent) return select_no_match;
-
 				tstring selector_param;
 				tstring	selector_name;
 
@@ -813,37 +811,37 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				switch(pseudo_selector)
 				{
 				case pseudo_class_only_child:
-					if (!el_parent->is_only_child(shared_from_this(), false))
+					if (!el_parent || !el_parent->is_only_child(shared_from_this(), false))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_only_of_type:
-					if (!el_parent->is_only_child(shared_from_this(), true))
+					if (!el_parent || !el_parent->is_only_child(shared_from_this(), true))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_first_child:
-					if (!el_parent->is_nth_child(shared_from_this(), 0, 1, false))
+					if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, false))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_first_of_type:
-					if (!el_parent->is_nth_child(shared_from_this(), 0, 1, true))
+					if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, true))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_last_child:
-					if (!el_parent->is_nth_last_child(shared_from_this(), 0, 1, false))
+					if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, false))
 					{
 						return select_no_match;
 					}
 					break;
 				case pseudo_class_last_of_type:
-					if (!el_parent->is_nth_last_child(shared_from_this(), 0, 1, true))
+					if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, true))
 					{
 						return select_no_match;
 					}
@@ -853,7 +851,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				case pseudo_class_nth_last_child:
 				case pseudo_class_nth_last_of_type:
 					{
-						if(selector_param.empty()) return select_no_match;
+						if(!el_parent || selector_param.empty()) return select_no_match;
 
 						int num = 0;
 						int off = 0;
@@ -1619,7 +1617,9 @@ void litehtml::html_tag::calc_outlines( int parent_width )
 
 void litehtml::html_tag::calc_auto_margins(int parent_width)
 {
-	if (get_element_position() != element_position_absolute && (m_display == display_block || m_display == display_table))
+	if ((m_display == display_block || m_display == display_table) &&
+		get_element_position() != element_position_absolute &&
+		m_float == float_none)
 	{
 		if (m_css_margins.left.is_predefined() && m_css_margins.right.is_predefined())
 		{
@@ -3701,9 +3701,9 @@ litehtml::element::ptr litehtml::html_tag::get_element_after()
 	return el;
 }
 
-void litehtml::html_tag::add_style( const litehtml::style& st )
+void litehtml::html_tag::add_style(const tstring& style, const tstring& baseurl)
 {
-	m_style.combine(st);
+	m_style.add(style.c_str(), baseurl.c_str(), this);
 }
 
 bool litehtml::html_tag::have_inline_child() const
@@ -3754,19 +3754,19 @@ void litehtml::html_tag::refresh_styles()
 							element::ptr el = get_element_after();
 							if(el)
 							{
-								el->add_style(*usel->m_selector->m_style);
+								el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 							}
 						} else if(apply & select_match_with_before)
 						{
 							element::ptr el = get_element_before();
 							if(el)
 							{
-								el->add_style(*usel->m_selector->m_style);
+								el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 							}
 						}
 						else
 						{
-							add_style(*usel->m_selector->m_style);
+							add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 							usel->m_used = true;
 						}
 					}
@@ -3775,18 +3775,18 @@ void litehtml::html_tag::refresh_styles()
 					element::ptr el = get_element_after();
 					if(el)
 					{
-						el->add_style(*usel->m_selector->m_style);
+						el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 					}
 				} else if(apply & select_match_with_before)
 				{
 					element::ptr el = get_element_before();
 					if(el)
 					{
-						el->add_style(*usel->m_selector->m_style);
+						el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 					}
 				} else
 				{
-					add_style(*usel->m_selector->m_style);
+					add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
 					usel->m_used = true;
 				}
 			}
