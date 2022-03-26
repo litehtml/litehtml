@@ -1950,7 +1950,7 @@ void litehtml::html_tag::init_font()
 		m_font_size = parent_sz;
 
 		css_length sz;
-		sz.fromString(str, font_size_strings);
+		sz.fromString(str, font_size_strings, -1);
 		if(sz.is_predefined())
 		{
 			int idx_in_table = doc_font_size - 9;
@@ -1961,7 +1961,7 @@ void litehtml::html_tag::init_font()
 					m_font_size = font_size_table[idx_in_table][sz.predef()];
 				} else
 				{
-					m_font_size = doc_font_size;
+					m_font_size = parent_sz;
 				}
 			} else			
 			{
@@ -1986,7 +1986,7 @@ void litehtml::html_tag::init_font()
 					m_font_size = doc_font_size * 2;
 					break;
 				default:
-					m_font_size = doc_font_size;
+					m_font_size = parent_sz;
 					break;
 				}
 			}
