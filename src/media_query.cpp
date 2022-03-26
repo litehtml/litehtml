@@ -102,9 +102,9 @@ bool litehtml::media_query::check( const media_features& features ) const
 	if(m_media_type == media_type_all || m_media_type == features.type)
 	{
 		res = true;
-		for(auto m_expression : m_expressions)
+		for(auto expression : m_expressions)
 		{
-			if(!m_expression.check(features))
+			if(!expression.check(features))
 			{
 				res = false;
                 break;
