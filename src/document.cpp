@@ -123,7 +123,7 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 		// and create the anonymous boxes in visual table layout
 		doc->fix_tables_layout();
 
-		// Fanaly initialize elements
+		// Finally initialize elements
 		doc->m_root->init();
 	}
 

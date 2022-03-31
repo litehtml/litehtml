@@ -84,8 +84,8 @@ namespace litehtml
 		int						m_z_index;
 		box_sizing				m_box_sizing;
 
-		int_int_cache			m_cahe_line_left;
-		int_int_cache			m_cahe_line_right;
+		int_int_cache			m_cache_line_left;
+		int_int_cache			m_cache_line_right;
 
 		// data for table rendering
 		std::unique_ptr<table_grid>	m_grid;

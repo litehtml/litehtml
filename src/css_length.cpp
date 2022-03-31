@@ -7,7 +7,7 @@ void litehtml::css_length::fromString( const tstring& str, const tstring& predef
 	if(str.substr(0, 4) == _t("calc"))
 	{
 		m_is_predefined = true;
-		m_predef		= 0;
+		m_predef		= defValue;
 		return;
 	}
 
