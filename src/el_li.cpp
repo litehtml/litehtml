@@ -14,17 +14,17 @@ int litehtml::el_li::render(int x, int y, int max_width, bool second_pass)
 		{
 			const auto hasStart = p->get_attr(_t("start"));
 			const int start = hasStart ? t_atoi(hasStart) : 1;
-			tchar_t val[2] = { (tchar_t)start, 0 };
+			int val = start;
 			for (int i = 0, n = (int)p->get_children_count(); i < n; ++i)
 			{
 				auto child = p->get_child(i);
 				if (child.get() == this)
 				{
-					set_attr(_t("list_index"), val);
+					set_attr(_t("list_index"), t_to_string(val).c_str());
 					break;
 				}
 				else if (!t_strcmp(child->get_tagName(), _t("li")))
-					++val[0];
+					++val;
 			}
 		}
 

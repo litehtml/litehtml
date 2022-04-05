@@ -2969,7 +2969,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 	{
 		lm.pos.y = pos.y;
 		lm.pos.height = pos.height;
-		lm.index = (unsigned char) get_attr(_t("list_index"), _t(""))[0];
+		lm.index = t_atoi(get_attr(_t("list_index"), _t("0")));
 	}
 	else
 	{
