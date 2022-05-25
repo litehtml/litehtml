@@ -4,6 +4,8 @@
 #include <memory>
 #include "stylesheet.h"
 #include "css_offsets.h"
+#include "css_margins.h"
+#include "css_properties.h"
 
 namespace litehtml
 {
@@ -30,7 +32,8 @@ namespace litehtml
 		margins						m_padding;
 		margins						m_borders;
 		bool						m_skip;
-		
+        css_properties              m_css;
+
 		virtual void select_all(const css_selector& selector, elements_vector& res);
 	public:
 		explicit element(const std::shared_ptr<litehtml::document>& doc);
@@ -38,6 +41,8 @@ namespace litehtml
 
 		// returns refer to m_pos member;
 		position&					get_position();
+        const css_properties&       css() const;
+        css_properties&             css_w();
 
 		int							left()						const;
 		int							right()						const;
@@ -116,21 +121,8 @@ namespace litehtml
 		virtual const tchar_t*		get_tagName() const;
 		virtual void				set_tagName(const tchar_t* tag);
 		virtual void				set_data(const tchar_t* data);
-		virtual element_float		get_float() const;
-		virtual vertical_align		get_vertical_align() const;
-		virtual element_clear		get_clear() const;
 		virtual size_t				get_children_count() const;
 		virtual element::ptr		get_child(int idx) const;
-		virtual overflow			get_overflow() const;
-
-		virtual css_length			get_css_left() const;
-		virtual css_length			get_css_right() const;
-		virtual css_length			get_css_top() const;
-		virtual css_length			get_css_bottom() const;
-		virtual css_offsets			get_css_offsets() const;
-		virtual css_length			get_css_width() const;
-		virtual void				set_css_width(css_length& w);
-		virtual css_length			get_css_height() const;
 
 		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
 		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = nullptr) const;
@@ -149,23 +141,15 @@ namespace litehtml
 		virtual void				on_click();
 		virtual bool				find_styles_changes(position::vector& redraw_boxes, int x, int y);
 		virtual const tchar_t*		get_cursor();
-		virtual void				init_font();
 		virtual bool				is_point_inside(int x, int y);
 		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add);
 		virtual bool				set_class(const tchar_t* pclass, bool add);
 		virtual bool				is_replaced() const;
-		virtual int					line_height() const;
-		virtual white_space			get_white_space() const;
-		virtual style_display		get_display() const;
-		virtual visibility			get_visibility() const;
-		virtual element_position	get_element_position(css_offsets* offsets = nullptr) const;
 		virtual void				get_inline_boxes(position::vector& boxes);
 		virtual void				parse_styles(bool is_reparse = false);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position* clip);
 		virtual void				draw_background( uint_ptr hdc, int x, int y, const position* clip );
 		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = nullptr) const;
-		virtual uint_ptr			get_font(font_metrics* fm = nullptr);
-		virtual int					get_font_size() const;
 		virtual void				get_text(tstring& text);
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
@@ -190,7 +174,6 @@ namespace litehtml
 		virtual void				update_floats(int dy, const ptr &parent);
 		virtual void				add_positioned(const ptr &el);
 		virtual int					find_next_line_top(int top, int width, int def_right);
-		virtual int					get_zindex() const;
 		virtual void				draw_stacking_context(uint_ptr hdc, int x, int y, const position* clip, bool with_positioned);
 		virtual void				draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
 		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const;
@@ -301,7 +284,7 @@ namespace litehtml
 
 	inline bool litehtml::element::in_normal_flow() const
 	{
-		if(get_element_position() != element_position_absolute && get_display() != display_none)
+		if(css().get_position() != element_position_absolute && css().get_display() != display_none)
 		{
 			return true;
 		}
@@ -386,12 +369,12 @@ namespace litehtml
 
 	inline bool litehtml::element::is_positioned()	const
 	{
-		return (get_element_position() > element_position_static);
+		return (css().get_position() > element_position_static);
 	}
 
 	inline bool litehtml::element::is_visible() const
 	{
-		return !(m_skip || get_display() == display_none || get_visibility() != visibility_visible);
+		return !(m_skip || css().get_display() == display_none || css().get_visibility() != visibility_visible);
 	}
 
 	inline position& litehtml::element::get_position()
@@ -403,6 +386,16 @@ namespace litehtml
 	{
 		return m_doc.lock();
 	}
+
+    inline const css_properties& element::css() const
+    {
+        return m_css;
+    }
+
+    inline css_properties& element::css_w()
+    {
+        return m_css;
+    }
 }
 
 #endif  // LH_ELEMENT_H

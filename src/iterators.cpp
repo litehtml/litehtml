@@ -56,7 +56,7 @@ void litehtml::elements_iterator::next_idx()
 
 bool litehtml::go_inside_inline::select(const element::ptr& el)
 {
-	if(el->get_display() == display_inline || el->get_display() == display_inline_text)
+	if(el->css().get_display() == display_inline || el->css().get_display() == display_inline_text)
 	{
 		return true;
 	}
@@ -65,9 +65,9 @@ bool litehtml::go_inside_inline::select(const element::ptr& el)
 
 bool litehtml::go_inside_table::select(const element::ptr& el)
 {
-	if(	el->get_display() == display_table_row_group ||
-		el->get_display() == display_table_header_group ||
-		el->get_display() == display_table_footer_group)
+	if(	el->css().get_display() == display_table_row_group ||
+		el->css().get_display() == display_table_header_group ||
+		el->css().get_display() == display_table_footer_group)
 	{
 		return true;
 	}
@@ -76,7 +76,7 @@ bool litehtml::go_inside_table::select(const element::ptr& el)
 
 bool litehtml::table_rows_selector::select(const element::ptr& el)
 {
-	if(	el->get_display() == display_table_row)
+	if(	el->css().get_display() == display_table_row)
 	{
 		return true;
 	}
@@ -85,7 +85,7 @@ bool litehtml::table_rows_selector::select(const element::ptr& el)
 
 bool litehtml::table_cells_selector::select(const element::ptr& el)
 {
-	if(	el->get_display() == display_table_cell)
+	if(	el->css().get_display() == display_table_cell)
 	{
 		return true;
 	}

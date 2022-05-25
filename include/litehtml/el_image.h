@@ -11,9 +11,7 @@ namespace litehtml
 		tstring	m_src;
 	public:
 		el_image(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_image(void);
 
-		virtual int		line_height() const override;
 		virtual bool	is_replaced() const override;
 		virtual int		render(int x, int y, int max_width, bool second_pass = false) override;
 		virtual void	parse_attributes() override;

@@ -194,12 +194,11 @@ void litehtml::line_box::finish(bool last_box)
 	// find line box baseline and line-height
 	for(const auto& el : m_items)
 	{
-		if(el->get_display() == display_inline_text)
+		if(el->css().get_display() == display_inline_text)
 		{
-			font_metrics fm;
-			el->get_font(&fm);
+			font_metrics fm = el->css().get_font_metrics();
 			base_line	= std::max(base_line,	fm.base_line());
-			line_height = std::max(line_height, el->line_height());
+			line_height = std::max(line_height, el->css().get_line_height());
 			m_height = std::max(m_height, fm.height);
 		}
 		el->m_pos.x += add_x;
@@ -217,14 +216,12 @@ void litehtml::line_box::finish(bool last_box)
 
 	for (const auto& el : m_items)
 	{
-		if(el->get_display() == display_inline_text)
+		if(el->css().get_display() == display_inline_text)
 		{
-			font_metrics fm;
-			el->get_font(&fm);
-			el->m_pos.y = m_height - base_line - fm.ascent;
+			el->m_pos.y = m_height - base_line - el->css().get_font_metrics().ascent;
 		} else
 		{
-			switch(el->get_vertical_align())
+			switch(el->css().get_vertical_align())
 			{
 			case va_super:
 			case va_sub:
@@ -256,9 +253,9 @@ void litehtml::line_box::finish(bool last_box)
 	{
 		el->m_pos.y -= y1;
 		el->m_pos.y += m_box_top;
-		if(el->get_display() != display_inline_text)
+		if(el->css().get_display() != display_inline_text)
 		{
-			switch(el->get_vertical_align())
+			switch(el->css().get_vertical_align())
 			{
 			case va_top:
 				el->m_pos.y = m_box_top + el->content_margins_top();

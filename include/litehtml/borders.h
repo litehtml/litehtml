@@ -199,7 +199,7 @@ namespace litehtml
 			bottom_right_y	= val.bottom_right_y;
 			return *this;
 		}
-		border_radiuses calc_percents(int width, int height)
+		border_radiuses calc_percents(int width, int height) const
 		{
 			border_radiuses ret;
 			ret.bottom_left_x = bottom_left_x.calc_percent(width);

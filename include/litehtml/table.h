@@ -39,7 +39,7 @@ namespace litehtml
 			bottom			= 0;
 			if (row)
 			{
-				css_height = row->get_css_height();
+				css_height = row->css().get_height();
 			}
 		}
 

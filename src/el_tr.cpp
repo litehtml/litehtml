@@ -32,7 +32,7 @@ void litehtml::el_tr::get_inline_boxes( position::vector& boxes )
 	position pos;
 	for(auto& el : m_children)
 	{
-		if(el->get_display() == display_table_cell)
+		if(el->css().get_display() == display_table_cell)
 		{
 			pos.x		= el->left() + el->margin_left();
 			pos.y		= el->top() - m_padding.top - m_borders.top;

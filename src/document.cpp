@@ -293,7 +293,7 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 	}
 }
 
-int litehtml::document::cvt_units( const tchar_t* str, int fontSize, bool* is_percent/*= 0*/ ) const
+int litehtml::document::to_pixels( const tchar_t* str, int fontSize, bool* is_percent/*= 0*/ ) const
 {
 	if(!str)	return 0;
 	
@@ -303,10 +303,10 @@ int litehtml::document::cvt_units( const tchar_t* str, int fontSize, bool* is_pe
 	{
 		*is_percent = true;
 	}
-	return cvt_units(val, fontSize);
+	return to_pixels(val, fontSize);
 }
 
-int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) const
+int litehtml::document::to_pixels( const css_length& val, int fontSize, int size ) const
 {
 	if(val.is_predefined())
 	{
@@ -320,23 +320,18 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 		break;
 	case css_units_em:
 		ret = round_f(val.val() * (float) fontSize);
-		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_pt:
 		ret = m_container->pt_to_px((int) val.val());
-		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_in:
 		ret = m_container->pt_to_px((int) (val.val() * 72));
-		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_cm:
 		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72));
-		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_mm:
 		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
-		val.set_value((float) ret, css_units_px);
 		break;
 	case css_units_vw:
 		ret = (int)((double)m_media.width * (double)val.val() / 100.0);
@@ -351,14 +346,45 @@ int litehtml::document::cvt_units( css_length& val, int fontSize, int size ) con
 		ret = (int)((double)std::max(m_media.height, m_media.width) * (double)val.val() / 100.0);
 		break;
 	case css_units_rem:
-		ret = (int) ((double) m_root->get_font_size() * (double) val.val());
-		val.set_value((float) ret, css_units_px);
+		ret = (int) ((double) m_root->css().get_font_size() * (double) val.val());
 		break;
 	default:
 		ret = (int) val.val();
 		break;
 	}
 	return ret;
+}
+
+void litehtml::document::cvt_units( css_length& val, int fontSize, int size ) const
+{
+    if(val.is_predefined())
+    {
+        return;
+    }
+    int ret;
+    switch(val.units())
+    {
+        case css_units_em:
+            ret = round_f(val.val() * (float) fontSize);
+            val.set_value((float) ret, css_units_px);
+            break;
+        case css_units_pt:
+            ret = m_container->pt_to_px((int) val.val());
+            val.set_value((float) ret, css_units_px);
+            break;
+        case css_units_in:
+            ret = m_container->pt_to_px((int) (val.val() * 72));
+            val.set_value((float) ret, css_units_px);
+            break;
+        case css_units_cm:
+            ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72));
+            val.set_value((float) ret, css_units_px);
+            break;
+        case css_units_mm:
+            ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
+            val.set_value((float) ret, css_units_px);
+            break;
+    }
 }
 
 int litehtml::document::width() const
@@ -753,7 +779,7 @@ void litehtml::document::fix_tables_layout()
 	{
 		element::ptr el_ptr = m_tabular_elements[i];
 
-		switch (el_ptr->get_display())
+		switch (el_ptr->css().get_display())
 		{
 		case display_inline_table:
 		case display_table:
@@ -766,7 +792,7 @@ void litehtml::document::fix_tables_layout()
 				element::ptr parent = el_ptr->parent();
 				if (parent)
 				{
-					if (parent->get_display() != display_inline_table)
+					if (parent->css().get_display() != display_inline_table)
 						fix_table_parent(el_ptr, display_table, _t("table"));
 				}
 				fix_table_children(el_ptr, display_table_row, _t("table-row"));
@@ -820,11 +846,11 @@ void litehtml::document::fix_table_children(element::ptr& el_ptr, style_display 
 
 	while (cur_iter != el_ptr->m_children.end())
 	{
-		if ((*cur_iter)->get_display() != disp)
+		if ((*cur_iter)->css().get_display() != disp)
 		{
 			if (!(*cur_iter)->is_table_skip() || ((*cur_iter)->is_table_skip() && !tmp.empty()))
 			{
-				if (disp != display_table_row_group || (*cur_iter)->get_display() != display_table_caption)
+				if (disp != display_table_row_group || (*cur_iter)->css().get_display() != display_table_caption)
 				{
 					if (tmp.empty())
 					{
@@ -854,7 +880,7 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 {
 	element::ptr parent = el_ptr->parent();
 
-	if (parent->get_display() != disp)
+	if (parent->css().get_display() != disp)
 	{
 		auto this_element = std::find_if(parent->m_children.begin(), parent->m_children.end(),
 			[&](element::ptr& el)
@@ -868,7 +894,7 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 		);
 		if (this_element != parent->m_children.end())
 		{
-			style_display el_disp = el_ptr->get_display();
+			style_display el_disp = el_ptr->css().get_display();
 			auto first = this_element;
 			auto last = this_element;
 			auto cur = this_element;
@@ -878,7 +904,7 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 			{
 				if (cur == parent->m_children.begin()) break;
 				cur--;
-				if ((*cur)->is_table_skip() || (*cur)->get_display() == el_disp)
+				if ((*cur)->is_table_skip() || (*cur)->css().get_display() == el_disp)
 				{
 					first = cur;
 				}
@@ -895,7 +921,7 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 				cur++;
 				if (cur == parent->m_children.end()) break;
 
-				if ((*cur)->is_table_skip() || (*cur)->get_display() == el_disp)
+				if ((*cur)->is_table_skip() || (*cur)->css().get_display() == el_disp)
 				{
 					last = cur;
 				}
