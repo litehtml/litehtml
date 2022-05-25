@@ -40,9 +40,13 @@ void litehtml::el_text::parse_styles(bool is_reparse)
     element::ptr el_parent = parent();
     if (el_parent)
     {
-        m_css = el_parent->css();
+        css_w().set_line_height(el_parent->css().get_line_height());
+        css_w().set_font(el_parent->css().get_font());
+        css_w().set_font_metrics(el_parent->css().get_font_metrics());
+        css_w().set_white_space(el_parent->css().get_white_space());
     }
-    m_css.set_display(display_inline_text);
+    css_w().set_display(display_inline_text);
+    css_w().set_float(float_none);
 
 	if(m_css.get_text_transform() != text_transform_none)
 	{
@@ -56,15 +60,15 @@ void litehtml::el_text::parse_styles(bool is_reparse)
     {
         if(p->css().get_position() == element_position_relative)
         {
-            m_css.set_offsets(p->css().get_offsets());
-            m_css.set_position(element_position_relative);
+            css_w().set_offsets(p->css().get_offsets());
+            css_w().set_position(element_position_relative);
             break;
         }
         p = p->parent();
     }
     if(p)
     {
-        m_css.set_position(element_position_static);
+        css_w().set_position(element_position_static);
     }
 
 	if(is_white_space())
