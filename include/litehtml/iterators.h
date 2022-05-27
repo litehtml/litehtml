@@ -10,7 +10,7 @@ namespace litehtml
 	class iterator_selector
 	{
 	public:
-		virtual bool select(const element::ptr& el) = 0;
+		virtual bool select(const std::shared_ptr<element>& el) = 0;
 
         protected:
 		~iterator_selector() = default;
@@ -21,8 +21,8 @@ namespace litehtml
 	private:
 		struct stack_item
 		{
-			int				idx;
-			element::ptr	el;
+			int							idx;
+			std::shared_ptr<element>	el;
 			stack_item() : idx(0)
 			{
 			}
@@ -45,7 +45,7 @@ namespace litehtml
 		iterator_selector*			m_select;
 	public:
 
-		elements_iterator(const element::ptr& el, iterator_selector* go_inside, iterator_selector* select)
+		elements_iterator(const std::shared_ptr<element>& el, iterator_selector* go_inside, iterator_selector* select)
 		{ 
 			m_el			= el;
 			m_idx			= -1; 
@@ -64,25 +64,25 @@ namespace litehtml
 	class go_inside_inline final : public iterator_selector
 	{
 	public:
-		bool select(const element::ptr& el) override;
+		bool select(const std::shared_ptr<element>& el) override;
 	};
 
 	class go_inside_table final : public iterator_selector
 	{
 	public:
-		bool select(const element::ptr& el) override;
+		bool select(const std::shared_ptr<element>& el) override;
 	};
 
 	class table_rows_selector final : public iterator_selector
 	{
 	public:
-		bool select(const element::ptr& el) override;
+		bool select(const std::shared_ptr<element>& el) override;
 	};
 
 	class table_cells_selector final : public iterator_selector
 	{
 	public:
-		bool select(const element::ptr& el) override;
+		bool select(const std::shared_ptr<element>& el) override;
 	};
 }
 

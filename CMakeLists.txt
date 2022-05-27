@@ -60,8 +60,6 @@ set(SOURCE_LITEHTML
     src/web_color.cpp
     src/num_cvt.cpp
     src/strtod.cpp
-#    src/layout_table.cpp
-#    src/layout_box.cpp
     src/css_properties.cpp
 )
 
@@ -115,9 +113,6 @@ set(HEADER_LITEHTML
     include/litehtml/utf8_strings.h
     include/litehtml/web_color.h
     include/litehtml/num_cvt.h
-    include/litehtml/layout.h
-    include/litehtml/layout_table.h
-    include/litehtml/layout_box.h
     include/litehtml/css_properties.h
 )
 

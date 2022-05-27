@@ -10,7 +10,6 @@
 #include "stylesheet.h"
 #include "box.h"
 #include "table.h"
-#include "layout.h"
 
 namespace litehtml
 {
@@ -71,6 +70,7 @@ namespace litehtml
 
 		int					render_inline(const element::ptr &container, int max_width) override;
 		int					place_element(const element::ptr &el, int max_width) override;
+        int					place_float(const element::ptr &el, int max_width);
 		bool				fetch_positioned() override;
 		void				render_positioned(render_type rt = render_all) override;
 

@@ -68,7 +68,8 @@ namespace litehtml
 		int							padding_bottom()			const;
 		int							padding_left()				const;
 		int							padding_right()				const;
-		margins						get_paddings()				const;
+        const margins&				get_paddings()				const;
+        void 				        set_paddings(const margins&);
 
 		int							border_top()				const;
 		int							border_bottom()				const;
@@ -83,6 +84,7 @@ namespace litehtml
 		bool						collapse_top_margin()		const;
 		bool						collapse_bottom_margin()	const;
 		bool						is_positioned()				const;
+        bool						is_float()				    const;
 
 		bool						skip() const;
 		void						skip(bool val);
@@ -252,12 +254,17 @@ namespace litehtml
 		return content_margins_top() + content_margins_bottom();
 	}
 
-	inline litehtml::margins litehtml::element::get_paddings()	const
+	inline const litehtml::margins& litehtml::element::get_paddings()	const
 	{
 		return m_padding;
 	}
 
-	inline litehtml::margins litehtml::element::get_borders()	const
+    inline void litehtml::element::set_paddings(const litehtml::margins& mPaddings)
+    {
+        m_padding = mPaddings;
+    }
+
+    inline litehtml::margins litehtml::element::get_borders()	const
 	{
 		return m_borders;
 	}
@@ -371,6 +378,11 @@ namespace litehtml
 	{
 		return (css().get_position() > element_position_static);
 	}
+
+    inline bool litehtml::element::is_float()	const
+    {
+        return (css().get_float() != float_none);
+    }
 
 	inline bool litehtml::element::is_visible() const
 	{

@@ -1,6 +1,6 @@
 #include "html.h"
 #include "table.h"
-#include "html_tag.h"
+#include "element.h"
 
 void litehtml::table_grid::add_cell(element::ptr& el)
 {
@@ -30,7 +30,6 @@ void litehtml::table_grid::begin_row(element::ptr& row)
 	m_cells.push_back(r);
 	
 	m_rows.push_back(table_row(0, row));
-
 }
 
 
@@ -416,7 +415,7 @@ void litehtml::table_grid::clear()
 	m_rows.clear();
 }
 
-void litehtml::table_grid::calc_horizontal_positions( margins& table_borders, border_collapse bc, int bdr_space_x)
+void litehtml::table_grid::calc_horizontal_positions( const margins& table_borders, border_collapse bc, int bdr_space_x)
 {
 	if(bc == border_collapse_separate)
 	{
@@ -448,7 +447,7 @@ void litehtml::table_grid::calc_horizontal_positions( margins& table_borders, bo
 	}
 }
 
-void litehtml::table_grid::calc_vertical_positions( margins& table_borders, border_collapse bc, int bdr_space_y )
+void litehtml::table_grid::calc_vertical_positions( const margins& table_borders, border_collapse bc, int bdr_space_y )
 {
 	if(bc == border_collapse_separate)
 	{
@@ -591,4 +590,19 @@ int& litehtml::table_column_accessor_min_width::get( table_column& col )
 int& litehtml::table_column_accessor_width::get( table_column& col )
 {
 	return col.width;
+}
+
+litehtml::table_row::table_row(int h, std::shared_ptr<element>& row)
+{
+    min_height		= 0;
+    height			= h;
+    el_row			= row;
+    border_bottom	= 0;
+    border_top		= 0;
+    top				= 0;
+    bottom			= 0;
+    if (row)
+    {
+        css_height = row->css().get_height();
+    }
 }

@@ -1,6 +1,10 @@
 #ifndef LH_TABLE_H
 #define LH_TABLE_H
 
+#include <vector>
+#include <memory>
+#include "css_length.h"
+
 namespace litehtml
 {
 	struct table_row
@@ -10,7 +14,7 @@ namespace litehtml
 		int				height;
 		int				border_top;
 		int				border_bottom;
-		element::ptr	el_row;
+        std::shared_ptr<element>	el_row;
 		int				top;
 		int				bottom;
 		css_length		css_height;
@@ -28,20 +32,7 @@ namespace litehtml
 			css_height.predef(0);
 		}
 
-		table_row(int h, element::ptr& row)
-		{
-			min_height		= 0;
-			height			= h;
-			el_row			= row;
-			border_bottom	= 0;
-			border_top		= 0;
-			top				= 0;
-			bottom			= 0;
-			if (row)
-			{
-				css_height = row->css().get_height();
-			}
-		}
+		table_row(int h, std::shared_ptr<element>& row);
 
 		table_row(const table_row& val)
 		{
@@ -147,7 +138,7 @@ namespace litehtml
 
 	struct table_cell
 	{
-		element::ptr	el;
+        std::shared_ptr<element>	el;
 		int				colspan;
 		int				rowspan;
 		int				min_width;
@@ -222,8 +213,8 @@ namespace litehtml
 		}
 
 		void			clear();
-		void			begin_row(element::ptr& row);
-		void			add_cell(element::ptr& el);
+		void			begin_row(std::shared_ptr<element>& row);
+		void			add_cell(std::shared_ptr<element>& el);
 		bool			is_rowspanned(int r, int c);
 		void			finish();
 		table_cell*		cell(int t_col, int t_row);
@@ -242,8 +233,8 @@ namespace litehtml
 		void			distribute_width(int width, int start, int end);
 		void			distribute_width(int width, int start, int end, table_column_accessor* acc);
 		int				calc_table_width(int block_width, bool is_auto, int& min_table_width, int& max_table_width);
-		void			calc_horizontal_positions(margins& table_borders, border_collapse bc, int bdr_space_x);
-		void			calc_vertical_positions(margins& table_borders, border_collapse bc, int bdr_space_y);
+		void			calc_horizontal_positions(const margins& table_borders, border_collapse bc, int bdr_space_x);
+		void			calc_vertical_positions(const margins& table_borders, border_collapse bc, int bdr_space_y);
 		void			calc_rows_height(int blockHeight, int borderSpacingY);
 	};
 }
