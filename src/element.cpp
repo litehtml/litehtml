@@ -65,11 +65,11 @@ litehtml::position litehtml::element::get_placement() const
 
 bool litehtml::element::is_inline_box() const
 {
-	style_display d = css().get_display();
-	if(	d == display_inline || 
-		d == display_inline_table ||
-		d == display_inline_block || 
-		d == display_inline_text)
+	if(	css().get_display() == display_inline ||
+        css().get_display() == display_inline_table ||
+        css().get_display() == display_inline_block ||
+        css().get_display() == display_inline_text ||
+        css().get_display() == display_inline_flex)
 	{
 		return true;
 	}

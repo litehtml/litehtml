@@ -182,7 +182,7 @@ namespace litehtml
 		draw_positioned,
 	};
 
-#define  style_display_strings		_t("none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text")
+#define  style_display_strings		_t("none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text;flex;inline-flex")
 
 	enum style_display
 	{
@@ -202,6 +202,8 @@ namespace litehtml
 		display_table_row,
 		display_table_row_group,
 		display_inline_text,
+        display_flex,
+        display_inline_flex,
 	};
 
 	enum style_border
