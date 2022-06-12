@@ -18,7 +18,6 @@ endif()
 
 set(SOURCE_LITEHTML
     src/background.cpp
-    src/box.cpp
     src/codepoint.cpp
     src/context.cpp
     src/css_length.cpp
@@ -61,6 +60,8 @@ set(SOURCE_LITEHTML
     src/num_cvt.cpp
     src/strtod.cpp
     src/css_properties.cpp
+    include/litehtml/line_box.h
+    src/line_box.cpp
 )
 
 set(HEADER_LITEHTML
@@ -68,8 +69,7 @@ set(HEADER_LITEHTML
     include/litehtml/attributes.h
     include/litehtml/background.h
     include/litehtml/borders.h
-    include/litehtml/box.h
-    include/litehtml/codepoint.h
+        include/litehtml/codepoint.h
     include/litehtml/context.h
     include/litehtml/css_length.h
     include/litehtml/css_margins.h

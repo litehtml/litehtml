@@ -38,29 +38,105 @@ void litehtml::css_properties::parse(const std::shared_ptr<element>& el, const s
         }
     }
 
-    const tchar_t* va	= el->get_style_property(_t("vertical-align"), true,	_t("baseline"));
-    m_vertical_align = (vertical_align) value_index(va, vertical_align_strings, va_baseline);
-
     const tchar_t* fl	= el->get_style_property(_t("float"), false,	_t("none"));
     m_float = (element_float) value_index(fl, element_float_strings, float_none);
 
-    m_clear = (element_clear) value_index(el->get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
-    if (m_display != display_none &&
-        m_display != display_table &&
-        m_display != display_inline_table)
+    // https://www.w3.org/TR/CSS22/visuren.html#dis-pos-flo
+    if(m_display == display_none)
     {
-        // reset display into block for floating elements
-        if (m_float != float_none)
+        // 1. If 'display' has the value 'none', then 'position' and 'float' do not apply. In this case, the element
+        //    generates no box.
+        m_float = float_none;
+    } else
+    {
+        // 2. Otherwise, if 'position' has the value 'absolute' or 'fixed', the box is absolutely positioned,
+        //    the computed value of 'float' is 'none', and display is set according to the table below.
+        //    The position of the box will be determined by the 'top', 'right', 'bottom' and 'left' properties
+        //    and the box's containing block.
+        if (m_el_position == element_position_absolute || m_el_position == element_position_fixed)
         {
-            m_display = display_block;
-        }
-            // fix elements with absolute/fixed positions
-        else if (m_el_position == element_position_absolute || m_el_position == element_position_fixed)
+            m_float = float_none;
+
+            if (m_display == display_inline_table)
+            {
+                m_display = display_table;
+            } else if (m_display == display_inline ||
+                       m_display == display_table_row_group ||
+                       m_display == display_table_column ||
+                       m_display == display_table_column_group ||
+                       m_display == display_table_header_group ||
+                       m_display == display_table_footer_group ||
+                       m_display == display_table_row ||
+                       m_display == display_table_cell ||
+                       m_display == display_table_caption ||
+                       m_display == display_inline_block)
+            {
+                m_display = display_block;
+            }
+        } else if (m_float != float_none)
         {
-            m_display = display_block;
+            // 3. Otherwise, if 'float' has a value other than 'none', the box is floated and 'display' is set
+            //    according to the table below.
+            if (m_display == display_inline_table)
+            {
+                m_display = display_table;
+            } else if (m_display == display_inline ||
+                       m_display == display_table_row_group ||
+                       m_display == display_table_column ||
+                       m_display == display_table_column_group ||
+                       m_display == display_table_header_group ||
+                       m_display == display_table_footer_group ||
+                       m_display == display_table_row ||
+                       m_display == display_table_cell ||
+                       m_display == display_table_caption ||
+                       m_display == display_inline_block)
+            {
+                m_display = display_block;
+            }
+        } else if(!el->have_parent())
+        {
+            // 4. Otherwise, if the element is the root element, 'display' is set according to the table below,
+            //    except that it is undefined in CSS 2.2 whether a specified value of 'list-item' becomes a
+            //    computed value of 'block' or 'list-item'.
+            if (m_display == display_inline_table)
+            {
+                m_display = display_table;
+            } else if (m_display == display_inline ||
+                m_display == display_table_row_group ||
+                m_display == display_table_column ||
+                m_display == display_table_column_group ||
+                m_display == display_table_header_group ||
+                m_display == display_table_footer_group ||
+                m_display == display_table_row ||
+                m_display == display_table_cell ||
+                m_display == display_table_caption ||
+                m_display == display_inline_block ||
+                m_display == display_list_item)
+            {
+                m_display = display_block;
+            }
         }
     }
+    // 5. Otherwise, the remaining 'display' property values apply as specified.
+
+    if (m_el_position == element_position_absolute || m_el_position == element_position_fixed || m_el_position == element_position_relative)
+    {
+        m_css_offsets.left.fromString(el->get_style_property(_t("left"), false, _t("auto")), _t("auto"));
+        m_css_offsets.right.fromString(el->get_style_property(_t("right"), false, _t("auto")), _t("auto"));
+        m_css_offsets.top.fromString(el->get_style_property(_t("top"), false, _t("auto")), _t("auto"));
+        m_css_offsets.bottom.fromString(el->get_style_property(_t("bottom"), false, _t("auto")), _t("auto"));
+
+        doc->cvt_units(m_css_offsets.left, m_font_size);
+        doc->cvt_units(m_css_offsets.right, m_font_size);
+        doc->cvt_units(m_css_offsets.top, m_font_size);
+        doc->cvt_units(m_css_offsets.bottom, m_font_size);
+    }
+
+    const tchar_t* va	= el->get_style_property(_t("vertical-align"), true,	_t("baseline"));
+    m_vertical_align = (vertical_align) value_index(va, vertical_align_strings, va_baseline);
+
+    m_clear = (element_clear) value_index(el->get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
     if (m_display == display_table ||
         m_display == display_inline_table ||
@@ -92,16 +168,6 @@ void litehtml::css_properties::parse(const std::shared_ptr<element>& el, const s
 
     doc->cvt_units(m_css_min_width, m_font_size);
     doc->cvt_units(m_css_min_height, m_font_size);
-
-    m_css_offsets.left.fromString(		el->get_style_property(_t("left"),				false,	_t("auto")), _t("auto"));
-    m_css_offsets.right.fromString(		el->get_style_property(_t("right"),				false,	_t("auto")), _t("auto"));
-    m_css_offsets.top.fromString(		el->get_style_property(_t("top"),				false,	_t("auto")), _t("auto"));
-    m_css_offsets.bottom.fromString(	el->get_style_property(_t("bottom"),			false,	_t("auto")), _t("auto"));
-
-    doc->cvt_units(m_css_offsets.left,		m_font_size);
-    doc->cvt_units(m_css_offsets.right,		m_font_size);
-    doc->cvt_units(m_css_offsets.top,		m_font_size);
-    doc->cvt_units(m_css_offsets.bottom,	m_font_size);
 
     m_css_margins.left.fromString(		el->get_style_property(_t("margin-left"),		false,	_t("0")), _t("auto"));
     m_css_margins.right.fromString(		el->get_style_property(_t("margin-right"),		false,	_t("0")), _t("auto"));

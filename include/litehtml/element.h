@@ -9,11 +9,16 @@
 
 namespace litehtml
 {
-	class box;
+	class line_box;
+
+    enum layout_type
+    {
+        layout_type_block,
+        layout_type_inline,
+    };
 
 	class element : public std::enable_shared_from_this<element>
 	{
-		friend class block_box;
 		friend class line_box;
 		friend class html_tag;
 		friend class el_table;
@@ -25,7 +30,7 @@ namespace litehtml
 	protected:
 		std::weak_ptr<element>		m_parent;
 		std::weak_ptr<litehtml::document>	m_doc;
-		litehtml::box*				m_box;
+		litehtml::line_box*			m_box;
 		elements_vector				m_children;
 		position					m_pos;
 		margins						m_margins;
@@ -33,6 +38,7 @@ namespace litehtml
 		margins						m_borders;
 		bool						m_skip;
         css_properties              m_css;
+        layout_type                 m_layout_type;
 
 		virtual void select_all(const css_selector& selector, elements_vector& res);
 	public:
@@ -80,6 +86,7 @@ namespace litehtml
 		bool						in_normal_flow()			const;
 		litehtml::web_color			get_color(const tchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		bool						is_inline_box()				const;
+        bool                        is_block_box()              const;
 		position					get_placement()				const;
 		bool						collapse_top_margin()		const;
 		bool						collapse_bottom_margin()	const;
@@ -109,7 +116,7 @@ namespace litehtml
 
 		virtual int					render(int x, int y, int max_width, bool second_pass = false);
 		virtual int					render_inline(const ptr &container, int max_width);
-		virtual int					place_element(const ptr &el, int max_width);
+		virtual int					place_inline(const element::ptr &el, int max_width);
 		virtual void				calc_outlines( int parent_width );
 		virtual void				calc_auto_margins(int parent_width);
 		virtual void				apply_vertical_align();
@@ -188,6 +195,8 @@ namespace litehtml
 		virtual element::ptr		get_element_by_point(int x, int y, int client_x, int client_y);
 		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 		virtual const background*	get_background(bool own_only = false);
+
+        void split_inlines();
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -407,6 +416,19 @@ namespace litehtml
     inline css_properties& element::css_w()
     {
         return m_css;
+    }
+
+    bool element::is_block_box() const
+    {
+        if(css().get_display() == display_block ||
+           css().get_display() == display_flex ||
+           css().get_display() == display_table ||
+           css().get_display() == display_list_item ||
+           css().get_display() == display_flex)
+        {
+            return true;
+        }
+        return false;
     }
 }
 

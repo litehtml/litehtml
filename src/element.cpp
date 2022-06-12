@@ -5,7 +5,7 @@
 #define LITEHTML_EMPTY_FUNC			{}
 #define LITEHTML_RETURN_FUNC(ret)	{return ret;}
 
-litehtml::element::element(const std::shared_ptr<litehtml::document>& doc) : m_doc(doc)
+litehtml::element::element(const std::shared_ptr<litehtml::document>& doc) : m_doc(doc), m_layout_type(layout_type_block)
 {
 	m_box		= nullptr;
 	m_skip		= false;
@@ -65,15 +65,15 @@ litehtml::position litehtml::element::get_placement() const
 
 bool litehtml::element::is_inline_box() const
 {
-	if(	css().get_display() == display_inline ||
-        css().get_display() == display_inline_table ||
-        css().get_display() == display_inline_block ||
-        css().get_display() == display_inline_text ||
-        css().get_display() == display_inline_flex)
-	{
-		return true;
-	}
-	return false;
+    if(	css().get_display() == display_inline ||
+           css().get_display() == display_inline_table ||
+           css().get_display() == display_inline_block ||
+           css().get_display() == display_inline_text ||
+           css().get_display() == display_inline_flex)
+    {
+        return true;
+    }
+    return false;
 }
 
 bool litehtml::element::collapse_top_margin() const
@@ -310,6 +310,11 @@ bool litehtml::element::is_table_skip() const
 	return is_space() || is_comment() || css().get_display() == display_none;
 }
 
+void litehtml::element::split_inlines()
+{
+
+}
+
 void litehtml::element::calc_auto_margins(int parent_width)							LITEHTML_EMPTY_FUNC
 const litehtml::background* litehtml::element::get_background(bool own_only)		LITEHTML_RETURN_FUNC(nullptr)
 litehtml::element::ptr litehtml::element::get_element_by_point(int x, int y, int client_x, int client_y)	LITEHTML_RETURN_FUNC(nullptr)
@@ -334,7 +339,7 @@ void litehtml::element::apply_vertical_align()										LITEHTML_EMPTY_FUNC
 litehtml::element::ptr litehtml::element::get_child( int idx ) const				LITEHTML_RETURN_FUNC(nullptr)
 size_t litehtml::element::get_children_count() const								LITEHTML_RETURN_FUNC(0)
 void litehtml::element::calc_outlines( int parent_width )							LITEHTML_EMPTY_FUNC
-int litehtml::element::place_element(const ptr &el, int max_width)					LITEHTML_RETURN_FUNC(0)
+int litehtml::element::place_inline(const ptr &el, int max_width)					LITEHTML_RETURN_FUNC(0)
 int litehtml::element::render_inline(const ptr &container, int max_width)			LITEHTML_RETURN_FUNC(0)
 void litehtml::element::add_positioned(const ptr &el)							LITEHTML_EMPTY_FUNC
 int litehtml::element::find_next_line_top( int top, int width, int def_right )		LITEHTML_RETURN_FUNC(0)

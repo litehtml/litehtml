@@ -8,7 +8,7 @@
 #include "borders.h"
 #include "css_selector.h"
 #include "stylesheet.h"
-#include "box.h"
+#include "line_box.h"
 #include "table.h"
 
 namespace litehtml
@@ -35,12 +35,11 @@ namespace litehtml
 		friend class elements_iterator;
 		friend class el_table;
 		friend class table_grid;
-		friend class block_box;
 		friend class line_box;
 	public:
 		typedef std::shared_ptr<litehtml::html_tag>	ptr;
 	protected:
-		box::vector				m_boxes;
+		std::vector<std::unique_ptr<litehtml::line_box>> m_line_boxes;
 		string_vector			m_class_values;
 		tstring					m_tag;
 		litehtml::style			m_style;
@@ -69,8 +68,8 @@ namespace litehtml
 		int					render(int x, int y, int max_width, bool second_pass = false) override;
 
 		int					render_inline(const element::ptr &container, int max_width) override;
-		int					place_element(const element::ptr &el, int max_width) override;
-        int					place_float(const element::ptr &el, int max_width);
+		int					place_inline(const element::ptr &el, int max_width) override;
+        int					place_float(const element::ptr &el, int top, int max_width);
 		bool				fetch_positioned() override;
 		void				render_positioned(render_type rt = render_all) override;
 
@@ -166,7 +165,8 @@ namespace litehtml
 	protected:
 		void				draw_children_box(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex);
 		void				draw_children_table(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex);
-		int					render_box(int x, int y, int max_width, bool second_pass = false);
+		int					render_box_layout(int x, int y, int max_width, bool second_pass = false);
+        int					render_inline_layout(int x, int y, int max_width, bool second_pass = false);
 		int					render_table(int x, int y, int max_width, bool second_pass = false);
 		int					fix_line_width(int max_width, element_float flt);
 		void				init_background_paint( position pos, background_paint &bg_paint, const background* bg );
