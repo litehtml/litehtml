@@ -310,9 +310,91 @@ bool litehtml::element::is_table_skip() const
 	return is_space() || is_comment() || css().get_display() == display_none;
 }
 
-void litehtml::element::split_inlines()
+litehtml::element::ptr litehtml::element::clone(const element::ptr& cloned_el)
 {
+    if(cloned_el)
+    {
+        cloned_el->m_parent = m_parent;
+        cloned_el->m_doc = m_doc;
+        cloned_el->m_box = m_box;
+        cloned_el->m_pos = m_pos;
+        cloned_el->m_margins = m_margins;
+        cloned_el->m_padding = m_padding;
+        cloned_el->m_borders = m_borders;
+        cloned_el->m_skip = m_skip;
+        cloned_el->m_css = m_css;
+        cloned_el->m_layout_type = m_layout_type;
+    }
+    return nullptr;
+}
 
+
+std::tuple<litehtml::element::ptr, litehtml::element::ptr, litehtml::element::ptr> litehtml::element::split_inlines()
+{
+    std::tuple<litehtml::element::ptr, litehtml::element::ptr, litehtml::element::ptr> ret;
+    for(const auto& child: m_children)
+    {
+        if(child->is_block_box() && child->css().get_float() == float_none)
+        {
+            std::get<0>(ret) = clone(nullptr);
+            std::get<1>(ret) = child;
+            std::get<2>(ret) = clone(nullptr);
+
+            std::get<1>(ret)->parent(std::get<0>(ret));
+            std::get<2>(ret)->parent(std::get<0>(ret));
+
+            bool found = false;
+            for(const auto& ch: m_children)
+            {
+                if(ch == child)
+                {
+                    found = true;
+                    continue;
+                }
+                if(!found)
+                {
+                    std::get<0>(ret)->appendChild(ch);
+                } else
+                {
+                    std::get<2>(ret)->appendChild(ch);
+                }
+            }
+            break;
+        }
+        if(!child->m_children.empty())
+        {
+            auto child_split = child->split_inlines();
+            if(std::get<0>(child_split))
+            {
+                std::get<0>(ret) = clone(nullptr);
+                std::get<1>(ret) = std::get<1>(child_split);
+                std::get<2>(ret) = clone(nullptr);
+
+                std::get<2>(ret)->parent(std::get<0>(ret));
+
+                bool found = false;
+                for(const auto& ch: m_children)
+                {
+                    if(ch == child)
+                    {
+                        found = true;
+                        continue;
+                    }
+                    if(!found)
+                    {
+                        std::get<0>(ret)->appendChild(ch);
+                    } else
+                    {
+                        std::get<2>(ret)->appendChild(ch);
+                    }
+                }
+                std::get<0>(ret)->appendChild(std::get<0>(child_split));
+                std::get<2>(ret)->m_children.push_back(std::get<2>(child_split));
+                break;
+            }
+        }
+    }
+    return ret;
 }
 
 void litehtml::element::calc_auto_margins(int parent_width)							LITEHTML_EMPTY_FUNC

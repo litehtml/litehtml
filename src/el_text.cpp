@@ -143,3 +143,20 @@ void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 	}
 }
 
+litehtml::element::ptr litehtml::el_text::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::el_text>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<el_text>(m_text.c_str(), get_document());
+        element::clone(ret);
+    }
+
+    ret->m_text = m_text;
+    ret->m_transformed_text = m_transformed_text;
+    ret->m_size = m_size;
+    ret->m_use_transformed = m_use_transformed;
+    ret->m_draw_spaces = m_draw_spaces;
+
+    return cloned_el ? nullptr : ret;
+}

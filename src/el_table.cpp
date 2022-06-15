@@ -99,3 +99,15 @@ void litehtml::el_table::parse_attributes()
 
 	html_tag::parse_attributes();
 }
+
+litehtml::element::ptr litehtml::el_table::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::el_table>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<el_table>(get_document());
+        html_tag::clone(ret);
+    }
+
+    return cloned_el ? nullptr : ret;
+}

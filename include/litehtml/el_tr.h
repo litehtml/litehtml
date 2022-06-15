@@ -12,6 +12,8 @@ namespace litehtml
 
 		void parse_attributes() override;
 		void get_inline_boxes(position::vector& boxes) override;
+
+        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

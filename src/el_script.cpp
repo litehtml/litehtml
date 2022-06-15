@@ -23,3 +23,15 @@ const litehtml::tchar_t* litehtml::el_script::get_tagName() const
 {
 	return _t("script");
 }
+
+litehtml::element::ptr litehtml::el_script::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::el_script>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<el_script>(get_document());
+        element::clone(ret);
+    }
+
+    return cloned_el ? nullptr : ret;
+}

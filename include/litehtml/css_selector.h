@@ -267,11 +267,24 @@ namespace litehtml
 		css_selector::ptr	m_selector;
 		bool				m_used;
 
-		used_selector(const css_selector::ptr& selector, bool used)
-		{
-			m_used		= used;
-			m_selector	= selector;
-		}
+        used_selector(const css_selector::ptr& selector, bool used)
+        {
+            m_used		= used;
+            m_selector	= selector;
+        }
+
+        used_selector(const used_selector& val)
+        {
+            m_used = val.m_used;
+            m_selector = val.m_selector;
+        }
+
+        used_selector& operator=(const used_selector& val)
+        {
+            m_used = val.m_used;
+            m_selector = val.m_selector;
+            return *this;
+        }
 	};
 }
 

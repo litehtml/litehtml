@@ -21,7 +21,7 @@ namespace litehtml
 		void				parse_styles(bool is_reparse) override;
 		int					get_base_line() override;
 		void				draw(uint_ptr hdc, int x, int y, const position* clip) override;
-
+        element::ptr clone(const element::ptr& cloned_el) override;
 	protected:
 		void				get_content_size(size& sz, int max_width) override;
 	};

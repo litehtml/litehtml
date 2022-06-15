@@ -161,6 +161,7 @@ namespace litehtml
 		bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const override;
 		bool				is_only_child(const element::ptr& el, bool of_type) const override;
 		const background*	get_background(bool own_only = false) override;
+        element::ptr        clone(const element::ptr& cloned_el) override;
 
 	protected:
 		void				draw_children_box(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex);

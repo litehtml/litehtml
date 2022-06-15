@@ -14,6 +14,7 @@ namespace litehtml
 		bool is_white_space() const override;
 		bool is_break() const override;
         bool is_space() const override;
+        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

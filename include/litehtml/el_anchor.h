@@ -12,6 +12,7 @@ namespace litehtml
 
 		void	on_click() override;
 		void	apply_stylesheet(const litehtml::css& stylesheet) override;
+        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

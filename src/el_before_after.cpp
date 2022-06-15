@@ -205,3 +205,27 @@ void litehtml::el_before_after_base::apply_stylesheet( const litehtml::css& styl
 {
 
 }
+
+litehtml::element::ptr litehtml::el_before::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::el_before>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<el_before>(get_document());
+        html_tag::clone(ret);
+    }
+
+    return cloned_el ? nullptr : ret;
+}
+
+litehtml::element::ptr litehtml::el_after::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::el_after>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<el_after>(get_document());
+        html_tag::clone(ret);
+    }
+
+    return cloned_el ? nullptr : ret;
+}

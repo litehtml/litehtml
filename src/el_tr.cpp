@@ -44,3 +44,15 @@ void litehtml::el_tr::get_inline_boxes( position::vector& boxes )
 		}
 	}
 }
+
+litehtml::element::ptr litehtml::el_tr::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::el_tr>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<el_tr>(get_document());
+        html_tag::clone(ret);
+    }
+
+    return cloned_el ? nullptr : ret;
+}

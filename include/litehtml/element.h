@@ -2,6 +2,7 @@
 #define LH_ELEMENT_H
 
 #include <memory>
+#include <tuple>
 #include "stylesheet.h"
 #include "css_offsets.h"
 #include "css_margins.h"
@@ -195,8 +196,9 @@ namespace litehtml
 		virtual element::ptr		get_element_by_point(int x, int y, int client_x, int client_y);
 		virtual element::ptr		get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
 		virtual const background*	get_background(bool own_only = false);
+        virtual element::ptr        clone(const element::ptr& cloned_el);
 
-        void split_inlines();
+        std::tuple<element::ptr, element::ptr, element::ptr> split_inlines();
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -418,7 +420,7 @@ namespace litehtml
         return m_css;
     }
 
-    bool element::is_block_box() const
+    inline bool element::is_block_box() const
     {
         if(css().get_display() == display_block ||
            css().get_display() == display_flex ||

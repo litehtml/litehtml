@@ -353,14 +353,6 @@ int litehtml::html_tag::get_base_line()
 
 void litehtml::html_tag::init()
 {
-//    for(const auto& cls : m_class_values)
-//    {
-//        if(cls == "toclimit-4")
-//        {
-//            int i = 0;
-//            i++;
-//        }
-//    }
 	if (m_css.get_display() == display_table || m_css.get_display() == display_inline_table)
 	{
 		if (m_grid)
@@ -417,6 +409,28 @@ void litehtml::html_tag::init()
         css().get_position() == element_position_absolute
     )
     {
+        // Split inline blocks with box blocks inside
+        auto iter = m_children.begin();
+        while (iter != m_children.end())
+        {
+            const auto& el = *iter;
+            if(el->css().get_display() == display_inline && !el->m_children.empty())
+            {
+                auto split_el = el->split_inlines();
+                if(std::get<0>(split_el))
+                {
+                    iter = m_children.erase(iter);
+                    iter = m_children.insert(iter, std::get<0>(split_el));
+                    iter = m_children.insert(iter, std::get<1>(split_el));
+                    iter = m_children.insert(iter, std::get<2>(split_el));
+
+                    std::get<0>(split_el)->parent(shared_from_this());
+                    continue;
+                }
+            }
+            ++iter;
+        }
+
         bool has_block_level = false;
         bool has_inlines = false;
         for (const auto& el : m_children)
@@ -4518,4 +4532,26 @@ void litehtml::html_tag::draw_children_table(uint_ptr hdc, int x, int y, const p
 			}
 		}
 	}
+}
+
+litehtml::element::ptr litehtml::html_tag::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::html_tag>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<html_tag>(get_document());
+        element::clone(ret);
+    }
+
+    ret->m_class_values = m_class_values;
+    ret->m_tag = m_tag;
+    ret->m_style = m_style;
+    ret->m_attrs = m_attrs;
+    ret->m_pseudo_classes = m_pseudo_classes;
+    for(auto& us : ret->m_used_styles)
+    {
+        ret->m_used_styles.emplace_back(new used_selector(us->m_selector, us->m_used));
+    }
+
+    return cloned_el ? nullptr : ret;
 }

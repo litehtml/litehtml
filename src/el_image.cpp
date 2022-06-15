@@ -263,3 +263,15 @@ void litehtml::el_image::parse_styles( bool is_reparse /*= false*/ )
 		}
 	}
 }
+
+litehtml::element::ptr litehtml::el_image::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::el_image>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<el_image>(get_document());
+        html_tag::clone(ret);
+    }
+
+    return cloned_el ? nullptr : ret;
+}

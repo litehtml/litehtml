@@ -10,6 +10,8 @@ namespace litehtml
 	public:
 		explicit el_link(const std::shared_ptr<litehtml::document>& doc);
 
+        element::ptr clone(const element::ptr& cloned_el) override;
+
 	protected:
 		void parse_attributes() override;
 	};

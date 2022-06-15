@@ -29,3 +29,17 @@ const litehtml::tchar_t* litehtml::el_style::get_tagName() const
 {
 	return _t("style");
 }
+
+litehtml::element::ptr litehtml::el_style::clone(const element::ptr& cloned_el)
+{
+    auto ret = std::dynamic_pointer_cast<litehtml::el_style>(cloned_el);
+    if(!ret)
+    {
+        ret = std::make_shared<el_style>(get_document());
+        element::clone(ret);
+    }
+
+    ret->m_children = m_children;
+
+    return cloned_el ? nullptr : ret;
+}
