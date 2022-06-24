@@ -1,5 +1,6 @@
 #include "line_box.h"
 #include "element.h"
+#include "render_item.h"
 
 
 int litehtml::line_box::height() const
@@ -12,35 +13,35 @@ int litehtml::line_box::width() const
     return m_width;
 }
 
-void litehtml::line_box::add_element(const element::ptr &el)
+void litehtml::line_box::add_element(const std::shared_ptr<render_item> &el)
 {
-    el->m_skip	= false;
-    el->m_box	= nullptr;
+    el->skip(false);
+    el->set_line_box(nullptr);
     bool add	= true;
-    if( (m_items.empty() && el->is_white_space()) || el->is_break() )
+    if( (m_items.empty() && el->src_el()->is_white_space()) || el->src_el()->is_break() )
     {
-        el->m_skip = true;
-    } else if(el->is_white_space())
+        el->skip(true);
+    } else if(el->src_el()->is_white_space())
     {
         if (have_last_space())
         {
             add = false;
-            el->m_skip = true;
+            el->skip(true);
         }
     }
 
     if(add)
     {
-        el->m_box = this;
+        el->set_line_box(this);
         m_items.push_back(el);
 
-        if(!el->m_skip)
+        if(!el->skip())
         {
             int el_shift_left	= el->get_inline_shift_left();
             int el_shift_right	= el->get_inline_shift_right();
 
-            el->m_pos.x	= m_box_left + m_width + el_shift_left + el->content_margins_left();
-            el->m_pos.y	= m_box_top + el->content_margins_top();
+            el->pos().x	= m_box_left + m_width + el_shift_left + el->content_margins_left();
+            el->pos().y	= m_box_top + el->content_margins_top();
             m_width		+= el->width() + el_shift_left + el_shift_right;
         }
     }
@@ -54,14 +55,14 @@ void litehtml::line_box::finish(bool last_box)
         return;
     }
 
-    for(auto i = m_items.rbegin(); i != m_items.rend(); i++)
+    for(const auto& el : m_items)
     {
-        if((*i)->is_white_space() || (*i)->is_break())
+        if(el->src_el()->is_white_space() || el->src_el()->is_break())
         {
-            if(!(*i)->m_skip)
+            if(!el->skip())
             {
-                (*i)->m_skip = true;
-                m_width -= (*i)->width();
+                el->skip(true);
+                m_width -= el->width();
             }
         } else
         {
@@ -95,14 +96,14 @@ void litehtml::line_box::finish(bool last_box)
     // find line box baseline and line-height
     for(const auto& el : m_items)
     {
-        if(el->css().get_display() == display_inline_text)
+        if(el->src_el()->css().get_display() == display_inline_text)
         {
-            font_metrics fm = el->css().get_font_metrics();
+            font_metrics fm = el->src_el()->css().get_font_metrics();
             base_line	= std::max(base_line,	fm.base_line());
-            line_height = std::max(line_height, el->css().get_line_height());
+            line_height = std::max(line_height, el->src_el()->css().get_line_height());
             m_height = std::max(m_height, fm.height);
         }
-        el->m_pos.x += add_x;
+        el->pos().x += add_x;
     }
 
     if(m_height)
@@ -117,32 +118,32 @@ void litehtml::line_box::finish(bool last_box)
 
     for (const auto& el : m_items)
     {
-        if(el->css().get_display() == display_inline_text)
+        if(el->src_el()->css().get_display() == display_inline_text)
         {
-            el->m_pos.y = m_height - base_line - el->css().get_font_metrics().ascent;
+            el->pos().y = m_height - base_line - el->src_el()->css().get_font_metrics().ascent;
         } else
         {
-            switch(el->css().get_vertical_align())
+            switch(el->src_el()->css().get_vertical_align())
             {
                 case va_super:
                 case va_sub:
                 case va_baseline:
-                    el->m_pos.y = m_height - base_line - el->height() + el->get_base_line() + el->content_margins_top();
+                    el->pos().y = m_height - base_line - el->height() + el->get_base_line() + el->content_margins_top();
                     break;
                 case va_top:
-                    el->m_pos.y = y1 + el->content_margins_top();
+                    el->pos().y = y1 + el->content_margins_top();
                     break;
                 case va_text_top:
-                    el->m_pos.y = m_height - base_line - m_font_metrics.ascent + el->content_margins_top();
+                    el->pos().y = m_height - base_line - m_font_metrics.ascent + el->content_margins_top();
                     break;
                 case va_middle:
-                    el->m_pos.y = m_height - base_line - m_font_metrics.x_height / 2 - el->height() / 2 + el->content_margins_top();
+                    el->pos().y = m_height - base_line - m_font_metrics.x_height / 2 - el->height() / 2 + el->content_margins_top();
                     break;
                 case va_bottom:
-                    el->m_pos.y = y2 - el->height() + el->content_margins_top();
+                    el->pos().y = y2 - el->height() + el->content_margins_top();
                     break;
                 case va_text_bottom:
-                    el->m_pos.y = m_height - base_line + m_font_metrics.descent - el->height() + el->content_margins_top();
+                    el->pos().y = m_height - base_line + m_font_metrics.descent - el->height() + el->content_margins_top();
                     break;
             }
             y1 = std::min(y1, el->top());
@@ -152,17 +153,17 @@ void litehtml::line_box::finish(bool last_box)
 
     for (const auto& el : m_items)
     {
-        el->m_pos.y -= y1;
-        el->m_pos.y += m_box_top;
-        if(el->css().get_display() != display_inline_text)
+        el->pos().y -= y1;
+        el->pos().y += m_box_top;
+        if(el->src_el()->css().get_display() != display_inline_text)
         {
-            switch(el->css().get_vertical_align())
+            switch(el->src_el()->css().get_vertical_align())
             {
                 case va_top:
-                    el->m_pos.y = m_box_top + el->content_margins_top();
+                    el->pos().y = m_box_top + el->content_margins_top();
                     break;
                 case va_bottom:
-                    el->m_pos.y = m_box_top + (y2 - y1) - el->height() + el->content_margins_top();
+                    el->pos().y = m_box_top + (y2 - y1) - el->height() + el->content_margins_top();
                     break;
                 case va_baseline:
                     //TODO: process vertical align "baseline"
@@ -191,16 +192,16 @@ void litehtml::line_box::finish(bool last_box)
     m_baseline = (base_line - y1) - (m_height - line_height);
 }
 
-bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws) const
+bool litehtml::line_box::can_hold(const std::shared_ptr<render_item> &el, white_space ws) const
 {
-    if(!el->is_inline_box()) return false;
+    if(!el->src_el()->is_inline_box()) return false;
 
-    if(el->is_break())
+    if(el->src_el()->is_break())
     {
         return false;
     }
 
-    if(ws == white_space_nowrap || ws == white_space_pre || (ws == white_space_pre_wrap && el->is_space()))
+    if(ws == white_space_nowrap || ws == white_space_pre || (ws == white_space_pre_wrap && el->src_el()->is_space()))
     {
         return true;
     }
@@ -215,26 +216,19 @@ bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws) const
 
 bool litehtml::line_box::have_last_space()  const
 {
-    bool ret = false;
-    for (auto i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
+    if(m_items.empty())
     {
-        if((*i)->is_white_space() || (*i)->is_break())
-        {
-            ret = true;
-        } else
-        {
-            break;
-        }
+        return false;
     }
-    return ret;
+    return m_items.back()->src_el()->is_white_space() || m_items.back()->src_el()->is_break();
 }
 
 bool litehtml::line_box::is_empty() const
 {
     if(m_items.empty()) return true;
-    for (auto i = m_items.rbegin(); i != m_items.rend(); i++)
+    for (const auto& el : m_items)
     {
-        if(!(*i)->m_skip || (*i)->is_break())
+        if(!el->skip() || el->src_el()->is_break())
         {
             return false;
         }
@@ -247,7 +241,7 @@ int litehtml::line_box::baseline() const
     return m_baseline;
 }
 
-void litehtml::line_box::get_elements( elements_vector& els )
+void litehtml::line_box::get_elements( std::vector< std::shared_ptr<render_item> >& els )
 {
     els.insert(els.begin(), m_items.begin(), m_items.end());
 }
@@ -267,7 +261,7 @@ void litehtml::line_box::y_shift( int shift )
     m_box_top += shift;
     for (auto& el : m_items)
     {
-        el->m_pos.y += shift;
+        el->pos().y += shift;
     }
 }
 
@@ -275,11 +269,11 @@ bool litehtml::line_box::is_break_only() const
 {
     if(m_items.empty()) return true;
 
-    if(m_items.front()->is_break())
+    if(m_items.front()->src_el()->is_break())
     {
         for (auto& el : m_items)
         {
-            if(!el->m_skip)
+            if(!el->skip())
             {
                 return false;
             }
@@ -289,7 +283,7 @@ bool litehtml::line_box::is_break_only() const
     return false;
 }
 
-void litehtml::line_box::new_width( int left, int right, elements_vector& els )
+void litehtml::line_box::new_width( int left, int right, std::vector< std::shared_ptr<render_item> >& els )
 {
     int add = left - m_box_left;
     if(add)
@@ -300,9 +294,9 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
         auto remove_begin = m_items.end();
         for (auto i = m_items.begin() + 1; i != m_items.end(); i++)
         {
-            element::ptr el = (*i);
+            auto el = (*i);
 
-            if(!el->m_skip)
+            if(!el->skip())
             {
                 if(m_box_left + m_width + el->width() + el->get_inline_shift_right() + el->get_inline_shift_left() > m_box_right)
                 {
@@ -310,7 +304,7 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
                     break;
                 } else
                 {
-                    el->m_pos.x += add;
+                    el->pos().x += add;
                     m_width += el->width() + el->get_inline_shift_right() + el->get_inline_shift_left();
                 }
             }
@@ -322,7 +316,7 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
 
             for(const auto& el : els)
             {
-                el->m_box = nullptr;
+                el->set_line_box(nullptr);
             }
         }
     }

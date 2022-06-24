@@ -6,7 +6,8 @@ litehtml::el_li::el_li(const std::shared_ptr<litehtml::document>& doc) : litehtm
 {
 }
 
-int litehtml::el_li::render(int x, int y, int max_width, bool second_pass)
+// TODO: process this
+/*int litehtml::el_li::render(int x, int y, int max_width, bool second_pass)
 {
 	if (css().get_list_style_type() >= list_style_type_armenian && !m_index_initialized)
 	{
@@ -33,17 +34,4 @@ int litehtml::el_li::render(int x, int y, int max_width, bool second_pass)
 
 	return html_tag::render(x, y, max_width, second_pass);
 }
-
-litehtml::element::ptr litehtml::el_li::clone(const element::ptr& cloned_el)
-{
-    auto ret = std::dynamic_pointer_cast<litehtml::el_li>(cloned_el);
-    if(!ret)
-    {
-        ret = std::make_shared<el_li>(get_document());
-        html_tag::clone(ret);
-    }
-
-    ret->m_index_initialized = m_index_initialized;
-
-    return cloned_el ? nullptr : ret;
-}
+*/

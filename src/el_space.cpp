@@ -38,14 +38,7 @@ bool litehtml::el_space::is_space() const
     return true;
 }
 
-litehtml::element::ptr litehtml::el_space::clone(const element::ptr& cloned_el)
+litehtml::tstring litehtml::el_space::dump_get_name()
 {
-    auto ret = std::dynamic_pointer_cast<litehtml::el_space>(cloned_el);
-    if(!ret)
-    {
-        ret = std::make_shared<el_space>(m_text.c_str(), get_document());
-        el_text::clone(ret);
-    }
-
-    return cloned_el ? nullptr : ret;
+    return _t("space: \"") + get_escaped_string(m_text) + _t("\"");
 }

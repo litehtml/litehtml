@@ -138,20 +138,6 @@ void litehtml::css_properties::parse(const std::shared_ptr<element>& el, const s
 
     m_clear = (element_clear) value_index(el->get_style_property(_t("clear"), false, _t("none")), element_clear_strings, clear_none);
 
-    if (m_display == display_table ||
-        m_display == display_inline_table ||
-        m_display == display_table_caption ||
-        m_display == display_table_cell ||
-        m_display == display_table_column ||
-        m_display == display_table_column_group ||
-        m_display == display_table_footer_group ||
-        m_display == display_table_header_group ||
-        m_display == display_table_row ||
-        m_display == display_table_row_group)
-    {
-        doc->add_tabular(el);
-    }
-
     m_css_text_indent.fromString(	el->get_style_property(_t("text-indent"),	true,	_t("0")),	_t("0"));
 
     m_css_width.fromString(			el->get_style_property(_t("width"),			false,	_t("auto")), _t("auto"));
@@ -529,4 +515,40 @@ void litehtml::css_properties::parse_background(const std::shared_ptr<element>& 
     {
         doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.empty() ? nullptr : m_bg.m_baseurl.c_str(), true);
     }
+}
+
+std::vector<std::tuple<litehtml::tstring, litehtml::tstring>> litehtml::css_properties::dump_get_attrs()
+{
+    std::vector<std::tuple<litehtml::tstring, litehtml::tstring>> ret;
+
+    ret.emplace_back(std::make_tuple(_t("display"), index_value(m_display, style_display_strings)));
+    ret.emplace_back(std::make_tuple(_t("el_position"), index_value(m_el_position, element_position_strings)));
+    ret.emplace_back(std::make_tuple(_t("text_align"), index_value(m_text_align, text_align_strings)));
+    ret.emplace_back(std::make_tuple(_t("font_size"), t_to_string(m_font_size)));
+    ret.emplace_back(std::make_tuple(_t("overflow"), index_value(m_overflow, overflow_strings)));
+    ret.emplace_back(std::make_tuple(_t("white_space"), index_value(m_white_space, white_space_strings)));
+    ret.emplace_back(std::make_tuple(_t("visibility"), index_value(m_visibility, visibility_strings)));
+    ret.emplace_back(std::make_tuple(_t("box_sizing"), index_value(m_box_sizing, box_sizing_strings)));
+    ret.emplace_back(std::make_tuple(_t("z_index"), t_to_string(m_z_index)));
+    ret.emplace_back(std::make_tuple(_t("vertical_align"), index_value(m_vertical_align, vertical_align_strings)));
+    ret.emplace_back(std::make_tuple(_t("float"), index_value(m_float, element_float_strings)));
+    ret.emplace_back(std::make_tuple(_t("clear"), index_value(m_clear, element_clear_strings)));
+    ret.emplace_back(std::make_tuple(_t("margins"), m_css_margins.to_string()));
+    ret.emplace_back(std::make_tuple(_t("padding"), m_css_padding.to_string()));
+    ret.emplace_back(std::make_tuple(_t("borders"), m_css_borders.to_string()));
+    ret.emplace_back(std::make_tuple(_t("width"), m_css_width.to_string()));
+    ret.emplace_back(std::make_tuple(_t("height"), m_css_height.to_string()));
+    ret.emplace_back(std::make_tuple(_t("min_width"), m_css_min_width.to_string()));
+    ret.emplace_back(std::make_tuple(_t("min_height"), m_css_min_width.to_string()));
+    ret.emplace_back(std::make_tuple(_t("max_width"), m_css_max_width.to_string()));
+    ret.emplace_back(std::make_tuple(_t("max_height"), m_css_max_width.to_string()));
+    ret.emplace_back(std::make_tuple(_t("offsets"), m_css_offsets.to_string()));
+    ret.emplace_back(std::make_tuple(_t("text_indent"), m_css_text_indent.to_string()));
+    ret.emplace_back(std::make_tuple(_t("line_height"), t_to_string(m_line_height)));
+    ret.emplace_back(std::make_tuple(_t("list_style_type"), index_value(m_list_style_type, list_style_type_strings)));
+    ret.emplace_back(std::make_tuple(_t("list_style_position"), index_value(m_list_style_position, list_style_position_strings)));
+    ret.emplace_back(std::make_tuple(_t("border_spacing_x"), m_css_border_spacing_x.to_string()));
+    ret.emplace_back(std::make_tuple(_t("border_spacing_y"), m_css_border_spacing_y.to_string()));
+
+    return ret;
 }

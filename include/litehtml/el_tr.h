@@ -11,9 +11,6 @@ namespace litehtml
 		explicit el_tr(const std::shared_ptr<litehtml::document>& doc);
 
 		void parse_attributes() override;
-		void get_inline_boxes(position::vector& boxes) override;
-
-        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

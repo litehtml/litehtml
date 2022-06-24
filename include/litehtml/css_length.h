@@ -28,6 +28,7 @@ namespace litehtml
 		css_units	units() const;
 		int			calc_percent(int width) const;
 		void		fromString(const tstring& str, const tstring& predefs = _t(""), int defValue = 0);
+        tstring     to_string();
 	};
 
 	// css_length inlines

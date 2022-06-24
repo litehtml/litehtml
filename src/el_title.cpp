@@ -14,14 +14,3 @@ void litehtml::el_title::parse_attributes()
 	get_document()->container()->set_caption(text.c_str());
 }
 
-litehtml::element::ptr litehtml::el_title::clone(const element::ptr& cloned_el)
-{
-    auto ret = std::dynamic_pointer_cast<litehtml::el_title>(cloned_el);
-    if(!ret)
-    {
-        ret = std::make_shared<el_title>(get_document());
-        html_tag::clone(ret);
-    }
-
-    return cloned_el ? nullptr : ret;
-}

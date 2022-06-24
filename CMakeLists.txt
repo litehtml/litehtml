@@ -60,8 +60,16 @@ set(SOURCE_LITEHTML
     src/num_cvt.cpp
     src/strtod.cpp
     src/css_properties.cpp
-    include/litehtml/line_box.h
     src/line_box.cpp
+    src/css_borders.cpp
+    src/render_item.cpp
+    src/render_block_context.cpp
+    src/render_block.cpp
+    src/render_inline_context.cpp
+    src/render_inline.cpp
+    src/render_table.cpp
+    src/render_flex.cpp
+    src/render_image.cpp
 )
 
 set(HEADER_LITEHTML
@@ -69,7 +77,7 @@ set(HEADER_LITEHTML
     include/litehtml/attributes.h
     include/litehtml/background.h
     include/litehtml/borders.h
-        include/litehtml/codepoint.h
+    include/litehtml/codepoint.h
     include/litehtml/context.h
     include/litehtml/css_length.h
     include/litehtml/css_margins.h
@@ -114,6 +122,8 @@ set(HEADER_LITEHTML
     include/litehtml/web_color.h
     include/litehtml/num_cvt.h
     include/litehtml/css_properties.h
+    include/litehtml/line_box.h
+    include/litehtml/render_item.h
 )
 
 set(TEST_LITEHTML

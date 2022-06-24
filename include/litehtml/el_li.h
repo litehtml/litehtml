@@ -10,9 +10,6 @@ namespace litehtml
 	public:
 		explicit el_li(const std::shared_ptr<litehtml::document>& doc);
 
-		int render(int x, int y, int max_width, bool second_pass = false) override;
-        element::ptr clone(const element::ptr& cloned_el) override;
-
 	private:
 		bool m_index_initialized = false;
 	};

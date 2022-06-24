@@ -11,7 +11,6 @@ namespace litehtml
 		explicit el_div(const std::shared_ptr<litehtml::document>& doc);
 
 		void parse_attributes() override;
-        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

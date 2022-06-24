@@ -6,8 +6,6 @@
 
 litehtml::el_table::el_table(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
-	m_border_spacing_x	= 0;
-	m_border_spacing_y	= 0;
 }
 
 
@@ -28,27 +26,28 @@ void litehtml::el_table::parse_styles(bool is_reparse)
 {
 	html_tag::parse_styles(is_reparse);
 
-	if(css().get_border_collapse() == border_collapse_separate)
-	{
-		int fntsz = css().get_font_size();
-		document::ptr doc = get_document();
-		m_border_spacing_x = doc->to_pixels(css().get_border_spacing_x(), fntsz);
-		m_border_spacing_y = doc->to_pixels(css().get_border_spacing_y(), fntsz);
-	} else
-	{
-		m_border_spacing_x	= 0;
-		m_border_spacing_y	= 0;
-		m_padding.bottom	= 0;
-		m_padding.top		= 0;
-		m_padding.left		= 0;
-		m_padding.right		= 0;
-        css_margins padding = css().get_padding();
-        padding.bottom.set_value(0, css_units_px);
-        padding.top.set_value(0, css_units_px);
-        padding.left.set_value(0, css_units_px);
-        padding.right.set_value(0, css_units_px);
-        m_css.set_padding(padding);
-	}
+    // TODO: process this
+//	if(css().get_border_collapse() == border_collapse_separate)
+//	{
+//		int fntsz = css().get_font_size();
+//		document::ptr doc = get_document();
+//		m_border_spacing_x = doc->to_pixels(css().get_border_spacing_x(), fntsz);
+//		m_border_spacing_y = doc->to_pixels(css().get_border_spacing_y(), fntsz);
+//	} else
+//	{
+//		m_border_spacing_x	= 0;
+//		m_border_spacing_y	= 0;
+//		m_padding.bottom	= 0;
+//		m_padding.top		= 0;
+//		m_padding.left		= 0;
+//		m_padding.right		= 0;
+//        css_margins padding = css().get_padding();
+//        padding.bottom.set_value(0, css_units_px);
+//        padding.top.set_value(0, css_units_px);
+//        padding.left.set_value(0, css_units_px);
+//        padding.right.set_value(0, css_units_px);
+//        m_css.set_padding(padding);
+//	}
 }
 
 void litehtml::el_table::parse_attributes()
@@ -98,16 +97,4 @@ void litehtml::el_table::parse_attributes()
 	}
 
 	html_tag::parse_attributes();
-}
-
-litehtml::element::ptr litehtml::el_table::clone(const element::ptr& cloned_el)
-{
-    auto ret = std::dynamic_pointer_cast<litehtml::el_table>(cloned_el);
-    if(!ret)
-    {
-        ret = std::make_shared<el_table>(get_document());
-        html_tag::clone(ret);
-    }
-
-    return cloned_el ? nullptr : ret;
 }

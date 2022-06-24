@@ -20,7 +20,6 @@ namespace litehtml
 		bool appendChild(const litehtml::element::ptr& el) override;
 		void parse_styles(bool is_reparse = false) override;
 		void parse_attributes() override;
-        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

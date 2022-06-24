@@ -1,7 +1,7 @@
 #ifndef LH_TYPES_H
 #define LH_TYPES_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <memory>
 #include <map>
 #include <vector>
@@ -518,15 +518,16 @@ namespace litehtml
 		content_property_no_close_quote,
 	};
 
+    class render_item;
 
 	struct floated_box
 	{
 		typedef std::vector<floated_box>	vector;
 
-		position		pos;
-		element_float	float_side;
-		element_clear	clear_floats;
-		std::shared_ptr<element>	el;
+		position		                pos;
+		element_float	                float_side;
+		element_clear	                clear_floats;
+		std::shared_ptr<render_item>	el;
 
 		floated_box() = default;
 		floated_box(const floated_box& val)

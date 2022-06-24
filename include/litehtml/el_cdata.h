@@ -13,7 +13,6 @@ namespace litehtml
 
 		void get_text(tstring& text) override;
 		void set_data(const tchar_t* data) override;
-        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

@@ -1,13 +1,14 @@
 #include "html.h"
 #include "table.h"
 #include "element.h"
+#include "render_item.h"
 
-void litehtml::table_grid::add_cell(element::ptr& el)
+void litehtml::table_grid::add_cell(const std::shared_ptr<render_item>& el)
 {
 	table_cell cell;
 	cell.el = el;
-	cell.colspan	= t_atoi(el->get_attr(_t("colspan"), _t("1")));
-	cell.rowspan	= t_atoi(el->get_attr(_t("rowspan"), _t("1")));
+	cell.colspan	= t_atoi(el->src_el()->get_attr(_t("colspan"), _t("1")));
+	cell.rowspan	= t_atoi(el->src_el()->get_attr(_t("rowspan"), _t("1")));
 	cell.borders	= el->get_borders();
 
 	while( is_rowspanned( (int) m_cells.size() - 1, (int) m_cells.back().size() ) )
@@ -24,7 +25,7 @@ void litehtml::table_grid::add_cell(element::ptr& el)
 }
 
 
-void litehtml::table_grid::begin_row(element::ptr& row)
+void litehtml::table_grid::begin_row(const std::shared_ptr<render_item>& row)
 {
 	std::vector<table_cell> r;
 	m_cells.push_back(r);
@@ -116,9 +117,9 @@ void litehtml::table_grid::finish()
 
 			if(cell(col, row)->el && cell(col, row)->colspan <= 1)
 			{
-				if (!cell(col, row)->el->css().get_width().is_predefined() && m_columns[col].css_width.is_predefined())
+				if (!cell(col, row)->el->src_el()->css().get_width().is_predefined() && m_columns[col].css_width.is_predefined())
 				{
-					m_columns[col].css_width = cell(col, row)->el->css().get_width();
+					m_columns[col].css_width = cell(col, row)->el->src_el()->css().get_width();
 				}
 			}
 		}
@@ -130,7 +131,7 @@ void litehtml::table_grid::finish()
 		{
 			if(cell(col, row)->el && cell(col, row)->colspan == 1)
 			{
-				cell(col, row)->el->css_w().set_width(m_columns[col].css_width);
+				cell(col, row)->el->src_el()->css_w().set_width(m_columns[col].css_width);
 			}
 		}
 	}
@@ -592,7 +593,7 @@ int& litehtml::table_column_accessor_width::get( table_column& col )
 	return col.width;
 }
 
-litehtml::table_row::table_row(int h, std::shared_ptr<element>& row)
+litehtml::table_row::table_row(int h, const std::shared_ptr<render_item>& row)
 {
     min_height		= 0;
     height			= h;
@@ -603,6 +604,6 @@ litehtml::table_row::table_row(int h, std::shared_ptr<element>& row)
     bottom			= 0;
     if (row)
     {
-        css_height = row->css().get_height();
+        css_height = row->src_el()->css().get_height();
     }
 }

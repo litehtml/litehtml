@@ -1,6 +1,7 @@
 #include "html.h"
 #include "el_text.h"
 #include "document.h"
+#include "render_item.h"
 
 litehtml::el_text::el_text(const tchar_t* text, const std::shared_ptr<litehtml::document>& doc) : element(doc)
 {
@@ -108,24 +109,14 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 	m_draw_spaces = fm.draw_spaces;
 }
 
-int litehtml::el_text::get_base_line()
-{
-	element::ptr el_parent = parent();
-	if (el_parent)
-	{
-		return el_parent->get_base_line();
-	}
-	return 0;
-}
-
-void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
+void litehtml::el_text::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
 {
 	if(is_white_space() && !m_draw_spaces)
 	{
 		return;
 	}
 
-	position pos = m_pos;
+	position pos = ri->pos();
 	pos.x	+= x;
 	pos.y	+= y;
 
@@ -143,20 +134,12 @@ void litehtml::el_text::draw( uint_ptr hdc, int x, int y, const position* clip )
 	}
 }
 
-litehtml::element::ptr litehtml::el_text::clone(const element::ptr& cloned_el)
+litehtml::tstring litehtml::el_text::dump_get_name()
 {
-    auto ret = std::dynamic_pointer_cast<litehtml::el_text>(cloned_el);
-    if(!ret)
-    {
-        ret = std::make_shared<el_text>(m_text.c_str(), get_document());
-        element::clone(ret);
-    }
+    return _t("text: \"") + get_escaped_string(m_text) + _t("\"");
+}
 
-    ret->m_text = m_text;
-    ret->m_transformed_text = m_transformed_text;
-    ret->m_size = m_size;
-    ret->m_use_transformed = m_use_transformed;
-    ret->m_draw_spaces = m_draw_spaces;
-
-    return cloned_el ? nullptr : ret;
+std::vector<std::tuple<litehtml::tstring, litehtml::tstring>> litehtml::el_text::dump_get_attrs()
+{
+    return std::vector<std::tuple<litehtml::tstring, litehtml::tstring>>();
 }

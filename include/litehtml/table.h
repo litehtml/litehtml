@@ -7,6 +7,8 @@
 
 namespace litehtml
 {
+    struct render_item;
+
 	struct table_row
 	{
 		typedef std::vector<table_row>	vector;
@@ -14,7 +16,7 @@ namespace litehtml
 		int				height;
 		int				border_top;
 		int				border_bottom;
-        std::shared_ptr<element>	el_row;
+        std::shared_ptr<render_item>	el_row;
 		int				top;
 		int				bottom;
 		css_length		css_height;
@@ -32,7 +34,7 @@ namespace litehtml
 			css_height.predef(0);
 		}
 
-		table_row(int h, std::shared_ptr<element>& row);
+		table_row(int h, const std::shared_ptr<render_item>& row);
 
 		table_row(const table_row& val)
 		{
@@ -138,7 +140,7 @@ namespace litehtml
 
 	struct table_cell
 	{
-        std::shared_ptr<element>	el;
+        std::shared_ptr<render_item>	el;
 		int				colspan;
 		int				rowspan;
 		int				min_width;
@@ -201,7 +203,7 @@ namespace litehtml
 		rows					m_cells;
 		table_column::vector	m_columns;
 		table_row::vector		m_rows;
-		elements_vector			m_captions;
+		std::vector<std::shared_ptr<render_item>> m_captions;
 		int						m_captions_height;
 	public:
 
@@ -213,14 +215,14 @@ namespace litehtml
 		}
 
 		void			clear();
-		void			begin_row(std::shared_ptr<element>& row);
-		void			add_cell(std::shared_ptr<element>& el);
+		void			begin_row(const std::shared_ptr<render_item>& row);
+		void			add_cell(const std::shared_ptr<render_item>& el);
 		bool			is_rowspanned(int r, int c);
 		void			finish();
 		table_cell*		cell(int t_col, int t_row);
 		table_column&	column(int c)	{ return m_columns[c];	}
 		table_row&		row(int r)		{ return m_rows[r];		}
-		elements_vector& captions()		{ return m_captions; }
+        std::vector<std::shared_ptr<render_item>>& captions()		{ return m_captions; }
 
 		int				rows_count() const	{ return m_rows_count;	}
 		int				cols_count() const	{ return m_cols_count; }

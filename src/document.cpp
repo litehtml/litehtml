@@ -28,6 +28,7 @@
 #include <functional>
 #include "gumbo.h"
 #include "utf8_strings.h"
+#include "render_item.h"
 
 litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
 {
@@ -118,13 +119,17 @@ litehtml::document::ptr litehtml::document::createFromUTF8(const char* str, lite
 		// Parse applied styles in the elements
 		doc->m_root->parse_styles();
 
+        // Create rendering tree
+        doc->m_root_render = doc->m_root->create_render_item(nullptr);
+
 		// Now the m_tabular_elements is filled with tabular elements.
 		// We have to check the tabular elements for missing table elements 
 		// and create the anonymous boxes in visual table layout
 		doc->fix_tables_layout();
 
 		// Finally initialize elements
-		doc->m_root->init();
+        // init() return pointer to the render_init element because it can change its type
+        doc->m_root_render = doc->m_root_render->init();
 	}
 
 	return doc;
@@ -267,18 +272,18 @@ int litehtml::document::render( int max_width, render_type rt )
 		if(rt == render_fixed_only)
 		{
 			m_fixed_boxes.clear();
-			m_root->render_positioned(rt);
+			m_root_render->render_positioned(rt);
 		} else
 		{
-			ret = m_root->render(0, 0, max_width);
-			if(m_root->fetch_positioned())
+			ret = m_root_render->render(0, 0, max_width);
+			if(m_root_render->fetch_positioned())
 			{
 				m_fixed_boxes.clear();
-				m_root->render_positioned(rt);
+                m_root_render->render_positioned(rt);
 			}
 			m_size.width	= 0;
 			m_size.height	= 0;
-			m_root->calc_document_size(m_size);
+			m_root_render->calc_document_size(m_size);
 		}
 	}
 	return ret;
@@ -286,10 +291,10 @@ int litehtml::document::render( int max_width, render_type rt )
 
 void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip )
 {
-	if(m_root)
+	if(m_root && m_root_render)
 	{
-		m_root->draw(hdc, x, y, clip);
-		m_root->draw_stacking_context(hdc, x, y, clip, true);
+        m_root->draw(hdc, x, y, clip, m_root_render);
+        m_root_render->draw_stacking_context(hdc, x, y, clip, true);
 	}
 }
 
@@ -407,12 +412,12 @@ void litehtml::document::add_stylesheet( const tchar_t* str, const tchar_t* base
 
 bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
 {
-	if(!m_root)
+	if(!m_root || !m_root_render)
 	{
 		return false;
 	}
 
-	element::ptr over_el = m_root->get_element_by_point(x, y, client_x, client_y);
+	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y);
 
 	bool state_was_changed = false;
 
@@ -443,14 +448,14 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 	
 	if(state_was_changed)
 	{
-		return m_root->find_styles_changes(redraw_boxes, 0, 0);
+		return m_root_render->find_styles_changes(redraw_boxes, 0, 0);
 	}
 	return false;
 }
 
 bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
 {
-	if(!m_root)
+	if(!m_root || !m_root_render)
 	{
 		return false;
 	}
@@ -458,7 +463,7 @@ bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
 	{
 		if(m_over_element->on_mouse_leave())
 		{
-			return m_root->find_styles_changes(redraw_boxes, 0, 0);
+			return m_root_render->find_styles_changes(redraw_boxes, 0, 0);
 		}
 	}
 	return false;
@@ -466,12 +471,12 @@ bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
 
 bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
 {
-	if(!m_root)
+	if(!m_root || !m_root_render)
 	{
 		return false;
 	}
 
-	element::ptr over_el = m_root->get_element_by_point(x, y, client_x, client_y);
+	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y);
 
 	bool state_was_changed = false;
 
@@ -509,7 +514,7 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 
 	if(state_was_changed)
 	{
-		return m_root->find_styles_changes(redraw_boxes, 0, 0);
+		return m_root_render->find_styles_changes(redraw_boxes, 0, 0);
 	}
 
 	return false;
@@ -517,7 +522,7 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 
 bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
 {
-	if(!m_root)
+	if(!m_root || !m_root_render)
 	{
 		return false;
 	}
@@ -525,7 +530,7 @@ bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y
 	{
 		if(m_over_element->on_lbutton_up())
 		{
-			return m_root->find_styles_changes(redraw_boxes, 0, 0);
+			return m_root_render->find_styles_changes(redraw_boxes, 0, 0);
 		}
 	}
 	return false;
@@ -774,12 +779,9 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 
 void litehtml::document::fix_tables_layout()
 {
-	size_t i = 0;
-	while (i < m_tabular_elements.size())
+	for (const auto& el_ptr : m_tabular_elements)
 	{
-		element::ptr el_ptr = m_tabular_elements[i];
-
-		switch (el_ptr->css().get_display())
+		switch (el_ptr->src_el()->css().get_display())
 		{
 		case display_inline_table:
 		case display_table:
@@ -789,10 +791,10 @@ void litehtml::document::fix_tables_layout()
 		case display_table_row_group:
 		case display_table_header_group:
 			{
-				element::ptr parent = el_ptr->parent();
+				auto parent = el_ptr->parent();
 				if (parent)
 				{
-					if (parent->css().get_display() != display_inline_table)
+					if (parent->src_el()->css().get_display() != display_inline_table)
 						fix_table_parent(el_ptr, display_table, _t("table"));
 				}
 				fix_table_children(el_ptr, display_table_row, _t("table-row"));
@@ -812,45 +814,50 @@ void litehtml::document::fix_tables_layout()
 		default:
 			break;
 		}
-		i++;
 	}
 }
 
-void litehtml::document::fix_table_children(element::ptr& el_ptr, style_display disp, const tchar_t* disp_str)
+void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp, const tchar_t* disp_str)
 {
-	elements_vector tmp;
-	auto first_iter = el_ptr->m_children.begin();
-	auto cur_iter = el_ptr->m_children.begin();
+	std::list<std::shared_ptr<render_item>> tmp;
+	auto first_iter = el_ptr->children().begin();
+	auto cur_iter = el_ptr->children().begin();
 
 	auto flush_elements = [&]()
 	{
 		element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
 		annon_tag->add_style(tstring(_t("display:")) + disp_str, _t(""));
-		annon_tag->parent(el_ptr);
+		annon_tag->parent(el_ptr->src_el());
 		annon_tag->parse_styles();
-		std::for_each(tmp.begin(), tmp.end(),
-			[&annon_tag](element::ptr& el)
-			{
-				annon_tag->appendChild(el);
-			}
-		);
-		first_iter = el_ptr->m_children.insert(first_iter, annon_tag);
-		cur_iter = first_iter + 1;
-		while (cur_iter != el_ptr->m_children.end() && (*cur_iter)->parent() != el_ptr)
+        std::shared_ptr<render_item> annon_ri;
+        if(annon_tag->css().get_display() == display_table_cell)
+        {
+            annon_ri = std::make_shared<render_item_block>(annon_tag);
+        } else
+        {
+            annon_ri = std::make_shared<render_item_table_part>(annon_tag);
+        }
+        for(const auto& el : tmp)
+        {
+            annon_ri->add_child(el);
+        }
+		first_iter = el_ptr->children().insert(first_iter, annon_ri);
+		cur_iter = std::next(first_iter);
+		while (cur_iter != el_ptr->children().end() && (*cur_iter)->parent() != el_ptr)
 		{
-			cur_iter = el_ptr->m_children.erase(cur_iter);
+			cur_iter = el_ptr->children().erase(cur_iter);
 		}
 		first_iter = cur_iter;
 		tmp.clear();
 	};
 
-	while (cur_iter != el_ptr->m_children.end())
+	while (cur_iter != el_ptr->children().end())
 	{
-		if ((*cur_iter)->css().get_display() != disp)
+		if ((*cur_iter)->src_el()->css().get_display() != disp)
 		{
-			if (!(*cur_iter)->is_table_skip() || ((*cur_iter)->is_table_skip() && !tmp.empty()))
+			if (!(*cur_iter)->src_el()->is_table_skip() || ((*cur_iter)->src_el()->is_table_skip() && !tmp.empty()))
 			{
-				if (disp != display_table_row_group || (*cur_iter)->css().get_display() != display_table_caption)
+				if (disp != display_table_row_group || (*cur_iter)->src_el()->css().get_display() != display_table_caption)
 				{
 					if (tmp.empty())
 					{
@@ -876,14 +883,14 @@ void litehtml::document::fix_table_children(element::ptr& el_ptr, style_display 
 	}
 }
 
-void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display disp, const tchar_t* disp_str)
+void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el_ptr, style_display disp, const tchar_t* disp_str)
 {
-	element::ptr parent = el_ptr->parent();
+	auto parent = el_ptr->parent();
 
-	if (parent->css().get_display() != disp)
+	if (parent->src_el()->css().get_display() != disp)
 	{
-		auto this_element = std::find_if(parent->m_children.begin(), parent->m_children.end(),
-			[&](element::ptr& el)
+		auto this_element = std::find_if(parent->children().begin(), parent->children().end(),
+			[&](const std::shared_ptr<render_item>& el)
 			{
 				if (el == el_ptr)
 				{
@@ -892,9 +899,9 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 				return false;
 			}
 		);
-		if (this_element != parent->m_children.end())
+		if (this_element != parent->children().end())
 		{
-			style_display el_disp = el_ptr->css().get_display();
+			style_display el_disp = el_ptr->src_el()->css().get_display();
 			auto first = this_element;
 			auto last = this_element;
 			auto cur = this_element;
@@ -902,9 +909,9 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 			// find first element with same display
 			while (true)
 			{
-				if (cur == parent->m_children.begin()) break;
+				if (cur == parent->children().begin()) break;
 				cur--;
-				if ((*cur)->is_table_skip() || (*cur)->css().get_display() == el_disp)
+				if ((*cur)->src_el()->is_table_skip() || (*cur)->src_el()->css().get_display() == el_disp)
 				{
 					first = cur;
 				}
@@ -919,9 +926,9 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 			while (true)
 			{
 				cur++;
-				if (cur == parent->m_children.end()) break;
+				if (cur == parent->children().end()) break;
 
-				if ((*cur)->is_table_skip() || (*cur)->css().get_display() == el_disp)
+				if ((*cur)->src_el()->is_table_skip() || (*cur)->src_el()->css().get_display() == el_disp)
 				{
 					last = cur;
 				}
@@ -934,16 +941,17 @@ void litehtml::document::fix_table_parent(element::ptr& el_ptr, style_display di
 			// extract elements with the same display and wrap them with anonymous object
 			element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
 			annon_tag->add_style(tstring(_t("display:")) + disp_str, _t(""));
-			annon_tag->parent(parent);
+			annon_tag->parent(parent->src_el());
 			annon_tag->parse_styles();
-			std::for_each(first, last + 1,
-				[&annon_tag](element::ptr& el)
+            auto annon_ri = std::make_shared<render_item_table_part>(annon_tag);
+			std::for_each(first, std::next(last, 1),
+				[&annon_ri](std::shared_ptr<render_item>& el)
 				{
-					annon_tag->appendChild(el);
+					annon_ri->add_child(el);
 				}
 			);
-			first = parent->m_children.erase(first, last + 1);
-			parent->m_children.insert(first, annon_tag);
+			first = parent->children().erase(first, std::next(last));
+			parent->children().insert(first, annon_ri);
 		}
 	}
 }
@@ -995,6 +1003,6 @@ void litehtml::document::append_children_from_utf8(element& parent, const char* 
 		fix_tables_layout();
 
 		// Fanaly initialize elements
-		child->init();
+		//child->init();
 	}
 }

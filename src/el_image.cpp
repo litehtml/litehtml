@@ -1,6 +1,7 @@
 #include "html.h"
 #include "el_image.h"
 #include "document.h"
+#include "render_item.h"
 
 litehtml::el_image::el_image(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
 {
@@ -12,166 +13,9 @@ void litehtml::el_image::get_content_size( size& sz, int max_width )
 	get_document()->container()->get_image_size(m_src.c_str(), 0, sz);
 }
 
-int litehtml::el_image::calc_max_height(int image_height)
-{
-	document::ptr doc = get_document();
-	int percentSize = 0;
-	if (css().get_max_height().units() == css_units_percentage)
-	{
-		auto el_parent = parent();
-		if (el_parent)
-		{
-			if (!el_parent->get_predefined_height(percentSize))
-			{
-				return image_height;
-			}
-		}
-	}
-	return doc->to_pixels(css().get_max_height(), css().get_font_size(), percentSize);
-}
-
 bool litehtml::el_image::is_replaced() const
 {
 	return true;
-}
-
-int litehtml::el_image::render( int x, int y, int max_width, bool second_pass )
-{
-	int parent_width = max_width;
-
-	calc_outlines(parent_width);
-
-	m_pos.move_to(x, y);
-
-	document::ptr doc = get_document();
-
-	litehtml::size sz;
-	doc->container()->get_image_size(m_src.c_str(), 0, sz);
-
-	m_pos.width		= sz.width;
-	m_pos.height	= sz.height;
-
-    css_w().set_line_height(height());
-
-	if(css().get_height().is_predefined() && css().get_width().is_predefined())
-	{
-		m_pos.height	= sz.height;
-		m_pos.width		= sz.width;
-
-		// check for max-width
-		if(!css().get_max_width().is_predefined())
-		{
-			int max_width = doc->to_pixels(css().get_max_width(), css().get_font_size(), parent_width);
-			if(m_pos.width > max_width)
-			{
-				m_pos.width = max_width;
-			}
-			if(sz.width)
-			{
-				m_pos.height = (int) ((float) m_pos.width * (float) sz.height / (float)sz.width);
-			} else
-			{
-				m_pos.height = sz.height;
-			}
-		}
-
-		// check for max-height
-		if(!css().get_max_height().is_predefined())
-		{
-			int max_height = calc_max_height(sz.height);
-			if(m_pos.height > max_height)
-			{
-				m_pos.height = max_height;
-			}
-			if(sz.height)
-			{
-				m_pos.width = (int) (m_pos.height * (float)sz.width / (float)sz.height);
-			} else
-			{
-				m_pos.width = sz.width;
-			}
-		}
-	} else if(!css().get_height().is_predefined() && css().get_width().is_predefined())
-	{
-		if (!get_predefined_height(m_pos.height))
-		{
-			m_pos.height = (int)css().get_height().val();
-		}
-
-		// check for max-height
-		if(!css().get_max_height().is_predefined())
-		{
-			int max_height = calc_max_height(sz.height);
-			if(m_pos.height > max_height)
-			{
-				m_pos.height = max_height;
-			}
-		}
-
-		if(sz.height)
-		{
-			m_pos.width = (int) (m_pos.height * (float)sz.width / (float)sz.height);
-		} else
-		{
-			m_pos.width = sz.width;
-		}
-	} else if(css().get_height().is_predefined() && !css().get_width().is_predefined())
-	{
-		m_pos.width = (int) css().get_width().calc_percent(parent_width);
-
-		// check for max-width
-		if(!css().get_max_width().is_predefined())
-		{
-			int max_width = doc->to_pixels(css().get_max_width(), css().get_font_size(), parent_width);
-			if(m_pos.width > max_width)
-			{
-				m_pos.width = max_width;
-			}
-		}
-
-		if(sz.width)
-		{
-			m_pos.height = (int) ((float) m_pos.width * (float) sz.height / (float)sz.width);
-		} else
-		{
-			m_pos.height = sz.height;
-		}
-	} else
-	{
-		m_pos.width		= (int) css().get_width().calc_percent(parent_width);
-		m_pos.height	= 0;
-		if (!get_predefined_height(m_pos.height))
-		{
-			m_pos.height = (int)css().get_height().val();
-		}
-
-		// check for max-height
-		if(!css().get_max_height().is_predefined())
-		{
-			int max_height = calc_max_height(sz.height);
-			if(m_pos.height > max_height)
-			{
-				m_pos.height = max_height;
-			}
-		}
-
-		// check for max-height
-		if(!css().get_max_width().is_predefined())
-		{
-			int max_width = doc->to_pixels(css().get_max_width(), css().get_font_size(), parent_width);
-			if(m_pos.width > max_width)
-			{
-				m_pos.width = max_width;
-			}
-		}
-	}
-
-	calc_auto_margins(parent_width);
-
-	m_pos.x	+= content_margins_left();
-	m_pos.y += content_margins_top();
-
-	return m_pos.width + content_margins_left() + content_margins_right();
 }
 
 void litehtml::el_image::parse_attributes()
@@ -190,15 +34,15 @@ void litehtml::el_image::parse_attributes()
 	}
 }
 
-void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip )
+void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
 {
-	position pos = m_pos;
+	position pos = ri->pos();
 	pos.x += x;
 	pos.y += y;
 
 	position el_pos = pos;
-	el_pos += m_padding;
-	el_pos += m_borders;
+	el_pos += ri->get_paddings();
+	el_pos += ri->get_borders();
 
 	// draw standard background here
 	if (el_pos.does_intersect(clip))
@@ -207,7 +51,7 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		if (bg)
 		{
 			background_paint bg_paint;
-			init_background_paint(pos, bg_paint, bg);
+			init_background_paint(pos, bg_paint, bg, ri);
 
 			get_document()->container()->draw_background(hdc, bg_paint);
 		}
@@ -222,8 +66,8 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 			bg.clip_box				= pos;
 			bg.origin_box			= pos;
 			bg.border_box			= pos;
-			bg.border_box			+= m_padding;
-			bg.border_box			+= m_borders;
+			bg.border_box			+= ri->get_paddings();
+			bg.border_box			+= ri->get_borders();
 			bg.repeat				= background_repeat_no_repeat;
 			bg.image_size.width		= pos.width;
 			bg.image_size.height	= pos.height;
@@ -238,8 +82,8 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 	if (el_pos.does_intersect(clip))
 	{
 		position border_box = pos;
-		border_box += m_padding;
-		border_box += m_borders;
+		border_box += ri->get_paddings();
+		border_box += ri->get_borders();
 
 		borders bdr = css().get_borders();
 		bdr.radius = css().get_borders().radius.calc_percents(border_box.width, border_box.height);
@@ -264,14 +108,14 @@ void litehtml::el_image::parse_styles( bool is_reparse /*= false*/ )
 	}
 }
 
-litehtml::element::ptr litehtml::el_image::clone(const element::ptr& cloned_el)
+litehtml::tstring litehtml::el_image::dump_get_name()
 {
-    auto ret = std::dynamic_pointer_cast<litehtml::el_image>(cloned_el);
-    if(!ret)
-    {
-        ret = std::make_shared<el_image>(get_document());
-        html_tag::clone(ret);
-    }
+    return _t("img src=\"") + m_src + _t("\"");
+}
 
-    return cloned_el ? nullptr : ret;
+std::shared_ptr<litehtml::render_item> litehtml::el_image::create_render_item(const std::shared_ptr<render_item>& parent_ri)
+{
+    auto ret = std::make_shared<render_item_image>(shared_from_this());
+    ret->parent(parent_ri);
+    return ret;
 }

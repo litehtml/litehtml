@@ -14,7 +14,6 @@ namespace litehtml
 		void			parse_attributes() override;
 		bool			appendChild(const ptr &el) override;
 		const tchar_t*	get_tagName() const override;
-        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

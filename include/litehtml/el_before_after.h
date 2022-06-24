@@ -25,8 +25,6 @@ namespace litehtml
 		{
 
 		}
-
-        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 
 	class el_after : public el_before_after_base
@@ -36,8 +34,6 @@ namespace litehtml
 		{
 
 		}
-
-        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 

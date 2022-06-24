@@ -8,14 +8,31 @@
 
 namespace litehtml
 {
-    class element;
+    class render_item;
+
+    struct line_context
+    {
+        int calculatedTop;
+        int top;
+        int left;
+        int right;
+
+        int width() const
+        {
+            return right - left;
+        }
+        void fix_top()
+        {
+            calculatedTop = top;
+        }
+    };
 
     class line_box
     {
         int		                m_box_top;
         int		                m_box_left;
         int		                m_box_right;
-        std::vector< std::shared_ptr<litehtml::element> > m_items;
+        std::vector< std::shared_ptr<render_item> > m_items;
         int						m_height;
         int						m_width;
         int						m_line_height;
@@ -43,16 +60,16 @@ namespace litehtml
 
         int					height() const;
         int					width() const;
-        void				add_element(const std::shared_ptr<litehtml::element> &el);
-        bool				can_hold(const std::shared_ptr<litehtml::element> &el, white_space ws) const;
+        void				add_element(const std::shared_ptr<render_item> &el);
+        bool				can_hold(const std::shared_ptr<render_item> &el, white_space ws) const;
         void				finish(bool last_box = false);
         bool				is_empty() const;
         int					baseline() const;
-        void				get_elements(std::vector< std::shared_ptr<litehtml::element> >& els);
+        void				get_elements(std::vector< std::shared_ptr<render_item> >& els);
         int					top_margin() const;
         int					bottom_margin() const;
         void				y_shift(int shift);
-        void				new_width(int left, int right, std::vector< std::shared_ptr<litehtml::element> >& els);
+        void				new_width(int left, int right, std::vector< std::shared_ptr<render_item> >& els);
 
     private:
         bool				have_last_space() const;

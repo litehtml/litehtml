@@ -11,8 +11,7 @@ namespace litehtml
 		explicit el_break(const std::shared_ptr<litehtml::document>& doc);
 
 		bool is_break() const override;
-        element::ptr clone(const element::ptr& cloned_el) override;
-	};
+    };
 }
 
 #endif  // LH_EL_BREAK_H

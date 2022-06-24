@@ -32,6 +32,8 @@ namespace litehtml
 			color	= val.color;
 			return *this;
 		}
+
+        tstring to_string();
 	};
 
 	struct border
@@ -248,6 +250,13 @@ namespace litehtml
 			radius	= val.radius;
 			return *this;
 		}
+        tstring to_string()
+        {
+            return _t("left: ") + left.to_string() +
+                   _t(", top: ") + top.to_string() +
+                   _t(", right: ") + top.to_string() +
+                   _t(", bottom: ") + bottom.to_string();
+        }
 	};
 
 	struct borders

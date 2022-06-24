@@ -11,14 +11,3 @@ bool litehtml::el_break::is_break() const
 	return true;
 }
 
-litehtml::element::ptr litehtml::el_break::clone(const element::ptr& cloned_el)
-{
-    auto ret = std::dynamic_pointer_cast<litehtml::el_break>(cloned_el);
-    if(!ret)
-    {
-        ret = std::make_shared<el_break>(get_document());
-        html_tag::clone(ret);
-    }
-
-    return cloned_el ? nullptr : ret;
-}

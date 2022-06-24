@@ -24,15 +24,3 @@ void litehtml::el_anchor::apply_stylesheet( const litehtml::css& stylesheet )
 	}
 	html_tag::apply_stylesheet(stylesheet);
 }
-
-litehtml::element::ptr litehtml::el_anchor::clone(const element::ptr& cloned_el)
-{
-    auto ret = std::dynamic_pointer_cast<litehtml::el_anchor>(cloned_el);
-    if(!ret)
-    {
-        ret = std::make_shared<el_anchor>(get_document());
-        html_tag::clone(ret);
-    }
-
-    return cloned_el ? nullptr : ret;
-}

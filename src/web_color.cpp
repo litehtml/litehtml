@@ -254,3 +254,16 @@ bool litehtml::web_color::is_color(const tchar_t* str)
 	}
 	return false;
 }
+
+litehtml::tstring litehtml::web_color::to_string()
+{
+    tchar_t str[9];
+    if(alpha)
+    {
+        snprintf(str, 9, "%02X%02X%02X%02X", red, green, blue, alpha);
+    } else
+    {
+        snprintf(str, 9, "%02X%02X%02X", red, green, blue);
+    }
+    return str;
+}

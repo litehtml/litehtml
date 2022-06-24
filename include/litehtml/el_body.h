@@ -11,7 +11,6 @@ namespace litehtml
 		explicit el_body(const std::shared_ptr<litehtml::document>& doc);
 
 		bool is_body() const override;
-        element::ptr clone(const element::ptr& cloned_el) override;
 	};
 }
 
