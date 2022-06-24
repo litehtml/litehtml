@@ -177,17 +177,23 @@ set_source_files_properties(src/master.css.inc PROPERTIES GENERATED TRUE)
 # Tests
 
 if (BUILD_TESTING)
-    include(FetchContent)
-    FetchContent_Declare(
-      googletest
-      URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
-    )
-    # For Windows: Prevent overriding the parent project's compiler/linker settings
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    FetchContent_GetProperties(googletest)
-    if(NOT googletest_POPULATED)
-      FetchContent_Populate(googletest)
-      add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+    option(EXTERNAL_GTEST "Use external GoogleTest instead of fetching from GitHub" OFF)
+
+    if (EXTERNAL_GTEST)
+        link_libraries("-Wl,--copy-dt-needed-entries")
+    else()
+        include(FetchContent)
+        FetchContent_Declare(
+          googletest
+          URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
+        )
+        # For Windows: Prevent overriding the parent project's compiler/linker settings
+        set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
+        FetchContent_GetProperties(googletest)
+        if(NOT googletest_POPULATED)
+          FetchContent_Populate(googletest)
+          add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
+        endif()
     endif()
 
     enable_testing()
