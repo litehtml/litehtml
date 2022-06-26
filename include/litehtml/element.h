@@ -81,7 +81,8 @@ namespace litehtml
         virtual bool                is_space() const;
 		virtual bool				is_comment() const;
 		virtual bool				is_body() const;
-		virtual bool				is_break() const;
+        virtual bool				is_break() const;
+        virtual bool				is_text() const;
 
         virtual bool				on_mouse_over();
 		virtual bool				on_mouse_leave();

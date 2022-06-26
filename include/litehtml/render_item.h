@@ -286,10 +286,11 @@ namespace litehtml
         void draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned );
         virtual void draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
         virtual int get_draw_vertical_offset() { return 0; }
-        std::shared_ptr<element> get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
+        virtual std::shared_ptr<element> get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
         std::shared_ptr<element> get_element_by_point(int x, int y, int client_x, int client_y);
         bool is_point_inside( int x, int y );
         bool find_styles_changes( position::vector& redraw_boxes, int x, int y );
+        void dump(litehtml::dumper& cout);
     };
 
     class render_item_block : public render_item
@@ -315,7 +316,6 @@ namespace litehtml
         int find_next_line_top( int top, int width, int def_right );
         virtual int fix_line_width( int max_width, element_float flt ) { return 0; }
         void update_floats(int dy, const std::shared_ptr<render_item> &_parent);
-
     public:
         explicit render_item_block(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))
         {}
@@ -393,6 +393,7 @@ namespace litehtml
             return std::make_shared<render_item_table>(src_el());
         }
         void draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;
+        //std::shared_ptr<element> get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex) override;
         int get_draw_vertical_offset() override;
     };
 
@@ -454,6 +455,7 @@ namespace litehtml
         {
             return std::make_shared<render_item_flex>(src_el());
         }
+        void draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;
     };
 
 }

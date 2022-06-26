@@ -404,6 +404,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::_init()
         {
             m_grid->begin_row(el);
 
+
             elements_iterator cell_iter(true, &table_selector, &cell_selector);
             cell_iter.process(el, [&](std::shared_ptr<render_item>& el)
                 {
@@ -421,6 +422,18 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::_init()
     }
 
     m_grid->finish();
+
+	if(src_el()->css().get_border_collapse() == border_collapse_separate)
+	{
+		int font_size = src_el()->css().get_font_size();
+		document::ptr doc = src_el()->get_document();
+		m_border_spacing_x = doc->to_pixels(src_el()->css().get_border_spacing_x(), font_size);
+		m_border_spacing_y = doc->to_pixels(src_el()->css().get_border_spacing_y(), font_size);
+	} else
+	{
+		m_border_spacing_x	= 0;
+		m_border_spacing_y	= 0;
+	}
 
     return shared_from_this();
 }
@@ -461,6 +474,42 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, int x, int y, cons
     }
 }
 
+/*std::shared_ptr<litehtml::element> litehtml::render_item_table::get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex)
+{
+    if (!m_grid) return nullptr;
+
+    position pos = m_pos;
+    pos.x += x;
+    pos.y += y;
+    for (auto& caption : m_grid->captions())
+    {
+        if (flag == draw_block)
+        {
+            caption->src_el()->draw(hdc, pos.x, pos.y, clip, caption);
+        }
+        caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
+    }
+    for (int row = 0; row < m_grid->rows_count(); row++)
+    {
+        if (flag == draw_block)
+        {
+            m_grid->row(row).el_row->src_el()->draw_background(hdc, pos.x, pos.y, clip, shared_from_this());
+        }
+        for (int col = 0; col < m_grid->cols_count(); col++)
+        {
+            table_cell* cell = m_grid->cell(col, row);
+            if (cell->el)
+            {
+                if (flag == draw_block)
+                {
+                    cell->el->src_el()->draw(hdc, pos.x, pos.y, clip, cell->el);
+                }
+                cell->el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
+            }
+        }
+    }
+}
+*/
 int litehtml::render_item_table::get_draw_vertical_offset()
 {
     if(m_grid)

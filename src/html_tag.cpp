@@ -289,7 +289,7 @@ void litehtml::html_tag::parse_styles(bool is_reparse)
 
 	if(!is_reparse)
 	{
-        for(auto& el : m_children)
+        for(const auto& el : m_children)
         {
             el->parse_styles();
         }
@@ -1463,10 +1463,12 @@ litehtml::element::ptr litehtml::html_tag::get_element_before()
 			return m_children.front();
 		}
 	}
-	element::ptr el = std::make_shared<el_before>(get_document());
+    // TODO: don't create ::before element here
+/*	element::ptr el = std::make_shared<el_before>(get_document());
 	el->parent(shared_from_this());
 	m_children.insert(m_children.begin(), el);
-	return el;
+	return el;*/
+    return nullptr;
 }
 
 litehtml::element::ptr litehtml::html_tag::get_element_after()
@@ -1478,9 +1480,11 @@ litehtml::element::ptr litehtml::html_tag::get_element_after()
 			return m_children.back();
 		}
 	}
-	element::ptr el = std::make_shared<el_after>(get_document());
+    // TODO: don't create ::before element here
+/*	element::ptr el = std::make_shared<el_after>(get_document());
 	appendChild(el);
-	return el;
+	return el;*/
+    return nullptr;
 }
 
 void litehtml::html_tag::add_style(const tstring& style, const tstring& baseurl)

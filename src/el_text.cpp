@@ -11,6 +11,7 @@ litehtml::el_text::el_text(const tchar_t* text, const std::shared_ptr<litehtml::
 	}
 	m_use_transformed	= false;
 	m_draw_spaces		= true;
+    css_w().set_display(display_inline_text);
 }
 
 void litehtml::el_text::get_content_size( size& sz, int max_width )

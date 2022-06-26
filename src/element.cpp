@@ -121,10 +121,7 @@ std::shared_ptr<litehtml::render_item> litehtml::element::create_render_item(con
                 css().get_display() == display_table_cell ||
                 css().get_display() == display_table_caption ||
                 css().get_display() == display_list_item ||
-                css().get_display() == display_inline_block ||
-                css().get_overflow() != overflow_visible ||
-                css().get_float() != float_none ||
-                css().get_position() == element_position_absolute)
+                css().get_display() == display_inline_block)
     {
         ret = std::make_shared<render_item_block>(shared_from_this());
     } else if(css().get_display() == display_table || css().get_display() == display_inline_table)
@@ -216,6 +213,7 @@ bool litehtml::element::is_space() const										    LITEHTML_RETURN_FUNC(false
 bool litehtml::element::is_comment() const											LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_body() const												LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::is_break() const											LITEHTML_RETURN_FUNC(false)
+bool litehtml::element::is_text() const											    LITEHTML_RETURN_FUNC(false)
 
 bool litehtml::element::on_mouse_over()												LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::on_mouse_leave()											LITEHTML_RETURN_FUNC(false)

@@ -21,11 +21,9 @@
 #include "el_div.h"
 #include "el_font.h"
 #include "el_tr.h"
-#include "el_li.h"
 #include <cmath>
 #include <cstdio>
 #include <algorithm>
-#include <functional>
 #include "gumbo.h"
 #include "utf8_strings.h"
 #include "render_item.h"
@@ -591,9 +589,6 @@ litehtml::element::ptr litehtml::document::create_element(const tchar_t* tag_nam
 		} else if(!t_strcmp(tag_name, _t("font")))
 		{
 			newTag = std::make_shared<litehtml::el_font>(this_doc);
-		} else if(!t_strcmp(tag_name, _t("li")))
-		{
-			newTag = std::make_shared<litehtml::el_li>(this_doc);
 		} else
 		{
 			newTag = std::make_shared<litehtml::html_tag>(this_doc);
@@ -832,6 +827,7 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
         std::shared_ptr<render_item> annon_ri;
         if(annon_tag->css().get_display() == display_table_cell)
         {
+            annon_tag->set_tagName("table_cell");
             annon_ri = std::make_shared<render_item_block>(annon_tag);
         } else
         {
@@ -841,6 +837,9 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
         {
             annon_ri->add_child(el);
         }
+        // add annon item as tabular for future processing
+        add_tabular(annon_ri);
+        annon_ri->parent(el_ptr);
 		first_iter = el_ptr->children().insert(first_iter, annon_ri);
 		cur_iter = std::next(first_iter);
 		while (cur_iter != el_ptr->children().end() && (*cur_iter)->parent() != el_ptr)
@@ -943,7 +942,14 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 			annon_tag->add_style(tstring(_t("display:")) + disp_str, _t(""));
 			annon_tag->parent(parent->src_el());
 			annon_tag->parse_styles();
-            auto annon_ri = std::make_shared<render_item_table_part>(annon_tag);
+            std::shared_ptr<render_item> annon_ri;
+            if(annon_tag->css().get_display() == display_table || annon_tag->css().get_display() == display_inline_table)
+            {
+                annon_ri = std::make_shared<render_item_table>(annon_tag);
+            } else
+            {
+                annon_ri = std::make_shared<render_item_table_part>(annon_tag);
+            }
 			std::for_each(first, std::next(last, 1),
 				[&annon_ri](std::shared_ptr<render_item>& el)
 				{
@@ -952,6 +958,8 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 			);
 			first = parent->children().erase(first, std::next(last));
 			parent->children().insert(first, annon_ri);
+            add_tabular(annon_ri);
+            annon_ri->parent(parent);
 		}
 	}
 }
@@ -1005,4 +1013,12 @@ void litehtml::document::append_children_from_utf8(element& parent, const char* 
 		// Fanaly initialize elements
 		//child->init();
 	}
+}
+
+void litehtml::document::document::dump(dumper& cout)
+{
+    if(m_root_render)
+    {
+        m_root_render->dump(cout);
+    }
 }

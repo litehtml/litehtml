@@ -52,6 +52,8 @@ int litehtml::render_item_block_context::_render(int x, int y, int max_width, bo
 
     m_floats_left.clear();
     m_floats_right.clear();
+    m_cache_line_left.invalidate();
+    m_cache_line_right.invalidate();
 
     element_position el_position;
 

@@ -114,14 +114,6 @@ namespace litehtml
 		void fix_table_parent(const std::shared_ptr<render_item> & el_ptr, style_display disp, const tchar_t* disp_str);
 	};
 
-    inline void document::dump(dumper& cout)
-    {
-        if(m_root)
-        {
-            m_root->dump(cout);
-        }
-    }
-
 	inline element::ptr document::root()
 	{
 		return m_root;

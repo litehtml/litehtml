@@ -49,6 +49,12 @@ namespace litehtml
 		bool select(const std::shared_ptr<render_item>& el) override;
 	};
 
+    class inline_selector final : public iterator_selector
+    {
+    public:
+        bool select(const std::shared_ptr<render_item>& el) override;
+    };
+
 	class go_inside_table final : public iterator_selector
 	{
 	public:

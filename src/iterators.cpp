@@ -13,7 +13,7 @@ litehtml::elements_iterator::elements_iterator(bool return_parents, iterator_sel
 
 bool litehtml::elements_iterator::go_inside(const std::shared_ptr<render_item>& el)
 {
-    return 	!el->children().empty() && m_go_inside && m_go_inside->select(el);
+    return 	/*!el->children().empty() &&*/ m_go_inside && m_go_inside->select(el);
 }
 
 void litehtml::elements_iterator::process(const std::shared_ptr<render_item>& container, const std::function<void (std::shared_ptr<render_item>&)>& func)
@@ -46,11 +46,25 @@ void litehtml::elements_iterator::process(const std::shared_ptr<render_item>& co
 
 bool litehtml::go_inside_inline::select(const std::shared_ptr<render_item>& el)
 {
-	if(el->src_el()->css().get_display() == display_inline || el->src_el()->css().get_display() == display_inline_text)
+	if(el->src_el()->css().get_display() == display_inline && el->src_el()->css().get_float() == float_none)
 	{
 		return true;
 	}
 	return false;
+}
+
+bool litehtml::inline_selector::select(const std::shared_ptr<render_item>& el)
+{
+    if(el->src_el()->css().get_display() == display_inline_text ||
+        el->src_el()->css().get_display() == display_inline_table ||
+        el->src_el()->css().get_display() == display_inline_block ||
+        el->src_el()->css().get_display() == display_inline_table ||
+        el->src_el()->css().get_display() == display_inline_flex ||
+        el->src_el()->css().get_float() != float_none)
+    {
+        return true;
+    }
+    return false;
 }
 
 bool litehtml::go_inside_table::select(const std::shared_ptr<render_item>& el)

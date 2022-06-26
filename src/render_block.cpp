@@ -521,6 +521,27 @@ void litehtml::render_item_block::update_floats(int dy, const std::shared_ptr<re
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::_init()
 {
+    // Initialize indexes for list items
+    if(src_el()->css().get_display() == display_list_item && src_el()->css().get_list_style_type() >= list_style_type_armenian)
+    {
+        if (auto p = src_el()->parent())
+        {
+            const auto hasStart = p->get_attr(_t("start"));
+            const int start = hasStart ? t_atoi(hasStart) : 1;
+            int val = start;
+            for (int i = 0, n = (int)p->get_children_count(); i < n; ++i)
+            {
+                auto child = p->get_child(i);
+                if (child == src_el())
+                {
+                    src_el()->set_attr(_t("list_index"), t_to_string(val).c_str());
+                    break;
+                }
+                else if (child->css().get_display() == display_list_item)
+                    ++val;
+            }
+        }
+    }
     // Split inline blocks with box blocks inside
     auto iter = m_children.begin();
     while (iter != m_children.end())

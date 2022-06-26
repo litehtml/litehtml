@@ -1,6 +1,7 @@
 #include "html.h"
 #include "render_item.h"
 #include "document.h"
+#include <typeinfo>
 
 litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
         m_element(std::move(_src_el)),
@@ -704,72 +705,93 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, int x /*= 0*
 
 void litehtml::render_item::get_inline_boxes( position::vector& boxes )
 {
-    litehtml::line_box* old_box = nullptr;
-    position pos;
-    for(auto& el : m_children)
+    if(src_el()->css().get_display() == display_table_row)
     {
-        if(!el->skip())
+        position pos;
+        for(auto& el : m_children)
         {
-            if(el->m_box)
+            if(el->src_el()->css().get_display() == display_table_cell)
             {
-                if(el->m_box != old_box)
-                {
-                    if(old_box)
-                    {
-                        if(boxes.empty())
-                        {
-                            pos.x		-= m_padding.left + m_borders.left;
-                            pos.width	+= m_padding.left + m_borders.left;
-                        }
-                        boxes.push_back(pos);
-                    }
-                    old_box		= el->m_box;
-                    pos.x		= el->left() + el->margin_left();
-                    pos.y		= el->top() - m_padding.top - m_borders.top;
-                    pos.width	= 0;
-                    pos.height	= 0;
-                }
+                pos.x		= el->left() + el->margin_left();
+                pos.y		= el->top() - m_padding.top - m_borders.top;
+
                 pos.width	= el->right() - pos.x - el->margin_right() - el->margin_left();
-                pos.height	= std::max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom);
-            } else if(el->src_el()->css().get_display() == display_inline)
+                pos.height	= el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom;
+
+                boxes.push_back(pos);
+            }
+        }
+    } else
+    {
+
+        litehtml::line_box *old_box = nullptr;
+        position pos;
+        for (auto &el: m_children)
+        {
+            if (!el->skip())
             {
-                position::vector sub_boxes;
-                el->get_inline_boxes(sub_boxes);
-                if(!sub_boxes.empty())
+                if (el->m_box)
                 {
-                    sub_boxes.rbegin()->width += el->margin_right();
-                    if(boxes.empty())
+                    if (el->m_box != old_box)
                     {
-                        if(m_padding.left + m_borders.left > 0)
+                        if (old_box)
                         {
-                            position padding_box = (*sub_boxes.begin());
-                            padding_box.x		-= m_padding.left + m_borders.left + el->margin_left();
-                            padding_box.width	= m_padding.left + m_borders.left + el->margin_left();
-                            boxes.push_back(padding_box);
+                            if (boxes.empty())
+                            {
+                                pos.x -= m_padding.left + m_borders.left;
+                                pos.width += m_padding.left + m_borders.left;
+                            }
+                            boxes.push_back(pos);
                         }
+                        old_box = el->m_box;
+                        pos.x = el->left() + el->margin_left();
+                        pos.y = el->top() - m_padding.top - m_borders.top;
+                        pos.width = 0;
+                        pos.height = 0;
                     }
+                    pos.width = el->right() - pos.x - el->margin_right() - el->margin_left();
+                    pos.height = std::max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top +
+                                                      m_borders.bottom);
+                } else if (el->src_el()->css().get_display() == display_inline)
+                {
+                    position::vector sub_boxes;
+                    el->get_inline_boxes(sub_boxes);
+                    if (!sub_boxes.empty())
+                    {
+                        sub_boxes.rbegin()->width += el->margin_right();
+                        if (boxes.empty())
+                        {
+                            if (m_padding.left + m_borders.left > 0)
+                            {
+                                position padding_box = (*sub_boxes.begin());
+                                padding_box.x -= m_padding.left + m_borders.left + el->margin_left();
+                                padding_box.width = m_padding.left + m_borders.left + el->margin_left();
+                                boxes.push_back(padding_box);
+                            }
+                        }
 
-                    sub_boxes.rbegin()->width += el->margin_right();
+                        sub_boxes.rbegin()->width += el->margin_right();
 
-                    boxes.insert(boxes.end(), sub_boxes.begin(), sub_boxes.end());
+                        boxes.insert(boxes.end(), sub_boxes.begin(), sub_boxes.end());
+                    }
                 }
             }
         }
-    }
-    if(pos.width || pos.height)
-    {
-        if(boxes.empty())
+        if (pos.width || pos.height)
         {
-            pos.x		-= m_padding.left + m_borders.left;
-            pos.width	+= m_padding.left + m_borders.left;
+            if (boxes.empty())
+            {
+                pos.x -= m_padding.left + m_borders.left;
+                pos.width += m_padding.left + m_borders.left;
+            }
+            boxes.push_back(pos);
         }
-        boxes.push_back(pos);
-    }
-    if(!boxes.empty())
-    {
-        if(m_padding.right + m_borders.right > 0)
+        if (!boxes.empty())
         {
-            boxes.back().width += m_padding.right + m_borders.right;
+            if (m_padding.right + m_borders.right > 0)
+            {
+                boxes.back().width += m_padding.right + m_borders.right;
+            }
         }
     }
 }
@@ -827,16 +849,21 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
 
     if (src_el()->css().get_overflow() > overflow_visible)
     {
-        position border_box = pos;
-        border_box += m_padding;
-        border_box += m_borders;
+        // TODO: Process overflow for inline elements
+        if(src_el()->css().get_display() != display_inline)
+        {
+            position border_box = pos;
+            border_box += m_padding;
+            border_box += m_borders;
 
-        border_radiuses bdr_radius = src_el()->css().get_borders().radius.calc_percents(border_box.width, border_box.height);
+            border_radiuses bdr_radius = src_el()->css().get_borders().radius.calc_percents(border_box.width,
+                                                                                            border_box.height);
 
-        bdr_radius -= m_borders;
-        bdr_radius -= m_padding;
+            bdr_radius -= m_borders;
+            bdr_radius -= m_padding;
 
-        doc->container()->set_clip(pos, bdr_radius, true, true);
+            doc->container()->set_clip(pos, bdr_radius, true, true);
+        }
     }
 
     for (auto& el : m_children)
@@ -938,7 +965,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
     pos.x	= x - pos.x;
     pos.y	= y - pos.y;
 
-    for(auto i = m_children.rbegin(); i != m_children.rend() && !ret; i++)
+    for(auto i = m_children.begin(); i != m_children.end() && !ret; i++)
     {
         auto el = (*i);
 
@@ -1203,4 +1230,32 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item::init()
     }
 
     return ret;
+}
+
+void litehtml::render_item::dump(litehtml::dumper& cout)
+{
+    cout.begin_node(src_el()->dump_get_name() + "{" + typeid(*this).name() + "}");
+
+    auto attrs = src_el()->dump_get_attrs();
+    if(!attrs.empty())
+    {
+        cout.begin_attrs_group(_t("attributes"));
+        for (const auto &attr: attrs)
+        {
+            cout.add_attr(std::get<0>(attr), std::get<1>(attr));
+        }
+        cout.end_attrs_group();
+    }
+
+    if(!m_children.empty())
+    {
+        cout.begin_attrs_group(_t("children"));
+        for (const auto &el: m_children)
+        {
+            el->dump(cout);
+        }
+        cout.end_attrs_group();
+    }
+
+    cout.end_node();
 }

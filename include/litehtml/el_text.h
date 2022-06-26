@@ -19,6 +19,7 @@ namespace litehtml
 		void				get_text(tstring& text) override;
 		const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = nullptr) const override;
 		void				parse_styles(bool is_reparse) override;
+        bool				is_text() const override { return true; }
 
         void draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) override;
         tstring             dump_get_name() override;

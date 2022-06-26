@@ -79,8 +79,9 @@ int litehtml::render_item_inline_context::_render(int x, int y, int max_width, b
 
     bool was_space = false;
 
-    go_inside_inline inlines_selector;
-    elements_iterator inlines_iter(false, &inlines_selector, nullptr);
+    go_inside_inline go_inside_inlines_selector;
+    inline_selector select_inlines;
+    elements_iterator inlines_iter(false, &go_inside_inlines_selector, &select_inlines);
 
     inlines_iter.process(shared_from_this(), [&](const std::shared_ptr<render_item>& el)
         {
