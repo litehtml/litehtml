@@ -122,6 +122,7 @@ namespace litehtml
         virtual std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri);
         bool requires_styles_update();
         void add_render(const std::shared_ptr<render_item>& ri);
+        bool find_styles_changes( position::vector& redraw_boxes);
 	};
 
 	//////////////////////////////////////////////////////////////////////////

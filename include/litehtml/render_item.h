@@ -288,9 +288,15 @@ namespace litehtml
         virtual std::shared_ptr<element> get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
         std::shared_ptr<element> get_element_by_point(int x, int y, int client_x, int client_y);
         bool is_point_inside( int x, int y );
-        bool find_styles_changes( position::vector& redraw_boxes, int x, int y );
         void dump(litehtml::dumper& cout);
         position get_placement() const;
+        /**
+         * Returns the boxes of rendering element. All coordinates are absolute
+         *
+         * @param redraw_boxes [out] resulting rendering boxes
+         * @return
+         */
+        void get_rendering_boxes( position::vector& redraw_boxes);
     };
 
     class render_item_block : public render_item

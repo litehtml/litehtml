@@ -199,6 +199,52 @@ void litehtml::element::add_render(const std::shared_ptr<render_item>& ri)
     m_renders.push_back(ri);
 }
 
+bool litehtml::element::find_styles_changes( position::vector& redraw_boxes)
+{
+    if(css().get_display() == display_inline_text)
+    {
+        return false;
+    }
+
+    bool ret = false;
+
+    if(requires_styles_update())
+    {
+        auto fetch_boxes = [&](const std::shared_ptr<element>& el)
+            {
+                for(const auto& weak_ri : el->m_renders)
+                {
+                    auto ri = weak_ri.lock();
+                    if(ri)
+                    {
+                        position::vector boxes;
+                        ri->get_rendering_boxes(boxes);
+                        for (auto &box: boxes)
+                        {
+                            redraw_boxes.push_back(box);
+                        }
+                    }
+                }
+            };
+        fetch_boxes(shared_from_this());
+        for (auto& el : m_children)
+        {
+            fetch_boxes(el);
+        }
+
+        refresh_styles();
+        parse_styles();
+        ret = true;
+    }
+    for (auto& el : m_children)
+    {
+        if(el->find_styles_changes(redraw_boxes))
+        {
+            ret = true;
+        }
+    }
+    return ret;
+}
 
 const litehtml::background* litehtml::element::get_background(bool own_only)		LITEHTML_RETURN_FUNC(nullptr)
 void litehtml::element::add_style( const tstring& style, const tstring& baseurl )						LITEHTML_EMPTY_FUNC

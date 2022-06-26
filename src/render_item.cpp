@@ -1160,64 +1160,37 @@ bool litehtml::render_item::is_point_inside( int x, int y )
     return false;
 }
 
-bool litehtml::render_item::find_styles_changes( position::vector& redraw_boxes, int x, int y )
+void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes)
 {
-    if(src_el()->css().get_display() == display_inline_text)
+    if(src_el()->css().get_display() == display_inline || src_el()->css().get_display() == display_table_row)
     {
-        return false;
-    }
-
-    bool ret = false;
-
-    if(src_el()->requires_styles_update())
-    {
-        if(src_el()->css().get_display() == display_inline || src_el()->css().get_display() == display_table_row)
+        position::vector boxes;
+        get_inline_boxes(boxes);
+        for(auto & box : boxes)
         {
-            position::vector boxes;
-            get_inline_boxes(boxes);
-            for(auto & box : boxes)
-            {
-                box.x	+= x;
-                box.y	+= y;
-                redraw_boxes.push_back(box);
-            }
-        } else
-        {
-            position pos = m_pos;
-            if(src_el()->css().get_position() != element_position_fixed)
-            {
-                pos.x += x;
-                pos.y += y;
-            }
-            pos += m_padding;
-            pos += m_borders;
-            redraw_boxes.push_back(pos);
+            redraw_boxes.push_back(box);
         }
-
-        src_el()->refresh_styles();
-        src_el()->parse_styles();
-        ret = true;
-    }
-    for (auto& el : m_children)
+    } else
     {
-        if(!el->skip())
+        position pos = m_pos;
+        pos += m_padding;
+        pos += m_borders;
+        redraw_boxes.push_back(pos);
+    }
+
+    if(src_el()->css().get_position() != element_position_fixed)
+    {
+        auto cur_el = parent();
+        while(cur_el)
         {
-            if(src_el()->css().get_position() != element_position_fixed)
+            for(auto& box : redraw_boxes)
             {
-                if(el->find_styles_changes(redraw_boxes, x + m_pos.x, y + m_pos.y))
-                {
-                    ret = true;
-                }
-            } else
-            {
-                if(el->find_styles_changes(redraw_boxes, m_pos.x, m_pos.y))
-                {
-                    ret = true;
-                }
+                box.x += cur_el->m_pos.x;
+                box.y += cur_el->m_pos.y;
             }
+            cur_el = cur_el->parent();
         }
     }
-    return ret;
 }
 
 void litehtml::render_item::dump(litehtml::dumper& cout)
@@ -1264,5 +1237,11 @@ litehtml::position litehtml::render_item::get_placement() const
 std::shared_ptr<litehtml::render_item> litehtml::render_item::init()
 {
     src_el()->add_render(shared_from_this());
+
+    for(auto& el : children())
+    {
+        el = el->init();
+    }
+
     return shared_from_this();
 }
