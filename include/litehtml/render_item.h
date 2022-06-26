@@ -264,7 +264,7 @@ namespace litehtml
         bool is_last_child_inline(const std::shared_ptr<render_item>& el) const;
         bool have_inline_child() const;
 
-        virtual std::shared_ptr<render_item> init() { return shared_from_this(); }
+        virtual std::shared_ptr<render_item> init();
         virtual void apply_vertical_align() {}
         virtual int get_base_line() { return 0; }
         virtual std::shared_ptr<render_item> clone()
@@ -290,6 +290,7 @@ namespace litehtml
         bool is_point_inside( int x, int y );
         bool find_styles_changes( position::vector& redraw_boxes, int x, int y );
         void dump(litehtml::dumper& cout);
+        position get_placement() const;
     };
 
     class render_item_block : public render_item

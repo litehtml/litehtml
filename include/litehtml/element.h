@@ -121,6 +121,7 @@ namespace litehtml
         std::tuple<element::ptr, element::ptr, element::ptr> split_inlines();
         virtual std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri);
         bool requires_styles_update();
+        void add_render(const std::shared_ptr<render_item>& ri);
 	};
 
 	//////////////////////////////////////////////////////////////////////////
