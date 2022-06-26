@@ -648,6 +648,8 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
         }
     }
 
+    ret->src_el()->add_render(ret);
+
     for(auto& el : ret->children())
     {
         el = el->init();

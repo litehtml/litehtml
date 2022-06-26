@@ -1247,3 +1247,22 @@ void litehtml::render_item::dump(litehtml::dumper& cout)
 
     cout.end_node();
 }
+
+litehtml::position litehtml::render_item::get_placement() const
+{
+	litehtml::position pos = m_pos;
+	auto cur_el = parent();
+	while(cur_el)
+	{
+		pos.x += cur_el->m_pos.x;
+		pos.y += cur_el->m_pos.y;
+		cur_el = cur_el->parent();
+	}
+	return pos;
+}
+
+std::shared_ptr<litehtml::render_item> litehtml::render_item::init()
+{
+    src_el()->add_render(shared_from_this());
+    return shared_from_this();
+}

@@ -22,17 +22,32 @@ litehtml::web_color litehtml::element::get_color( const tchar_t* prop_name, bool
 
 litehtml::position litehtml::element::get_placement() const
 {
-    // TODO: Requires converting
-    return {};
-//	litehtml::position pos = m_pos;
-//	element::ptr cur_el = parent();
-//	while(cur_el)
-//	{
-//		pos.x += cur_el->m_pos.x;
-//		pos.y += cur_el->m_pos.y;
-//		cur_el = cur_el->parent();
-//	}
-//	return pos;
+    position pos;
+    bool is_first = true;
+    for(const auto& ri_el : m_renders)
+    {
+        auto ri = ri_el.lock();
+        if(ri)
+        {
+            position ri_pos = ri_el.lock()->get_placement();
+            if(is_first)
+            {
+                is_first = false;
+                pos = ri_pos;
+            } else
+            {
+                if(pos.x < ri_pos.x)
+                {
+                    pos.x = ri_pos.x;
+                }
+                if(pos.y < ri_pos.y)
+                {
+                    pos.y = ri_pos.y;
+                }
+            }
+        }
+    }
+    return pos;
 }
 
 bool litehtml::element::is_inline_box() const
@@ -178,6 +193,12 @@ bool litehtml::element::requires_styles_update()
     }
     return false;
 }
+
+void litehtml::element::add_render(const std::shared_ptr<render_item>& ri)
+{
+    m_renders.push_back(ri);
+}
+
 
 const litehtml::background* litehtml::element::get_background(bool own_only)		LITEHTML_RETURN_FUNC(nullptr)
 void litehtml::element::add_style( const tstring& style, const tstring& baseurl )						LITEHTML_EMPTY_FUNC

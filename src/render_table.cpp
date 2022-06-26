@@ -417,6 +417,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
     {
         if (el->src_el()->css().get_display() == display_table_caption)
         {
+            el = el->init();
             m_grid->captions().push_back(el);
         }
     }
@@ -434,6 +435,8 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 		m_border_spacing_x	= 0;
 		m_border_spacing_y	= 0;
 	}
+
+    src_el()->add_render(shared_from_this());
 
     return shared_from_this();
 }
