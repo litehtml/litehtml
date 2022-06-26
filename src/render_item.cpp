@@ -391,7 +391,7 @@ std::tuple<
                     }
                 }
                 std::get<0>(ret)->add_child(std::get<0>(child_split));
-                std::get<2>(ret)->m_children.push_back(std::get<2>(child_split));
+                std::get<2>(ret)->add_child(std::get<2>(child_split));
                 break;
             }
         }

@@ -521,6 +521,15 @@ void litehtml::render_item_block::update_floats(int dy, const std::shared_ptr<re
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
 {
+    {
+        css_selector sel(media_query_list::ptr(nullptr), _t(""));
+        sel.parse(".inline_rating");
+        if(src_el()->select(sel))
+        {
+            int i = 0;
+            i++;
+        }
+    }
     std::shared_ptr<render_item> ret;
 
     // Initialize indexes for list items
@@ -560,6 +569,8 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
                 iter = m_children.insert(iter, std::get<0>(split_el));
 
                 std::get<0>(split_el)->parent(shared_from_this());
+                std::get<1>(split_el)->parent(shared_from_this());
+                std::get<2>(split_el)->parent(shared_from_this());
                 continue;
             }
         }
