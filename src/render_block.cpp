@@ -519,8 +519,10 @@ void litehtml::render_item_block::update_floats(int dy, const std::shared_ptr<re
     }
 }
 
-std::shared_ptr<litehtml::render_item> litehtml::render_item_block::_init()
+std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
 {
+    std::shared_ptr<render_item> ret;
+
     // Initialize indexes for list items
     if(src_el()->css().get_display() == display_list_item && src_el()->css().get_list_style_type() >= list_style_type_armenian)
     {
@@ -580,7 +582,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::_init()
     }
     if(has_block_level)
     {
-        auto ret = std::make_shared<render_item_block_context>(src_el());
+        ret = std::make_shared<render_item_block_context>(src_el());
         ret->parent(parent());
 
         auto doc = src_el()->get_document();
@@ -633,16 +635,24 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::_init()
             anon_ri->parent(ret);
         }
         ret->children() = new_children;
-        return ret;
     }
 
-    auto ret = std::make_shared<render_item_inline_context>(src_el());
-    ret->parent(parent());
-    ret->children() = children();
-    for(const auto& el : ret->children())
+    if(!ret)
     {
-        el->parent(ret);
+        ret = std::make_shared<render_item_inline_context>(src_el());
+        ret->parent(parent());
+        ret->children() = children();
+        for (const auto &el: ret->children())
+        {
+            el->parent(ret);
+        }
     }
+
+    for(auto& el : ret->children())
+    {
+        el = el->init();
+    }
+
     return ret;
 }
 

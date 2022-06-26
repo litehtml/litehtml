@@ -389,7 +389,7 @@ int litehtml::render_item_table::_render(int x, int y, int max_width, bool /*sec
     return max_table_width;
 }
 
-std::shared_ptr<litehtml::render_item> litehtml::render_item_table::_init()
+std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 {
     // Initialize Grid
     m_grid = std::unique_ptr<table_grid>(new table_grid());
@@ -474,42 +474,6 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, int x, int y, cons
     }
 }
 
-/*std::shared_ptr<litehtml::element> litehtml::render_item_table::get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex)
-{
-    if (!m_grid) return nullptr;
-
-    position pos = m_pos;
-    pos.x += x;
-    pos.y += y;
-    for (auto& caption : m_grid->captions())
-    {
-        if (flag == draw_block)
-        {
-            caption->src_el()->draw(hdc, pos.x, pos.y, clip, caption);
-        }
-        caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
-    }
-    for (int row = 0; row < m_grid->rows_count(); row++)
-    {
-        if (flag == draw_block)
-        {
-            m_grid->row(row).el_row->src_el()->draw_background(hdc, pos.x, pos.y, clip, shared_from_this());
-        }
-        for (int col = 0; col < m_grid->cols_count(); col++)
-        {
-            table_cell* cell = m_grid->cell(col, row);
-            if (cell->el)
-            {
-                if (flag == draw_block)
-                {
-                    cell->el->src_el()->draw(hdc, pos.x, pos.y, clip, cell->el);
-                }
-                cell->el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
-            }
-        }
-    }
-}
-*/
 int litehtml::render_item_table::get_draw_vertical_offset()
 {
     if(m_grid)

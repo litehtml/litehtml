@@ -866,7 +866,7 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
         }
     }
 
-    for (auto& el : m_children)
+    for (const auto& el : m_children)
     {
         if (el->is_visible())
         {
@@ -961,11 +961,11 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
         }
     }
 
-    position pos = m_pos;
-    pos.x	= x - pos.x;
-    pos.y	= y - pos.y;
+    position el_pos = m_pos;
+    el_pos.x	= x - el_pos.x;
+    el_pos.y	= y - el_pos.y;
 
-    for(auto i = m_children.begin(); i != m_children.end() && !ret; i++)
+    for(auto i = m_children.begin(); i != m_children.end() && !ret; std::advance(i, 1))
     {
         auto el = (*i);
 
@@ -985,8 +985,8 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                             }
                         } else
                         {
-                            ret = el->get_element_by_point(pos.x, pos.y, client_x, client_y);
-                            if(!ret && (*i)->is_point_inside(pos.x, pos.y))
+                            ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y);
+                            if(!ret && (*i)->is_point_inside(el_pos.x, el_pos.y))
                             {
                                 ret = (*i)->src_el();
                             }
@@ -997,7 +997,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                 case draw_block:
                     if(!el->src_el()->is_inline_box() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
                     {
-                        if(el->is_point_inside(pos.x, pos.y))
+                        if(el->is_point_inside(el_pos.x, el_pos.y))
                         {
                             ret = el->src_el();
                         }
@@ -1006,9 +1006,9 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                 case draw_floats:
                     if(el->src_el()->css().get_float() != float_none && !el->src_el()->is_positioned())
                     {
-                        ret = el->get_element_by_point(pos.x, pos.y, client_x, client_y);
+                        ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y);
 
-                        if(!ret && (*i)->is_point_inside(pos.x, pos.y))
+                        if(!ret && (*i)->is_point_inside(el_pos.x, el_pos.y))
                         {
                             ret = (*i)->src_el();
                         }
@@ -1020,10 +1020,10 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                     {
                         if(el->src_el()->css().get_display() == display_inline_block)
                         {
-                            ret = el->get_element_by_point(pos.x, pos.y, client_x, client_y);
+                            ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y);
                             el = nullptr;
                         }
-                        if(!ret && (*i)->is_point_inside(pos.x, pos.y))
+                        if(!ret && (*i)->is_point_inside(el_pos.x, el_pos.y))
                         {
                             ret = (*i)->src_el();
                         }
@@ -1037,7 +1037,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
             {
                 if(flag == draw_positioned)
                 {
-                    element::ptr child = el->get_child_by_point(pos.x, pos.y, client_x, client_y, flag, zindex);
+                    element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex);
                     if(child)
                     {
                         ret = child;
@@ -1047,7 +1047,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                     if(	el->src_el()->css().get_float() == float_none &&
                            el->src_el()->css().get_display() != display_inline_block)
                     {
-                        element::ptr child = el->get_child_by_point(pos.x, pos.y, client_x, client_y, flag, zindex);
+                        element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex);
                         if(child)
                         {
                             ret = child;
@@ -1217,18 +1217,6 @@ bool litehtml::render_item::find_styles_changes( position::vector& redraw_boxes,
             }
         }
     }
-    return ret;
-}
-
-std::shared_ptr<litehtml::render_item> litehtml::render_item::init()
-{
-    auto ret = _init();
-
-    for(auto& el : ret->children())
-    {
-        el = el->init();
-    }
-
     return ret;
 }
 

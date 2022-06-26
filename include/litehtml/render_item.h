@@ -28,7 +28,6 @@ namespace litehtml
         std::vector<std::shared_ptr<render_item>>   m_positioned;
 
         virtual int _render(int x, int y, int max_width, bool second_pass) { return 0; }
-        virtual std::shared_ptr<render_item> _init() { return shared_from_this(); }
 
     public:
         explicit render_item(std::shared_ptr<element>  src_el);
@@ -264,8 +263,8 @@ namespace litehtml
         bool is_first_child_inline(const std::shared_ptr<render_item>& el) const;
         bool is_last_child_inline(const std::shared_ptr<render_item>& el) const;
         bool have_inline_child() const;
-        std::shared_ptr<render_item> init();
 
+        virtual std::shared_ptr<render_item> init() { return shared_from_this(); }
         virtual void apply_vertical_align() {}
         virtual int get_base_line() { return 0; }
         virtual std::shared_ptr<render_item> clone()
@@ -302,7 +301,6 @@ namespace litehtml
         int_int_cache m_cache_line_right;
 
         int _render(int x, int y, int max_width, bool second_pass) override {return 0;}
-        std::shared_ptr<render_item> _init() override;
 
         int place_float(const std::shared_ptr<render_item> &el, int top, int max_width);
         int get_floats_height(element_float el_float = float_none) const;
@@ -324,6 +322,7 @@ namespace litehtml
         {
             return std::make_shared<render_item_block>(src_el());
         }
+        std::shared_ptr<render_item> init() override;
     };
 
     /**
@@ -383,7 +382,6 @@ namespace litehtml
         int						    m_border_spacing_y;
 
         int _render(int x, int y, int max_width, bool second_pass) override;
-        std::shared_ptr<render_item> _init() override;
 
     public:
         explicit render_item_table(std::shared_ptr<element>  src_el);
@@ -393,8 +391,8 @@ namespace litehtml
             return std::make_shared<render_item_table>(src_el());
         }
         void draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;
-        //std::shared_ptr<element> get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex) override;
         int get_draw_vertical_offset() override;
+        std::shared_ptr<render_item> init() override;
     };
 
     class render_item_table_part : public render_item
