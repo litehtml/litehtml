@@ -27,7 +27,18 @@ int litehtml::render_item_inline_context::_render(int x, int y, int max_width, b
         {
             w -= m_padding.width() + m_borders.width();
         }
-        ret_width = max_width = block_width = w;
+        max_width = w;
+        if(src_el()->css().get_width().units() != css_units_percentage)
+        {
+            block_width = ret_width = w;
+        } else
+        {
+            auto par = parent();
+            if(!par || par && !par->src_el()->css().get_width().is_predefined())
+            {
+                block_width = ret_width = w;
+            }
+        }
     }
     else
     {
