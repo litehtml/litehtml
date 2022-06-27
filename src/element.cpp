@@ -2,6 +2,7 @@
 #include "element.h"
 #include "document.h"
 #include "render_item.h"
+#include "el_before_after.h"
 
 #define LITEHTML_EMPTY_FUNC			{}
 #define LITEHTML_RETURN_FUNC(ret)	{return ret;}
@@ -245,6 +246,29 @@ bool litehtml::element::find_styles_changes( position::vector& redraw_boxes)
     }
     return ret;
 }
+
+litehtml::element::ptr litehtml::element::_add_before_after(int type, const tstring& style, const tstring& baseurl)
+{
+    litehtml::style st;
+    st.add(style.c_str(), baseurl.c_str(), nullptr);
+    if(st.get_property("content"))
+    {
+        element::ptr el;
+        if(type == 0)
+        {
+            el = std::make_shared<el_before>(get_document());
+            m_children.insert(m_children.begin(), el);
+        } else
+        {
+            el = std::make_shared<el_after>(get_document());
+            m_children.insert(m_children.end(), el);
+        }
+        el->parent(shared_from_this());
+        return el;
+    }
+    return nullptr;
+}
+
 
 const litehtml::background* litehtml::element::get_background(bool own_only)		LITEHTML_RETURN_FUNC(nullptr)
 void litehtml::element::add_style( const tstring& style, const tstring& baseurl )						LITEHTML_EMPTY_FUNC

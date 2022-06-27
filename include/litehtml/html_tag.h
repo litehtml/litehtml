@@ -101,9 +101,8 @@ namespace litehtml
 		void				draw_list_marker( uint_ptr hdc, const position &pos );
 		tstring				get_list_marker_text(int index);
 		static void			parse_nth_child_params( const tstring& param, int &num, int &off );
-		void				remove_before_after();
-		litehtml::element::ptr  get_element_before();
-		litehtml::element::ptr  get_element_after();
+		litehtml::element::ptr  get_element_before(const tstring& style, const tstring& baseurl, bool create);
+		litehtml::element::ptr  get_element_after(const tstring& style, const tstring& baseurl, bool create);
     };
 
 	/************************************************************************/

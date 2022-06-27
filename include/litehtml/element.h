@@ -34,6 +34,7 @@ namespace litehtml
         used_selector::vector	                m_used_styles;
 
         virtual void select_all(const css_selector& selector, elements_vector& res);
+        element::ptr _add_before_after(int type, const tstring& style, const tstring& baseurl);
 	public:
 		explicit element(const std::shared_ptr<litehtml::document>& doc);
         virtual ~element() = default;
@@ -123,6 +124,14 @@ namespace litehtml
         bool requires_styles_update();
         void add_render(const std::shared_ptr<render_item>& ri);
         bool find_styles_changes( position::vector& redraw_boxes);
+        element::ptr add_pseudo_before(const tstring& style, const tstring& baseurl)
+        {
+            return _add_before_after(0, style, baseurl);
+        }
+        element::ptr add_pseudo_after(const tstring& style, const tstring& baseurl)
+        {
+            return _add_before_after(1, style, baseurl);
+        }
 	};
 
 	//////////////////////////////////////////////////////////////////////////

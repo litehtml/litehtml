@@ -33,11 +33,12 @@ void litehtml::el_before_after_base::add_style(const tstring& style, const tstri
 			tstring::size_type i = 0;
 			while(i < content.length() && i != tstring::npos)
 			{
-				if(content.at(i) == _t('"'))
+				if(content.at(i) == _t('"') || content.at(i) == _t('\''))
 				{
+                    auto chr = content.at(i);
 					fnc.clear();
 					i++;
-					tstring::size_type pos = content.find(_t('"'), i);
+					tstring::size_type pos = content.find(chr, i);
 					tstring txt;
 					if(pos == tstring::npos)
 					{
