@@ -307,7 +307,8 @@ namespace litehtml
         int_int_cache m_cache_line_left;
         int_int_cache m_cache_line_right;
 
-        int _render(int x, int y, int max_width, bool second_pass) override {return 0;}
+        int _render(int x, int y, int max_width, bool second_pass) override;
+        virtual int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) {return ret_width;}
 
         int place_float(const std::shared_ptr<render_item> &el, int top, int max_width);
         int get_floats_height(element_float el_float = float_none) const;
@@ -340,7 +341,7 @@ namespace litehtml
     class render_item_block_context : public render_item_block
     {
     protected:
-        int _render(int x, int y, int max_width, bool second_pass) override;
+        int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) override;
 
     public:
         explicit render_item_block_context(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el))
@@ -361,7 +362,7 @@ namespace litehtml
     protected:
         std::vector<std::unique_ptr<litehtml::line_box>> m_line_boxes;
 
-        int _render(int x, int y, int max_width, bool second_pass) override;
+        int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) override;
         int fix_line_width( int max_width, element_float flt ) override;
 
         int finish_last_box(bool end_of_render = false);
