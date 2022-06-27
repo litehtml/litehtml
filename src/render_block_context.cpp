@@ -101,12 +101,8 @@ int litehtml::render_item_block_context::_render(int x, int y, int max_width, bo
             } else
             {
                 child_top = get_cleared_top(el, child_top);
-                if(el->src_el()->is_replaced() || el->src_el()->is_floats_holder())
-                {
-                    auto el_parent = el->parent();
-                    el->pos().width = el->src_el()->css().get_width().calc_percent(max_width);
-                    el->pos().height = el->src_el()->css().get_height().calc_percent(el_parent ? el_parent->pos().height : 0);
-                }
+                int child_x  = 0;
+                int child_width = max_width;
 
                 el->calc_outlines(max_width);
 
@@ -128,7 +124,21 @@ int litehtml::render_item_block_context::_render(int x, int y, int max_width, bo
                         child_top -= last_margin;
                     }
                 }
-                int rw = el->render(0, child_top, max_width);
+
+                if(el->src_el()->is_replaced() || el->src_el()->is_floats_holder())
+                {
+                    int ln_left = 0;
+                    int ln_right = child_width;
+                    get_line_left_right(child_top, child_width, ln_left, ln_right);
+                    child_x = ln_left;
+                    child_width = ln_right - ln_left;
+
+                    auto el_parent = el->parent();
+                    el->pos().width = el->src_el()->css().get_width().calc_percent(child_width);
+                    el->pos().height = el->src_el()->css().get_height().calc_percent(el_parent ? el_parent->pos().height : 0);
+                }
+
+                int rw = el->render(child_x, child_top, child_width);
                 if (rw > ret_width)
                 {
                     ret_width = rw;
