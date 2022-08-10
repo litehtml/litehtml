@@ -189,12 +189,12 @@ void litehtml::el_image::parse_attributes()
 	const tchar_t* attr_height = get_attr(_t("height"));
 	if(attr_height)
 	{
-		m_style.add_property(_t("height"), attr_height, 0, false);
+		m_style.add_property(_t("height"), attr_height, 0, false, this);
 	}
 	const tchar_t* attr_width = get_attr(_t("width"));
 	if(attr_width)
 	{
-		m_style.add_property(_t("width"), attr_width, 0, false);
+		m_style.add_property(_t("width"), attr_width, 0, false, this);
 	}
 }
 
@@ -252,7 +252,7 @@ void litehtml::el_image::draw( uint_ptr hdc, int x, int y, const position* clip 
 		borders bdr = m_css_borders;
 		bdr.radius = m_css_borders.radius.calc_percents(border_box.width, border_box.height);
 
-		get_document()->container()->draw_borders(hdc, bdr, border_box, have_parent() ? false : true);
+		get_document()->container()->draw_borders(hdc, bdr, border_box, !have_parent());
 	}
 }
 
@@ -264,10 +264,10 @@ void litehtml::el_image::parse_styles( bool is_reparse /*= false*/ )
 	{
 		if(!m_css_height.is_predefined() && !m_css_width.is_predefined())
 		{
-			get_document()->container()->load_image(m_src.c_str(), 0, true);
+			get_document()->container()->load_image(m_src.c_str(), nullptr, true);
 		} else
 		{
-			get_document()->container()->load_image(m_src.c_str(), 0, false);
+			get_document()->container()->load_image(m_src.c_str(), nullptr, false);
 		}
 	}
 }

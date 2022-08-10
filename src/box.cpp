@@ -3,17 +3,17 @@
 #include "html_tag.h"
 
 
-litehtml::box_type litehtml::block_box::get_type()
+litehtml::box_type litehtml::block_box::get_type() const
 {
 	return box_block;
 }
 
-int litehtml::block_box::height()
+int litehtml::block_box::height() const
 {
 	return m_element->height();
 }
 
-int litehtml::block_box::width()
+int litehtml::block_box::width() const
 {
 	return m_element->width();
 }
@@ -30,7 +30,7 @@ void litehtml::block_box::finish(bool last_box)
 	m_element->apply_relative_shift(m_box_right - m_box_left);
 }
 
-bool litehtml::block_box::can_hold(const element::ptr &el, white_space ws)
+bool litehtml::block_box::can_hold(const element::ptr &el, white_space ws) const
 {
 	if(m_element || el->is_inline_box())
 	{
@@ -39,7 +39,7 @@ bool litehtml::block_box::can_hold(const element::ptr &el, white_space ws)
 	return true;
 }
 
-bool litehtml::block_box::is_empty()
+bool litehtml::block_box::is_empty() const
 {
 	if(m_element)
 	{
@@ -48,7 +48,7 @@ bool litehtml::block_box::is_empty()
 	return true;
 }
 
-int litehtml::block_box::baseline()
+int litehtml::block_box::baseline() const
 {
 	if(m_element)
 	{
@@ -62,7 +62,7 @@ void litehtml::block_box::get_elements( elements_vector& els )
 	els.push_back(m_element);
 }
 
-int litehtml::block_box::top_margin()
+int litehtml::block_box::top_margin() const
 {
 	if(m_element && m_element->collapse_top_margin())
 	{
@@ -71,7 +71,7 @@ int litehtml::block_box::top_margin()
 	return 0;
 }
 
-int litehtml::block_box::bottom_margin()
+int litehtml::block_box::bottom_margin() const
 {
 	if(m_element && m_element->collapse_bottom_margin())
 	{
@@ -96,17 +96,17 @@ void litehtml::block_box::new_width( int left, int right, elements_vector& els )
 
 //////////////////////////////////////////////////////////////////////////
 
-litehtml::box_type litehtml::line_box::get_type()
+litehtml::box_type litehtml::line_box::get_type() const
 {
 	return box_line;
 }
 
-int litehtml::line_box::height()
+int litehtml::line_box::height() const
 {
 	return m_height;
 }
 
-int litehtml::line_box::width()
+int litehtml::line_box::width() const
 {
 	return m_width;
 }
@@ -114,7 +114,7 @@ int litehtml::line_box::width()
 void litehtml::line_box::add_element(const element::ptr &el)
 {
 	el->m_skip	= false;
-	el->m_box	= 0;
+	el->m_box	= nullptr;
 	bool add	= true;
 	if( (m_items.empty() && el->is_white_space()) || el->is_break() )
 	{
@@ -252,8 +252,6 @@ void litehtml::line_box::finish(bool last_box)
 		}
 	}
 
-	css_offsets offsets;
-
 	for (const auto& el : m_items)
 	{
 		el->m_pos.y -= y1;
@@ -295,7 +293,7 @@ void litehtml::line_box::finish(bool last_box)
 	m_baseline = (base_line - y1) - (m_height - line_height);
 }
 
-bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws)
+bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws) const
 {
 	if(!el->is_inline_box()) return false;
 
@@ -304,7 +302,7 @@ bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws)
 		return false;
 	}
 
-	if(ws == white_space_nowrap || ws == white_space_pre)
+	if(ws == white_space_nowrap || ws == white_space_pre || (ws == white_space_pre_wrap && el->is_space()))
 	{
 		return true;
 	}
@@ -317,7 +315,7 @@ bool litehtml::line_box::can_hold(const element::ptr &el, white_space ws)
 	return true;
 }
 
-bool litehtml::line_box::have_last_space()
+bool litehtml::line_box::have_last_space()  const
 {
 	bool ret = false;
 	for (auto i = m_items.rbegin(); i != m_items.rend() && !ret; i++)
@@ -333,7 +331,7 @@ bool litehtml::line_box::have_last_space()
 	return ret;
 }
 
-bool litehtml::line_box::is_empty()
+bool litehtml::line_box::is_empty() const
 {
 	if(m_items.empty()) return true;
 	for (auto i = m_items.rbegin(); i != m_items.rend(); i++)
@@ -346,7 +344,7 @@ bool litehtml::line_box::is_empty()
 	return true;
 }
 
-int litehtml::line_box::baseline()
+int litehtml::line_box::baseline() const
 {
 	return m_baseline;
 }
@@ -356,12 +354,12 @@ void litehtml::line_box::get_elements( elements_vector& els )
 	els.insert(els.begin(), m_items.begin(), m_items.end());
 }
 
-int litehtml::line_box::top_margin()
+int litehtml::line_box::top_margin() const
 {
 	return 0;
 }
 
-int litehtml::line_box::bottom_margin()
+int litehtml::line_box::bottom_margin() const
 {
 	return 0;
 }
@@ -375,7 +373,7 @@ void litehtml::line_box::y_shift( int shift )
 	}
 }
 
-bool litehtml::line_box::is_break_only()
+bool litehtml::line_box::is_break_only() const
 {
 	if(m_items.empty()) return true;
 
@@ -426,7 +424,7 @@ void litehtml::line_box::new_width( int left, int right, elements_vector& els )
 
 			for(const auto& el : els)
 			{
-				el->m_box = 0;
+				el->m_box = nullptr;
 			}
 		}
 	}

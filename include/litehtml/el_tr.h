@@ -8,11 +8,10 @@ namespace litehtml
 	class el_tr : public html_tag
 	{
 	public:
-		el_tr(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_tr();
+		explicit el_tr(const std::shared_ptr<litehtml::document>& doc);
 
-		virtual void	parse_attributes() override;
-		virtual void	get_inline_boxes(position::vector& boxes) override;
+		void parse_attributes() override;
+		void get_inline_boxes(position::vector& boxes) override;
 	};
 }
 

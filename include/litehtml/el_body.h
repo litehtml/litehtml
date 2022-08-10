@@ -8,10 +8,9 @@ namespace litehtml
 	class el_body : public html_tag
 	{
 	public:
-		el_body(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_body();
+		explicit el_body(const std::shared_ptr<litehtml::document>& doc);
 
-		virtual bool is_body() const override;
+		bool is_body() const override;
 	};
 }
 

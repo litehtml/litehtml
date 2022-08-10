@@ -127,36 +127,38 @@ int litehtml::win32_container::get_text_base_line( uint_ptr hdc, uint_ptr hFont 
 	return (int) tm.tmDescent;
 }
 
-void litehtml::win32_container::draw_list_marker( uint_ptr hdc, list_style_type marker_type, int x, int y, int height, const web_color& color )
+void litehtml::win32_container::draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker)
 {
-	apply_clip((HDC) hdc);
+	apply_clip((HDC)hdc);
 
-	int top_margin = height / 3;
+	int top_margin = marker.pos.height / 3;
+	if (top_margin < 4)
+		top_margin = 0;
 
-	int draw_x		= x;
-	int draw_y		= y + top_margin;
-	int draw_width	= height - top_margin * 2;
-	int draw_height	= height - top_margin * 2;
+	int draw_x = marker.pos.x;
+	int draw_y = marker.pos.y + top_margin;
+	int draw_width = marker.pos.height - top_margin * 2;
+	int draw_height = marker.pos.height - top_margin * 2;
 
-	switch(marker_type)
+	switch (marker.marker_type)
 	{
 	case list_style_type_circle:
 		{
-			draw_ellipse((HDC) hdc, draw_x, draw_y, draw_width, draw_height, color, 1);
+			draw_ellipse((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color, 1);
 		}
 		break;
 	case list_style_type_disc:
 		{
-			fill_ellipse((HDC) hdc, draw_x, draw_y, draw_width, draw_height, color);
+			fill_ellipse((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color);
 		}
 		break;
 	case list_style_type_square:
 		{
-			fill_rect((HDC) hdc, draw_x, draw_y, draw_width, draw_height, color, css_border_radius());
+			fill_rect((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color, css_border_radius());
 		}
 		break;
 	}
-	release_clip((HDC) hdc);
+	release_clip((HDC)hdc);
 }
 
 void litehtml::win32_container::load_image( const wchar_t* src, const wchar_t* baseurl, bool redraw_on_ready )

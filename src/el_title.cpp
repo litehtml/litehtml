@@ -7,11 +7,6 @@ litehtml::el_title::el_title(const std::shared_ptr<litehtml::document>& doc) : l
 
 }
 
-litehtml::el_title::~el_title()
-{
-
-}
-
 void litehtml::el_title::parse_attributes()
 {
 	tstring text;

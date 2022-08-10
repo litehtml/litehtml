@@ -55,7 +55,7 @@ namespace litehtml
 			el_row = val.el_row;
 		}
 
-		table_row(table_row&& val)
+		table_row(table_row&& val) noexcept
 		{
 			min_height = val.min_height;
 			top = val.top;
@@ -122,24 +122,27 @@ namespace litehtml
 	{
 	public:
 		virtual int& get(table_column& col) = 0;
+
+	protected:
+		~table_column_accessor() = default;
 	};
 
-	class table_column_accessor_max_width : public table_column_accessor
+	class table_column_accessor_max_width final : public table_column_accessor
 	{
 	public:
-		virtual int& get(table_column& col);
+		int& get(table_column& col) override;
 	};
 
-	class table_column_accessor_min_width : public table_column_accessor
+	class table_column_accessor_min_width final : public table_column_accessor
 	{
 	public:
-		virtual int& get(table_column& col);
+		int& get(table_column& col) override;
 	};
 
-	class table_column_accessor_width : public table_column_accessor
+	class table_column_accessor_width final : public table_column_accessor
 	{
 	public:
-		virtual int& get(table_column& col);
+		int& get(table_column& col) override;
 	};
 
 	struct table_cell
@@ -182,8 +185,8 @@ namespace litehtml
 			borders			= val.borders;
 		}
 
-		table_cell(const table_cell&& val)
-		{
+		table_cell(table_cell&& val) noexcept
+        {
 			el = std::move(val.el);
 			colspan = val.colspan;
 			rowspan = val.rowspan;
@@ -207,12 +210,15 @@ namespace litehtml
 		rows					m_cells;
 		table_column::vector	m_columns;
 		table_row::vector		m_rows;
+		elements_vector			m_captions;
+		int						m_captions_height;
 	public:
 
 		table_grid()
 		{
 			m_rows_count	= 0;
 			m_cols_count	= 0;
+			m_captions_height = 0;
 		}
 
 		void			clear();
@@ -223,9 +229,13 @@ namespace litehtml
 		table_cell*		cell(int t_col, int t_row);
 		table_column&	column(int c)	{ return m_columns[c];	}
 		table_row&		row(int r)		{ return m_rows[r];		}
+		elements_vector& captions()		{ return m_captions; }
 
-		int				rows_count()	{ return m_rows_count;	}
-		int				cols_count()	{ return m_cols_count;	}
+		int				rows_count() const	{ return m_rows_count;	}
+		int				cols_count() const	{ return m_cols_count; }
+
+		void			captions_height(int height) { m_captions_height = height; }
+		int				captions_height() const { return m_captions_height; }
 
 		void			distribute_max_width(int width, int start, int end);
 		void			distribute_min_width(int width, int start, int end);

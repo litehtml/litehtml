@@ -12,10 +12,7 @@ namespace litehtml
 		css_length	top;
 		css_length	bottom;
 
-		css_margins()
-		{
-
-		}
+		css_margins() = default;
 
 		css_margins(const css_margins& val)
 		{

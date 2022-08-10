@@ -8,11 +8,6 @@ litehtml::el_link::el_link(const std::shared_ptr<litehtml::document>& doc) : lit
 
 }
 
-litehtml::el_link::~el_link()
-{
-
-}
-
 void litehtml::el_link::parse_attributes()
 {
 	bool processed = false;

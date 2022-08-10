@@ -27,24 +27,24 @@ namespace litehtml
 			m_box_left	= left;
 			m_box_right	= right;
 		}
-		virtual ~box() {}
+		virtual ~box() = default;
 
-		int		bottom()	{ return m_box_top + height();	}
-		int		top()		{ return m_box_top;				}
-		int		right()		{ return m_box_left + width();	}
-		int		left()		{ return m_box_left;			}
+		int		bottom() const	{ return m_box_top + height();	}
+		int		top() const		{ return m_box_top;				}
+		int		right() const	{ return m_box_left + width();	}
+		int		left() const	{ return m_box_left;			}
 
-		virtual litehtml::box_type	get_type() = 0;
-		virtual int					height() = 0;
-		virtual int					width() = 0;
+		virtual litehtml::box_type	get_type() const = 0;
+		virtual int					height() const = 0;
+		virtual int					width() const = 0;
 		virtual void				add_element(const element::ptr &el) = 0;
-		virtual bool				can_hold(const element::ptr &el, white_space ws) = 0;
+		virtual bool				can_hold(const element::ptr &el, white_space ws) const = 0;
 		virtual void				finish(bool last_box = false) = 0;
-		virtual bool				is_empty() = 0;
-		virtual int					baseline() = 0;
+		virtual bool				is_empty() const = 0;
+		virtual int					baseline() const = 0;
 		virtual void				get_elements(elements_vector& els) = 0;
-		virtual int					top_margin() = 0;
-		virtual int					bottom_margin() = 0;
+		virtual int					top_margin() const = 0;
+		virtual int					bottom_margin() const = 0;
 		virtual void				y_shift(int shift) = 0;
 		virtual void				new_width(int left, int right, elements_vector& els) = 0;
 	};
@@ -57,22 +57,22 @@ namespace litehtml
 	public:
 		block_box(int top, int left, int right) : box(top, left, right)
 		{
-			m_element = 0;
+			m_element = nullptr;
 		}
 
-		virtual litehtml::box_type	get_type();
-		virtual int					height();
-		virtual int					width();
-		virtual void				add_element(const element::ptr &el);
-		virtual bool				can_hold(const element::ptr &el, white_space ws);
-		virtual void				finish(bool last_box = false);
-		virtual bool				is_empty();
-		virtual int					baseline();
-		virtual void				get_elements(elements_vector& els);
-		virtual int					top_margin();
-		virtual int					bottom_margin();
-		virtual void				y_shift(int shift);
-		virtual void				new_width(int left, int right, elements_vector& els);
+		litehtml::box_type	get_type() const override;
+		int					height() const override;
+		int					width() const override;
+		void				add_element(const element::ptr &el) override;
+		bool				can_hold(const element::ptr &el, white_space ws) const override;
+		void				finish(bool last_box = false) override;
+		bool				is_empty() const override;
+		int					baseline() const override;
+		void				get_elements(elements_vector& els) override;
+		int					top_margin() const override;
+		int					bottom_margin() const override;
+		void				y_shift(int shift) override;
+		void				new_width(int left, int right, elements_vector& els) override;
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -97,23 +97,23 @@ namespace litehtml
 			m_text_align	= align;
 		}
 
-		virtual litehtml::box_type	get_type();
-		virtual int					height();
-		virtual int					width();
-		virtual void				add_element(const element::ptr &el);
-		virtual bool				can_hold(const element::ptr &el, white_space ws);
-		virtual void				finish(bool last_box = false);
-		virtual bool				is_empty();
-		virtual int					baseline();
-		virtual void				get_elements(elements_vector& els);
-		virtual int					top_margin();
-		virtual int					bottom_margin();
-		virtual void				y_shift(int shift);
-		virtual void				new_width(int left, int right, elements_vector& els);
+		litehtml::box_type	get_type() const override;
+		int					height() const override;
+		int					width() const override;
+		void				add_element(const element::ptr &el) override;
+		bool				can_hold(const element::ptr &el, white_space ws) const override;
+		void				finish(bool last_box = false) override;
+		bool				is_empty() const override;
+		int					baseline() const override;
+		void				get_elements(elements_vector& els) override;
+		int					top_margin() const override;
+		int					bottom_margin() const override;
+		void				y_shift(int shift) override;
+		void				new_width(int left, int right, elements_vector& els) override;
 
 	private:
-		bool						have_last_space();
-		bool						is_break_only();
+		bool						have_last_space() const;
+		bool						is_break_only() const;
 	};
 }
 

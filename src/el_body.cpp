@@ -6,11 +6,6 @@ litehtml::el_body::el_body(const std::shared_ptr<litehtml::document>& doc) : lit
 {
 }
 
-litehtml::el_body::~el_body()
-{
-
-}
-
 bool litehtml::el_body::is_body()  const
 {
 	return true;

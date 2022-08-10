@@ -8,10 +8,9 @@ namespace litehtml
 	class el_div : public html_tag
 	{
 	public:
-		el_div(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_div();
+		explicit el_div(const std::shared_ptr<litehtml::document>& doc);
 
-		virtual void parse_attributes() override;
+		void parse_attributes() override;
 	};
 }
 

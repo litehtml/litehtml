@@ -9,11 +9,11 @@ namespace litehtml
 	{
 		tstring	m_text;
 	public:
-		el_comment(const std::shared_ptr<litehtml::document>& doc);
-		virtual ~el_comment();
+		explicit el_comment(const std::shared_ptr<litehtml::document>& doc);
 
-		virtual void	get_text(tstring& text) override;
-		virtual void	set_data(const tchar_t* data) override;
+		bool is_comment() const override;
+		void get_text(tstring& text) override;
+		void set_data(const tchar_t* data) override;
 	};
 }
 

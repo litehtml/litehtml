@@ -24,7 +24,7 @@ litehtml::element::ptr litehtml::elements_iterator::next(bool ret_parent)
 			next_idx();
 		} else
 		{
-			if( !m_select || (m_select && m_select->select(m_el->get_child(m_idx))) )
+			if(!m_select || m_select->select(m_el->get_child(m_idx)))
 			{
 				return m_el->get_child(m_idx);
 			} else
@@ -34,20 +34,19 @@ litehtml::element::ptr litehtml::elements_iterator::next(bool ret_parent)
 		}
 	}
 
-	return 0;
+	return nullptr;
 }
 
 void litehtml::elements_iterator::next_idx()
 {
 	m_idx++;
-	while(m_idx >= (int) m_el->get_children_count() && m_stack.size())
+	while(m_idx >= (int) m_el->get_children_count() && !m_stack.empty())
 	{
 		stack_item si = m_stack.back();
 		m_stack.pop_back();
 		m_idx	= si.idx;
 		m_el	= si.el;
 		m_idx++;
-		continue;
 	}
 }
 

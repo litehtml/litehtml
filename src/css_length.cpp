@@ -7,11 +7,11 @@ void litehtml::css_length::fromString( const tstring& str, const tstring& predef
 	if(str.substr(0, 4) == _t("calc"))
 	{
 		m_is_predefined = true;
-		m_predef		= 0;
+		m_predef		= defValue;
 		return;
 	}
 
-	int predef = value_index(str.c_str(), predefs.c_str(), -1);
+	int predef = value_index(str, predefs, -1);
 	if(predef >= 0)
 	{
 		m_is_predefined = true;
@@ -23,13 +23,13 @@ void litehtml::css_length::fromString( const tstring& str, const tstring& predef
 		tstring num;
 		tstring un;
 		bool is_unit = false;
-		for(tstring::const_iterator chr = str.begin(); chr != str.end(); chr++)
+		for(tchar_t chr : str)
 		{
 			if(!is_unit)
 			{
-				if(t_isdigit(*chr) || *chr == _t('.') || *chr == _t('+') || *chr == _t('-'))
+				if(t_isdigit(chr) || chr == _t('.') || chr == _t('+') || chr == _t('-'))
 				{
-					num += *chr;
+					num += chr;
 				} else
 				{
 					is_unit = true;
@@ -37,13 +37,13 @@ void litehtml::css_length::fromString( const tstring& str, const tstring& predef
 			}
 			if(is_unit)
 			{
-				un += *chr;
+				un += chr;
 			}
 		}
 		if(!num.empty())
 		{
-			m_value = (float) t_strtod(num.c_str(), 0);
-			m_units	= (css_units) value_index(un.c_str(), css_units_strings, css_units_none);
+			m_value = (float) t_strtod(num.c_str(), nullptr);
+			m_units	= (css_units) value_index(un, css_units_strings, css_units_none);
 		} else
 		{
 			// not a number so it is predefined

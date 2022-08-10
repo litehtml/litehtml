@@ -40,11 +40,11 @@ litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceNa
 		delete f;
 #else
 		fnt_name = fonts[0];
-		if (fnt_name.front() == '"' || fnt_name.front() == '\'')
+		if (fnt_name.front() == L'"' || fnt_name.front() == L'\'')
 		{
 			fnt_name.erase(0, 1);
 		}
-		if (fnt_name.back() == '"' || fnt_name.back() == '\'')
+		if (fnt_name.back() == L'"' || fnt_name.back() == L'\'')
 		{
 			fnt_name.erase(fnt_name.length() - 1, 1);
 		}
@@ -121,7 +121,7 @@ void cairo_container::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
 	}
 }
 
-int cairo_container::pt_to_px( int pt )
+int cairo_container::pt_to_px( int pt ) const
 {
 	HDC dc = GetDC(NULL);
 	int ret = MulDiv(pt, GetDeviceCaps(dc, LOGPIXELSY), 72);
@@ -148,38 +148,39 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 			if(img_i->second)
 			{
 				draw_txdib((cairo_t*)hdc, img_i->second.get(), marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
+				unlock_images_cache();
+				return;
 			}
 		}
 		unlock_images_cache();
-	} else
+	}
+
+	switch(marker.marker_type)
 	{
-		switch(marker.marker_type)
+	case litehtml::list_style_type_circle:
 		{
-		case litehtml::list_style_type_circle:
-			{
-				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 0.5);
-			}
-			break;
-		case litehtml::list_style_type_disc:
-			{
-				fill_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color);
-			}
-			break;
-		case litehtml::list_style_type_square:
-			if(hdc)
-			{
-				cairo_t* cr = (cairo_t*) hdc;
-				cairo_save(cr);
-
-				cairo_new_path(cr);
-				cairo_rectangle(cr, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
-
-				set_color(cr, marker.color);
-				cairo_fill(cr);
-				cairo_restore(cr);
-			}
-			break;
+			draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 0.5);
 		}
+		break;
+	case litehtml::list_style_type_disc:
+		{
+			fill_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color);
+		}
+		break;
+	case litehtml::list_style_type_square:
+		if(hdc)
+		{
+			cairo_t* cr = (cairo_t*) hdc;
+			cairo_save(cr);
+
+			cairo_new_path(cr);
+			cairo_rectangle(cr, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
+
+			set_color(cr, marker.color);
+			cairo_fill(cr);
+			cairo_restore(cr);
+		}
+		break;
 	}
 }
 
@@ -1011,7 +1012,7 @@ litehtml::tstring cairo_container::resolve_color(const litehtml::tstring& color)
 
     for (auto& clr : colors)
     {
-        if (!t_strcasecmp(clr.name, color.c_str()))
+		if (!litehtml::t_strcasecmp(clr.name, color.c_str()))
         {
             litehtml::tchar_t  str_clr[20];
             DWORD rgb_color =  GetSysColor(clr.color_index);

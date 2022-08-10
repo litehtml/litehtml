@@ -1,18 +1,17 @@
 #include "container_linux.h"
-#define _USE_MATH_DEFINES
-#include <math.h>
+#include <cmath>
 
 #ifndef M_PI
 #       define M_PI    3.14159265358979323846
 #endif
 
-container_linux::container_linux(void)
+container_linux::container_linux()
 {
 	m_temp_surface	= cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 2, 2);
 	m_temp_cr		= cairo_create(m_temp_surface);
 }
 
-container_linux::~container_linux(void)
+container_linux::~container_linux()
 {
 	clear_images();
 	cairo_surface_destroy(m_temp_surface);
@@ -21,77 +20,75 @@ container_linux::~container_linux(void)
 
 litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
-	litehtml::string_vector fonts;
-	litehtml::split_string(faceName, fonts, ",");
-	litehtml::trim(fonts[0]);
+    PangoFontDescription *desc = pango_font_description_from_string (faceName);
+    pango_font_description_set_absolute_size(desc, size * PANGO_SCALE);
+    if(italic == litehtml::fontStyleItalic )
+    {
+        pango_font_description_set_style(desc, PANGO_STYLE_ITALIC);
+    } else
+    {
+        pango_font_description_set_style(desc, PANGO_STYLE_NORMAL);
+    }
+    PangoWeight fnt_weight;
+    if(weight >= 0 && weight < 150)			fnt_weight = PANGO_WEIGHT_THIN;
+    else if(weight >= 150 && weight < 250)	fnt_weight = PANGO_WEIGHT_ULTRALIGHT;
+    else if(weight >= 250 && weight < 350)	fnt_weight = PANGO_WEIGHT_LIGHT;
+    else if(weight >= 350 && weight < 450)	fnt_weight = PANGO_WEIGHT_NORMAL;
+    else if(weight >= 450 && weight < 550)	fnt_weight = PANGO_WEIGHT_MEDIUM;
+    else if(weight >= 550 && weight < 650)	fnt_weight = PANGO_WEIGHT_SEMIBOLD;
+    else if(weight >= 650 && weight < 750)	fnt_weight = PANGO_WEIGHT_BOLD;
+    else if(weight >= 750 && weight < 850)	fnt_weight = PANGO_WEIGHT_ULTRABOLD;
+    else fnt_weight = PANGO_WEIGHT_HEAVY;
 
-	cairo_font_face_t* fnt = 0;
+    pango_font_description_set_weight(desc, fnt_weight);
 
-	FcPattern *pattern = FcPatternCreate();
-	bool found = false;
-	for(litehtml::string_vector::iterator i = fonts.begin(); i != fonts.end(); i++)
-	{
-		if(FcPatternAddString(pattern, FC_FAMILY, (unsigned char *) i->c_str()))
-		{
-			found = true;
-			break;
-		}
-	}
-	if(found)
-	{
-		if(italic == litehtml::fontStyleItalic )
-		{
-			FcPatternAddInteger (pattern, FC_SLANT, FC_SLANT_ITALIC);
-		} else
-		{
-			FcPatternAddInteger (pattern, FC_SLANT, FC_SLANT_ROMAN);
-		}
+	cairo_font* ret = nullptr;
 
-		int fc_weight = FC_WEIGHT_NORMAL;
-		if(weight >= 0 && weight < 150)			fc_weight = FC_WEIGHT_THIN;
-		else if(weight >= 150 && weight < 250)	fc_weight = FC_WEIGHT_EXTRALIGHT;
-		else if(weight >= 250 && weight < 350)	fc_weight = FC_WEIGHT_LIGHT;
-		else if(weight >= 350 && weight < 450)	fc_weight = FC_WEIGHT_NORMAL;
-		else if(weight >= 450 && weight < 550)	fc_weight = FC_WEIGHT_MEDIUM;
-		else if(weight >= 550 && weight < 650)	fc_weight = FC_WEIGHT_SEMIBOLD;
-		else if(weight >= 650 && weight < 750)	fc_weight = FC_WEIGHT_BOLD;
-		else if(weight >= 750 && weight < 850)	fc_weight = FC_WEIGHT_EXTRABOLD;
-		else if(weight >= 950)					fc_weight = FC_WEIGHT_BLACK;
-
-		FcPatternAddInteger (pattern, FC_WEIGHT, fc_weight);
-
-		fnt = cairo_ft_font_face_create_for_pattern(pattern);
-	}
-
-	FcPatternDestroy(pattern);
-
-	cairo_font* ret = 0;
-
-	if(fm && fnt)
+	if(fm)
 	{
 		cairo_save(m_temp_cr);
+        PangoLayout *layout = pango_cairo_create_layout(m_temp_cr);
+        PangoContext *context = pango_layout_get_context(layout);
+        PangoLanguage *language = pango_language_get_default();
+        pango_layout_set_font_description(layout, desc);
+        PangoFontMetrics *metrics = pango_context_get_metrics(context, desc, language);
 
-		cairo_set_font_face(m_temp_cr, fnt);
-		cairo_set_font_size(m_temp_cr, size);
-		cairo_font_extents_t ext;
-		cairo_font_extents(m_temp_cr, &ext);
+        fm->ascent = PANGO_PIXELS((double)pango_font_metrics_get_ascent(metrics));
+        fm->descent = PANGO_PIXELS((double)pango_font_metrics_get_descent(metrics));
+        fm->height = fm->ascent + fm->descent;
+        fm->x_height = fm->height;
 
-		cairo_text_extents_t tex;
-		cairo_text_extents(m_temp_cr, "x", &tex);
+        pango_layout_set_text(layout, "x", 1);
 
-		fm->ascent		= (int) ext.ascent;
-		fm->descent		= (int) ext.descent;
-		fm->height		= (int) (ext.ascent + ext.descent);
-		fm->x_height	= (int) tex.height;
+        int x_width, x_height;
+        pango_layout_get_pixel_size(layout, &x_width, &x_height);
+
+		fm->x_height	= x_height;
 
 		cairo_restore(m_temp_cr);
 
-		ret = new cairo_font;
-		ret->font		= fnt;
-		ret->size		= size;
-		ret->strikeout 	= (decoration & litehtml::font_decoration_linethrough) ? true : false;
-		ret->underline	= (decoration & litehtml::font_decoration_underline) ? true : false;
+        g_object_unref(layout);
+        pango_font_metrics_unref(metrics);
 
+		ret = new cairo_font;
+		ret->font		= desc;
+		ret->size		= size;
+		ret->strikeout 	= (decoration & litehtml::font_decoration_linethrough) != 0;
+		ret->underline	= (decoration & litehtml::font_decoration_underline) != 0;
+        ret->ascent     = fm->ascent;
+        ret->descent    = fm->descent;
+
+        ret->underline_thickness = pango_font_metrics_get_underline_thickness(metrics);
+        ret->underline_position = -pango_font_metrics_get_underline_position(metrics);
+        pango_quantize_line_geometry(&ret->underline_thickness, &ret->underline_position);
+        ret->underline_thickness = PANGO_PIXELS(ret->underline_thickness);
+        ret->underline_position = -1;//PANGO_PIXELS(ret->underline_position);
+
+        ret->strikethrough_thickness = pango_font_metrics_get_strikethrough_thickness(metrics);
+        ret->strikethrough_position = pango_font_metrics_get_strikethrough_position(metrics);
+        pango_quantize_line_geometry(&ret->strikethrough_thickness, &ret->strikethrough_position);
+        ret->strikethrough_thickness = PANGO_PIXELS(ret->strikethrough_thickness);
+        ret->strikethrough_position = PANGO_PIXELS(ret->strikethrough_position);
 	}
 
 	return (litehtml::uint_ptr) ret;
@@ -99,50 +96,61 @@ litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceNa
 
 void container_linux::delete_font( litehtml::uint_ptr hFont )
 {
-	cairo_font* fnt = (cairo_font*) hFont;
+	auto* fnt = (cairo_font*) hFont;
 	if(fnt)
 	{
-		cairo_font_face_destroy(fnt->font);
+        pango_font_description_free(fnt->font);
 		delete fnt;
 	}
 }
 
 int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_ptr hFont )
 {
-	cairo_font* fnt = (cairo_font*) hFont;
+	auto* fnt = (cairo_font*) hFont;
 
 	cairo_save(m_temp_cr);
 
-	cairo_set_font_size(m_temp_cr, fnt->size);
-	cairo_set_font_face(m_temp_cr, fnt->font);
-	cairo_text_extents_t ext;
-	cairo_text_extents(m_temp_cr, text, &ext);
+    PangoLayout *layout = pango_cairo_create_layout(m_temp_cr);
+    pango_layout_set_font_description(layout, fnt->font);
+
+    pango_layout_set_text(layout, text, -1);
+    pango_cairo_update_layout (m_temp_cr, layout);
+
+    int x_width, x_height;
+    pango_layout_get_pixel_size(layout, &x_width, &x_height);
 
 	cairo_restore(m_temp_cr);
 
-	return (int) ext.x_advance;
+	return (int) x_width;
 }
 
 void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
-	cairo_font* fnt = (cairo_font*) hFont;
-	cairo_t* cr		= (cairo_t*) hdc;
+	auto* fnt = (cairo_font*) hFont;
+	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 
 	apply_clip(cr);
 
-	cairo_set_font_face(cr, fnt->font);
-	cairo_set_font_size(cr, fnt->size);
-	cairo_font_extents_t ext;
-	cairo_font_extents(cr, &ext);
-
-	int x = pos.left();
-	int y = pos.bottom()	- ext.descent;
-
 	set_color(cr, color);
 
+    PangoLayout *layout = pango_cairo_create_layout(cr);
+    pango_layout_set_font_description (layout, fnt->font);
+    pango_layout_set_text (layout, text, -1);
+
+    int baseline = PANGO_PIXELS(pango_layout_get_baseline(layout));
+
+    PangoRectangle ink_rect, logical_rect;
+    pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
+
+    int text_baseline = pos.height - fnt->descent;
+
+    int x = pos.left() + logical_rect.x;
+    int y = pos.top() + logical_rect.y + text_baseline - baseline;
+
 	cairo_move_to(cr, x, y);
-	cairo_show_text(cr, text);
+    pango_cairo_update_layout (cr, layout);
+    pango_cairo_show_layout (cr, layout);
 
 	int tw = 0;
 
@@ -153,28 +161,25 @@ void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t
 
 	if(fnt->underline)
 	{
-		cairo_set_line_width(cr, 1);
-		cairo_move_to(cr, x, y + 1.5);
-		cairo_line_to(cr, x + tw, y + 1.5);
+		cairo_set_line_width(cr, fnt->underline_thickness);
+		cairo_move_to(cr, x, pos.top() + text_baseline - fnt->underline_position + 0.5);
+		cairo_line_to(cr, x + tw, pos.top() + text_baseline - fnt->underline_position + 0.5);
 		cairo_stroke(cr);
 	}
 	if(fnt->strikeout)
 	{
-		cairo_text_extents_t tex;
-		cairo_text_extents(cr, "x", &tex);
-
-		int ln_y = y - tex.height / 2.0;
-
-		cairo_set_line_width(cr, 1);
-		cairo_move_to(cr, x, (double) ln_y - 0.5);
-		cairo_line_to(cr, x + tw, (double) ln_y - 0.5);
+		cairo_set_line_width(cr, fnt->strikethrough_thickness);
+		cairo_move_to(cr, x, pos.top() + text_baseline - fnt->strikethrough_position - 0.5);
+		cairo_line_to(cr, x + tw, pos.top() + text_baseline - fnt->strikethrough_position - 0.5);
 		cairo_stroke(cr);
 	}
 
 	cairo_restore(cr);
+
+    g_object_unref(layout);
 }
 
-int container_linux::pt_to_px( int pt )
+int container_linux::pt_to_px( int pt ) const
 {
 	GdkScreen* screen = gdk_screen_get_default();
 	double dpi = gdk_screen_get_resolution(screen);
@@ -184,7 +189,7 @@ int container_linux::pt_to_px( int pt )
 
 int container_linux::get_default_font_size() const
 {
-	return 16;
+	return pt_to_px(12);
 }
 
 void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::list_marker& marker )
@@ -210,7 +215,7 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 		{
 		case litehtml::list_style_type_circle:
 			{
-				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 0.5);
+				draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height, marker.color, 1);
 			}
 			break;
 		case litehtml::list_style_type_disc:
@@ -221,7 +226,7 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 		case litehtml::list_style_type_square:
 			if(hdc)
 			{
-				cairo_t* cr = (cairo_t*) hdc;
+				auto* cr = (cairo_t*) hdc;
 				cairo_save(cr);
 
 				cairo_new_path(cr);
@@ -243,7 +248,7 @@ void container_linux::load_image( const litehtml::tchar_t* src, const litehtml::
 {
 	litehtml::tstring url;
 	make_url(src, baseurl, url);
-	if(m_images.find(url.c_str()) == m_images.end())
+	if(m_images.find(url) == m_images.end())
 	{
 		try
 		{
@@ -254,8 +259,7 @@ void container_linux::load_image( const litehtml::tchar_t* src, const litehtml::
 			}
 		} catch(...)
 		{
-			int iii=0;
-			iii++;
+            m_images[url.c_str()] = Glib::RefPtr<Gdk::Pixbuf>(nullptr);
 		}
 	}
 }
@@ -265,11 +269,18 @@ void container_linux::get_image_size( const litehtml::tchar_t* src, const liteht
 	litehtml::tstring url;
 	make_url(src, baseurl, url);
 
-	images_map::iterator img = m_images.find(url.c_str());
+	auto img = m_images.find(url);
 	if(img != m_images.end())
 	{
-		sz.width	= img->second->get_width();
-		sz.height	= img->second->get_height();
+        if(img->second)
+        {
+            sz.width = img->second->get_width();
+            sz.height = img->second->get_height();
+        } else
+        {
+            sz.width	= 0;
+            sz.height	= 0;
+        }
 	} else
 	{
 		sz.width	= 0;
@@ -279,7 +290,7 @@ void container_linux::get_image_size( const litehtml::tchar_t* src, const liteht
 
 void container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::background_paint& bg )
 {
-	cairo_t* cr = (cairo_t*) hdc;
+	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
@@ -299,7 +310,7 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 	make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
 
 	//lock_images_cache();
-	images_map::iterator img_i = m_images.find(url.c_str());
+	auto img_i = m_images.find(url);
 	if(img_i != m_images.end() && img_i->second)
 	{
 		Glib::RefPtr<Gdk::Pixbuf> bgbmp = img_i->second;
@@ -385,7 +396,7 @@ void container_linux::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 
 void container_linux::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root)
 {
-	cairo_t* cr = (cairo_t*) hdc;
+	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
@@ -717,7 +728,7 @@ void container_linux::apply_clip( cairo_t* cr )
 
 void container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width )
 {
-	if(!cr) return;
+	if(!cr || !width || !height) return;
 	cairo_save(cr);
 
 	apply_clip(cr);
@@ -737,7 +748,7 @@ void container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, int he
 
 void container_linux::fill_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color )
 {
-	if(!cr) return;
+	if(!cr || !width || !height) return;
 	cairo_save(cr);
 
 	apply_clip(cr);
@@ -776,7 +787,7 @@ std::shared_ptr<litehtml::element>	container_linux::create_element(const litehtm
 																	  const litehtml::string_map &attributes,
 																	  const std::shared_ptr<litehtml::document> &doc)
 {
-	return 0;
+	return nullptr;
 }
 
 void container_linux::rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius )
@@ -824,7 +835,7 @@ void container_linux::draw_pixbuf(cairo_t* cr, const Glib::RefPtr<Gdk::Pixbuf>& 
 
 		if(cx != bmp->get_width() || cy != bmp->get_height())
 		{
-			Glib::RefPtr<Gdk::Pixbuf> new_img = bmp->scale_simple(cx, cy, Gdk::INTERP_BILINEAR);;
+			Glib::RefPtr<Gdk::Pixbuf> new_img = bmp->scale_simple(cx, cy, Gdk::INTERP_BILINEAR);
 			Gdk::Cairo::set_source_pixbuf(crobj, new_img, x, y);
 			crobj->paint();
 		} else
@@ -839,7 +850,7 @@ void container_linux::draw_pixbuf(cairo_t* cr, const Glib::RefPtr<Gdk::Pixbuf>& 
 
 cairo_surface_t* container_linux::surface_from_pixbuf(const Glib::RefPtr<Gdk::Pixbuf>& bmp)
 {
-	cairo_surface_t* ret = NULL;
+	cairo_surface_t* ret;
 
 	if(bmp->get_has_alpha())
 	{

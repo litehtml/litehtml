@@ -47,14 +47,13 @@ void litehtml::css::parse_stylesheet(const tchar_t* str, const tchar_t* baseurl,
 			break;
 		}
 
-		tstring::size_type style_start = text.find(_t("{"), pos);
-		tstring::size_type style_end	= text.find(_t("}"), pos);
+		tstring::size_type style_start	= text.find(_t('{'), pos);
+		tstring::size_type style_end	= text.find(_t('}'), pos);
 		if(style_start != tstring::npos && style_end != tstring::npos)
 		{
-			style::ptr st = std::make_shared<style>();
-			st->add(text.substr(style_start + 1, style_end - style_start - 1).c_str(), baseurl);
+			auto style = text.substr(style_start + 1, style_end - style_start - 1);
 
-			parse_selectors(text.substr(pos, style_start - pos), st, media);
+			parse_selectors(text.substr(pos, style_start - pos), style, media, baseurl ? baseurl : _t(""));
 
 			if(media && doc)
 			{
@@ -99,7 +98,7 @@ void litehtml::css::parse_css_url( const tstring& str, tstring& url )
 	}
 }
 
-bool litehtml::css::parse_selectors( const tstring& txt, const litehtml::style::ptr& styles, const media_query_list::ptr& media )
+bool litehtml::css::parse_selectors( const tstring& txt, const tstring& styles, const media_query_list::ptr& media, const tstring& baseurl )
 {
 	tstring selector = txt;
 	trim(selector);
@@ -108,15 +107,15 @@ bool litehtml::css::parse_selectors( const tstring& txt, const litehtml::style::
 
 	bool added_something = false;
 
-	for(string_vector::iterator tok = tokens.begin(); tok != tokens.end(); tok++)
+	for(auto & token : tokens)
 	{
-		css_selector::ptr selector = std::make_shared<css_selector>(media);
-		selector->m_style = styles;
-		trim(*tok);
-		if(selector->parse(*tok))
+		css_selector::ptr new_selector = std::make_shared<css_selector>(media, baseurl);
+        new_selector->m_style = styles;
+		trim(token);
+		if(new_selector->parse(token))
 		{
-			selector->calc_specificity();
-			add_selector(selector);
+			new_selector->calc_specificity();
+			add_selector(new_selector);
 			added_something = true;
 		}
 	}
@@ -175,7 +174,7 @@ void litehtml::css::parse_atrule(const tstring& text, const tchar_t* baseurl, co
 						if(!tokens.empty())
 						{
 							tstring media_str;
-							for(string_vector::iterator iter = tokens.begin(); iter != tokens.end(); iter++)
+							for(auto iter = tokens.begin(); iter != tokens.end(); iter++)
 							{
 								if(iter != tokens.begin())
 								{
