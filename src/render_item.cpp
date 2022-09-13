@@ -256,8 +256,9 @@ bool litehtml::render_item::is_last_child_inline(const std::shared_ptr<render_it
 {
     if(!m_children.empty())
     {
-        for (const auto& this_el: m_children)
+        for (auto it = m_children.rbegin(); it != m_children.rend(); ++it)
         {
+            const auto& this_el = *it;
             if (!this_el->src_el()->is_white_space())
             {
                 if (el == this_el)
