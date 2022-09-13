@@ -32,7 +32,7 @@
 
 #include <string>
 
-#include "litehtml/os_types.h"
+#include "os_types.h"
 
 namespace litehtml {
 

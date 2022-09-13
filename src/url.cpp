@@ -27,14 +27,14 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#include "litehtml/url.h"
+#include "url.h"
 
 #include <iostream>
 #include <sstream>
 #include <algorithm>
 
-#include "litehtml/codepoint.h"
-#include "litehtml/url_path.h"
+#include "codepoint.h"
+#include "url_path.h"
 
 namespace litehtml {
 
