@@ -184,7 +184,8 @@ int litehtml::render_item::get_inline_shift_left()
                     if (el_parent->is_first_child_inline(el))
                     {
                         ret += el_parent->padding_left() + el_parent->border_left() + el_parent->margin_left();
-                    }
+                    } else
+                        break;
                     el = el_parent;
                     el_parent = el_parent->parent();
                 }
@@ -213,7 +214,8 @@ int litehtml::render_item::get_inline_shift_right()
                     if (el_parent->is_last_child_inline(el))
                     {
                         ret += el_parent->padding_right() + el_parent->border_right() + el_parent->margin_right();
-                    }
+                    } else
+                        break;
                     el = el_parent;
                     el_parent = el_parent->parent();
                 }
