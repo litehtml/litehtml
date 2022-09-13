@@ -3,7 +3,7 @@
 
 litehtml::el_cdata::el_cdata(const std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
 {
-	m_skip = true;
+	//m_skip = true;
 }
 
 void litehtml::el_cdata::get_text( tstring& text )

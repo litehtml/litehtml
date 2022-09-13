@@ -18,7 +18,6 @@ namespace litehtml
 		explicit el_table(const std::shared_ptr<litehtml::document>& doc);
 
 		bool appendChild(const litehtml::element::ptr& el) override;
-		void parse_styles(bool is_reparse = false) override;
 		void parse_attributes() override;
 	};
 }

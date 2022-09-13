@@ -1,7 +1,7 @@
 #ifndef LH_TYPES_H
 #define LH_TYPES_H
 
-#include <stdlib.h>
+#include <cstdlib>
 #include <memory>
 #include <map>
 #include <vector>
@@ -182,7 +182,7 @@ namespace litehtml
 		draw_positioned,
 	};
 
-#define  style_display_strings		_t("none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text")
+#define  style_display_strings		_t("none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text;flex;inline-flex")
 
 	enum style_display
 	{
@@ -202,6 +202,8 @@ namespace litehtml
 		display_table_row,
 		display_table_row_group,
 		display_inline_text,
+        display_flex,
+        display_inline_flex,
 	};
 
 	enum style_border
@@ -516,15 +518,16 @@ namespace litehtml
 		content_property_no_close_quote,
 	};
 
+    class render_item;
 
 	struct floated_box
 	{
 		typedef std::vector<floated_box>	vector;
 
-		position		pos;
-		element_float	float_side;
-		element_clear	clear_floats;
-		std::shared_ptr<element>	el;
+		position		                pos;
+		element_float	                float_side;
+		element_clear	                clear_floats;
+		std::shared_ptr<render_item>	el;
 
 		floated_box() = default;
 		floated_box(const floated_box& val)

@@ -8,7 +8,7 @@ litehtml::el_space::el_space(const tchar_t* text, const std::shared_ptr<litehtml
 
 bool litehtml::el_space::is_white_space() const
 {
-	white_space ws = get_white_space();
+	white_space ws = css().get_white_space();
 	if(	ws == white_space_normal || 
 		ws == white_space_nowrap ||
 		ws == white_space_pre_line )
@@ -20,7 +20,7 @@ bool litehtml::el_space::is_white_space() const
 
 bool litehtml::el_space::is_break() const
 {
-	white_space ws = get_white_space();
+	white_space ws = css().get_white_space();
 	if(	ws == white_space_pre ||
 		ws == white_space_pre_line ||
 		ws == white_space_pre_wrap)
@@ -38,3 +38,7 @@ bool litehtml::el_space::is_space() const
     return true;
 }
 
+litehtml::tstring litehtml::el_space::dump_get_name()
+{
+    return _t("space: \"") + get_escaped_string(m_text) + _t("\"");
+}

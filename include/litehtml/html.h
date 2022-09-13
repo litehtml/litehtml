@@ -74,11 +74,13 @@ namespace litehtml
 	void trim(tstring &s);
 	void lcase(tstring &s);
 	int	 value_index(const tstring& val, const tstring& strings, int defValue = -1, tchar_t delim = _t(';'));
+    tstring index_value(int index, const tstring& strings, tchar_t delim = _t(';'));
 	bool value_in_list(const tstring& val, const tstring& strings, tchar_t delim = _t(';'));
 	tstring::size_type find_close_bracket(const tstring &s, tstring::size_type off, tchar_t open_b = _t('('), tchar_t close_b = _t(')'));
 	void split_string(const tstring& str, string_vector& tokens, const tstring& delims, const tstring& delims_preserve = _t(""), const tstring& quote = _t("\""));
 	void join_string(tstring& str, const string_vector& tokens, const tstring& delims);
     double t_strtod(const tchar_t* string, tchar_t** endPtr);
+    tstring get_escaped_string(const tstring& in_str);
 
 	int t_strcasecmp(const tchar_t *s1, const tchar_t *s2);
 	int t_strncasecmp(const tchar_t *s1, const tchar_t *s2, size_t n);

@@ -3,6 +3,7 @@
 
 #include "css_length.h"
 #include "types.h"
+#include "web_color.h"
 
 namespace litehtml
 {
@@ -31,6 +32,8 @@ namespace litehtml
 			color	= val.color;
 			return *this;
 		}
+
+        tstring to_string();
 	};
 
 	struct border
@@ -199,7 +202,7 @@ namespace litehtml
 			bottom_right_y	= val.bottom_right_y;
 			return *this;
 		}
-		border_radiuses calc_percents(int width, int height)
+		border_radiuses calc_percents(int width, int height) const
 		{
 			border_radiuses ret;
 			ret.bottom_left_x = bottom_left_x.calc_percent(width);
@@ -247,6 +250,13 @@ namespace litehtml
 			radius	= val.radius;
 			return *this;
 		}
+        tstring to_string()
+        {
+            return _t("left: ") + left.to_string() +
+                   _t(", top: ") + top.to_string() +
+                   _t(", right: ") + top.to_string() +
+                   _t(", bottom: ") + bottom.to_string();
+        }
 	};
 
 	struct borders

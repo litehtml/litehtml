@@ -52,3 +52,12 @@ void litehtml::css_length::fromString( const tstring& str, const tstring& predef
 		}
 	}
 }
+
+litehtml::tstring litehtml::css_length::to_string()
+{
+    if(m_is_predefined)
+    {
+        return _t("def(") + t_to_string(m_predef) + _t(")");
+    }
+    return t_to_string(m_value) + _t("{") + index_value(m_units, css_units_strings) + _t("}");
+}

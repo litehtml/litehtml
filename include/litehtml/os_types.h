@@ -3,6 +3,7 @@
 
 #include <string>
 #include <cstdint>
+#include <iostream>
 
 namespace litehtml
 {

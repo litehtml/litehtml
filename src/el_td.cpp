@@ -41,4 +41,3 @@ void litehtml::el_td::parse_attributes()
 	}
 	html_tag::parse_attributes();
 }
-

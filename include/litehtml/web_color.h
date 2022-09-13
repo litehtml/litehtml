@@ -52,6 +52,7 @@ namespace litehtml
 			alpha	= val.alpha;
 			return *this;
 		}
+        tstring to_string();
         static web_color            from_string(const tchar_t* str, litehtml::document_container* callback);
 		static litehtml::tstring    resolve_name(const tchar_t* name, litehtml::document_container* callback);
         static bool                 is_color(const tchar_t* str);

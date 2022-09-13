@@ -44,6 +44,19 @@ litehtml::tstring::size_type litehtml::find_close_bracket(const tstring &s, tstr
 	return tstring::npos;
 }
 
+litehtml::tstring litehtml::index_value(int index, const tstring& strings, tchar_t delim)
+{
+	std::vector<tstring> vals;
+	tstring delims;
+	delims.push_back(delim);
+	split_string(strings, vals, delims);
+	if(index >= 0 and index < vals.size())
+	{
+		return vals[index];
+	}
+	return t_to_string(index);
+}
+
 int litehtml::value_index( const tstring& val, const tstring& strings, int defValue, tchar_t delim )
 {
 	if(val.empty() || strings.empty() || !delim)
@@ -200,6 +213,66 @@ int litehtml::t_strncasecmp(const litehtml::tchar_t *s1, const litehtml::tchar_t
 	}
 
 	return 0;
+}
+
+
+litehtml::tstring litehtml::get_escaped_string(const tstring& in_str)
+{
+    tstringstream tss;
+	for ( auto ch : in_str )
+	{
+		switch (ch)
+		{
+			case '\'':
+				tss << "\\'";
+				break;
+
+			case '\"':
+				tss << "\\\"";
+				break;
+
+			case '\?':
+				tss << "\\?";
+				break;
+
+			case '\\':
+				tss << "\\\\";
+				break;
+
+			case '\a':
+				tss << "\\a";
+				break;
+
+			case '\b':
+				tss << "\\b";
+				break;
+
+			case '\f':
+				tss << "\\f";
+				break;
+
+			case '\n':
+				tss << "\\n";
+				break;
+
+			case '\r':
+				tss << "\\r";
+				break;
+
+			case '\t':
+				tss << "\\t";
+				break;
+
+			case '\v':
+				tss << "\\v";
+				break;
+
+			default:
+				tss << ch;
+		}
+	}
+
+	return tss.str();
 }
 
 void litehtml::document_container::split_text(const char* text, const std::function<void(const tchar_t*)>& on_word, const std::function<void(const tchar_t*)>& on_space)

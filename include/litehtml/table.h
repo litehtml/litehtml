@@ -1,8 +1,14 @@
 #ifndef LH_TABLE_H
 #define LH_TABLE_H
 
+#include <vector>
+#include <memory>
+#include "css_length.h"
+
 namespace litehtml
 {
+    struct render_item;
+
 	struct table_row
 	{
 		typedef std::vector<table_row>	vector;
@@ -10,7 +16,7 @@ namespace litehtml
 		int				height;
 		int				border_top;
 		int				border_bottom;
-		element::ptr	el_row;
+        std::shared_ptr<render_item>	el_row;
 		int				top;
 		int				bottom;
 		css_length		css_height;
@@ -28,20 +34,7 @@ namespace litehtml
 			css_height.predef(0);
 		}
 
-		table_row(int h, element::ptr& row)
-		{
-			min_height		= 0;
-			height			= h;
-			el_row			= row;
-			border_bottom	= 0;
-			border_top		= 0;
-			top				= 0;
-			bottom			= 0;
-			if (row)
-			{
-				css_height = row->get_css_height();
-			}
-		}
+		table_row(int h, const std::shared_ptr<render_item>& row);
 
 		table_row(const table_row& val)
 		{
@@ -147,7 +140,7 @@ namespace litehtml
 
 	struct table_cell
 	{
-		element::ptr	el;
+        std::shared_ptr<render_item>	el;
 		int				colspan;
 		int				rowspan;
 		int				min_width;
@@ -210,7 +203,7 @@ namespace litehtml
 		rows					m_cells;
 		table_column::vector	m_columns;
 		table_row::vector		m_rows;
-		elements_vector			m_captions;
+		std::vector<std::shared_ptr<render_item>> m_captions;
 		int						m_captions_height;
 	public:
 
@@ -222,14 +215,14 @@ namespace litehtml
 		}
 
 		void			clear();
-		void			begin_row(element::ptr& row);
-		void			add_cell(element::ptr& el);
+		void			begin_row(const std::shared_ptr<render_item>& row);
+		void			add_cell(const std::shared_ptr<render_item>& el);
 		bool			is_rowspanned(int r, int c);
 		void			finish();
 		table_cell*		cell(int t_col, int t_row);
 		table_column&	column(int c)	{ return m_columns[c];	}
 		table_row&		row(int r)		{ return m_rows[r];		}
-		elements_vector& captions()		{ return m_captions; }
+        std::vector<std::shared_ptr<render_item>>& captions()		{ return m_captions; }
 
 		int				rows_count() const	{ return m_rows_count;	}
 		int				cols_count() const	{ return m_cols_count; }
@@ -242,8 +235,8 @@ namespace litehtml
 		void			distribute_width(int width, int start, int end);
 		void			distribute_width(int width, int start, int end, table_column_accessor* acc);
 		int				calc_table_width(int block_width, bool is_auto, int& min_table_width, int& max_table_width);
-		void			calc_horizontal_positions(margins& table_borders, border_collapse bc, int bdr_space_x);
-		void			calc_vertical_positions(margins& table_borders, border_collapse bc, int bdr_space_y);
+		void			calc_horizontal_positions(const margins& table_borders, border_collapse bc, int bdr_space_x);
+		void			calc_vertical_positions(const margins& table_borders, border_collapse bc, int bdr_space_y);
 		void			calc_rows_height(int blockHeight, int borderSpacingY);
 	};
 }

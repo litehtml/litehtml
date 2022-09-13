@@ -3,7 +3,7 @@
 
 litehtml::el_comment::el_comment(const std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
 {
-	m_skip = true;
+	//m_skip = true;
 }
 
 bool litehtml::el_comment::is_comment() const
