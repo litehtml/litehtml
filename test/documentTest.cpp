@@ -37,7 +37,7 @@ TEST(DocumentTest, CvtUnits) {
   container_test container;
   litehtml::document::ptr doc = std::make_shared<litehtml::document>(&container, nullptr);
   bool is_percent;
-  doc->cvt_units(_t(""), 10, &is_percent);
+  doc->to_pixels(_t(""), 10, &is_percent);
   css_length c;
   c.fromString(_t("10%")), doc->cvt_units(c, 10, 100);
   c.fromString(_t("10em")), doc->cvt_units(c, 10, 100);
