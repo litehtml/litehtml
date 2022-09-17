@@ -2,6 +2,7 @@
 #include "render_item.h"
 #include "document.h"
 #include <typeinfo>
+#include <utf8_strings.h>
 
 litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
         m_element(std::move(_src_el)),
@@ -1200,7 +1201,7 @@ void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes)
 
 void litehtml::render_item::dump(litehtml::dumper& cout)
 {
-    cout.begin_node(src_el()->dump_get_name() + "{" + typeid(*this).name() + "}");
+    cout.begin_node(src_el()->dump_get_name() + _t("{") + (const tstring) litehtml_from_utf8(typeid(*this).name()) + _t("}"));
 
     auto attrs = src_el()->dump_get_attrs();
     if(!attrs.empty())

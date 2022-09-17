@@ -26,9 +26,6 @@
     <ClCompile Include="src\background.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\box.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\context.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -164,13 +161,43 @@
     <ClCompile Include="src\gumbo\vector.c">
       <Filter>Source Files\gumbo</Filter>
     </ClCompile>
-    <ClCompile Include="src\el_li.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\num_cvt.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\strtod.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_block.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_block_context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_flex.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_image.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_inline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_inline_context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_item.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\render_table.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\line_box.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\css_properties.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\css_borders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -360,9 +387,6 @@
     </ClInclude>
     <ClInclude Include="src\gumbo\include\gumbo\vector.h">
       <Filter>Header Files\gumbo</Filter>
-    </ClInclude>
-    <ClInclude Include="include\litehtml\el_li.h">
-      <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\litehtml\num_cvt.h">
       <Filter>Header Files</Filter>

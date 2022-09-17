@@ -827,7 +827,7 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
         std::shared_ptr<render_item> annon_ri;
         if(annon_tag->css().get_display() == display_table_cell)
         {
-            annon_tag->set_tagName("table_cell");
+            annon_tag->set_tagName(_t("table_cell"));
             annon_ri = std::make_shared<render_item_block>(annon_tag);
         } else
         {
@@ -1015,7 +1015,7 @@ void litehtml::document::append_children_from_utf8(element& parent, const char* 
 	}
 }
 
-void litehtml::document::document::dump(dumper& cout)
+void litehtml::document::dump(dumper& cout)
 {
     if(m_root_render)
     {

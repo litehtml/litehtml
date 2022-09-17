@@ -31,6 +31,7 @@ namespace litehtml
 	#define t_strstr			wcsstr
 	#define t_isspace			iswspace
 	#define t_to_string(val)	std::to_wstring(val)
+	#define t_snprintf(s, n, format, ...) _snwprintf(s, n, format, __VA_ARGS__)
 
 #else
 
@@ -49,6 +50,7 @@ namespace litehtml
 	#define t_strstr			strstr
 	#define t_isspace			isspace
 	#define t_to_string(val)	std::to_string(val)
+	#define t_snprintf(s, n, format, ...) snprintf(s, n, format, __VA_ARGS__)
 
 #endif
 
@@ -79,6 +81,8 @@ namespace litehtml
 	#define t_strstr			strstr
 	#define t_isspace			isspace
 	#define t_to_string(val)	std::to_string(val)
+	
+	#define t_snprintf(s, n, format, ...) snprintf(s, n, format, __VA_ARGS__)
 
 #endif
 }

@@ -251,7 +251,7 @@ litehtml::element::ptr litehtml::element::_add_before_after(int type, const tstr
 {
     litehtml::style st;
     st.add(style.c_str(), baseurl.c_str(), nullptr);
-    if(st.get_property("content"))
+    if(st.get_property(_t("content")))
     {
         element::ptr el;
         if(type == 0)

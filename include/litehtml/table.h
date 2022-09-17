@@ -7,7 +7,7 @@
 
 namespace litehtml
 {
-    struct render_item;
+    class render_item;
 
 	struct table_row
 	{

@@ -7,8 +7,6 @@ int litehtml::render_item_inline_context::_render_content(int x, int y, int max_
 {
     m_line_boxes.clear();
 
-    element_position el_position;
-
     int block_height = 0;
 
     if (get_predefined_height(block_height))

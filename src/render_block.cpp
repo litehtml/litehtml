@@ -523,7 +523,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
 {
     {
         css_selector sel(media_query_list::ptr(nullptr), _t(""));
-        sel.parse(".inline_rating");
+        sel.parse(_t(".inline_rating"));
         if(src_el()->select(sel))
         {
             int i = 0;

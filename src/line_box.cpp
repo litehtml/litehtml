@@ -1,6 +1,7 @@
 #include "line_box.h"
 #include "element.h"
 #include "render_item.h"
+#include <algorithm>
 
 
 int litehtml::line_box::height() const

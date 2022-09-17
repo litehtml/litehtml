@@ -260,10 +260,10 @@ litehtml::tstring litehtml::web_color::to_string()
     tchar_t str[9];
     if(alpha)
     {
-        snprintf(str, 9, "%02X%02X%02X%02X", red, green, blue, alpha);
+		t_snprintf(str, 9, _t("%02X%02X%02X%02X"), red, green, blue, alpha);
     } else
     {
-        snprintf(str, 9, "%02X%02X%02X", red, green, blue);
+		t_snprintf(str, 9, _t("%02X%02X%02X"), red, green, blue);
     }
     return str;
 }

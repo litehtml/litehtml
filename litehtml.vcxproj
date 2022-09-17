@@ -38,6 +38,7 @@
     <ProjectGuid>{5EEE68E7-3CB0-4ADB-AF72-4C0BB01F0B18}</ProjectGuid>
     <RootNamespace>drawhtml</RootNamespace>
     <Keyword>Win32Proj</Keyword>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-UTF8|Win32'" Label="Configuration">
@@ -64,24 +65,24 @@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release-UTF8|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug-UTF8|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
     <WholeProgramOptimization>true</WholeProgramOptimization>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>StaticLibrary</ConfigurationType>
-    <PlatformToolset>v143</PlatformToolset>
+    <PlatformToolset>v120</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
@@ -309,9 +310,10 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\background.cpp" />
-    <ClCompile Include="src\box.cpp" />
     <ClCompile Include="src\context.cpp" />
+    <ClCompile Include="src\css_borders.cpp" />
     <ClCompile Include="src\css_length.cpp" />
+    <ClCompile Include="src\css_properties.cpp" />
     <ClCompile Include="src\css_selector.cpp" />
     <ClCompile Include="src\document.cpp" />
     <ClCompile Include="src\element.cpp" />
@@ -325,7 +327,6 @@
     <ClCompile Include="src\el_div.cpp" />
     <ClCompile Include="src\el_font.cpp" />
     <ClCompile Include="src\el_image.cpp" />
-    <ClCompile Include="src\el_li.cpp" />
     <ClCompile Include="src\el_link.cpp" />
     <ClCompile Include="src\el_para.cpp" />
     <ClCompile Include="src\el_script.cpp" />
@@ -350,8 +351,17 @@
     <ClCompile Include="src\html.cpp" />
     <ClCompile Include="src\html_tag.cpp" />
     <ClCompile Include="src\iterators.cpp" />
+    <ClCompile Include="src\line_box.cpp" />
     <ClCompile Include="src\media_query.cpp" />
     <ClCompile Include="src\num_cvt.cpp" />
+    <ClCompile Include="src\render_block.cpp" />
+    <ClCompile Include="src\render_block_context.cpp" />
+    <ClCompile Include="src\render_flex.cpp" />
+    <ClCompile Include="src\render_image.cpp" />
+    <ClCompile Include="src\render_inline.cpp" />
+    <ClCompile Include="src\render_inline_context.cpp" />
+    <ClCompile Include="src\render_item.cpp" />
+    <ClCompile Include="src\render_table.cpp" />
     <ClCompile Include="src\strtod.cpp" />
     <ClCompile Include="src\style.cpp" />
     <ClCompile Include="src\stylesheet.cpp" />
@@ -382,7 +392,6 @@
     <ClInclude Include="include\litehtml\el_div.h" />
     <ClInclude Include="include\litehtml\el_font.h" />
     <ClInclude Include="include\litehtml\el_image.h" />
-    <ClInclude Include="include\litehtml\el_li.h" />
     <ClInclude Include="include\litehtml\el_link.h" />
     <ClInclude Include="include\litehtml\el_para.h" />
     <ClInclude Include="include\litehtml\el_script.h" />

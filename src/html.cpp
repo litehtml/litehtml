@@ -50,7 +50,7 @@ litehtml::tstring litehtml::index_value(int index, const tstring& strings, tchar
 	tstring delims;
 	delims.push_back(delim);
 	split_string(strings, vals, delims);
-	if(index >= 0 and index < vals.size())
+	if(index >= 0 && index < vals.size())
 	{
 		return vals[index];
 	}
