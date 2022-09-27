@@ -121,6 +121,8 @@ int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_p
 
 	cairo_restore(m_temp_cr);
 
+    g_object_unref(layout);
+
 	return (int) x_width;
 }
 
