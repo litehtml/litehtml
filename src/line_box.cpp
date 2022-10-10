@@ -50,29 +50,22 @@ void litehtml::line_box::add_element(const std::shared_ptr<render_item> &el)
 
 void litehtml::line_box::finish(bool last_box)
 {
+    // remove empty elements at the end of line
+    while (!m_items.empty() && (m_items.back()->src_el()->is_white_space() || m_items.back()->src_el()->is_break()))
+    {
+        m_width -= m_items.back()->width();
+        m_items.pop_back();
+    }
+
     if( is_empty() || (!is_empty() && last_box && is_break_only()) )
     {
         m_height = 0;
         return;
     }
 
-    for(const auto& el : m_items)
-    {
-        if(el->src_el()->is_white_space() || el->src_el()->is_break())
-        {
-            if(!el->skip())
-            {
-                el->skip(true);
-                m_width -= el->width();
-            }
-        } else
-        {
-            break;
-        }
-    }
-
     int base_line	= m_font_metrics.base_line();
     int line_height = m_line_height;
+    int spc_x = 0;
 
     int add_x = 0;
     switch(m_text_align)
@@ -89,9 +82,22 @@ void litehtml::line_box::finish(bool last_box)
                 add_x = ((m_box_right - m_box_left) - m_width) / 2;
             }
             break;
+        case text_align_justify:
+            if (m_width < (m_box_right - m_box_left))
+            {
+                add_x = 0;
+                spc_x = (m_box_right - m_box_left) - m_width;
+                if (spc_x > m_width/4)
+                    spc_x = 0;
+            }
+            break;
         default:
             add_x = 0;
     }
+
+    int counter = 0;
+    float offj  = float(spc_x) / std::max(1.f, float(m_items.size())-1.f);
+    float cixx  = 0.0f;
 
     m_height = 0;
     // find line box baseline and line-height
@@ -104,7 +110,22 @@ void litehtml::line_box::finish(bool last_box)
             line_height = std::max(line_height, el->src_el()->css().get_line_height());
             m_height = std::max(m_height, fm.height);
         }
-        el->pos().x += add_x;
+        if (spc_x && counter)
+        {
+            cixx += offj;
+            if ((counter+1) == int(m_items.size()))
+                cixx += 0.99f;
+            el->pos().x += int(cixx);
+        }
+        counter++;
+        if((m_text_align == text_align_right || spc_x) && counter == int(m_items.size()))
+        {
+            // Forcible justify the last element to the right side for text align right and justify;
+            el->pos().x = m_box_right - el->pos().width;
+        } else
+        {
+            el->pos().x += add_x;
+        }
     }
 
     if(m_height)
