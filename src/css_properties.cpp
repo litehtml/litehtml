@@ -271,6 +271,7 @@ void litehtml::css_properties::parse(const std::shared_ptr<element>& el, const s
     }
 
     parse_background(el, doc);
+    parse_flex(el, doc);
 }
 
 void litehtml::css_properties::parse_font(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc)
@@ -514,6 +515,38 @@ void litehtml::css_properties::parse_background(const std::shared_ptr<element>& 
     if(!m_bg.m_image.empty())
     {
         doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.empty() ? nullptr : m_bg.m_baseurl.c_str(), true);
+    }
+}
+
+void litehtml::css_properties::parse_flex(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc)
+{
+    if(m_display == display_flex)
+    {
+        m_flex_direction = (flex_direction) value_index(el->get_style_property(_t("flex-direction"), false, _t("row")), flex_direction_strings, flex_direction_row);
+        m_flex_wrap = (flex_wrap) value_index(el->get_style_property(_t("flex-wrap"), false, _t("nowrap")), flex_wrap_strings, flex_wrap_nowrap);
+
+        m_flex_justify_content = (flex_justify_content) value_index(el->get_style_property(_t("justify-content"), false, _t("flex-start")), flex_justify_content_strings, flex_justify_content_flex_start);
+        m_flex_align_items = (flex_align_items) value_index(el->get_style_property(_t("align-items"), false, _t("stretch")), flex_align_items_strings, flex_align_items_stretch);
+        m_flex_align_content = (flex_align_content) value_index(el->get_style_property(_t("align-content"), false, _t("stretch")), flex_align_content_strings, flex_align_content_stretch);
+    }
+    auto parent = el->parent();
+    if(parent && parent->css().m_display == display_flex)
+    {
+        m_flex_grow = (float) t_strtod(el->get_style_property(_t("flex-grow"), false, _t("0")), nullptr);
+        m_flex_shrink = (float) t_strtod(el->get_style_property(_t("flex-shrink"), false, _t("1")), nullptr);
+        m_flex_align_self = (flex_align_self) value_index(el->get_style_property(_t("align-self"), false, _t("auto")), flex_align_self_strings, flex_align_self_auto);
+        m_flex_basis.fromString(el->get_style_property(_t("flex-shrink"), false, _t("auto")));
+        doc->cvt_units(m_flex_basis,	m_font_size);
+        if(m_display == display_inline || m_display == display_inline_block)
+        {
+            m_display = display_block;
+        } else if(m_display == display_inline_table)
+        {
+            m_display = display_table;
+        } else if(m_display == display_inline_flex)
+        {
+            m_display = display_flex;
+        }
     }
 }
 

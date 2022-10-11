@@ -748,6 +748,71 @@ namespace litehtml
 
 	// List of the Void Elements (can't have any contents)
 	const litehtml::tchar_t* const void_elements = _t("area;base;br;col;command;embed;hr;img;input;keygen;link;meta;param;source;track;wbr");
+
+#define flex_direction_strings		_t("row;row-reverse;column;column-reverse")
+
+    enum flex_direction
+    {
+        flex_direction_row,
+        flex_direction_row_reverse,
+        flex_direction_column,
+        flex_direction_column_reverse
+    };
+
+#define flex_wrap_strings		_t("nowrap;wrap;wrap-reverse")
+
+    enum flex_wrap
+    {
+        flex_wrap_nowrap,
+        flex_wrap_wrap,
+        flex_wrap_wrap_reverse
+    };
+
+#define flex_justify_content_strings		_t("flex-start;flex-end;center;space-between;space-around")
+
+    enum flex_justify_content
+    {
+        flex_justify_content_flex_start,
+        flex_justify_content_flex_end,
+        flex_justify_content_center,
+        flex_justify_content_space_between,
+        flex_justify_content_space_around
+    };
+
+#define flex_align_items_strings		_t("flex-start;flex-end;center;baseline;stretch")
+
+    enum flex_align_items
+    {
+        flex_align_items_flex_start,
+        flex_align_items_flex_end,
+        flex_align_items_center,
+        flex_align_items_baseline,
+        flex_align_items_stretch
+    };
+
+#define flex_align_self_strings		_t("auto;flex-start;flex-end;center;baseline;stretch")
+
+    enum flex_align_self
+    {
+        flex_align_self_auto,
+        flex_align_self_flex_start,
+        flex_align_self_flex_end,
+        flex_align_self_center,
+        flex_align_self_baseline,
+        flex_align_self_stretch
+    };
+
+#define flex_align_content_strings		_t("flex-start;flex-end;center;space-between;space-around;stretch")
+
+    enum flex_align_content
+    {
+        flex_align_content_flex_start,
+        flex_align_content_flex_end,
+        flex_align_content_center,
+        flex_align_content_space_between,
+        flex_align_content_space_around,
+        flex_align_content_stretch
+    };
 }
 
 #endif  // LH_TYPES_H

@@ -51,9 +51,20 @@ namespace litehtml
         css_length				m_css_border_spacing_x;
         css_length				m_css_border_spacing_y;
 
+        float                   m_flex_grow;
+        float                   m_flex_shrink;
+        css_length              m_flex_basis;
+        flex_direction          m_flex_direction;
+        flex_wrap               m_flex_wrap;
+        flex_justify_content    m_flex_justify_content;
+        flex_align_items        m_flex_align_items;
+        flex_align_self         m_flex_align_self;
+        flex_align_content      m_flex_align_content;
+
     private:
         void parse_font(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
         void parse_background(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
+        void parse_flex(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
 
     public:
         css_properties() :
@@ -90,7 +101,15 @@ namespace litehtml
                 m_text_transform(text_transform_none),
                 m_border_collapse(border_collapse_separate),
                 m_css_border_spacing_x(),
-                m_css_border_spacing_y()
+                m_css_border_spacing_y(),
+                m_flex_grow(0),
+                m_flex_shrink(1),
+                m_flex_direction(flex_direction_row),
+                m_flex_wrap(flex_wrap_nowrap),
+                m_flex_justify_content(flex_justify_content_flex_start),
+                m_flex_align_items(flex_align_items_stretch),
+                m_flex_align_self(flex_align_self_auto),
+                m_flex_align_content(flex_align_content_stretch)
         {}
 
         void parse(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
@@ -197,6 +216,16 @@ namespace litehtml
 
         const css_length& get_border_spacing_y() const;
         void get_border_spacing_y(const css_length& mBorderSpacingY);
+
+        float get_flex_grow() const;
+        float get_flex_shrink() const;
+        const css_length& get_flex_basis() const;
+        flex_direction get_flex_direction() const;
+        flex_wrap get_flex_wrap() const;
+        flex_justify_content get_flex_justify_content() const;
+        flex_align_items get_flex_align_items() const;
+        flex_align_self get_flex_align_self() const;
+        flex_align_content get_flex_align_content() const;
     };
 
     inline element_position css_properties::get_position() const
@@ -537,6 +566,51 @@ namespace litehtml
     inline void css_properties::get_border_spacing_y(const css_length& mBorderSpacingY)
     {
         m_css_border_spacing_y = mBorderSpacingY;
+    }
+
+    inline float css_properties::get_flex_grow() const
+    {
+        return m_flex_grow;
+    }
+
+    inline float css_properties::get_flex_shrink() const
+    {
+        return m_flex_shrink;
+    }
+
+    inline const css_length& css_properties::get_flex_basis() const
+    {
+        return m_flex_basis;
+    }
+
+    inline flex_direction css_properties::get_flex_direction() const
+    {
+        return m_flex_direction;
+    }
+
+    inline flex_wrap css_properties::get_flex_wrap() const
+    {
+        return m_flex_wrap;
+    }
+
+    inline flex_justify_content css_properties::get_flex_justify_content() const
+    {
+        return m_flex_justify_content;
+    }
+
+    inline flex_align_items css_properties::get_flex_align_items() const
+    {
+        return m_flex_align_items;
+    }
+
+    inline flex_align_self css_properties::get_flex_align_self() const
+    {
+        return m_flex_align_self;
+    }
+
+    inline flex_align_content css_properties::get_flex_align_content() const
+    {
+        return m_flex_align_content;
     }
 }
 

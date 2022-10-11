@@ -454,9 +454,99 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* _val, co
 	if(!t_strcmp(name, _t("font")))
 	{
 		parse_short_font(val, important);
-	} else 
-	{
-		add_parsed_property(name, val, important);
+	} else
+
+    // Parse flex-flow shorthand properties
+    if(!t_strcmp(name, _t("flex-flow")))
+    {
+        string_vector tokens;
+        split_string(val, tokens, _t(" "));
+        for(const auto& tok : tokens)
+        {
+            if(value_in_list(tok, flex_direction_strings))
+            {
+                add_parsed_property(_t("flex-direction"), tok, important);
+            } else if(value_in_list(tok, flex_wrap_strings))
+            {
+                add_parsed_property(_t("flex-wrap"), tok, important);
+            }
+        }
+    } else
+
+    // Parse flex-flow shorthand properties
+    if(!t_strcmp(name, _t("flex")))
+    {
+        auto is_number = [](const tstring& val)
+            {
+                for(auto ch : val)
+                {
+                    if((ch < _t('0') || ch > _t('9')) && ch != _t('.'))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            };
+        if(val == _t("initial"))
+        {
+            // 0 1 auto
+            add_parsed_property(_t("flex-grow"), "0", important);
+            add_parsed_property(_t("flex-shrink"), "1", important);
+            add_parsed_property(_t("flex-basis"), "auto", important);
+        } else if(val == _t("auto"))
+        {
+            // 1 1 auto
+            add_parsed_property(_t("flex-grow"), "1", important);
+            add_parsed_property(_t("flex-shrink"), "1", important);
+            add_parsed_property(_t("flex-basis"), "auto", important);
+        } else if(val == _t("none"))
+        {
+            // 0 0 auto
+            add_parsed_property(_t("flex-grow"), "0", important);
+            add_parsed_property(_t("flex-shrink"), "0", important);
+            add_parsed_property(_t("flex-basis"), "auto", important);
+        }
+        string_vector tokens;
+        split_string(val, tokens, _t(" "));
+        if(tokens.size() == 3)
+        {
+            add_parsed_property(_t("flex-grow"), tokens[0], important);
+            add_parsed_property(_t("flex-shrink"), tokens[1], important);
+            add_parsed_property(_t("flex-basis"), tokens[2], important);
+        } else if(tokens.size() == 2)
+        {
+            if(is_number(tokens[0]))
+            {
+                add_parsed_property(_t("flex-grow"), tokens[0], important);
+            } else
+            {
+                if (is_number(tokens[1]))
+                {
+                    add_parsed_property(_t("flex-shrink"), tokens[0], important);
+                } else
+                {
+                    add_parsed_property(_t("flex-base"), tokens[0], important);
+                }
+            }
+        } else if(tokens.size() == 1)
+        {
+            if (is_number(tokens[0]))
+            {
+                add_parsed_property(_t("flex-grow"), tokens[0], important);
+                auto v = (float) t_strtod(tokens[0].c_str(), nullptr);
+                if(v >= 1)
+                {
+                    add_parsed_property(_t("flex-shrink"), "1", important);
+                    add_parsed_property(_t("flex-basis"), "0", important);
+                }
+            } else
+            {
+                add_parsed_property(_t("flex-base"), tokens[0], important);
+            }
+        }
+    } else
+    {
+        add_parsed_property(name, val, important);
 	}
 }
 
