@@ -14,6 +14,11 @@ namespace litehtml
 		bool is_comment() const override;
 		void get_text(tstring& text) override;
 		void set_data(const tchar_t* data) override;
+        std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri) override
+        {
+            // Comments are not rendered
+            return nullptr;
+        }
 	};
 }
 
