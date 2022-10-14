@@ -46,6 +46,7 @@ void litehtml::el_text::parse_styles(bool is_reparse)
         css_w().set_font(el_parent->css().get_font());
         css_w().set_font_metrics(el_parent->css().get_font_metrics());
         css_w().set_white_space(el_parent->css().get_white_space());
+		css_w().set_text_transform(el_parent->css().get_text_transform());
     }
     css_w().set_display(display_inline_text);
     css_w().set_float(float_none);
@@ -55,6 +56,9 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 		m_transformed_text	= m_text;
 		m_use_transformed = true;
 		get_document()->container()->transform_text(m_transformed_text, m_css.get_text_transform());
+	} else
+	{
+		m_use_transformed = false;
 	}
 
     element::ptr p = parent();
