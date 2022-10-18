@@ -45,6 +45,7 @@ namespace litehtml
 		virtual void				draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) = 0;
 		virtual void				load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready) = 0;
 		virtual void				get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz) = 0;
+		// Note: regular <img> images are also drawn with draw_background
 		virtual void				draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg) = 0;
 		virtual void				draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) = 0;
 
@@ -58,13 +59,13 @@ namespace litehtml
 		virtual void				set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) = 0;
 		virtual void				del_clip() = 0;
 		virtual void				get_client_rect(litehtml::position& client) const = 0;
-		virtual std::shared_ptr<litehtml::element>	create_element(const litehtml::tchar_t *tag_name,
-																	 const litehtml::string_map &attributes,
-																	 const std::shared_ptr<litehtml::document> &doc) = 0;
+		virtual litehtml::element::ptr	create_element( const litehtml::tchar_t *tag_name,
+														const litehtml::string_map &attributes,
+														const std::shared_ptr<litehtml::document> &doc) = 0;
 
 		virtual void				get_media_features(litehtml::media_features& media) const = 0;
 		virtual void				get_language(litehtml::tstring& language, litehtml::tstring & culture) const = 0;
-		virtual litehtml::tstring resolve_color(const litehtml::tstring& /*color*/) const { return litehtml::tstring(); }
+		virtual litehtml::tstring	resolve_color(const litehtml::tstring& /*color*/) const { return litehtml::tstring(); }
 		virtual void				split_text(const char* text, const std::function<void(const tchar_t*)>& on_word, const std::function<void(const tchar_t*)>& on_space);
 
 	protected:

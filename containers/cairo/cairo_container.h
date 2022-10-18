@@ -5,7 +5,6 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
-#include <mlang.h>
 #include <vector>
 #include "cairo.h"
 #include "cairo-win32.h"

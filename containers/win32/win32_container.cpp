@@ -1,29 +1,79 @@
-#include <litehtml.h>
 #include "win32_container.h"
 
-
-litehtml::win32_container::win32_container()
+win32_container::win32_container()
 {
 	m_hClipRgn = NULL;
+	m_tmp_hdc = GetDC(NULL);
+	InitializeCriticalSection(&m_img_sync);
+
+	EnumFonts(m_tmp_hdc, NULL, EnumFontsProc, (LPARAM)this);
+	m_installed_fonts.insert(L"monospace");
+	m_installed_fonts.insert(L"serif");
+	m_installed_fonts.insert(L"sans-serif");
+	m_installed_fonts.insert(L"fantasy");
+	m_installed_fonts.insert(L"cursive");
 }
 
-litehtml::win32_container::~win32_container()
+win32_container::~win32_container()
 {
+	clear_images();
+	DeleteCriticalSection(&m_img_sync);
 	if(m_hClipRgn)
 	{
 		DeleteObject(m_hClipRgn);
 	}
+	ReleaseDC(NULL, m_tmp_hdc);
 }
 
-litehtml::uint_ptr litehtml::win32_container::create_font( const wchar_t* faceName, int size, int weight, font_style italic, unsigned int decoration )
+int CALLBACK win32_container::EnumFontsProc(const LOGFONT* lplf, const TEXTMETRIC* lptm, DWORD dwType, LPARAM lpData)
 {
-	litehtml::string_vector fonts;
-	tokenize(faceName, fonts, L",");
-	litehtml::trim(fonts[0]);
+	win32_container* container = (win32_container*)lpData;
+	container->m_installed_fonts.insert(lplf->lfFaceName);
+	return 1;
+}
 
-	LOGFONT lf;
-	ZeroMemory(&lf, sizeof(lf));
-	wcscpy_s(lf.lfFaceName, LF_FACESIZE, fonts[0].c_str());
+static LPCWSTR get_exact_font_name(LPCWSTR facename)
+{
+	if      (!lstrcmpi(facename, L"monospace"))		return L"Courier New";
+	else if (!lstrcmpi(facename, L"serif"))			return L"Times New Roman";
+	else if (!lstrcmpi(facename, L"sans-serif"))	return L"Arial";
+	else if (!lstrcmpi(facename, L"fantasy"))		return L"Impact";
+	else if (!lstrcmpi(facename, L"cursive"))		return L"Comic Sans MS";
+	else											return facename;
+}
+
+static void trim_quotes(litehtml::tstring& str)
+{
+	if (str.front() == L'"' || str.front() == L'\'')
+		str.erase(0, 1);
+
+	if (str.back() == L'"' || str.back() == L'\'')
+		str.erase(str.length() - 1, 1);
+}
+
+litehtml::uint_ptr win32_container::create_font( const litehtml::tchar_t* font_list, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
+{
+	std::wstring font_name;
+	litehtml::string_vector fonts;
+	litehtml::split_string(font_list, fonts, _t(","));
+	bool found = false;
+	for (auto& name : fonts)
+	{
+		litehtml::trim(name);
+		trim_quotes(name);
+		std::wstring wname = litehtml_to_wchar(name.c_str());
+		if (m_installed_fonts.count(wname))
+		{
+			font_name = wname;
+			found = true;
+			break;
+		}
+	}
+	if (!found) font_name = litehtml_to_wchar(get_default_font_name());
+	font_name = get_exact_font_name(font_name.c_str());
+
+	LOGFONT lf = {};
+	wcscpy_s(lf.lfFaceName, LF_FACESIZE, font_name.c_str());
 
 	lf.lfHeight			= -size;
 	lf.lfWeight			= weight;
@@ -36,37 +86,45 @@ litehtml::uint_ptr litehtml::win32_container::create_font( const wchar_t* faceNa
 	lf.lfUnderline		= (decoration & litehtml::font_decoration_underline) ? TRUE : FALSE;
 	HFONT hFont = CreateFontIndirect(&lf);
 
+	if (fm)
+	{
+		SelectObject(m_tmp_hdc, hFont);
+		TEXTMETRIC tm = {};
+		GetTextMetrics(m_tmp_hdc, &tm);
+		fm->ascent = tm.tmAscent;
+		fm->descent = tm.tmDescent;
+		fm->height = tm.tmHeight;
+		fm->x_height = tm.tmHeight / 2;   // this is an estimate; call GetGlyphOutline to get the real value
+		fm->draw_spaces = italic || decoration;
+	}
+
 	return (uint_ptr) hFont;
 }
 
-void litehtml::win32_container::delete_font( uint_ptr hFont )
+void win32_container::delete_font( uint_ptr hFont )
 {
 	DeleteObject((HFONT) hFont);
 }
 
-int litehtml::win32_container::line_height( uint_ptr hdc, uint_ptr hFont )
+const litehtml::tchar_t* win32_container::get_default_font_name() const
 {
-	HFONT oldFont = (HFONT) SelectObject((HDC) hdc, (HFONT) hFont);
-	TEXTMETRIC tm;
-	GetTextMetrics((HDC) hdc, &tm);
-	SelectObject((HDC) hdc, oldFont);
-	return (int) tm.tmHeight;
+	return _t("Times New Roman");
 }
 
-int litehtml::win32_container::text_width( uint_ptr hdc, const wchar_t* text, uint_ptr hFont )
+int win32_container::get_default_font_size() const
 {
-	HFONT oldFont = (HFONT) SelectObject((HDC) hdc, (HFONT) hFont);
-
-	SIZE sz = {0, 0};
-
-	GetTextExtentPoint32((HDC) hdc, text, lstrlen(text), &sz);
-
-	SelectObject((HDC) hdc, oldFont);
-
-	return (int) sz.cx;
+	return 16;
 }
 
-void litehtml::win32_container::draw_text( uint_ptr hdc, const wchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
+int win32_container::text_width( const litehtml::tchar_t* text, uint_ptr hFont )
+{
+	SIZE size = {};
+	SelectObject(m_tmp_hdc, (HFONT)hFont);
+	GetTextExtentPoint32(m_tmp_hdc, litehtml_to_wchar(text), (int)t_strlen(text), &size);
+	return size.cx;
+}
+
+void win32_container::draw_text( uint_ptr hdc, const litehtml::tchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
 	apply_clip((HDC) hdc);
 
@@ -77,57 +135,19 @@ void litehtml::win32_container::draw_text( uint_ptr hdc, const wchar_t* text, ui
 	SetTextColor((HDC) hdc, RGB(color.red, color.green, color.blue));
 
 	RECT rcText = { pos.left(), pos.top(), pos.right(), pos.bottom() };
-	DrawText((HDC) hdc, text, -1, &rcText, DT_SINGLELINE | DT_NOPREFIX | DT_BOTTOM | DT_NOCLIP);
+	DrawText((HDC) hdc, litehtml_to_wchar(text), -1, &rcText, DT_SINGLELINE | DT_NOPREFIX | DT_BOTTOM | DT_NOCLIP);
 
 	SelectObject((HDC) hdc, oldFont);
 
 	release_clip((HDC) hdc);
 }
 
-void litehtml::win32_container::fill_rect( uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color color, const litehtml::css_border_radius& radius )
+int win32_container::pt_to_px( int pt ) const
 {
-	apply_clip((HDC) hdc);
-	fill_rect((HDC) hdc, pos.x, pos.y, pos.width, pos.height, color, radius);
-	release_clip((HDC) hdc);
+	return MulDiv(pt, GetDeviceCaps(m_tmp_hdc, LOGPIXELSY), 72);
 }
 
-litehtml::uint_ptr litehtml::win32_container::get_temp_dc()
-{
-	return (litehtml::uint_ptr) GetDC(NULL);
-}
-
-void litehtml::win32_container::release_temp_dc( uint_ptr hdc )
-{
-	ReleaseDC(NULL, (HDC) hdc);
-}
-
-int litehtml::win32_container::pt_to_px( int pt )
-{
-	HDC dc = GetDC(NULL);
-	int ret = MulDiv(pt, GetDeviceCaps(dc, LOGPIXELSY), 72);
-	ReleaseDC(NULL, dc);
-	return ret;
-}
-
-int litehtml::win32_container::get_text_base_line( uint_ptr hdc, uint_ptr hFont )
-{
-	HDC dc = (HDC) hdc;
-	if(!dc)
-	{
-		dc = GetDC(NULL);
-	}
-	HFONT oldFont = (HFONT) SelectObject(dc, (HFONT) hFont);
-	TEXTMETRIC tm;
-	GetTextMetrics(dc, &tm);
-	SelectObject(dc, oldFont);
-	if(!hdc)
-	{
-		ReleaseDC(NULL, dc);
-	}
-	return (int) tm.tmDescent;
-}
-
-void litehtml::win32_container::draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker)
+void win32_container::draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker)
 {
 	apply_clip((HDC)hdc);
 
@@ -142,131 +162,131 @@ void litehtml::win32_container::draw_list_marker(uint_ptr hdc, const litehtml::l
 
 	switch (marker.marker_type)
 	{
-	case list_style_type_circle:
+	case litehtml::list_style_type_circle:
 		{
 			draw_ellipse((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color, 1);
 		}
 		break;
-	case list_style_type_disc:
+	case litehtml::list_style_type_disc:
 		{
 			fill_ellipse((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color);
 		}
 		break;
-	case list_style_type_square:
+	case litehtml::list_style_type_square:
 		{
-			fill_rect((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color, css_border_radius());
+			fill_rect((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color);
 		}
 		break;
 	}
 	release_clip((HDC)hdc);
 }
 
-void litehtml::win32_container::load_image( const wchar_t* src, const wchar_t* baseurl, bool redraw_on_ready )
+void win32_container::make_url_utf8(const char* url, const char* basepath, std::wstring& out)
+{
+	make_url(litehtml::utf8_to_wchar(url), litehtml::utf8_to_wchar(basepath), out);
+}
+
+void win32_container::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready )
 {
 	std::wstring url;
-	make_url(src, baseurl, url);
-	if(m_images.find(url.c_str()) == m_images.end())
+	t_make_url(src, baseurl, url);
+	
+	lock_images_cache();
+	if (m_images.count(url) == 0)
 	{
-		uint_ptr img = get_image(url.c_str());
-		if(img)
-		{ 
-			m_images[url.c_str()] = img;
-		}
+		unlock_images_cache();
+		uint_ptr img = get_image(url.c_str(), redraw_on_ready);
+		add_image(url.c_str(), img);
+	}
+	else
+	{
+		unlock_images_cache();
 	}
 }
 
-void litehtml::win32_container::get_image_size( const wchar_t* src, const wchar_t* baseurl, litehtml::size& sz )
+void win32_container::add_image(LPCWSTR url, uint_ptr img)
+{
+	lock_images_cache();
+	m_images[url] = img;
+	unlock_images_cache();
+}
+
+void win32_container::get_image_size( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz )
 {
 	std::wstring url;
-	make_url(src, baseurl, url);
+	t_make_url(src, baseurl, url);
 
-	images_map::iterator img = m_images.find(url.c_str());
-	if(img != m_images.end())
+	sz.width  = 0;
+	sz.height = 0;
+
+	lock_images_cache();
+	images_map::iterator img = m_images.find(url);
+	if(img != m_images.end() && img->second)
 	{
 		get_img_size(img->second, sz);
 	}
+	unlock_images_cache();
 }
 
-void litehtml::win32_container::draw_image( uint_ptr hdc, const wchar_t* src, const wchar_t* baseurl, const litehtml::position& pos )
+void win32_container::clear_images()
 {
-	apply_clip((HDC) hdc);
-
-	std::wstring url;
-	make_url(src, baseurl, url);
-	images_map::iterator img = m_images.find(url.c_str());
-	if(img != m_images.end())
+	lock_images_cache();
+	for(auto& img : m_images)
 	{
-		draw_img((HDC) hdc, img->second, pos);
-	}
-
-	release_clip((HDC) hdc);
-}
-
-void litehtml::win32_container::clear_images()
-{
-	for(images_map::iterator i = m_images.begin(); i != m_images.end(); i++)
-	{
-		if(i->second)
+		if(img.second)
 		{
-			free_image(i->second);
+			free_image(img.second);
 		}
 	}
 	m_images.clear();
+	unlock_images_cache();
 }
 
-int litehtml::win32_container::get_default_font_size() const
+void win32_container::lock_images_cache()
 {
-	return 16;
+	EnterCriticalSection(&m_img_sync);
 }
 
-void litehtml::win32_container::draw_background( uint_ptr hdc, const wchar_t* image, const wchar_t* baseurl, const litehtml::position& draw_pos, const litehtml::css_position& bg_pos, litehtml::background_repeat repeat, litehtml::background_attachment attachment )
+void win32_container::unlock_images_cache()
 {
-	apply_clip((HDC) hdc);
+	LeaveCriticalSection(&m_img_sync);
+}
 
-	std::wstring url;
-	make_url(image, baseurl, url);
+static void FillSolidRect(HDC hdc, LPCRECT lpRect, COLORREF clr)
+{
+	COLORREF clrOld = SetBkColor(hdc, clr);
+	ExtTextOut(hdc, 0, 0, ETO_OPAQUE, lpRect, NULL, 0, NULL);
+	SetBkColor(hdc, clrOld);
+}
 
-	images_map::iterator img = m_images.find(url.c_str());
-	if(img != m_images.end())
+void win32_container::draw_background( uint_ptr _hdc, const litehtml::background_paint& bg )
+{
+	HDC hdc = (HDC)_hdc;
+	apply_clip(hdc);
+
+	RECT rect = { bg.border_box.left(), bg.border_box.top(), bg.border_box.right(), bg.border_box.bottom() };
+	COLORREF color = RGB(bg.color.red, bg.color.green, bg.color.blue);
+	// alpha channel for background color is not supported; alpha below some threshold is considered transparent, above it - opaque
+	if (bg.color.alpha > 30)
 	{
-		litehtml::size img_sz;
-		get_img_size(img->second, img_sz);
-
-		litehtml::position pos = draw_pos;
-
-		if(bg_pos.x.units() != css_units_percentage)
-		{
-			pos.x += (int) bg_pos.x.val();
-		} else
-		{
-			pos.x += (int) ((float) (draw_pos.width - img_sz.width) * bg_pos.x.val() / 100.0);
-		}
-
-		if(bg_pos.y.units() != css_units_percentage)
-		{
-			pos.y += (int) bg_pos.y.val();
-		} else
-		{
-			pos.y += (int) ( (float) (draw_pos.height - img_sz.height) * bg_pos.y.val() / 100.0);
-		}
-
-		draw_img_bg((HDC) hdc, img->second, draw_pos, pos, repeat, attachment);
+		FillSolidRect(hdc, &rect, color);
 	}
 
-	release_clip((HDC) hdc);
+	std::wstring url;
+	t_make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
+
+	lock_images_cache();
+	images_map::iterator img = m_images.find(url);
+	if(img != m_images.end() && img->second)
+	{
+		draw_img_bg(hdc, img->second, bg);
+	}
+	unlock_images_cache();
+
+	release_clip(hdc);
 }
 
-wchar_t litehtml::win32_container::toupper( const wchar_t c )
-{
-	return (wchar_t) CharUpper((LPWSTR) c);
-}
-
-wchar_t litehtml::win32_container::tolower( const wchar_t c )
-{
-	return (wchar_t) CharLower((LPWSTR) c);
-}
-
-void litehtml::win32_container::set_clip( const litehtml::position& pos, bool valid_x, bool valid_y )
+void win32_container::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y )
 {
 	litehtml::position clip_pos = pos;
 	litehtml::position client_pos;
@@ -284,19 +304,15 @@ void litehtml::win32_container::set_clip( const litehtml::position& pos, bool va
 	m_clips.push_back(clip_pos);
 }
 
-void litehtml::win32_container::del_clip()
+void win32_container::del_clip()
 {
 	if(!m_clips.empty())
 	{
 		m_clips.pop_back();
-		if(!m_clips.empty())
-		{
-			litehtml::position clip_pos = m_clips.back();
-		}
 	}
 }
 
-void litehtml::win32_container::apply_clip(HDC hdc)
+void win32_container::apply_clip(HDC hdc)
 {
 	if(m_hClipRgn)
 	{
@@ -315,7 +331,7 @@ void litehtml::win32_container::apply_clip(HDC hdc)
 	}
 }
 
-void litehtml::win32_container::release_clip(HDC hdc)
+void win32_container::release_clip(HDC hdc)
 {
 	SelectClipRgn(hdc, NULL);
 
@@ -324,4 +340,108 @@ void litehtml::win32_container::release_clip(HDC hdc)
 		DeleteObject(m_hClipRgn);
 		m_hClipRgn = NULL;
 	}
+}
+
+litehtml::element::ptr win32_container::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, const litehtml::document::ptr& doc)
+{
+	return 0;
+}
+
+void win32_container::get_media_features(litehtml::media_features& media)  const
+{
+	litehtml::position client;
+	get_client_rect(client);
+
+	media.type = litehtml::media_type_screen;
+	media.width = client.width;
+	media.height = client.height;
+	media.color = 8;
+	media.monochrome = 0;
+	media.color_index = 256;
+	media.resolution = GetDeviceCaps(m_tmp_hdc, LOGPIXELSX);
+	media.device_width = GetDeviceCaps(m_tmp_hdc, HORZRES);
+	media.device_height = GetDeviceCaps(m_tmp_hdc, VERTRES);
+}
+
+void win32_container::get_language(litehtml::tstring& language, litehtml::tstring& culture) const
+{
+	language = _t("en");
+	culture = _t("");
+}
+
+void win32_container::transform_text(litehtml::tstring& text, litehtml::text_transform tt)
+{
+	if (text.empty()) return;
+
+	LPWSTR txt = _wcsdup(litehtml_to_wchar(text.c_str()));
+	switch (tt)
+	{
+	case litehtml::text_transform_capitalize:
+		CharUpperBuff(txt, 1);
+		break;
+	case litehtml::text_transform_uppercase:
+		CharUpperBuff(txt, lstrlen(txt));
+		break;
+	case litehtml::text_transform_lowercase:
+		CharLowerBuff(txt, lstrlen(txt));
+		break;
+	}
+	text = litehtml_from_wchar(txt);
+	free(txt);
+}
+
+void win32_container::link(const litehtml::document::ptr& doc, const litehtml::element::ptr& el)
+{
+}
+
+litehtml::tstring win32_container::resolve_color(const litehtml::tstring& color) const
+{
+	struct custom_color
+	{
+		litehtml::tchar_t*	name;
+		int					color_index;
+	};
+
+	static custom_color colors[] = {
+		{ _t("ActiveBorder"),          COLOR_ACTIVEBORDER},
+		{ _t("ActiveCaption"),         COLOR_ACTIVECAPTION},
+		{ _t("AppWorkspace"),          COLOR_APPWORKSPACE },
+		{ _t("Background"),            COLOR_BACKGROUND },
+		{ _t("ButtonFace"),            COLOR_BTNFACE },
+		{ _t("ButtonHighlight"),       COLOR_BTNHIGHLIGHT },
+		{ _t("ButtonShadow"),          COLOR_BTNSHADOW },
+		{ _t("ButtonText"),            COLOR_BTNTEXT },
+		{ _t("CaptionText"),           COLOR_CAPTIONTEXT },
+		{ _t("GrayText"),              COLOR_GRAYTEXT },
+		{ _t("Highlight"),             COLOR_HIGHLIGHT },
+		{ _t("HighlightText"),         COLOR_HIGHLIGHTTEXT },
+		{ _t("InactiveBorder"),        COLOR_INACTIVEBORDER },
+		{ _t("InactiveCaption"),       COLOR_INACTIVECAPTION },
+		{ _t("InactiveCaptionText"),   COLOR_INACTIVECAPTIONTEXT },
+		{ _t("InfoBackground"),        COLOR_INFOBK },
+		{ _t("InfoText"),              COLOR_INFOTEXT },
+		{ _t("Menu"),                  COLOR_MENU },
+		{ _t("MenuText"),              COLOR_MENUTEXT },
+		{ _t("Scrollbar"),             COLOR_SCROLLBAR },
+		{ _t("ThreeDDarkShadow"),      COLOR_3DDKSHADOW },
+		{ _t("ThreeDFace"),            COLOR_3DFACE },
+		{ _t("ThreeDHighlight"),       COLOR_3DHILIGHT },
+		{ _t("ThreeDLightShadow"),     COLOR_3DLIGHT },
+		{ _t("ThreeDShadow"),          COLOR_3DSHADOW },
+		{ _t("Window"),                COLOR_WINDOW },
+		{ _t("WindowFrame"),           COLOR_WINDOWFRAME },
+		{ _t("WindowText"),            COLOR_WINDOWTEXT }
+	};
+
+	for (auto& clr : colors)
+	{
+		if (!litehtml::t_strcasecmp(color.c_str(), clr.name))
+		{
+			litehtml::tchar_t  str_clr[20];
+			DWORD rgb_color = GetSysColor(clr.color_index);
+			t_snprintf(str_clr, 20, _t("#%02X%02X%02X"), GetRValue(rgb_color), GetGValue(rgb_color), GetBValue(rgb_color));
+			return std::move(litehtml::tstring(str_clr));
+		}
+	}
+	return std::move(litehtml::tstring());
 }
