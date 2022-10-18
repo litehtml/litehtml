@@ -5,6 +5,8 @@
 litehtml::utf8_to_wchar::utf8_to_wchar(const char* val)
 {
 	m_utf8 = (const byte*) val;
+	if (!m_utf8) return;
+
 	while (true)
 	{
 		ucode_t wch = get_char();
