@@ -38,18 +38,18 @@ using namespace litehtml;
 namespace {
 
 struct url_parse_testcase {
-    tstring str;
-    tstring scheme;
-    tstring authority;
-    tstring path;
-    tstring query;
-    tstring fragment;
+    string str;
+    string scheme;
+    string authority;
+    string path;
+    string query;
+    string fragment;
 };
 
 struct url_resolve_testcase {
-    tstring base;
-    tstring reference;
-    tstring expected;
+    string base;
+    string reference;
+    string expected;
 };
 
 } // namespace
@@ -71,42 +71,42 @@ TEST(URLTest, Parse)
 
         // Example from RFC 3986 that includes a scheme, an authority, a path,
         // a query, and a fragment.
-        { _t("foo://example.com:8042/over/there?name=ferret#nose"),
-            _t("foo"), _t("example.com:8042"), _t("/over/there"), _t("name=ferret"), _t("nose") },
+        { "foo://example.com:8042/over/there?name=ferret#nose",
+            "foo", "example.com:8042", "/over/there", "name=ferret", "nose" },
 
         // Example from RFC 3986 that only includes a scheme and a path.
-        { _t("urn:example:animal:ferret:nose"),
-            _t("urn"), _t(""), _t("example:animal:ferret:nose"), _t(""), _t("") },
+        { "urn:example:animal:ferret:nose",
+            "urn", "", "example:animal:ferret:nose", "", "" },
 
-        { _t("http://www.litehtml.com/"),
-            _t("http"), _t("www.litehtml.com"), _t("/"), _t(""), _t("") },
+        { "http://www.litehtml.com/",
+            "http", "www.litehtml.com", "/", "", "" },
 
-        { _t("https://www.slashdot.org/"),
-            _t("https"), _t("www.slashdot.org"), _t("/"), _t(""), _t("") },
+        { "https://www.slashdot.org/",
+            "https", "www.slashdot.org", "/", "", "" },
 
-        { _t("https://www.slashdot.org"),
-            _t("https"), _t("www.slashdot.org"), _t(""), _t(""), _t("") },
+        { "https://www.slashdot.org",
+            "https", "www.slashdot.org", "", "", "" },
 
-        { _t("https://news.slashdot.org/story/21/09/24/2157247/"),
-            _t("https"), _t("news.slashdot.org"), _t("/story/21/09/24/2157247/"), _t(""), _t("") },
+        { "https://news.slashdot.org/story/21/09/24/2157247/",
+            "https", "news.slashdot.org", "/story/21/09/24/2157247/", "", "" },
 
-        { _t("https://www.cbc.ca/news/politics/spavor-kovrig-return-1.6189516"),
-            _t("https"), _t("www.cbc.ca"), _t("/news/politics/spavor-kovrig-return-1.6189516"), _t(""), _t("") },
+        { "https://www.cbc.ca/news/politics/spavor-kovrig-return-1.6189516",
+            "https", "www.cbc.ca", "/news/politics/spavor-kovrig-return-1.6189516", "", "" },
 
-        { _t("https://twitter.com/geekbench/status/1412433598200823810"),
-            _t("https"), _t("twitter.com"), _t("/geekbench/status/1412433598200823810"), _t(""), _t("") },
+        { "https://twitter.com/geekbench/status/1412433598200823810",
+            "https", "twitter.com", "/geekbench/status/1412433598200823810", "", "" },
 
-        { _t("https://browser.geekbench.com/v5/cpu/search?q=ryzen"),
-            _t("https"), _t("browser.geekbench.com"), _t("/v5/cpu/search"), _t("q=ryzen"), _t("") },
+        { "https://browser.geekbench.com/v5/cpu/search?q=ryzen",
+            "https", "browser.geekbench.com", "/v5/cpu/search", "q=ryzen", "" },
 
-        { _t("https://datatracker.ietf.org/doc/html/rfc3986#section-2.2"),
-            _t("https"), _t("datatracker.ietf.org"), _t("/doc/html/rfc3986"), _t(""), _t("section-2.2") },
+        { "https://datatracker.ietf.org/doc/html/rfc3986#section-2.2",
+            "https", "datatracker.ietf.org", "/doc/html/rfc3986", "", "section-2.2" },
 
-        { _t("file:///home/litehtml/build/hipster.html"),
-            _t("file"), _t(""), _t("/home/litehtml/build/hipster.html") },
+        { "file:///home/litehtml/build/hipster.html",
+            "file", "", "/home/litehtml/build/hipster.html" },
 
-        { _t("/home/litehtml/Projects/litehtml/build/hipster.html"),
-            _t(""), _t(""), _t("/home/litehtml/Projects/litehtml/build/hipster.html") },
+        { "/home/litehtml/Projects/litehtml/build/hipster.html",
+            "", "", "/home/litehtml/Projects/litehtml/build/hipster.html" },
     };
 
     for (auto& testcase : testcases) {
@@ -126,47 +126,47 @@ TEST(URLTest, Build)
 
         // Example from RFC 3986 that includes a scheme, an authority, a path,
         // a query, and a fragment.
-        { _t("foo://example.com:8042/over/there?name=ferret#nose"),
-            _t("foo"), _t("example.com:8042"), _t("/over/there"), _t("name=ferret"), _t("nose") },
+        { "foo://example.com:8042/over/there?name=ferret#nose",
+            "foo", "example.com:8042", "/over/there", "name=ferret", "nose" },
 
         // Example from RFC 3986 that only includes a scheme and a path.
-        { _t("urn:example:animal:ferret:nose"),
-            _t("urn"), _t(""), _t("example:animal:ferret:nose"), _t(""), _t("") },
+        { "urn:example:animal:ferret:nose",
+            "urn", "", "example:animal:ferret:nose", "", "" },
 
-        { _t("http://www.litehtml.com/"),
-            _t("http"), _t("www.litehtml.com"), _t("/"), _t(""), _t("") },
+        { "http://www.litehtml.com/",
+            "http", "www.litehtml.com", "/", "", "" },
 
-        { _t("https://www.slashdot.org/"),
-            _t("https"), _t("www.slashdot.org"), _t("/"), _t(""), _t("") },
+        { "https://www.slashdot.org/",
+            "https", "www.slashdot.org", "/", "", "" },
 
-        { _t("https://www.slashdot.org"),
-            _t("https"), _t("www.slashdot.org"), _t(""), _t(""), _t("") },
+        { "https://www.slashdot.org",
+            "https", "www.slashdot.org", "", "", "" },
 
-        { _t("https://news.slashdot.org/story/21/09/24/2157247/"),
-            _t("https"), _t("news.slashdot.org"), _t("/story/21/09/24/2157247/"), _t(""), _t("") },
+        { "https://news.slashdot.org/story/21/09/24/2157247/",
+            "https", "news.slashdot.org", "/story/21/09/24/2157247/", "", "" },
 
-        { _t("https://www.cbc.ca/news/politics/spavor-kovrig-return-1.6189516"),
-            _t("https"), _t("www.cbc.ca"), _t("/news/politics/spavor-kovrig-return-1.6189516"), _t(""), _t("") },
+        { "https://www.cbc.ca/news/politics/spavor-kovrig-return-1.6189516",
+            "https", "www.cbc.ca", "/news/politics/spavor-kovrig-return-1.6189516", "", "" },
 
-        { _t("https://twitter.com/geekbench/status/1412433598200823810"),
-            _t("https"), _t("twitter.com"), _t("/geekbench/status/1412433598200823810"), _t(""), _t("") },
+        { "https://twitter.com/geekbench/status/1412433598200823810",
+            "https", "twitter.com", "/geekbench/status/1412433598200823810", "", "" },
 
-        { _t("https://browser.geekbench.com/v5/cpu/search?q=ryzen"),
-            _t("https"), _t("browser.geekbench.com"), _t("/v5/cpu/search"), _t("q=ryzen"), _t("") },
+        { "https://browser.geekbench.com/v5/cpu/search?q=ryzen",
+            "https", "browser.geekbench.com", "/v5/cpu/search", "q=ryzen", "" },
 
-        { _t("https://datatracker.ietf.org/doc/html/rfc3986#section-2.2"),
-            _t("https"), _t("datatracker.ietf.org"), _t("/doc/html/rfc3986"), _t(""), _t("section-2.2") },
+        { "https://datatracker.ietf.org/doc/html/rfc3986#section-2.2",
+            "https", "datatracker.ietf.org", "/doc/html/rfc3986", "", "section-2.2" },
 
         // Disabled since the url class does not regenerate the same URL for
         // this test case (it does not emit the double slash at the start of
         // the authority).  How do we determine which schemes require the double
         // slash and which ones do not?
 
-        // { _t("file:///home/litehtml/build/hipster.html"),
-        //    _t("file"), _t(""), _t("/home/litehtml/build/hipster.html") },
+        // { "file:///home/litehtml/build/hipster.html",
+        //    "file", "", "/home/litehtml/build/hipster.html" },
 
-        { _t("/home/litehtml/Projects/litehtml/build/hipster.html"),
-            _t(""), _t(""), _t("/home/litehtml/Projects/litehtml/build/hipster.html") },
+        { "/home/litehtml/Projects/litehtml/build/hipster.html",
+            "", "", "/home/litehtml/Projects/litehtml/build/hipster.html" },
     };
 
     for (auto& testcase : testcases) {
@@ -175,7 +175,7 @@ TEST(URLTest, Build)
             testcase.path,
             testcase.query,
             testcase.fragment);
-        EXPECT_EQ(testcase.str, u.string());
+        EXPECT_EQ(testcase.str, u.str());
     }
 
 }
@@ -183,14 +183,14 @@ TEST(URLTest, Build)
 TEST(URLTest, Resolve)
 {
     std::vector<url_resolve_testcase> testcases = {
-        { _t("https://www.twitter.com/"), _t("/foo"),
-            _t("https://www.twitter.com/foo") },
+        { "https://www.twitter.com/", "/foo",
+            "https://www.twitter.com/foo" },
 
-        { _t("https://www.twitter.com/"), _t("https://www.facebook.com/"),
-            _t("https://www.facebook.com/") },
+        { "https://www.twitter.com/", "https://www.facebook.com/",
+            "https://www.facebook.com/" },
 
-        { _t("https://www.example.com/index.html"), _t("about.html"),
-            _t("https://www.example.com/about.html") },
+        { "https://www.example.com/index.html", "about.html",
+            "https://www.example.com/about.html" },
     };
 
     for (auto& testcase : testcases) {

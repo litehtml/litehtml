@@ -40,31 +40,31 @@ using namespace litehtml;
 namespace {
 
 struct url_path_testcase {
-    tstring base;
-    tstring path;
-    tstring expected;
+    string base;
+    string path;
+    string expected;
 };
 
 } // namespace
 
 TEST(URLPathTest, Absolute)
 {
-    std::vector<std::pair<tstring, bool>> testcases = {
-        { _t(""), false },
-        { _t("a"), false },
-        { _t("a/"), false },
-        { _t("a/b"), false },
-        { _t("a/b/"), false },
-        { _t("a/b/c"), false },
-        { _t("a/b/c/"), false },
+    std::vector<std::pair<string, bool>> testcases = {
+        { "", false },
+        { "a", false },
+        { "a/", false },
+        { "a/b", false },
+        { "a/b/", false },
+        { "a/b/c", false },
+        { "a/b/c/", false },
 
-        { _t("/"), true },
-        { _t("/a"), true },
-        { _t("/a/"), true },
-        { _t("/a/b"), true },
-        { _t("/a/b/"), true },
-        { _t("/a/b/c"), true },
-        { _t("/a/b/c/"), true },
+        { "/", true },
+        { "/a", true },
+        { "/a/", true },
+        { "/a/b", true },
+        { "/a/b/", true },
+        { "/a/b/c", true },
+        { "/a/b/c/", true },
     };
 
     for (auto& testcase : testcases) {
@@ -74,22 +74,22 @@ TEST(URLPathTest, Absolute)
 
 TEST(URLPathTest, DirectoryName)
 {
-    std::vector<std::pair<tstring, tstring>> testcases = {
-        { _t(""), _t(".") },
-        { _t("a"), _t(".") },
-        { _t("a/"), _t("a/") },
-        { _t("a/b"), _t("a/") },
-        { _t("a/b/"), _t("a/b/") },
-        { _t("a/b/c"), _t("a/b/") },
-        { _t("a/b/c/"), _t("a/b/c/") },
+    std::vector<std::pair<string, string>> testcases = {
+        { "", "." },
+        { "a", "." },
+        { "a/", "a/" },
+        { "a/b", "a/" },
+        { "a/b/", "a/b/" },
+        { "a/b/c", "a/b/" },
+        { "a/b/c/", "a/b/c/" },
 
-        { _t("/"), _t("/") },
-        { _t("/a"), _t("/") },
-        { _t("/a/"), _t("/a/") },
-        { _t("/a/b"), _t("/a/") },
-        { _t("/a/b/"), _t("/a/b/") },
-        { _t("/a/b/c"), _t("/a/b/") },
-        { _t("/a/b/c/"), _t("/a/b/c/") },
+        { "/", "/" },
+        { "/a", "/" },
+        { "/a/", "/a/" },
+        { "/a/b", "/a/" },
+        { "/a/b/", "/a/b/" },
+        { "/a/b/c", "/a/b/" },
+        { "/a/b/c/", "/a/b/c/" },
     };
 
     for (auto& testcase : testcases) {
@@ -99,22 +99,22 @@ TEST(URLPathTest, DirectoryName)
 
 TEST(URLPathTest, BaseName)
 {
-    std::vector<std::pair<tstring, tstring>> testcases = {
-        { _t(""), _t("") },
-        { _t("a"), _t("a") },
-        { _t("a/"), _t("") },
-        { _t("a/b"), _t("b") },
-        { _t("a/b/"), _t("") },
-        { _t("a/b/c"), _t("c") },
-        { _t("a/b/c/"), _t("") },
+    std::vector<std::pair<string, string>> testcases = {
+        { "", "" },
+        { "a", "a" },
+        { "a/", "" },
+        { "a/b", "b" },
+        { "a/b/", "" },
+        { "a/b/c", "c" },
+        { "a/b/c/", "" },
 
-        { _t("/"), _t("") },
-        { _t("/a"), _t("a") },
-        { _t("/a/"), _t("") },
-        { _t("/a/b"), _t("b") },
-        { _t("/a/b/"), _t("") },
-        { _t("/a/b/c"), _t("c") },
-        { _t("/a/b/c/"), _t("") },
+        { "/", "" },
+        { "/a", "a" },
+        { "/a/", "" },
+        { "/a/b", "b" },
+        { "/a/b/", "" },
+        { "/a/b/c", "c" },
+        { "/a/b/c/", "" },
     };
 
     for (auto& testcase : testcases) {
@@ -125,10 +125,10 @@ TEST(URLPathTest, BaseName)
 TEST(URLPathTest, Append)
 {
     std::vector<url_path_testcase> testcases = {
-        { _t(""), _t("a"), _t("a") },
-        { _t("/"), _t("a"), _t("/a") },
-        { _t("/a"), _t(""), _t("/a") },
-        { _t("/a"), _t("b"), _t("/a/b") },
+        { "", "a", "a" },
+        { "/", "a", "/a" },
+        { "/a", "", "/a" },
+        { "/a", "b", "/a/b" },
     };
 
     for (auto& testcase : testcases) {
@@ -139,9 +139,9 @@ TEST(URLPathTest, Append)
 TEST(URLPathTest, Resolve)
 {
     std::vector<url_path_testcase> testcases = {
-        { _t("/"), _t("a"), _t("/a") },
-        { _t("/a"), _t("b"), _t("/b") },
-        { _t("/a"), _t("/b"), _t("/b") },
+        { "/", "a", "/a" },
+        { "/a", "b", "/b" },
+        { "/a", "/b", "/b" },
     };
 
     for (auto& testcase : testcases) {

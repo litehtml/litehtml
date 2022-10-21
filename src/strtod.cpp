@@ -69,11 +69,11 @@ static double powersOf10[] = {	/* Table giving binary powers of 10.  Entry */
  *----------------------------------------------------------------------
  */
 
-double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** endPtr)
+double litehtml::t_strtod(const char* string, char** endPtr)
 {
     int sign, expSign = FALSE;
     double fraction, dblExp, *d;
-    const litehtml::tchar_t *p;
+    const char *p;
     int c;
     int exp = 0;		/* Exponent read from "EX" field. */
     int fracExp = 0;		/* Exponent that derives from the fractional
@@ -88,7 +88,7 @@ double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** e
     int mantSize;		/* Number of digits in mantissa. */
     int decPt;			/* Number of mantissa digits BEFORE decimal
 				 * point. */
-    const litehtml::tchar_t *pExp;		/* Temporarily holds location of exponent
+    const char *pExp;		/* Temporarily holds location of exponent
 				 * in string. */
 
     /*
@@ -96,17 +96,17 @@ double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** e
      */
 
     p = string;
-    while (t_isspace(*p))
+    while (isspace(*p))
     {
 	    p += 1;
     }
-    if (*p == _t('-'))
+    if (*p == '-')
     {
 	    sign = TRUE;
 	    p += 1;
     } else
     {
-	    if (*p == _t('+'))
+	    if (*p == '+')
         {
 	        p += 1;
 	    }
@@ -124,7 +124,7 @@ double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** e
         c = *p;
         if (!t_isdigit(c))
         {
-            if ((c != _t('.')) || (decPt >= 0))
+            if ((c != '.') || (decPt >= 0))
             {
                 break;
             }
@@ -170,24 +170,24 @@ double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** e
 	    {
 	        c = *p;
 	        p += 1;
-	        if (c == _t('.'))
+	        if (c == '.')
             {
 		        c = *p;
 		        p += 1;
 	        }
-	        frac1 = 10*frac1 + (c - _t('0'));
+	        frac1 = 10*frac1 + (c - '0');
 	    }
 	    frac2 = 0;
 	    for (; mantSize > 0; mantSize -= 1)
 	    {
 	        c = *p;
 	        p += 1;
-	        if (c == _t('.'))
+	        if (c == '.')
             {
 		        c = *p;
 		        p += 1;
 	        }
-	        frac2 = 10*frac2 + (c - _t('0'));
+	        frac2 = 10*frac2 + (c - '0');
 	    }
 	    fraction = (1.0e9 * frac1) + frac2;
     }
@@ -197,16 +197,16 @@ double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** e
      */
 
     p = pExp;
-    if ((*p == _t('E')) || (*p == _t('e')))
+    if ((*p == 'E') || (*p == 'e'))
     {
 	    p += 1;
-	    if (*p == _t('-'))
+	    if (*p == '-')
         {
 	        expSign = TRUE;
 	        p += 1;
 	    } else
         {
-	        if (*p == _t('+'))
+	        if (*p == '+')
             {
 		        p += 1;
 	        }
@@ -214,7 +214,7 @@ double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** e
 	    }
 	    while (isdigit(*p))
         {
-	        exp = exp * 10 + (*p - _t('0'));
+	        exp = exp * 10 + (*p - '0');
 	        p += 1;
 	    }
     }
@@ -265,7 +265,7 @@ double litehtml::t_strtod(const litehtml::tchar_t* string, litehtml::tchar_t** e
 done:
     if (endPtr != nullptr)
     {
-	    *endPtr = (litehtml::tchar_t *) p;
+	    *endPtr = (char *) p;
     }
 
     if (sign)

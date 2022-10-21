@@ -3,20 +3,20 @@
 #include "document.h"
 
 
-litehtml::el_style::el_style(const std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
+litehtml::el_style::el_style(const std::shared_ptr<document>& doc) : element(doc)
 {
 
 }
 
 void litehtml::el_style::parse_attributes()
 {
-	tstring text;
+	string text;
 
 	for(auto& el : m_children)
 	{
 		el->get_text(text);
 	}
-	get_document()->add_stylesheet( text.c_str(), nullptr, get_attr(_t("media")) );
+	get_document()->add_stylesheet( text.c_str(), nullptr, get_attr("media") );
 }
 
 bool litehtml::el_style::appendChild(const ptr &el)
@@ -25,7 +25,7 @@ bool litehtml::el_style::appendChild(const ptr &el)
 	return true;
 }
 
-const litehtml::tchar_t* litehtml::el_style::get_tagName() const
+const char* litehtml::el_style::get_tagName() const
 {
-	return _t("style");
+	return "style";
 }

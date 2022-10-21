@@ -33,7 +33,7 @@ namespace litehtml
 			return *this;
 		}
 
-        tstring to_string();
+		string to_string();
 	};
 
 	struct border
@@ -227,10 +227,10 @@ namespace litehtml
 
 		css_borders() = default;
 
-        bool is_visible() const
-        {
-            return left.width.val() != 0 || right.width.val() != 0 || top.width.val() != 0 || bottom.width.val() != 0;
-        }
+		bool is_visible() const
+		{
+			return left.width.val() != 0 || right.width.val() != 0 || top.width.val() != 0 || bottom.width.val() != 0;
+		}
 
 		css_borders(const css_borders& val)
 		{
@@ -250,13 +250,13 @@ namespace litehtml
 			radius	= val.radius;
 			return *this;
 		}
-        tstring to_string()
-        {
-            return _t("left: ") + left.to_string() +
-                   _t(", top: ") + top.to_string() +
-                   _t(", right: ") + top.to_string() +
-                   _t(", bottom: ") + bottom.to_string();
-        }
+		string to_string()
+		{
+			return	"left: " + left.to_string() +
+					", top: " + top.to_string() +
+					", right: " + top.to_string() +
+					", bottom: " + bottom.to_string();
+		}
 	};
 
 	struct borders
@@ -286,10 +286,10 @@ namespace litehtml
 			bottom = val.bottom;
 		}
 
-        bool is_visible() const
-        {
-            return left.width != 0 || right.width != 0 || top.width != 0 || bottom.width != 0;
-        }
+		bool is_visible() const
+		{
+			return left.width != 0 || right.width != 0 || top.width != 0 || bottom.width != 0;
+		}
 
 		borders& operator=(const borders& val)
 		{

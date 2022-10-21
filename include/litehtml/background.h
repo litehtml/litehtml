@@ -13,8 +13,8 @@ namespace litehtml
 	class background
 	{
 	public:
-		tstring					m_image;
-		tstring					m_baseurl;
+		string					m_image;
+		string					m_baseurl;
 		web_color				m_color;
 		background_attachment	m_attachment;
 		css_position			m_position;
@@ -34,8 +34,8 @@ namespace litehtml
 	class background_paint
 	{
 	public:
-		tstring					image;
-		tstring					baseurl;
+		string					image;
+		string					baseurl;
 		background_attachment	attachment;
 		background_repeat		repeat;
 		web_color				color;
@@ -50,7 +50,7 @@ namespace litehtml
 	public:
 		background_paint();
 		background_paint(const background_paint& val);
-        background_paint& operator=(const background& val);
+		background_paint& operator=(const background& val);
 	};
 
 }

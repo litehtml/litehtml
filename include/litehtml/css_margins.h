@@ -31,13 +31,13 @@ namespace litehtml
 			return *this;
 		}
 
-        tstring to_string()
-        {
-            return _t("left: ") + left.to_string() +
-                   _t(", right: ") + right.to_string() +
-                   _t(", top: ") + top.to_string() +
-                   _t(", bottom: ") + bottom.to_string();
-        }
+		string to_string()
+		{
+			return	"left: " + left.to_string() +
+					", right: " + right.to_string() +
+					", top: " + top.to_string() +
+					", bottom: " + bottom.to_string();
+		}
 	};
 }
 

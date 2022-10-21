@@ -5,62 +5,62 @@
 #include "el_image.h"
 #include "utf8_strings.h"
 
-litehtml::el_before_after_base::el_before_after_base(const std::shared_ptr<litehtml::document>& doc, bool before) : html_tag(doc)
+litehtml::el_before_after_base::el_before_after_base(const std::shared_ptr<document>& doc, bool before) : html_tag(doc)
 {
 	if(before)
 	{
-		m_tag = _t("::before");
+		m_tag = "::before";
 	} else
 	{
-        m_tag = _t("::after");
+        m_tag = "::after";
 	}
 }
 
-void litehtml::el_before_after_base::add_style(const tstring& style, const tstring& baseurl)
+void litehtml::el_before_after_base::add_style(const string& style, const string& baseurl)
 {
 	html_tag::add_style(style, baseurl);
 
 	auto children = m_children;
 	m_children.clear();
 
-	tstring content = get_style_property(_t("content"), false, _t(""));
+	string content = get_style_property("content", false, "");
 	if(!content.empty())
 	{
 		int idx = value_index(content, content_property_string);
 		if(idx < 0)
 		{
-			tstring fnc;
-			tstring::size_type i = 0;
-			while(i < content.length() && i != tstring::npos)
+			string fnc;
+			string::size_type i = 0;
+			while(i < content.length() && i != string::npos)
 			{
-				if(content.at(i) == _t('"') || content.at(i) == _t('\''))
+				if(content.at(i) == '"' || content.at(i) == '\'')
 				{
                     auto chr = content.at(i);
 					fnc.clear();
 					i++;
-					tstring::size_type pos = content.find(chr, i);
-					tstring txt;
-					if(pos == tstring::npos)
+					string::size_type pos = content.find(chr, i);
+					string txt;
+					if(pos == string::npos)
 					{
 						txt = content.substr(i);
-						i = tstring::npos;
+						i = string::npos;
 					} else
 					{
 						txt = content.substr(i, pos - i);
 						i = pos + 1;
 					}
 					add_text(txt);
-				} else if(content.at(i) == _t('('))
+				} else if(content.at(i) == '(')
 				{
 					i++;
 					litehtml::trim(fnc);
 					litehtml::lcase(fnc);
-					tstring::size_type pos = content.find(_t(')'), i);
-					tstring params;
-					if(pos == tstring::npos)
+					string::size_type pos = content.find(')', i);
+					string params;
+					if(pos == string::npos)
 					{
 						params = content.substr(i);
-						i = tstring::npos;
+						i = string::npos;
 					} else
 					{
 						params = content.substr(i, pos - i);
@@ -83,13 +83,13 @@ void litehtml::el_before_after_base::add_style(const tstring& style, const tstri
 	}
 }
 
-void litehtml::el_before_after_base::add_text( const tstring& txt )
+void litehtml::el_before_after_base::add_text( const string& txt )
 {
-	tstring word;
-	tstring esc;
-	for(tstring::size_type i = 0; i < txt.length(); i++)
+	string word;
+	string esc;
+	for(string::size_type i = 0; i < txt.length(); i++)
 	{
-		if( (txt.at(i) == _t(' ')) || (txt.at(i) == _t('\t')) || (txt.at(i) == _t('\\') && !esc.empty()) )
+		if( (txt.at(i) == ' ') || (txt.at(i) == '\t') || (txt.at(i) == '\\' && !esc.empty()) )
 		{
 			if(esc.empty())
 			{
@@ -106,14 +106,14 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 			{
 				word += convert_escape(esc.c_str() + 1);
 				esc.clear();
-				if(txt.at(i) == _t('\\'))
+				if(txt.at(i) == '\\')
 				{
 					esc += txt.at(i);
 				}
 			}
 		} else
 		{
-			if(!esc.empty() || txt.at(i) == _t('\\'))
+			if(!esc.empty() || txt.at(i) == '\\')
 			{
 				esc += txt.at(i);
 			} else
@@ -135,21 +135,21 @@ void litehtml::el_before_after_base::add_text( const tstring& txt )
 	}
 }
 
-void litehtml::el_before_after_base::add_function( const tstring& fnc, const tstring& params )
+void litehtml::el_before_after_base::add_function( const string& fnc, const string& params )
 {
-	int idx = value_index(fnc, _t("attr;counter;url"));
+	int idx = value_index(fnc, "attr;counter;url");
 	switch(idx)
 	{
 	// attr
 	case 0:
 		{
-			tstring p_name = params;
+			string p_name = params;
 			trim(p_name);
 			lcase(p_name);
 			element::ptr el_parent = parent();
 			if (el_parent)
 			{
-				const tchar_t* attr_value = el_parent->get_attr(p_name.c_str());
+				const char* attr_value = el_parent->get_attr(p_name.c_str());
 				if (attr_value)
 				{
 					add_text(attr_value);
@@ -163,18 +163,18 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 	// url
 	case 2:
 		{
-			tstring p_url = params;
+			string p_url = params;
 			trim(p_url);
 			if(!p_url.empty())
 			{
-				if(p_url.at(0) == _t('\'') || p_url.at(0) == _t('\"'))
+				if(p_url.at(0) == '\'' || p_url.at(0) == '\"')
 				{
 					p_url.erase(0, 1);
 				}
 			}
 			if(!p_url.empty())
 			{
-				if(p_url.at(p_url.length() - 1) == _t('\'') || p_url.at(p_url.length() - 1) == _t('\"'))
+				if(p_url.at(p_url.length() - 1) == '\'' || p_url.at(p_url.length() - 1) == '\"')
 				{
 					p_url.erase(p_url.length() - 1, 1);
 				}
@@ -182,9 +182,9 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 			if(!p_url.empty())
 			{
 				element::ptr el = std::make_shared<el_image>(get_document());
-				el->set_attr(_t("src"), p_url.c_str());
-				el->set_attr(_t("style"), _t("display:inline-block"));
-				el->set_tagName(_t("img"));
+				el->set_attr("src", p_url.c_str());
+				el->set_attr("style", "display:inline-block");
+				el->set_tagName("img");
 				appendChild(el);
 				el->parse_attributes();
 			}
@@ -193,13 +193,13 @@ void litehtml::el_before_after_base::add_function( const tstring& fnc, const tst
 	}
 }
 
-litehtml::tstring litehtml::el_before_after_base::convert_escape( const tchar_t* txt )
+litehtml::string litehtml::el_before_after_base::convert_escape( const char* txt )
 {
-    tchar_t* str_end;
+    char* str_end;
 	wchar_t u_str[2];
-    u_str[0] = (wchar_t) t_strtol(txt, &str_end, 16);
+    u_str[0] = (wchar_t) strtol(txt, &str_end, 16);
     u_str[1] = 0;
-	return litehtml::tstring(litehtml_from_wchar(u_str));
+	return litehtml::string(litehtml_from_wchar(u_str));
 }
 
 void litehtml::el_before_after_base::apply_stylesheet( const litehtml::css& stylesheet )

@@ -34,7 +34,7 @@ namespace litehtml
         used_selector::vector	                m_used_styles;
 
         virtual void select_all(const css_selector& selector, elements_vector& res);
-        element::ptr _add_before_after(int type, const tstring& style, const tstring& baseurl);
+        element::ptr _add_before_after(int type, const string& style, const string& baseurl);
 	public:
 		explicit element(const std::shared_ptr<litehtml::document>& doc);
         virtual ~element() = default;
@@ -43,7 +43,7 @@ namespace litehtml
         css_properties&             css_w();
 
 		bool						in_normal_flow()			const;
-		litehtml::web_color			get_color(const tchar_t* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
+		litehtml::web_color			get_color(const char* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		bool						is_inline_box()				const;
         bool                        is_block_box()              const;
 		position					get_placement()				const;
@@ -58,47 +58,47 @@ namespace litehtml
 
 		std::shared_ptr<document>	get_document() const;
 
-		virtual elements_vector		select_all(const tstring& selector);
+		virtual elements_vector		select_all(const string& selector);
 		virtual elements_vector		select_all(const css_selector& selector);
 
-		virtual element::ptr		select_one(const tstring& selector);
+		virtual element::ptr		select_one(const string& selector);
 		virtual element::ptr		select_one(const css_selector& selector);
 
 		virtual bool				appendChild(const ptr &el);
 		virtual bool				removeChild(const ptr &el);
 		virtual void				clearRecursive();
 
-		virtual const tchar_t*		get_tagName() const;
-		virtual void				set_tagName(const tchar_t* tag);
-		virtual void				set_data(const tchar_t* data);
+		virtual const char*			get_tagName() const;
+		virtual void				set_tagName(const char* tag);
+		virtual void				set_data(const char* data);
 		virtual size_t				get_children_count() const;
 		virtual element::ptr		get_child(int idx) const;
 
-		virtual void				set_attr(const tchar_t* name, const tchar_t* val);
-		virtual const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = nullptr) const;
+		virtual void				set_attr(const char* name, const char* val);
+		virtual const char*			get_attr(const char* name, const char* def = nullptr) const;
 		virtual void				apply_stylesheet(const litehtml::css& stylesheet);
 		virtual void				refresh_styles();
 		virtual bool				is_white_space() const;
-        virtual bool                is_space() const;
+		virtual bool				is_space() const;
 		virtual bool				is_comment() const;
 		virtual bool				is_body() const;
-        virtual bool				is_break() const;
-        virtual bool				is_text() const;
+		virtual bool				is_break() const;
+		virtual bool				is_text() const;
 
-        virtual bool				on_mouse_over();
+		virtual bool				on_mouse_over();
 		virtual bool				on_mouse_leave();
 		virtual bool				on_lbutton_down();
 		virtual bool				on_lbutton_up();
 		virtual void				on_click();
-		virtual const tchar_t*		get_cursor();
-		virtual bool				set_pseudo_class(const tchar_t* pclass, bool add);
-		virtual bool				set_class(const tchar_t* pclass, bool add);
+		virtual const char*			get_cursor();
+		virtual bool				set_pseudo_class(const char* pclass, bool add);
+		virtual bool				set_class(const char* pclass, bool add);
 		virtual bool				is_replaced() const;
 		virtual void				parse_styles(bool is_reparse = false);
-		virtual void                draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item>& ri);
-		virtual void                draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri);
-		virtual const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = nullptr) const;
-		virtual void				get_text(tstring& text);
+		virtual void				draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item>& ri);
+		virtual void				draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri);
+		virtual const char*			get_style_property(const char* name, bool inherited, const char* def = nullptr) const;
+		virtual void				get_text(string& text);
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
@@ -112,26 +112,26 @@ namespace litehtml
 		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const;
 		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const;
 		virtual bool				is_only_child(const element::ptr& el, bool of_type) const;
-		virtual void				add_style(const tstring& style, const tstring& baseurl);
+		virtual void				add_style(const string& style, const string& baseurl);
 		virtual const background*	get_background(bool own_only = false);
 
-        virtual tstring             dump_get_name();
-        virtual std::vector<std::tuple<tstring, tstring>> dump_get_attrs();
-        void                        dump(litehtml::dumper& cout);
+		virtual string				dump_get_name();
+		virtual std::vector<std::tuple<string, string>> dump_get_attrs();
+		void						dump(litehtml::dumper& cout);
 
-        std::tuple<element::ptr, element::ptr, element::ptr> split_inlines();
-        virtual std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri);
-        bool requires_styles_update();
-        void add_render(const std::shared_ptr<render_item>& ri);
-        bool find_styles_changes( position::vector& redraw_boxes);
-        element::ptr add_pseudo_before(const tstring& style, const tstring& baseurl)
-        {
-            return _add_before_after(0, style, baseurl);
-        }
-        element::ptr add_pseudo_after(const tstring& style, const tstring& baseurl)
-        {
-            return _add_before_after(1, style, baseurl);
-        }
+		std::tuple<element::ptr, element::ptr, element::ptr> split_inlines();
+		virtual std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri);
+		bool requires_styles_update();
+		void add_render(const std::shared_ptr<render_item>& ri);
+		bool find_styles_changes( position::vector& redraw_boxes);
+		element::ptr add_pseudo_before(const string& style, const string& baseurl)
+		{
+			return _add_before_after(0, style, baseurl);
+		}
+		element::ptr add_pseudo_after(const string& style, const string& baseurl)
+		{
+			return _add_before_after(1, style, baseurl);
+		}
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -167,38 +167,38 @@ namespace litehtml
 		return (css().get_position() > element_position_static);
 	}
 
-    inline bool litehtml::element::is_float()	const
-    {
-        return (css().get_float() != float_none);
-    }
+	inline bool litehtml::element::is_float()	const
+	{
+		return (css().get_float() != float_none);
+	}
 
 	inline std::shared_ptr<document> element::get_document() const
 	{
 		return m_doc.lock();
 	}
 
-    inline const css_properties& element::css() const
-    {
-        return m_css;
-    }
+	inline const css_properties& element::css() const
+	{
+		return m_css;
+	}
 
-    inline css_properties& element::css_w()
-    {
-        return m_css;
-    }
+	inline css_properties& element::css_w()
+	{
+		return m_css;
+	}
 
-    inline bool element::is_block_box() const
-    {
-        if(css().get_display() == display_block ||
-           css().get_display() == display_flex ||
-           css().get_display() == display_table ||
-           css().get_display() == display_list_item ||
-           css().get_display() == display_flex)
-        {
-            return true;
-        }
-        return false;
-    }
+	inline bool element::is_block_box() const
+	{
+		if(css().get_display() == display_block ||
+		   css().get_display() == display_flex ||
+		   css().get_display() == display_table ||
+		   css().get_display() == display_list_item ||
+		   css().get_display() == display_flex)
+		{
+			return true;
+		}
+		return false;
+	}
 }
 
 #endif  // LH_ELEMENT_H

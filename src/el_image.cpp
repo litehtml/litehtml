@@ -3,7 +3,7 @@
 #include "document.h"
 #include "render_item.h"
 
-litehtml::el_image::el_image(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
+litehtml::el_image::el_image(const std::shared_ptr<document>& doc) : html_tag(doc)
 {
 	m_css.set_display(display_inline_block);
 }
@@ -20,17 +20,17 @@ bool litehtml::el_image::is_replaced() const
 
 void litehtml::el_image::parse_attributes()
 {
-	m_src = get_attr(_t("src"), _t(""));
+	m_src = get_attr("src", "");
 
-	const tchar_t* attr_height = get_attr(_t("height"));
+	const char* attr_height = get_attr("height");
 	if(attr_height)
 	{
-		m_style.add_property(_t("height"), attr_height, 0, false, this);
+		m_style.add_property("height", attr_height, 0, false, this);
 	}
-	const tchar_t* attr_width = get_attr(_t("width"));
+	const char* attr_width = get_attr("width");
 	if(attr_width)
 	{
-		m_style.add_property(_t("width"), attr_width, 0, false, this);
+		m_style.add_property("width", attr_width, 0, false, this);
 	}
 }
 
@@ -108,9 +108,9 @@ void litehtml::el_image::parse_styles( bool is_reparse /*= false*/ )
 	}
 }
 
-litehtml::tstring litehtml::el_image::dump_get_name()
+litehtml::string litehtml::el_image::dump_get_name()
 {
-    return _t("img src=\"") + m_src + _t("\"");
+    return "img src=\"" + m_src + "\"";
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::el_image::create_render_item(const std::shared_ptr<render_item>& parent_ri)

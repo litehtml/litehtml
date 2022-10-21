@@ -42,20 +42,20 @@ class url {
 public:
     url() = default;
 
-    explicit url(const tstring& str);
+    explicit url(const string& str);
 
-    url(const tstring& scheme,
-        const tstring& authority,
-        const tstring& path,
-        const tstring& query,
-        const tstring& fragment);
+    url(const string& scheme,
+        const string& authority,
+        const string& path,
+        const string& query,
+        const string& fragment);
 
-    const tstring& string() const
+    const string& str() const
     {
         return str_;
     }
 
-    const tstring& scheme() const
+    const string& scheme() const
     {
         return scheme_;
     }
@@ -65,7 +65,7 @@ public:
         return !scheme_.empty();
     }
 
-    const tstring& authority() const
+    const string& authority() const
     {
         return authority_;
     }
@@ -75,7 +75,7 @@ public:
         return !authority_.empty();
     }
 
-    const tstring& path() const
+    const string& path() const
     {
         return path_;
     }
@@ -85,7 +85,7 @@ public:
         return !path_.empty();
     }
 
-    const tstring& query() const
+    const string& query() const
     {
         return query_;
     }
@@ -95,7 +95,7 @@ public:
         return !query_.empty();
     }
 
-    const tstring& fragment() const
+    const string& fragment() const
     {
         return fragment_;
     }
@@ -106,7 +106,7 @@ public:
     }
 
 protected:
-    tstring str_;
+    string str_;
 
     // Assume URLs are relative by default.  See RFC 3986 Section 4.3 for
     // information on which URLs are considered relative and which URLs are
@@ -116,15 +116,15 @@ protected:
 
     bool absolute_ = false;
 
-    tstring scheme_;
+    string scheme_;
 
-    tstring authority_;
+    string authority_;
 
-    tstring path_;
+    string path_;
 
-    tstring query_;
+    string query_;
 
-    tstring fragment_;
+    string fragment_;
 };
 
 // Returns a URL that is resolved from the reference URL that might be

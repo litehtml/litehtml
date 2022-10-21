@@ -522,8 +522,8 @@ void litehtml::render_item_block::update_floats(int dy, const std::shared_ptr<re
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
 {
     {
-        css_selector sel(media_query_list::ptr(nullptr), _t(""));
-        sel.parse(_t(".inline_rating"));
+        css_selector sel(media_query_list::ptr(nullptr), "");
+        sel.parse(".inline_rating");
         if(src_el()->select(sel))
         {
             int i = 0;
@@ -537,19 +537,17 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
     {
         if (auto p = src_el()->parent())
         {
-            const auto hasStart = p->get_attr(_t("start"));
-            const int start = hasStart ? t_atoi(hasStart) : 1;
-            int val = start;
-            for (int i = 0, n = (int)p->get_children_count(); i < n; ++i)
+            int val = atoi(p->get_attr("start", "1"));
+            for (int i = 0; i < (int)p->get_children_count(); i++)
             {
                 auto child = p->get_child(i);
                 if (child == src_el())
                 {
-                    src_el()->set_attr(_t("list_index"), t_to_string(val).c_str());
+                    src_el()->set_attr("list_index", std::to_string(val).c_str());
                     break;
                 }
                 else if (child->css().get_display() == display_list_item)
-                    ++val;
+                    val++;
             }
         }
     }
@@ -612,7 +610,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
                 if(not_ws_added)
                 {
                     auto anon_el = std::make_shared<html_tag>(doc);
-                    anon_el->add_style(tstring(_t("display: block")), _t(""));
+                    anon_el->add_style("display: block", "");
                     anon_el->parent(src_el());
                     anon_el->parse_styles();
                     auto anon_ri = std::make_shared<render_item_block>(anon_el);
@@ -633,7 +631,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
         if(!inlines.empty() && not_ws_added)
         {
             auto anon_el = std::make_shared<html_tag>(doc);
-            anon_el->add_style(tstring(_t("display: block")), _t(""));
+            anon_el->add_style("display: block", "");
             anon_el->parent(src_el());
             anon_el->parse_styles();
             auto anon_ri = std::make_shared<render_item_block>(anon_el);
@@ -791,14 +789,14 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
 
     if (src_el()->css().get_display() == display_list_item)
     {
-        const tchar_t* list_image = src_el()->get_style_property(_t("list-style-image"), true, nullptr);
+        const char* list_image = src_el()->get_style_property("list-style-image", true, nullptr);
         if (list_image)
         {
-            tstring url;
+            string url;
             css::parse_css_url(list_image, url);
 
             size sz;
-            const tchar_t* list_image_baseurl = src_el()->get_style_property(_t("list-style-image-baseurl"), true, nullptr);
+            const char* list_image_baseurl = src_el()->get_style_property("list-style-image-baseurl", true, nullptr);
             src_el()->get_document()->container()->get_image_size(url.c_str(), list_image_baseurl, sz);
             if (min_height < sz.height)
             {

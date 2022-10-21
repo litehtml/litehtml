@@ -3,7 +3,7 @@
 #include "document.h"
 
 
-litehtml::el_link::el_link(const std::shared_ptr<litehtml::document>& doc) : litehtml::html_tag(doc)
+litehtml::el_link::el_link(const std::shared_ptr<document>& doc) : litehtml::html_tag(doc)
 {
 
 }
@@ -14,15 +14,15 @@ void litehtml::el_link::parse_attributes()
 
 	document::ptr doc = get_document();
 
-	const tchar_t* rel = get_attr(_t("rel"));
-	if(rel && !t_strcmp(rel, _t("stylesheet")))
+	const char* rel = get_attr("rel");
+	if(rel && !strcmp(rel, "stylesheet"))
 	{
-		const tchar_t* media	= get_attr(_t("media"));
-		const tchar_t* href		= get_attr(_t("href"));
+		const char* media	= get_attr("media");
+		const char* href	= get_attr("href");
 		if(href && href[0])
 		{
-			tstring css_text;
-			tstring css_baseurl;
+			string css_text;
+			string css_baseurl;
 			doc->container()->import_css(css_text, href, css_baseurl);
 			if(!css_text.empty())
 			{

@@ -49,7 +49,7 @@ TEST(TStringViewTest, Constructor)
     constexpr size_t offset = 5;
     constexpr size_t length = 10;
 
-    tstring string = _t("the quick brown fox jumps over the lazy dog");
+    string string = "the quick brown fox jumps over the lazy dog";
     tstring_view view(string.data() + offset, length);
 
     EXPECT_EQ(string.data() + offset, view.data());
@@ -66,7 +66,7 @@ TEST(TStringViewTest, RangeForLoop)
     constexpr size_t offset = 5;
     constexpr size_t length = 10;
 
-    tstring string = _t("the quick brown fox jumps over the lazy dog");
+    string string = "the quick brown fox jumps over the lazy dog";
     tstring_view view(string.data() + offset, length);
 
     for (auto c : view) {

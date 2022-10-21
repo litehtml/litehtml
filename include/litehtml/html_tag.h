@@ -21,10 +21,10 @@ namespace litehtml
 		friend class table_grid;
 		friend class line_box;
 	public:
-		typedef std::shared_ptr<litehtml::html_tag>	ptr;
+		typedef std::shared_ptr<html_tag>	ptr;
 	protected:
 		string_vector			m_class_values;
-		tstring					m_tag;
+		string					m_tag;
 		litehtml::style			m_style;
 		string_map				m_attrs;
 		string_vector			m_pseudo_classes;
@@ -37,14 +37,14 @@ namespace litehtml
 		bool				appendChild(const element::ptr &el) override;
 		bool				removeChild(const element::ptr &el) override;
 		void				clearRecursive() override;
-		const tchar_t*		get_tagName() const override;
-		void				set_tagName(const tchar_t* tag) override;
-		void				set_data(const tchar_t* data) override;
+		const char*			get_tagName() const override;
+		void				set_tagName(const char* tag) override;
+		void				set_data(const char* data) override;
 		size_t				get_children_count() const override;
 		element::ptr		get_child(int idx) const override;
 
-		void				set_attr(const tchar_t* name, const tchar_t* val) override;
-		const tchar_t*		get_attr(const tchar_t* name, const tchar_t* def = nullptr) const override;
+		void				set_attr(const char* name, const char* val) override;
+		const char*			get_attr(const char* name, const char* def = nullptr) const override;
 		void				apply_stylesheet(const litehtml::css& stylesheet) override;
 		void				refresh_styles() override;
 
@@ -57,52 +57,52 @@ namespace litehtml
 		bool				on_lbutton_down() override;
 		bool				on_lbutton_up() override;
 		void				on_click() override;
-		const tchar_t*		get_cursor() override;
-		bool				set_pseudo_class(const tchar_t* pclass, bool add) override;
-		bool				set_class(const tchar_t* pclass, bool add) override;
+		const char*			get_cursor() override;
+		bool				set_pseudo_class(const char* pclass, bool add) override;
+		bool				set_class(const char* pclass, bool add) override;
 		bool				is_replaced() const override;
 		void				parse_styles(bool is_reparse = false) override;
 		void                draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) override;
 		void                draw_background(uint_ptr hdc, int x, int y, const position *clip,
                                     const std::shared_ptr<render_item> &ri) override;
 
-		const tchar_t*		get_style_property(const tchar_t* name, bool inherited, const tchar_t* def = nullptr) const override;
+		const char*			get_style_property(const char* name, bool inherited, const char* def = nullptr) const override;
 
 		elements_vector&	children();
 
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;
 		int					select(const css_element_selector& selector, bool apply_pseudo = true) override;
 
-		elements_vector		select_all(const tstring& selector) override;
+		elements_vector		select_all(const string& selector) override;
 		elements_vector		select_all(const css_selector& selector) override;
 
-		element::ptr		select_one(const tstring& selector) override;
+		element::ptr		select_one(const string& selector) override;
 		element::ptr		select_one(const css_selector& selector) override;
 
 		element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr) override;
 		element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr) override;
 		element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr) override;
-		void				get_text(tstring& text) override;
+		void				get_text(string& text) override;
 		void				parse_attributes() override;
 
 		void				get_content_size(size& sz, int max_width) override;
 		bool				is_floats_holder() const override;
-		void				add_style(const tstring& style, const tstring& baseurl) override;
+		void				add_style(const string& style, const string& baseurl) override;
 
 		bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const override;
 		bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const override;
 		bool				is_only_child(const element::ptr& el, bool of_type) const override;
 		const background*	get_background(bool own_only = false) override;
 
-        tstring             dump_get_name() override;
+        string             dump_get_name() override;
 
 	protected:
 		void				init_background_paint( position pos, background_paint &bg_paint, const background* bg, const std::shared_ptr<render_item> &ri );
 		void				draw_list_marker( uint_ptr hdc, const position &pos );
-		tstring				get_list_marker_text(int index);
-		static void			parse_nth_child_params( const tstring& param, int &num, int &off );
-		litehtml::element::ptr  get_element_before(const tstring& style, const tstring& baseurl, bool create);
-		litehtml::element::ptr  get_element_after(const tstring& style, const tstring& baseurl, bool create);
+		string				get_list_marker_text(int index);
+		static void			parse_nth_child_params( const string& param, int &num, int &off );
+		element::ptr		get_element_before(const string& style, const string& baseurl, bool create);
+		element::ptr		get_element_after(const string& style, const string& baseurl, bool create);
     };
 
 	/************************************************************************/

@@ -1,10 +1,10 @@
 #include "html.h"
 #include "css_length.h"
 
-void litehtml::css_length::fromString( const tstring& str, const tstring& predefs, int defValue )
+void litehtml::css_length::fromString( const string& str, const string& predefs, int defValue )
 {
 	// TODO: Make support for calc
-	if(str.substr(0, 4) == _t("calc"))
+	if(str.substr(0, 4) == "calc")
 	{
 		m_is_predefined = true;
 		m_predef		= defValue;
@@ -20,14 +20,14 @@ void litehtml::css_length::fromString( const tstring& str, const tstring& predef
 	{
 		m_is_predefined = false;
 
-		tstring num;
-		tstring un;
+		string num;
+		string un;
 		bool is_unit = false;
-		for(tchar_t chr : str)
+		for(char chr : str)
 		{
 			if(!is_unit)
 			{
-				if(t_isdigit(chr) || chr == _t('.') || chr == _t('+') || chr == _t('-'))
+				if(t_isdigit(chr) || chr == '.' || chr == '+' || chr == '-')
 				{
 					num += chr;
 				} else
@@ -53,11 +53,11 @@ void litehtml::css_length::fromString( const tstring& str, const tstring& predef
 	}
 }
 
-litehtml::tstring litehtml::css_length::to_string()
+litehtml::string litehtml::css_length::to_string()
 {
     if(m_is_predefined)
     {
-        return _t("def(") + t_to_string(m_predef) + _t(")");
+        return "def(" + std::to_string(m_predef) + ")";
     }
-    return t_to_string(m_value) + _t("{") + index_value(m_units, css_units_strings) + _t("}");
+    return std::to_string(m_value) + "{" + index_value(m_units, css_units_strings) + "}";
 }

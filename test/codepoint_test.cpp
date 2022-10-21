@@ -44,7 +44,7 @@ using namespace litehtml;
 
 TEST(CodepointTest, URLReserved)
 {
-    std::vector<std::pair<tchar_t, bool>> testcases = {
+    std::vector<std::pair<char, bool>> testcases = {
         { '!', true },
         { '"', false },
         { '#', true },
@@ -97,7 +97,7 @@ TEST(CodepointTest, URLReserved)
 
 TEST(CodepointTest, URLScheme)
 {
-    std::vector<std::pair<tchar_t, bool>> testcases = {
+    std::vector<std::pair<char, bool>> testcases = {
         { '!', false },
         { '"', false },
         { '#', false },

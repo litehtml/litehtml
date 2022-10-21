@@ -3,12 +3,6 @@
 #include <set>
 #include <litehtml.h>
 
-#ifdef LITEHTML_UTF8
-#define t_make_url	make_url_utf8
-#else
-#define t_make_url	make_url
-#endif
-
 class win32_container : public litehtml::document_container
 {
 public:
@@ -28,27 +22,27 @@ public:
 	virtual ~win32_container();
 
 	// litehtml::document_container members
-	virtual uint_ptr	create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm) override;
-	virtual void		delete_font(uint_ptr hFont) override;
-	virtual const litehtml::tchar_t*  get_default_font_name() const override;
-	virtual int			get_default_font_size() const override;
-	virtual int			text_width(const litehtml::tchar_t* text, uint_ptr hFont) override;
-	virtual void		draw_text(uint_ptr hdc, const litehtml::tchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) override;
-	virtual	void		transform_text(litehtml::tstring& text, litehtml::text_transform tt) override;
+	uint_ptr	create_font(const char* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm) override;
+	void		delete_font(uint_ptr hFont) override;
+	const char* get_default_font_name() const override;
+	int			get_default_font_size() const override;
+	int			text_width(const char* text, uint_ptr hFont) override;
+	void		draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) override;
+	void		transform_text(litehtml::string& text, litehtml::text_transform tt) override;
 
-	virtual int			pt_to_px(int pt) const override;
-	virtual void		draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker) override;
-	virtual void		load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready) override;
-	virtual void		get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz) override;
-	virtual void		draw_background(uint_ptr hdc, const litehtml::background_paint& bg) override;
+	int			pt_to_px(int pt) const override;
+	void		draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker) override;
+	void		load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
+	void		get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
+	void		draw_background(uint_ptr hdc, const litehtml::background_paint& bg) override;
 
-	virtual void		set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) override;
-	virtual void		del_clip() override;
-	virtual litehtml::element::ptr	create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, const litehtml::document::ptr& doc) override;
-	virtual void		get_media_features(litehtml::media_features& media) const override;
-	virtual void		get_language(litehtml::tstring& language, litehtml::tstring& culture) const override;
-	virtual void		link(const litehtml::document::ptr& doc, const litehtml::element::ptr& el) override;
-	virtual litehtml::tstring	resolve_color(const litehtml::tstring& color) const override;
+	void		set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) override;
+	void		del_clip() override;
+	litehtml::element::ptr	create_element(const char* tag_name, const litehtml::string_map& attributes, const litehtml::document::ptr& doc) override;
+	void		get_media_features(litehtml::media_features& media) const override;
+	void		get_language(litehtml::string& language, litehtml::string& culture) const override;
+	void		link(const litehtml::document::ptr& doc, const litehtml::element::ptr& el) override;
+	litehtml::string	resolve_color(const litehtml::string& color) const override;
 
 protected:
 	void				apply_clip(HDC hdc);

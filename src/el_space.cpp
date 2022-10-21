@@ -2,7 +2,7 @@
 #include "document.h"
 #include "el_space.h"
 
-litehtml::el_space::el_space(const tchar_t* text, const std::shared_ptr<litehtml::document>& doc) : el_text(text, doc)
+litehtml::el_space::el_space(const char* text, const std::shared_ptr<document>& doc) : el_text(text, doc)
 {
 }
 
@@ -25,7 +25,7 @@ bool litehtml::el_space::is_break() const
 		ws == white_space_pre_line ||
 		ws == white_space_pre_wrap)
 	{
-		if(m_text == _t("\n"))
+		if(m_text == "\n")
 		{
 			return true;
 		}
@@ -38,7 +38,7 @@ bool litehtml::el_space::is_space() const
     return true;
 }
 
-litehtml::tstring litehtml::el_space::dump_get_name()
+litehtml::string litehtml::el_space::dump_get_name()
 {
-    return _t("space: \"") + get_escaped_string(m_text) + _t("\"");
+    return "space: \"" + get_escaped_string(m_text) + "\"";
 }

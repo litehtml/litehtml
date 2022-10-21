@@ -45,17 +45,8 @@ namespace litehtml
 		}
 	};
 
-#ifdef LITEHTML_UTF8
-#define litehtml_from_utf8(str)		str
-#define litehtml_to_utf8(str)		str
 #define litehtml_from_wchar(str)	litehtml::wchar_to_utf8(str)
 #define litehtml_to_wchar(str)		litehtml::utf8_to_wchar(str)
-#else
-#define litehtml_from_utf8(str)		litehtml::utf8_to_wchar(str)
-#define litehtml_to_utf8(str)		litehtml::wchar_to_utf8(str)
-#define litehtml_from_wchar(str)	str
-#define litehtml_to_wchar(str)		str
-#endif
 }
 
 #endif  // LH_UTF8_STRINGS_H

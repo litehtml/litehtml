@@ -86,7 +86,7 @@ cairo_font::~cairo_font()
 	}
 }
 
-void cairo_font::show_text( cairo_t* cr, int x, int y, const litehtml::tchar_t* str )
+void cairo_font::show_text( cairo_t* cr, int x, int y, const char* str )
 {
 	lock();
 	text_chunk::vector chunks;
@@ -137,15 +137,10 @@ void cairo_font::show_text( cairo_t* cr, int x, int y, const litehtml::tchar_t* 
 	free_text_chunks(chunks);
 }
 
-void cairo_font::split_text( const litehtml::tchar_t* src, text_chunk::vector& chunks )
+void cairo_font::split_text( const char* src, text_chunk::vector& chunks )
 {
-	wchar_t* str;
-#ifdef LITEHTML_UTF8
-	str = cairo_font::utf8_to_wchar(src);
+	wchar_t* str = cairo_font::utf8_to_wchar(src);
 	wchar_t* str_start = str;
-#else
-	str = (wchar_t*) src;
-#endif
 
 	int cch = lstrlen(str);
 
@@ -226,10 +221,7 @@ void cairo_font::split_text( const litehtml::tchar_t* src, text_chunk::vector& c
 	}
 
 	ReleaseDC(NULL, hdc);
-
-#ifdef LITEHTML_UTF8
 	delete str_start;
-#endif
 }
 
 void cairo_font::free_text_chunks( text_chunk::vector& chunks )
@@ -248,7 +240,7 @@ cairo_font_face_t* cairo_font::create_font_face( HFONT fnt )
 	return cairo_win32_font_face_create_for_logfontw(&lf);
 }
 
-int cairo_font::text_width( cairo_t* cr, const litehtml::tchar_t* str )
+int cairo_font::text_width( cairo_t* cr, const char* str )
 {
 	text_chunk::vector chunks;
 	split_text(str, chunks);

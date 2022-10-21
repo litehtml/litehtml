@@ -1201,12 +1201,12 @@ void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes)
 
 void litehtml::render_item::dump(litehtml::dumper& cout)
 {
-    cout.begin_node(src_el()->dump_get_name() + _t("{") + (const tstring) litehtml_from_utf8(typeid(*this).name()) + _t("}"));
+    cout.begin_node(src_el()->dump_get_name() + "{" + string(typeid(*this).name()) + "}");
 
     auto attrs = src_el()->dump_get_attrs();
     if(!attrs.empty())
     {
-        cout.begin_attrs_group(_t("attributes"));
+        cout.begin_attrs_group("attributes");
         for (const auto &attr: attrs)
         {
             cout.add_attr(std::get<0>(attr), std::get<1>(attr));
@@ -1216,7 +1216,7 @@ void litehtml::render_item::dump(litehtml::dumper& cout)
 
     if(!m_children.empty())
     {
-        cout.begin_attrs_group(_t("children"));
+        cout.begin_attrs_group("children");
         for (const auto &el: m_children)
         {
             el->dump(cout);

@@ -2,42 +2,42 @@
 #include "el_td.h"
 
 
-litehtml::el_td::el_td(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
+litehtml::el_td::el_td(const std::shared_ptr<document>& doc) : html_tag(doc)
 {
 
 }
 
 void litehtml::el_td::parse_attributes()
 {
-	const tchar_t* str = get_attr(_t("width"));
+	const char* str = get_attr("width");
 	if(str)
 	{
-		m_style.add_property(_t("width"), str, nullptr, false, this);
+		m_style.add_property("width", str, nullptr, false, this);
 	}
-	str = get_attr(_t("background"));
+	str = get_attr("background");
 	if(str)
 	{
-		tstring url = _t("url('");
+		string url = "url('";
 		url += str;
-		url += _t("')");
-		m_style.add_property(_t("background-image"), url.c_str(), nullptr, false, this);
+		url += "')";
+		m_style.add_property("background-image", url.c_str(), nullptr, false, this);
 	}
-	str = get_attr(_t("align"));
+	str = get_attr("align");
 	if(str)
 	{
-		m_style.add_property(_t("text-align"), str, nullptr, false, this);
+		m_style.add_property("text-align", str, nullptr, false, this);
 	}
 
-	str = get_attr(_t("bgcolor"));
+	str = get_attr("bgcolor");
 	if (str)
 	{
-		m_style.add_property(_t("background-color"), str, nullptr, false, this);
+		m_style.add_property("background-color", str, nullptr, false, this);
 	}
 
-	str = get_attr(_t("valign"));
+	str = get_attr("valign");
 	if(str)
 	{
-		m_style.add_property(_t("vertical-align"), str, nullptr, false, this);
+		m_style.add_property("vertical-align", str, nullptr, false, this);
 	}
 	html_tag::parse_attributes();
 }

@@ -67,14 +67,14 @@ public:
 	void init();
 	~cairo_font();
 
-	void				show_text(cairo_t* cr, int x, int y, const litehtml::tchar_t*);
-	int					text_width(cairo_t* cr, const litehtml::tchar_t* str);
+	void				show_text(cairo_t* cr, int x, int y, const char*);
+	int					text_width(cairo_t* cr, const char* str);
 	void				load_metrics(cairo_t* cr);
 	cairo_font_metrics&	metrics();
 	static wchar_t*		utf8_to_wchar(const char* src);
 	static char*		wchar_to_utf8(const wchar_t* src);
 private:
-	void				split_text(const litehtml::tchar_t* str, text_chunk::vector& chunks);
+	void				split_text(const char* str, text_chunk::vector& chunks);
 	void				free_text_chunks(text_chunk::vector& chunks);
 	cairo_font_face_t*	create_font_face(HFONT fnt);
 	void				set_font(HFONT hFont);

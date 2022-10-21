@@ -36,15 +36,15 @@
 
 namespace litehtml {
 
-bool is_url_path_absolute(const tstring& path);
+bool is_url_path_absolute(const string& path);
 
-tstring url_path_directory_name(const tstring& path);
+string url_path_directory_name(const string& path);
 
-tstring url_path_base_name(const tstring& path);
+string url_path_base_name(const string& path);
 
-tstring url_path_append(const tstring& base, const tstring& path);
+string url_path_append(const string& base, const string& path);
 
-tstring url_path_resolve(const tstring& base, const tstring& path);
+string url_path_resolve(const string& base, const string& path);
 
 } // namespace litehtml
 
