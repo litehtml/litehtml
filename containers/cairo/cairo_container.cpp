@@ -25,21 +25,18 @@ cairo_container::~cairo_container(void)
 	DeleteCriticalSection(&m_img_sync);
 }
 
-litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
+litehtml::uint_ptr cairo_container::create_font( const char* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
 	std::wstring fnt_name = L"sans-serif";
 
 	litehtml::string_vector fonts;
-	litehtml::split_string(faceName, fonts, _t(","));
+	litehtml::split_string(faceName, fonts, ",");
 	if(!fonts.empty())
 	{
 		litehtml::trim(fonts[0]);
-#ifdef LITEHTML_UTF8
 		wchar_t* f = cairo_font::utf8_to_wchar(fonts[0].c_str());
 		fnt_name = f;
 		delete f;
-#else
-		fnt_name = fonts[0];
 		if (fnt_name.front() == L'"' || fnt_name.front() == L'\'')
 		{
 			fnt_name.erase(0, 1);
@@ -48,7 +45,6 @@ litehtml::uint_ptr cairo_container::create_font( const litehtml::tchar_t* faceNa
 		{
 			fnt_name.erase(fnt_name.length() - 1, 1);
 		}
-#endif
 	}
 
 	cairo_font* fnt = new cairo_font(	m_font_link,
@@ -91,7 +87,7 @@ void cairo_container::delete_font( litehtml::uint_ptr hFont )
 	}
 }
 
-int cairo_container::text_width( const litehtml::tchar_t* text, litehtml::uint_ptr hFont )
+int cairo_container::text_width( const char* text, litehtml::uint_ptr hFont )
 {
 	cairo_font* fnt = (cairo_font*) hFont;
 	
@@ -101,7 +97,7 @@ int cairo_container::text_width( const litehtml::tchar_t* text, litehtml::uint_p
 	return ret;
 }
 
-void cairo_container::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
+void cairo_container::draw_text( litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
 	if(hFont)
 	{
@@ -139,7 +135,7 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 	if(!marker.image.empty())
 	{
 		std::wstring url;
-		t_make_url(marker.image.c_str(), marker.baseurl, url);
+		make_url_utf8(marker.image.c_str(), marker.baseurl, url);
 
 		lock_images_cache();
 		images_map::iterator img_i = m_images.find(url.c_str());
@@ -184,10 +180,10 @@ void cairo_container::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 	}
 }
 
-void cairo_container::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready )
+void cairo_container::load_image( const char* src, const char* baseurl, bool redraw_on_ready )
 {
 	std::wstring url;
-	t_make_url(src, baseurl, url);
+	make_url_utf8(src, baseurl, url);
 	lock_images_cache();
 	if(m_images.find(url.c_str()) == m_images.end())
 	{
@@ -203,10 +199,10 @@ void cairo_container::load_image( const litehtml::tchar_t* src, const litehtml::
 
 }
 
-void cairo_container::get_image_size( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz )
+void cairo_container::get_image_size( const char* src, const char* baseurl, litehtml::size& sz )
 {
 	std::wstring url;
-	t_make_url(src, baseurl, url);
+	make_url_utf8(src, baseurl, url);
 
 	sz.width	= 0;
 	sz.height	= 0;
@@ -224,14 +220,14 @@ void cairo_container::get_image_size( const litehtml::tchar_t* src, const liteht
 	unlock_images_cache();
 }
 
-void cairo_container::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, const litehtml::position& pos )
+void cairo_container::draw_image( litehtml::uint_ptr hdc, const char* src, const char* baseurl, const litehtml::position& pos )
 {
 	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
 	std::wstring url;
-	t_make_url(src, baseurl, url);
+	make_url_utf8(src, baseurl, url);
 	lock_images_cache();
 	images_map::iterator img = m_images.find(url.c_str());
 	if(img != m_images.end())
@@ -264,7 +260,7 @@ void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 	}
 
 	std::wstring url;
-	t_make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
+	make_url_utf8(bg.image.c_str(), bg.baseurl.c_str(), url);
 
 	lock_images_cache();
 	images_map::iterator img_i = m_images.find(url.c_str());
@@ -766,9 +762,9 @@ void cairo_container::clear_images()
 	unlock_images_cache();
 }
 
-const litehtml::tchar_t* cairo_container::get_default_font_name() const
+const char* cairo_container::get_default_font_name() const
 {
-	return _t("Times New Roman");
+	return "Times New Roman";
 }
 
 void cairo_container::draw_txdib( cairo_t* cr, CTxDIB* bmp, int x, int y, int cx, int cy )
@@ -874,7 +870,7 @@ void cairo_container::unlock_images_cache()
 	LeaveCriticalSection(&m_img_sync);
 }
 
-std::shared_ptr<litehtml::element> cairo_container::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, const std::shared_ptr<litehtml::document>& doc)
+std::shared_ptr<litehtml::element> cairo_container::create_element(const char* tag_name, const litehtml::string_map& attributes, const std::shared_ptr<litehtml::document>& doc)
 {
 	return 0;
 }
@@ -898,10 +894,10 @@ void cairo_container::get_media_features(litehtml::media_features& media)  const
 	ReleaseDC(NULL, hdc);
 }
 
-void cairo_container::get_language(litehtml::tstring& language, litehtml::tstring & culture) const
+void cairo_container::get_language(litehtml::string& language, litehtml::string & culture) const
 {
-	language = _t("en");
-	culture = _t("");
+	language = "en";
+	culture = "";
 }
 
 void cairo_container::make_url_utf8( const char* url, const char* basepath, std::wstring& out )
@@ -914,33 +910,10 @@ void cairo_container::make_url_utf8( const char* url, const char* basepath, std:
 	if(basepathW) delete basepathW;
 }
 
-void cairo_container::transform_text( litehtml::tstring& text, litehtml::text_transform tt )
+void cairo_container::transform_text( litehtml::string& text, litehtml::text_transform tt )
 {
 	if(text.empty()) return;
 
-#ifndef LITEHTML_UTF8
-	switch(tt)
-	{
-	case litehtml::text_transform_capitalize:
-		if(!text.empty())
-		{
-			text[0] = (WCHAR) CharUpper((LPWSTR) text[0]);
-		}
-		break;
-	case litehtml::text_transform_uppercase:
-		for(size_t i = 0; i < text.length(); i++)
-		{
-			text[i] = (WCHAR) CharUpper((LPWSTR) text[i]);
-		}
-		break;
-	case litehtml::text_transform_lowercase:
-		for(size_t i = 0; i < text.length(); i++)
-		{
-			text[i] = (WCHAR) CharLower((LPWSTR) text[i]);
-		}
-		break;
-	}
-#else
 	LPWSTR txt = cairo_font::utf8_to_wchar(text.c_str());
 	switch(tt)
 	{
@@ -958,71 +931,60 @@ void cairo_container::transform_text( litehtml::tstring& text, litehtml::text_tr
 	text = txtA;
 	delete txtA;
 	delete txt;
-#endif
 }
 
 void cairo_container::link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el)
 {
 }
 
-litehtml::tstring cairo_container::resolve_color(const litehtml::tstring& color) const
+litehtml::string cairo_container::resolve_color(const litehtml::string& color) const
 {
 	struct custom_color 
 	{
-		litehtml::tchar_t*	name;
+		char*	name;
 		int					color_index;
 	};
 
 	static custom_color colors[] = {
-		{ _t("ActiveBorder"),          COLOR_ACTIVEBORDER},
-		{ _t("ActiveCaption"),         COLOR_ACTIVECAPTION},
-		{ _t("AppWorkspace"),          COLOR_APPWORKSPACE },
-		{ _t("Background"),            COLOR_BACKGROUND },
-		{ _t("ButtonFace"),            COLOR_BTNFACE },
-		{ _t("ButtonHighlight"),       COLOR_BTNHIGHLIGHT },
-		{ _t("ButtonShadow"),          COLOR_BTNSHADOW },
-		{ _t("ButtonText"),            COLOR_BTNTEXT },
-		{ _t("CaptionText"),           COLOR_CAPTIONTEXT },
-        { _t("GrayText"),              COLOR_GRAYTEXT },
-		{ _t("Highlight"),             COLOR_HIGHLIGHT },
-		{ _t("HighlightText"),         COLOR_HIGHLIGHTTEXT },
-		{ _t("InactiveBorder"),        COLOR_INACTIVEBORDER },
-		{ _t("InactiveCaption"),       COLOR_INACTIVECAPTION },
-		{ _t("InactiveCaptionText"),   COLOR_INACTIVECAPTIONTEXT },
-		{ _t("InfoBackground"),        COLOR_INFOBK },
-		{ _t("InfoText"),              COLOR_INFOTEXT },
-		{ _t("Menu"),                  COLOR_MENU },
-		{ _t("MenuText"),              COLOR_MENUTEXT },
-		{ _t("Scrollbar"),             COLOR_SCROLLBAR },
-		{ _t("ThreeDDarkShadow"),      COLOR_3DDKSHADOW },
-		{ _t("ThreeDFace"),            COLOR_3DFACE },
-		{ _t("ThreeDHighlight"),       COLOR_3DHILIGHT },
-		{ _t("ThreeDLightShadow"),     COLOR_3DLIGHT },
-		{ _t("ThreeDShadow"),          COLOR_3DSHADOW },
-		{ _t("Window"),                COLOR_WINDOW },
-		{ _t("WindowFrame"),           COLOR_WINDOWFRAME },
-		{ _t("WindowText"),            COLOR_WINDOWTEXT }
+		{ "ActiveBorder",          COLOR_ACTIVEBORDER},
+		{ "ActiveCaption",         COLOR_ACTIVECAPTION},
+		{ "AppWorkspace",          COLOR_APPWORKSPACE },
+		{ "Background",            COLOR_BACKGROUND },
+		{ "ButtonFace",            COLOR_BTNFACE },
+		{ "ButtonHighlight",       COLOR_BTNHIGHLIGHT },
+		{ "ButtonShadow",          COLOR_BTNSHADOW },
+		{ "ButtonText",            COLOR_BTNTEXT },
+		{ "CaptionText",           COLOR_CAPTIONTEXT },
+        { "GrayText",              COLOR_GRAYTEXT },
+		{ "Highlight",             COLOR_HIGHLIGHT },
+		{ "HighlightText",         COLOR_HIGHLIGHTTEXT },
+		{ "InactiveBorder",        COLOR_INACTIVEBORDER },
+		{ "InactiveCaption",       COLOR_INACTIVECAPTION },
+		{ "InactiveCaptionText",   COLOR_INACTIVECAPTIONTEXT },
+		{ "InfoBackground",        COLOR_INFOBK },
+		{ "InfoText",              COLOR_INFOTEXT },
+		{ "Menu",                  COLOR_MENU },
+		{ "MenuText",              COLOR_MENUTEXT },
+		{ "Scrollbar",             COLOR_SCROLLBAR },
+		{ "ThreeDDarkShadow",      COLOR_3DDKSHADOW },
+		{ "ThreeDFace",            COLOR_3DFACE },
+		{ "ThreeDHighlight",       COLOR_3DHILIGHT },
+		{ "ThreeDLightShadow",     COLOR_3DLIGHT },
+		{ "ThreeDShadow",          COLOR_3DSHADOW },
+		{ "Window",                COLOR_WINDOW },
+		{ "WindowFrame",           COLOR_WINDOWFRAME },
+		{ "WindowText",            COLOR_WINDOWTEXT }
 	};
-
-    if (color == _t("Highlight"))
-    {
-        int iii = 0;
-        iii++;
-    }
 
     for (auto& clr : colors)
     {
 		if (!litehtml::t_strcasecmp(clr.name, color.c_str()))
         {
-            litehtml::tchar_t  str_clr[20];
+            char  str_clr[20];
             DWORD rgb_color =  GetSysColor(clr.color_index);
-#ifdef LITEHTML_UTF8
             StringCchPrintfA(str_clr, 20, "#%02X%02X%02X", GetRValue(rgb_color), GetGValue(rgb_color), GetBValue(rgb_color));
-#else
-            StringCchPrintf(str_clr, 20, L"#%02X%02X%02X", GetRValue(rgb_color), GetGValue(rgb_color), GetBValue(rgb_color));
-#endif // LITEHTML_UTF8
-            return std::move(litehtml::tstring(str_clr));
+            return std::move(litehtml::string(str_clr));
         }
     }
-    return std::move(litehtml::tstring());
+    return std::move(litehtml::string());
 }

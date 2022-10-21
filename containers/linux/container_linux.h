@@ -47,7 +47,7 @@ struct cairo_font
 
 class container_linux :	public litehtml::document_container
 {
-	typedef std::map<litehtml::tstring, Glib::RefPtr<Gdk::Pixbuf> >	images_map;
+	typedef std::map<litehtml::string, Glib::RefPtr<Gdk::Pixbuf> >	images_map;
 
 protected:
 	cairo_surface_t*			m_temp_surface;
@@ -58,32 +58,32 @@ public:
 	container_linux();
 	virtual ~container_linux();
 
-	litehtml::uint_ptr create_font(const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm) override;
+	litehtml::uint_ptr create_font(const char* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm) override;
 	void delete_font(litehtml::uint_ptr hFont) override;
-	int text_width(const litehtml::tchar_t* text, litehtml::uint_ptr hFont) override;
-	void draw_text(litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) override;
+	int text_width(const char* text, litehtml::uint_ptr hFont) override;
+	void draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) override;
 	int pt_to_px(int pt) const override;
 	int get_default_font_size() const override;
-	const litehtml::tchar_t*	get_default_font_name() const override;
-	void load_image(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready) override;
-	void get_image_size(const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz) override;
+	const char*	get_default_font_name() const override;
+	void load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
+	void get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
 	void draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg) override;
 	void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) override;
 	void draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) override;
-	std::shared_ptr<litehtml::element>	create_element(const litehtml::tchar_t *tag_name,
+	std::shared_ptr<litehtml::element>	create_element(const char *tag_name,
 														 const litehtml::string_map &attributes,
 														 const std::shared_ptr<litehtml::document> &doc) override;
 	void get_media_features(litehtml::media_features& media) const override;
-	void get_language(litehtml::tstring& language, litehtml::tstring & culture) const override;
+	void get_language(litehtml::string& language, litehtml::string & culture) const override;
 	void link(const std::shared_ptr<litehtml::document> &ptr, const litehtml::element::ptr& el) override;
 
 
-	void transform_text(litehtml::tstring& text, litehtml::text_transform tt) override;
+	void transform_text(litehtml::string& text, litehtml::text_transform tt) override;
 	void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) override;
 	void del_clip() override;
 
-	virtual void make_url( const litehtml::tchar_t* url, const litehtml::tchar_t* basepath, litehtml::tstring& out );
-	virtual Glib::RefPtr<Gdk::Pixbuf>	get_image(const litehtml::tchar_t* url, bool redraw_on_ready) = 0;
+	virtual void make_url( const char* url, const char* basepath, litehtml::string& out );
+	virtual Glib::RefPtr<Gdk::Pixbuf>	get_image(const char* url, bool redraw_on_ready) = 0;
 
 	void clear_images();
 

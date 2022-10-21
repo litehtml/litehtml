@@ -113,7 +113,7 @@ namespace litehtml
         {}
 
         void parse(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
-        std::vector<std::tuple<tstring, tstring>> dump_get_attrs();
+        std::vector<std::tuple<string, string>> dump_get_attrs();
 
         element_position get_position() const;
         void set_position(element_position mElPosition);

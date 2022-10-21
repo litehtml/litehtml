@@ -18,7 +18,7 @@ container_linux::~container_linux()
 	cairo_destroy(m_temp_cr);
 }
 
-litehtml::uint_ptr container_linux::create_font( const litehtml::tchar_t* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
+litehtml::uint_ptr container_linux::create_font( const char* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
     PangoFontDescription *desc = pango_font_description_from_string (faceName);
     pango_font_description_set_absolute_size(desc, size * PANGO_SCALE);
@@ -104,7 +104,7 @@ void container_linux::delete_font( litehtml::uint_ptr hFont )
 	}
 }
 
-int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_ptr hFont )
+int container_linux::text_width( const char* text, litehtml::uint_ptr hFont )
 {
 	auto* fnt = (cairo_font*) hFont;
 
@@ -126,7 +126,7 @@ int container_linux::text_width( const litehtml::tchar_t* text, litehtml::uint_p
 	return (int) x_width;
 }
 
-void container_linux::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
+void container_linux::draw_text( litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
 	auto* fnt = (cairo_font*) hFont;
 	auto* cr = (cairo_t*) hdc;
@@ -198,7 +198,7 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 {
 	if(!marker.image.empty())
 	{
-		/*litehtml::tstring url;
+		/*litehtml::string url;
 		make_url(marker.image.c_str(), marker.baseurl, url);
 
 		lock_images_cache();
@@ -246,9 +246,9 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 	}
 }
 
-void container_linux::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready )
+void container_linux::load_image( const char* src, const char* baseurl, bool redraw_on_ready )
 {
-	litehtml::tstring url;
+	litehtml::string url;
 	make_url(src, baseurl, url);
 	if(m_images.find(url) == m_images.end())
 	{
@@ -266,9 +266,9 @@ void container_linux::load_image( const litehtml::tchar_t* src, const litehtml::
 	}
 }
 
-void container_linux::get_image_size( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz )
+void container_linux::get_image_size( const char* src, const char* baseurl, litehtml::size& sz )
 {
-	litehtml::tstring url;
+	litehtml::string url;
 	make_url(src, baseurl, url);
 
 	auto img = m_images.find(url);
@@ -308,7 +308,7 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 		cairo_paint(cr);
 	}
 
-	litehtml::tstring url;
+	litehtml::string url;
 	make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
 
 	//lock_images_cache();
@@ -365,7 +365,7 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 	cairo_restore(cr);
 }
 
-void container_linux::make_url(const litehtml::tchar_t* url,	const litehtml::tchar_t* basepath, litehtml::tstring& out)
+void container_linux::make_url(const char* url,	const char* basepath, litehtml::string& out)
 {
 	out = url;
 }
@@ -688,7 +688,7 @@ void container_linux::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
 	cairo_restore(cr);
 }
 
-void container_linux::transform_text(litehtml::tstring& text, litehtml::text_transform tt)
+void container_linux::transform_text(litehtml::string& text, litehtml::text_transform tt)
 {
 
 }
@@ -780,12 +780,12 @@ void container_linux::clear_images()
 */
 }
 
-const litehtml::tchar_t* container_linux::get_default_font_name() const
+const char* container_linux::get_default_font_name() const
 {
 	return "Times New Roman";
 }
 
-std::shared_ptr<litehtml::element>	container_linux::create_element(const litehtml::tchar_t *tag_name,
+std::shared_ptr<litehtml::element>	container_linux::create_element(const char *tag_name,
 																	  const litehtml::string_map &attributes,
 																	  const std::shared_ptr<litehtml::document> &doc)
 {
@@ -885,10 +885,10 @@ void container_linux::get_media_features(litehtml::media_features& media) const
 	media.resolution	= 96;
 }
 
-void container_linux::get_language(litehtml::tstring& language, litehtml::tstring& culture) const
+void container_linux::get_language(litehtml::string& language, litehtml::string& culture) const
 {
-	language = _t("en");
-	culture = _t("");
+	language = "en";
+	culture = "";
 }
 
 void container_linux::link(const std::shared_ptr<litehtml::document> &ptr, const litehtml::element::ptr& el)

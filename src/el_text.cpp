@@ -3,7 +3,7 @@
 #include "document.h"
 #include "render_item.h"
 
-litehtml::el_text::el_text(const tchar_t* text, const std::shared_ptr<litehtml::document>& doc) : element(doc)
+litehtml::el_text::el_text(const char* text, const std::shared_ptr<document>& doc) : element(doc)
 {
 	if(text)
 	{
@@ -19,12 +19,12 @@ void litehtml::el_text::get_content_size( size& sz, int max_width )
 	sz = m_size;
 }
 
-void litehtml::el_text::get_text( tstring& text )
+void litehtml::el_text::get_text( string& text )
 {
 	text += m_text;
 }
 
-const litehtml::tchar_t* litehtml::el_text::get_style_property( const tchar_t* name, bool inherited, const tchar_t* def /*= 0*/ ) const
+const char* litehtml::el_text::get_style_property( const char* name, bool inherited, const char* def /*= 0*/ ) const
 {
 	if(inherited)
 	{
@@ -79,18 +79,18 @@ void litehtml::el_text::parse_styles(bool is_reparse)
 
 	if(is_white_space())
 	{
-		m_transformed_text = _t(" ");
+		m_transformed_text = " ";
 		m_use_transformed = true;
 	} else
 	{
-		if(m_text == _t("\t"))
+		if(m_text == "\t")
 		{
-			m_transformed_text = _t("    ");
+			m_transformed_text = "    ";
 			m_use_transformed = true;
 		}
-		if(m_text == _t("\n") || m_text == _t("\r"))
+		if(m_text == "\n" || m_text == "\r")
 		{
-			m_transformed_text = _t("");
+			m_transformed_text = "";
 			m_use_transformed = true;
 		}
 	}
@@ -133,18 +133,18 @@ void litehtml::el_text::draw(uint_ptr hdc, int x, int y, const position *clip, c
 			document::ptr doc = get_document();
 
 			uint_ptr font = el_parent->css().get_font();
-			litehtml::web_color color = el_parent->get_color(_t("color"), true, doc->get_def_color());
+			litehtml::web_color color = el_parent->get_color("color", true, doc->get_def_color());
 			doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
 		}
 	}
 }
 
-litehtml::tstring litehtml::el_text::dump_get_name()
+litehtml::string litehtml::el_text::dump_get_name()
 {
-    return _t("text: \"") + get_escaped_string(m_text) + _t("\"");
+    return "text: \"" + get_escaped_string(m_text) + "\"";
 }
 
-std::vector<std::tuple<litehtml::tstring, litehtml::tstring>> litehtml::el_text::dump_get_attrs()
+std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::el_text::dump_get_attrs()
 {
-    return std::vector<std::tuple<litehtml::tstring, litehtml::tstring>>();
+    return std::vector<std::tuple<string, string>>();
 }

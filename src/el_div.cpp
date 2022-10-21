@@ -2,17 +2,17 @@
 #include "el_div.h"
 
 
-litehtml::el_div::el_div(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
+litehtml::el_div::el_div(const std::shared_ptr<document>& doc) : html_tag(doc)
 {
 
 }
 
 void litehtml::el_div::parse_attributes()
 {
-	const tchar_t* str = get_attr(_t("align"));
+	const char* str = get_attr("align");
 	if(str)
 	{
-		m_style.add_property(_t("text-align"), str, 0, false, this);
+		m_style.add_property("text-align", str, 0, false, this);
 	}
 	html_tag::parse_attributes();
 }

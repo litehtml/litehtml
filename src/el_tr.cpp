@@ -2,27 +2,27 @@
 #include "el_tr.h"
 
 
-litehtml::el_tr::el_tr(const std::shared_ptr<litehtml::document>& doc) : html_tag(doc)
+litehtml::el_tr::el_tr(const std::shared_ptr<document>& doc) : html_tag(doc)
 {
 
 }
 
 void litehtml::el_tr::parse_attributes()
 {
-	const tchar_t* str = get_attr(_t("align"));
+	const char* str = get_attr("align");
 	if(str)
 	{
-		m_style.add_property(_t("text-align"), str, nullptr, false, this);
+		m_style.add_property("text-align", str, nullptr, false, this);
 	}
-	str = get_attr(_t("valign"));
+	str = get_attr("valign");
 	if(str)
 	{
-		m_style.add_property(_t("vertical-align"), str, nullptr, false, this);
+		m_style.add_property("vertical-align", str, nullptr, false, this);
 	}
-	str = get_attr(_t("bgcolor"));
+	str = get_attr("bgcolor");
 	if (str)
 	{
-		m_style.add_property(_t("background-color"), str, nullptr, false, this);
+		m_style.add_property("background-color", str, nullptr, false, this);
 	}
 	html_tag::parse_attributes();
 }

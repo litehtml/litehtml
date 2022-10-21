@@ -9,11 +9,11 @@ namespace litehtml
 	{
 		elements_vector		m_children;
 	public:
-		explicit el_style(const std::shared_ptr<litehtml::document>& doc);
+		explicit el_style(const std::shared_ptr<document>& doc);
 
 		void			parse_attributes() override;
 		bool			appendChild(const ptr &el) override;
-		const tchar_t*	get_tagName() const override;
+		const char*		get_tagName() const override;
 	};
 }
 

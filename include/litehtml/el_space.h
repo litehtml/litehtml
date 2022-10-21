@@ -9,12 +9,12 @@ namespace litehtml
 	class el_space : public el_text
 	{
 	public:
-		el_space(const tchar_t* text, const std::shared_ptr<litehtml::document>& doc);
+		el_space(const char* text, const std::shared_ptr<document>& doc);
 
 		bool is_white_space() const override;
 		bool is_break() const override;
         bool is_space() const override;
-        tstring dump_get_name() override;
+        string dump_get_name() override;
 	};
 }
 

@@ -6,7 +6,7 @@
 
 litehtml::string_map litehtml::style::m_valid_values =
 {
-	{ _t("white-space"), white_space_strings }
+	{ "white-space", white_space_strings }
 };
 
 litehtml::style::style( const style& val )
@@ -14,10 +14,10 @@ litehtml::style::style( const style& val )
 	m_properties = val.m_properties;
 }
 
-void litehtml::style::parse( const tchar_t* txt, const tchar_t* baseurl, const element* el )
+void litehtml::style::parse( const char* txt, const char* baseurl, const element* el )
 {
-	std::vector<tstring> properties;
-	split_string(txt, properties, _t(";"), _t(""), _t("\"'"));
+	std::vector<string> properties;
+	split_string(txt, properties, ";", "", "\"'");
 
 	for(const auto & property : properties)
 	{
@@ -25,13 +25,13 @@ void litehtml::style::parse( const tchar_t* txt, const tchar_t* baseurl, const e
 	}
 }
 
-void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl, const element* el )
+void litehtml::style::parse_property( const string& txt, const char* baseurl, const element* el )
 {
-	tstring::size_type pos = txt.find_first_of(_t(':'));
-	if(pos != tstring::npos)
+	string::size_type pos = txt.find_first_of(':');
+	if(pos != string::npos)
 	{
-		tstring name = txt.substr(0, pos);
-		tstring val	= txt.substr(pos + 1);
+		string name = txt.substr(0, pos);
+		string val	= txt.substr(pos + 1);
 
 		trim(name); lcase(name);
 		trim(val);
@@ -39,7 +39,7 @@ void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl
 		if(!name.empty() && !val.empty())
 		{
 			string_vector vals;
-			split_string(val, vals, _t("!"));
+			split_string(val, vals, "!");
 			if(vals.size() == 1)
 			{
 				add_property(name.c_str(), val.c_str(), baseurl, false, el);
@@ -47,7 +47,7 @@ void litehtml::style::parse_property( const tstring& txt, const tchar_t* baseurl
 			{
 				trim(vals[0]);
 				lcase(vals[1]);
-				add_property(name.c_str(), vals[0].c_str(), baseurl, vals[1] == _t("important"), el);
+				add_property(name.c_str(), vals[0].c_str(), baseurl, vals[1] == "important", el);
 			}
 		}
 	}
@@ -61,16 +61,16 @@ void litehtml::style::combine( const litehtml::style& src )
 	}
 }
 
-void litehtml::style::subst_vars( tstring& str, const element* el )
+void litehtml::style::subst_vars( string& str, const element* el )
 {
 	if (!el) return;
 
 	while (1)
 	{
-		auto start = str.find(_t("var("));
+		auto start = str.find("var(");
 		if (start == -1) break;
 		if (start > 0 && isalnum(str[start - 1])) break;
-		auto end = str.find(_t(")"), start + 4);
+		auto end = str.find(")", start + 4);
 		if (end == -1) break;
 		auto name = str.substr(start + 4, end - start - 4);
 		trim(name);
@@ -80,106 +80,106 @@ void litehtml::style::subst_vars( tstring& str, const element* el )
 	}
 }
 
-void litehtml::style::add_property( const tchar_t* name, const tchar_t* _val, const tchar_t* baseurl, bool important, const element* el )
+void litehtml::style::add_property( const char* name, const char* _val, const char* baseurl, bool important, const element* el )
 {
 	if(!name || !_val)
 	{
 		return;
 	}
 
-	tstring val = _val;
+	string val = _val;
 	subst_vars(val, el);
 
 	// Add baseurl for background image 
-	if(	!t_strcmp(name, _t("background-image")))
+	if(	!strcmp(name, "background-image"))
 	{
 		add_parsed_property(name, val, important);
 		if(baseurl)
 		{
-			add_parsed_property(_t("background-image-baseurl"), baseurl, important);
+			add_parsed_property("background-image-baseurl", baseurl, important);
 		}
 	} else
 
 	// Parse border spacing properties 
-	if(	!t_strcmp(name, _t("border-spacing")))
+	if(	!strcmp(name, "border-spacing"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() == 1)
 		{
-			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0], important);
-			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[0], important);
+			add_parsed_property("-litehtml-border-spacing-x", tokens[0], important);
+			add_parsed_property("-litehtml-border-spacing-y", tokens[0], important);
 		} else if(tokens.size() == 2)
 		{
-			add_parsed_property(_t("-litehtml-border-spacing-x"), tokens[0], important);
-			add_parsed_property(_t("-litehtml-border-spacing-y"), tokens[1], important);
+			add_parsed_property("-litehtml-border-spacing-x", tokens[0], important);
+			add_parsed_property("-litehtml-border-spacing-y", tokens[1], important);
 		}
 	} else
 
 	// Parse borders shorthand properties 
 
-	if(	!t_strcmp(name, _t("border")))
+	if(	!strcmp(name, "border"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "), _t(""), _t("("));
+		split_string(val, tokens, " ", "", "(");
 		int idx;
-		tstring str;
+		string str;
 		for(const auto& token : tokens)
 		{
 			idx = value_index(token, border_style_strings, -1);
 			if(idx >= 0)
 			{
-				add_property(_t("border-left-style"), token.c_str(), baseurl, important, el);
-				add_property(_t("border-right-style"), token.c_str(), baseurl, important, el);
-				add_property(_t("border-top-style"), token.c_str(), baseurl, important, el);
-				add_property(_t("border-bottom-style"), token.c_str(), baseurl, important, el);
+				add_property("border-left-style", token.c_str(), baseurl, important, el);
+				add_property("border-right-style", token.c_str(), baseurl, important, el);
+				add_property("border-top-style", token.c_str(), baseurl, important, el);
+				add_property("border-bottom-style", token.c_str(), baseurl, important, el);
 			} else
 			{
-				if (t_isdigit(token[0]) || token[0] == _t('.') ||
-					value_in_list(token, _t("thin;medium;thick")))
+				if (t_isdigit(token[0]) || token[0] == '.' ||
+					value_in_list(token, "thin;medium;thick"))
 				{
-					add_property(_t("border-left-width"), token.c_str(), baseurl, important, el);
-					add_property(_t("border-right-width"), token.c_str(), baseurl, important, el);
-					add_property(_t("border-top-width"), token.c_str(), baseurl, important, el);
-					add_property(_t("border-bottom-width"), token.c_str(), baseurl, important, el);
+					add_property("border-left-width", token.c_str(), baseurl, important, el);
+					add_property("border-right-width", token.c_str(), baseurl, important, el);
+					add_property("border-top-width", token.c_str(), baseurl, important, el);
+					add_property("border-bottom-width", token.c_str(), baseurl, important, el);
 				} 
 				else
 				{
-					add_property(_t("border-left-color"), token.c_str(), baseurl, important, el);
-					add_property(_t("border-right-color"), token.c_str(), baseurl, important, el);
-					add_property(_t("border-top-color"), token.c_str(), baseurl, important, el);
-					add_property(_t("border-bottom-color"), token.c_str(), baseurl, important, el);
+					add_property("border-left-color", token.c_str(), baseurl, important, el);
+					add_property("border-right-color", token.c_str(), baseurl, important, el);
+					add_property("border-top-color", token.c_str(), baseurl, important, el);
+					add_property("border-bottom-color", token.c_str(), baseurl, important, el);
 				}
 			}
 		}
-	} else if(	!t_strcmp(name, _t("border-left"))	||
-		!t_strcmp(name, _t("border-right"))	||
-		!t_strcmp(name, _t("border-top"))	||
-		!t_strcmp(name, _t("border-bottom")) )
+	} else if(	!strcmp(name, "border-left")	||
+		!strcmp(name, "border-right")	||
+		!strcmp(name, "border-top")	||
+		!strcmp(name, "border-bottom") )
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "), _t(""), _t("("));
+		split_string(val, tokens, " ", "", "(");
 		int idx;
-		tstring str;
+		string str;
 		for(const auto& token : tokens)
 		{
 			idx = value_index(token, border_style_strings, -1);
 			if(idx >= 0)
 			{
 				str = name;
-				str += _t("-style");
+				str += "-style";
 				add_property(str.c_str(), token.c_str(), baseurl, important, el);
 			} else
 			{
 				if(web_color::is_color(token.c_str()))
 				{
 					str = name;
-					str += _t("-color");
+					str += "-color";
 					add_property(str.c_str(), token.c_str(), baseurl, important, el);
 				} else
 				{
 					str = name;
-					str += _t("-width");
+					str += "-width";
 					add_property(str.c_str(), token.c_str(), baseurl, important, el);
 				}
 			}
@@ -187,167 +187,167 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* _val, co
 	} else 
 
 	// Parse border radius shorthand properties 
-	if(!t_strcmp(name, _t("border-bottom-left-radius")))
+	if(!strcmp(name, "border-bottom-left-radius"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() >= 2)
 		{
-			add_property(_t("border-bottom-left-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-y"), tokens[1].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-y", tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 1)
 		{
-			add_property(_t("border-bottom-left-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-y"), tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-y", tokens[0].c_str(), baseurl, important, el);
 		}
 
-	} else if(!t_strcmp(name, _t("border-bottom-right-radius")))
+	} else if(!strcmp(name, "border-bottom-right-radius"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() >= 2)
 		{
-			add_property(_t("border-bottom-right-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-y"), tokens[1].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-y", tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 1)
 		{
-			add_property(_t("border-bottom-right-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-y"), tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-y", tokens[0].c_str(), baseurl, important, el);
 		}
 
-	} else if(!t_strcmp(name, _t("border-top-right-radius")))
+	} else if(!strcmp(name, "border-top-right-radius"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() >= 2)
 		{
-			add_property(_t("border-top-right-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-y"), tokens[1].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-y", tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 1)
 		{
-			add_property(_t("border-top-right-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-y"), tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-y", tokens[0].c_str(), baseurl, important, el);
 		}
 
-	} else if(!t_strcmp(name, _t("border-top-left-radius")))
+	} else if(!strcmp(name, "border-top-left-radius"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() >= 2)
 		{
-			add_property(_t("border-top-left-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-left-radius-y"), tokens[1].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-y", tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 1)
 		{
-			add_property(_t("border-top-left-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-left-radius-y"), tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-y", tokens[0].c_str(), baseurl, important, el);
 		}
 
 	} else 
 
 	// Parse border-radius shorthand properties 
-	if(!t_strcmp(name, _t("border-radius")))
+	if(!strcmp(name, "border-radius"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t("/"));
+		split_string(val, tokens, "/");
 		if(tokens.size() == 1)
 		{
-			add_property(_t("border-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-radius-y"), tokens[0].c_str(), baseurl, important, el);
+			add_property("border-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-radius-y", tokens[0].c_str(), baseurl, important, el);
 		} else if(tokens.size() >= 2)
 		{
-			add_property(_t("border-radius-x"), tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-radius-y"), tokens[1].c_str(), baseurl, important, el);
+			add_property("border-radius-x", tokens[0].c_str(), baseurl, important, el);
+			add_property("border-radius-y", tokens[1].c_str(), baseurl, important, el);
 		}
-	} else if(!t_strcmp(name, _t("border-radius-x")))
+	} else if(!strcmp(name, "border-radius-x"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() == 1)
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-x"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-x",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-x",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-x",	tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-x",	tokens[0].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 2)
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[1].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-x",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-x",		tokens[1].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-x",	tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-x",	tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 3)
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[2].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[1].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-x",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-x",		tokens[1].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-x",	tokens[2].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-x",	tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 4)
 		{
-			add_property(_t("border-top-left-radius-x"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-x"),		tokens[1].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-x"),	tokens[2].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-x"),	tokens[3].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-x",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-x",		tokens[1].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-x",	tokens[2].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-x",	tokens[3].c_str(), baseurl, important, el);
 		}
-	} else if(!t_strcmp(name, _t("border-radius-y")))
+	} else if(!strcmp(name, "border-radius-y"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() == 1)
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-y"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-y",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-y",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-y",	tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-y",	tokens[0].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 2)
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[1].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-y",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-y",		tokens[1].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-y",	tokens[0].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-y",	tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 3)
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[2].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[1].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-y",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-y",		tokens[1].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-y",	tokens[2].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-y",	tokens[1].c_str(), baseurl, important, el);
 		} else if(tokens.size() == 4)
 		{
-			add_property(_t("border-top-left-radius-y"),		tokens[0].c_str(), baseurl, important, el);
-			add_property(_t("border-top-right-radius-y"),		tokens[1].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-right-radius-y"),	tokens[2].c_str(), baseurl, important, el);
-			add_property(_t("border-bottom-left-radius-y"),	tokens[3].c_str(), baseurl, important, el);
+			add_property("border-top-left-radius-y",		tokens[0].c_str(), baseurl, important, el);
+			add_property("border-top-right-radius-y",		tokens[1].c_str(), baseurl, important, el);
+			add_property("border-bottom-right-radius-y",	tokens[2].c_str(), baseurl, important, el);
+			add_property("border-bottom-left-radius-y",	tokens[3].c_str(), baseurl, important, el);
 		}
 	}
 	else
 
 	// Parse list-style shorthand properties 
-	if(!t_strcmp(name, _t("list-style")))
+	if(!strcmp(name, "list-style"))
 	{
-		add_parsed_property(_t("list-style-type"),			_t("disc"),		important);
-		add_parsed_property(_t("list-style-position"),		_t("outside"),	important);
-		add_parsed_property(_t("list-style-image"),			_t(""),			important);
-		add_parsed_property(_t("list-style-image-baseurl"),	_t(""),			important);
+		add_parsed_property("list-style-type",			"disc",		important);
+		add_parsed_property("list-style-position",		"outside",	important);
+		add_parsed_property("list-style-image",			"",			important);
+		add_parsed_property("list-style-image-baseurl",	"",			important);
 
 		string_vector tokens;
-		split_string(val, tokens, _t(" "), _t(""), _t("("));
+		split_string(val, tokens, " ", "", "(");
 		for(const auto& token : tokens)
 		{
 			int idx = value_index(token, list_style_type_strings, -1);
 			if(idx >= 0)
 			{
-				add_parsed_property(_t("list-style-type"), token, important);
+				add_parsed_property("list-style-type", token, important);
 			} else
 			{
 				idx = value_index(token, list_style_position_strings, -1);
 				if(idx >= 0)
 				{
-					add_parsed_property(_t("list-style-position"), token, important);
-				} else if(!t_strncmp(val.c_str(), _t("url"), 3))
+					add_parsed_property("list-style-position", token, important);
+				} else if(!strncmp(val.c_str(), "url", 3))
 				{
-					add_parsed_property(_t("list-style-image"), token, important);
+					add_parsed_property("list-style-image", token, important);
 					if(baseurl)
 					{
-						add_parsed_property(_t("list-style-image-baseurl"), baseurl, important);
+						add_parsed_property("list-style-image-baseurl", baseurl, important);
 					}
 				}
 			}
@@ -355,193 +355,193 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* _val, co
 	} else 
 
 	// Add baseurl for background image 
-	if(	!t_strcmp(name, _t("list-style-image")))
+	if(	!strcmp(name, "list-style-image"))
 	{
 		add_parsed_property(name, val, important);
 		if(baseurl)
 		{
-			add_parsed_property(_t("list-style-image-baseurl"), baseurl, important);
+			add_parsed_property("list-style-image-baseurl", baseurl, important);
 		}
 	} else
 		
 	// Parse background shorthand properties 
-	if(!t_strcmp(name, _t("background")))
+	if(!strcmp(name, "background"))
 	{
 		parse_short_background(val, baseurl, important);
 
 	} else 
 		
 	// Parse margin and padding shorthand properties 
-	if(!t_strcmp(name, _t("margin")) || !t_strcmp(name, _t("padding")))
+	if(!strcmp(name, "margin") || !strcmp(name, "padding"))
 	{
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() >= 4)
 		{
-			add_parsed_property(tstring(name) + _t("-top"),		tokens[0], important);
-			add_parsed_property(tstring(name) + _t("-right"),		tokens[1], important);
-			add_parsed_property(tstring(name) + _t("-bottom"),	tokens[2], important);
-			add_parsed_property(tstring(name) + _t("-left"),		tokens[3], important);
+			add_parsed_property(string(name) + "-top",		tokens[0], important);
+			add_parsed_property(string(name) + "-right",		tokens[1], important);
+			add_parsed_property(string(name) + "-bottom",	tokens[2], important);
+			add_parsed_property(string(name) + "-left",		tokens[3], important);
 		} else if(tokens.size() == 3)
 		{
-			add_parsed_property(tstring(name) + _t("-top"),		tokens[0], important);
-			add_parsed_property(tstring(name) + _t("-right"),		tokens[1], important);
-			add_parsed_property(tstring(name) + _t("-left"),		tokens[1], important);
-			add_parsed_property(tstring(name) + _t("-bottom"),	tokens[2], important);
+			add_parsed_property(string(name) + "-top",		tokens[0], important);
+			add_parsed_property(string(name) + "-right",		tokens[1], important);
+			add_parsed_property(string(name) + "-left",		tokens[1], important);
+			add_parsed_property(string(name) + "-bottom",	tokens[2], important);
 		} else if(tokens.size() == 2)
 		{
-			add_parsed_property(tstring(name) + _t("-top"),		tokens[0], important);
-			add_parsed_property(tstring(name) + _t("-bottom"),	tokens[0], important);
-			add_parsed_property(tstring(name) + _t("-right"),		tokens[1], important);
-			add_parsed_property(tstring(name) + _t("-left"),		tokens[1], important);
+			add_parsed_property(string(name) + "-top",		tokens[0], important);
+			add_parsed_property(string(name) + "-bottom",	tokens[0], important);
+			add_parsed_property(string(name) + "-right",		tokens[1], important);
+			add_parsed_property(string(name) + "-left",		tokens[1], important);
 		} else if(tokens.size() == 1)
 		{
-			add_parsed_property(tstring(name) + _t("-top"),		tokens[0], important);
-			add_parsed_property(tstring(name) + _t("-bottom"),	tokens[0], important);
-			add_parsed_property(tstring(name) + _t("-right"),		tokens[0], important);
-			add_parsed_property(tstring(name) + _t("-left"),		tokens[0], important);
+			add_parsed_property(string(name) + "-top",		tokens[0], important);
+			add_parsed_property(string(name) + "-bottom",	tokens[0], important);
+			add_parsed_property(string(name) + "-right",		tokens[0], important);
+			add_parsed_property(string(name) + "-left",		tokens[0], important);
 		}
 	} else 
 		
 		
 	// Parse border-* shorthand properties 
-	if(	!t_strcmp(name, _t("border-left")) || 
-		!t_strcmp(name, _t("border-right")) ||
-		!t_strcmp(name, _t("border-top"))  || 
-		!t_strcmp(name, _t("border-bottom")))
+	if(	!strcmp(name, "border-left") || 
+		!strcmp(name, "border-right") ||
+		!strcmp(name, "border-top")  || 
+		!strcmp(name, "border-bottom"))
 	{
 		parse_short_border(name, val, important);
 	} else 
 		
 	// Parse border-width/style/color shorthand properties 
-	if(	!t_strcmp(name, _t("border-width")) ||
-		!t_strcmp(name, _t("border-style"))  ||
-		!t_strcmp(name, _t("border-color")) )
+	if(	!strcmp(name, "border-width") ||
+		!strcmp(name, "border-style")  ||
+		!strcmp(name, "border-color") )
 	{
 		string_vector nametokens;
-		split_string(name, nametokens, _t("-"));
+		split_string(name, nametokens, "-");
 
 		string_vector tokens;
-		split_string(val, tokens, _t(" "));
+		split_string(val, tokens, " ");
 		if(tokens.size() >= 4)
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
-			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[2], important);
-			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[3], important);
+			add_parsed_property(nametokens[0] + "-top-"		+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + "-right-"	+ nametokens[1],	tokens[1], important);
+			add_parsed_property(nametokens[0] + "-bottom-"	+ nametokens[1],	tokens[2], important);
+			add_parsed_property(nametokens[0] + "-left-"	+ nametokens[1],	tokens[3], important);
 		} else if(tokens.size() == 3)
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
-			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[1], important);
-			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[2], important);
+			add_parsed_property(nametokens[0] + "-top-"		+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + "-right-"	+ nametokens[1],	tokens[1], important);
+			add_parsed_property(nametokens[0] + "-left-"	+ nametokens[1],	tokens[1], important);
+			add_parsed_property(nametokens[0] + "-bottom-"	+ nametokens[1],	tokens[2], important);
 		} else if(tokens.size() == 2)
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[1], important);
-			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[1], important);
+			add_parsed_property(nametokens[0] + "-top-"		+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + "-bottom-"	+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + "-right-"	+ nametokens[1],	tokens[1], important);
+			add_parsed_property(nametokens[0] + "-left-"	+ nametokens[1],	tokens[1], important);
 		} else if(tokens.size() == 1)
 		{
-			add_parsed_property(nametokens[0] + _t("-top-")		+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-bottom-")	+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-right-")	+ nametokens[1],	tokens[0], important);
-			add_parsed_property(nametokens[0] + _t("-left-")	+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + "-top-"		+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + "-bottom-"	+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + "-right-"	+ nametokens[1],	tokens[0], important);
+			add_parsed_property(nametokens[0] + "-left-"	+ nametokens[1],	tokens[0], important);
 		}
 	} else 
 		
 	// Parse font shorthand properties 
-	if(!t_strcmp(name, _t("font")))
+	if(!strcmp(name, "font"))
 	{
 		parse_short_font(val, important);
 	} else
 
     // Parse flex-flow shorthand properties
-    if(!t_strcmp(name, _t("flex-flow")))
+    if(!strcmp(name, "flex-flow"))
     {
         string_vector tokens;
-        split_string(val, tokens, _t(" "));
+        split_string(val, tokens, " ");
         for(const auto& tok : tokens)
         {
             if(value_in_list(tok, flex_direction_strings))
             {
-                add_parsed_property(_t("flex-direction"), tok, important);
+                add_parsed_property("flex-direction", tok, important);
             } else if(value_in_list(tok, flex_wrap_strings))
             {
-                add_parsed_property(_t("flex-wrap"), tok, important);
+                add_parsed_property("flex-wrap", tok, important);
             }
         }
     } else
 
     // Parse flex-flow shorthand properties
-    if(!t_strcmp(name, _t("flex")))
+    if(!strcmp(name, "flex"))
     {
-        auto is_number = [](const tstring& val)
+        auto is_number = [](const string& val)
             {
                 for(auto ch : val)
                 {
-                    if((ch < _t('0') || ch > _t('9')) && ch != _t('.'))
+                    if((ch < '0' || ch > '9') && ch != '.')
                     {
                         return false;
                     }
                 }
                 return true;
             };
-        if(val == _t("initial"))
+        if(val == "initial")
         {
             // 0 1 auto
-            add_parsed_property(_t("flex-grow"), "0", important);
-            add_parsed_property(_t("flex-shrink"), "1", important);
-            add_parsed_property(_t("flex-basis"), "auto", important);
-        } else if(val == _t("auto"))
+            add_parsed_property("flex-grow", "0", important);
+            add_parsed_property("flex-shrink", "1", important);
+            add_parsed_property("flex-basis", "auto", important);
+        } else if(val == "auto")
         {
             // 1 1 auto
-            add_parsed_property(_t("flex-grow"), "1", important);
-            add_parsed_property(_t("flex-shrink"), "1", important);
-            add_parsed_property(_t("flex-basis"), "auto", important);
-        } else if(val == _t("none"))
+            add_parsed_property("flex-grow", "1", important);
+            add_parsed_property("flex-shrink", "1", important);
+            add_parsed_property("flex-basis", "auto", important);
+        } else if(val == "none")
         {
             // 0 0 auto
-            add_parsed_property(_t("flex-grow"), "0", important);
-            add_parsed_property(_t("flex-shrink"), "0", important);
-            add_parsed_property(_t("flex-basis"), "auto", important);
+            add_parsed_property("flex-grow", "0", important);
+            add_parsed_property("flex-shrink", "0", important);
+            add_parsed_property("flex-basis", "auto", important);
         }
         string_vector tokens;
-        split_string(val, tokens, _t(" "));
+        split_string(val, tokens, " ");
         if(tokens.size() == 3)
         {
-            add_parsed_property(_t("flex-grow"), tokens[0], important);
-            add_parsed_property(_t("flex-shrink"), tokens[1], important);
-            add_parsed_property(_t("flex-basis"), tokens[2], important);
+            add_parsed_property("flex-grow", tokens[0], important);
+            add_parsed_property("flex-shrink", tokens[1], important);
+            add_parsed_property("flex-basis", tokens[2], important);
         } else if(tokens.size() == 2)
         {
             if(is_number(tokens[0]))
             {
-                add_parsed_property(_t("flex-grow"), tokens[0], important);
+                add_parsed_property("flex-grow", tokens[0], important);
             } else
             {
                 if (is_number(tokens[1]))
                 {
-                    add_parsed_property(_t("flex-shrink"), tokens[0], important);
+                    add_parsed_property("flex-shrink", tokens[0], important);
                 } else
                 {
-                    add_parsed_property(_t("flex-base"), tokens[0], important);
+                    add_parsed_property("flex-base", tokens[0], important);
                 }
             }
         } else if(tokens.size() == 1)
         {
             if (is_number(tokens[0]))
             {
-                add_parsed_property(_t("flex-grow"), tokens[0], important);
+                add_parsed_property("flex-grow", tokens[0], important);
                 auto v = (float) t_strtod(tokens[0].c_str(), nullptr);
                 if(v >= 1)
                 {
-                    add_parsed_property(_t("flex-shrink"), "1", important);
-                    add_parsed_property(_t("flex-basis"), "0", important);
+                    add_parsed_property("flex-shrink", "1", important);
+                    add_parsed_property("flex-basis", "0", important);
                 }
             } else
             {
-                add_parsed_property(_t("flex-base"), tokens[0], important);
+                add_parsed_property("flex-base", tokens[0], important);
             }
         }
     } else
@@ -550,107 +550,107 @@ void litehtml::style::add_property( const tchar_t* name, const tchar_t* _val, co
 	}
 }
 
-void litehtml::style::parse_short_border( const tstring& prefix, const tstring& val, bool important )
+void litehtml::style::parse_short_border( const string& prefix, const string& val, bool important )
 {
 	string_vector tokens;
-	split_string(val, tokens, _t(" "), _t(""), _t("("));
+	split_string(val, tokens, " ", "", "(");
 	if(tokens.size() >= 3)
 	{
-		add_parsed_property(prefix + _t("-width"),	tokens[0], important);
-		add_parsed_property(prefix + _t("-style"),	tokens[1], important);
-		add_parsed_property(prefix + _t("-color"),	tokens[2], important);
+		add_parsed_property(prefix + "-width",	tokens[0], important);
+		add_parsed_property(prefix + "-style",	tokens[1], important);
+		add_parsed_property(prefix + "-color",	tokens[2], important);
 	} else if(tokens.size() == 2)
 	{
 		if(iswdigit(tokens[0][0]) || value_index(val, border_width_strings) >= 0)
 		{
-			add_parsed_property(prefix + _t("-width"),	tokens[0], important);
-			add_parsed_property(prefix + _t("-style"),	tokens[1], important);
+			add_parsed_property(prefix + "-width",	tokens[0], important);
+			add_parsed_property(prefix + "-style",	tokens[1], important);
 		} else
 		{
-			add_parsed_property(prefix + _t("-style"),	tokens[0], important);
-			add_parsed_property(prefix + _t("-color"),	tokens[1], important);
+			add_parsed_property(prefix + "-style",	tokens[0], important);
+			add_parsed_property(prefix + "-color",	tokens[1], important);
 		}
 	}
 }
 
-void litehtml::style::parse_short_background( const tstring& val, const tchar_t* baseurl, bool important )
+void litehtml::style::parse_short_background( const string& val, const char* baseurl, bool important )
 {
-	add_parsed_property(_t("background-color"),			_t("transparent"),	important);
-	add_parsed_property(_t("background-image"),			_t(""),				important);
-	add_parsed_property(_t("background-image-baseurl"), _t(""),				important);
-	add_parsed_property(_t("background-repeat"),		_t("repeat"),		important);
-	add_parsed_property(_t("background-origin"),		_t("padding-box"),	important);
-	add_parsed_property(_t("background-clip"),			_t("border-box"),	important);
-	add_parsed_property(_t("background-attachment"),	_t("scroll"),		important);
+	add_parsed_property("background-color",			"transparent",	important);
+	add_parsed_property("background-image",			"",				important);
+	add_parsed_property("background-image-baseurl", "",				important);
+	add_parsed_property("background-repeat",		"repeat",		important);
+	add_parsed_property("background-origin",		"padding-box",	important);
+	add_parsed_property("background-clip",			"border-box",	important);
+	add_parsed_property("background-attachment",	"scroll",		important);
 
-	if(val == _t("none"))
+	if(val == "none")
 	{
 		return;
 	}
 
 	string_vector tokens;
-	split_string(val, tokens, _t(" "), _t(""), _t("("));
+	split_string(val, tokens, " ", "", "(");
 	bool origin_found = false;
 	for(const auto& token : tokens)
 	{
-		if(token.substr(0, 3) == _t("url"))
+		if(token.substr(0, 3) == "url")
 		{
-			add_parsed_property(_t("background-image"), token, important);
+			add_parsed_property("background-image", token, important);
 			if(baseurl)
 			{
-				add_parsed_property(_t("background-image-baseurl"), baseurl, important);
+				add_parsed_property("background-image-baseurl", baseurl, important);
 			}
 
 		} else if( value_in_list(token, background_repeat_strings) )
 		{
-			add_parsed_property(_t("background-repeat"), token, important);
+			add_parsed_property("background-repeat", token, important);
 		} else if( value_in_list(token, background_attachment_strings) )
 		{
-			add_parsed_property(_t("background-attachment"), token, important);
+			add_parsed_property("background-attachment", token, important);
 		} else if( value_in_list(token, background_box_strings) )
 		{
 			if(!origin_found)
 			{
-				add_parsed_property(_t("background-origin"), token, important);
+				add_parsed_property("background-origin", token, important);
 				origin_found = true;
 			} else
 			{
-				add_parsed_property(_t("background-clip"), token, important);
+				add_parsed_property("background-clip", token, important);
 			}
-		} else if(	value_in_list(token, _t("left;right;top;bottom;center")) ||
+		} else if(	value_in_list(token, "left;right;top;bottom;center") ||
 					iswdigit(token[0]) ||
-					token[0] == _t('-')	||
-					token[0] == _t('.')	||
-					token[0] == _t('+'))
+					token[0] == '-'	||
+					token[0] == '.'	||
+					token[0] == '+')
 		{
-			if(m_properties.find(_t("background-position")) != m_properties.end())
+			if(m_properties.find("background-position") != m_properties.end())
 			{
-				m_properties[_t("background-position")].m_value = m_properties[_t("background-position")].m_value + _t(" ") + token;
+				m_properties["background-position"].m_value = m_properties["background-position"].m_value + " " + token;
 			} else
 			{
-				add_parsed_property(_t("background-position"), token, important);
+				add_parsed_property("background-position", token, important);
 			}
 		} else if (web_color::is_color(token.c_str()))
 		{
-			add_parsed_property(_t("background-color"), token, important);
+			add_parsed_property("background-color", token, important);
 		}
 	}
 }
 
-void litehtml::style::parse_short_font( const tstring& val, bool important )
+void litehtml::style::parse_short_font( const string& val, bool important )
 {
-	add_parsed_property(_t("font-style"),	_t("normal"),	important);
-	add_parsed_property(_t("font-variant"),	_t("normal"),	important);
-	add_parsed_property(_t("font-weight"),	_t("normal"),	important);
-	add_parsed_property(_t("font-size"),		_t("medium"),	important);
-	add_parsed_property(_t("line-height"),	_t("normal"),	important);
+	add_parsed_property("font-style",	"normal",	important);
+	add_parsed_property("font-variant",	"normal",	important);
+	add_parsed_property("font-weight",	"normal",	important);
+	add_parsed_property("font-size",	"medium",	important);
+	add_parsed_property("line-height",	"normal",	important);
 
 	string_vector tokens;
-	split_string(val, tokens, _t(" "), _t(""), _t("\""));
+	split_string(val, tokens, " ", "", "\"");
 
 	int idx;
 	bool is_family = false;
-	tstring font_family;
+	string font_family;
 	for(const auto& token : tokens)
 	{
 		idx = value_index(token, font_style_strings);
@@ -660,35 +660,35 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 			{
 				if(idx == 0)
 				{
-					add_parsed_property(_t("font-weight"), token, important);
-					add_parsed_property(_t("font-variant"), token, important);
-					add_parsed_property(_t("font-style"), token, important);
+					add_parsed_property("font-weight", token, important);
+					add_parsed_property("font-variant", token, important);
+					add_parsed_property("font-style", token, important);
 				} else
 				{
-					add_parsed_property(_t("font-style"), token, important);
+					add_parsed_property("font-style", token, important);
 				}
 			} else
 			{
 				if(value_in_list(token, font_weight_strings))
 				{
-					add_parsed_property(_t("font-weight"), token, important);
+					add_parsed_property("font-weight", token, important);
 				} else
 				{
 					if(value_in_list(token, font_variant_strings))
 					{
-						add_parsed_property(_t("font-variant"), token, important);
+						add_parsed_property("font-variant", token, important);
 					} else if( iswdigit(token[0]) )
 					{
 						string_vector szlh;
-						split_string(token, szlh, _t("/"));
+						split_string(token, szlh, "/");
 
 						if(szlh.size() == 1)
 						{
-							add_parsed_property(_t("font-size"),	szlh[0], important);
+							add_parsed_property("font-size",	szlh[0], important);
 						} else	if(szlh.size() >= 2)
 						{
-							add_parsed_property(_t("font-size"),	szlh[0], important);
-							add_parsed_property(_t("line-height"),	szlh[1], important);
+							add_parsed_property("font-size",	szlh[0], important);
+							add_parsed_property("line-height",	szlh[1], important);
 						}
 					} else
 					{
@@ -702,10 +702,10 @@ void litehtml::style::parse_short_font( const tstring& val, bool important )
 			font_family += token;
 		}
 	}
-	add_parsed_property(_t("font-family"), font_family, important);
+	add_parsed_property("font-family", font_family, important);
 }
 
-void litehtml::style::add_parsed_property( const tstring& name, const tstring& val, bool important )
+void litehtml::style::add_parsed_property( const string& name, const string& val, bool important )
 {
 	bool is_valid = true;
 	auto vals = m_valid_values.find(name);
@@ -735,7 +735,7 @@ void litehtml::style::add_parsed_property( const tstring& name, const tstring& v
 	}
 }
 
-void litehtml::style::remove_property( const tstring& name, bool important )
+void litehtml::style::remove_property( const string& name, bool important )
 {
 	auto prop = m_properties.find(name);
 	if(prop != m_properties.end())

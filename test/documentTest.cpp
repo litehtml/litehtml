@@ -4,6 +4,7 @@
 #include "test/container_test.h"
 
 using namespace litehtml;
+#define _t(x) x
 
 TEST(DocumentTest, AddFont) {
   container_test container;

@@ -3,7 +3,7 @@
 #include "document.h"
 
 
-litehtml::el_script::el_script(const std::shared_ptr<litehtml::document>& doc) : litehtml::element(doc)
+litehtml::el_script::el_script(const std::shared_ptr<document>& doc) : element(doc)
 {
 
 }
@@ -19,7 +19,7 @@ bool litehtml::el_script::appendChild(const ptr &el)
 	return true;
 }
 
-const litehtml::tchar_t* litehtml::el_script::get_tagName() const
+const char* litehtml::el_script::get_tagName() const
 {
-	return _t("script");
+	return "script";
 }

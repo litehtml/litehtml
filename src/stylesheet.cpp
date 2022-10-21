@@ -4,31 +4,31 @@
 #include "document.h"
 
 
-void litehtml::css::parse_stylesheet(const tchar_t* str, const tchar_t* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
+void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
 {
-	tstring text = str;
+	string text = str;
 
 	// remove comments
-	tstring::size_type c_start = text.find(_t("/*"));
-	while(c_start != tstring::npos)
+	string::size_type c_start = text.find("/*");
+	while(c_start != string::npos)
 	{
-		tstring::size_type c_end = text.find(_t("*/"), c_start + 2);
+		string::size_type c_end = text.find("*/", c_start + 2);
 		text.erase(c_start, c_end - c_start + 2);
-		c_start = text.find(_t("/*"));
+		c_start = text.find("/*");
 	}
 
-	tstring::size_type pos = text.find_first_not_of(_t(" \n\r\t"));
-	while(pos != tstring::npos)
+	string::size_type pos = text.find_first_not_of(" \n\r\t");
+	while(pos != string::npos)
 	{
-		while(pos != tstring::npos && text[pos] == _t('@'))
+		while(pos != string::npos && text[pos] == '@')
 		{
-			tstring::size_type sPos = pos;
-			pos = text.find_first_of(_t("{;"), pos);
-			if(pos != tstring::npos && text[pos] == _t('{'))
+			string::size_type sPos = pos;
+			pos = text.find_first_of("{;", pos);
+			if(pos != string::npos && text[pos] == '{')
 			{
-				pos = find_close_bracket(text, pos, _t('{'), _t('}'));
+				pos = find_close_bracket(text, pos, '{', '}');
 			}
-			if(pos != tstring::npos)
+			if(pos != string::npos)
 			{
 				parse_atrule(text.substr(sPos, pos - sPos + 1), baseurl, doc, media);
 			} else
@@ -36,24 +36,24 @@ void litehtml::css::parse_stylesheet(const tchar_t* str, const tchar_t* baseurl,
 				parse_atrule(text.substr(sPos), baseurl, doc, media);
 			}
 
-			if(pos != tstring::npos)
+			if(pos != string::npos)
 			{
-				pos = text.find_first_not_of(_t(" \n\r\t"), pos + 1);
+				pos = text.find_first_not_of(" \n\r\t", pos + 1);
 			}
 		}
 
-		if(pos == tstring::npos)
+		if(pos == string::npos)
 		{
 			break;
 		}
 
-		tstring::size_type style_start	= text.find(_t('{'), pos);
-		tstring::size_type style_end	= text.find(_t('}'), pos);
-		if(style_start != tstring::npos && style_end != tstring::npos)
+		string::size_type style_start	= text.find('{', pos);
+		string::size_type style_end	= text.find('}', pos);
+		if(style_start != string::npos && style_end != string::npos)
 		{
 			auto style = text.substr(style_start + 1, style_end - style_start - 1);
 
-			parse_selectors(text.substr(pos, style_start - pos), style, media, baseurl ? baseurl : _t(""));
+			parse_selectors(text.substr(pos, style_start - pos), style, media, baseurl ? baseurl : "");
 
 			if(media && doc)
 			{
@@ -63,34 +63,34 @@ void litehtml::css::parse_stylesheet(const tchar_t* str, const tchar_t* baseurl,
 			pos = style_end + 1;
 		} else
 		{
-			pos = tstring::npos;
+			pos = string::npos;
 		}
 
-		if(pos != tstring::npos)
+		if(pos != string::npos)
 		{
-			pos = text.find_first_not_of(_t(" \n\r\t"), pos);
+			pos = text.find_first_not_of(" \n\r\t", pos);
 		}
 	}
 }
 
-void litehtml::css::parse_css_url( const tstring& str, tstring& url )
+void litehtml::css::parse_css_url( const string& str, string& url )
 {
-	url = _t("");
-	size_t pos1 = str.find(_t('('));
-	size_t pos2 = str.find(_t(')'));
-	if(pos1 != tstring::npos && pos2 != tstring::npos)
+	url = "";
+	size_t pos1 = str.find('(');
+	size_t pos2 = str.find(')');
+	if(pos1 != string::npos && pos2 != string::npos)
 	{
 		url = str.substr(pos1 + 1, pos2 - pos1 - 1);
 		if(url.length())
 		{
-			if(url[0] == _t('\'') || url[0] == _t('"'))
+			if(url[0] == '\'' || url[0] == '"')
 			{
 				url.erase(0, 1);
 			}
 		}
 		if(url.length())
 		{
-			if(url[url.length() - 1] == _t('\'') || url[url.length() - 1] == _t('"'))
+			if(url[url.length() - 1] == '\'' || url[url.length() - 1] == '"')
 			{
 				url.erase(url.length() - 1, 1);
 			}
@@ -98,12 +98,12 @@ void litehtml::css::parse_css_url( const tstring& str, tstring& url )
 	}
 }
 
-bool litehtml::css::parse_selectors( const tstring& txt, const tstring& styles, const media_query_list::ptr& media, const tstring& baseurl )
+bool litehtml::css::parse_selectors( const string& txt, const string& styles, const media_query_list::ptr& media, const string& baseurl )
 {
-	tstring selector = txt;
+	string selector = txt;
 	trim(selector);
 	string_vector tokens;
-	split_string(selector, tokens, _t(","));
+	split_string(selector, tokens, ",");
 
 	bool added_something = false;
 
@@ -133,23 +133,23 @@ void litehtml::css::sort_selectors()
 	);
 }
 
-void litehtml::css::parse_atrule(const tstring& text, const tchar_t* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
+void litehtml::css::parse_atrule(const string& text, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
 {
-	if(text.substr(0, 7) == _t("@import"))
+	if(text.substr(0, 7) == "@import")
 	{
 		int sPos = 7;
-		tstring iStr;
+		string iStr;
 		iStr = text.substr(sPos);
-		if(iStr[iStr.length() - 1] == _t(';'))
+		if(iStr[iStr.length() - 1] == ';')
 		{
 			iStr.erase(iStr.length() - 1);
 		}
 		trim(iStr);
 		string_vector tokens;
-		split_string(iStr, tokens, _t(" "), _t(""), _t("(\""));
+		split_string(iStr, tokens, " ", "", "(\"");
 		if(!tokens.empty())
 		{
-			tstring url;
+			string url;
 			parse_css_url(tokens.front(), url);
 			if(url.empty())
 			{
@@ -161,8 +161,8 @@ void litehtml::css::parse_atrule(const tstring& text, const tchar_t* baseurl, co
 				document_container* doc_cont = doc->container();
 				if(doc_cont)
 				{
-					tstring css_text;
-					tstring css_baseurl;
+					string css_text;
+					string css_baseurl;
 					if(baseurl)
 					{
 						css_baseurl = baseurl;
@@ -173,12 +173,12 @@ void litehtml::css::parse_atrule(const tstring& text, const tchar_t* baseurl, co
 						media_query_list::ptr new_media = media;
 						if(!tokens.empty())
 						{
-							tstring media_str;
+							string media_str;
 							for(auto iter = tokens.begin(); iter != tokens.end(); iter++)
 							{
 								if(iter != tokens.begin())
 								{
-									media_str += _t(" ");
+									media_str += " ";
 								}
 								media_str += (*iter);
 							}
@@ -193,18 +193,18 @@ void litehtml::css::parse_atrule(const tstring& text, const tchar_t* baseurl, co
 				}
 			}
 		}
-	} else if(text.substr(0, 6) == _t("@media"))
+	} else if(text.substr(0, 6) == "@media")
 	{
-		tstring::size_type b1 = text.find_first_of(_t('{'));
-		tstring::size_type b2 = text.find_last_of(_t('}'));
-		if(b1 != tstring::npos)
+		string::size_type b1 = text.find_first_of('{');
+		string::size_type b2 = text.find_last_of('}');
+		if(b1 != string::npos)
 		{
-			tstring media_type = text.substr(6, b1 - 6);
+			string media_type = text.substr(6, b1 - 6);
 			trim(media_type);
 			media_query_list::ptr new_media = media_query_list::create_from_string(media_type, doc);
 
-			tstring media_style;
-			if(b2 != tstring::npos)
+			string media_style;
+			if(b2 != string::npos)
 			{
 				media_style = text.substr(b1 + 1, b2 - b1 - 1);
 			} else

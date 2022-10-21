@@ -8,7 +8,7 @@ litehtml::el_anchor::el_anchor(const std::shared_ptr<litehtml::document>& doc) :
 
 void litehtml::el_anchor::on_click()
 {
-	const tchar_t* href = get_attr(_t("href"));
+	const char* href = get_attr("href");
 
 	if(href)
 	{
@@ -18,9 +18,9 @@ void litehtml::el_anchor::on_click()
 
 void litehtml::el_anchor::apply_stylesheet( const litehtml::css& stylesheet )
 {
-	if( get_attr(_t("href")) )
+	if( get_attr("href") )
 	{
-		m_pseudo_classes.push_back(_t("link"));
+		m_pseudo_classes.push_back("link");
 	}
 	html_tag::apply_stylesheet(stylesheet);
 }

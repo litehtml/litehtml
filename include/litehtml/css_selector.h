@@ -134,8 +134,8 @@ namespace litehtml
 	{
 		typedef std::vector<css_attribute_selector>	vector;
 
-		tstring					attribute;
-		tstring					val;
+		string					attribute;
+		string					val;
 		string_vector			class_val;
 		attr_select_condition	condition;
 
@@ -150,11 +150,11 @@ namespace litehtml
 	class css_element_selector
 	{
 	public:
-		tstring							m_tag;
+		string							m_tag;
 		css_attribute_selector::vector	m_attrs;
 	public:
 
-		void parse(const tstring& txt);
+		void parse(const string& txt);
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -179,12 +179,12 @@ namespace litehtml
 		css_element_selector	m_right;
 		css_selector::ptr		m_left;
 		css_combinator			m_combinator;
-		tstring					m_style;
+		string					m_style;
 		int						m_order;
 		media_query_list::ptr	m_media_query;
-		tstring					m_baseurl;
+		string					m_baseurl;
 	public:
-		explicit css_selector(const media_query_list::ptr& media, const tstring& baseurl)
+		explicit css_selector(const media_query_list::ptr& media, const string& baseurl)
 		{
 			m_media_query	= media;
 			m_baseurl		= baseurl;
@@ -210,7 +210,7 @@ namespace litehtml
 			m_media_query	= val.m_media_query;
 		}
 
-		bool parse(const tstring& text);
+		bool parse(const string& text);
 		void calc_specificity();
 		bool is_media_valid() const;
 		void add_media_to_doc(document* doc) const;
@@ -267,24 +267,24 @@ namespace litehtml
 		css_selector::ptr	m_selector;
 		bool				m_used;
 
-        used_selector(const css_selector::ptr& selector, bool used)
-        {
-            m_used		= used;
-            m_selector	= selector;
-        }
+		used_selector(const css_selector::ptr& selector, bool used)
+		{
+			m_used		= used;
+			m_selector	= selector;
+		}
 
-        used_selector(const used_selector& val)
-        {
-            m_used = val.m_used;
-            m_selector = val.m_selector;
-        }
+		used_selector(const used_selector& val)
+		{
+			m_used = val.m_used;
+			m_selector = val.m_selector;
+		}
 
-        used_selector& operator=(const used_selector& val)
-        {
-            m_used = val.m_used;
-            m_selector = val.m_selector;
-            return *this;
-        }
+		used_selector& operator=(const used_selector& val)
+		{
+			m_used = val.m_used;
+			m_selector = val.m_selector;
+			return *this;
+		}
 	};
 }
 

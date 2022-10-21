@@ -8,20 +8,20 @@ namespace litehtml
 	class el_before_after_base : public html_tag
 	{
 	public:
-		el_before_after_base(const std::shared_ptr<litehtml::document>& doc, bool before);
+		el_before_after_base(const std::shared_ptr<document>& doc, bool before);
 
-		void add_style(const tstring& style, const tstring& baseurl) override;
+		void add_style(const string& style, const string& baseurl) override;
 		void apply_stylesheet(const litehtml::css& stylesheet) override;
 	private:
-		void	add_text(const tstring& txt);
-		void	add_function(const tstring& fnc, const tstring& params);
-		static tstring convert_escape(const tchar_t* txt);
+		void	add_text(const string& txt);
+		void	add_function(const string& fnc, const string& params);
+		static string convert_escape(const char* txt);
 	};
 
 	class el_before : public el_before_after_base
 	{
 	public:
-		explicit el_before(const std::shared_ptr<litehtml::document>& doc) : el_before_after_base(doc, true)
+		explicit el_before(const std::shared_ptr<document>& doc) : el_before_after_base(doc, true)
 		{
 
 		}
@@ -30,7 +30,7 @@ namespace litehtml
 	class el_after : public el_before_after_base
 	{
 	public:
-		explicit el_after(const std::shared_ptr<litehtml::document>& doc) : el_before_after_base(doc, false)
+		explicit el_after(const std::shared_ptr<document>& doc) : el_before_after_base(doc, false)
 		{
 
 		}

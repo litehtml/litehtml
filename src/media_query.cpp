@@ -16,28 +16,28 @@ litehtml::media_query::media_query( const media_query& val )
 	m_media_type	= val.m_media_type;
 }
 
-litehtml::media_query::ptr litehtml::media_query::create_from_string(const tstring& str, const std::shared_ptr<document>& doc)
+litehtml::media_query::ptr litehtml::media_query::create_from_string(const string& str, const std::shared_ptr<document>& doc)
 {
 	media_query::ptr query = std::make_shared<media_query>();
 
 	string_vector tokens;
-	split_string(str, tokens, _t(" \t\r\n"), _t(""), _t("("));
+	split_string(str, tokens, " \t\r\n", "", "(");
 
 	for(auto & token : tokens)
 	{
-		if(token == _t("not"))
+		if(token == "not")
 		{
 			query->m_not = true;
-		} else if(token.at(0) == _t('('))
+		} else if(token.at(0) == '(')
 		{
 			token.erase(0, 1);
-			if(token.at(token.length() - 1) == _t(')'))
+			if(token.at(token.length() - 1) == ')')
 			{
 				token.erase(token.length() - 1, 1);
 			}
 			media_query_expression expr;
 			string_vector expr_tokens;
-			split_string(token, expr_tokens, _t(":"));
+			split_string(token, expr_tokens, ":");
 			if(!expr_tokens.empty())
 			{
 				trim(expr_tokens[0]);
@@ -56,15 +56,15 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string(const tstri
 							expr.val = value_index(expr_tokens[1], media_orientation_strings, media_orientation_landscape);
 						} else
 						{
-							tstring::size_type slash_pos = expr_tokens[1].find(_t('/'));
-							if( slash_pos != tstring::npos )
+							string::size_type slash_pos = expr_tokens[1].find('/');
+							if( slash_pos != string::npos )
 							{
-								tstring val1 = expr_tokens[1].substr(0, slash_pos);
-								tstring val2 = expr_tokens[1].substr(slash_pos + 1);
+								string val1 = expr_tokens[1].substr(0, slash_pos);
+								string val2 = expr_tokens[1].substr(slash_pos + 1);
 								trim(val1);
 								trim(val2);
-								expr.val = t_atoi(val1.c_str());
-								expr.val2 = t_atoi(val2.c_str());
+								expr.val = atoi(val1.c_str());
+								expr.val2 = atoi(val2.c_str());
 							} else
 							{
 								css_length length;
@@ -122,12 +122,12 @@ bool litehtml::media_query::check( const media_features& features ) const
 
 //////////////////////////////////////////////////////////////////////////
 
-litehtml::media_query_list::ptr litehtml::media_query_list::create_from_string(const tstring& str, const std::shared_ptr<document>& doc)
+litehtml::media_query_list::ptr litehtml::media_query_list::create_from_string(const string& str, const std::shared_ptr<document>& doc)
 {
 	media_query_list::ptr list = std::make_shared<media_query_list>();
 
 	string_vector tokens;
-	split_string(str, tokens, _t(","));
+	split_string(str, tokens, ",");
 
 	for(auto & token : tokens)
 	{

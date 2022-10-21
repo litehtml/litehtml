@@ -7,8 +7,8 @@ void litehtml::table_grid::add_cell(const std::shared_ptr<render_item>& el)
 {
 	table_cell cell;
 	cell.el = el;
-	cell.colspan	= t_atoi(el->src_el()->get_attr(_t("colspan"), _t("1")));
-	cell.rowspan	= t_atoi(el->src_el()->get_attr(_t("rowspan"), _t("1")));
+	cell.colspan	= atoi(el->src_el()->get_attr("colspan", "1"));
+	cell.rowspan	= atoi(el->src_el()->get_attr("rowspan", "1"));
 	cell.borders	= el->get_borders();
 
 	while( is_rowspanned( (int) m_cells.size() - 1, (int) m_cells.back().size() ) )

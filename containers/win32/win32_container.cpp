@@ -42,20 +42,20 @@ static LPCWSTR get_exact_font_name(LPCWSTR facename)
 	else											return facename;
 }
 
-static void trim_quotes(litehtml::tstring& str)
+static void trim_quotes(litehtml::string& str)
 {
-	if (str.front() == L'"' || str.front() == L'\'')
+	if (str.front() == '"' || str.front() == '\'')
 		str.erase(0, 1);
 
-	if (str.back() == L'"' || str.back() == L'\'')
+	if (str.back() == '"' || str.back() == '\'')
 		str.erase(str.length() - 1, 1);
 }
 
-litehtml::uint_ptr win32_container::create_font( const litehtml::tchar_t* font_list, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
+litehtml::uint_ptr win32_container::create_font( const char* font_list, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
 {
 	std::wstring font_name;
 	litehtml::string_vector fonts;
-	litehtml::split_string(font_list, fonts, _t(","));
+	litehtml::split_string(font_list, fonts, ",");
 	bool found = false;
 	for (auto& name : fonts)
 	{
@@ -106,9 +106,9 @@ void win32_container::delete_font( uint_ptr hFont )
 	DeleteObject((HFONT) hFont);
 }
 
-const litehtml::tchar_t* win32_container::get_default_font_name() const
+const char* win32_container::get_default_font_name() const
 {
-	return _t("Times New Roman");
+	return "Times New Roman";
 }
 
 int win32_container::get_default_font_size() const
@@ -116,15 +116,15 @@ int win32_container::get_default_font_size() const
 	return 16;
 }
 
-int win32_container::text_width( const litehtml::tchar_t* text, uint_ptr hFont )
+int win32_container::text_width( const char* text, uint_ptr hFont )
 {
 	SIZE size = {};
 	SelectObject(m_tmp_hdc, (HFONT)hFont);
-	GetTextExtentPoint32(m_tmp_hdc, litehtml_to_wchar(text), (int)t_strlen(text), &size);
+	GetTextExtentPoint32(m_tmp_hdc, litehtml_to_wchar(text), (int)strlen(text), &size);
 	return size.cx;
 }
 
-void win32_container::draw_text( uint_ptr hdc, const litehtml::tchar_t* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
+void win32_container::draw_text( uint_ptr hdc, const char* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
 {
 	apply_clip((HDC) hdc);
 
@@ -186,10 +186,10 @@ void win32_container::make_url_utf8(const char* url, const char* basepath, std::
 	make_url(litehtml::utf8_to_wchar(url), litehtml::utf8_to_wchar(basepath), out);
 }
 
-void win32_container::load_image( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, bool redraw_on_ready )
+void win32_container::load_image( const char* src, const char* baseurl, bool redraw_on_ready )
 {
 	std::wstring url;
-	t_make_url(src, baseurl, url);
+	make_url_utf8(src, baseurl, url);
 	
 	lock_images_cache();
 	if (m_images.count(url) == 0)
@@ -211,10 +211,10 @@ void win32_container::add_image(LPCWSTR url, uint_ptr img)
 	unlock_images_cache();
 }
 
-void win32_container::get_image_size( const litehtml::tchar_t* src, const litehtml::tchar_t* baseurl, litehtml::size& sz )
+void win32_container::get_image_size( const char* src, const char* baseurl, litehtml::size& sz )
 {
 	std::wstring url;
-	t_make_url(src, baseurl, url);
+	make_url_utf8(src, baseurl, url);
 
 	sz.width  = 0;
 	sz.height = 0;
@@ -273,7 +273,7 @@ void win32_container::draw_background( uint_ptr _hdc, const litehtml::background
 	}
 
 	std::wstring url;
-	t_make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
+	make_url_utf8(bg.image.c_str(), bg.baseurl.c_str(), url);
 
 	lock_images_cache();
 	images_map::iterator img = m_images.find(url);
@@ -342,7 +342,7 @@ void win32_container::release_clip(HDC hdc)
 	}
 }
 
-litehtml::element::ptr win32_container::create_element(const litehtml::tchar_t* tag_name, const litehtml::string_map& attributes, const litehtml::document::ptr& doc)
+litehtml::element::ptr win32_container::create_element(const char* tag_name, const litehtml::string_map& attributes, const litehtml::document::ptr& doc)
 {
 	return 0;
 }
@@ -363,13 +363,13 @@ void win32_container::get_media_features(litehtml::media_features& media)  const
 	media.device_height = GetDeviceCaps(m_tmp_hdc, VERTRES);
 }
 
-void win32_container::get_language(litehtml::tstring& language, litehtml::tstring& culture) const
+void win32_container::get_language(litehtml::string& language, litehtml::string& culture) const
 {
-	language = _t("en");
-	culture = _t("");
+	language = "en";
+	culture = "";
 }
 
-void win32_container::transform_text(litehtml::tstring& text, litehtml::text_transform tt)
+void win32_container::transform_text(litehtml::string& text, litehtml::text_transform tt)
 {
 	if (text.empty()) return;
 
@@ -394,54 +394,54 @@ void win32_container::link(const litehtml::document::ptr& doc, const litehtml::e
 {
 }
 
-litehtml::tstring win32_container::resolve_color(const litehtml::tstring& color) const
+litehtml::string win32_container::resolve_color(const litehtml::string& color) const
 {
 	struct custom_color
 	{
-		litehtml::tchar_t*	name;
+		char*	name;
 		int					color_index;
 	};
 
 	static custom_color colors[] = {
-		{ _t("ActiveBorder"),          COLOR_ACTIVEBORDER},
-		{ _t("ActiveCaption"),         COLOR_ACTIVECAPTION},
-		{ _t("AppWorkspace"),          COLOR_APPWORKSPACE },
-		{ _t("Background"),            COLOR_BACKGROUND },
-		{ _t("ButtonFace"),            COLOR_BTNFACE },
-		{ _t("ButtonHighlight"),       COLOR_BTNHIGHLIGHT },
-		{ _t("ButtonShadow"),          COLOR_BTNSHADOW },
-		{ _t("ButtonText"),            COLOR_BTNTEXT },
-		{ _t("CaptionText"),           COLOR_CAPTIONTEXT },
-		{ _t("GrayText"),              COLOR_GRAYTEXT },
-		{ _t("Highlight"),             COLOR_HIGHLIGHT },
-		{ _t("HighlightText"),         COLOR_HIGHLIGHTTEXT },
-		{ _t("InactiveBorder"),        COLOR_INACTIVEBORDER },
-		{ _t("InactiveCaption"),       COLOR_INACTIVECAPTION },
-		{ _t("InactiveCaptionText"),   COLOR_INACTIVECAPTIONTEXT },
-		{ _t("InfoBackground"),        COLOR_INFOBK },
-		{ _t("InfoText"),              COLOR_INFOTEXT },
-		{ _t("Menu"),                  COLOR_MENU },
-		{ _t("MenuText"),              COLOR_MENUTEXT },
-		{ _t("Scrollbar"),             COLOR_SCROLLBAR },
-		{ _t("ThreeDDarkShadow"),      COLOR_3DDKSHADOW },
-		{ _t("ThreeDFace"),            COLOR_3DFACE },
-		{ _t("ThreeDHighlight"),       COLOR_3DHILIGHT },
-		{ _t("ThreeDLightShadow"),     COLOR_3DLIGHT },
-		{ _t("ThreeDShadow"),          COLOR_3DSHADOW },
-		{ _t("Window"),                COLOR_WINDOW },
-		{ _t("WindowFrame"),           COLOR_WINDOWFRAME },
-		{ _t("WindowText"),            COLOR_WINDOWTEXT }
+		{ "ActiveBorder",          COLOR_ACTIVEBORDER },
+		{ "ActiveCaption",         COLOR_ACTIVECAPTION },
+		{ "AppWorkspace",          COLOR_APPWORKSPACE },
+		{ "Background",            COLOR_BACKGROUND },
+		{ "ButtonFace",            COLOR_BTNFACE },
+		{ "ButtonHighlight",       COLOR_BTNHIGHLIGHT },
+		{ "ButtonShadow",          COLOR_BTNSHADOW },
+		{ "ButtonText",            COLOR_BTNTEXT },
+		{ "CaptionText",           COLOR_CAPTIONTEXT },
+		{ "GrayText",              COLOR_GRAYTEXT },
+		{ "Highlight",             COLOR_HIGHLIGHT },
+		{ "HighlightText",         COLOR_HIGHLIGHTTEXT },
+		{ "InactiveBorder",        COLOR_INACTIVEBORDER },
+		{ "InactiveCaption",       COLOR_INACTIVECAPTION },
+		{ "InactiveCaptionText",   COLOR_INACTIVECAPTIONTEXT },
+		{ "InfoBackground",        COLOR_INFOBK },
+		{ "InfoText",              COLOR_INFOTEXT },
+		{ "Menu",                  COLOR_MENU },
+		{ "MenuText",              COLOR_MENUTEXT },
+		{ "Scrollbar",             COLOR_SCROLLBAR },
+		{ "ThreeDDarkShadow",      COLOR_3DDKSHADOW },
+		{ "ThreeDFace",            COLOR_3DFACE },
+		{ "ThreeDHighlight",       COLOR_3DHILIGHT },
+		{ "ThreeDLightShadow",     COLOR_3DLIGHT },
+		{ "ThreeDShadow",          COLOR_3DSHADOW },
+		{ "Window",                COLOR_WINDOW },
+		{ "WindowFrame",           COLOR_WINDOWFRAME },
+		{ "WindowText",            COLOR_WINDOWTEXT }
 	};
 
 	for (auto& clr : colors)
 	{
 		if (!litehtml::t_strcasecmp(color.c_str(), clr.name))
 		{
-			litehtml::tchar_t  str_clr[20];
+			char  str_clr[20];
 			DWORD rgb_color = GetSysColor(clr.color_index);
-			t_snprintf(str_clr, 20, _t("#%02X%02X%02X"), GetRValue(rgb_color), GetGValue(rgb_color), GetBValue(rgb_color));
-			return std::move(litehtml::tstring(str_clr));
+			t_snprintf(str_clr, 20, "#%02X%02X%02X", GetRValue(rgb_color), GetGValue(rgb_color), GetBValue(rgb_color));
+			return std::move(litehtml::string(str_clr));
 		}
 	}
-	return std::move(litehtml::tstring());
+	return std::move(litehtml::string());
 }

@@ -9,14 +9,14 @@ namespace litehtml
 	class property_value
 	{
 	public:
-		tstring	m_value;
+		string	m_value;
 		bool			m_important;
 
 		property_value()
 		{
 			m_important = false;
 		}
-		property_value(const tchar_t* val, bool imp)
+		property_value(const char* val, bool imp)
 		{
 			m_important = imp;
 			m_value		= val;
@@ -35,7 +35,7 @@ namespace litehtml
 		}
 	};
 
-	typedef std::map<tstring, property_value>	props_map;
+	typedef std::map<string, property_value>	props_map;
 
 	class style
 	{
@@ -52,17 +52,17 @@ namespace litehtml
 		style& operator=(const style& val)
 		{
 			m_properties = val.m_properties;
-            return *this;
+			return *this;
 		}
 
-		void add(const tchar_t* txt, const tchar_t* baseurl, const element* el)
+		void add(const char* txt, const char* baseurl, const element* el)
 		{
 			parse(txt, baseurl, el);
 		}
 
-		void add_property(const tchar_t* name, const tchar_t* val, const tchar_t* baseurl, bool important, const element* el);
+		void add_property(const char* name, const char* val, const char* baseurl, bool important, const element* el);
 
-		const tchar_t* get_property(const tchar_t* name) const
+		const char* get_property(const char* name) const
 		{
 			if(name)
 			{
@@ -75,21 +75,21 @@ namespace litehtml
 			return nullptr;
 		}
 
-		void combine(const litehtml::style& src);
+		void combine(const style& src);
 		void clear()
 		{
 			m_properties.clear();
 		}
 
 	private:
-		void parse_property(const tstring& txt, const tchar_t* baseurl, const element* el);
-		void parse(const tchar_t* txt, const tchar_t* baseurl, const element* el);
-		void parse_short_border(const tstring& prefix, const tstring& val, bool important);
-		void parse_short_background(const tstring& val, const tchar_t* baseurl, bool important);
-		void parse_short_font(const tstring& val, bool important);
-		static void subst_vars(tstring& str, const element* el);
-		void add_parsed_property(const tstring& name, const tstring& val, bool important);
-		void remove_property(const tstring& name, bool important);
+		void parse_property(const string& txt, const char* baseurl, const element* el);
+		void parse(const char* txt, const char* baseurl, const element* el);
+		void parse_short_border(const string& prefix, const string& val, bool important);
+		void parse_short_background(const string& val, const char* baseurl, bool important);
+		void parse_short_font(const string& val, bool important);
+		static void subst_vars(string& str, const element* el);
+		void add_parsed_property(const string& name, const string& val, bool important);
+		void remove_property(const string& name, bool important);
 	};
 }
 

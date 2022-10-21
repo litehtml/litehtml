@@ -7,12 +7,12 @@ namespace litehtml
 {
 	class el_cdata : public element
 	{
-		tstring	m_text;
+		string	m_text;
 	public:
-		explicit el_cdata(const std::shared_ptr<litehtml::document>& doc);
+		explicit el_cdata(const std::shared_ptr<document>& doc);
 
-		void get_text(tstring& text) override;
-		void set_data(const tchar_t* data) override;
+		void get_text(string& text) override;
+		void set_data(const char* data) override;
 	};
 }
 
