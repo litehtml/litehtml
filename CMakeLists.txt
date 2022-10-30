@@ -19,7 +19,6 @@ endif()
 set(SOURCE_LITEHTML
     src/background.cpp
     src/codepoint.cpp
-    src/context.cpp
     src/css_length.cpp
     src/css_selector.cpp
     src/document.cpp
@@ -77,7 +76,6 @@ set(HEADER_LITEHTML
     include/litehtml/background.h
     include/litehtml/borders.h
     include/litehtml/codepoint.h
-    include/litehtml/context.h
     include/litehtml/css_length.h
     include/litehtml/css_margins.h
     include/litehtml/css_offsets.h
@@ -123,12 +121,12 @@ set(HEADER_LITEHTML
     include/litehtml/css_properties.h
     include/litehtml/line_box.h
     include/litehtml/render_item.h
+    include/litehtml/master_css.h
 )
 
 set(TEST_LITEHTML
     containers/test/container_test.cpp
     test/codepoint_test.cpp
-    test/contextTest.cpp
     test/cssTest.cpp
     test/documentTest.cpp
     test/layoutGlobalTest.cpp
@@ -158,11 +156,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC
     $<INSTALL_INTERFACE:include/${PROJECT_NAME}>)
 target_include_directories(${PROJECT_NAME} PRIVATE include/${PROJECT_NAME})
 
-option(LITEHTML_UTF8 "Build litehtml with UTF-8 text conversion functions." OFF)
-if (LITEHTML_UTF8)
-  target_compile_definitions(${PROJECT_NAME} PUBLIC LITEHTML_UTF8)
-endif()
-
 # Gumbo
 target_link_libraries(${PROJECT_NAME} PUBLIC gumbo)
 
@@ -176,14 +169,6 @@ install(TARGETS ${PROJECT_NAME}
 )
 install(FILES cmake/litehtmlConfig.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
 install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib${LIB_SUFFIX}/cmake/litehtml)
-
-# Generate master.css.inc
-function(make_inc src dst)
-    file(READ  ${src} data)
-    file(WRITE ${dst} "R\"##(\n${data})##\"")
-endfunction(make_inc)
-make_inc(include/master.css src/master.css.inc)
-set_source_files_properties(src/master.css.inc PROPERTIES GENERATED TRUE)
 
 # Tests
 
@@ -214,7 +199,6 @@ if (BUILD_TESTING)
     add_executable(
         ${TEST_NAME}
         ${TEST_LITEHTML}
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc
     )
 
     set_target_properties(${TEST_NAME} PROPERTIES

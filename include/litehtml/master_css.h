@@ -1,3 +1,6 @@
+namespace litehtml{ const char* const master_css = R"##(
+
+
 html {
     display: block;
     height:100%;
@@ -325,3 +328,5 @@ article, aside, footer, header, hgroup, nav, section
 	display: block;
 }
 
+
+)##"; }

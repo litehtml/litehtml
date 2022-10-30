@@ -3,7 +3,7 @@
 
 #include "style.h"
 #include "types.h"
-#include "context.h"
+#include "master_css.h"
 
 namespace litehtml
 {
@@ -58,7 +58,7 @@ namespace litehtml
 		css_text::vector					m_css;
 		litehtml::css						m_styles;
 		litehtml::web_color					m_def_color;
-		litehtml::context*					m_context;
+		litehtml::css						m_master_css;
 		litehtml::size						m_size;
 		position::vector					m_fixed_boxes;
 		media_query_list::vector			m_media_lists;
@@ -68,7 +68,7 @@ namespace litehtml
 		string								m_lang;
 		string								m_culture;
 	public:
-		document(litehtml::document_container* objContainer, litehtml::context* ctx);
+		document(document_container* objContainer);
 		virtual ~document();
 
 		document_container*				container()	{ return m_container; }
@@ -100,7 +100,7 @@ namespace litehtml
 		void							append_children_from_string(element& parent, const char* str);
 		void							dump(dumper& cout);
 
-		static litehtml::document::ptr	createFromString(const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles = nullptr);
+		static litehtml::document::ptr	createFromString(const char* str, litehtml::document_container* objPainter, const char* master_styles = litehtml::master_css, const char* user_styles = "");
 	
 	private:
 		uint_ptr	add_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);

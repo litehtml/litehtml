@@ -164,7 +164,6 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="src\background.cpp" />
-    <ClCompile Include="src\context.cpp" />
     <ClCompile Include="src\css_borders.cpp" />
     <ClCompile Include="src\css_length.cpp" />
     <ClCompile Include="src\css_properties.cpp" />
@@ -228,7 +227,6 @@
     <ClInclude Include="include\litehtml\background.h" />
     <ClInclude Include="include\litehtml\borders.h" />
     <ClInclude Include="include\litehtml\box.h" />
-    <ClInclude Include="include\litehtml\context.h" />
     <ClInclude Include="include\litehtml\css_length.h" />
     <ClInclude Include="include\litehtml\css_margins.h" />
     <ClInclude Include="include\litehtml\css_offsets.h" />
@@ -256,6 +254,7 @@
     <ClInclude Include="include\litehtml\el_text.h" />
     <ClInclude Include="include\litehtml\el_title.h" />
     <ClInclude Include="include\litehtml\el_tr.h" />
+    <ClInclude Include="include\litehtml\master_css.h" />
     <ClInclude Include="include\litehtml\num_cvt.h" />
     <ClInclude Include="src\gumbo\include\gumbo\attribute.h" />
     <ClInclude Include="src\gumbo\include\gumbo\char_ref.h" />
