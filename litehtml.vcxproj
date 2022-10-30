@@ -169,6 +169,7 @@
     <ClCompile Include="src\css_properties.cpp" />
     <ClCompile Include="src\css_selector.cpp" />
     <ClCompile Include="src\document.cpp" />
+    <ClCompile Include="src\document_container.cpp" />
     <ClCompile Include="src\element.cpp" />
     <ClCompile Include="src\el_anchor.cpp" />
     <ClCompile Include="src\el_base.cpp" />
@@ -233,6 +234,7 @@
     <ClInclude Include="include\litehtml\css_position.h" />
     <ClInclude Include="include\litehtml\css_selector.h" />
     <ClInclude Include="include\litehtml\document.h" />
+    <ClInclude Include="include\litehtml\document_container.h" />
     <ClInclude Include="include\litehtml\element.h" />
     <ClInclude Include="include\litehtml\el_anchor.h" />
     <ClInclude Include="include\litehtml\el_base.h" />

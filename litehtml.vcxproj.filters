@@ -197,6 +197,9 @@
     <ClCompile Include="src\css_borders.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\document_container.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\litehtml\attributes.h">
@@ -386,6 +389,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\litehtml\master_css.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\litehtml\document_container.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

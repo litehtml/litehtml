@@ -22,6 +22,7 @@ set(SOURCE_LITEHTML
     src/css_length.cpp
     src/css_selector.cpp
     src/document.cpp
+    src/document_container.cpp
     src/el_anchor.cpp
     src/el_base.cpp
     src/el_before_after.cpp
@@ -82,6 +83,7 @@ set(HEADER_LITEHTML
     include/litehtml/css_position.h
     include/litehtml/css_selector.h
     include/litehtml/document.h
+    include/litehtml/document_container.h
     include/litehtml/el_anchor.h
     include/litehtml/el_base.h
     include/litehtml/el_before_after.h
