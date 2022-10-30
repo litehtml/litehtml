@@ -120,7 +120,8 @@ int win32_container::text_width( const char* text, uint_ptr hFont )
 {
 	SIZE size = {};
 	SelectObject(m_tmp_hdc, (HFONT)hFont);
-	GetTextExtentPoint32(m_tmp_hdc, litehtml_to_wchar(text), (int)strlen(text), &size);
+	std::wstring wtext = litehtml_to_wchar(text);
+	GetTextExtentPoint32(m_tmp_hdc, wtext.c_str(), (int)wtext.size(), &size);
 	return size.cx;
 }
 
