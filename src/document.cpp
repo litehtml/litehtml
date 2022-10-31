@@ -180,8 +180,35 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 			case litehtml::fontWeightLighter:
 				fw = 300;
 				break;
-			default:
+			case litehtml::fontWeightNormal:
 				fw = 400;
+				break;
+			case litehtml::fontWeight100:
+				fw = 100;
+				break;
+			case litehtml::fontWeight200:
+				fw = 200;
+				break;
+			case litehtml::fontWeight300:
+				fw = 300;
+				break;
+			case litehtml::fontWeight400:
+				fw = 400;
+				break;
+			case litehtml::fontWeight500:
+				fw = 500;
+				break;
+			case litehtml::fontWeight600:
+				fw = 600;
+				break;
+			case litehtml::fontWeight700:
+				fw = 700;
+				break;
+			case litehtml::fontWeight800:
+				fw = 800;
+				break;
+			case litehtml::fontWeight900:
+				fw = 900;
 				break;
 			}
 		} else
