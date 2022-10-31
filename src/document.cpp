@@ -68,11 +68,10 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 		doc->m_master_css.parse_stylesheet(master_styles, nullptr, doc, nullptr);
 		doc->m_master_css.sort_selectors();
 	}
-	css user_css;
 	if (user_styles && *user_styles)
 	{
-		user_css.parse_stylesheet(user_styles, nullptr, doc, nullptr);
-		user_css.sort_selectors();
+		doc->m_user_css.parse_stylesheet(user_styles, nullptr, doc, nullptr);
+        doc->m_user_css.sort_selectors();
 	}
 
 	// Let's process created elements tree
@@ -115,7 +114,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 		doc->m_root->apply_stylesheet(doc->m_styles);
 
 		// Apply user styles if any
-		doc->m_root->apply_stylesheet(user_css);
+		doc->m_root->apply_stylesheet(doc->m_user_css);
 
 		// Parse applied styles in the elements
 		doc->m_root->parse_styles();
@@ -1026,6 +1025,9 @@ void litehtml::document::append_children_from_string(element& parent, const char
 
 		// Apply parsed styles.
 		child->apply_stylesheet(m_styles);
+
+        // Apply user styles if any
+        child->apply_stylesheet(m_user_css);
 
 		// Parse applied styles in the elements
 		child->parse_styles();

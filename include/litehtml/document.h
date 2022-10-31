@@ -58,7 +58,8 @@ namespace litehtml
 		css_text::vector					m_css;
 		litehtml::css						m_styles;
 		litehtml::web_color					m_def_color;
-		litehtml::css						m_master_css;
+        litehtml::css						m_master_css;
+        litehtml::css						m_user_css;
 		litehtml::size						m_size;
 		position::vector					m_fixed_boxes;
 		media_query_list::vector			m_media_lists;
