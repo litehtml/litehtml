@@ -1,3 +1,8 @@
+#ifndef LH_MASTER_CSS_H
+#define LH_MASTER_CSS_H
+namespace litehtml{ const char* const master_css = R"##(
+
+
 html {
     display: block;
     height:100%;
@@ -325,3 +330,6 @@ article, aside, footer, header, hgroup, nav, section
 	display: block;
 }
 
+
+)##"; }
+#endif  // LH_MASTER_CSS_H

@@ -8,8 +8,7 @@ using namespace litehtml;
 
 TEST(CSSTest, Parse) {
   container_test container;
-  litehtml::document::ptr doc = std::make_shared<litehtml::document>(&container, nullptr);
-  media_query_list::ptr media = media_query_list::ptr();
+  litehtml::document::ptr doc = std::make_shared<litehtml::document>(&container);
   css c;
   c.parse_stylesheet(_t("/*Comment*/"), nullptr, doc, nullptr);
   c.parse_stylesheet(_t("html { display: none }"), nullptr, doc, nullptr);

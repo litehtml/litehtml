@@ -244,7 +244,7 @@ TEST(MediaQueryTest, Check) {
 
 TEST(MediaQueryTest, Parse) {
   container_test container;
-  litehtml::document::ptr doc = std::make_shared<litehtml::document>(&container, nullptr);
+  litehtml::document::ptr doc = std::make_shared<litehtml::document>(&container);
   media_query::ptr q;
   q = media_query::create_from_string("", doc);
   q = media_query::create_from_string("not", doc);

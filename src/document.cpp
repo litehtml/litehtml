@@ -28,10 +28,9 @@
 #include "utf8_strings.h"
 #include "render_item.h"
 
-litehtml::document::document(litehtml::document_container* objContainer, litehtml::context* ctx)
+litehtml::document::document(document_container* objContainer)
 {
 	m_container	= objContainer;
-	m_context	= ctx;
 }
 
 litehtml::document::~document()
@@ -46,13 +45,13 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const char* str, litehtml::document_container* objPainter, litehtml::context* ctx, litehtml::css* user_styles )
+litehtml::document::ptr litehtml::document::createFromString( const char* str, document_container* objPainter, const char* master_styles, const char* user_styles )
 {
 	// parse document into GumboOutput
 	GumboOutput* output = gumbo_parse(str);
 
 	// Create litehtml::document
-	document::ptr doc = std::make_shared<document>(objPainter, ctx);
+	document::ptr doc = std::make_shared<document>(objPainter);
 
 	// Create litehtml::elements.
 	elements_vector root_elements;
@@ -64,6 +63,18 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, l
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
+	if (master_styles && *master_styles)
+	{
+		doc->m_master_css.parse_stylesheet(master_styles, nullptr, doc, nullptr);
+		doc->m_master_css.sort_selectors();
+	}
+	css user_css;
+	if (user_styles && *user_styles)
+	{
+		user_css.parse_stylesheet(user_styles, nullptr, doc, nullptr);
+		user_css.sort_selectors();
+	}
+
 	// Let's process created elements tree
 	if (doc->m_root)
 	{
@@ -72,7 +83,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, l
 		doc->m_root->set_pseudo_class("root", true);
 
 		// apply master CSS
-		doc->m_root->apply_stylesheet(ctx->master_css());
+		doc->m_root->apply_stylesheet(doc->m_master_css);
 
 		// parse elements attributes
 		doc->m_root->parse_attributes();
@@ -104,10 +115,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, l
 		doc->m_root->apply_stylesheet(doc->m_styles);
 
 		// Apply user styles if any
-		if (user_styles)
-		{
-			doc->m_root->apply_stylesheet(*user_styles);
-		}
+		doc->m_root->apply_stylesheet(user_css);
 
 		// Parse applied styles in the elements
 		doc->m_root->parse_styles();
@@ -984,7 +992,7 @@ void litehtml::document::append_children_from_string(element& parent, const char
 		parent.appendChild(child);
 
 		// apply master CSS
-		child->apply_stylesheet(m_context->master_css());
+		child->apply_stylesheet(m_master_css);
 
 		// parse elements attributes
 		child->parse_attributes();
