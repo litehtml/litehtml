@@ -88,7 +88,7 @@ void litehtml::style::add_property( string_id name, const char* _val, const char
 
 	switch (name)
 	{
-		// Add baseurl for background image 
+	// Add baseurl for background image 
 	case _background_image_:
 		add_parsed_property(name, val, important);
 		if (baseurl)
@@ -97,7 +97,7 @@ void litehtml::style::add_property( string_id name, const char* _val, const char
 		}
 		break;
 
-		// Parse border spacing properties 
+	// Parse border spacing properties 
 	case _border_spacing_:
 	{
 		string_vector tokens;
@@ -383,12 +383,12 @@ void litehtml::style::add_property( string_id name, const char* _val, const char
 		}
 		break;
 
-		// Parse background shorthand properties 
+	// Parse background shorthand properties 
 	case _background_:
 		parse_short_background(val, baseurl, important);
 		break;
 
-		// Parse margin and padding shorthand properties 
+	// Parse margin and padding shorthand properties 
 	case _margin_:
 	case _padding_:
 	{
@@ -471,7 +471,7 @@ void litehtml::style::add_property( string_id name, const char* _val, const char
 		parse_short_font(val, important);
 		break;
 
-		// Parse flex-flow shorthand properties
+	// Parse flex-flow shorthand properties
 	case _flex_flow_:
 	{
 		string_vector tokens;
