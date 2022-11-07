@@ -61,7 +61,7 @@ litehtml::uint_ptr win32_container::create_font( const char* font_list, int size
 	{
 		litehtml::trim(name);
 		trim_quotes(name);
-		std::wstring wname = litehtml_to_wchar(name.c_str());
+		std::wstring wname = (const wchar_t*)litehtml_to_wchar(name.c_str());
 		if (m_installed_fonts.count(wname))
 		{
 			font_name = wname;
@@ -120,7 +120,7 @@ int win32_container::text_width( const char* text, uint_ptr hFont )
 {
 	SIZE size = {};
 	SelectObject(m_tmp_hdc, (HFONT)hFont);
-	std::wstring wtext = litehtml_to_wchar(text);
+	std::wstring wtext = (const wchar_t*)litehtml_to_wchar(text);
 	GetTextExtentPoint32(m_tmp_hdc, wtext.c_str(), (int)wtext.size(), &size);
 	return size.cx;
 }
@@ -399,7 +399,7 @@ litehtml::string win32_container::resolve_color(const litehtml::string& color) c
 {
 	struct custom_color
 	{
-		char*	name;
+		const char*	name;
 		int					color_index;
 	};
 
