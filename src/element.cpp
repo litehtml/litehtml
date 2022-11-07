@@ -11,7 +11,7 @@ litehtml::element::element(const std::shared_ptr<document>& doc) : m_doc(doc)
 {
 }
 
-litehtml::web_color litehtml::element::get_color( const char* prop_name, bool inherited, const litehtml::web_color& def_color )
+litehtml::web_color litehtml::element::get_color( string_id prop_name, bool inherited, const litehtml::web_color& def_color )
 {
 	const char* clrstr = get_style_property(prop_name, inherited, nullptr);
 	if(!clrstr)
@@ -251,7 +251,7 @@ litehtml::element::ptr litehtml::element::_add_before_after(int type, const stri
 {
     litehtml::style st;
     st.add(style.c_str(), baseurl.c_str(), nullptr);
-    if(st.get_property("content"))
+    if(st.get_property(_content_))
     {
         element::ptr el;
         if(type == 0)
@@ -316,7 +316,7 @@ bool litehtml::element::set_class( const char* pclass, bool add )				LITEHTML_RE
 bool litehtml::element::is_replaced() const											LITEHTML_RETURN_FUNC(false)
 void litehtml::element::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) LITEHTML_EMPTY_FUNC
 void litehtml::element::draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) LITEHTML_EMPTY_FUNC
-const char* litehtml::element::get_style_property( const char* name, bool inherited, const char* def /*= 0*/ ) const	LITEHTML_RETURN_FUNC(nullptr)
+const char* litehtml::element::get_style_property( string_id name, bool inherited, const char* def /*= 0*/ ) const	LITEHTML_RETURN_FUNC(nullptr)
 void litehtml::element::get_text( string& text )									LITEHTML_EMPTY_FUNC
 void litehtml::element::parse_attributes()											LITEHTML_EMPTY_FUNC
 int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(select_no_match)

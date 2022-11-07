@@ -58,6 +58,7 @@ set(SOURCE_LITEHTML
     src/web_color.cpp
     src/num_cvt.cpp
     src/strtod.cpp
+    src/string_id.cpp
     src/css_properties.cpp
     src/line_box.cpp
     src/css_borders.cpp
@@ -124,6 +125,7 @@ set(HEADER_LITEHTML
     include/litehtml/line_box.h
     include/litehtml/render_item.h
     include/litehtml/master_css.h
+    include/litehtml/string_id.h
 )
 
 set(TEST_LITEHTML

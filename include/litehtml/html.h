@@ -11,6 +11,7 @@
 #include <sstream>
 #include <functional>
 #include "os_types.h"
+#include "string_id.h"
 #include "types.h"
 #include "utf8_strings.h"
 #include "background.h"

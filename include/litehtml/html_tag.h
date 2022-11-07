@@ -66,7 +66,7 @@ namespace litehtml
 		void                draw_background(uint_ptr hdc, int x, int y, const position *clip,
                                     const std::shared_ptr<render_item> &ri) override;
 
-		const char*			get_style_property(const char* name, bool inherited, const char* def = nullptr) const override;
+		const char*			get_style_property(string_id name, bool inherited, const char* def = nullptr) const override;
 
 		elements_vector&	children();
 

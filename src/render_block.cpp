@@ -789,14 +789,14 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
 
     if (src_el()->css().get_display() == display_list_item)
     {
-        const char* list_image = src_el()->get_style_property("list-style-image", true, nullptr);
+        const char* list_image = src_el()->get_style_property(_list_style_image_, true, nullptr);
         if (list_image)
         {
             string url;
             css::parse_css_url(list_image, url);
 
             size sz;
-            const char* list_image_baseurl = src_el()->get_style_property("list-style-image-baseurl", true, nullptr);
+            const char* list_image_baseurl = src_el()->get_style_property(_list_style_image_baseurl_, true, nullptr);
             src_el()->get_document()->container()->get_image_size(url.c_str(), list_image_baseurl, sz);
             if (min_height < sz.height)
             {

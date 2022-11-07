@@ -24,7 +24,7 @@ void litehtml::el_text::get_text( string& text )
 	text += m_text;
 }
 
-const char* litehtml::el_text::get_style_property( const char* name, bool inherited, const char* def /*= 0*/ ) const
+const char* litehtml::el_text::get_style_property( string_id name, bool inherited, const char* def /*= 0*/ ) const
 {
 	if(inherited)
 	{
@@ -133,7 +133,7 @@ void litehtml::el_text::draw(uint_ptr hdc, int x, int y, const position *clip, c
 			document::ptr doc = get_document();
 
 			uint_ptr font = el_parent->css().get_font();
-			litehtml::web_color color = el_parent->get_color("color", true, doc->get_def_color());
+			litehtml::web_color color = el_parent->get_color(_color_, true, doc->get_def_color());
 			doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
 		}
 	}

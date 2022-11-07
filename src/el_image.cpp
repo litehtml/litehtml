@@ -25,12 +25,12 @@ void litehtml::el_image::parse_attributes()
 	const char* attr_height = get_attr("height");
 	if(attr_height)
 	{
-		m_style.add_property("height", attr_height, 0, false, this);
+		m_style.add_property(_height_, attr_height, 0, false, this);
 	}
 	const char* attr_width = get_attr("width");
 	if(attr_width)
 	{
-		m_style.add_property("width", attr_width, 0, false, this);
+		m_style.add_property(_width_, attr_width, 0, false, this);
 	}
 }
 

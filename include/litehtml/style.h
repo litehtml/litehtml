@@ -35,7 +35,7 @@ namespace litehtml
 		}
 	};
 
-	typedef std::map<string, property_value>	props_map;
+	typedef std::map<string_id, property_value>	props_map;
 
 	class style
 	{
@@ -43,8 +43,8 @@ namespace litehtml
 		typedef std::shared_ptr<style>		ptr;
 		typedef std::vector<style::ptr>		vector;
 	private:
-		props_map			m_properties;
-		static string_map	m_valid_values;
+		props_map							m_properties;
+		static std::map<string_id, string>	m_valid_values;
 	public:
 		style() = default;
 		style(const style& val);
@@ -60,9 +60,9 @@ namespace litehtml
 			parse(txt, baseurl, el);
 		}
 
-		void add_property(const char* name, const char* val, const char* baseurl, bool important, const element* el);
+		void add_property(string_id name, const char* val, const char* baseurl, bool important, const element* el);
 
-		const char* get_property(const char* name) const
+		const char* get_property(string_id name) const
 		{
 			if(name)
 			{
@@ -84,12 +84,11 @@ namespace litehtml
 	private:
 		void parse_property(const string& txt, const char* baseurl, const element* el);
 		void parse(const char* txt, const char* baseurl, const element* el);
-		void parse_short_border(const string& prefix, const string& val, bool important);
 		void parse_short_background(const string& val, const char* baseurl, bool important);
 		void parse_short_font(const string& val, bool important);
 		static void subst_vars(string& str, const element* el);
-		void add_parsed_property(const string& name, const string& val, bool important);
-		void remove_property(const string& name, bool important);
+		void add_parsed_property(string_id name, const string& val, bool important);
+		void remove_property(string_id name, bool important);
 	};
 }
 
