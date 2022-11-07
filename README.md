@@ -12,7 +12,7 @@
 
 ## Compatibility
 
-**litehtml** is compatible with any platform suported by C++ and STL. For Windows MS Visual Studio 2013 is recommended. **litehtml** supports both UTF-8 and Unicode strings on Windows and UTF-8 strings on Linux and Haiku.
+**litehtml** is compatible with any platform supported by C++ and STL. For Windows MS Visual Studio 2013 is recommended. **litehtml** supports only UTF-8 strings.
 
 ## Support for HTML and CSS standards
 
