@@ -94,7 +94,7 @@ namespace litehtml
 		void							add_media_list(const media_query_list::ptr& list);
 		bool							media_changed();
 		bool							lang_changed();
-		bool							match_lang(const string & lang);
+		bool							match_lang(const string& lang);
 		void							add_tabular(const std::shared_ptr<render_item>& el);
 		element::const_ptr				get_over_element() const { return m_over_element; }
 
@@ -121,7 +121,7 @@ namespace litehtml
 	{
 		m_tabular_elements.push_back(el);
 	}
-	inline bool document::match_lang(const string & lang)
+	inline bool document::match_lang(const string& lang)
 	{
 		return lang == m_lang || lang == m_culture;
 	}

@@ -23,7 +23,7 @@ void litehtml::el_before_after_base::add_style(const string& style, const string
 	auto children = m_children;
 	m_children.clear();
 
-	string content = get_style_property("content", false, "");
+	string content = get_style_property(_content_, false, "");
 	if(!content.empty())
 	{
 		int idx = value_index(content, content_property_string);

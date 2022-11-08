@@ -38,9 +38,9 @@ litehtml::document::~document()
 	m_over_element = nullptr;
 	if(m_container)
 	{
-		for(auto & m_font : m_fonts)
+		for(auto& font : m_fonts)
 		{
-			m_container->delete_font(m_font.second.font);
+			m_container->delete_font(font.second.font);
 		}
 	}
 }
@@ -759,11 +759,9 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 		break;
 	case GUMBO_NODE_TEXT:
 		{
-			std::wstring str;
-			std::wstring str_in = (const wchar_t*) (utf8_to_wchar(node->v.text.text));
 			if (!parseTextNode)
 			{
-				elements.push_back(std::make_shared<el_text>(litehtml_from_wchar(str_in).c_str(), shared_from_this()));
+				elements.push_back(std::make_shared<el_text>(node->v.text.text, shared_from_this()));
 			}
 			else
 			{
@@ -1002,7 +1000,7 @@ void litehtml::document::append_children_from_string(element& parent, const char
 	}
 
 	// parse document into GumboOutput
-	GumboOutput* output = gumbo_parse((const char*) str);
+	GumboOutput* output = gumbo_parse(str);
 
 	// Create litehtml::elements.
 	elements_vector child_elements;
@@ -1037,7 +1035,7 @@ void litehtml::document::append_children_from_string(element& parent, const char
 		// and create the anonymous boxes in visual table layout
 		fix_tables_layout();
 
-		// Fanaly initialize elements
+		// Finally initialize elements
 		//child->init();
 	}
 }

@@ -1,3 +1,4 @@
+#include "html.h"
 #include "line_box.h"
 #include "element.h"
 #include "render_item.h"

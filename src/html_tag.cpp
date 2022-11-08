@@ -253,7 +253,7 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 	}
 }
 
-const char* litehtml::html_tag::get_style_property( const char* name, bool inherited, const char* def /*= 0*/ ) const
+const char* litehtml::html_tag::get_style_property( string_id name, bool inherited, const char* def /*= 0*/ ) const
 {
 	const char* ret = m_style.get_property(name);
 	element::ptr el_parent = parent();
@@ -768,7 +768,7 @@ void litehtml::html_tag::on_click()
 
 const char* litehtml::html_tag::get_cursor()
 {
-	return get_style_property("cursor", true, nullptr);
+	return get_style_property(_cursor_, true, nullptr);
 }
 
 bool litehtml::html_tag::is_break() const
@@ -1111,12 +1111,12 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 {
 	list_marker lm;
 
-	const char* list_image = get_style_property("list-style-image", true, nullptr);
+	const char* list_image = get_style_property(_list_style_image_, true, nullptr);
 	size img_size;
 	if(list_image)
 	{
 		css::parse_css_url(list_image, lm.image);
-		lm.baseurl = get_style_property("list-style-image-baseurl", true, nullptr);
+		lm.baseurl = get_style_property(_list_style_image_baseurl_, true, nullptr);
 		get_document()->container()->get_image_size(lm.image.c_str(), lm.baseurl, img_size);
 	} else
 	{
@@ -1127,7 +1127,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 	int sz_font		= css().get_font_size();
 	lm.pos.x		= pos.x;
 	lm.pos.width = sz_font - sz_font * 2 / 3;
-	lm.color = get_color("color", true, web_color(0, 0, 0));
+	lm.color = get_color(_color_, true, web_color(0, 0, 0));
 	lm.marker_type = m_css.get_list_style_type();
 	lm.font = css().get_font();
 

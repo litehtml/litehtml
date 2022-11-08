@@ -43,7 +43,7 @@ namespace litehtml
         css_properties&             css_w();
 
 		bool						in_normal_flow()			const;
-		litehtml::web_color			get_color(const char* prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
+		litehtml::web_color			get_color(string_id prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		bool						is_inline_box()				const;
         bool                        is_block_box()              const;
 		position					get_placement()				const;
@@ -97,7 +97,7 @@ namespace litehtml
 		virtual void				parse_styles(bool is_reparse = false);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item>& ri);
 		virtual void				draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri);
-		virtual const char*			get_style_property(const char* name, bool inherited, const char* def = nullptr) const;
+		virtual const char*			get_style_property(string_id name, bool inherited, const char* def = nullptr) const;
 		virtual void				get_text(string& text);
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);

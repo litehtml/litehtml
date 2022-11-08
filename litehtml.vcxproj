@@ -216,6 +216,7 @@
     <ClCompile Include="src\render_inline_context.cpp" />
     <ClCompile Include="src\render_item.cpp" />
     <ClCompile Include="src\render_table.cpp" />
+    <ClCompile Include="src\string_id.cpp" />
     <ClCompile Include="src\strtod.cpp" />
     <ClCompile Include="src\style.cpp" />
     <ClCompile Include="src\stylesheet.cpp" />
@@ -258,6 +259,7 @@
     <ClInclude Include="include\litehtml\el_tr.h" />
     <ClInclude Include="include\litehtml\master_css.h" />
     <ClInclude Include="include\litehtml\num_cvt.h" />
+    <ClInclude Include="include\litehtml\string_id.h" />
     <ClInclude Include="src\gumbo\include\gumbo\attribute.h" />
     <ClInclude Include="src\gumbo\include\gumbo\char_ref.h" />
     <ClInclude Include="src\gumbo\include\gumbo\error.h" />

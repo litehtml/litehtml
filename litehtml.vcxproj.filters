@@ -200,6 +200,9 @@
     <ClCompile Include="src\document_container.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\string_id.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\litehtml\attributes.h">
@@ -392,6 +395,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\litehtml\document_container.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\litehtml\string_id.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

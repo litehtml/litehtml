@@ -12,13 +12,13 @@ void litehtml::el_font::parse_attributes()
 	const char* str = get_attr("color");
 	if(str)
 	{
-		m_style.add_property("color", str, nullptr, false, this);
+		m_style.add_property(_color_, str, nullptr, false, this);
 	}
 
 	str = get_attr("face");
 	if(str)
 	{
-		m_style.add_property("font-face", str, nullptr, false, this);
+		m_style.add_property(_font_family_, str, nullptr, false, this);
 	}
 
 	str = get_attr("size");
@@ -27,25 +27,25 @@ void litehtml::el_font::parse_attributes()
 		int sz = atoi(str);
 		if(sz <= 1)
 		{
-			m_style.add_property("font-size", "x-small", nullptr, false, this);
+			m_style.add_property(_font_size_, "x-small", nullptr, false, this);
 		} else if(sz >= 6)
 		{
-			m_style.add_property("font-size", "xx-large", nullptr, false, this);
+			m_style.add_property(_font_size_, "xx-large", nullptr, false, this);
 		} else
 		{
 			switch(sz)
 			{
 			case 2:
-				m_style.add_property("font-size", "small", nullptr, false, this);
+				m_style.add_property(_font_size_, "small", nullptr, false, this);
 				break;
 			case 3:
-				m_style.add_property("font-size", "medium", nullptr, false, this);
+				m_style.add_property(_font_size_, "medium", nullptr, false, this);
 				break;
 			case 4:
-				m_style.add_property("font-size", "large", nullptr, false, this);
+				m_style.add_property(_font_size_, "large", nullptr, false, this);
 				break;
 			case 5:
-				m_style.add_property("font-size", "x-large", nullptr, false, this);
+				m_style.add_property(_font_size_, "x-large", nullptr, false, this);
 				break;
 			}
 		}
