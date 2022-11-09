@@ -1,13 +1,20 @@
 #include "html.h"
-#include <mutex>
+#include "string_id.h"
 #include <assert.h>
+
+#ifndef LITEHTML_NO_THREADS
+	#include <mutex>
+	static std::mutex mutex;
+	#define lock_guard std::lock_guard<std::mutex> lock(mutex)
+#else
+	#define lock_guard
+#endif
 
 namespace litehtml
 {
 
 static std::map<string, string_id> map;
 static std::vector<string> array;
-static std::mutex mutex;
 
 static int init()
 {
@@ -27,7 +34,7 @@ static int dummy = init();
 
 string_id _id(const string& str)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+	lock_guard;
 	auto it = map.find(str);
 	if (it != map.end()) return it->second;
 	// else: str not found, add it to the array and the map
@@ -37,7 +44,7 @@ string_id _id(const string& str)
 
 string _s(string_id id)
 {
-	std::lock_guard<std::mutex> lock(mutex);
+	lock_guard;
 	// this may fail with "vector subscript out of range" if litehtml functions are called before main
 	return array[id];
 }
