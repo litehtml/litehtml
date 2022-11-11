@@ -136,7 +136,6 @@ namespace litehtml
 
 		string					attribute;
 		string					val;
-		string_vector			class_val;
 		attr_select_condition	condition;
 
 		css_attribute_selector()
@@ -246,7 +245,7 @@ namespace litehtml
 		return (v1.m_specificity < v2.m_specificity);
 	}
 
-	inline bool operator >(const css_selector::ptr& v1, const css_selector::ptr& v2)
+	inline bool operator > (const css_selector::ptr& v1, const css_selector::ptr& v2)
 	{
 		return (*v1 > *v2);
 	}

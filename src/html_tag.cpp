@@ -417,22 +417,13 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			{
 				if(attr.attribute == "class")
 				{
-					const string_vector & tokens1 = m_class_values;
-					const string_vector & tokens2 = attr.class_val;
-					bool found = true;
-					for(const auto& str1 : tokens2)
+					bool found = false;
+					for(const auto& cls : m_class_values)
 					{
-						bool f = false;
-						for(const auto& str2 : tokens1)
+						if( !t_strcasecmp(attr.val.c_str(), cls.c_str()) )
 						{
-							if( !t_strcasecmp(str1.c_str(), str2.c_str()) )
-							{
-								f = true;
-							}
-						}
-						if(!f)
-						{
-							found = false;
+							found = true;
+							break;
 						}
 					}
 					if(!found)

@@ -16,7 +16,6 @@ void litehtml::css_element_selector::parse( const string& txt )
 
 			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
-			split_string( attribute.val, attribute.class_val, " " );
 			attribute.condition	= select_equal;
 			attribute.attribute	= "class";
 			m_attrs.push_back(attribute);
@@ -237,13 +236,7 @@ void litehtml::css_selector::calc_specificity()
 			m_specificity.b++;
 		} else
 		{
-			if(attr.attribute == "class")
-			{
-				m_specificity.c += (int) attr.class_val.size();
-			} else
-			{
-				m_specificity.c++;
-			}
+			m_specificity.c++;
 		}	
 	}
 	if(m_left)

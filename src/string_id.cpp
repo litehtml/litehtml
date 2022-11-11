@@ -45,7 +45,6 @@ string_id _id(const string& str)
 string _s(string_id id)
 {
 	lock_guard;
-	// this may fail with "vector subscript out of range" if litehtml functions are called before main
 	return array[id];
 }
 
