@@ -23,7 +23,7 @@ namespace litehtml
 	public:
 		typedef std::shared_ptr<html_tag>	ptr;
 	protected:
-		string_vector			m_class_values;
+		string_vector			m_classes;
 		string					m_tag;
 		litehtml::style			m_style;
 		string_map				m_attrs;

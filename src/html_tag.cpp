@@ -67,8 +67,8 @@ void litehtml::html_tag::set_attr( const char* name, const char* val )
 
 		if( t_strcasecmp( name, "class" ) == 0 )
 		{
-			m_class_values.resize( 0 );
-			split_string( val, m_class_values, " " );
+			m_classes.resize( 0 );
+			split_string( val, m_classes, " " );
 		}
 	}
 }
@@ -152,7 +152,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 			{
 				const auto& attr = r.m_attrs[0];
 				if (attr.condition == select_equal && attr.attribute == "class" &&
-					std::find(m_class_values.begin(), m_class_values.end(), attr.val) == m_class_values.end())
+					std::find(m_classes.begin(), m_classes.end(), attr.val) == m_classes.end())
 					continue;
 			}
 		}
@@ -433,7 +433,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				if(attr.attribute == "class")
 				{
 					bool found = false;
-					for(const auto& cls : m_class_values)
+					for(const auto& cls : m_classes)
 					{
 						if( !t_strcasecmp(attr.val.c_str(), cls.c_str()) )
 						{
@@ -941,9 +941,9 @@ bool litehtml::html_tag::set_class( const char* pclass, bool add )
 	{
 		for( auto & _class : classes  )
 		{
-			if(std::find(m_class_values.begin(), m_class_values.end(), _class) == m_class_values.end())
+			if(std::find(m_classes.begin(), m_classes.end(), _class) == m_classes.end())
 			{
-				m_class_values.push_back( std::move( _class ) );
+				m_classes.push_back( std::move( _class ) );
 				changed = true;
 			}
 		}
@@ -951,11 +951,11 @@ bool litehtml::html_tag::set_class( const char* pclass, bool add )
 	{
 		for( const auto & _class : classes )
 		{
-			auto end = std::remove(m_class_values.begin(), m_class_values.end(), _class);
+			auto end = std::remove(m_classes.begin(), m_classes.end(), _class);
 
-			if(end != m_class_values.end())
+			if(end != m_classes.end())
 			{
-				m_class_values.erase(end, m_class_values.end());
+				m_classes.erase(end, m_classes.end());
 				changed = true;
 			}
 		}
@@ -964,7 +964,7 @@ bool litehtml::html_tag::set_class( const char* pclass, bool add )
 	if( changed )
 	{
 		string class_string;
-		join_string(class_string, m_class_values, " ");
+		join_string(class_string, m_classes, " ");
 		set_attr("class", class_string.c_str());
 
 		return true;
