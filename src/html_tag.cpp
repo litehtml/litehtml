@@ -142,6 +142,21 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 {
 	for(const auto& sel : stylesheet.selectors())
 	{
+		// optimization
+		{
+			const auto& r = sel->m_right;
+			if (r.m_tag != "" && r.m_tag != "*" && r.m_tag != m_tag)
+				continue;
+
+			if (!r.m_attrs.empty())
+			{
+				const auto& attr = r.m_attrs[0];
+				if (attr.condition == select_equal && attr.attribute == "class" &&
+					std::find(m_class_values.begin(), m_class_values.end(), attr.val) == m_class_values.end())
+					continue;
+			}
+		}
+
 		int apply = select(*sel, false);
 
 		if(apply != select_no_match)
