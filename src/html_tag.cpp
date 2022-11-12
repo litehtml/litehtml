@@ -54,18 +54,21 @@ const char* litehtml::html_tag::get_tagName() const
 	return m_tag.c_str();
 }
 
-void litehtml::html_tag::set_attr( const char* name, const char* val )
+void litehtml::html_tag::set_tagName( const char* tag )
 {
-	if(name && val)
-	{
-		string s_val = name;
-		for(char& i : s_val)
-		{
-			i = std::tolower(i, std::locale::classic());
-		}
-		m_attrs[s_val] = val;
+	m_tag = tag;
+	lcase(m_tag);
+}
 
-		if( t_strcasecmp( name, "class" ) == 0 )
+void litehtml::html_tag::set_attr( const char* _name, const char* val )
+{
+	if(_name && val)
+	{
+		string name = _name;
+		lcase(name);
+		m_attrs[name] = val;
+
+		if( name == "class" )
 		{
 			m_classes.resize( 0 );
 			split_string( val, m_classes, " " );
@@ -780,15 +783,6 @@ const char* litehtml::html_tag::get_cursor()
 bool litehtml::html_tag::is_break() const
 {
 	return false;
-}
-
-void litehtml::html_tag::set_tagName( const char* tag )
-{
-	m_tag = tag;
-	for (char& i : m_tag)
-	{
-		i = std::tolower(i, std::locale::classic());
-	}
 }
 
 void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const position *clip,
