@@ -60,16 +60,20 @@ void litehtml::html_tag::set_tagName( const char* tag )
 	lcase(m_tag);
 }
 
-void litehtml::html_tag::set_attr( const char* _name, const char* val )
+void litehtml::html_tag::set_attr( const char* _name, const char* _val )
 {
-	if(_name && val)
+	if(_name && _val)
 	{
 		string name = _name;
 		lcase(name);
-		m_attrs[name] = val;
+		m_attrs[name] = _val;
 
 		if( name == "class" )
 		{
+			string val = _val;
+			// class names are matched case-insensitively in quirks mode
+			// we match them case-insensitively in all modes
+			lcase(val);
 			m_classes.resize( 0 );
 			split_string( val, m_classes, " " );
 		}
@@ -435,16 +439,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			{
 				if(attr.attribute == "class")
 				{
-					bool found = false;
-					for(const auto& cls : m_classes)
-					{
-						if( !t_strcasecmp(attr.val.c_str(), cls.c_str()) )
-						{
-							found = true;
-							break;
-						}
-					}
-					if(!found)
+					if (std::find(m_classes.begin(), m_classes.end(), attr.val) == m_classes.end())
 					{
 						return select_no_match;
 					}
