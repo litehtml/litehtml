@@ -422,6 +422,16 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 
 	for(const auto& attr : selector.m_attrs)
 	{
+		if (attr.condition == select_equal && attr.attribute == "class")
+		{
+			if (std::find(m_classes.begin(), m_classes.end(), attr.val) == m_classes.end())
+			{
+				return select_no_match;
+			}
+			else
+				continue;
+		}
+
 		const char* attr_value = get_attr(attr.attribute.c_str());
 		switch(attr.condition)
 		{
@@ -432,24 +442,9 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			}
 			break;
 		case select_equal:
-			if(!attr_value)
+			if(!attr_value || t_strcasecmp(attr_value, attr.val.c_str()))
 			{
 				return select_no_match;
-			} else 
-			{
-				if(attr.attribute == "class")
-				{
-					if (std::find(m_classes.begin(), m_classes.end(), attr.val) == m_classes.end())
-					{
-						return select_no_match;
-					}
-				} else
-				{
-					if( t_strcasecmp(attr.val.c_str(), attr_value) )
-					{
-						return select_no_match;
-					}
-				}
 			}
 			break;
 		case select_contain_str:
