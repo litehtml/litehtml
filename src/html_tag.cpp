@@ -418,7 +418,6 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 	}
 
 	int res = select_match;
-	element::ptr el_parent = parent();
 
 	for(const auto& attr : selector.m_attrs)
 	{
@@ -491,132 +490,9 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		case select_pseudo_class:
 			if(apply_pseudo)
 			{
-				string	selector_param;
-				string	selector_name;
-
-				string::size_type begin	= attr.val.find_first_of('(');
-				string::size_type end	= (begin == string::npos) ? string::npos : find_close_bracket(attr.val, begin);
-				if(begin != string::npos && end != string::npos)
+				if (select_pseudoclass(attr) == select_no_match)
 				{
-					selector_param = attr.val.substr(begin + 1, end - begin - 1);
-				}
-				if(begin != string::npos)
-				{
-					selector_name = attr.val.substr(0, begin);
-					litehtml::trim(selector_name);
-				} else
-				{
-					selector_name = attr.val;
-				}
-
-				int pseudo_selector = value_index(selector_name, pseudo_class_strings);
-				
-				switch(pseudo_selector)
-				{
-				case pseudo_class_only_child:
-					if (!el_parent || !el_parent->is_only_child(shared_from_this(), false))
-					{
-						return select_no_match;
-					}
-					break;
-				case pseudo_class_only_of_type:
-					if (!el_parent || !el_parent->is_only_child(shared_from_this(), true))
-					{
-						return select_no_match;
-					}
-					break;
-				case pseudo_class_first_child:
-					if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, false))
-					{
-						return select_no_match;
-					}
-					break;
-				case pseudo_class_first_of_type:
-					if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, true))
-					{
-						return select_no_match;
-					}
-					break;
-				case pseudo_class_last_child:
-					if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, false))
-					{
-						return select_no_match;
-					}
-					break;
-				case pseudo_class_last_of_type:
-					if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, true))
-					{
-						return select_no_match;
-					}
-					break;
-				case pseudo_class_nth_child:
-				case pseudo_class_nth_of_type:
-				case pseudo_class_nth_last_child:
-				case pseudo_class_nth_last_of_type:
-					{
-						if(!el_parent || selector_param.empty()) return select_no_match;
-
-						int num = 0;
-						int off = 0;
-
-						parse_nth_child_params(selector_param, num, off);
-						if(!num && !off) return select_no_match;
-						switch(pseudo_selector)
-						{
-						case pseudo_class_nth_child:
-							if (!el_parent->is_nth_child(shared_from_this(), num, off, false))
-							{
-								return select_no_match;
-							}
-							break;
-						case pseudo_class_nth_of_type:
-							if (!el_parent->is_nth_child(shared_from_this(), num, off, true))
-							{
-								return select_no_match;
-							}
-							break;
-						case pseudo_class_nth_last_child:
-							if (!el_parent->is_nth_last_child(shared_from_this(), num, off, false))
-							{
-								return select_no_match;
-							}
-							break;
-						case pseudo_class_nth_last_of_type:
-							if (!el_parent->is_nth_last_child(shared_from_this(), num, off, true))
-							{
-								return select_no_match;
-							}
-							break;
-						}
-
-					}
-					break;
-				case pseudo_class_not:
-					{
-						css_element_selector sel;
-						sel.parse(selector_param);
-						if(select(sel, apply_pseudo))
-						{
-							return select_no_match;
-						}
-					}
-					break;
-				case pseudo_class_lang:
-					{
-						trim( selector_param );
-
-						if( !get_document()->match_lang( selector_param ) )
-						{
-							return select_no_match;
-						}
-					}
-					break;
-				default:
-					if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), attr.val) == m_pseudo_classes.end())
-					{
-						return select_no_match;
-					}
-					break;
+					return select_no_match;
 				}
 			} else
 			{
@@ -626,6 +502,141 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		}
 	}
 	return res;
+}
+
+int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& attr)
+{
+	element::ptr el_parent = parent();
+
+	string	selector_param;
+	string	selector_name;
+
+	string::size_type begin = attr.val.find_first_of('(');
+	string::size_type end = (begin == string::npos) ? string::npos : find_close_bracket(attr.val, begin);
+	if (begin != string::npos && end != string::npos)
+	{
+		selector_param = attr.val.substr(begin + 1, end - begin - 1);
+	}
+	if (begin != string::npos)
+	{
+		selector_name = attr.val.substr(0, begin);
+		litehtml::trim(selector_name);
+	}
+	else
+	{
+		selector_name = attr.val;
+	}
+
+	int pseudo_selector = value_index(selector_name, pseudo_class_strings);
+
+	switch (pseudo_selector)
+	{
+	case pseudo_class_only_child:
+		if (!el_parent || !el_parent->is_only_child(shared_from_this(), false))
+		{
+			return select_no_match;
+		}
+		break;
+	case pseudo_class_only_of_type:
+		if (!el_parent || !el_parent->is_only_child(shared_from_this(), true))
+		{
+			return select_no_match;
+		}
+		break;
+	case pseudo_class_first_child:
+		if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, false))
+		{
+			return select_no_match;
+		}
+		break;
+	case pseudo_class_first_of_type:
+		if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, true))
+		{
+			return select_no_match;
+		}
+		break;
+	case pseudo_class_last_child:
+		if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, false))
+		{
+			return select_no_match;
+		}
+		break;
+	case pseudo_class_last_of_type:
+		if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, true))
+		{
+			return select_no_match;
+		}
+		break;
+	case pseudo_class_nth_child:
+	case pseudo_class_nth_of_type:
+	case pseudo_class_nth_last_child:
+	case pseudo_class_nth_last_of_type:
+	{
+		if (!el_parent || selector_param.empty()) return select_no_match;
+
+		int num = 0;
+		int off = 0;
+
+		parse_nth_child_params(selector_param, num, off);
+		if (!num && !off) return select_no_match;
+		switch (pseudo_selector)
+		{
+		case pseudo_class_nth_child:
+			if (!el_parent->is_nth_child(shared_from_this(), num, off, false))
+			{
+				return select_no_match;
+			}
+			break;
+		case pseudo_class_nth_of_type:
+			if (!el_parent->is_nth_child(shared_from_this(), num, off, true))
+			{
+				return select_no_match;
+			}
+			break;
+		case pseudo_class_nth_last_child:
+			if (!el_parent->is_nth_last_child(shared_from_this(), num, off, false))
+			{
+				return select_no_match;
+			}
+			break;
+		case pseudo_class_nth_last_of_type:
+			if (!el_parent->is_nth_last_child(shared_from_this(), num, off, true))
+			{
+				return select_no_match;
+			}
+			break;
+		}
+
+	}
+	break;
+	case pseudo_class_not:
+	{
+		css_element_selector sel;
+		sel.parse(selector_param);
+		if (select(sel, true))
+		{
+			return select_no_match;
+		}
+	}
+	break;
+	case pseudo_class_lang:
+	{
+		trim(selector_param);
+
+		if (!get_document()->match_lang(selector_param))
+		{
+			return select_no_match;
+		}
+	}
+	break;
+	default:
+		if (std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), attr.val) == m_pseudo_classes.end())
+		{
+			return select_no_match;
+		}
+		break;
+	}
+	return select_match;
 }
 
 litehtml::element::ptr litehtml::html_tag::find_ancestor(const css_selector& selector, bool apply_pseudo, bool* is_pseudo)
