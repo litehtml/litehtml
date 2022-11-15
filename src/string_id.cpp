@@ -32,6 +32,9 @@ static int init()
 }
 static int dummy = init();
 
+const string_id empty_id = _id("");
+const string_id star_id = _id("*");
+
 string_id _id(const string& str)
 {
 	lock_guard;
@@ -42,7 +45,7 @@ string_id _id(const string& str)
 	return map[str] = (string_id)(array.size() - 1);
 }
 
-string _s(string_id id)
+const string& _s(string_id id)
 {
 	lock_guard;
 	return array[id];

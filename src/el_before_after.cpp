@@ -9,10 +9,10 @@ litehtml::el_before_after_base::el_before_after_base(const std::shared_ptr<docum
 {
 	if(before)
 	{
-		m_tag = "::before";
+		m_tag = _id("::before");
 	} else
 	{
-        m_tag = "::after";
+        m_tag = _id("::after");
 	}
 }
 

@@ -23,7 +23,7 @@ namespace litehtml
 	public:
 		typedef std::shared_ptr<html_tag>	ptr;
 	protected:
-		string					m_tag;
+		string_id				m_tag;
 		string_id				m_id;
 		string_vector			m_str_classes;
 		std::vector<string_id>	m_classes;
@@ -34,7 +34,7 @@ namespace litehtml
 		void			select_all(const css_selector& selector, elements_vector& res) override;
 
 	public:
-		explicit html_tag(const std::shared_ptr<litehtml::document>& doc);
+		explicit html_tag(const std::shared_ptr<document>& doc);
 
 		bool				appendChild(const element::ptr &el) override;
 		bool				removeChild(const element::ptr &el) override;

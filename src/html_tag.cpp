@@ -14,6 +14,8 @@
 
 litehtml::html_tag::html_tag(const std::shared_ptr<document>& doc) : element(doc)
 {
+	m_tag = empty_id;
+	m_id = empty_id;
 }
 
 bool litehtml::html_tag::appendChild(const element::ptr &el)
@@ -51,13 +53,14 @@ void litehtml::html_tag::clearRecursive()
 
 const char* litehtml::html_tag::get_tagName() const
 {
-	return m_tag.c_str();
+	return _s(m_tag).c_str();
 }
 
-void litehtml::html_tag::set_tagName( const char* tag )
+void litehtml::html_tag::set_tagName( const char* _tag )
 {
-	m_tag = tag;
-	lcase(m_tag);
+	string tag = _tag;
+	lcase(tag);
+	m_tag = _id(tag);
 }
 
 void litehtml::html_tag::set_attr( const char* _name, const char* _val )
@@ -160,7 +163,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 		// optimization
 		{
 			const auto& r = sel->m_right;
-			if (r.m_tag != "" && r.m_tag != "*" && r.m_tag != m_tag)
+			if (r.m_tag != star_id && r.m_tag != m_tag)
 				continue;
 
 			if (!r.m_attrs.empty())
@@ -417,12 +420,9 @@ int litehtml::html_tag::select(const css_selector& selector, bool apply_pseudo)
 
 int litehtml::html_tag::select(const css_element_selector& selector, bool apply_pseudo)
 {
-	if(!selector.m_tag.empty() && selector.m_tag != "*")
+	if(selector.m_tag != star_id && selector.m_tag != m_tag)
 	{
-		if(selector.m_tag != m_tag)
-		{
-			return select_no_match;
-		}
+		return select_no_match;
 	}
 
 	int res = select_match;
@@ -925,11 +925,6 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 
 bool litehtml::html_tag::set_pseudo_class( const char* pclass, bool add )
 {
-    if(m_tag == "a")
-    {
-        int i = 0;
-        i++;
-    }
 	bool ret = false;
 	if(add)
 	{
@@ -1615,9 +1610,9 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 
 litehtml::string litehtml::html_tag::dump_get_name()
 {
-    if(m_tag.empty())
+    if(m_tag == empty_id)
     {
         return "anon [html_tag]";
     }
-    return m_tag + " [html_tag]";
+    return _s(m_tag) + " [html_tag]";
 }

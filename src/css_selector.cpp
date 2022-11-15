@@ -5,8 +5,11 @@
 void litehtml::css_element_selector::parse( const string& txt )
 {
 	string::size_type el_end = txt.find_first_of(".#[:");
-	m_tag = txt.substr(0, el_end);
-	litehtml::lcase(m_tag);
+	string tag = txt.substr(0, el_end);
+	litehtml::lcase(tag);
+	if (tag == "") tag = "*";
+	m_tag = _id(tag);
+
 	m_attrs.clear();
 	while(el_end != string::npos)
 	{
@@ -225,7 +228,7 @@ bool litehtml::css_selector::parse( const string& text )
 
 void litehtml::css_selector::calc_specificity()
 {
-	if(!m_right.m_tag.empty() && m_right.m_tag != "*")
+	if(m_right.m_tag != star_id)
 	{
 		m_specificity.d = 1;
 	}

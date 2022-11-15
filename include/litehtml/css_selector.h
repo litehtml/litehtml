@@ -153,7 +153,7 @@ namespace litehtml
 	class css_element_selector
 	{
 	public:
-		string							m_tag;
+		string_id						m_tag;
 		css_attribute_selector::vector	m_attrs;
 	public:
 
