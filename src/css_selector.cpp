@@ -14,22 +14,20 @@ void litehtml::css_element_selector::parse( const string& txt )
 		{
 			css_attribute_selector attribute;
 
+			attribute.type = select_class;
 			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
-			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
-			litehtml::lcase(attribute.val);
-			attribute.condition	= select_class;
-			attribute.attribute	= "class";
+			attribute.name		= txt.substr(el_end + 1, pos - el_end - 1);
+			litehtml::lcase(attribute.name);
 			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else if(txt[el_end] == '#')
 		{
 			css_attribute_selector attribute;
 
+			attribute.type = select_id;
 			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
-			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
-			litehtml::lcase(attribute.val);
-			attribute.condition	= select_id;
-			attribute.attribute	= "id";
+			attribute.name		= txt.substr(el_end + 1, pos - el_end - 1);
+			litehtml::lcase(attribute.name);
 			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else if(txt[el_end] == ':')
@@ -40,9 +38,8 @@ void litehtml::css_element_selector::parse( const string& txt )
 			{
 				string::size_type pos = txt.find_first_of(".#[:", el_end + 2);
 				attribute.val		= txt.substr(el_end + 2, pos - el_end - 2);
-				attribute.condition	= select_pseudo_element;
+				attribute.type	= select_pseudo_element;
 				litehtml::lcase(attribute.val);
-				attribute.attribute	= "pseudo-el";
 				m_attrs.push_back(attribute);
 				el_end = pos;
 			} else
@@ -66,12 +63,11 @@ void litehtml::css_element_selector::parse( const string& txt )
 				litehtml::lcase(attribute.val);
 				if(attribute.val == "after" || attribute.val == "before")
 				{
-					attribute.condition	= select_pseudo_element;
+					attribute.type	= select_pseudo_element;
 				} else
 				{
-					attribute.condition	= select_pseudo_class;
+					attribute.type	= select_pseudo_class;
 				}
-				attribute.attribute	= "pseudo";
 				m_attrs.push_back(attribute);
 				el_end = pos;
 			}
@@ -87,34 +83,34 @@ void litehtml::css_element_selector::parse( const string& txt )
 			{
 				if(txt[pos] == ']')
 				{
-					attribute.condition = select_exists;
+					attribute.type = select_exists;
 				} else if(txt[pos] == '=')
 				{
-					attribute.condition = select_equal;
+					attribute.type = select_equal;
 					pos++;
 				} else if(txt.substr(pos, 2) == "~=")
 				{
-					attribute.condition = select_contain_str;
+					attribute.type = select_contain_str;
 					pos += 2;
 				} else if(txt.substr(pos, 2) == "|=")
 				{
-					attribute.condition = select_start_str;
+					attribute.type = select_start_str;
 					pos += 2;
 				} else if(txt.substr(pos, 2) == "^=")
 				{
-					attribute.condition = select_start_str;
+					attribute.type = select_start_str;
 					pos += 2;
 				} else if(txt.substr(pos, 2) == "$=")
 				{
-					attribute.condition = select_end_str;
+					attribute.type = select_end_str;
 					pos += 2;
 				} else if(txt.substr(pos, 2) == "*=")
 				{
-					attribute.condition = select_contain_str;
+					attribute.type = select_contain_str;
 					pos += 2;
 				} else
 				{
-					attribute.condition = select_exists;
+					attribute.type = select_exists;
 					pos += 1;
 				}
 				pos = txt.find_first_not_of(" \t", pos);
@@ -138,9 +134,9 @@ void litehtml::css_element_selector::parse( const string& txt )
 				}
 			} else
 			{
-				attribute.condition = select_exists;
+				attribute.type = select_exists;
 			}
-			attribute.attribute	= attr;
+			attribute.name = attr;
 			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else
@@ -233,7 +229,7 @@ void litehtml::css_selector::calc_specificity()
 	}
 	for(const auto& attr : m_right.m_attrs)
 	{
-		if(attr.attribute == "id")
+		if(attr.type == select_id)
 		{
 			m_specificity.b++;
 		} else

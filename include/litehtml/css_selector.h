@@ -117,7 +117,7 @@ namespace litehtml
 
 	//////////////////////////////////////////////////////////////////////////
 
-	enum attr_select_condition
+	enum attr_select_type
 	{
 		select_class,
 		select_id,
@@ -138,13 +138,13 @@ namespace litehtml
 	{
 		typedef std::vector<css_attribute_selector>	vector;
 
-		string					attribute;
-		string					val;
-		attr_select_condition	condition;
+		attr_select_type	type;
+		string				name;
+		string				val;
 
 		css_attribute_selector()
 		{
-			condition = select_exists;
+			type = select_class;
 		}
 	};
 

@@ -163,8 +163,8 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 			if (!r.m_attrs.empty())
 			{
 				const auto& attr = r.m_attrs[0];
-				if (attr.condition == select_class &&
-					std::find(m_classes.begin(), m_classes.end(), attr.val) == m_classes.end())
+				if (attr.type == select_class &&
+					std::find(m_classes.begin(), m_classes.end(), attr.name) == m_classes.end())
 					continue;
 			}
 		}
@@ -426,16 +426,16 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 
 	for(const auto& attr : selector.m_attrs)
 	{
-		switch(attr.condition)
+		switch(attr.type)
 		{
 		case select_class:
-			if (std::find(m_classes.begin(), m_classes.end(), attr.val) == m_classes.end())
+			if (std::find(m_classes.begin(), m_classes.end(), attr.name) == m_classes.end())
 			{
 				return select_no_match;
 			}
 			break;
 		case select_id:
-			if (attr.val != m_id)
+			if (attr.name != m_id)
 			{
 				return select_no_match;
 			}
@@ -611,9 +611,9 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& attr)
 
 int litehtml::html_tag::select_attribute(const css_attribute_selector& attr)
 {
-	const char* attr_value = get_attr(attr.attribute.c_str());
+	const char* attr_value = get_attr(attr.name.c_str());
 
-	switch (attr.condition)
+	switch (attr.type)
 	{
 	case select_exists:
 		if (!attr_value)
