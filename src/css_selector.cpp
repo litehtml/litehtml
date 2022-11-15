@@ -17,7 +17,7 @@ void litehtml::css_element_selector::parse( const string& txt )
 			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
 			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
 			litehtml::lcase(attribute.val);
-			attribute.condition	= select_equal;
+			attribute.condition	= select_class;
 			attribute.attribute	= "class";
 			m_attrs.push_back(attribute);
 			el_end = pos;

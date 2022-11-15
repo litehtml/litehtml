@@ -158,7 +158,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 			if (!r.m_attrs.empty())
 			{
 				const auto& attr = r.m_attrs[0];
-				if (attr.condition == select_equal && attr.attribute == "class" &&
+				if (attr.condition == select_class &&
 					std::find(m_classes.begin(), m_classes.end(), attr.val) == m_classes.end())
 					continue;
 			}
@@ -421,18 +421,14 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 
 	for(const auto& attr : selector.m_attrs)
 	{
-		if (attr.condition == select_equal && attr.attribute == "class")
+		switch(attr.condition)
 		{
+		case select_class:
 			if (std::find(m_classes.begin(), m_classes.end(), attr.val) == m_classes.end())
 			{
 				return select_no_match;
 			}
-			else
-				continue;
-		}
-
-		switch(attr.condition)
-		{
+			break;
 		case select_pseudo_element:
 			if(attr.val == "after")
 			{
