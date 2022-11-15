@@ -23,8 +23,9 @@ namespace litehtml
 	public:
 		typedef std::shared_ptr<html_tag>	ptr;
 	protected:
-		string_vector			m_classes;
 		string					m_tag;
+		string					m_id;
+		string_vector			m_classes;
 		litehtml::style			m_style;
 		string_map				m_attrs;
 		string_vector			m_pseudo_classes;

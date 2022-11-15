@@ -72,10 +72,15 @@ void litehtml::html_tag::set_attr( const char* _name, const char* _val )
 		{
 			string val = _val;
 			// class names are matched case-insensitively in quirks mode
-			// we match them case-insensitively in all modes
+			// we match them case-insensitively in all modes (same for id)
 			lcase(val);
 			m_classes.resize( 0 );
 			split_string( val, m_classes, " " );
+		}
+		else if (name == "id")
+		{
+			m_id = _val;
+			lcase(m_id);
 		}
 	}
 }
@@ -429,6 +434,12 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				return select_no_match;
 			}
 			break;
+		case select_id:
+			if (attr.val != m_id)
+			{
+				return select_no_match;
+			}
+			break;
 		case select_pseudo_element:
 			if(attr.val == "after")
 			{
@@ -611,7 +622,7 @@ int litehtml::html_tag::select_attribute(const css_attribute_selector& attr)
 		}
 		break;
 	case select_equal:
-		if (!attr_value || t_strcasecmp(attr_value, attr.val.c_str()))
+		if (!attr_value || strcmp(attr_value, attr.val.c_str()))
 		{
 			return select_no_match;
 		}

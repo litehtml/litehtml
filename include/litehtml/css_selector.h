@@ -120,11 +120,14 @@ namespace litehtml
 	enum attr_select_condition
 	{
 		select_class,
+		select_id,
+
 		select_exists,
 		select_equal,
 		select_contain_str,
 		select_start_str,
 		select_end_str,
+
 		select_pseudo_class,
 		select_pseudo_element,
 	};
