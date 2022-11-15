@@ -431,50 +431,8 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				continue;
 		}
 
-		const char* attr_value = get_attr(attr.attribute.c_str());
 		switch(attr.condition)
 		{
-		case select_exists:
-			if(!attr_value)
-			{
-				return select_no_match;
-			}
-			break;
-		case select_equal:
-			if(!attr_value || t_strcasecmp(attr_value, attr.val.c_str()))
-			{
-				return select_no_match;
-			}
-			break;
-		case select_contain_str:
-			if(!attr_value || !strstr(attr_value, attr.val.c_str()))
-			{
-				return select_no_match;
-			}
-			break;
-		case select_start_str:
-			if(!attr_value || strncmp(attr_value, attr.val.c_str(), attr.val.length()))
-			{
-				return select_no_match;
-			}
-			break;
-		case select_end_str:
-			if(!attr_value)
-			{
-				return select_no_match;
-			} else if(strncmp(attr_value, attr.val.c_str(), attr.val.length()))
-			{
-				const char* s = attr_value + strlen(attr_value) - attr.val.length() - 1;
-				if(s < attr_value)
-				{
-					return select_no_match;
-				}
-				if(attr.val != s)
-				{
-					return select_no_match;
-				}
-			}
-			break;
 		case select_pseudo_element:
 			if(attr.val == "after")
 			{
@@ -499,6 +457,11 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 				res |= select_match_pseudo_class;
 			}
 			break;
+		default:
+			if (select_attribute(attr) == select_no_match)
+			{
+				return select_no_match;
+			}
 		}
 	}
 	return res;
@@ -633,6 +596,58 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& attr)
 		if (std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), attr.val) == m_pseudo_classes.end())
 		{
 			return select_no_match;
+		}
+		break;
+	}
+	return select_match;
+}
+
+int litehtml::html_tag::select_attribute(const css_attribute_selector& attr)
+{
+	const char* attr_value = get_attr(attr.attribute.c_str());
+
+	switch (attr.condition)
+	{
+	case select_exists:
+		if (!attr_value)
+		{
+			return select_no_match;
+		}
+		break;
+	case select_equal:
+		if (!attr_value || t_strcasecmp(attr_value, attr.val.c_str()))
+		{
+			return select_no_match;
+		}
+		break;
+	case select_contain_str:
+		if (!attr_value || !strstr(attr_value, attr.val.c_str()))
+		{
+			return select_no_match;
+		}
+		break;
+	case select_start_str:
+		if (!attr_value || strncmp(attr_value, attr.val.c_str(), attr.val.length()))
+		{
+			return select_no_match;
+		}
+		break;
+	case select_end_str:
+		if (!attr_value)
+		{
+			return select_no_match;
+		}
+		else if (strncmp(attr_value, attr.val.c_str(), attr.val.length()))
+		{
+			const char* s = attr_value + strlen(attr_value) - attr.val.length() - 1;
+			if (s < attr_value)
+			{
+				return select_no_match;
+			}
+			if (attr.val != s)
+			{
+				return select_no_match;
+			}
 		}
 		break;
 	}
