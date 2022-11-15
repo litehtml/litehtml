@@ -74,13 +74,16 @@ void litehtml::html_tag::set_attr( const char* _name, const char* _val )
 			// class names are matched case-insensitively in quirks mode
 			// we match them case-insensitively in all modes (same for id)
 			lcase(val);
-			m_classes.resize( 0 );
-			split_string( val, m_classes, " " );
+			m_str_classes.resize( 0 );
+			split_string( val, m_str_classes, " " );
+			m_classes.clear();
+			for (auto& cls : m_str_classes) m_classes.push_back(_id(cls));
 		}
 		else if (name == "id")
 		{
-			m_id = _val;
-			lcase(m_id);
+			string val = _val;
+			lcase(val);
+			m_id = _id(val);
 		}
 	}
 }
@@ -611,7 +614,7 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& attr)
 
 int litehtml::html_tag::select_attribute(const css_attribute_selector& attr)
 {
-	const char* attr_value = get_attr(attr.name.c_str());
+	const char* attr_value = get_attr(_s(attr.name).c_str());
 
 	switch (attr.type)
 	{
@@ -956,11 +959,11 @@ bool litehtml::html_tag::set_class( const char* pclass, bool add )
 
 	if(add)
 	{
-		for( auto & _class : classes  )
+		for( auto & _class : classes )
 		{
-			if(std::find(m_classes.begin(), m_classes.end(), _class) == m_classes.end())
+			if(std::find(m_str_classes.begin(), m_str_classes.end(), _class) == m_str_classes.end())
 			{
-				m_classes.push_back( std::move( _class ) );
+				m_str_classes.push_back( std::move( _class ) );
 				changed = true;
 			}
 		}
@@ -968,11 +971,11 @@ bool litehtml::html_tag::set_class( const char* pclass, bool add )
 	{
 		for( const auto & _class : classes )
 		{
-			auto end = std::remove(m_classes.begin(), m_classes.end(), _class);
+			auto end = std::remove(m_str_classes.begin(), m_str_classes.end(), _class);
 
-			if(end != m_classes.end())
+			if(end != m_str_classes.end())
 			{
-				m_classes.erase(end, m_classes.end());
+				m_str_classes.erase(end, m_str_classes.end());
 				changed = true;
 			}
 		}
@@ -981,7 +984,7 @@ bool litehtml::html_tag::set_class( const char* pclass, bool add )
 	if( changed )
 	{
 		string class_string;
-		join_string(class_string, m_classes, " ");
+		join_string(class_string, m_str_classes, " ");
 		set_attr("class", class_string.c_str());
 
 		return true;

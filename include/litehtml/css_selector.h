@@ -139,8 +139,8 @@ namespace litehtml
 		typedef std::vector<css_attribute_selector>	vector;
 
 		attr_select_type	type;
-		string				name;
-		string				val;
+		string_id			name; // .name, #name, [name]
+		string				val;  // [name=val], :val
 
 		css_attribute_selector()
 		{

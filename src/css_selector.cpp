@@ -16,8 +16,9 @@ void litehtml::css_element_selector::parse( const string& txt )
 
 			attribute.type = select_class;
 			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
-			attribute.name		= txt.substr(el_end + 1, pos - el_end - 1);
-			litehtml::lcase(attribute.name);
+			string name		= txt.substr(el_end + 1, pos - el_end - 1);
+			litehtml::lcase(name);
+			attribute.name = _id(name);
 			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else if(txt[el_end] == '#')
@@ -26,8 +27,9 @@ void litehtml::css_element_selector::parse( const string& txt )
 
 			attribute.type = select_id;
 			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
-			attribute.name		= txt.substr(el_end + 1, pos - el_end - 1);
-			litehtml::lcase(attribute.name);
+			string name		= txt.substr(el_end + 1, pos - el_end - 1);
+			litehtml::lcase(name);
+			attribute.name = _id(name);
 			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else if(txt[el_end] == ':')
@@ -136,7 +138,7 @@ void litehtml::css_element_selector::parse( const string& txt )
 			{
 				attribute.type = select_exists;
 			}
-			attribute.name = attr;
+			attribute.name = _id(attr);
 			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else
