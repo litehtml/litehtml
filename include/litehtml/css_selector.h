@@ -134,17 +134,24 @@ namespace litehtml
 
 	//////////////////////////////////////////////////////////////////////////
 
+	class css_element_selector;
+
 	struct css_attribute_selector
 	{
 		typedef std::vector<css_attribute_selector>	vector;
 
 		attr_select_type	type;
-		string_id			name; // .name, #name, [name]
-		string				val;  // [name=val], :val
+		string_id			name; // .name, #name, [name], :name
+		string				val;  // [name=val], :lang(val)
+
+		std::shared_ptr<css_element_selector> sel; // :not(sel)
+		int a, b; // :nth-child(an+b)
 
 		css_attribute_selector()
 		{
 			type = select_class;
+			name = empty_id;
+			a = b = 0;
 		}
 	};
 
@@ -158,6 +165,7 @@ namespace litehtml
 	public:
 
 		void parse(const string& txt);
+		static void parse_nth_child_params(const string& param, int& num, int& off);
 	};
 
 	//////////////////////////////////////////////////////////////////////////

@@ -444,10 +444,10 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 			}
 			break;
 		case select_pseudo_element:
-			if(attr.val == "after")
+			if(attr.name == _after_)
 			{
 				res |= select_match_with_after;
-			} else if(attr.val == "before")
+			} else if(attr.name == _before_)
 			{
 				res |= select_match_with_before;
 			} else
@@ -477,102 +477,80 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 	return res;
 }
 
-int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& attr)
+int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& sel)
 {
 	element::ptr el_parent = parent();
 
-	string	selector_param;
-	string	selector_name;
-
-	string::size_type begin = attr.val.find_first_of('(');
-	string::size_type end = (begin == string::npos) ? string::npos : find_close_bracket(attr.val, begin);
-	if (begin != string::npos && end != string::npos)
+	switch (sel.name)
 	{
-		selector_param = attr.val.substr(begin + 1, end - begin - 1);
-	}
-	if (begin != string::npos)
-	{
-		selector_name = attr.val.substr(0, begin);
-		litehtml::trim(selector_name);
-	}
-	else
-	{
-		selector_name = attr.val;
-	}
-
-	int pseudo_selector = value_index(selector_name, pseudo_class_strings);
-
-	switch (pseudo_selector)
-	{
-	case pseudo_class_only_child:
+	case _only_child_:
 		if (!el_parent || !el_parent->is_only_child(shared_from_this(), false))
 		{
 			return select_no_match;
 		}
 		break;
-	case pseudo_class_only_of_type:
+	case _only_of_type_:
 		if (!el_parent || !el_parent->is_only_child(shared_from_this(), true))
 		{
 			return select_no_match;
 		}
 		break;
-	case pseudo_class_first_child:
+	case _first_child_:
 		if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, false))
 		{
 			return select_no_match;
 		}
 		break;
-	case pseudo_class_first_of_type:
+	case _first_of_type_:
 		if (!el_parent || !el_parent->is_nth_child(shared_from_this(), 0, 1, true))
 		{
 			return select_no_match;
 		}
 		break;
-	case pseudo_class_last_child:
+	case _last_child_:
 		if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, false))
 		{
 			return select_no_match;
 		}
 		break;
-	case pseudo_class_last_of_type:
+	case _last_of_type_:
 		if (!el_parent || !el_parent->is_nth_last_child(shared_from_this(), 0, 1, true))
 		{
 			return select_no_match;
 		}
 		break;
-	case pseudo_class_nth_child:
-	case pseudo_class_nth_of_type:
-	case pseudo_class_nth_last_child:
-	case pseudo_class_nth_last_of_type:
+	case _nth_child_:
+	case _nth_of_type_:
+	case _nth_last_child_:
+	case _nth_last_of_type_:
 	{
-		if (!el_parent || selector_param.empty()) return select_no_match;
+		if (!el_parent) return select_no_match;
 
-		int num = 0;
-		int off = 0;
-
-		parse_nth_child_params(selector_param, num, off);
+		int num = sel.a;
+		int off = sel.b;
 		if (!num && !off) return select_no_match;
-		switch (pseudo_selector)
+
+		switch (sel.name)
 		{
-		case pseudo_class_nth_child:
+		case _nth_child_:
 			if (!el_parent->is_nth_child(shared_from_this(), num, off, false))
 			{
 				return select_no_match;
 			}
 			break;
-		case pseudo_class_nth_of_type:
+		case _nth_of_type_:
 			if (!el_parent->is_nth_child(shared_from_this(), num, off, true))
 			{
 				return select_no_match;
 			}
 			break;
-		case pseudo_class_nth_last_child:
+		case _nth_last_child_:
 			if (!el_parent->is_nth_last_child(shared_from_this(), num, off, false))
 			{
 				return select_no_match;
 			}
 			break;
-		case pseudo_class_nth_last_of_type:
+		case _nth_last_of_type_:
 			if (!el_parent->is_nth_last_child(shared_from_this(), num, off, true))
 			{
 				return select_no_match;
@@ -582,28 +560,20 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& attr)
 
 	}
 	break;
-	case pseudo_class_not:
-	{
-		css_element_selector sel;
-		sel.parse(selector_param);
-		if (select(sel, true))
+	case _not_:
+		if (select(*sel.sel, true))
 		{
 			return select_no_match;
 		}
-	}
-	break;
-	case pseudo_class_lang:
-	{
-		trim(selector_param);
-
-		if (!get_document()->match_lang(selector_param))
+		break;
+	case _lang_:
+		if (!get_document()->match_lang(sel.val))
 		{
 			return select_no_match;
 		}
-	}
-	break;
+		break;
 	default:
-		if (std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), attr.val) == m_pseudo_classes.end())
+		if (std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), sel.name) == m_pseudo_classes.end())
 		{
 			return select_no_match;
 		}
@@ -612,11 +582,11 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& attr)
 	return select_match;
 }
 
-int litehtml::html_tag::select_attribute(const css_attribute_selector& attr)
+int litehtml::html_tag::select_attribute(const css_attribute_selector& sel)
 {
-	const char* attr_value = get_attr(_s(attr.name).c_str());
+	const char* attr_value = get_attr(_s(sel.name).c_str());
 
-	switch (attr.type)
+	switch (sel.type)
 	{
 	case select_exists:
 		if (!attr_value)
@@ -625,19 +595,19 @@ int litehtml::html_tag::select_attribute(const css_attribute_selector& attr)
 		}
 		break;
 	case select_equal:
-		if (!attr_value || strcmp(attr_value, attr.val.c_str()))
+		if (!attr_value || strcmp(attr_value, sel.val.c_str()))
 		{
 			return select_no_match;
 		}
 		break;
 	case select_contain_str:
-		if (!attr_value || !strstr(attr_value, attr.val.c_str()))
+		if (!attr_value || !strstr(attr_value, sel.val.c_str()))
 		{
 			return select_no_match;
 		}
 		break;
 	case select_start_str:
-		if (!attr_value || strncmp(attr_value, attr.val.c_str(), attr.val.length()))
+		if (!attr_value || strncmp(attr_value, sel.val.c_str(), sel.val.length()))
 		{
 			return select_no_match;
 		}
@@ -647,14 +617,14 @@ int litehtml::html_tag::select_attribute(const css_attribute_selector& attr)
 		{
 			return select_no_match;
 		}
-		else if (strncmp(attr_value, attr.val.c_str(), attr.val.length()))
+		else if (strncmp(attr_value, sel.val.c_str(), sel.val.length()))
 		{
-			const char* s = attr_value + strlen(attr_value) - attr.val.length() - 1;
+			const char* s = attr_value + strlen(attr_value) - sel.val.length() - 1;
 			if (s < attr_value)
 			{
 				return select_no_match;
 			}
-			if (attr.val != s)
+			if (sel.val != s)
 			{
 				return select_no_match;
 			}
@@ -722,7 +692,7 @@ bool litehtml::html_tag::on_mouse_over()
 	element::ptr el = shared_from_this();
 	while(el)
 	{
-		if(el->set_pseudo_class("hover", true))
+		if(el->set_pseudo_class(_hover_, true))
 		{
 			ret = true;
 		}
@@ -739,11 +709,11 @@ bool litehtml::html_tag::on_mouse_leave()
 	element::ptr el = shared_from_this();
 	while(el)
 	{
-		if(el->set_pseudo_class("hover", false))
+		if(el->set_pseudo_class(_hover_, false))
 		{
 			ret = true;
 		}
-		if(el->set_pseudo_class("active", false))
+		if(el->set_pseudo_class(_active_, false))
 		{
 			ret = true;
 		}
@@ -760,7 +730,7 @@ bool litehtml::html_tag::on_lbutton_down()
 	element::ptr el = shared_from_this();
     while (el)
     {
-        if (el->set_pseudo_class("active", true))
+        if (el->set_pseudo_class(_active_, true))
         {
             ret = true;
         }
@@ -777,7 +747,7 @@ bool litehtml::html_tag::on_lbutton_up()
 	element::ptr el = shared_from_this();
     while (el)
     {
-        if (el->set_pseudo_class("active", false))
+        if (el->set_pseudo_class(_active_, false))
         {
             ret = true;
         }
@@ -923,19 +893,19 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 	}
 }
 
-bool litehtml::html_tag::set_pseudo_class( const char* pclass, bool add )
+bool litehtml::html_tag::set_pseudo_class( string_id cls, bool add )
 {
 	bool ret = false;
 	if(add)
 	{
-		if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass) == m_pseudo_classes.end())
+		if(std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), cls) == m_pseudo_classes.end())
 		{
-			m_pseudo_classes.push_back(pclass);
+			m_pseudo_classes.push_back(cls);
 			ret = true;
 		}
 	} else
 	{
-		auto pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), pclass);
+		auto pi = std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), cls);
 		if(pi != m_pseudo_classes.end())
 		{
 			m_pseudo_classes.erase(pi);
@@ -1325,43 +1295,6 @@ bool litehtml::html_tag::is_nth_last_child(const element::ptr& el, int num, int 
 		}
 	}
 	return false;
-}
-
-void litehtml::html_tag::parse_nth_child_params( const string& param, int &num, int &off )
-{
-	if(param == "odd")
-	{
-		num = 2;
-		off = 1;
-	} else if(param == "even")
-	{
-		num = 2;
-		off = 0;
-	} else
-	{
-		string_vector tokens;
-		split_string(param, tokens, " n", "n");
-
-		string s_num;
-		string s_off;
-
-		string s_int;
-		for(const auto& token : tokens)
-		{
-			if(token == "n")
-			{
-				s_num = s_int;
-				s_int.clear();
-			} else
-			{
-				s_int += token;
-			}
-		}
-		s_off = s_int;
-
-		num = atoi(s_num.c_str());
-		off = atoi(s_off.c_str());
-	}
 }
 
 litehtml::element::ptr litehtml::html_tag::find_adjacent_sibling( const element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/ )

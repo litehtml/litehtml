@@ -133,6 +133,28 @@ STRING_ID(
 	_video_,
 	_wbr_,
 
+	// CSS pseudo-elements
+	_before_,
+	_after_,
+
+	// CSS pseudo-classes
+	_root_,
+	_only_child_,
+	_only_of_type_,
+	_first_child_,
+	_first_of_type_,
+	_last_child_,
+	_last_of_type_,
+	_nth_child_,
+	_nth_of_type_,
+	_nth_last_child_,
+	_nth_last_of_type_,
+	_not_,
+	_lang_,
+
+	_active_,
+	_hover_,
+
 	// CSS property names
 	_background_,
 	_background_color_,

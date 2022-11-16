@@ -29,7 +29,7 @@ namespace litehtml
 		std::vector<string_id>	m_classes;
 		litehtml::style			m_style;
 		string_map				m_attrs;
-		string_vector			m_pseudo_classes;
+		std::vector<string_id>	m_pseudo_classes;
 
 		void			select_all(const css_selector& selector, elements_vector& res) override;
 
@@ -60,7 +60,7 @@ namespace litehtml
 		bool				on_lbutton_up() override;
 		void				on_click() override;
 		const char*			get_cursor() override;
-		bool				set_pseudo_class(const char* pclass, bool add) override;
+		bool				set_pseudo_class(string_id cls, bool add) override;
 		bool				set_class(const char* pclass, bool add) override;
 		bool				is_replaced() const override;
 		void				parse_styles(bool is_reparse = false) override;
@@ -104,7 +104,6 @@ namespace litehtml
 		void				init_background_paint( position pos, background_paint &bg_paint, const background* bg, const std::shared_ptr<render_item> &ri );
 		void				draw_list_marker( uint_ptr hdc, const position &pos );
 		string				get_list_marker_text(int index);
-		static void			parse_nth_child_params( const string& param, int &num, int &off );
 		element::ptr		get_element_before(const string& style, const string& baseurl, bool create);
 		element::ptr		get_element_after(const string& style, const string& baseurl, bool create);
     };

@@ -489,25 +489,6 @@ namespace litehtml
 		border_collapse_separate,
 	};
 
-
-#define pseudo_class_strings		"only-child;only-of-type;first-child;first-of-type;last-child;last-of-type;nth-child;nth-of-type;nth-last-child;nth-last-of-type;not;lang"
-
-	enum pseudo_class
-	{
-		pseudo_class_only_child,
-		pseudo_class_only_of_type,
-		pseudo_class_first_child,
-		pseudo_class_first_of_type,
-		pseudo_class_last_child,
-		pseudo_class_last_of_type,
-		pseudo_class_nth_child,
-		pseudo_class_nth_of_type,
-		pseudo_class_nth_last_child,
-		pseudo_class_nth_last_of_type,
-		pseudo_class_not,
-		pseudo_class_lang,
-	};
-
 #define content_property_string		"none;normal;open-quote;close-quote;no-open-quote;no-close-quote"
 
 	enum content_property
