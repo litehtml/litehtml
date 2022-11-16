@@ -23,20 +23,23 @@ namespace litehtml
 	public:
 		typedef std::shared_ptr<html_tag>	ptr;
 	protected:
-		string_vector			m_class_values;
-		string					m_tag;
+		string_id				m_tag;
+		string_id				m_id;
+		string_vector			m_str_classes;
+		std::vector<string_id>	m_classes;
 		litehtml::style			m_style;
 		string_map				m_attrs;
-		string_vector			m_pseudo_classes;
+		std::vector<string_id>	m_pseudo_classes;
 
 		void			select_all(const css_selector& selector, elements_vector& res) override;
 
 	public:
-		explicit html_tag(const std::shared_ptr<litehtml::document>& doc);
+		explicit html_tag(const std::shared_ptr<document>& doc);
 
 		bool				appendChild(const element::ptr &el) override;
 		bool				removeChild(const element::ptr &el) override;
 		void				clearRecursive() override;
+		string_id			tag() const override;
 		const char*			get_tagName() const override;
 		void				set_tagName(const char* tag) override;
 		void				set_data(const char* data) override;
@@ -58,7 +61,7 @@ namespace litehtml
 		bool				on_lbutton_up() override;
 		void				on_click() override;
 		const char*			get_cursor() override;
-		bool				set_pseudo_class(const char* pclass, bool add) override;
+		bool				set_pseudo_class(string_id cls, bool add) override;
 		bool				set_class(const char* pclass, bool add) override;
 		bool				is_replaced() const override;
 		void				parse_styles(bool is_reparse = false) override;
@@ -72,6 +75,8 @@ namespace litehtml
 
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;
 		int					select(const css_element_selector& selector, bool apply_pseudo = true) override;
+		int					select_pseudoclass(const css_attribute_selector& attr);
+		int					select_attribute(const css_attribute_selector& attr);
 
 		elements_vector		select_all(const string& selector) override;
 		elements_vector		select_all(const css_selector& selector) override;
@@ -100,7 +105,6 @@ namespace litehtml
 		void				init_background_paint( position pos, background_paint &bg_paint, const background* bg, const std::shared_ptr<render_item> &ri );
 		void				draw_list_marker( uint_ptr hdc, const position &pos );
 		string				get_list_marker_text(int index);
-		static void			parse_nth_child_params( const string& param, int &num, int &off );
 		element::ptr		get_element_before(const string& style, const string& baseurl, bool create);
 		element::ptr		get_element_after(const string& style, const string& baseurl, bool create);
     };

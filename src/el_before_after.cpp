@@ -7,13 +7,7 @@
 
 litehtml::el_before_after_base::el_before_after_base(const std::shared_ptr<document>& doc, bool before) : html_tag(doc)
 {
-	if(before)
-	{
-		m_tag = "::before";
-	} else
-	{
-        m_tag = "::after";
-	}
+	m_tag = before ? __tag_before_ : __tag_after_;
 }
 
 void litehtml::el_before_after_base::add_style(const string& style, const string& baseurl)

@@ -20,7 +20,7 @@ void litehtml::el_anchor::apply_stylesheet( const litehtml::css& stylesheet )
 {
 	if( get_attr("href") )
 	{
-		m_pseudo_classes.push_back("link");
+		m_pseudo_classes.push_back(_link_);
 	}
 	html_tag::apply_stylesheet(stylesheet);
 }

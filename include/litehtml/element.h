@@ -22,12 +22,12 @@ namespace litehtml
 		friend class el_table;
 		friend class document;
 	public:
-		typedef std::shared_ptr<litehtml::element>			ptr;
-		typedef std::shared_ptr<const litehtml::element>	const_ptr;
-		typedef std::weak_ptr<litehtml::element>			weak_ptr;
+		typedef std::shared_ptr<element>		ptr;
+		typedef std::shared_ptr<const element>	const_ptr;
+		typedef std::weak_ptr<element>			weak_ptr;
 	protected:
 		std::weak_ptr<element>		            m_parent;
-		std::weak_ptr<litehtml::document>	    m_doc;
+		std::weak_ptr<document>					m_doc;
         elements_vector				            m_children;
         css_properties                          m_css;
         std::list<std::weak_ptr<render_item>>   m_renders;
@@ -68,6 +68,7 @@ namespace litehtml
 		virtual bool				removeChild(const ptr &el);
 		virtual void				clearRecursive();
 
+		virtual string_id			tag() const;
 		virtual const char*			get_tagName() const;
 		virtual void				set_tagName(const char* tag);
 		virtual void				set_data(const char* data);
@@ -91,7 +92,7 @@ namespace litehtml
 		virtual bool				on_lbutton_up();
 		virtual void				on_click();
 		virtual const char*			get_cursor();
-		virtual bool				set_pseudo_class(const char* pclass, bool add);
+		virtual bool				set_pseudo_class(string_id cls, bool add);
 		virtual bool				set_class(const char* pclass, bool add);
 		virtual bool				is_replaced() const;
 		virtual void				parse_styles(bool is_reparse = false);

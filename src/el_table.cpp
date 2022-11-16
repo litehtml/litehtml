@@ -12,10 +12,10 @@ litehtml::el_table::el_table(const std::shared_ptr<document>& doc) : html_tag(do
 bool litehtml::el_table::appendChild(const element::ptr& el)
 {
 	if(!el)	return false;
-	if( !strcmp(el->get_tagName(), "tbody") || 
-		!strcmp(el->get_tagName(), "thead") || 
-		!strcmp(el->get_tagName(), "tfoot") ||
-		!strcmp(el->get_tagName(), "caption"))
+	if( el->tag() == _tbody_ ||
+		el->tag() == _thead_ ||
+		el->tag() == _tfoot_ ||
+		el->tag() == _caption_)
 	{
 		return html_tag::appendChild(el);
 	}

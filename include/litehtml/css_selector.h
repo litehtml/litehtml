@@ -117,31 +117,41 @@ namespace litehtml
 
 	//////////////////////////////////////////////////////////////////////////
 
-	enum attr_select_condition
+	enum attr_select_type
 	{
+		select_class,
+		select_id,
+
 		select_exists,
 		select_equal,
 		select_contain_str,
 		select_start_str,
 		select_end_str,
+
 		select_pseudo_class,
 		select_pseudo_element,
 	};
 
 	//////////////////////////////////////////////////////////////////////////
 
+	class css_element_selector;
+
 	struct css_attribute_selector
 	{
 		typedef std::vector<css_attribute_selector>	vector;
 
-		string					attribute;
-		string					val;
-		string_vector			class_val;
-		attr_select_condition	condition;
+		attr_select_type	type;
+		string_id			name; // .name, #name, [name], :name
+		string				val;  // [name=val], :lang(val)
+
+		std::shared_ptr<css_element_selector> sel; // :not(sel)
+		int a, b; // :nth-child(an+b)
 
 		css_attribute_selector()
 		{
-			condition = select_exists;
+			type = select_class;
+			name = empty_id;
+			a = b = 0;
 		}
 	};
 
@@ -150,11 +160,12 @@ namespace litehtml
 	class css_element_selector
 	{
 	public:
-		string							m_tag;
+		string_id						m_tag;
 		css_attribute_selector::vector	m_attrs;
 	public:
 
 		void parse(const string& txt);
+		static void parse_nth_child_params(const string& param, int& num, int& off);
 	};
 
 	//////////////////////////////////////////////////////////////////////////
@@ -246,7 +257,7 @@ namespace litehtml
 		return (v1.m_specificity < v2.m_specificity);
 	}
 
-	inline bool operator >(const css_selector::ptr& v1, const css_selector::ptr& v2)
+	inline bool operator > (const css_selector::ptr& v1, const css_selector::ptr& v2)
 	{
 		return (*v1 > *v2);
 	}

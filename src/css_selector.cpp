@@ -2,11 +2,54 @@
 #include "css_selector.h"
 #include "document.h"
 
+void litehtml::css_element_selector::parse_nth_child_params(const string& param, int& num, int& off)
+{
+	if (param == "odd")
+	{
+		num = 2;
+		off = 1;
+	}
+	else if (param == "even")
+	{
+		num = 2;
+		off = 0;
+	}
+	else
+	{
+		string_vector tokens;
+		split_string(param, tokens, " n", "n");
+
+		string s_num;
+		string s_off;
+
+		string s_int;
+		for (const auto& token : tokens)
+		{
+			if (token == "n")
+			{
+				s_num = s_int;
+				s_int.clear();
+			}
+			else
+			{
+				s_int += token;
+			}
+		}
+		s_off = s_int;
+
+		num = atoi(s_num.c_str());
+		off = atoi(s_off.c_str());
+	}
+}
+
 void litehtml::css_element_selector::parse( const string& txt )
 {
 	string::size_type el_end = txt.find_first_of(".#[:");
-	m_tag = txt.substr(0, el_end);
-	litehtml::lcase(m_tag);
+	string tag = txt.substr(0, el_end);
+	litehtml::lcase(tag);
+	if (tag == "") tag = "*";
+	m_tag = _id(tag);
+
 	m_attrs.clear();
 	while(el_end != string::npos)
 	{
@@ -14,11 +57,22 @@ void litehtml::css_element_selector::parse( const string& txt )
 		{
 			css_attribute_selector attribute;
 
+			attribute.type = select_class;
 			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
-			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
-			split_string( attribute.val, attribute.class_val, " " );
-			attribute.condition	= select_equal;
-			attribute.attribute	= "class";
+			string name		= txt.substr(el_end + 1, pos - el_end - 1);
+			litehtml::lcase(name);
+			attribute.name = _id(name);
+			m_attrs.push_back(attribute);
+			el_end = pos;
+		} else if(txt[el_end] == '#')
+		{
+			css_attribute_selector attribute;
+
+			attribute.type = select_id;
+			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
+			string name		= txt.substr(el_end + 1, pos - el_end - 1);
+			litehtml::lcase(name);
+			attribute.name = _id(name);
 			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else if(txt[el_end] == ':')
@@ -27,53 +81,58 @@ void litehtml::css_element_selector::parse( const string& txt )
 
 			if(txt[el_end + 1] == ':')
 			{
+				attribute.type = select_pseudo_element;
 				string::size_type pos = txt.find_first_of(".#[:", el_end + 2);
-				attribute.val		= txt.substr(el_end + 2, pos - el_end - 2);
-				attribute.condition	= select_pseudo_element;
-				litehtml::lcase(attribute.val);
-				attribute.attribute	= "pseudo-el";
+				string name		= txt.substr(el_end + 2, pos - el_end - 2);
+				litehtml::lcase(name);
+				attribute.name = _id(name);
 				m_attrs.push_back(attribute);
 				el_end = pos;
 			} else
 			{
 				string::size_type pos = txt.find_first_of(".#[:(", el_end + 1);
+				string name = txt.substr(el_end + 1, pos - el_end - 1);
+				lcase(name);
+				attribute.name = _id(name);
+				if(attribute.name == _after_ || attribute.name == _before_)
+				{
+					attribute.type	= select_pseudo_element;
+				} else
+				{
+					attribute.type	= select_pseudo_class;
+				}
+
+				string val;
 				if(pos != string::npos && txt.at(pos) == '(')
 				{
-					pos = find_close_bracket(txt, pos);
-					if(pos != string::npos)
-					{
-						pos++;
-					}
+					auto end = find_close_bracket(txt, pos);
+					val = txt.substr(pos + 1, end - pos - 1);
+					if (end != string::npos) pos = end + 1;
 				}
-				if(pos != string::npos)
+
+				switch (attribute.name)
 				{
-					attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
-				} else
-				{
-					attribute.val		= txt.substr(el_end + 1);
+				case _nth_child_:
+				case _nth_of_type_:
+				case _nth_last_child_:
+				case _nth_last_of_type_:
+					lcase(val);
+					parse_nth_child_params(val, attribute.a, attribute.b);
+					break;
+				case _not_:
+					attribute.sel = std::make_shared<css_element_selector>();
+					attribute.sel->parse(val);
+					break;
+				case _lang_:
+					trim(val);
+					lcase(val);
+					attribute.val = val;
+					break;
 				}
-				litehtml::lcase(attribute.val);
-				if(attribute.val == "after" || attribute.val == "before")
-				{
-					attribute.condition	= select_pseudo_element;
-				} else
-				{
-					attribute.condition	= select_pseudo_class;
-				}
-				attribute.attribute	= "pseudo";
+
 				m_attrs.push_back(attribute);
 				el_end = pos;
 			}
-		} else if(txt[el_end] == '#')
-		{
-			css_attribute_selector attribute;
-
-			string::size_type pos = txt.find_first_of(".#[:", el_end + 1);
-			attribute.val		= txt.substr(el_end + 1, pos - el_end - 1);
-			attribute.condition	= select_equal;
-			attribute.attribute	= "id";
-			m_attrs.push_back(attribute);
-			el_end = pos;
 		} else if(txt[el_end] == '[')
 		{
 			css_attribute_selector attribute;
@@ -86,34 +145,34 @@ void litehtml::css_element_selector::parse( const string& txt )
 			{
 				if(txt[pos] == ']')
 				{
-					attribute.condition = select_exists;
+					attribute.type = select_exists;
 				} else if(txt[pos] == '=')
 				{
-					attribute.condition = select_equal;
+					attribute.type = select_equal;
 					pos++;
 				} else if(txt.substr(pos, 2) == "~=")
 				{
-					attribute.condition = select_contain_str;
+					attribute.type = select_contain_str;
 					pos += 2;
 				} else if(txt.substr(pos, 2) == "|=")
 				{
-					attribute.condition = select_start_str;
+					attribute.type = select_start_str;
 					pos += 2;
 				} else if(txt.substr(pos, 2) == "^=")
 				{
-					attribute.condition = select_start_str;
+					attribute.type = select_start_str;
 					pos += 2;
 				} else if(txt.substr(pos, 2) == "$=")
 				{
-					attribute.condition = select_end_str;
+					attribute.type = select_end_str;
 					pos += 2;
 				} else if(txt.substr(pos, 2) == "*=")
 				{
-					attribute.condition = select_contain_str;
+					attribute.type = select_contain_str;
 					pos += 2;
 				} else
 				{
-					attribute.condition = select_exists;
+					attribute.type = select_exists;
 					pos += 1;
 				}
 				pos = txt.find_first_not_of(" \t", pos);
@@ -137,9 +196,9 @@ void litehtml::css_element_selector::parse( const string& txt )
 				}
 			} else
 			{
-				attribute.condition = select_exists;
+				attribute.type = select_exists;
 			}
-			attribute.attribute	= attr;
+			attribute.name = _id(attr);
 			m_attrs.push_back(attribute);
 			el_end = pos;
 		} else
@@ -226,24 +285,18 @@ bool litehtml::css_selector::parse( const string& text )
 
 void litehtml::css_selector::calc_specificity()
 {
-	if(!m_right.m_tag.empty() && m_right.m_tag != "*")
+	if(m_right.m_tag != star_id)
 	{
 		m_specificity.d = 1;
 	}
 	for(const auto& attr : m_right.m_attrs)
 	{
-		if(attr.attribute == "id")
+		if(attr.type == select_id)
 		{
 			m_specificity.b++;
 		} else
 		{
-			if(attr.attribute == "class")
-			{
-				m_specificity.c += (int) attr.class_val.size();
-			} else
-			{
-				m_specificity.c++;
-			}
+			m_specificity.c++;
 		}	
 	}
 	if(m_left)

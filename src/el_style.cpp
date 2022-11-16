@@ -25,6 +25,11 @@ bool litehtml::el_style::appendChild(const ptr &el)
 	return true;
 }
 
+litehtml::string_id litehtml::el_style::tag() const
+{
+	return _style_;
+}
+
 const char* litehtml::el_style::get_tagName() const
 {
 	return "style";

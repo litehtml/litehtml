@@ -79,7 +79,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 	{
 		doc->container()->get_media_features(doc->m_media);
 
-		doc->m_root->set_pseudo_class("root", true);
+		doc->m_root->set_pseudo_class(_root_, true);
 
 		// apply master CSS
 		doc->m_root->apply_stylesheet(doc->m_master_css);
