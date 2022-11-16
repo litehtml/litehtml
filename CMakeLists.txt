@@ -74,7 +74,6 @@ set(SOURCE_LITEHTML
 
 set(HEADER_LITEHTML
     include/litehtml.h
-    include/litehtml/attributes.h
     include/litehtml/background.h
     include/litehtml/borders.h
     include/litehtml/codepoint.h

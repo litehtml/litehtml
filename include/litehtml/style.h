@@ -1,9 +1,6 @@
 #ifndef LH_STYLE_H
 #define LH_STYLE_H
 
-#include "attributes.h"
-#include <string>
-
 namespace litehtml
 {
 	class property_value

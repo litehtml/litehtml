@@ -206,17 +206,6 @@ namespace litehtml
         display_inline_flex,
 	};
 
-	enum style_border
-	{
-		borderNope,
-		borderNone,
-		borderHidden,
-		borderDotted,
-		borderDashed,
-		borderSolid,
-		borderDouble
-	};
-
 #define  font_size_strings		"xx-small;x-small;small;medium;large;x-large;xx-large;smaller;larger"
 
 	enum font_size
