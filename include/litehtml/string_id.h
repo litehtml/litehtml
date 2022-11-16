@@ -133,6 +133,10 @@ STRING_ID(
 	_video_,
 	_wbr_,
 
+	// litehtml internal tags
+	__tag_before_, // note: real tag cannot start with '-'
+	__tag_after_,
+
 	// CSS pseudo-elements
 	_before_,
 	_after_,

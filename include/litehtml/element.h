@@ -68,6 +68,7 @@ namespace litehtml
 		virtual bool				removeChild(const ptr &el);
 		virtual void				clearRecursive();
 
+		virtual string_id			tag() const;
 		virtual const char*			get_tagName() const;
 		virtual void				set_tagName(const char* tag);
 		virtual void				set_data(const char* data);

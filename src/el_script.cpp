@@ -19,6 +19,11 @@ bool litehtml::el_script::appendChild(const ptr &el)
 	return true;
 }
 
+litehtml::string_id litehtml::el_script::tag() const
+{
+	return _script_;
+}
+
 const char* litehtml::el_script::get_tagName() const
 {
 	return "script";

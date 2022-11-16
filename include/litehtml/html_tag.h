@@ -39,6 +39,7 @@ namespace litehtml
 		bool				appendChild(const element::ptr &el) override;
 		bool				removeChild(const element::ptr &el) override;
 		void				clearRecursive() override;
+		string_id			tag() const override;
 		const char*			get_tagName() const override;
 		void				set_tagName(const char* tag) override;
 		void				set_data(const char* data) override;

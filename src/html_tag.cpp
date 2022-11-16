@@ -51,6 +51,11 @@ void litehtml::html_tag::clearRecursive()
 }
 
 
+litehtml::string_id litehtml::html_tag::tag() const
+{
+	return m_tag;
+}
+
 const char* litehtml::html_tag::get_tagName() const
 {
 	return _s(m_tag).c_str();
@@ -1240,7 +1245,7 @@ bool litehtml::html_tag::is_nth_child(const element::ptr& el, int num, int off, 
 	{
 		if(child->css().get_display() != display_inline_text)
 		{
-			if( (!of_type) || (of_type && !strcmp(el->get_tagName(), child->get_tagName())) )
+			if( (!of_type) || (of_type && el->tag() == child->tag()) )
 			{
 				if(el == child)
 				{
@@ -1272,7 +1277,7 @@ bool litehtml::html_tag::is_nth_last_child(const element::ptr& el, int num, int 
 	{
 		if((*child)->css().get_display() != display_inline_text)
 		{
-			if( !of_type || (of_type && !strcmp(el->get_tagName(), (*child)->get_tagName())) )
+			if( !of_type || (of_type && el->tag() == (*child)->tag()) )
 			{
 				if(el == (*child))
 				{
@@ -1374,7 +1379,7 @@ bool litehtml::html_tag::is_only_child(const element::ptr& el, bool of_type) con
 	{
 		if(child->css().get_display() != display_inline_text)
 		{
-			if( !of_type || (of_type && !strcmp(el->get_tagName(), child->get_tagName())) )
+			if( !of_type || (of_type && el->tag() == child->tag()) )
 			{
 				child_count++;
 			}
@@ -1392,7 +1397,7 @@ litehtml::element::ptr litehtml::html_tag::get_element_before(const string& styl
 {
 	if(!m_children.empty())
 	{
-		if( !strcmp(m_children.front()->get_tagName(), "::before") )
+		if( m_children.front()->tag() == __tag_before_ )
 		{
 			return m_children.front();
 		}
@@ -1408,7 +1413,7 @@ litehtml::element::ptr litehtml::html_tag::get_element_after(const string& style
 {
 	if(!m_children.empty())
 	{
-		if( !strcmp(m_children.back()->get_tagName(), "::after") )
+		if( m_children.back()->tag() == __tag_after_ )
 		{
 			return m_children.back();
 		}

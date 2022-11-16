@@ -290,6 +290,7 @@ void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML
 bool litehtml::element::appendChild(const ptr &el)									LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::removeChild(const ptr &el)									LITEHTML_RETURN_FUNC(false)
 void litehtml::element::clearRecursive()											LITEHTML_EMPTY_FUNC
+litehtml::string_id litehtml::element::tag() const									LITEHTML_RETURN_FUNC(empty_id)
 const char* litehtml::element::get_tagName() const									LITEHTML_RETURN_FUNC("")
 void litehtml::element::set_tagName( const char* tag )								LITEHTML_EMPTY_FUNC
 void litehtml::element::set_data( const char* data )								LITEHTML_EMPTY_FUNC
