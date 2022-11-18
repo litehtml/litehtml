@@ -41,7 +41,6 @@ namespace litehtml
 		typedef std::vector<style::ptr>		vector;
 	private:
 		props_map							m_properties;
-		static std::map<string_id, string>	m_valid_values;
 	public:
 		style() = default;
 		style(const style& val);
@@ -61,13 +60,10 @@ namespace litehtml
 
 		const char* get_property(string_id name) const
 		{
-			if(name)
+			auto f = m_properties.find(name);
+			if(f != m_properties.end())
 			{
-				auto f = m_properties.find(name);
-				if(f != m_properties.end())
-				{
-					return f->second.m_value.c_str();
-				}
+				return f->second.m_value.c_str();
 			}
 			return nullptr;
 		}

@@ -1,13 +1,5 @@
 #include "html.h"
 #include "style.h"
-#ifndef WINCE
-#include <locale>
-#endif
-
-std::map<litehtml::string_id, litehtml::string> litehtml::style::m_valid_values =
-{
-	{ _white_space_, white_space_strings }
-};
 
 litehtml::style::style( const style& val )
 {
@@ -710,31 +702,18 @@ void litehtml::style::parse_short_font( const string& val, bool important )
 
 void litehtml::style::add_parsed_property( string_id name, const string& val, bool important )
 {
-	bool is_valid = true;
-	auto vals = m_valid_values.find(name);
-	if (vals != m_valid_values.end())
+	auto prop = m_properties.find(name);
+	if (prop != m_properties.end())
 	{
-		if (!value_in_list(val, vals->second))
+		if (!prop->second.m_important || (important && prop->second.m_important))
 		{
-			is_valid = false;
+			prop->second.m_value = val;
+			prop->second.m_important = important;
 		}
 	}
-
-	if (is_valid)
+	else
 	{
-		auto prop = m_properties.find(name);
-		if (prop != m_properties.end())
-		{
-			if (!prop->second.m_important || (important && prop->second.m_important))
-			{
-				prop->second.m_value = val;
-				prop->second.m_important = important;
-			}
-		}
-		else
-		{
-			m_properties[name] = property_value(val.c_str(), important);
-		}
+		m_properties[name] = property_value(val.c_str(), important);
 	}
 }
 

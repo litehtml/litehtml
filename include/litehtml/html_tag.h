@@ -75,8 +75,8 @@ namespace litehtml
 
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;
 		int					select(const css_element_selector& selector, bool apply_pseudo = true) override;
-		int					select_pseudoclass(const css_attribute_selector& attr);
-		int					select_attribute(const css_attribute_selector& attr);
+		int					select_pseudoclass(const css_attribute_selector& sel);
+		int					select_attribute(const css_attribute_selector& sel);
 
 		elements_vector		select_all(const string& selector) override;
 		elements_vector		select_all(const css_selector& selector) override;
