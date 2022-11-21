@@ -34,9 +34,9 @@ namespace litehtml
         used_selector::vector	                m_used_styles;
 
         virtual void select_all(const css_selector& selector, elements_vector& res);
-        element::ptr _add_before_after(int type, const string& style, const string& baseurl);
+        element::ptr _add_before_after(int type, const style& style);
 	public:
-		explicit element(const std::shared_ptr<litehtml::document>& doc);
+		explicit element(const std::shared_ptr<document>& doc);
         virtual ~element() = default;
 
         const css_properties&       css() const;
@@ -113,7 +113,7 @@ namespace litehtml
 		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const;
 		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const;
 		virtual bool				is_only_child(const element::ptr& el, bool of_type) const;
-		virtual void				add_style(const string& style, const string& baseurl);
+		virtual void				add_style(const style& style);
 		virtual const background*	get_background(bool own_only = false);
 
 		virtual string				dump_get_name();
@@ -125,13 +125,13 @@ namespace litehtml
 		bool requires_styles_update();
 		void add_render(const std::shared_ptr<render_item>& ri);
 		bool find_styles_changes( position::vector& redraw_boxes);
-		element::ptr add_pseudo_before(const string& style, const string& baseurl)
+		element::ptr add_pseudo_before(const style& style)
 		{
-			return _add_before_after(0, style, baseurl);
+			return _add_before_after(0, style);
 		}
-		element::ptr add_pseudo_after(const string& style, const string& baseurl)
+		element::ptr add_pseudo_after(const style& style)
 		{
-			return _add_before_after(1, style, baseurl);
+			return _add_before_after(1, style);
 		}
 	};
 

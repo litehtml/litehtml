@@ -848,7 +848,9 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
 	auto flush_elements = [&]()
 	{
 		element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-		annon_tag->add_style(string("display:") + disp_str, "");
+		litehtml::style style;
+		style.add_property(_display_, disp_str);
+		annon_tag->add_style(style);
 		annon_tag->parent(el_ptr->src_el());
 		annon_tag->parse_styles();
         std::shared_ptr<render_item> annon_ri;
@@ -966,7 +968,9 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 
 			// extract elements with the same display and wrap them with anonymous object
 			element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-			annon_tag->add_style(string("display:") + disp_str, "");
+			litehtml::style style;
+			style.add_property(_display_, disp_str);
+			annon_tag->add_style(style);
 			annon_tag->parent(parent->src_el());
 			annon_tag->parse_styles();
             std::shared_ptr<render_item> annon_ri;

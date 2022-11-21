@@ -247,11 +247,9 @@ bool litehtml::element::find_styles_changes( position::vector& redraw_boxes)
     return ret;
 }
 
-litehtml::element::ptr litehtml::element::_add_before_after(int type, const string& style, const string& baseurl)
+litehtml::element::ptr litehtml::element::_add_before_after(int type, const style& style)
 {
-    litehtml::style st;
-    st.add(style.c_str(), baseurl.c_str(), nullptr);
-    if(st.get_property(_content_))
+    if(style.get_property(_content_))
     {
         element::ptr el;
         if(type == 0)
@@ -271,7 +269,7 @@ litehtml::element::ptr litehtml::element::_add_before_after(int type, const stri
 
 
 const litehtml::background* litehtml::element::get_background(bool own_only)		LITEHTML_RETURN_FUNC(nullptr)
-void litehtml::element::add_style( const string& style, const string& baseurl )						LITEHTML_EMPTY_FUNC
+void litehtml::element::add_style( const style& style)	        					LITEHTML_EMPTY_FUNC
 void litehtml::element::select_all(const css_selector& selector, litehtml::elements_vector& res)	LITEHTML_EMPTY_FUNC
 litehtml::elements_vector litehtml::element::select_all(const litehtml::css_selector& selector)	 LITEHTML_RETURN_FUNC(litehtml::elements_vector())
 litehtml::elements_vector litehtml::element::select_all(const litehtml::string& selector)			 LITEHTML_RETURN_FUNC(litehtml::elements_vector())

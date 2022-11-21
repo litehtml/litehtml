@@ -51,9 +51,11 @@ void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const
 		string::size_type style_end	= text.find('}', pos);
 		if(style_start != string::npos && style_end != string::npos)
 		{
-			auto style = text.substr(style_start + 1, style_end - style_start - 1);
+			auto str_style = text.substr(style_start + 1, style_end - style_start - 1);
+			style::ptr style = std::make_shared<litehtml::style>();
+			style->add(str_style.c_str(), baseurl ? baseurl : "", nullptr);
 
-			parse_selectors(text.substr(pos, style_start - pos), style, media, baseurl ? baseurl : "");
+			parse_selectors(text.substr(pos, style_start - pos), style, media);
 
 			if(media && doc)
 			{
@@ -98,7 +100,7 @@ void litehtml::css::parse_css_url( const string& str, string& url )
 	}
 }
 
-bool litehtml::css::parse_selectors( const string& txt, const string& styles, const media_query_list::ptr& media, const string& baseurl )
+bool litehtml::css::parse_selectors( const string& txt, const style::ptr& styles, const media_query_list::ptr& media )
 {
 	string selector = txt;
 	trim(selector);
@@ -109,7 +111,7 @@ bool litehtml::css::parse_selectors( const string& txt, const string& styles, co
 
 	for(auto & token : tokens)
 	{
-		css_selector::ptr new_selector = std::make_shared<css_selector>(media, baseurl);
+		css_selector::ptr new_selector = std::make_shared<css_selector>(media);
         new_selector->m_style = styles;
 		trim(token);
 		if(new_selector->parse(token))

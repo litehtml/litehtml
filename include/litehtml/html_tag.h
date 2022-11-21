@@ -92,7 +92,7 @@ namespace litehtml
 
 		void				get_content_size(size& sz, int max_width) override;
 		bool				is_floats_holder() const override;
-		void				add_style(const string& style, const string& baseurl) override;
+		void				add_style(const style& style) override;
 
 		bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const override;
 		bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const override;
@@ -105,8 +105,8 @@ namespace litehtml
 		void				init_background_paint( position pos, background_paint &bg_paint, const background* bg, const std::shared_ptr<render_item> &ri );
 		void				draw_list_marker( uint_ptr hdc, const position &pos );
 		string				get_list_marker_text(int index);
-		element::ptr		get_element_before(const string& style, const string& baseurl, bool create);
-		element::ptr		get_element_after(const string& style, const string& baseurl, bool create);
+		element::ptr		get_element_before(const style& style, bool create);
+		element::ptr		get_element_after(const style& style, bool create);
     };
 
 	/************************************************************************/

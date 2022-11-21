@@ -51,12 +51,12 @@ namespace litehtml
 			return *this;
 		}
 
-		void add(const char* txt, const char* baseurl, const element* el)
+		void add(const char* txt, const char* baseurl = "", const element* el = nullptr)
 		{
 			parse(txt, baseurl, el);
 		}
 
-		void add_property(string_id name, const char* val, const char* baseurl, bool important, const element* el);
+		void add_property(string_id name, const char* val, const char* baseurl = "", bool important = false, const element* el = nullptr);
 
 		const char* get_property(string_id name) const
 		{

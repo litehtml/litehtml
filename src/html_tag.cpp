@@ -108,7 +108,7 @@ const char* litehtml::html_tag::get_attr( const char* name, const char* def ) co
 
 litehtml::elements_vector litehtml::html_tag::select_all( const string& selector )
 {
-	css_selector sel(media_query_list::ptr(nullptr), "");
+	css_selector sel;
 	sel.parse(selector);
 	
 	return select_all(sel);
@@ -137,7 +137,7 @@ void litehtml::html_tag::select_all(const css_selector& selector, elements_vecto
 
 litehtml::element::ptr litehtml::html_tag::select_one( const string& selector )
 {
-	css_selector sel(media_query_list::ptr(nullptr), "");
+	css_selector sel;
 	sel.parse(selector);
 
 	return select_one(sel);
@@ -194,42 +194,42 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 					{
 						if(apply & select_match_with_after)
 						{
-							element::ptr el = get_element_after(sel->m_style, sel->m_baseurl, true);
+							element::ptr el = get_element_after(*sel->m_style, true);
 							if(el)
 							{
-								el->add_style(sel->m_style, sel->m_baseurl);
+								el->add_style(*sel->m_style);
 							}
 						} else if(apply & select_match_with_before)
 						{
-							element::ptr el = get_element_before(sel->m_style, sel->m_baseurl, true);
+							element::ptr el = get_element_before(*sel->m_style, true);
 							if(el)
 							{
-								el->add_style(sel->m_style, sel->m_baseurl);
+								el->add_style(*sel->m_style);
 							}
 						}
 						else
 						{
-							add_style(sel->m_style, sel->m_baseurl);
+							add_style(*sel->m_style);
 							us->m_used = true;
 						}
 					}
 				} else if(apply & select_match_with_after)
 				{
-					element::ptr el = get_element_after(sel->m_style, sel->m_baseurl, true);
+					element::ptr el = get_element_after(*sel->m_style, true);
 					if(el)
 					{
-						el->add_style(sel->m_style, sel->m_baseurl);
+						el->add_style(*sel->m_style);
 					}
 				} else if(apply & select_match_with_before)
 				{
-					element::ptr el = get_element_before(sel->m_style, sel->m_baseurl, true);
+					element::ptr el = get_element_before(*sel->m_style, true);
 					if(el)
 					{
-						el->add_style(sel->m_style, sel->m_baseurl);
+						el->add_style(*sel->m_style);
 					}
 				} else
 				{
-					add_style(sel->m_style, sel->m_baseurl);
+					add_style(*sel->m_style);
 					us->m_used = true;
 				}
 			}
@@ -1393,7 +1393,7 @@ bool litehtml::html_tag::is_only_child(const element::ptr& el, bool of_type) con
 	return true;
 }
 
-litehtml::element::ptr litehtml::html_tag::get_element_before(const string& style, const string& baseurl, bool create)
+litehtml::element::ptr litehtml::html_tag::get_element_before(const style& style, bool create)
 {
 	if(!m_children.empty())
 	{
@@ -1404,12 +1404,12 @@ litehtml::element::ptr litehtml::html_tag::get_element_before(const string& styl
 	}
     if(create)
     {
-        return add_pseudo_before(style, baseurl);
+        return add_pseudo_before(style);
     }
     return nullptr;
 }
 
-litehtml::element::ptr litehtml::html_tag::get_element_after(const string& style, const string& baseurl, bool create)
+litehtml::element::ptr litehtml::html_tag::get_element_after(const style& style, bool create)
 {
 	if(!m_children.empty())
 	{
@@ -1420,14 +1420,14 @@ litehtml::element::ptr litehtml::html_tag::get_element_after(const string& style
 	}
     if(create)
     {
-        return add_pseudo_after(style, baseurl);
+        return add_pseudo_after(style);
     }
     return nullptr;
 }
 
-void litehtml::html_tag::add_style(const string& style, const string& baseurl)
+void litehtml::html_tag::add_style(const style& style)
 {
-	m_style.add(style.c_str(), baseurl.c_str(), this);
+	m_style.combine(style);
 }
 
 void litehtml::html_tag::refresh_styles()
@@ -1458,42 +1458,42 @@ void litehtml::html_tag::refresh_styles()
 					{
 						if(apply & select_match_with_after)
 						{
-							element::ptr el = get_element_after(usel->m_selector->m_style, usel->m_selector->m_baseurl, false);
+							element::ptr el = get_element_after(*usel->m_selector->m_style, false);
 							if(el)
 							{
-								el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+								el->add_style(*usel->m_selector->m_style);
 							}
 						} else if(apply & select_match_with_before)
 						{
-							element::ptr el = get_element_before(usel->m_selector->m_style, usel->m_selector->m_baseurl, false);
+							element::ptr el = get_element_before(*usel->m_selector->m_style, false);
 							if(el)
 							{
-								el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+								el->add_style(*usel->m_selector->m_style);
 							}
 						}
 						else
 						{
-							add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+							add_style(*usel->m_selector->m_style);
 							usel->m_used = true;
 						}
 					}
 				} else if(apply & select_match_with_after)
 				{
-					element::ptr el = get_element_after(usel->m_selector->m_style, usel->m_selector->m_baseurl, false);
+					element::ptr el = get_element_after(*usel->m_selector->m_style, false);
 					if(el)
 					{
-						el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+						el->add_style(*usel->m_selector->m_style);
 					}
 				} else if(apply & select_match_with_before)
 				{
-					element::ptr el = get_element_before(usel->m_selector->m_style, usel->m_selector->m_baseurl, false);
+					element::ptr el = get_element_before(*usel->m_selector->m_style, false);
 					if(el)
 					{
-						el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+						el->add_style(*usel->m_selector->m_style);
 					}
 				} else
 				{
-					add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+					add_style(*usel->m_selector->m_style);
 					usel->m_used = true;
 				}
 			}

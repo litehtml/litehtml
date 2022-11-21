@@ -522,7 +522,7 @@ void litehtml::render_item_block::update_floats(int dy, const std::shared_ptr<re
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
 {
     {
-        css_selector sel(media_query_list::ptr(nullptr), "");
+        css_selector sel;
         sel.parse(".inline_rating");
         if(src_el()->select(sel))
         {
@@ -610,7 +610,9 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
                 if(not_ws_added)
                 {
                     auto anon_el = std::make_shared<html_tag>(doc);
-                    anon_el->add_style("display: block", "");
+                    litehtml::style style;
+                    style.add("display: block");
+                    anon_el->add_style(style);
                     anon_el->parent(src_el());
                     anon_el->parse_styles();
                     auto anon_ri = std::make_shared<render_item_block>(anon_el);
@@ -631,7 +633,9 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
         if(!inlines.empty() && not_ws_added)
         {
             auto anon_el = std::make_shared<html_tag>(doc);
-            anon_el->add_style("display: block", "");
+            litehtml::style style;
+            style.add("display: block");
+            anon_el->add_style(style);
             anon_el->parent(src_el());
             anon_el->parse_styles();
             auto anon_ri = std::make_shared<render_item_block>(anon_el);
