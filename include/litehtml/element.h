@@ -96,11 +96,13 @@ namespace litehtml
 		virtual void				compute_styles(bool recursive = true);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item>& ri);
 		virtual void				draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri);
-		virtual int					get_enum_property(string_id name, bool inherited, int defval, uint_ptr css_properties_member_offset) const;
-		virtual css_length			get_length_property(string_id name, bool inherited, css_length defval, uint_ptr css_properties_member_offset) const;
-		virtual web_color			get_color_property(string_id name, bool inherited, web_color defval, uint_ptr css_properties_member_offset) const;
-		virtual string				get_string_property(string_id name, bool inherited, const string& defval, uint_ptr css_properties_member_offset) const;
-		virtual float				get_number_property(string_id name, bool inherited, float defval, uint_ptr css_properties_member_offset) const;
+		virtual int					get_enum_property  (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const;
+		virtual css_length			get_length_property(string_id name, bool inherited, css_length    default_value, uint_ptr css_properties_member_offset) const;
+		virtual web_color			get_color_property (string_id name, bool inherited, web_color     default_value, uint_ptr css_properties_member_offset) const;
+		virtual string				get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const;
+		virtual float				get_number_property(string_id name, bool inherited, float         default_value, uint_ptr css_properties_member_offset) const;
+		virtual string				get_custom_property(string_id name, const string& default_value) const;
+
 		virtual void				get_text(string& text);
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);

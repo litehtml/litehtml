@@ -34,9 +34,14 @@ namespace litehtml
 		{
 			m_type = prop_type_invalid;
 		}
-		property_value(const string& str, bool important)
+		property_value(bool important, property_type type)
 		{
-			m_type = prop_type_string;
+			m_type = type;
+			m_important = important;
+		}
+		property_value(const string& str, bool important, property_type type = prop_type_string)
+		{
+			m_type = type;
 			m_string = str;
 			m_important = important;
 		}
@@ -92,6 +97,8 @@ namespace litehtml
 			m_properties.clear();
 		}
 
+		void subst_vars(const element* el);
+
 	private:
 		void parse_property(const string& txt, const string& baseurl, document_container* container);
 		void parse(const string& txt, const string& baseurl, document_container* container);
@@ -103,7 +110,7 @@ namespace litehtml
 		static css_length parse_border_width(const string& str);
 		static void parse_two_lengths(const string& str, css_length len[2]);
 		static int parse_four_lengths(const string& str, css_length len[4]);
-		static void subst_vars(string& str, const element* el);
+		static void subst_vars_(string& str, const element* el);
 
 		void add_parsed_property(string_id name, const property_value& propval);
 		void remove_property(string_id name, bool important);

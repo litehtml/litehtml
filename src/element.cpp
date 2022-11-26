@@ -309,6 +309,7 @@ litehtml::css_length	litehtml::element::get_length_property(string_id name, bool
 litehtml::web_color		litehtml::element::get_color_property(string_id name, bool inherited, web_color defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(web_color())
 litehtml::string		litehtml::element::get_string_property(string_id name, bool inherited, const string& defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC("")
 float				    litehtml::element::get_number_property(string_id name, bool inherited, float defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(0)
+litehtml::string		litehtml::element::get_custom_property(string_id name, const string& defval) const LITEHTML_RETURN_FUNC("")
 void litehtml::element::get_text( string& text )									LITEHTML_EMPTY_FUNC
 void litehtml::element::parse_attributes()											LITEHTML_EMPTY_FUNC
 int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(select_no_match)

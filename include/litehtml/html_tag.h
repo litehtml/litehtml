@@ -75,6 +75,7 @@ namespace litehtml
 		web_color			get_color_property (string_id name, bool inherited, web_color     default_value, uint_ptr css_properties_member_offset) const override;
 		string				get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const override;
 		float				get_number_property(string_id name, bool inherited, float         default_value, uint_ptr css_properties_member_offset) const override;
+		string				get_custom_property(string_id name, const string& default_value) const override;
 
 		elements_vector&	children();
 

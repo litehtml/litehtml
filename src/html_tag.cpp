@@ -291,6 +291,21 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 	}
 }
 
+litehtml::string litehtml::html_tag::get_custom_property(string_id name, const string& default_value) const
+{
+	const property_value& value = m_style.get_property(name);
+
+	if (value.m_type == prop_type_string)
+	{
+		return value.m_string;
+	}
+	else if (auto _parent = parent())
+	{
+		return _parent->get_custom_property(name, default_value);
+	}
+	return default_value;
+}
+
 template<class Type, litehtml::property_type property_value_type, Type litehtml::property_value::* property_value_member>
 const Type& litehtml::html_tag::get_property_impl(string_id name, bool inherited, const Type& default_value, uint_ptr css_properties_member_offset) const
 {
@@ -347,6 +362,8 @@ void litehtml::html_tag::compute_styles(bool recursive)
 	{
 		m_style.add(style, "", doc->container());
 	}
+
+	m_style.subst_vars(this);
 
 	m_css.compute(shared_from_this(), doc);
 

@@ -81,35 +81,11 @@ void litehtml::style::parse_property(const string& txt, const string& baseurl, d
 	}
 }
 
-void litehtml::style::combine(const style& src)
-{
-	for(const auto& property : src.m_properties)
-	{
-		add_parsed_property(property.first, property.second);
-	}
-}
-
-//void litehtml::style::subst_vars(string& str, const element* el)
-//{
-//	if (!el) return;
-//
-//	while (1)
-//	{
-//		auto start = str.find("var(");
-//		if (start == -1) break;
-//		if (start > 0 && isalnum(str[start - 1])) break;
-//		auto end = str.find(")", start + 4);
-//		if (end == -1) break;
-//		auto name = str.substr(start + 4, end - start - 4);
-//		trim(name);
-//		auto val = el->get_style_property(_id(name), true);
-//		if (!val) break;
-//		str.replace(start, end - start + 1, val);
-//	}
-//}
-
 void litehtml::style::add_property(string_id name, const string& val, const string& baseurl, bool important, document_container* container)
 {
+	if (val.find("var(") != -1) return add_parsed_property(name, property_value(val, important, prop_type_var));
+	if (val == "inherit")       return add_parsed_property(name, property_value(important, prop_type_inherit));
+
 	int idx;
 	string url;
 	css_length len[4], length;
@@ -965,6 +941,14 @@ void litehtml::style::remove_property( string_id name, bool important )
 	}
 }
 
+void litehtml::style::combine(const style& src)
+{
+	for (const auto& property : src.m_properties)
+	{
+		add_parsed_property(property.first, property.second);
+	}
+}
+
 const litehtml::property_value& litehtml::style::get_property(string_id name) const
 {
 	auto it = m_properties.find(name);
@@ -974,4 +958,35 @@ const litehtml::property_value& litehtml::style::get_property(string_id name) co
 	}
 	static property_value dummy;
 	return dummy;
+}
+
+void litehtml::style::subst_vars_(string& str, const element* el)
+{
+	while (1)
+	{
+		auto start = str.find("var(");
+		if (start == -1) break;
+		if (start > 0 && isalnum(str[start - 1])) break;
+		auto end = str.find(")", start + 4);
+		if (end == -1) break;
+		auto name = str.substr(start + 4, end - start - 4);
+		trim(name);
+		string val = el->get_custom_property(_id(name), "");
+		str.replace(start, end - start + 1, val);
+	}
+}
+
+void litehtml::style::subst_vars(const element* el)
+{
+	for (auto& prop : m_properties)
+	{
+		if (prop.second.m_type == prop_type_var)
+		{
+			subst_vars_(prop.second.m_string, el);
+			// re-adding the same property
+			// if it is a custom property it will be readded as a string (currently it is prop_type_var)
+			// if it is a standard css property it will be parsed and properly added as typed property
+			add_property(prop.first, prop.second.m_string, "", prop.second.m_important, el->get_document()->container());
+		}
+	}
 }
