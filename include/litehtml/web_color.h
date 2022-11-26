@@ -20,6 +20,9 @@ namespace litehtml
 		byte	red;
 		byte	alpha;
 
+		static const web_color transparent;
+		static const web_color black;
+
 		web_color(byte r, byte g, byte b, byte a = 255)
 		{
 			blue	= b;
@@ -36,26 +39,10 @@ namespace litehtml
 			alpha	= 0xFF;
 		}
 
-		web_color(const web_color& val)
-		{
-			blue	= val.blue;
-			green	= val.green;
-			red		= val.red;
-			alpha	= val.alpha;
-		}
-
-		web_color& operator=(const web_color& val)
-		{
-			blue	= val.blue;
-			green	= val.green;
-			red		= val.red;
-			alpha	= val.alpha;
-			return *this;
-		}
-		string to_string();
-		static web_color	from_string(const char* str, document_container* callback);
-		static string		resolve_name(const char* name, document_container* callback);
-		static bool			is_color(const char* str);
+		string to_string() const;
+		static web_color	from_string(const string& str, document_container* callback);
+		static string		resolve_name(const string& name, document_container* callback);
+		static bool			is_color(const string& str);
 	};
 }
 

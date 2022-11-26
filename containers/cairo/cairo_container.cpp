@@ -51,7 +51,7 @@ litehtml::uint_ptr cairo_container::create_font( const char* faceName, int size,
 										fnt_name.c_str(), 
 										size, 
 										weight, 
-										(italic == litehtml::fontStyleItalic) ? TRUE : FALSE,
+										(italic == litehtml::font_style_italic) ? TRUE : FALSE,
 										(decoration & litehtml::font_decoration_linethrough) ? TRUE : FALSE,
 										(decoration & litehtml::font_decoration_underline) ? TRUE : FALSE);
 
@@ -64,7 +64,7 @@ litehtml::uint_ptr cairo_container::create_font( const char* faceName, int size,
 		fm->descent		= fnt->metrics().descent;
 		fm->height		= fnt->metrics().height;
 		fm->x_height	= fnt->metrics().x_height;
-		if(italic == litehtml::fontStyleItalic || decoration)
+		if(italic == litehtml::font_style_italic || decoration)
 		{
 			fm->draw_spaces = true;
 		} else

@@ -53,7 +53,7 @@ void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const
 		{
 			auto str_style = text.substr(style_start + 1, style_end - style_start - 1);
 			style::ptr style = std::make_shared<litehtml::style>();
-			style->add(str_style.c_str(), baseurl ? baseurl : "", nullptr);
+			style->add(str_style, baseurl ? baseurl : "", doc->container());
 
 			parse_selectors(text.substr(pos, style_start - pos), style, media);
 

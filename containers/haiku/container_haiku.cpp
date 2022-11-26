@@ -142,7 +142,7 @@ LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size,
 	litehtml::trim(fonts[0]);
 
 	uint16 face = B_REGULAR_FACE; // default
-	if (italic == litehtml::fontStyleItalic)
+	if (italic == litehtml::font_style_italic)
 	{
 		face |= B_ITALIC_FACE;
 	}

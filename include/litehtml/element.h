@@ -12,8 +12,8 @@
 namespace litehtml
 {
 	class line_box;
-    class dumper;
-    class render_item;
+	class dumper;
+	class render_item;
 
 	class element : public std::enable_shared_from_this<element>
 	{
@@ -26,29 +26,28 @@ namespace litehtml
 		typedef std::shared_ptr<const element>	const_ptr;
 		typedef std::weak_ptr<element>			weak_ptr;
 	protected:
-		std::weak_ptr<element>		            m_parent;
+		std::weak_ptr<element>					m_parent;
 		std::weak_ptr<document>					m_doc;
-        elements_vector				            m_children;
-        css_properties                          m_css;
-        std::list<std::weak_ptr<render_item>>   m_renders;
-        used_selector::vector	                m_used_styles;
+		elements_vector							m_children;
+		css_properties							m_css;
+		std::list<std::weak_ptr<render_item>>	m_renders;
+		used_selector::vector					m_used_styles;
 
-        virtual void select_all(const css_selector& selector, elements_vector& res);
-        element::ptr _add_before_after(int type, const style& style);
+		virtual void select_all(const css_selector& selector, elements_vector& res);
+		element::ptr _add_before_after(int type, const style& style);
 	public:
 		explicit element(const std::shared_ptr<document>& doc);
-        virtual ~element() = default;
+		virtual ~element() = default;
 
-        const css_properties&       css() const;
-        css_properties&             css_w();
+		const css_properties&		css() const;
+		css_properties&				css_w();
 
 		bool						in_normal_flow()			const;
-		litehtml::web_color			get_color(string_id prop_name, bool inherited, const litehtml::web_color& def_color = litehtml::web_color());
 		bool						is_inline_box()				const;
-        bool                        is_block_box()              const;
+		bool						is_block_box()				const;
 		position					get_placement()				const;
 		bool						is_positioned()				const;
-        bool						is_float()				    const;
+		bool						is_float()					const;
 
 		bool						have_parent() const;
 		element::ptr				parent() const;
@@ -91,14 +90,17 @@ namespace litehtml
 		virtual bool				on_lbutton_down();
 		virtual bool				on_lbutton_up();
 		virtual void				on_click();
-		virtual const char*			get_cursor();
 		virtual bool				set_pseudo_class(string_id cls, bool add);
 		virtual bool				set_class(const char* pclass, bool add);
 		virtual bool				is_replaced() const;
-		virtual void				parse_styles(bool is_reparse = false);
+		virtual void				compute_styles(bool recursive = true);
 		virtual void				draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item>& ri);
 		virtual void				draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri);
-		virtual const char*			get_style_property(string_id name, bool inherited, const char* def = nullptr) const;
+		virtual int					get_enum_property(string_id name, bool inherited, int defval, uint_ptr css_properties_member_offset) const;
+		virtual css_length			get_length_property(string_id name, bool inherited, css_length defval, uint_ptr css_properties_member_offset) const;
+		virtual web_color			get_color_property(string_id name, bool inherited, web_color defval, uint_ptr css_properties_member_offset) const;
+		virtual string				get_string_property(string_id name, bool inherited, const string& defval, uint_ptr css_properties_member_offset) const;
+		virtual float				get_number_property(string_id name, bool inherited, float defval, uint_ptr css_properties_member_offset) const;
 		virtual void				get_text(string& text);
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
@@ -190,11 +192,11 @@ namespace litehtml
 
 	inline bool element::is_block_box() const
 	{
-		if(css().get_display() == display_block ||
-		   css().get_display() == display_flex ||
-		   css().get_display() == display_table ||
-		   css().get_display() == display_list_item ||
-		   css().get_display() == display_flex)
+		if (css().get_display() == display_block ||
+			css().get_display() == display_flex ||
+			css().get_display() == display_table ||
+			css().get_display() == display_list_item ||
+			css().get_display() == display_flex)
 		{
 			return true;
 		}

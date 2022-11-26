@@ -16,10 +16,11 @@
 #include "utf8_strings.h"
 #include "background.h"
 #include "borders.h"
-#include "html_tag.h"
 #include "web_color.h"
 #include "media_query.h"
+#include "html_tag.h"
 #include "document_container.h"
+#include "document.h"
 
 namespace litehtml
 {
@@ -31,7 +32,7 @@ namespace litehtml
 	string::size_type find_close_bracket(const string &s, string::size_type off, char open_b = '(', char close_b = ')');
 	void split_string(const string& str, string_vector& tokens, const string& delims, const string& delims_preserve = "", const string& quote = "\"");
 	void join_string(string& str, const string_vector& tokens, const string& delims);
-    double t_strtod(const char* string, char** endPtr);
+    double t_strtod(const char* string, char** endPtr = nullptr);
     string get_escaped_string(const string& in_str);
 
 	int t_strcasecmp(const char *s1, const char *s2);
@@ -65,6 +66,11 @@ namespace litehtml
 			int_val++;
 		}
 		return int_val;
+	}
+
+	inline float t_strtof(const string& str, char** endPtr = nullptr)
+	{
+		return (float)t_strtod(str.c_str(), endPtr);
 	}
 }
 

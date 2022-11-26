@@ -55,21 +55,26 @@ namespace litehtml
 		bool				is_body() const override;
 		bool				is_break() const override;
 
-        bool				on_mouse_over() override;
+		bool				on_mouse_over() override;
 		bool				on_mouse_leave() override;
 		bool				on_lbutton_down() override;
 		bool				on_lbutton_up() override;
 		void				on_click() override;
-		const char*			get_cursor() override;
 		bool				set_pseudo_class(string_id cls, bool add) override;
 		bool				set_class(const char* pclass, bool add) override;
 		bool				is_replaced() const override;
-		void				parse_styles(bool is_reparse = false) override;
-		void                draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) override;
-		void                draw_background(uint_ptr hdc, int x, int y, const position *clip,
-                                    const std::shared_ptr<render_item> &ri) override;
+		void				compute_styles(bool recursive = true) override;
+		void				draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) override;
+		void				draw_background(uint_ptr hdc, int x, int y, const position *clip,
+									const std::shared_ptr<render_item> &ri) override;
 
-		const char*			get_style_property(string_id name, bool inherited, const char* def = nullptr) const override;
+		template<class Type, property_type property_value_type, Type property_value::* property_value_member>
+		const Type&			get_property_impl  (string_id name, bool inherited, const Type&   default_value, uint_ptr css_properties_member_offset) const;
+		int					get_enum_property  (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const override;
+		css_length			get_length_property(string_id name, bool inherited, css_length    default_value, uint_ptr css_properties_member_offset) const override;
+		web_color			get_color_property (string_id name, bool inherited, web_color     default_value, uint_ptr css_properties_member_offset) const override;
+		string				get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const override;
+		float				get_number_property(string_id name, bool inherited, float         default_value, uint_ptr css_properties_member_offset) const override;
 
 		elements_vector&	children();
 
@@ -99,7 +104,7 @@ namespace litehtml
 		bool				is_only_child(const element::ptr& el, bool of_type) const override;
 		const background*	get_background(bool own_only = false) override;
 
-        string             dump_get_name() override;
+		string				dump_get_name() override;
 
 	protected:
 		void				init_background_paint( position pos, background_paint &bg_paint, const background* bg, const std::shared_ptr<render_item> &ri );
@@ -107,7 +112,7 @@ namespace litehtml
 		string				get_list_marker_text(int index);
 		element::ptr		get_element_before(const style& style, bool create);
 		element::ptr		get_element_after(const style& style, bool create);
-    };
+	};
 
 	/************************************************************************/
 	/*                        Inline Functions                              */

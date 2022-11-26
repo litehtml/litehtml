@@ -42,7 +42,7 @@ void litehtml::css_length::fromString( const string& str, const string& predefs,
 		}
 		if(!num.empty())
 		{
-			m_value = (float) t_strtod(num.c_str(), nullptr);
+			m_value = t_strtof(num);
 			m_units	= (css_units) value_index(un, css_units_strings, css_units_none);
 		} else
 		{
@@ -53,11 +53,25 @@ void litehtml::css_length::fromString( const string& str, const string& predefs,
 	}
 }
 
-litehtml::string litehtml::css_length::to_string()
+litehtml::css_length litehtml::css_length::from_string(const string& str, const string& predefs, int defValue)
+{
+	css_length len;
+	len.fromString(str, predefs, defValue);
+	return len;
+}
+
+litehtml::string litehtml::css_length::to_string() const
 {
     if(m_is_predefined)
     {
         return "def(" + std::to_string(m_predef) + ")";
     }
     return std::to_string(m_value) + "{" + index_value(m_units, css_units_strings) + "}";
+}
+
+litehtml::css_length litehtml::css_length::predef_value(int val)
+{
+	css_length len;
+	len.predef(val);
+	return len;
 }

@@ -1,9 +1,8 @@
 #include "html.h"
 #include "el_text.h"
-#include "document.h"
 #include "render_item.h"
 
-litehtml::el_text::el_text(const char* text, const std::shared_ptr<document>& doc) : element(doc)
+litehtml::el_text::el_text(const char* text, const document::ptr& doc) : element(doc)
 {
 	if(text)
 	{
@@ -24,20 +23,7 @@ void litehtml::el_text::get_text( string& text )
 	text += m_text;
 }
 
-const char* litehtml::el_text::get_style_property( string_id name, bool inherited, const char* def /*= 0*/ ) const
-{
-	if(inherited)
-	{
-		element::ptr el_parent = parent();
-		if (el_parent)
-		{
-			return el_parent->get_style_property(name, inherited, def);
-		}
-	}
-	return def;
-}
-
-void litehtml::el_text::parse_styles(bool is_reparse)
+void litehtml::el_text::compute_styles(bool recursive)
 {
     element::ptr el_parent = parent();
     if (el_parent)
@@ -133,7 +119,7 @@ void litehtml::el_text::draw(uint_ptr hdc, int x, int y, const position *clip, c
 			document::ptr doc = get_document();
 
 			uint_ptr font = el_parent->css().get_font();
-			litehtml::web_color color = el_parent->get_color(_color_, true, doc->get_def_color());
+			web_color color = el_parent->css().get_color();
 			doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
 		}
 	}
