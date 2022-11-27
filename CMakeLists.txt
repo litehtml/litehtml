@@ -128,16 +128,12 @@ set(HEADER_LITEHTML
 )
 
 set(TEST_LITEHTML
-    containers/test/container_test.cpp
-    test/codepoint_test.cpp
     test/cssTest.cpp
-    test/documentTest.cpp
-    test/layoutGlobalTest.cpp
     test/mediaQueryTest.cpp
+    test/codepoint_test.cpp
     test/tstring_view_test.cpp
     test/url_test.cpp
     test/url_path_test.cpp
-    test/webColorTest.cpp
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
@@ -224,21 +220,3 @@ if (BUILD_TESTING)
     include(GoogleTest)
     gtest_discover_tests(${TEST_NAME})
 endif()
-
-#     set(TEST_NAME ${PROJECT_NAME}_tests)
-#     add_executable(${TEST_NAME} ${TEST_LITEHTML} ${CMAKE_CURRENT_SOURCE_DIR}/src/master.css.inc)
-#     set_target_properties(${TEST_NAME} PROPERTIES
-#         CXX_STANDARD 11
-#         C_STANDARD 99
-#         PUBLIC_HEADER "${HEADER_LITEHTML}"
-#     )
-#     target_include_directories(${TEST_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/containers)
-#     target_link_libraries(${TEST_NAME} PRIVATE ${PROJECT_NAME})
-#     # tests
-#     add_test(NAME contextTest COMMAND ${TEST_NAME} 1)
-#     add_test(NAME cssTest COMMAND ${TEST_NAME} 2)
-#     add_test(NAME documentTest COMMAND ${TEST_NAME} 3)
-#     add_test(NAME layoutGlobalTest COMMAND ${TEST_NAME} 4)
-#     add_test(NAME mediaQueryTest COMMAND ${TEST_NAME} 5)
-#     add_test(NAME webColorTest COMMAND ${TEST_NAME} 6)
-# endif()
