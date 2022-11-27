@@ -16,7 +16,6 @@ win32_container::win32_container()
 
 win32_container::~win32_container()
 {
-	clear_images();
 	DeleteCriticalSection(&m_img_sync);
 	if(m_hClipRgn)
 	{
