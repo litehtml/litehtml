@@ -2,6 +2,9 @@
 #include "web_color.h"
 #include <cstring>
 
+const litehtml::web_color litehtml::web_color::transparent = web_color(0, 0, 0, 0);
+const litehtml::web_color litehtml::web_color::black       = web_color(0, 0, 0, 255);
+
 litehtml::def_color litehtml::g_def_colors[] = 
 {
 	{"transparent","rgba(0, 0, 0, 0)"},
@@ -154,9 +157,10 @@ litehtml::def_color litehtml::g_def_colors[] =
 };
 
 
-litehtml::web_color litehtml::web_color::from_string(const char* str, litehtml::document_container* callback)
+litehtml::web_color litehtml::web_color::from_string(const string& _str, document_container* callback)
 {
-	if(!str || !str[0])
+	auto str = _str.c_str();
+	if(!str[0])
 	{
 		return web_color(0, 0, 0);
 	}
@@ -225,26 +229,26 @@ litehtml::web_color litehtml::web_color::from_string(const char* str, litehtml::
 	return web_color(0, 0, 0);
 }
 
-litehtml::string litehtml::web_color::resolve_name(const char* name, litehtml::document_container* callback)
+litehtml::string litehtml::web_color::resolve_name(const string& name, document_container* callback)
 {
 	for(int i=0; g_def_colors[i].name; i++)
 	{
-		if(!t_strcasecmp(name, g_def_colors[i].name))
+		if(!t_strcasecmp(name.c_str(), g_def_colors[i].name))
 		{
-            return litehtml::string(g_def_colors[i].rgb);
+            return g_def_colors[i].rgb;
 		}
 	}
     if (callback)
     {
-        litehtml::string clr = callback->resolve_color(name);
+        string clr = callback->resolve_color(name);
         return clr;
     }
-    return litehtml::string();
+	return "";
 }
 
-bool litehtml::web_color::is_color(const char* str)
+bool litehtml::web_color::is_color(const string& str)
 {
-	if(!t_strncasecmp(str, "rgb", 3) || str[0] == '#')
+	if(!t_strncasecmp(str.c_str(), "rgb", 3) || str[0] == '#')
 	{
 		return true;
 	}
@@ -255,7 +259,7 @@ bool litehtml::web_color::is_color(const char* str)
 	return false;
 }
 
-litehtml::string litehtml::web_color::to_string()
+litehtml::string litehtml::web_color::to_string() const
 {
     char str[9];
     if(alpha)

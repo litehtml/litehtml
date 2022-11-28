@@ -22,7 +22,7 @@ litehtml::uint_ptr container_linux::create_font( const char* faceName, int size,
 {
     PangoFontDescription *desc = pango_font_description_from_string (faceName);
     pango_font_description_set_absolute_size(desc, size * PANGO_SCALE);
-    if(italic == litehtml::fontStyleItalic )
+    if(italic == litehtml::font_style_italic)
     {
         pango_font_description_set_style(desc, PANGO_STYLE_ITALIC);
     } else

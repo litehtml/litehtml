@@ -31,7 +31,7 @@ namespace litehtml
 			return *this;
 		}
 
-		string to_string()
+		string to_string() const
 		{
 			return	"left: " + left.to_string() +
 					", top: " + top.to_string() +

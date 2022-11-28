@@ -32,7 +32,7 @@ namespace litehtml
 	private:
 		void	parse_atrule(const string& text, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media);
 		void	add_selector(const css_selector::ptr& selector);
-		bool	parse_selectors(const string& txt, const string& styles, const media_query_list::ptr& media, const string& baseurl);
+		bool	parse_selectors(const string& txt, const style::ptr& styles, const media_query_list::ptr& media);
 
 	};
 

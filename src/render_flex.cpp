@@ -34,9 +34,11 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_flex::init()
             }
 
             auto anon_el = std::make_shared<html_tag>(doc);
-            anon_el->add_style("display: block", "");
+            litehtml::style style;
+            style.add("display: block");
+            anon_el->add_style(style);
             anon_el->parent(src_el());
-            anon_el->parse_styles();
+            anon_el->compute_styles();
             auto anon_ri = std::make_shared<render_item_block>(anon_el);
             for(const auto& inl : inlines)
             {
@@ -75,9 +77,11 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_flex::init()
             {
                 // Wrap inlines with anonymous block box
                 auto anon_el = std::make_shared<html_tag>(doc);
-                anon_el->add_style("display: block", "");
+                litehtml::style style;
+                style.add("display: block");
+                anon_el->add_style(style);
                 anon_el->parent(el->src_el());
-                anon_el->parse_styles();
+                anon_el->compute_styles();
                 auto anon_ri = std::make_shared<render_item_block>(anon_el);
                 anon_ri->add_child(el->init());
                 anon_ri->parent(shared_from_this());

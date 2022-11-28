@@ -205,9 +205,6 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="include\litehtml\attributes.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="include\litehtml\background.h">
       <Filter>Header Files</Filter>
     </ClInclude>

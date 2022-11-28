@@ -522,7 +522,7 @@ void litehtml::render_item_block::update_floats(int dy, const std::shared_ptr<re
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
 {
     {
-        css_selector sel(media_query_list::ptr(nullptr), "");
+        css_selector sel;
         sel.parse(".inline_rating");
         if(src_el()->select(sel))
         {
@@ -610,9 +610,11 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
                 if(not_ws_added)
                 {
                     auto anon_el = std::make_shared<html_tag>(doc);
-                    anon_el->add_style("display: block", "");
+                    litehtml::style style;
+                    style.add("display: block");
+                    anon_el->add_style(style);
                     anon_el->parent(src_el());
-                    anon_el->parse_styles();
+                    anon_el->compute_styles();
                     auto anon_ri = std::make_shared<render_item_block>(anon_el);
                     for(const auto& inl : inlines)
                     {
@@ -631,9 +633,11 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
         if(!inlines.empty() && not_ws_added)
         {
             auto anon_el = std::make_shared<html_tag>(doc);
-            anon_el->add_style("display: block", "");
+            litehtml::style style;
+            style.add("display: block");
+            anon_el->add_style(style);
             anon_el->parent(src_el());
-            anon_el->parse_styles();
+            anon_el->compute_styles();
             auto anon_ri = std::make_shared<render_item_block>(anon_el);
             for(const auto& inl : inlines)
             {
@@ -789,15 +793,12 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
 
     if (src_el()->css().get_display() == display_list_item)
     {
-        const char* list_image = src_el()->get_style_property(_list_style_image_, true, nullptr);
-        if (list_image)
+        string list_image = src_el()->css().get_list_style_image();
+        if (list_image != "")
         {
-            string url;
-            css::parse_css_url(list_image, url);
-
             size sz;
-            const char* list_image_baseurl = src_el()->get_style_property(_list_style_image_baseurl_, true, nullptr);
-            src_el()->get_document()->container()->get_image_size(url.c_str(), list_image_baseurl, sz);
+            string list_image_baseurl = src_el()->css().get_list_style_image_baseurl();
+            src_el()->get_document()->container()->get_image_size(list_image.c_str(), list_image_baseurl.c_str(), sz);
             if (min_height < sz.height)
             {
                 min_height = sz.height;

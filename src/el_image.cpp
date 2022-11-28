@@ -1,9 +1,8 @@
 #include "html.h"
 #include "el_image.h"
-#include "document.h"
 #include "render_item.h"
 
-litehtml::el_image::el_image(const std::shared_ptr<document>& doc) : html_tag(doc)
+litehtml::el_image::el_image(const document::ptr& doc) : html_tag(doc)
 {
 	m_css.set_display(display_inline_block);
 }
@@ -25,12 +24,12 @@ void litehtml::el_image::parse_attributes()
 	const char* attr_height = get_attr("height");
 	if(attr_height)
 	{
-		m_style.add_property(_height_, attr_height, 0, false, this);
+		m_style.add_property(_height_, attr_height);
 	}
 	const char* attr_width = get_attr("width");
 	if(attr_width)
 	{
-		m_style.add_property(_width_, attr_width, 0, false, this);
+		m_style.add_property(_width_, attr_width);
 	}
 }
 
@@ -92,9 +91,9 @@ void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, 
 	}
 }
 
-void litehtml::el_image::parse_styles( bool is_reparse /*= false*/ )
+void litehtml::el_image::compute_styles(bool recursive)
 {
-	html_tag::parse_styles(is_reparse);
+	html_tag::compute_styles(recursive);
 
 	if(!m_src.empty())
 	{

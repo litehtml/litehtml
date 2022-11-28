@@ -10,11 +10,11 @@ namespace litehtml
 	{
 		string	m_src;
 	public:
-		el_image(const std::shared_ptr<litehtml::document>& doc);
+		el_image(const document::ptr& doc);
 
 		bool	is_replaced() const override;
 		void	parse_attributes() override;
-		void	parse_styles(bool is_reparse = false) override;
+		void	compute_styles(bool recursive = true) override;
 		void	draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) override;
 		void	get_content_size(size& sz, int max_width) override;
 		string	dump_get_name() override;

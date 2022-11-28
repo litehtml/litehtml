@@ -108,7 +108,7 @@ const char* litehtml::html_tag::get_attr( const char* name, const char* def ) co
 
 litehtml::elements_vector litehtml::html_tag::select_all( const string& selector )
 {
-	css_selector sel(media_query_list::ptr(nullptr), "");
+	css_selector sel;
 	sel.parse(selector);
 	
 	return select_all(sel);
@@ -137,7 +137,7 @@ void litehtml::html_tag::select_all(const css_selector& selector, elements_vecto
 
 litehtml::element::ptr litehtml::html_tag::select_one( const string& selector )
 {
-	css_selector sel(media_query_list::ptr(nullptr), "");
+	css_selector sel;
 	sel.parse(selector);
 
 	return select_one(sel);
@@ -194,42 +194,42 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 					{
 						if(apply & select_match_with_after)
 						{
-							element::ptr el = get_element_after(sel->m_style, sel->m_baseurl, true);
+							element::ptr el = get_element_after(*sel->m_style, true);
 							if(el)
 							{
-								el->add_style(sel->m_style, sel->m_baseurl);
+								el->add_style(*sel->m_style);
 							}
 						} else if(apply & select_match_with_before)
 						{
-							element::ptr el = get_element_before(sel->m_style, sel->m_baseurl, true);
+							element::ptr el = get_element_before(*sel->m_style, true);
 							if(el)
 							{
-								el->add_style(sel->m_style, sel->m_baseurl);
+								el->add_style(*sel->m_style);
 							}
 						}
 						else
 						{
-							add_style(sel->m_style, sel->m_baseurl);
+							add_style(*sel->m_style);
 							us->m_used = true;
 						}
 					}
 				} else if(apply & select_match_with_after)
 				{
-					element::ptr el = get_element_after(sel->m_style, sel->m_baseurl, true);
+					element::ptr el = get_element_after(*sel->m_style, true);
 					if(el)
 					{
-						el->add_style(sel->m_style, sel->m_baseurl);
+						el->add_style(*sel->m_style);
 					}
 				} else if(apply & select_match_with_before)
 				{
-					element::ptr el = get_element_before(sel->m_style, sel->m_baseurl, true);
+					element::ptr el = get_element_before(*sel->m_style, true);
 					if(el)
 					{
-						el->add_style(sel->m_style, sel->m_baseurl);
+						el->add_style(*sel->m_style);
 					}
 				} else
 				{
-					add_style(sel->m_style, sel->m_baseurl);
+					add_style(*sel->m_style);
 					us->m_used = true;
 				}
 			}
@@ -264,7 +264,7 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 	pos.x	+= x;
 	pos.y	+= y;
 
-    draw_background(hdc, x, y, clip, ri);
+	draw_background(hdc, x, y, clip, ri);
 
 	if(m_css.get_display() == display_list_item && m_css.get_list_style_type() != list_style_type_none)
 	{
@@ -291,44 +291,88 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 	}
 }
 
-const char* litehtml::html_tag::get_style_property( string_id name, bool inherited, const char* def /*= 0*/ ) const
+litehtml::string litehtml::html_tag::get_custom_property(string_id name, const string& default_value) const
 {
-	const char* ret = m_style.get_property(name);
-	element::ptr el_parent = parent();
-	if (el_parent)
-	{
-		if ( ( ret && !t_strcasecmp(ret, "inherit") ) || (!ret && inherited) )
-		{
-			ret = el_parent->get_style_property(name, inherited, def);
-		}
-	}
+	const property_value& value = m_style.get_property(name);
 
-	if(!ret)
+	if (value.m_type == prop_type_string)
 	{
-		ret = def;
+		return value.m_string;
 	}
-
-	return ret;
+	else if (auto _parent = parent())
+	{
+		return _parent->get_custom_property(name, default_value);
+	}
+	return default_value;
 }
 
-void litehtml::html_tag::parse_styles(bool is_reparse)
+template<class Type, litehtml::property_type property_value_type, Type litehtml::property_value::* property_value_member>
+const Type& litehtml::html_tag::get_property_impl(string_id name, bool inherited, const Type& default_value, uint_ptr css_properties_member_offset) const
+{
+	const property_value& value = m_style.get_property(name);
+
+	if (value.m_type == property_value_type)
+	{
+		return value.*property_value_member;
+	}
+	else if (inherited || value.m_type == prop_type_inherit)
+	{
+		if (auto _parent = parent())
+		{
+			return *(Type*)((byte*)&_parent->css() + css_properties_member_offset);
+		}
+		return default_value;
+	}
+	// value must be invalid here
+	//assert(value.m_type == prop_type_invalid);
+	return default_value;
+}
+
+int litehtml::html_tag::get_enum_property(string_id name, bool inherited, int default_value, uint_ptr css_properties_member_offset) const
+{
+	return get_property_impl<int, prop_type_enum_item, &property_value::m_enum_item>(name, inherited, default_value, css_properties_member_offset);
+}
+
+litehtml::css_length litehtml::html_tag::get_length_property(string_id name, bool inherited, css_length default_value, uint_ptr css_properties_member_offset) const
+{
+	return get_property_impl<css_length, prop_type_length, &property_value::m_length>(name, inherited, default_value, css_properties_member_offset);
+}
+
+litehtml::web_color litehtml::html_tag::get_color_property(string_id name, bool inherited, web_color default_value, uint_ptr css_properties_member_offset) const
+{
+	return get_property_impl<web_color, prop_type_color, &property_value::m_color>(name, inherited, default_value, css_properties_member_offset);
+}
+
+litehtml::string litehtml::html_tag::get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const
+{
+	return get_property_impl<string, prop_type_string, &property_value::m_string>(name, inherited, default_value, css_properties_member_offset);
+}
+
+float litehtml::html_tag::get_number_property(string_id name, bool inherited, float default_value, uint_ptr css_properties_member_offset) const
+{
+	return get_property_impl<float, prop_type_number, &property_value::m_number>(name, inherited, default_value, css_properties_member_offset);
+}
+
+void litehtml::html_tag::compute_styles(bool recursive)
 {
 	const char* style = get_attr("style");
+	document::ptr doc = get_document();
 
-	if(style)
+	if (style)
 	{
-		m_style.add(style, nullptr, this);
+		m_style.add(style, "", doc->container());
 	}
 
-    document::ptr doc = get_document();
-    m_css.parse(shared_from_this(), doc);
+	m_style.subst_vars(this);
 
-	if(!is_reparse)
+	m_css.compute(shared_from_this(), doc);
+
+	if (recursive)
 	{
-        for(const auto& el : m_children)
-        {
-            el->parse_styles();
-        }
+		for (const auto& el : m_children)
+		{
+			el->compute_styles();
+		}
 	}
 }
 
@@ -730,19 +774,19 @@ bool litehtml::html_tag::on_mouse_leave()
 
 bool litehtml::html_tag::on_lbutton_down()
 {
-    bool ret = false;
+	bool ret = false;
 
 	element::ptr el = shared_from_this();
-    while (el)
-    {
-        if (el->set_pseudo_class(_active_, true))
-        {
-            ret = true;
-        }
-        el = el->parent();
-    }
+	while (el)
+	{
+		if (el->set_pseudo_class(_active_, true))
+		{
+			ret = true;
+		}
+		el = el->parent();
+	}
 
-    return ret;
+	return ret;
 }
 
 bool litehtml::html_tag::on_lbutton_up()
@@ -750,16 +794,16 @@ bool litehtml::html_tag::on_lbutton_up()
 	bool ret = false;
 
 	element::ptr el = shared_from_this();
-    while (el)
-    {
-        if (el->set_pseudo_class(_active_, false))
-        {
-            ret = true;
-        }
-        el = el->parent();
-    }
+	while (el)
+	{
+		if (el->set_pseudo_class(_active_, false))
+		{
+			ret = true;
+		}
+		el = el->parent();
+	}
 
-    on_click();
+	on_click();
 
 	return ret;
 }
@@ -776,18 +820,13 @@ void litehtml::html_tag::on_click()
 	}
 }
 
-const char* litehtml::html_tag::get_cursor()
-{
-	return get_style_property(_cursor_, true, nullptr);
-}
-
 bool litehtml::html_tag::is_break() const
 {
 	return false;
 }
 
 void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const position *clip,
-                                         const std::shared_ptr<render_item> &ri)
+										 const std::shared_ptr<render_item> &ri)
 {
 	position pos = ri->pos();
 	pos.x	+= x;
@@ -801,9 +840,9 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 	{
 		if(el_pos.does_intersect(clip))
 		{
-            auto v_offset = ri->get_draw_vertical_offset();
-            pos.y += v_offset;
-            pos.height -= v_offset;
+			auto v_offset = ri->get_draw_vertical_offset();
+			pos.y += v_offset;
+			pos.height -= v_offset;
 
 			const background* bg = get_background();
 			if(bg)
@@ -818,11 +857,11 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 			border_box += ri->get_borders();
 
 			borders bdr = m_css.get_borders();
-            if(bdr.is_visible())
-            {
-                bdr.radius = m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
-                get_document()->container()->draw_borders(hdc, bdr, border_box, !have_parent());
-            }
+			if(bdr.is_visible())
+			{
+				bdr.radius = m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
+				get_document()->container()->draw_borders(hdc, bdr, border_box, !have_parent());
+			}
 		}
 	} else
 	{
@@ -887,13 +926,13 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 					bg_paint.border_radius = bdr.radius.calc_percents(bg_paint.border_box.width, bg_paint.border_box.width);
 					get_document()->container()->draw_background(hdc, bg_paint);
 				}
-                if(bdr.is_visible())
-                {
-                    borders b = bdr;
-                    b.radius = bdr.radius.calc_percents(box->width, box->height);
-                    get_document()->container()->draw_borders(hdc, b, *box, false);
-                }
-            }
+				if(bdr.is_visible())
+				{
+					borders b = bdr;
+					b.radius = bdr.radius.calc_percents(box->width, box->height);
+					get_document()->container()->draw_borders(hdc, b, *box, false);
+				}
+			}
 		}
 	}
 }
@@ -1103,16 +1142,15 @@ void litehtml::html_tag::init_background_paint(position pos, background_paint &b
 	bg_paint.is_root		= !have_parent();
 }
 
-void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
+void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 {
 	list_marker lm;
 
-	const char* list_image = get_style_property(_list_style_image_, true, nullptr);
 	size img_size;
-	if(list_image)
+	if (css().get_list_style_image() != "")
 	{
-		css::parse_css_url(list_image, lm.image);
-		lm.baseurl = get_style_property(_list_style_image_baseurl_, true, nullptr);
+		lm.image   = css().get_list_style_image();
+		lm.baseurl = css().get_list_style_image_baseurl().c_str();
 		get_document()->container()->get_image_size(lm.image.c_str(), lm.baseurl, img_size);
 	} else
 	{
@@ -1122,12 +1160,12 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position &pos )
 	int ln_height	= css().get_line_height();
 	int sz_font		= css().get_font_size();
 	lm.pos.x		= pos.x;
-	lm.pos.width = sz_font - sz_font * 2 / 3;
-	lm.color = get_color(_color_, true, web_color(0, 0, 0));
-	lm.marker_type = m_css.get_list_style_type();
-	lm.font = css().get_font();
+	lm.pos.width    = sz_font - sz_font * 2 / 3;
+	lm.color        = css().get_color();
+	lm.marker_type  = css().get_list_style_type();
+	lm.font         = css().get_font();
 
-	if (m_css.get_list_style_type() >= list_style_type_armenian)
+	if (css().get_list_style_type() >= list_style_type_armenian)
 	{
 		lm.pos.y = pos.y;
 		lm.pos.height = pos.height;
@@ -1220,8 +1258,8 @@ litehtml::string litehtml::html_tag::get_list_marker_text(int index)
 		return num_cvt::to_roman_lower(index);
 	case litehtml::list_style_type_upper_roman:
 		return num_cvt::to_roman_upper(index);
-    default:
-        return "";
+	default:
+		return "";
 //	case litehtml::list_style_type_armenian:
 //	case litehtml::list_style_type_georgian:
 //	case litehtml::list_style_type_hebrew:
@@ -1235,7 +1273,7 @@ litehtml::string litehtml::html_tag::get_list_marker_text(int index)
 //  case litehtml::list_style_type_square:
 //  case litehtml::list_style_type_cjk_ideographic:
 //      break;
-    }
+	}
 }
 
 bool litehtml::html_tag::is_nth_child(const element::ptr& el, int num, int off, bool of_type) const
@@ -1393,7 +1431,7 @@ bool litehtml::html_tag::is_only_child(const element::ptr& el, bool of_type) con
 	return true;
 }
 
-litehtml::element::ptr litehtml::html_tag::get_element_before(const string& style, const string& baseurl, bool create)
+litehtml::element::ptr litehtml::html_tag::get_element_before(const style& style, bool create)
 {
 	if(!m_children.empty())
 	{
@@ -1402,14 +1440,14 @@ litehtml::element::ptr litehtml::html_tag::get_element_before(const string& styl
 			return m_children.front();
 		}
 	}
-    if(create)
-    {
-        return add_pseudo_before(style, baseurl);
-    }
-    return nullptr;
+	if(create)
+	{
+		return add_pseudo_before(style);
+	}
+	return nullptr;
 }
 
-litehtml::element::ptr litehtml::html_tag::get_element_after(const string& style, const string& baseurl, bool create)
+litehtml::element::ptr litehtml::html_tag::get_element_after(const style& style, bool create)
 {
 	if(!m_children.empty())
 	{
@@ -1418,16 +1456,16 @@ litehtml::element::ptr litehtml::html_tag::get_element_after(const string& style
 			return m_children.back();
 		}
 	}
-    if(create)
-    {
-        return add_pseudo_after(style, baseurl);
-    }
-    return nullptr;
+	if(create)
+	{
+		return add_pseudo_after(style);
+	}
+	return nullptr;
 }
 
-void litehtml::html_tag::add_style(const string& style, const string& baseurl)
+void litehtml::html_tag::add_style(const style& style)
 {
-	m_style.add(style.c_str(), baseurl.c_str(), this);
+	m_style.combine(style);
 }
 
 void litehtml::html_tag::refresh_styles()
@@ -1458,42 +1496,42 @@ void litehtml::html_tag::refresh_styles()
 					{
 						if(apply & select_match_with_after)
 						{
-							element::ptr el = get_element_after(usel->m_selector->m_style, usel->m_selector->m_baseurl, false);
+							element::ptr el = get_element_after(*usel->m_selector->m_style, false);
 							if(el)
 							{
-								el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+								el->add_style(*usel->m_selector->m_style);
 							}
 						} else if(apply & select_match_with_before)
 						{
-							element::ptr el = get_element_before(usel->m_selector->m_style, usel->m_selector->m_baseurl, false);
+							element::ptr el = get_element_before(*usel->m_selector->m_style, false);
 							if(el)
 							{
-								el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+								el->add_style(*usel->m_selector->m_style);
 							}
 						}
 						else
 						{
-							add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+							add_style(*usel->m_selector->m_style);
 							usel->m_used = true;
 						}
 					}
 				} else if(apply & select_match_with_after)
 				{
-					element::ptr el = get_element_after(usel->m_selector->m_style, usel->m_selector->m_baseurl, false);
+					element::ptr el = get_element_after(*usel->m_selector->m_style, false);
 					if(el)
 					{
-						el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+						el->add_style(*usel->m_selector->m_style);
 					}
 				} else if(apply & select_match_with_before)
 				{
-					element::ptr el = get_element_before(usel->m_selector->m_style, usel->m_selector->m_baseurl, false);
+					element::ptr el = get_element_before(*usel->m_selector->m_style, false);
 					if(el)
 					{
-						el->add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+						el->add_style(*usel->m_selector->m_style);
 					}
 				} else
 				{
-					add_style(usel->m_selector->m_style, usel->m_selector->m_baseurl);
+					add_style(*usel->m_selector->m_style);
 					usel->m_used = true;
 				}
 			}
@@ -1548,9 +1586,9 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 
 litehtml::string litehtml::html_tag::dump_get_name()
 {
-    if(m_tag == empty_id)
-    {
-        return "anon [html_tag]";
-    }
-    return _s(m_tag) + " [html_tag]";
+	if(m_tag == empty_id)
+	{
+		return "anon [html_tag]";
+	}
+	return _s(m_tag) + " [html_tag]";
 }

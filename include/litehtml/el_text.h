@@ -14,11 +14,10 @@ namespace litehtml
 		bool			m_use_transformed;
 		bool			m_draw_spaces;
 	public:
-		el_text(const char* text, const std::shared_ptr<litehtml::document>& doc);
+		el_text(const char* text, const document::ptr& doc);
 
 		void				get_text(string& text) override;
-		const char*			get_style_property(string_id name, bool inherited, const char* def = nullptr) const override;
-		void				parse_styles(bool is_reparse) override;
+		void				compute_styles(bool recursive) override;
         bool				is_text() const override { return true; }
 
         void draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) override;

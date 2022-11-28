@@ -1,7 +1,6 @@
 #include <gtest/gtest.h>
 
 #include "litehtml.h"
-#include "test/container_test.h"
 
 using namespace litehtml;
 
@@ -240,18 +239,4 @@ TEST(MediaQueryTest, Check) {
   EXPECT_TRUE(e.check(k));
   k = media_features(), k.resolution = 500;
   EXPECT_TRUE(!e.check(k));
-}
-
-TEST(MediaQueryTest, Parse) {
-  container_test container;
-  litehtml::document::ptr doc = std::make_shared<litehtml::document>(&container);
-  media_query::ptr q;
-  q = media_query::create_from_string("", doc);
-  q = media_query::create_from_string("not", doc);
-  q = media_query::create_from_string("(width)", doc);
-  q = media_query::create_from_string("(orientation: portrait)", doc);
-  q = media_query::create_from_string("(width: 1 / 2)", doc);
-  q = media_query::create_from_string("(width: 300px)", doc);
-  q = media_query::create_from_string("print", doc);
-  q = media_query::create_from_string("only screen and (max-width: 600px)", doc);
 }

@@ -10,14 +10,14 @@ litehtml::el_before_after_base::el_before_after_base(const std::shared_ptr<docum
 	m_tag = before ? __tag_before_ : __tag_after_;
 }
 
-void litehtml::el_before_after_base::add_style(const string& style, const string& baseurl)
+void litehtml::el_before_after_base::add_style(const style& style)
 {
-	html_tag::add_style(style, baseurl);
+	html_tag::add_style(style);
 
 	auto children = m_children;
 	m_children.clear();
 
-	string content = get_style_property(_content_, false, "");
+	string content = css().get_content();
 	if(!content.empty())
 	{
 		int idx = value_index(content, content_property_string);

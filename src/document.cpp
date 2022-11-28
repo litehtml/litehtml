@@ -117,7 +117,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 		doc->m_root->apply_stylesheet(doc->m_user_css);
 
 		// Parse applied styles in the elements
-		doc->m_root->parse_styles();
+		doc->m_root->compute_styles();
 
         // Create rendering tree
         doc->m_root_render = doc->m_root->create_render_item(nullptr);
@@ -139,7 +139,7 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 {
 	uint_ptr ret = 0;
 
-	if(!name || !t_strcasecmp(name, "inherit"))
+	if(!name)
 	{
 		name = m_container->get_default_font_name();
 	}
@@ -164,49 +164,49 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 
 	if(m_fonts.find(key) == m_fonts.end())
 	{
-		font_style fs = (font_style) value_index(style, font_style_strings, fontStyleNormal);
+		font_style fs = (font_style) value_index(style, font_style_strings, font_style_normal);
 		int	fw = value_index(weight, font_weight_strings, -1);
 		if(fw >= 0)
 		{
 			switch(fw)
 			{
-			case litehtml::fontWeightBold:
+			case litehtml::font_weight_bold:
 				fw = 700;
 				break;
-			case litehtml::fontWeightBolder:
+			case litehtml::font_weight_bolder:
 				fw = 600;
 				break;
-			case litehtml::fontWeightLighter:
+			case litehtml::font_weight_lighter:
 				fw = 300;
 				break;
-			case litehtml::fontWeightNormal:
+			case litehtml::font_weight_normal:
 				fw = 400;
 				break;
-			case litehtml::fontWeight100:
+			case litehtml::font_weight_100:
 				fw = 100;
 				break;
-			case litehtml::fontWeight200:
+			case litehtml::font_weight_200:
 				fw = 200;
 				break;
-			case litehtml::fontWeight300:
+			case litehtml::font_weight_300:
 				fw = 300;
 				break;
-			case litehtml::fontWeight400:
+			case litehtml::font_weight_400:
 				fw = 400;
 				break;
-			case litehtml::fontWeight500:
+			case litehtml::font_weight_500:
 				fw = 500;
 				break;
-			case litehtml::fontWeight600:
+			case litehtml::font_weight_600:
 				fw = 600;
 				break;
-			case litehtml::fontWeight700:
+			case litehtml::font_weight_700:
 				fw = 700;
 				break;
-			case litehtml::fontWeight800:
+			case litehtml::font_weight_800:
 				fw = 800;
 				break;
-			case litehtml::fontWeight900:
+			case litehtml::font_weight_900:
 				fw = 900;
 				break;
 			}
@@ -255,7 +255,7 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 
 litehtml::uint_ptr litehtml::document::get_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
 {
-	if(!name || !t_strcasecmp(name, "inherit"))
+	if(!name)
 	{
 		name = m_container->get_default_font_name();
 	}
@@ -460,7 +460,7 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 		m_over_element = over_el;
 	}
 
-	const char* cursor = nullptr;
+	string cursor;
 
 	if(m_over_element)
 	{
@@ -468,10 +468,10 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 		{
 			state_was_changed = true;
 		}
-		cursor = m_over_element->get_cursor();
+		cursor = m_over_element->css().get_cursor();
 	}
 	
-	m_container->set_cursor(cursor ? cursor : "auto");
+	m_container->set_cursor(cursor.c_str());
 	
 	if(state_was_changed)
 	{
@@ -526,7 +526,7 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 		}
 	}
 
-	const char* cursor = nullptr;
+	string cursor;
 
 	if(m_over_element)
 	{
@@ -534,10 +534,10 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 		{
 			state_was_changed = true;
 		}
-		cursor = m_over_element->get_cursor();
+		cursor = m_over_element->css().get_cursor();
 	}
 
-	m_container->set_cursor(cursor ? cursor : "auto");
+	m_container->set_cursor(cursor.c_str());
 
 	if(state_was_changed)
 	{
@@ -652,7 +652,7 @@ bool litehtml::document::media_changed()
 	if (update_media_lists(m_media))
 	{
 		m_root->refresh_styles();
-		m_root->parse_styles();
+		m_root->compute_styles();
 		return true;
 	}
 	return false;
@@ -673,7 +673,7 @@ bool litehtml::document::lang_changed()
 			m_culture.clear();
 		}
 		m_root->refresh_styles();
-		m_root->parse_styles();
+		m_root->compute_styles();
 		return true;
 	}
 	return false;
@@ -848,9 +848,11 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
 	auto flush_elements = [&]()
 	{
 		element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-		annon_tag->add_style(string("display:") + disp_str, "");
+		litehtml::style style;
+		style.add_property(_display_, disp_str);
+		annon_tag->add_style(style);
 		annon_tag->parent(el_ptr->src_el());
-		annon_tag->parse_styles();
+		annon_tag->compute_styles();
         std::shared_ptr<render_item> annon_ri;
         if(annon_tag->css().get_display() == display_table_cell)
         {
@@ -966,9 +968,11 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 
 			// extract elements with the same display and wrap them with anonymous object
 			element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-			annon_tag->add_style(string("display:") + disp_str, "");
+			litehtml::style style;
+			style.add_property(_display_, disp_str);
+			annon_tag->add_style(style);
 			annon_tag->parent(parent->src_el());
-			annon_tag->parse_styles();
+			annon_tag->compute_styles();
             std::shared_ptr<render_item> annon_ri;
             if(annon_tag->css().get_display() == display_table || annon_tag->css().get_display() == display_inline_table)
             {
@@ -1028,7 +1032,7 @@ void litehtml::document::append_children_from_string(element& parent, const char
         child->apply_stylesheet(m_user_css);
 
 		// Parse applied styles in the elements
-		child->parse_styles();
+		child->compute_styles();
 
 		// Now the m_tabular_elements is filled with tabular elements.
 		// We have to check the tabular elements for missing table elements 

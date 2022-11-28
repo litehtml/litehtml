@@ -77,7 +77,7 @@ litehtml::uint_ptr win32_container::create_font( const char* font_list, int size
 
 	lf.lfHeight			= -size;
 	lf.lfWeight			= weight;
-	lf.lfItalic			= (italic == litehtml::fontStyleItalic) ? TRUE : FALSE;
+	lf.lfItalic			= (italic == litehtml::font_style_italic) ? TRUE : FALSE;
 	lf.lfCharSet		= DEFAULT_CHARSET;
 	lf.lfOutPrecision	= OUT_DEFAULT_PRECIS;
 	lf.lfClipPrecision	= CLIP_DEFAULT_PRECIS;

@@ -42,7 +42,7 @@ void litehtml::line_box::add_element(const std::shared_ptr<render_item> &el)
             int el_shift_left	= el->get_inline_shift_left();
             int el_shift_right	= el->get_inline_shift_right();
 
-            el->pos().x	= m_box_left + m_width + el_shift_left + el->content_margins_left();
+            el->pos().x = m_box_left + m_width + el_shift_left + el->content_margins_left();
             el->pos().y	= m_box_top + el->content_margins_top();
             m_width		+= el->width() + el_shift_left + el_shift_right;
         }

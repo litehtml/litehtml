@@ -202,42 +202,38 @@ namespace litehtml
 		display_table_row,
 		display_table_row_group,
 		display_inline_text,
-        display_flex,
-        display_inline_flex,
-	};
-
-	enum style_border
-	{
-		borderNope,
-		borderNone,
-		borderHidden,
-		borderDotted,
-		borderDashed,
-		borderSolid,
-		borderDouble
+		display_flex,
+		display_inline_flex,
 	};
 
 #define  font_size_strings		"xx-small;x-small;small;medium;large;x-large;xx-large;smaller;larger"
 
 	enum font_size
 	{
-		fontSize_xx_small,
-		fontSize_x_small,
-		fontSize_small,
-		fontSize_medium,
-		fontSize_large,
-		fontSize_x_large,
-		fontSize_xx_large,
-		fontSize_smaller,
-		fontSize_larger,
+		font_size_xx_small,
+		font_size_x_small,
+		font_size_small,
+		font_size_medium,
+		font_size_large,
+		font_size_x_large,
+		font_size_xx_large,
+		font_size_smaller,
+		font_size_larger,
+	};
+
+#define line_height_strings "normal"
+
+	enum line_height
+	{
+		line_height_normal
 	};
 
 #define  font_style_strings		"normal;italic"
 
 	enum font_style
 	{
-		fontStyleNormal,
-		fontStyleItalic
+		font_style_normal,
+		font_style_italic
 	};
 
 #define  font_variant_strings		"normal;small-caps"
@@ -245,26 +241,26 @@ namespace litehtml
 	enum font_variant
 	{
 		font_variant_normal,
-		font_variant_italic
+		font_variant_small_caps
 	};
 
 #define  font_weight_strings	"normal;bold;bolder;lighter;100;200;300;400;500;600;700;800;900"
 
 	enum font_weight
 	{
-		fontWeightNormal,
-		fontWeightBold,
-		fontWeightBolder,
-		fontWeightLighter,
-		fontWeight100,
-		fontWeight200,
-		fontWeight300,
-		fontWeight400,
-		fontWeight500,
-		fontWeight600,
-		fontWeight700,
-		fontWeight800,
-		fontWeight900
+		font_weight_normal,
+		font_weight_bold,
+		font_weight_bolder,
+		font_weight_lighter,
+		font_weight_100,
+		font_weight_200,
+		font_weight_300,
+		font_weight_400,
+		font_weight_500,
+		font_weight_600,
+		font_weight_700,
+		font_weight_800,
+		font_weight_900
 	};
 
 #define  list_style_type_strings	"none;circle;disc;square;armenian;cjk-ideographic;decimal;decimal-leading-zero;georgian;hebrew;hiragana;hiragana-iroha;katakana;katakana-iroha;lower-alpha;lower-greek;lower-latin;lower-roman;upper-alpha;upper-latin;upper-roman"
@@ -325,6 +321,11 @@ namespace litehtml
 		border_width_thick
 	};
 
+	const float border_width_thin_value = 1;
+	const float border_width_medium_value = 3;
+	const float border_width_thick_value = 5;
+	const float border_width_values[] = { border_width_thin_value, border_width_medium_value, border_width_thick_value };
+
 #define  border_style_strings	"none;hidden;dotted;dashed;solid;double;groove;ridge;inset;outset"
 
 	enum border_style
@@ -362,7 +363,7 @@ namespace litehtml
 
 #define  css_units_strings	"none;%;in;cm;mm;em;ex;pt;pc;px;dpi;dpcm;vw;vh;vmin;vmax;rem"
 
-	enum css_units
+	enum css_units : byte
 	{
 		css_units_none,
 		css_units_percentage,
@@ -408,6 +409,17 @@ namespace litehtml
 		background_box_border,
 		background_box_padding,
 		background_box_content
+	};
+
+#define  background_position_strings	"top;bottom;left;right;center"
+
+	enum background_position
+	{
+		background_position_top,
+		background_position_bottom,
+		background_position_left,
+		background_position_right,
+		background_position_center,
 	};
 
 #define element_position_strings	"static;relative;absolute;fixed"
@@ -501,7 +513,7 @@ namespace litehtml
 		content_property_no_close_quote,
 	};
 
-    class render_item;
+	class render_item;
 
 	struct floated_box
 	{
@@ -708,19 +720,19 @@ namespace litehtml
 		int			monochrome;		// The number of bits per pixel in a monochrome frame buffer. If the device is not a monochrome device, the output device value will be 0.
 		int			resolution;		// The resolution of the output device (in DPI)
 
-        media_features()
-        {
-            type = media_type::media_type_none,
-            width =0;
-            height = 0;
-            device_width = 0;
-            device_height = 0;
-            color = 0;
-            color_index = 0;
-            monochrome = 0;
-            resolution = 0;
-        }
-    };
+		media_features()
+		{
+			type = media_type::media_type_none,
+			width =0;
+			height = 0;
+			device_width = 0;
+			device_height = 0;
+			color = 0;
+			color_index = 0;
+			monochrome = 0;
+			resolution = 0;
+		}
+	};
 
 	enum render_type
 	{
@@ -734,68 +746,80 @@ namespace litehtml
 
 #define flex_direction_strings		"row;row-reverse;column;column-reverse"
 
-    enum flex_direction
-    {
-        flex_direction_row,
-        flex_direction_row_reverse,
-        flex_direction_column,
-        flex_direction_column_reverse
-    };
+	enum flex_direction
+	{
+		flex_direction_row,
+		flex_direction_row_reverse,
+		flex_direction_column,
+		flex_direction_column_reverse
+	};
 
 #define flex_wrap_strings		"nowrap;wrap;wrap-reverse"
 
-    enum flex_wrap
-    {
-        flex_wrap_nowrap,
-        flex_wrap_wrap,
-        flex_wrap_wrap_reverse
-    };
+	enum flex_wrap
+	{
+		flex_wrap_nowrap,
+		flex_wrap_wrap,
+		flex_wrap_wrap_reverse
+	};
 
 #define flex_justify_content_strings		"flex-start;flex-end;center;space-between;space-around"
 
-    enum flex_justify_content
-    {
-        flex_justify_content_flex_start,
-        flex_justify_content_flex_end,
-        flex_justify_content_center,
-        flex_justify_content_space_between,
-        flex_justify_content_space_around
-    };
+	enum flex_justify_content
+	{
+		flex_justify_content_flex_start,
+		flex_justify_content_flex_end,
+		flex_justify_content_center,
+		flex_justify_content_space_between,
+		flex_justify_content_space_around
+	};
 
 #define flex_align_items_strings		"flex-start;flex-end;center;baseline;stretch"
 
-    enum flex_align_items
-    {
-        flex_align_items_flex_start,
-        flex_align_items_flex_end,
-        flex_align_items_center,
-        flex_align_items_baseline,
-        flex_align_items_stretch
-    };
+	enum flex_align_items
+	{
+		flex_align_items_flex_start,
+		flex_align_items_flex_end,
+		flex_align_items_center,
+		flex_align_items_baseline,
+		flex_align_items_stretch
+	};
 
 #define flex_align_self_strings		"auto;flex-start;flex-end;center;baseline;stretch"
 
-    enum flex_align_self
-    {
-        flex_align_self_auto,
-        flex_align_self_flex_start,
-        flex_align_self_flex_end,
-        flex_align_self_center,
-        flex_align_self_baseline,
-        flex_align_self_stretch
-    };
+	enum flex_align_self
+	{
+		flex_align_self_auto,
+		flex_align_self_flex_start,
+		flex_align_self_flex_end,
+		flex_align_self_center,
+		flex_align_self_baseline,
+		flex_align_self_stretch
+	};
 
 #define flex_align_content_strings		"flex-start;flex-end;center;space-between;space-around;stretch"
 
-    enum flex_align_content
-    {
-        flex_align_content_flex_start,
-        flex_align_content_flex_end,
-        flex_align_content_center,
-        flex_align_content_space_between,
-        flex_align_content_space_around,
-        flex_align_content_stretch
-    };
+	enum flex_align_content
+	{
+		flex_align_content_flex_start,
+		flex_align_content_flex_end,
+		flex_align_content_center,
+		flex_align_content_space_between,
+		flex_align_content_space_around,
+		flex_align_content_stretch
+	};
+
+#define flex_basis_strings		"auto;content;fit-content;min-content;max-content"
+
+	enum flex_basis
+	{
+		flex_basis_auto,
+		flex_basis_content,
+		flex_basis_fit_content,
+		flex_basis_min_content,
+		flex_basis_max_content,
+	};
+
 }
 
 #endif  // LH_TYPES_H
