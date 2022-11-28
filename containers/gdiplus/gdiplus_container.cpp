@@ -11,6 +11,7 @@ gdiplus_container::gdiplus_container()
 
 gdiplus_container::~gdiplus_container()
 {
+	clear_images();
 	Gdiplus::GdiplusShutdown(m_gdiplusToken);
 }
 
