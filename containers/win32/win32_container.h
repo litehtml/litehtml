@@ -61,9 +61,9 @@ protected:
 	virtual void		get_img_size(uint_ptr img, litehtml::size& sz) = 0;
 	virtual void		draw_img_bg(HDC hdc, uint_ptr img, const litehtml::background_paint& bg) = 0;
 
-	virtual void		draw_ellipse(HDC hdc, int x, int y, int width, int height, const litehtml::web_color& color, int line_width) = 0;
-	virtual void		fill_ellipse(HDC hdc, int x, int y, int width, int height, const litehtml::web_color& color) = 0;
-	virtual void		fill_rect(HDC hdc, int x, int y, int width, int height, const litehtml::web_color& color) = 0;
+	virtual void		draw_ellipse(HDC hdc, int x, int y, int width, int height, litehtml::web_color color, int line_width) = 0;
+	virtual void		fill_ellipse(HDC hdc, int x, int y, int width, int height, litehtml::web_color color) = 0;
+	virtual void		fill_rect(HDC hdc, int x, int y, int width, int height, litehtml::web_color color) = 0;
 
 private:
 	static int CALLBACK EnumFontsProc(const LOGFONT* lplf, const TEXTMETRIC* lptm, DWORD dwType, LPARAM lpData);
