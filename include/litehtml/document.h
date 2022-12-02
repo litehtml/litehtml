@@ -35,6 +35,7 @@ namespace litehtml
     class dumper
     {
     public:
+        virtual ~dumper() {}
         virtual void begin_node(const litehtml::string& descr) = 0;
         virtual void end_node() = 0;
         virtual void begin_attrs_group(const litehtml::string& descr) = 0;

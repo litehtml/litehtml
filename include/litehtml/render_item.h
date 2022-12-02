@@ -32,6 +32,8 @@ namespace litehtml
     public:
         explicit render_item(std::shared_ptr<element>  src_el);
 
+        virtual ~render_item() {}
+
         std::list<std::shared_ptr<render_item>>& children()
         {
             return m_children;
