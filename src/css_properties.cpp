@@ -3,7 +3,7 @@
 
 #define offset(member) ((uint_ptr)&this->member - (uint_ptr)this)
 
-void litehtml::css_properties::compute(const element::ptr& el, const document::ptr& doc)
+void litehtml::css_properties::compute(const element* el, const document::ptr& doc)
 {
 	compute_font(el, doc);
 	int font_size = get_font_size();
@@ -256,7 +256,7 @@ static const int font_size_table[8][7] =
 		{ 9,   10,    13,    16,    18,    24,    32}
 };
 
-void litehtml::css_properties::compute_font(const element::ptr& el, const document::ptr& doc)
+void litehtml::css_properties::compute_font(const element* el, const document::ptr& doc)
 {
 	// initialize font size
 	css_length sz = el->get_length_property(_font_size_, true, css_length::predef_value(font_size_medium), offset(m_font_size));
@@ -344,7 +344,7 @@ void litehtml::css_properties::compute_font(const element::ptr& el, const docume
 		&m_font_metrics);
 }
 
-void litehtml::css_properties::compute_background(const element::ptr& el, const document::ptr& doc)
+void litehtml::css_properties::compute_background(const element* el, const document::ptr& doc)
 {
 	int font_size = get_font_size();
 
@@ -374,7 +374,7 @@ void litehtml::css_properties::compute_background(const element::ptr& el, const 
 	}
 }
 
-void litehtml::css_properties::compute_flex(const element::ptr& el, const document::ptr& doc)
+void litehtml::css_properties::compute_flex(const element* el, const document::ptr& doc)
 {
 	if (m_display == display_flex)
 	{

@@ -847,12 +847,7 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
 
 	auto flush_elements = [&]()
 	{
-		element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-		litehtml::style style;
-		style.add_property(_display_, disp_str);
-		annon_tag->add_style(style);
-		annon_tag->parent(el_ptr->src_el());
-		annon_tag->compute_styles();
+		element::ptr annon_tag = std::make_shared<html_tag>(el_ptr->src_el(), string("display:") + disp_str);
 		std::shared_ptr<render_item> annon_ri;
 		if(annon_tag->css().get_display() == display_table_cell)
 		{
@@ -967,12 +962,7 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 			}
 
 			// extract elements with the same display and wrap them with anonymous object
-			element::ptr annon_tag = std::make_shared<html_tag>(shared_from_this());
-			litehtml::style style;
-			style.add_property(_display_, disp_str);
-			annon_tag->add_style(style);
-			annon_tag->parent(parent->src_el());
-			annon_tag->compute_styles();
+			element::ptr annon_tag = std::make_shared<html_tag>(parent->src_el(), string("display:") + disp_str);
 			std::shared_ptr<render_item> annon_ri;
 			if(annon_tag->css().get_display() == display_table || annon_tag->css().get_display() == display_inline_table)
 			{

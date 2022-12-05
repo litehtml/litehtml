@@ -35,6 +35,8 @@ namespace litehtml
 
 	public:
 		explicit html_tag(const std::shared_ptr<document>& doc);
+		// constructor for anonymous wrapper boxes
+		explicit html_tag(const element::ptr& parent, const string& style = "display: block");
 
 		bool				appendChild(const element::ptr &el) override;
 		bool				removeChild(const element::ptr &el) override;
