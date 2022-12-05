@@ -50,6 +50,10 @@ void litehtml::html_tag::clearRecursive()
 	m_children.clear();
 }
 
+litehtml::string_id litehtml::html_tag::id() const
+{
+	return m_id;
+}
 
 litehtml::string_id litehtml::html_tag::tag() const
 {
@@ -379,6 +383,13 @@ void litehtml::html_tag::compute_styles(bool recursive)
 bool litehtml::html_tag::is_white_space() const
 {
 	return false;
+}
+
+int litehtml::html_tag::select(const string& selector)
+{
+	css_selector sel;
+	sel.parse(selector);
+	return select(sel, true);
 }
 
 int litehtml::html_tag::select(const css_selector& selector, bool apply_pseudo)

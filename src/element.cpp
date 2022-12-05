@@ -278,6 +278,7 @@ void litehtml::element::get_content_size( size& sz, int max_width )					LITEHTML
 bool litehtml::element::appendChild(const ptr &el)									LITEHTML_RETURN_FUNC(false)
 bool litehtml::element::removeChild(const ptr &el)									LITEHTML_RETURN_FUNC(false)
 void litehtml::element::clearRecursive()											LITEHTML_EMPTY_FUNC
+litehtml::string_id litehtml::element::id() const									LITEHTML_RETURN_FUNC(empty_id)
 litehtml::string_id litehtml::element::tag() const									LITEHTML_RETURN_FUNC(empty_id)
 const char* litehtml::element::get_tagName() const									LITEHTML_RETURN_FUNC("")
 void litehtml::element::set_tagName( const char* tag )								LITEHTML_EMPTY_FUNC
@@ -312,6 +313,7 @@ float				    litehtml::element::get_number_property(string_id name, bool inherit
 litehtml::string		litehtml::element::get_custom_property(string_id name, const string& defval) const LITEHTML_RETURN_FUNC("")
 void litehtml::element::get_text( string& text )									LITEHTML_EMPTY_FUNC
 void litehtml::element::parse_attributes()											LITEHTML_EMPTY_FUNC
-int litehtml::element::select( const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(select_no_match)
+int litehtml::element::select(const string& selector)								LITEHTML_RETURN_FUNC(select_no_match)
+int litehtml::element::select(const css_selector& selector, bool apply_pseudo)		LITEHTML_RETURN_FUNC(select_no_match)
 int litehtml::element::select( const css_element_selector& selector, bool apply_pseudo /*= true*/ )	LITEHTML_RETURN_FUNC(select_no_match)
 litehtml::element::ptr litehtml::element::find_ancestor(const css_selector& selector, bool apply_pseudo, bool* is_pseudo)	LITEHTML_RETURN_FUNC(nullptr)

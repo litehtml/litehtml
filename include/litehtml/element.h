@@ -67,6 +67,7 @@ namespace litehtml
 		virtual bool				removeChild(const ptr &el);
 		virtual void				clearRecursive();
 
+		virtual string_id			id() const;
 		virtual string_id			tag() const;
 		virtual const char*			get_tagName() const;
 		virtual void				set_tagName(const char* tag);
@@ -105,6 +106,7 @@ namespace litehtml
 
 		virtual void				get_text(string& text);
 		virtual void				parse_attributes();
+		virtual int					select(const string& selector);
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
 		virtual element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);

@@ -40,6 +40,7 @@ namespace litehtml
 		bool				removeChild(const element::ptr &el) override;
 		void				clearRecursive() override;
 		string_id			tag() const override;
+		string_id			id() const override;
 		const char*			get_tagName() const override;
 		void				set_tagName(const char* tag) override;
 		void				set_data(const char* data) override;
@@ -79,6 +80,7 @@ namespace litehtml
 
 		elements_vector&	children();
 
+		int					select(const string& selector) override;
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;
 		int					select(const css_element_selector& selector, bool apply_pseudo = true) override;
 		int					select_pseudoclass(const css_attribute_selector& sel);
