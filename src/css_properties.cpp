@@ -318,9 +318,6 @@ void litehtml::css_properties::compute_font(const element* el, const document::p
 		if(sz.units() == css_units_percentage)
 		{
 			font_size = sz.calc_percent(parent_sz);
-		} else if(sz.units() == css_units_none)
-		{
-			font_size = parent_sz;
 		} else
 		{
 			font_size = doc->to_pixels(sz, parent_sz);
