@@ -71,7 +71,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 	if (user_styles && *user_styles)
 	{
 		doc->m_user_css.parse_stylesheet(user_styles, nullptr, doc, nullptr);
-        doc->m_user_css.sort_selectors();
+		doc->m_user_css.sort_selectors();
 	}
 
 	// Let's process created elements tree
@@ -119,8 +119,8 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 		// Parse applied styles in the elements
 		doc->m_root->compute_styles();
 
-        // Create rendering tree
-        doc->m_root_render = doc->m_root->create_render_item(nullptr);
+		// Create rendering tree
+		doc->m_root_render = doc->m_root->create_render_item(nullptr);
 
 		// Now the m_tabular_elements is filled with tabular elements.
 		// We have to check the tabular elements for missing table elements 
@@ -128,8 +128,8 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 		doc->fix_tables_layout();
 
 		// Finally initialize elements
-        // init() return pointer to the render_init element because it can change its type
-        doc->m_root_render = doc->m_root_render->init();
+		// init() return pointer to the render_init element because it can change its type
+		doc->m_root_render = doc->m_root_render->init();
 	}
 
 	return doc;
@@ -306,7 +306,7 @@ int litehtml::document::render( int max_width, render_type rt )
 			if(m_root_render->fetch_positioned())
 			{
 				m_fixed_boxes.clear();
-                m_root_render->render_positioned(rt);
+				m_root_render->render_positioned(rt);
 			}
 			m_size.width	= 0;
 			m_size.height	= 0;
@@ -320,8 +320,8 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 {
 	if(m_root && m_root_render)
 	{
-        m_root->draw(hdc, x, y, clip, m_root_render);
-        m_root_render->draw_stacking_context(hdc, x, y, clip, true);
+		m_root->draw(hdc, x, y, clip, m_root_render);
+		m_root_render->draw_stacking_context(hdc, x, y, clip, true);
 	}
 }
 
@@ -389,34 +389,34 @@ int litehtml::document::to_pixels( const css_length& val, int fontSize, int size
 
 void litehtml::document::cvt_units( css_length& val, int fontSize, int size ) const
 {
-    if(val.is_predefined())
-    {
-        return;
-    }
-    int ret;
-    switch(val.units())
-    {
-        case css_units_em:
-            ret = round_f(val.val() * (float) fontSize);
-            val.set_value((float) ret, css_units_px);
-            break;
-        case css_units_pt:
-            ret = m_container->pt_to_px((int) val.val());
-            val.set_value((float) ret, css_units_px);
-            break;
-        case css_units_in:
-            ret = m_container->pt_to_px((int) (val.val() * 72));
-            val.set_value((float) ret, css_units_px);
-            break;
-        case css_units_cm:
-            ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72));
-            val.set_value((float) ret, css_units_px);
-            break;
-        case css_units_mm:
-            ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
-            val.set_value((float) ret, css_units_px);
-            break;
-    }
+	if(val.is_predefined())
+	{
+		return;
+	}
+	int ret;
+	switch(val.units())
+	{
+		case css_units_em:
+			ret = round_f(val.val() * (float) fontSize);
+			val.set_value((float) ret, css_units_px);
+			break;
+		case css_units_pt:
+			ret = m_container->pt_to_px((int) val.val());
+			val.set_value((float) ret, css_units_px);
+			break;
+		case css_units_in:
+			ret = m_container->pt_to_px((int) (val.val() * 72));
+			val.set_value((float) ret, css_units_px);
+			break;
+		case css_units_cm:
+			ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72));
+			val.set_value((float) ret, css_units_px);
+			break;
+		case css_units_mm:
+			ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
+			val.set_value((float) ret, css_units_px);
+			break;
+	}
 }
 
 int litehtml::document::width() const
@@ -853,22 +853,22 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
 		annon_tag->add_style(style);
 		annon_tag->parent(el_ptr->src_el());
 		annon_tag->compute_styles();
-        std::shared_ptr<render_item> annon_ri;
-        if(annon_tag->css().get_display() == display_table_cell)
-        {
-            annon_tag->set_tagName("table_cell");
-            annon_ri = std::make_shared<render_item_block>(annon_tag);
-        } else
-        {
-            annon_ri = std::make_shared<render_item_table_part>(annon_tag);
-        }
-        for(const auto& el : tmp)
-        {
-            annon_ri->add_child(el);
-        }
-        // add annon item as tabular for future processing
-        add_tabular(annon_ri);
-        annon_ri->parent(el_ptr);
+		std::shared_ptr<render_item> annon_ri;
+		if(annon_tag->css().get_display() == display_table_cell)
+		{
+			annon_tag->set_tagName("table_cell");
+			annon_ri = std::make_shared<render_item_block>(annon_tag);
+		} else
+		{
+			annon_ri = std::make_shared<render_item_table_part>(annon_tag);
+		}
+		for(const auto& el : tmp)
+		{
+			annon_ri->add_child(el);
+		}
+		// add annon item as tabular for future processing
+		add_tabular(annon_ri);
+		annon_ri->parent(el_ptr);
 		first_iter = el_ptr->children().insert(first_iter, annon_ri);
 		cur_iter = std::next(first_iter);
 		while (cur_iter != el_ptr->children().end() && (*cur_iter)->parent() != el_ptr)
@@ -973,14 +973,14 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 			annon_tag->add_style(style);
 			annon_tag->parent(parent->src_el());
 			annon_tag->compute_styles();
-            std::shared_ptr<render_item> annon_ri;
-            if(annon_tag->css().get_display() == display_table || annon_tag->css().get_display() == display_inline_table)
-            {
-                annon_ri = std::make_shared<render_item_table>(annon_tag);
-            } else
-            {
-                annon_ri = std::make_shared<render_item_table_part>(annon_tag);
-            }
+			std::shared_ptr<render_item> annon_ri;
+			if(annon_tag->css().get_display() == display_table || annon_tag->css().get_display() == display_inline_table)
+			{
+				annon_ri = std::make_shared<render_item_table>(annon_tag);
+			} else
+			{
+				annon_ri = std::make_shared<render_item_table_part>(annon_tag);
+			}
 			std::for_each(first, std::next(last, 1),
 				[&annon_ri](std::shared_ptr<render_item>& el)
 				{
@@ -989,8 +989,8 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 			);
 			first = parent->children().erase(first, std::next(last));
 			parent->children().insert(first, annon_ri);
-            add_tabular(annon_ri);
-            annon_ri->parent(parent);
+			add_tabular(annon_ri);
+			annon_ri->parent(parent);
 		}
 	}
 }
@@ -1028,8 +1028,8 @@ void litehtml::document::append_children_from_string(element& parent, const char
 		// Apply parsed styles.
 		child->apply_stylesheet(m_styles);
 
-        // Apply user styles if any
-        child->apply_stylesheet(m_user_css);
+		// Apply user styles if any
+		child->apply_stylesheet(m_user_css);
 
 		// Parse applied styles in the elements
 		child->compute_styles();
@@ -1046,8 +1046,8 @@ void litehtml::document::append_children_from_string(element& parent, const char
 
 void litehtml::document::dump(dumper& cout)
 {
-    if(m_root_render)
-    {
-        m_root_render->dump(cout);
-    }
+	if(m_root_render)
+	{
+		m_root_render->dump(cout);
+	}
 }
