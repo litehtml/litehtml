@@ -116,7 +116,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 		// Apply user styles if any
 		doc->m_root->apply_stylesheet(doc->m_user_css);
 
-		// Parse applied styles in the elements
+		// Initialize m_css
 		doc->m_root->compute_styles();
 
 		// Create rendering tree
@@ -1021,7 +1021,7 @@ void litehtml::document::append_children_from_string(element& parent, const char
 		// Apply user styles if any
 		child->apply_stylesheet(m_user_css);
 
-		// Parse applied styles in the elements
+		// Initialize m_css
 		child->compute_styles();
 
 		// Now the m_tabular_elements is filled with tabular elements.
