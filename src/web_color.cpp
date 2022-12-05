@@ -246,13 +246,13 @@ litehtml::string litehtml::web_color::resolve_name(const string& name, document_
 	return "";
 }
 
-bool litehtml::web_color::is_color(const string& str)
+bool litehtml::web_color::is_color(const string& str, document_container* callback)
 {
-	if(!t_strncasecmp(str.c_str(), "rgb", 3) || str[0] == '#')
+	if (!t_strncasecmp(str.c_str(), "rgb", 3) || str[0] == '#')
 	{
 		return true;
 	}
-    if (!t_isdigit(str[0]) && str[0] != '.')
+    if (t_isalpha(str[0]) && resolve_name(str, callback) != "")
 	{
 		return true;
 	}

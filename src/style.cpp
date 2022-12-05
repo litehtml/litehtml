@@ -633,7 +633,7 @@ void litehtml::style::parse_background(const string& val, const string& baseurl,
 					token[0] == '.')
 		{
 			position += " " + token;
-		} else if (web_color::is_color(token))
+		} else if (web_color::is_color(token, container))
 		{
 			auto color = web_color::from_string(token, container);
 			add_parsed_property(_background_color_, property_value(color, important));

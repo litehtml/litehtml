@@ -609,12 +609,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
             {
                 if(not_ws_added)
                 {
-                    auto anon_el = std::make_shared<html_tag>(doc);
-                    litehtml::style style;
-                    style.add("display: block");
-                    anon_el->add_style(style);
-                    anon_el->parent(src_el());
-                    anon_el->compute_styles();
+                    auto anon_el = std::make_shared<html_tag>(src_el());
                     auto anon_ri = std::make_shared<render_item_block>(anon_el);
                     for(const auto& inl : inlines)
                     {
@@ -632,12 +627,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
         }
         if(!inlines.empty() && not_ws_added)
         {
-            auto anon_el = std::make_shared<html_tag>(doc);
-            litehtml::style style;
-            style.add("display: block");
-            anon_el->add_style(style);
-            anon_el->parent(src_el());
-            anon_el->compute_styles();
+            auto anon_el = std::make_shared<html_tag>(src_el());
             auto anon_ri = std::make_shared<render_item_block>(anon_el);
             for(const auto& inl : inlines)
             {

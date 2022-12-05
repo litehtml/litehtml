@@ -42,7 +42,7 @@ namespace litehtml
 		string to_string() const;
 		static web_color	from_string(const string& str, document_container* callback);
 		static string		resolve_name(const string& name, document_container* callback);
-		static bool			is_color(const string& str);
+		static bool			is_color(const string& str, document_container* callback);
 	};
 }
 

@@ -71,9 +71,9 @@ namespace litehtml
 		flex_align_content		m_flex_align_content;
 
 	private:
-		void compute_font(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
-		void compute_background(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
-		void compute_flex(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
+		void compute_font(const element* el, const std::shared_ptr<document>& doc);
+		void compute_background(const element* el, const std::shared_ptr<document>& doc);
+		void compute_flex(const element* el, const std::shared_ptr<document>& doc);
 
 	public:
 		css_properties() :
@@ -120,7 +120,7 @@ namespace litehtml
 				m_flex_align_content(flex_align_content_stretch)
 		{}
 
-		void compute(const std::shared_ptr<element>& el, const std::shared_ptr<document>& doc);
+		void compute(const element* el, const std::shared_ptr<document>& doc);
 		std::vector<std::tuple<string, string>> dump_get_attrs();
 
 		element_position get_position() const;

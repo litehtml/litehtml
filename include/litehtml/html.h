@@ -42,7 +42,12 @@ namespace litehtml
 	{
 		return (c >= '0' && c <= '9');
 	}
-	
+
+	inline int t_isalpha(int c)
+	{
+		return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
+	}
+
 	inline int t_tolower(int c)
 	{
 		return (c >= 'A' && c <= 'Z' ? c + 'a' - 'A' : c);

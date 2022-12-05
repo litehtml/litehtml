@@ -18,6 +18,17 @@ litehtml::html_tag::html_tag(const std::shared_ptr<document>& doc) : element(doc
 	m_id = empty_id;
 }
 
+litehtml::html_tag::html_tag(const element::ptr& parent, const string& style) : element(parent->get_document()),
+	m_tag(empty_id),
+	m_id(empty_id)
+{
+	litehtml::style st;
+	st.add(style);
+	add_style(st);
+	this->parent(parent);
+	compute_styles();
+}
+
 bool litehtml::html_tag::appendChild(const element::ptr &el)
 {
 	if(el)
@@ -50,6 +61,10 @@ void litehtml::html_tag::clearRecursive()
 	m_children.clear();
 }
 
+litehtml::string_id litehtml::html_tag::id() const
+{
+	return m_id;
+}
 
 litehtml::string_id litehtml::html_tag::tag() const
 {
@@ -365,7 +380,7 @@ void litehtml::html_tag::compute_styles(bool recursive)
 
 	m_style.subst_vars(this);
 
-	m_css.compute(shared_from_this(), doc);
+	m_css.compute(this, doc);
 
 	if (recursive)
 	{
@@ -379,6 +394,13 @@ void litehtml::html_tag::compute_styles(bool recursive)
 bool litehtml::html_tag::is_white_space() const
 {
 	return false;
+}
+
+int litehtml::html_tag::select(const string& selector)
+{
+	css_selector sel;
+	sel.parse(selector);
+	return select(sel, true);
 }
 
 int litehtml::html_tag::select(const css_selector& selector, bool apply_pseudo)
