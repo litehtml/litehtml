@@ -215,19 +215,17 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 	m_css_text_indent = el->get_length_property(_text_indent_, true, 0, offset(m_css_text_indent));
 	doc->cvt_units(m_css_text_indent, font_size);
 
-	m_line_height = el->get_length_property(_line_height_, true, normal, offset(m_line_height));
-	if(m_line_height.is_predefined())
+	m_computed_line_height = el->get_length_property(_line_height_, true, normal, offset(m_computed_line_height));
+	if(m_computed_line_height.is_predefined())
 	{
-		m_line_height = (float) m_font_metrics.height;
-		m_lh_predefined = true;
-	} else if(m_line_height.units() == css_units_none)
+		m_line_height = m_font_metrics.height;
+	} else if(m_computed_line_height.units() == css_units_none)
 	{
-		m_line_height = (float)(int) (m_line_height.val() * font_size);
-		m_lh_predefined = false;
+		m_line_height = (int) (m_computed_line_height.val() * font_size);
 	} else
 	{
-		m_line_height = (float) doc->to_pixels(m_line_height, font_size, font_size);
-		m_lh_predefined = false;
+		m_line_height = doc->to_pixels(m_computed_line_height, font_size, font_size);
+		m_computed_line_height = (float) m_line_height;
 	}
 
 	m_list_style_type     = (list_style_type)     el->get_enum_property(_list_style_type_,     true, list_style_type_disc,        offset(m_list_style_type));
@@ -430,7 +428,7 @@ std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::css_proper
 	ret.emplace_back(std::make_tuple("max_height", m_css_max_width.to_string()));
 	ret.emplace_back(std::make_tuple("offsets", m_css_offsets.to_string()));
 	ret.emplace_back(std::make_tuple("text_indent", m_css_text_indent.to_string()));
-	ret.emplace_back(std::make_tuple("line_height", m_line_height.to_string()));
+	ret.emplace_back(std::make_tuple("line_height", std::to_string(m_line_height)));
 	ret.emplace_back(std::make_tuple("list_style_type", index_value(m_list_style_type, list_style_type_strings)));
 	ret.emplace_back(std::make_tuple("list_style_position", index_value(m_list_style_position, list_style_position_strings)));
 	ret.emplace_back(std::make_tuple("border_spacing_x", m_css_border_spacing_x.to_string()));
