@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "Font.h"
-char* readfile(const char* fname);
+string readfile(string filename);
 using namespace std;
 
 string Font::font_dir = "../containers/test/fonts/"; // ctest is run from litehtml/build
@@ -53,8 +53,7 @@ Bitmap Font::get_glyph(int ch, web_color color)
 // load .yaff font file in an ad hoc manner (can't parse arbitrary yaff files)
 void Font::load(string filename)
 {
-	auto text = readfile(filename.c_str());
-	if (!text) return;
+	string text = readfile(filename);
 	
 	string_vector lines;
 	split_string(text, lines, "\n");

@@ -1,5 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include <gtest/gtest.h>
+#include <fstream>
 #ifdef _WIN32
 	#include "dirent.h"
 #else
@@ -43,18 +44,11 @@ vector<string> find_htm_files()
 	return ret;
 }
 
-char* readfile(const char* fname)
+string readfile(string filename)
 {
-	FILE* f = fopen(fname, "rb");
-	if (!f) return 0;
-	struct stat st;
-	stat(fname, &st);
-	int size = st.st_size;
-	char* buf = (char*)malloc(size + 1);
-	fread(buf, 1, size, f);
-	buf[size] = 0;
-	fclose(f);
-	return buf;
+	stringstream ss;
+	ifstream(filename) >> ss.rdbuf();
+	return ss.str();
 }
 
 Bitmap draw(document::ptr doc, int width, int height)
@@ -72,12 +66,12 @@ Bitmap draw(document::ptr doc, int width, int height)
 
 void test(string filename)
 {
-	char* html = readfile(filename.c_str());
+	string html = readfile(filename);
 
 	int width = 800, height = 600; // image will be cropped to contain only the "inked" part
 	test_container container(width, height);
 
-	auto doc = document::createFromString(html, &container);
+	auto doc = document::createFromString(html.c_str(), &container);
 	doc->render(width);
 	Bitmap bmp = draw(doc, width, height);
 
