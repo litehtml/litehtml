@@ -9,6 +9,11 @@ void litehtml::trim(string &s)
 	{
 		s.erase(s.begin(), s.begin() + pos);
 	}
+	else
+	{
+		s = "";
+		return;
+	}
 	pos = s.find_last_not_of(" \n\r\t");
 	if(pos != string::npos)
 	{
