@@ -6,8 +6,9 @@ class test_container : public document_container
 public:
 	int width;
 	int height;
+	string basedir;
 
-	test_container(int width, int height) : width(width), height(height) {}
+	test_container(int width, int height, string basedir) : width(width), height(height), basedir(basedir) {}
 
 	uint_ptr		create_font(const char* faceName, int size, int weight, font_style italic, unsigned int decoration, font_metrics* fm) override;
 	void			delete_font(uint_ptr hFont) override {}
@@ -36,6 +37,6 @@ public:
 	void 			set_base_url(const char* base_url) override {}
 	void			on_anchor_click(const char* url, const element::ptr& el) override {}
 	void			set_cursor(const char* cursor) override {}
-	void			import_css(string& text, const string& url, string& baseurl) override {}
+	void			import_css(string& text, const string& url, string& baseurl) override;
 	void			get_client_rect(position& client) const override;
 };

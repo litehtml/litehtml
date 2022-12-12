@@ -1,5 +1,6 @@
 #include "test_container.h"
 #include "Font.h"
+string readfile(string filename);
 
 // note: font is selected only by size, name and style are not used
 uint_ptr test_container::create_font(const char* faceName, int size, int weight, font_style italic, unsigned int decoration, font_metrics* fm)
@@ -67,6 +68,12 @@ void test_container::draw_borders(uint_ptr hdc, const borders& borders, const po
 		bmp->draw_line(
 			pos.left(),  pos.bottom() - y - 1,
 			pos.right(), pos.bottom() - y - 1, borders.bottom.color);
+}
+
+void test_container::import_css(string& text, const string& url, string& baseurl)
+{
+	baseurl = basedir + url;
+	text = readfile(baseurl);
 }
 
 void test_container::get_client_rect(position& client) const
