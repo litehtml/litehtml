@@ -21,6 +21,7 @@ public:
 	bool operator==(const Bitmap& bmp) const { return width == bmp.width && height == bmp.height && data == bmp.data; }
 	bool operator!=(const Bitmap& bmp) const { return !(*this == bmp); }
 
+	web_color get_pixel(int x, int y) const;
 	void set_pixel(int x, int y, web_color color);
 	void draw_line(int x0, int y0, int x1, int y1, web_color color);
 	void draw_rect(int x, int y, int width, int height, web_color color);

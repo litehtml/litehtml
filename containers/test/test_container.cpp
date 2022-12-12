@@ -44,8 +44,7 @@ const char* test_container::get_default_font_name() const { return ""; }
 void test_container::draw_background(uint_ptr hdc, const background_paint& bg)
 {
 	Bitmap* bmp = (Bitmap*)hdc;
-	if (bg.color.alpha != 0)
-		bmp->fill_rect(bg.border_box, bg.color);
+	bmp->fill_rect(bg.border_box, bg.color);
 }
 
 void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool root)
@@ -75,6 +74,12 @@ void test_container::draw_borders(uint_ptr hdc, const borders& borders, const po
 		bmp->draw_line(
 			pos.left(),  pos.bottom() - y - 1,
 			pos.right(), pos.bottom() - y - 1, borders.bottom.color);
+}
+
+void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
+{
+	Bitmap* bmp = (Bitmap*)hdc;
+	bmp->fill_rect(marker.pos, marker.color);
 }
 
 void test_container::import_css(string& text, const string& url, string& baseurl)

@@ -2,9 +2,18 @@
 #include "lodepng.h"
 using namespace std;
 
+web_color Bitmap::get_pixel(int x, int y) const
+{
+	if (x < 0 || x >= width || y < 0 || y >= height)
+		return web_color::black;
+	else
+		return data[x + y * width];
+}
+
 void Bitmap::set_pixel(int x, int y, web_color color)
 {
 	if (x < 0 || x >= width || y < 0 || y >= height) return;
+	if (color.alpha == 0) return;
 	data[x + y * width] = color;
 }
 
@@ -46,11 +55,7 @@ void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp)
 {
 	for (int y = 0; y < bmp.height; y++)
 		for (int x = 0; x < bmp.width; x++)
-		{
-			web_color color = bmp.data[x + y * bmp.width];
-			if (color.alpha != 0)
-				set_pixel(x0 + x, y0 + y, color);
-		}
+			set_pixel(x0 + x, y0 + y, bmp.get_pixel(x, y));
 }
 
 void Bitmap::replace_color(web_color original, web_color replacement)

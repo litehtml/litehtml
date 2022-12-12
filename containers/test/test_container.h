@@ -21,11 +21,11 @@ public:
 	void			get_image_size(const char* src, const char* baseurl, size& sz) override {}
 	void			draw_background(uint_ptr hdc, const background_paint& bg) override;
 	void			draw_borders(uint_ptr hdc, const borders& borders, const position& draw_pos, bool root) override;
-	void 			draw_list_marker(uint_ptr hdc, const list_marker& marker) override {}
+	void 			draw_list_marker(uint_ptr hdc, const list_marker& marker) override;
 	element::ptr	create_element(const char* tag_name,
 								   const string_map& attributes,
 								   const document::ptr& doc) override { return 0; }
-	void			get_media_features(media_features& media) const override { }
+	void			get_media_features(media_features& media) const override {}
 	void			get_language(string& language, string& culture) const override {}
 	void 			link(const document::ptr& doc, const element::ptr& el) override {}
 
