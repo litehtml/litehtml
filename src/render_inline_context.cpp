@@ -130,18 +130,19 @@ int litehtml::render_item_inline_context::fix_line_width( int max_width, element
             int line_right	= max_width;
             get_line_left_right(line_top, max_width, line_left, line_right);
 
-            if(m_line_boxes.size() == 1 && src_el()->css().get_list_style_type() != list_style_type_none && src_el()->css().get_list_style_position() == list_style_position_inside)
+            if(m_line_boxes.size() == 1)
             {
-                int sz_font = src_el()->css().get_font_size();
-                line_left += sz_font;
-            }
+                if (src_el()->css().get_list_style_type() != list_style_type_none && src_el()->css().get_list_style_position() == list_style_position_inside)
+                {
+                    int sz_font = src_el()->css().get_font_size();
+                    line_left += sz_font;
+                }
 
-            if(src_el()->css().get_text_indent().val() != 0)
-            {
-                if(!m_line_boxes.empty())
+                if (src_el()->css().get_text_indent().val() != 0)
                 {
                     line_left += src_el()->css().get_text_indent().calc_percent(max_width);
                 }
+            
             }
 
             els.clear();
@@ -204,16 +205,15 @@ int litehtml::render_item_inline_context::new_box(const std::shared_ptr<render_i
     }
 
     int first_line_margin = 0;
-    if(m_line_boxes.empty() && src_el()->css().get_list_style_type() != list_style_type_none && src_el()->css().get_list_style_position() == list_style_position_inside)
-    {
-        int sz_font = src_el()->css().get_font_size();
-        first_line_margin = sz_font;
-    }
-
     int text_indent = 0;
-    if(src_el()->css().get_text_indent().val() != 0)
+    if(m_line_boxes.empty())
     {
-        if(!m_line_boxes.empty())
+        if(src_el()->css().get_list_style_type() != list_style_type_none && src_el()->css().get_list_style_position() == list_style_position_inside)
+        {
+            int sz_font = src_el()->css().get_font_size();
+            first_line_margin = sz_font;
+        }
+        if(src_el()->css().get_text_indent().val() != 0)
         {
             text_indent = src_el()->css().get_text_indent().calc_percent(max_width);
         }
