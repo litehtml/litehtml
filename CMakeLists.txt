@@ -134,6 +134,11 @@ set(TEST_LITEHTML
     test/tstring_view_test.cpp
     test/url_test.cpp
     test/url_path_test.cpp
+    test/render_test.cpp
+    containers/test/test_container.cpp
+    containers/test/Font.cpp
+    containers/test/Bitmap.cpp
+    containers/test/lodepng.cpp
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)

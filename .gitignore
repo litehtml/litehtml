@@ -21,6 +21,9 @@ _build32/
 _build64/
 *.inc
 
+# Test results
+*-FAILED.png
+
 # MSTest test Results
 [Tt]est[Rr]esult*/
 [Bb]uild[Ll]og.*

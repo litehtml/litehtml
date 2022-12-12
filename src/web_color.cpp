@@ -4,6 +4,7 @@
 
 const litehtml::web_color litehtml::web_color::transparent = web_color(0, 0, 0, 0);
 const litehtml::web_color litehtml::web_color::black       = web_color(0, 0, 0, 255);
+const litehtml::web_color litehtml::web_color::white       = web_color(255, 255, 255, 255);
 
 litehtml::def_color litehtml::g_def_colors[] = 
 {

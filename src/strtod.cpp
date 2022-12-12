@@ -21,7 +21,6 @@
 #include <cstdlib>
 #include <cctype>
 #include <cerrno>
-extern  int     errno;
 
 #ifndef TRUE
 #define TRUE 1

@@ -15,29 +15,33 @@ namespace litehtml
 
 	struct web_color
 	{
-		byte	blue;
-		byte	green;
 		byte	red;
+		byte	green;
+		byte	blue;
 		byte	alpha;
 
 		static const web_color transparent;
 		static const web_color black;
+		static const web_color white;
 
 		web_color(byte r, byte g, byte b, byte a = 255)
 		{
-			blue	= b;
-			green	= g;
 			red		= r;
+			green	= g;
+			blue	= b;
 			alpha	= a;
 		}
 
 		web_color()
 		{
-			blue	= 0;
-			green	= 0;
 			red		= 0;
+			green	= 0;
+			blue	= 0;
 			alpha	= 0xFF;
 		}
+
+		bool operator==(web_color color) const { return red == color.red && green == color.green && blue == color.blue && alpha == color.alpha; }
+		bool operator!=(web_color color) const { return !(*this == color); }
 
 		string to_string() const;
 		static web_color	from_string(const string& str, document_container* callback);
