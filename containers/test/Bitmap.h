@@ -24,6 +24,7 @@ public:
 	void set_pixel(int x, int y, web_color color);
 	void draw_line(int x0, int y0, int x1, int y1, web_color color);
 	void draw_rect(int x, int y, int width, int height, web_color color);
+	void fill_rect(position rect, web_color color);
 	void draw_bitmap(int x, int y, const Bitmap& bmp);
 	void replace_color(web_color original, web_color replacement);
 

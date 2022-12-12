@@ -41,6 +41,13 @@ int test_container::pt_to_px(int pt) const { return pt * 96 / 72; }
 int test_container::get_default_font_size() const { return 16; }
 const char* test_container::get_default_font_name() const { return ""; }
 
+void test_container::draw_background(uint_ptr hdc, const background_paint& bg)
+{
+	Bitmap* bmp = (Bitmap*)hdc;
+	if (bg.color.alpha != 0)
+		bmp->fill_rect(bg.border_box, bg.color);
+}
+
 void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool root)
 {
 	Bitmap* bmp = (Bitmap*)hdc;

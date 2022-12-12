@@ -35,6 +35,13 @@ void Bitmap::draw_rect(int x, int y, int width, int height, web_color color)
 	draw_line(x + width - 1, y, x + width - 1, y + height, color); // right
 }
 
+void Bitmap::fill_rect(position rect, web_color color)
+{
+	for (int y = rect.top(); y < rect.bottom(); y++)
+		for (int x = rect.left(); x < rect.right(); x++)
+			set_pixel(x, y, color);
+}
+
 void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp)
 {
 	for (int y = 0; y < bmp.height; y++)

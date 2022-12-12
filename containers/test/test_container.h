@@ -19,7 +19,7 @@ public:
 	const char*		get_default_font_name() const override;
 	void 			load_image(const char* src, const char* baseurl, bool redraw_on_ready) override {}
 	void			get_image_size(const char* src, const char* baseurl, size& sz) override {}
-	void			draw_background(uint_ptr hdc, const background_paint& bg) override {}
+	void			draw_background(uint_ptr hdc, const background_paint& bg) override;
 	void			draw_borders(uint_ptr hdc, const borders& borders, const position& draw_pos, bool root) override;
 	void 			draw_list_marker(uint_ptr hdc, const list_marker& marker) override {}
 	element::ptr	create_element(const char* tag_name,
