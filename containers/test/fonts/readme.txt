@@ -1,3 +1,5 @@
+Note: Fonts in this directory are not automatically picked up, you have to update Font::installed_fonts.
+
 Terminus Font:
 Sizes: 6x12, 8x14, 8x16, 10x18, 10x20, 11x22, 12x24, 14x28, 16x32. (we use 3 of them)
 https://terminus-font.sourceforge.net
