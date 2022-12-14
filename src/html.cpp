@@ -190,8 +190,8 @@ int litehtml::t_strcasecmp(const char *s1, const char *s2)
 
 	for (i = 0;; i++)
 	{
-		c = tolower((unsigned char)s1[i]);
-		d = c - tolower((unsigned char)s2[i]);
+		c = t_tolower((unsigned char)s1[i]);
+		d = c - t_tolower((unsigned char)s2[i]);
 		if (d < 0)
 			return -1;
 		else if (d > 0)
@@ -213,6 +213,8 @@ int litehtml::t_strncasecmp(const char *s1, const char *s2, size_t n)
 			return -1;
 		else if (d > 0)
 			return 1;
+		else if (c == 0)
+			return 0;
 	}
 
 	return 0;
