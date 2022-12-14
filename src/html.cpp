@@ -173,17 +173,15 @@ void litehtml::split_string(const string& str, string_vector& tokens, const stri
 
 void litehtml::join_string(string& str, const string_vector& tokens, const string& delims)
 {
-	std::stringstream ss;
-	for(size_t i=0; i<tokens.size(); ++i)
+	str = "";
+	for (size_t i = 0; i < tokens.size(); i++)
 	{
-		if(i != 0)
+		if (i != 0)
 		{
-			ss << delims;
+			str += delims;
 		}
-		ss << tokens[i];
+		str += tokens[i];
 	}
-
-	str = ss.str();
 }
 
 int litehtml::t_strcasecmp(const char *s1, const char *s2)
@@ -220,62 +218,60 @@ int litehtml::t_strncasecmp(const char *s1, const char *s2, size_t n)
 	return 0;
 }
 
-
 litehtml::string litehtml::get_escaped_string(const string& in_str)
 {
-    std::stringstream tss;
-	for ( auto ch : in_str )
+	string ret;
+	for (auto ch : in_str)
 	{
 		switch (ch)
 		{
 			case '\'':
-				tss << "\\'";
+				ret += "\\'";
 				break;
 
 			case '\"':
-				tss << "\\\"";
+				ret += "\\\"";
 				break;
 
 			case '\?':
-				tss << "\\?";
+				ret += "\\?";
 				break;
 
 			case '\\':
-				tss << "\\\\";
+				ret += "\\\\";
 				break;
 
 			case '\a':
-				tss << "\\a";
+				ret += "\\a";
 				break;
 
 			case '\b':
-				tss << "\\b";
+				ret += "\\b";
 				break;
 
 			case '\f':
-				tss << "\\f";
+				ret += "\\f";
 				break;
 
 			case '\n':
-				tss << "\\n";
+				ret += "\\n";
 				break;
 
 			case '\r':
-				tss << "\\r";
+				ret += "\\r";
 				break;
 
 			case '\t':
-				tss << "\\t";
+				ret += "\\t";
 				break;
 
 			case '\v':
-				tss << "\\v";
+				ret += "\\v";
 				break;
 
 			default:
-				tss << ch;
+				ret += ch;
 		}
 	}
-
-	return tss.str();
+	return ret;
 }
