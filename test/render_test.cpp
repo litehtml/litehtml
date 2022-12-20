@@ -23,7 +23,7 @@ TEST_P(render_test, _)
 	test(test_dir + GetParam());
 }
 
-INSTANTIATE_TEST_SUITE_P(_, render_test, testing::ValuesIn(find_htm_files()));
+INSTANTIATE_TEST_SUITE_P(, render_test, testing::ValuesIn(find_htm_files()));
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 void error(const char* msg) { puts(msg); exit(1); }

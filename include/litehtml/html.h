@@ -8,7 +8,6 @@
 #include <map>
 #include <cstring>
 #include <algorithm>
-#include <sstream>
 #include <functional>
 #include "os_types.h"
 #include "string_id.h"

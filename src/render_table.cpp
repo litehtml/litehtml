@@ -4,7 +4,7 @@
 #include "iterators.h"
 
 
-litehtml::render_item_table::render_item_table(std::shared_ptr<element>  _src_el) :
+litehtml::render_item_table::render_item_table(std::shared_ptr<element> _src_el) :
         render_item(std::move(_src_el)),
         m_border_spacing_x(0),
         m_border_spacing_y(0)
