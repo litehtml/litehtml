@@ -52,7 +52,7 @@ b, strong {
 	font-weight:bold;
 }
 
-i, em {
+i, em, cite {
 	display:inline; 
 	font-style:italic;
 }
