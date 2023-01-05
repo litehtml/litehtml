@@ -38,7 +38,7 @@ namespace litehtml
 		css_length				m_css_max_height;
 		css_offsets				m_css_offsets;
 		css_length				m_css_text_indent;
-		css_length				m_computed_line_height;
+		css_length				m_css_line_height;
 		int						m_line_height;
 		list_style_type			m_list_style_type;
 		list_style_position		m_list_style_position;
@@ -99,7 +99,7 @@ namespace litehtml
 				m_css_max_height(),
 				m_css_offsets(),
 				m_css_text_indent(),
-				m_computed_line_height(0),
+				m_css_line_height(0),
 				m_line_height(0),
 				m_list_style_type(list_style_type_none),
 				m_list_style_position(list_style_position_outside),

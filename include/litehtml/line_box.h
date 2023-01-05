@@ -40,17 +40,17 @@ namespace litehtml
         int						m_baseline;
         text_align				m_text_align;
     public:
-        line_box(int top, int left, int right, int line_height, font_metrics& fm, text_align align)
-        {
-            m_box_top	    = top;
-            m_box_left	    = left;
-            m_box_right	    = right;
-            m_height		= 0;
-            m_width			= 0;
-            m_font_metrics	= fm;
-            m_line_height	= line_height;
-            m_baseline		= 0;
-            m_text_align	= align;
+        line_box(int top, int left, int right, int line_height, const font_metrics& fm, text_align align) :
+            m_box_top(top),
+            m_box_left(left),
+            m_box_right(right),
+            m_height(0),
+            m_width(0),
+            m_font_metrics(fm),
+            m_line_height(line_height),
+            m_baseline(0),
+            m_text_align(align)
+		{
         }
 
         int		bottom() const	{ return m_box_top + height();	}

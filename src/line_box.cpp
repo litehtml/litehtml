@@ -60,12 +60,13 @@ void litehtml::line_box::finish(bool last_box)
 
     if( is_empty() || (!is_empty() && last_box && is_break_only()) )
     {
-        m_height = 0;
+        m_height = m_line_height;
+		m_baseline = m_font_metrics.base_line();
         return;
     }
 
-    int base_line	= m_font_metrics.base_line();
-    int line_height = m_line_height;
+	int base_line = 0;
+    int line_height = 0;
     int spc_x = 0;
 
     int add_x = 0;
@@ -106,10 +107,9 @@ void litehtml::line_box::finish(bool last_box)
     {
         if(el->src_el()->css().get_display() == display_inline_text)
         {
-            font_metrics fm = el->src_el()->css().get_font_metrics();
-            base_line	= std::max(base_line,	fm.base_line());
-            line_height = std::max(line_height, el->src_el()->css().get_line_height());
-            m_height = std::max(m_height, fm.height);
+            base_line	= std::max(base_line,	el->css().get_font_metrics().base_line());
+            line_height = std::max(line_height, el->css().get_line_height());
+            m_height = std::max(m_height, el->css().get_font_metrics().height);
         }
         if (spc_x && counter)
         {
@@ -143,10 +143,10 @@ void litehtml::line_box::finish(bool last_box)
     {
         if(el->src_el()->css().get_display() == display_inline_text)
         {
-            el->pos().y = m_height - base_line - el->src_el()->css().get_font_metrics().ascent;
+            el->pos().y = m_height - base_line - el->css().get_font_metrics().ascent;
         } else
         {
-            switch(el->src_el()->css().get_vertical_align())
+            switch(el->css().get_vertical_align())
             {
                 case va_super:
                 case va_sub:
@@ -178,9 +178,9 @@ void litehtml::line_box::finish(bool last_box)
     {
         el->pos().y -= y1;
         el->pos().y += m_box_top;
-        if(el->src_el()->css().get_display() != display_inline_text)
+        if(el->css().get_display() != display_inline_text)
         {
-            switch(el->src_el()->css().get_vertical_align())
+            switch(el->css().get_vertical_align())
             {
                 case va_top:
                     el->pos().y = m_box_top + el->content_margins_top();
@@ -219,9 +219,16 @@ bool litehtml::line_box::can_hold(const std::shared_ptr<render_item> &el, white_
 {
     if(!el->src_el()->is_inline_box()) return false;
 
+	// force new line if the last placed element was line break
+	if(!m_items.empty() && m_items.back()->src_el()->is_break())
+	{
+		return false;
+	}
+
+	// line break should stay in current line box
     if(el->src_el()->is_break())
     {
-        return false;
+        return true;
     }
 
     if(ws == white_space_nowrap || ws == white_space_pre || (ws == white_space_pre_wrap && el->src_el()->is_space()))

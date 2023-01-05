@@ -48,7 +48,8 @@ int litehtml::render_item_inline_context::_render_content(int x, int y, int max_
                 }
                 else
                 {
-                    was_space = false;
+					// skip all spaces after line break
+                    was_space = el->src_el()->is_break();
                 }
             }
             // place element into rendering flow
@@ -169,7 +170,8 @@ int litehtml::render_item_inline_context::finish_last_box(bool end_of_render)
     {
         m_line_boxes.back()->finish(end_of_render);
 
-        if(m_line_boxes.back()->is_empty())
+		// remove the last empty line
+        if(m_line_boxes.back()->is_empty() && end_of_render)
         {
             line_top = m_line_boxes.back()->top();
             m_line_boxes.pop_back();
@@ -219,8 +221,7 @@ int litehtml::render_item_inline_context::new_box(const std::shared_ptr<render_i
         }
     }
 
-    font_metrics fm = src_el()->css().get_font_metrics();
-    m_line_boxes.emplace_back(std::unique_ptr<line_box>(new line_box(line_ctx.top, line_ctx.left + first_line_margin + text_indent, line_ctx.right, src_el()->css().get_line_height(), fm, src_el()->css().get_text_align())));
+    m_line_boxes.emplace_back(std::unique_ptr<line_box>(new line_box(line_ctx.top, line_ctx.left + first_line_margin + text_indent, line_ctx.right, el->css().get_line_height(), el->css().get_font_metrics(), css().get_text_align())));
 
     return line_ctx.top;
 }

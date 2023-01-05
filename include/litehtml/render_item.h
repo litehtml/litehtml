@@ -214,6 +214,11 @@ namespace litehtml
             return m_element;
         }
 
+		const css_properties& css() const
+		{
+			return m_element->css();
+		}
+
         void add_child(const std::shared_ptr<render_item>& ri)
         {
             m_children.push_back(ri);

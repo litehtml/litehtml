@@ -162,7 +162,7 @@ namespace litehtml
 			x_height		= 0;
 			draw_spaces		= true;
 		}
-		int base_line()	{ return descent; }
+		int base_line() const	{ return descent; }
 	};
 
 	struct font_item
