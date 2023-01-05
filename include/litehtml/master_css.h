@@ -57,8 +57,12 @@ i, em, cite {
 	font-style:italic;
 }
 
-u {
+ins, u {
 	text-decoration:underline
+}
+
+del, s, strike {
+	text-decoration:line-through
 }
 
 center 
