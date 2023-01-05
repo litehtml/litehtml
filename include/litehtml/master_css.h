@@ -57,6 +57,10 @@ i, em {
 	font-style:italic;
 }
 
+u {
+	text-decoration:underline
+}
+
 center 
 {
 	text-align:center;
