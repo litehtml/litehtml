@@ -55,6 +55,7 @@ void litehtml::line_box::finish(bool last_box)
     while (!m_items.empty() && (m_items.back()->src_el()->is_white_space() || m_items.back()->src_el()->is_break()))
     {
         m_width -= m_items.back()->width();
+		m_items.back()->skip(true);
         m_items.pop_back();
     }
 

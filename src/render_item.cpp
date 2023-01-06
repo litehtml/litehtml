@@ -736,26 +736,30 @@ void litehtml::render_item::get_inline_boxes( position::vector& boxes )
             {
                 if (el->m_box)
                 {
-                    if (el->m_box != old_box)
-                    {
-                        if (old_box)
-                        {
-                            if (boxes.empty())
-                            {
-                                pos.x -= m_padding.left + m_borders.left;
-                                pos.width += m_padding.left + m_borders.left;
-                            }
-                            boxes.push_back(pos);
-                        }
-                        old_box = el->m_box;
-                        pos.x = el->left() + el->margin_left();
-                        pos.y = el->top() - m_padding.top - m_borders.top;
-                        pos.width = 0;
-                        pos.height = 0;
-                    }
-                    pos.width = el->right() - pos.x - el->margin_right() - el->margin_left();
-                    pos.height = std::max(pos.height, el->height() + m_padding.top + m_padding.bottom + m_borders.top +
-                                                      m_borders.bottom);
+					if(el->css().get_display() == display_inline_text)
+					{
+						if (el->m_box != old_box)
+						{
+							if (old_box)
+							{
+								if (boxes.empty())
+								{
+									pos.x -= m_padding.left + m_borders.left;
+									pos.width += m_padding.left + m_borders.left;
+								}
+								boxes.push_back(pos);
+							}
+							old_box = el->m_box;
+							pos.x = el->left() + el->margin_left();
+							pos.y = el->top() - m_padding.top - m_borders.top;
+							pos.width = 0;
+							pos.height = 0;
+						}
+						pos.width = el->right() - pos.x - el->margin_right() - el->margin_left();
+						pos.height = std::max(pos.height,
+											  el->height() + m_padding.top + m_padding.bottom + m_borders.top +
+											  m_borders.bottom);
+					}
                 } else if (el->src_el()->css().get_display() == display_inline)
                 {
                     position::vector sub_boxes;
