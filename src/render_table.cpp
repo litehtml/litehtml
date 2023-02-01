@@ -400,16 +400,19 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 
     elements_iterator row_iter(false, &table_selector, &row_selector);
 
-    row_iter.process(shared_from_this(), [&](std::shared_ptr<render_item>& el)
+    row_iter.process(shared_from_this(), [&](std::shared_ptr<render_item>& el, iterator_item_type item_type)
         {
             m_grid->begin_row(el);
 
 
             elements_iterator cell_iter(true, &table_selector, &cell_selector);
-            cell_iter.process(el, [&](std::shared_ptr<render_item>& el)
+            cell_iter.process(el, [&](std::shared_ptr<render_item>& el, iterator_item_type item_type)
                 {
-                    el = el->init();
-                    m_grid->add_cell(el);
+					if(item_type != iterator_item_type_end_parent)
+					{
+						el = el->init();
+						m_grid->add_cell(el);
+					}
                 });
         });
 

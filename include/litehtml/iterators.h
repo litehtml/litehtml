@@ -18,6 +18,13 @@ namespace litehtml
 		~iterator_selector() = default;
 	};
 
+	enum iterator_item_type
+	{
+		iterator_item_type_child,
+		iterator_item_type_start_parent,
+		iterator_item_type_end_parent
+	};
+
 	class elements_iterator
 	{
 	private:
@@ -37,7 +44,7 @@ namespace litehtml
 		elements_iterator(bool return_parents, iterator_selector* go_inside, iterator_selector* select);
 		~elements_iterator() = default;
 
-        void process(const std::shared_ptr<render_item>& container, const std::function<void (std::shared_ptr<render_item>&)>& func);
+        void process(const std::shared_ptr<render_item>& container, const std::function<void (std::shared_ptr<render_item>&, iterator_item_type)>& func);
 	
 	private:
 		void next_idx();
