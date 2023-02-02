@@ -10,6 +10,9 @@ enable_testing()
 set(PROJECT_MAJOR 0)
 set(PROJECT_MINOR 0)
 
+# https://stackoverflow.com/questions/38296756/what-is-the-idiomatic-way-in-cmake-to-add-the-fpic-compiler-option
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
 option(EXTERNAL_GUMBO "Link against external gumbo instead of shipping a bundled copy" OFF)
 
 if(NOT EXTERNAL_GUMBO)
