@@ -124,6 +124,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			// remove empty elements at the end of line
 			if(m_items.back()->get_el()->src_el()->is_break() || m_items.back()->get_el()->src_el()->is_white_space())
 			{
+				m_width -= m_items.back()->width();
 				m_items.back()->get_el()->skip(true);
 				m_items.pop_back();
 			} else
@@ -132,6 +133,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			}
 		} else if(m_items.back()->get_type() == line_box_item::type_inline_start)
 		{
+			m_width -= m_items.back()->width();
 			ret_items.emplace_back(std::move(m_items.back()));
 			m_items.pop_back();
 		} else

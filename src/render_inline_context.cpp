@@ -210,10 +210,10 @@ std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inlin
 			for (auto &inline_item: m_inlines)
 			{
 				inline_item.start_box.x = m_line_boxes.back()->left();
-				inline_item.start_box.height = inline_item.element->src_el()->css().get_line_height();
+				inline_item.start_box.height = inline_item.element->src_el()->css().get_font_metrics().height;
 				inline_item.start_box.y = m_line_boxes.back()->top() +
 										  baseline_align(m_line_boxes.back()->height(), m_line_boxes.back()->baseline(),
-														 inline_item.element->src_el()->css().get_line_height(),
+														 inline_item.element->src_el()->css().get_font_metrics().height,
 														 inline_item.element->src_el()->css().get_font_metrics().base_line());
 			}
 
@@ -227,11 +227,11 @@ std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inlin
 					{
 						// set real position
 						el_it->start_box.x = item->pos().x - item->pos().width;
-						el_it->start_box.height = el_it->element->src_el()->css().get_line_height();
+						el_it->start_box.height = el_it->element->src_el()->css().get_font_metrics().height;
 						el_it->start_box.y = m_line_boxes.back()->top() +
 											 baseline_align(m_line_boxes.back()->height(),
 															m_line_boxes.back()->baseline(),
-															el_it->element->src_el()->css().get_line_height(),
+															el_it->element->src_el()->css().get_font_metrics().height,
 															el_it->element->src_el()->css().get_font_metrics().base_line());
 					}
 				} else if (item->get_type() == line_box_item::type_inline_end)
@@ -265,19 +265,26 @@ std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inlin
 			// make boxes for all inlines in list
 			for (auto &inline_item: m_inlines)
 			{
-				// set real position
-				int end_box_x = m_line_boxes.back()->right();
+				// Find start item in the removed elements to ignore them
+				auto el_it = std::find_if(ret.begin(), ret.end(), [&](const std::unique_ptr<line_box_item> &a)
+					{ return a->get_el() == inline_item.element && a->get_type() == line_box_item::type_inline_start; });
 
-				// calculate box
-				position pos;
-				pos.x = inline_item.start_box.x;
-				pos.y = inline_item.start_box.y - inline_item.element->padding_top() -
-						inline_item.element->border_top();
-				pos.height = inline_item.start_box.height + inline_item.element->padding_top() +
-							 inline_item.element->border_top() +
-							 inline_item.element->padding_bottom() + inline_item.element->border_bottom();
-				pos.width = end_box_x - inline_item.start_box.x;
-				inline_item.boxes.push_back(pos);
+				if(el_it == ret.end())
+				{
+					// set real position
+					int end_box_x = m_line_boxes.back()->right();
+
+					// calculate box
+					position pos;
+					pos.x = inline_item.start_box.x;
+					pos.y = inline_item.start_box.y - inline_item.element->padding_top() -
+							inline_item.element->border_top();
+					pos.height = inline_item.start_box.height + inline_item.element->padding_top() +
+								 inline_item.element->border_top() +
+								 inline_item.element->padding_bottom() + inline_item.element->border_bottom();
+					pos.width = end_box_x - inline_item.start_box.x;
+					inline_item.boxes.push_back(pos);
+				}
 			}
 		}
     }
