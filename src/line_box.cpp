@@ -296,7 +296,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
         el->get_el()->apply_relative_shift(m_right - m_left);
     }
     m_height = y2 - y1;
-    m_baseline = (base_line - y1) - (m_height - line_height);
+    m_baseline = base_line - y1;
 
 	return std::move(ret_items);
 }
