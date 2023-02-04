@@ -17,7 +17,7 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 	m_box_sizing	 = (box_sizing)		  el->get_enum_property( _box_sizing_,		false,	box_sizing_content_box,	 offset(m_box_sizing));
 	m_overflow		 = (overflow)		  el->get_enum_property( _overflow_,		false,	overflow_visible,		 offset(m_overflow));
 	m_text_align	 = (text_align)		  el->get_enum_property( _text_align_,		true,	text_align_left,		 offset(m_text_align));
-	m_vertical_align = (vertical_align)	  el->get_enum_property( _vertical_align_,	true,	va_baseline,			 offset(m_vertical_align));
+	m_vertical_align = (vertical_align)	  el->get_enum_property( _vertical_align_,	false,	va_baseline,			 offset(m_vertical_align));
 	m_text_transform = (text_transform)	  el->get_enum_property( _text_transform_,	true,	text_transform_none,	 offset(m_text_transform));
 	m_white_space	 = (white_space)	  el->get_enum_property( _white_space_,		true,	white_space_normal,		 offset(m_white_space));
 
