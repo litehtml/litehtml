@@ -129,7 +129,7 @@ int litehtml::render_item_block::get_floats_height(element_float el_float) const
 
         return h;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int h = el_parent->get_floats_height(el_float);
@@ -152,7 +152,7 @@ int litehtml::render_item_block::get_left_floats_height() const
         }
         return h;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int h = el_parent->get_left_floats_height();
@@ -175,7 +175,7 @@ int litehtml::render_item_block::get_right_floats_height() const
         }
         return h;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int h = el_parent->get_right_floats_height();
@@ -208,7 +208,7 @@ int litehtml::render_item_block::get_line_left( int y )
         m_cache_line_left.set_value(y, w);
         return w;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int w = el_parent->get_line_left(y + m_pos.y);
@@ -253,7 +253,7 @@ int litehtml::render_item_block::get_line_right( int y, int def_right )
         m_cache_line_right.set_value(y, w);
         return w;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int w = el_parent->get_line_right(y + m_pos.y, def_right + m_pos.x);
@@ -271,7 +271,7 @@ void litehtml::render_item_block::get_line_left_right( int y, int def_right, int
         ln_right	= get_line_right(y, def_right);
     } else
     {
-        auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+        auto el_parent = parent();
         if (el_parent)
         {
             el_parent->get_line_left_right(y + m_pos.y, def_right + m_pos.x, ln_left, ln_right);
@@ -354,7 +354,7 @@ void litehtml::render_item_block::add_float(const std::shared_ptr<render_item> &
         }
     } else
     {
-        auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+        auto el_parent = parent();
         if (el_parent)
         {
             el_parent->add_float(el, x + m_pos.x, y + m_pos.y);
@@ -470,7 +470,7 @@ int litehtml::render_item_block::find_next_line_top( int top, int width, int def
         }
         return new_top;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int new_top = el_parent->find_next_line_top(top + m_pos.y, width, def_right + m_pos.x);
@@ -511,7 +511,7 @@ void litehtml::render_item_block::update_floats(int dy, const std::shared_ptr<re
         }
     } else
     {
-        auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+        auto el_parent = parent();
         if (el_parent)
         {
             el_parent->update_floats(dy, _parent);
