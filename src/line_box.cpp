@@ -99,7 +99,7 @@ void litehtml::line_box::add_item(std::unique_ptr<line_box_item> item)
 	{
 		item->place_to(m_left + m_width, m_top);
 		m_width += item->width();
-		if(item->get_type() == line_box_item::type_text_part)
+		if(item->get_el()->src_el()->css().get_display() == display_inline_text)
 		{
 			m_baseline = std::max(m_baseline, item->get_el()->css().get_font_metrics().base_line());
 			m_line_height = std::max(m_line_height, item->get_el()->css().get_line_height());
@@ -116,28 +116,53 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 {
 	std::list< std::unique_ptr<line_box_item> > ret_items;
 
-	while(!m_items.empty())
+	if(!last_box)
 	{
-		if(m_items.back()->get_type() == line_box_item::type_text_part)
+		while(!m_items.empty())
 		{
-			// remove empty elements at the end of line
-			if(m_items.back()->get_el()->src_el()->is_break() || m_items.back()->get_el()->src_el()->is_white_space())
+			if (m_items.back()->get_type() == line_box_item::type_text_part)
+			{
+				// remove empty elements at the end of line
+				if (m_items.back()->get_el()->src_el()->is_break() ||
+					m_items.back()->get_el()->src_el()->is_white_space())
+				{
+					m_width -= m_items.back()->width();
+					m_items.back()->get_el()->skip(true);
+					m_items.pop_back();
+				} else
+				{
+					break;
+				}
+			} else if (m_items.back()->get_type() == line_box_item::type_inline_start)
 			{
 				m_width -= m_items.back()->width();
-				m_items.back()->get_el()->skip(true);
+				ret_items.emplace_back(std::move(m_items.back()));
 				m_items.pop_back();
 			} else
 			{
 				break;
 			}
-		} else if(m_items.back()->get_type() == line_box_item::type_inline_start)
+		}
+	} else
+	{
+		// remove trailing spaces
+		auto iter = m_items.rbegin();
+		while(iter != m_items.rend())
 		{
-			m_width -= m_items.back()->width();
-			ret_items.emplace_back(std::move(m_items.back()));
-			m_items.pop_back();
-		} else
-		{
-			break;
+			if ((*iter)->get_type() == line_box_item::type_text_part)
+			{
+				if((*iter)->get_el()->src_el()->is_white_space())
+				{
+					m_width -= (*iter)->width();
+					iter = decltype(iter) (m_items.erase( std::next(iter).base() ));
+				} else
+				{
+					break;
+				}
+			} else
+			{
+				iter++;
+			}
 		}
 	}
 
