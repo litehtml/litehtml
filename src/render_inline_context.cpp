@@ -66,8 +66,7 @@ int litehtml::render_item_inline_context::_render_content(int x, int y, int max_
 
 				case iterator_item_type_start_parent:
 					{
-						auto clear_boxes = position::vector();
-						el->set_inline_boxes(clear_boxes);
+						el->clear_inline_boxes();
 						m_inlines.emplace_back(el);
 						int rw = place_inline(std::unique_ptr<lbi_start>(new lbi_start(el)), max_width);
 						if (rw > ret_width)

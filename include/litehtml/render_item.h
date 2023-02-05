@@ -279,6 +279,7 @@ namespace litehtml
         void calc_document_size( litehtml::size& sz, int x = 0, int y = 0 );
 		virtual void get_inline_boxes( position::vector& boxes ) const {};
 		virtual void set_inline_boxes( position::vector& boxes ) {};
+		virtual void clear_inline_boxes() {};
         void draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned );
         virtual void draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
         virtual int get_draw_vertical_offset() { return 0; }
@@ -457,7 +458,8 @@ namespace litehtml
         {}
 
 		void get_inline_boxes( position::vector& boxes ) const override { boxes = m_boxes; }
-		void set_inline_boxes( position::vector& boxes ) override {m_boxes = boxes; }
+		void set_inline_boxes( position::vector& boxes ) override { m_boxes = boxes; }
+		void clear_inline_boxes() override { m_boxes.clear(); }
 
         std::shared_ptr<render_item> clone() override
         {
