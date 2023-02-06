@@ -33,6 +33,11 @@ int litehtml::line_box_item::bottom() const
 	return m_element->bottom();
 }
 
+int litehtml::line_box_item::right() const
+{
+	return m_element->right();
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 litehtml::lbi_start::lbi_start(const std::shared_ptr<render_item>& element) : line_box_item(element)
@@ -62,6 +67,11 @@ int litehtml::lbi_start::bottom() const
 	return m_pos.y + m_element->pos().height + m_element->content_margins_top() + m_element->content_margins_bottom();
 }
 
+int litehtml::lbi_start::right() const
+{
+	return m_pos.x;
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 litehtml::lbi_end::lbi_end(const std::shared_ptr<render_item>& element) : lbi_start(element)
@@ -74,6 +84,11 @@ void litehtml::lbi_end::place_to(int x, int y)
 {
 	m_pos.x = x;
 	m_pos.y = y;
+}
+
+int litehtml::lbi_end::right() const
+{
+	return m_pos.x + m_pos.width;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -153,6 +168,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			{
 				if((*iter)->get_el()->src_el()->is_white_space())
 				{
+					(*iter)->get_el()->skip(true);
 					m_width -= (*iter)->width();
 					iter = decltype(iter) (m_items.erase( std::next(iter).base() ));
 				} else
@@ -172,6 +188,8 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		m_baseline = m_font_metrics.base_line();
         return ret_items;
     }
+
+	m_min_width = m_items.back()->right();
 
     int spc_x = 0;
 

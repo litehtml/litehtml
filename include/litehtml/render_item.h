@@ -316,6 +316,17 @@ namespace litehtml
         int_int_cache m_cache_line_right;
 
         int _render(int x, int y, int max_width, bool second_pass) override;
+
+		/**
+		 * Render block content.
+		 *
+		 * @param x - horizontal position of the content
+		 * @param y - vertical position of the content
+		 * @param max_width - maximal width of the content
+		 * @param second_pass - true is this is the second pass.
+		 * @param ret_width - input minimal width.
+		 * @return return value is the minimal width of the content in block. Must be greater or equal to ret_width parameter
+		 */
         virtual int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) {return ret_width;}
 
         int place_float(const std::shared_ptr<render_item> &el, int top, int max_width);
@@ -328,7 +339,7 @@ namespace litehtml
         void add_float(const std::shared_ptr<render_item> &el, int x, int y) override;
         int get_cleared_top(const std::shared_ptr<render_item> &el, int line_top) const;
         int find_next_line_top( int top, int width, int def_right ) override;
-        virtual int fix_line_width( int max_width, element_float flt ) { return 0; }
+        virtual void fix_line_width( int max_width, element_float flt ) {}
         void update_floats(int dy, const std::shared_ptr<render_item> &_parent) override;
     public:
         explicit render_item_block(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))
@@ -386,16 +397,17 @@ namespace litehtml
     protected:
         std::vector<std::unique_ptr<litehtml::line_box> > m_line_boxes;
 		std::list< inlines_item > m_inlines;
+		int m_max_line_width;
 
         int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) override;
-        int fix_line_width( int max_width, element_float flt ) override;
+        void fix_line_width( int max_width, element_float flt ) override;
 
-        std::list<std::unique_ptr<line_box_item> > finish_last_box(bool end_of_render = false);
-        int place_inline(std::unique_ptr<line_box_item> item, int max_width);
+        std::list<std::unique_ptr<line_box_item> > finish_last_box(bool end_of_render, int max_width);
+        void place_inline(std::unique_ptr<line_box_item> item, int max_width);
         int new_box(const std::unique_ptr<line_box_item>& el, int max_width, line_context& line_ctx);
         void apply_vertical_align() override;
     public:
-        explicit render_item_inline_context(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el))
+        explicit render_item_inline_context(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el)), m_max_line_width(0)
         {}
 
         std::shared_ptr<render_item> clone() override

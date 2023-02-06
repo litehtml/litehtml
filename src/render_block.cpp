@@ -21,11 +21,8 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
             el->pos().y = new_top + el->content_margins_top();
         }
         add_float(el, 0, 0);
-        ret_width = fix_line_width(max_width, float_left);
-        if(!ret_width)
-        {
-            ret_width = el->right();
-        }
+        fix_line_width(max_width, float_left);
+		ret_width = el->right();
     } else if (el->src_el()->css().get_float() == float_right)
     {
         el->render(0, line_top, line_right);
@@ -40,16 +37,12 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
             el->pos().x = line_right - el->width() + el->content_margins_left();
         }
         add_float(el, 0, 0);
-        ret_width = fix_line_width(max_width, float_right);
+        fix_line_width(max_width, float_right);
+		line_left	= 0;
+		line_right	= max_width;
+		get_line_left_right(line_top, max_width, line_left, line_right);
 
-        if(!ret_width)
-        {
-            line_left	= 0;
-            line_right	= max_width;
-            get_line_left_right(line_top, max_width, line_left, line_right);
-
-            ret_width = ret_width + (max_width - line_right);
-        }
+		ret_width = ret_width + (max_width - line_right);
     }
     return ret_width;
 }

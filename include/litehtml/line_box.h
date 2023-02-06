@@ -50,6 +50,7 @@ namespace litehtml
 		virtual int width() const;
 		virtual int top() const;
 		virtual int bottom() const;
+		virtual int right() const;
 		virtual element_type get_type() const	{ return type_text_part; }
 	};
 
@@ -65,6 +66,7 @@ namespace litehtml
 		position& pos() override { return m_pos; }
 		int top() const override;
 		int bottom() const override;
+		int right() const override;
 		element_type get_type() const override	{ return type_inline_start; }
 	};
 
@@ -74,6 +76,7 @@ namespace litehtml
 		explicit lbi_end(const std::shared_ptr<render_item>& element);
 
 		void place_to(int x, int y) override;
+		int right() const override;
 		element_type get_type() const override	{ return type_inline_end; }
 	};
 
@@ -89,6 +92,7 @@ namespace litehtml
         font_metrics			m_font_metrics;
         int						m_baseline;
         text_align				m_text_align;
+		int 					m_min_width;
 		std::list< std::unique_ptr<line_box_item> > m_items;
     public:
         line_box(int top, int left, int right, int line_height, const font_metrics& fm, text_align align) :
@@ -101,7 +105,8 @@ namespace litehtml
 				m_default_line_height(line_height),
 				m_baseline(0),
 				m_line_height(0),
-				m_text_align(align)
+				m_text_align(align),
+				m_min_width(0)
 		{
         }
 
@@ -111,15 +116,17 @@ namespace litehtml
         int		left() const	{ return m_left;			}
         int		height() const  { return m_height;				}
         int	 	width() const	{ return m_width;				}
+		int	 	line_right() const	{ return m_right;			}
+		int	 	min_width() const	{ return m_min_width;		}
 
         void				add_item(std::unique_ptr<line_box_item> item);
         bool				can_hold(const std::unique_ptr<line_box_item>& item, white_space ws) const;
-		std::list< std::unique_ptr<line_box_item> >	finish(bool last_box = false);
         bool				is_empty() const;
         int					baseline() const;
         int					top_margin() const;
         int					bottom_margin() const;
         void				y_shift(int shift);
+		std::list< std::unique_ptr<line_box_item> >	finish(bool last_box = false);
 		std::list< std::unique_ptr<line_box_item> > new_width(int left, int right);
 		std::shared_ptr<render_item> 		get_last_text_part() const;
 		std::shared_ptr<render_item> 		get_first_text_part() const;
