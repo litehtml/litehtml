@@ -386,7 +386,7 @@ int litehtml::render_item_table::_render(int x, int y, int max_width, bool /*sec
     m_pos.width = table_width;
     m_pos.height = table_height + captions_height;
 
-    return std::min(table_width, max_table_width);
+    return std::min(table_width, max_table_width) + content_margins_left() + content_margins_right();
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
