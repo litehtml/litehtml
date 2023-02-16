@@ -152,7 +152,7 @@ bool litehtml::render_item::get_predefined_height(int& p_height) const
                 p_height = h.calc_percent(ph);
                 if (src_el()->is_body())
                 {
-                    p_height -= content_margins_height();
+                    p_height -= content_offset_height();
                 }
                 return true;
             } else
@@ -180,13 +180,13 @@ int litehtml::render_item::calc_width(int defVal) const
         {
             position client_pos;
             src_el()->get_document()->container()->get_client_rect(client_pos);
-            return w.calc_percent(client_pos.width) - content_margins_width();
+            return w.calc_percent(client_pos.width) - content_offset_width();
         } else
         {
             int pw = el_parent->calc_width(defVal);
             if (src_el()->is_body())
             {
-                pw -= content_margins_width();
+                pw -= content_offset_width();
             }
             return w.calc_percent(pw);
         }
@@ -389,14 +389,16 @@ void litehtml::render_item::render_positioned(render_type rt)
                 {
                     if(!css_left.is_predefined() && css_right.is_predefined())
                     {
-                        el->m_pos.x = css_left.calc_percent(parent_width) + el->content_margins_left();
+                        el->m_pos.x = css_left.calc_percent(parent_width) + el->content_offset_left();
                     } else if(css_left.is_predefined() && !css_right.is_predefined())
                     {
-                        el->m_pos.x = parent_width - css_right.calc_percent(parent_width) - el->m_pos.width - el->content_margins_right();
+                        el->m_pos.x = parent_width - css_right.calc_percent(parent_width) - el->m_pos.width -
+								el->content_offset_right();
                     } else
                     {
-                        el->m_pos.x		= css_left.calc_percent(parent_width) + el->content_margins_left();
-                        el->m_pos.width	= parent_width - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_margins_left() + el->content_margins_right());
+                        el->m_pos.x		= css_left.calc_percent(parent_width) + el->content_offset_left();
+                        el->m_pos.width	= parent_width - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_offset_left() +
+								el->content_offset_right());
                         need_render = true;
                     }
                 }
@@ -405,14 +407,16 @@ void litehtml::render_item::render_positioned(render_type rt)
                 {
                     if(!css_top.is_predefined() && css_bottom.is_predefined())
                     {
-                        el->m_pos.y = css_top.calc_percent(parent_height) + el->content_margins_top();
+                        el->m_pos.y = css_top.calc_percent(parent_height) + el->content_offset_top();
                     } else if(css_top.is_predefined() && !css_bottom.is_predefined())
                     {
-                        el->m_pos.y = parent_height - css_bottom.calc_percent(parent_height) - el->m_pos.height - el->content_margins_bottom();
+                        el->m_pos.y = parent_height - css_bottom.calc_percent(parent_height) - el->m_pos.height -
+								el->content_offset_bottom();
                     } else
                     {
-                        el->m_pos.y			= css_top.calc_percent(parent_height) + el->content_margins_top();
-                        el->m_pos.height	= parent_height - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_margins_top() + el->content_margins_bottom());
+                        el->m_pos.y			= css_top.calc_percent(parent_height) + el->content_offset_top();
+                        el->m_pos.height	= parent_height - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_offset_top() +
+																																			  el->content_offset_bottom());
                         need_render = true;
                     }
                 }
@@ -422,14 +426,16 @@ void litehtml::render_item::render_positioned(render_type rt)
                 {
                     if(!css_left.is_predefined() && css_right.is_predefined())
                     {
-                        el->m_pos.x = css_left.calc_percent(parent_width) + el->content_margins_left() - m_padding.left;
+                        el->m_pos.x = css_left.calc_percent(parent_width) + el->content_offset_left() - m_padding.left;
                     } else if(css_left.is_predefined() && !css_right.is_predefined())
                     {
-                        el->m_pos.x = m_pos.width + m_padding.right - css_right.calc_percent(parent_width) - el->m_pos.width - el->content_margins_right();
+                        el->m_pos.x = m_pos.width + m_padding.right - css_right.calc_percent(parent_width) - el->m_pos.width -
+								el->content_offset_right();
                     } else
                     {
-                        el->m_pos.x		= css_left.calc_percent(parent_width) + el->content_margins_left() - m_padding.left;
-                        el->m_pos.width	= m_pos.width + m_padding.left + m_padding.right - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_margins_left() + el->content_margins_right());
+                        el->m_pos.x		= css_left.calc_percent(parent_width) + el->content_offset_left() - m_padding.left;
+                        el->m_pos.width	= m_pos.width + m_padding.left + m_padding.right - css_left.calc_percent(parent_width) - css_right.calc_percent(parent_width) - (el->content_offset_left() +
+								el->content_offset_right());
                         if (new_width != -1)
                         {
                             el->m_pos.x += (el->m_pos.width - new_width) / 2;
@@ -444,14 +450,16 @@ void litehtml::render_item::render_positioned(render_type rt)
                 {
                     if(!css_top.is_predefined() && css_bottom.is_predefined())
                     {
-                        el->m_pos.y = css_top.calc_percent(parent_height) + el->content_margins_top() - m_padding.top;
+                        el->m_pos.y = css_top.calc_percent(parent_height) + el->content_offset_top() - m_padding.top;
                     } else if(css_top.is_predefined() && !css_bottom.is_predefined())
                     {
-                        el->m_pos.y = m_pos.height + m_padding.bottom - css_bottom.calc_percent(parent_height) - el->m_pos.height - el->content_margins_bottom();
+                        el->m_pos.y = m_pos.height + m_padding.bottom - css_bottom.calc_percent(parent_height) - el->m_pos.height -
+								el->content_offset_bottom();
                     } else
                     {
-                        el->m_pos.y			= css_top.calc_percent(parent_height) + el->content_margins_top() - m_padding.top;
-                        el->m_pos.height	= m_pos.height + m_padding.top + m_padding.bottom - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_margins_top() + el->content_margins_bottom());
+                        el->m_pos.y			= css_top.calc_percent(parent_height) + el->content_offset_top() - m_padding.top;
+                        el->m_pos.height	= m_pos.height + m_padding.top + m_padding.bottom - css_top.calc_percent(parent_height) - css_bottom.calc_percent(parent_height) - (el->content_offset_top() +
+																																												el->content_offset_bottom());
                         if (new_height != -1)
                         {
                             el->m_pos.y += (el->m_pos.height - new_height) / 2;
@@ -568,8 +576,8 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, int x /*= 0*
         {
             position client_pos;
             src_el()->get_document()->container()->get_client_rect(client_pos);
-            m_pos.height = std::max(sz.height, client_pos.height) - content_margins_top() - content_margins_bottom();
-            m_pos.width	 = std::max(sz.width, client_pos.width) - content_margins_left() - content_margins_right();
+            m_pos.height = std::max(sz.height, client_pos.height) - content_offset_top() - content_offset_bottom();
+            m_pos.width	 = std::max(sz.width, client_pos.width) - content_offset_left() - content_offset_right();
         }
     }
 }

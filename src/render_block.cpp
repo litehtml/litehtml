@@ -17,8 +17,8 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
         if(el->right() > line_right)
         {
             int new_top = find_next_line_top(el->top(), el->width(), max_width);
-            el->pos().x = get_line_left(new_top) + el->content_margins_left();
-            el->pos().y = new_top + el->content_margins_top();
+            el->pos().x = get_line_left(new_top) + el->content_offset_left();
+            el->pos().y = new_top + el->content_offset_top();
         }
         add_float(el, 0, 0);
         fix_line_width(max_width, float_left);
@@ -30,11 +30,11 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
         if(line_left + el->width() > line_right)
         {
             int new_top = find_next_line_top(el->top(), el->width(), max_width);
-            el->pos().x = get_line_right(new_top, max_width) - el->width() + el->content_margins_left();
-            el->pos().y = new_top + el->content_margins_top();
+            el->pos().x = get_line_right(new_top, max_width) - el->width() + el->content_offset_left();
+            el->pos().y = new_top + el->content_offset_top();
         } else
         {
-            el->pos().x = line_right - el->width() + el->content_margins_left();
+            el->pos().x = line_right - el->width() + el->content_offset_left();
         }
         add_float(el, 0, 0);
         fix_line_width(max_width, float_right);
@@ -664,8 +664,8 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
     m_pos.clear();
     m_pos.move_to(x, y);
 
-    m_pos.x += content_margins_left();
-    m_pos.y += content_margins_top();
+    m_pos.x += content_offset_left();
+    m_pos.y += content_offset_top();
     if (src_el()->css().get_display() != display_table_cell && !src_el()->css().get_width().is_predefined())
     {
         int w = calc_width(parent_width);
@@ -691,7 +691,7 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
     {
         if (max_width)
         {
-            max_width -= content_margins_left() + content_margins_right();
+            max_width -= content_offset_left() + content_offset_right();
         }
     }
 
@@ -743,8 +743,8 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
     // calculate the final position
 
     m_pos.move_to(x, y);
-    m_pos.x += content_margins_left();
-    m_pos.y += content_margins_top();
+    m_pos.x += content_offset_left();
+    m_pos.y += content_offset_top();
 
     int block_height = 0;
     if (get_predefined_height(block_height))
@@ -815,7 +815,7 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
         }
     }
 
-    ret_width += content_margins_left() + content_margins_right();
+    ret_width += content_offset_left() + content_offset_right();
 
     // re-render with new width
     if (ret_width < max_width && !second_pass && have_parent())
@@ -829,7 +829,7 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
              )))
         {
             _render(x, y, ret_width, true);
-            m_pos.width = ret_width - (content_margins_left() + content_margins_right());
+            m_pos.width = ret_width - (content_offset_left() + content_offset_right());
         }
     }
 

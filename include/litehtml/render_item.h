@@ -168,34 +168,52 @@ namespace litehtml
             return m_borders;
         }
 
-        int content_margins_top() const
+		/**
+		 * Top offset to the element content. Includes paddings, margins and borders.
+		 */
+        int content_offset_top() const
         {
             return m_margins.top + m_padding.top + m_borders.top;
         }
 
-        inline int content_margins_bottom() const
+		/**
+		 * Bottom offset to the element content. Includes paddings, margins and borders.
+		 */
+        inline int content_offset_bottom() const
         {
             return m_margins.bottom + m_padding.bottom + m_borders.bottom;
         }
 
-        int content_margins_left() const
+		/**
+		 * Left offset to the element content. Includes paddings, margins and borders.
+		 */
+        int content_offset_left() const
         {
             return m_margins.left + m_padding.left + m_borders.left;
         }
 
-        int content_margins_right() const
+		/**
+		 * Right offset to the element content. Includes paddings, margins and borders.
+		 */
+        int content_offset_right() const
         {
             return m_margins.right + m_padding.right + m_borders.right;
         }
 
-        int content_margins_width() const
+		/**
+		 * Sum of left and right offsets to the element content. Includes paddings, margins and borders.
+		 */
+        int content_offset_width() const
         {
-            return content_margins_left() + content_margins_right();
+            return content_offset_left() + content_offset_right();
         }
 
-        int content_margins_height() const
+		/**
+		 * Sum of top and bottom offsets to the element content. Includes paddings, margins and borders.
+		 */
+        int content_offset_height() const
         {
-            return content_margins_top() + content_margins_bottom();
+            return content_offset_top() + content_offset_bottom();
         }
 
         void parent(const std::shared_ptr<render_item>& par)

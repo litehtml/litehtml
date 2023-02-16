@@ -8,8 +8,8 @@
 
 void litehtml::line_box_item::place_to(int x, int y)
 {
-	m_element->pos().x = x + m_element->content_margins_left();
-	m_element->pos().y = y + m_element->content_margins_top();
+	m_element->pos().x = x + m_element->content_offset_left();
+	m_element->pos().y = y + m_element->content_offset_top();
 }
 
 litehtml::position& litehtml::line_box_item::pos()
@@ -48,13 +48,13 @@ int litehtml::line_box_item::left() const
 litehtml::lbi_start::lbi_start(const std::shared_ptr<render_item>& element) : line_box_item(element)
 {
 	m_pos.height = m_element->src_el()->css().get_font_metrics().height;
-	m_pos.width = m_element->content_margins_left();
+	m_pos.width = m_element->content_offset_left();
 }
 
 void litehtml::lbi_start::place_to(int x, int y)
 {
-	m_pos.x = x + m_element->content_margins_left();
-	m_pos.y = y + m_element->content_margins_top();
+	m_pos.x = x + m_element->content_offset_left();
+	m_pos.y = y;
 }
 
 int litehtml::lbi_start::width() const
@@ -64,12 +64,12 @@ int litehtml::lbi_start::width() const
 
 int litehtml::lbi_start::top() const
 {
-	return m_pos.y - m_element->content_margins_top();
+	return m_pos.y;
 }
 
 int litehtml::lbi_start::bottom() const
 {
-	return m_pos.y + m_pos.height + m_element->content_margins_top() + m_element->content_margins_bottom();
+	return m_pos.y + m_pos.height;
 }
 
 int litehtml::lbi_start::right() const
@@ -79,7 +79,7 @@ int litehtml::lbi_start::right() const
 
 int litehtml::lbi_start::left() const
 {
-	return m_pos.x - m_element->content_margins_left();
+	return m_pos.x - m_element->content_offset_left();
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -87,7 +87,7 @@ int litehtml::lbi_start::left() const
 litehtml::lbi_end::lbi_end(const std::shared_ptr<render_item>& element) : lbi_start(element)
 {
 	m_pos.height = m_element->src_el()->css().get_font_metrics().height;
-	m_pos.width = m_element->content_margins_right();
+	m_pos.width = m_element->content_offset_right();
 }
 
 void litehtml::lbi_end::place_to(int x, int y)
@@ -146,7 +146,7 @@ void litehtml::line_box::add_item(std::unique_ptr<line_box_item> item)
 		case line_box_item::type_text_part:
 			if(item->get_el()->src_el()->is_white_space())
 			{
-				add = !m_items.empty() && !have_last_space();
+				add = !is_empty() && !have_last_space();
 			}
 			break;
 		case line_box_item::type_inline_start:
@@ -205,7 +205,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		{
 			if (m_items.back()->get_type() == line_box_item::type_text_part)
 			{
-				// remove empty elements at the end of line
+				// remove trailing spaces
 				if (m_items.back()->get_el()->src_el()->is_break() ||
 					m_items.back()->get_el()->src_el()->is_white_space())
 				{
@@ -218,6 +218,8 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 				}
 			} else if (m_items.back()->get_type() == line_box_item::type_inline_start)
 			{
+				// remove trailing empty inline_start markers
+				// these markers will be added at the beginning of the next line box
 				m_width -= m_items.back()->width();
 				ret_items.emplace_back(std::move(m_items.back()));
 				m_items.pop_back();
@@ -238,6 +240,23 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 				{
 					(*iter)->get_el()->skip(true);
 					m_width -= (*iter)->width();
+					// Space can be between text and inline_end marker
+					// We have to shift all items on the right side
+					if(iter != m_items.rbegin())
+					{
+						auto r_iter = iter;
+						r_iter--;
+						while (true)
+						{
+							(*r_iter)->pos().x -= (*iter)->width();
+							if (r_iter == m_items.rbegin())
+							{
+								break;
+							}
+							r_iter--;
+						}
+					}
+					// erase white space element
 					iter = decltype(iter) (m_items.erase( std::next(iter).base() ));
 				} else
 				{
@@ -347,26 +366,31 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
                 case va_super:
 					{
 						int bl = calc_va_baseline(current_context, lbi->get_el()->css().get_vertical_align(), current_context.fm, line_top, line_bottom);
-						lbi->pos().y = bl - lbi->get_el()->height() + lbi->get_el()->get_base_line() + lbi->get_el()->content_margins_top();
+						lbi->pos().y = bl - lbi->get_el()->height() + lbi->get_el()->get_base_line() +
+								lbi->get_el()->content_offset_top();
 					}
 					break;
 				case va_bottom:
-					lbi->pos().y = line_bottom - lbi->get_el()->height() + lbi->get_el()->content_margins_top();
+					lbi->pos().y = line_bottom - lbi->get_el()->height() + lbi->get_el()->content_offset_top();
 					break;
 				case va_top:
-					lbi->pos().y = line_top + lbi->get_el()->content_margins_top();
+					lbi->pos().y = line_top + lbi->get_el()->content_offset_top();
 					break;
                 case va_baseline:
-					lbi->pos().y = current_context.baseline - lbi->get_el()->height() + lbi->get_el()->get_base_line() + lbi->get_el()->content_margins_top();
+					lbi->pos().y = current_context.baseline - lbi->get_el()->height() + lbi->get_el()->get_base_line() +
+							lbi->get_el()->content_offset_top();
                     break;
                 case va_text_top:
-					lbi->pos().y = current_context.baseline - current_context.fm.height + current_context.fm.base_line() + lbi->get_el()->content_margins_top();
+					lbi->pos().y = current_context.baseline - current_context.fm.height + current_context.fm.base_line() +
+							lbi->get_el()->content_offset_top();
                     break;
 				case va_text_bottom:
-					lbi->pos().y = current_context.baseline + current_context.fm.base_line() - lbi->get_el()->height() + lbi->get_el()->content_margins_top();
+					lbi->pos().y = current_context.baseline + current_context.fm.base_line() - lbi->get_el()->height() +
+							lbi->get_el()->content_offset_top();
 					break;
                 case va_middle:
-					lbi->pos().y = current_context.baseline - current_context.fm.x_height / 2 - lbi->get_el()->height() / 2 + lbi->get_el()->content_margins_top();
+					lbi->pos().y = current_context.baseline - current_context.fm.x_height / 2 - lbi->get_el()->height() / 2 +
+							lbi->get_el()->content_offset_top();
                     break;
             }
         }
@@ -459,10 +483,10 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
         {
             if(lbi->get_el()->css().get_vertical_align() == va_top)
 			{
-				lbi->pos().y = m_top + lbi->get_el()->content_margins_top();
+				lbi->pos().y = m_top + lbi->get_el()->content_offset_top();
 			} else if(lbi->get_el()->css().get_vertical_align() == va_bottom)
 			{
-				lbi->pos().y = m_top + m_height - lbi->get_el()->height() + lbi->get_el()->content_margins_top();
+				lbi->pos().y = m_top + m_height - lbi->get_el()->height() + lbi->get_el()->content_offset_top();
 			}
         }
         lbi->get_el()->apply_relative_shift(m_right - m_left);
@@ -476,8 +500,8 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			}
 			inlines.emplace_back(lbi->get_el());
 			inlines.back().box.x = lbi->left();
-			inlines.back().box.y = lbi->top();
-			inlines.back().box.height = lbi->bottom() - lbi->top();
+			inlines.back().box.y = lbi->top() - lbi->get_el()->content_offset_top();
+			inlines.back().box.height = lbi->bottom() - lbi->top() + lbi->get_el()->content_offset_height();
 		} else if(lbi->get_type() == line_box_item::type_inline_end)
 		{
 			if(!inlines.empty())

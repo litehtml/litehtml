@@ -402,7 +402,7 @@ int litehtml::render_item_inline_context::get_base_line()
     int bl = 0;
     if(!m_line_boxes.empty())
     {
-        bl = m_line_boxes.back()->baseline() + content_margins_bottom();
+        bl = m_line_boxes.back()->baseline() + content_offset_bottom();
     }
     return bl;
 }

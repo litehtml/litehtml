@@ -30,8 +30,8 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
             if(el->src_el()->css().get_position() == element_position_absolute || el->src_el()->css().get_position() == element_position_fixed)
             {
                 el->render(0, child_top, max_width);
-                el->pos().x	+= el->content_margins_left();
-                el->pos().y	+= el->content_margins_top();
+                el->pos().x	+= el->content_offset_left();
+                el->pos().y	+= el->content_offset_top();
             } else
             {
                 child_top = get_cleared_top(el, child_top);
