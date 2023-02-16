@@ -279,6 +279,7 @@ namespace litehtml
         void calc_document_size( litehtml::size& sz, int x = 0, int y = 0 );
 		virtual void get_inline_boxes( position::vector& boxes ) const {};
 		virtual void set_inline_boxes( position::vector& boxes ) {};
+		virtual void add_inline_box( const position& box ) {};
 		virtual void clear_inline_boxes() {};
         void draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned );
         virtual void draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
@@ -396,7 +397,6 @@ namespace litehtml
 		};
     protected:
         std::vector<std::unique_ptr<litehtml::line_box> > m_line_boxes;
-		std::list< inlines_item > m_inlines;
 		int m_max_line_width;
 
         int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) override;
@@ -481,9 +481,11 @@ namespace litehtml
 
 		void get_inline_boxes( position::vector& boxes ) const override { boxes = m_boxes; }
 		void set_inline_boxes( position::vector& boxes ) override { m_boxes = boxes; }
+		void add_inline_box( const position& box ) override { m_boxes.emplace_back(box); };
 		void clear_inline_boxes() override { m_boxes.clear(); }
+		int get_base_line() override { return src_el()->css().get_font_metrics().base_line(); }
 
-        std::shared_ptr<render_item> clone() override
+		std::shared_ptr<render_item> clone() override
         {
             return std::make_shared<render_item_inline>(src_el());
         }

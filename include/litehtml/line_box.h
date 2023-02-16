@@ -34,6 +34,7 @@ namespace litehtml
 		{
 			type_text_part,
 			type_inline_start,
+			type_inline_continue,
 			type_inline_end
 		};
 	protected:
@@ -44,6 +45,7 @@ namespace litehtml
 		line_box_item(const line_box_item& el) = default;
 		line_box_item(line_box_item&&) = default;
 
+		int height() const { return right() - left(); }
 		const std::shared_ptr<render_item>& get_el() const { return m_element; }
 		virtual position& pos();
 		virtual void place_to(int x, int y);
@@ -51,6 +53,7 @@ namespace litehtml
 		virtual int top() const;
 		virtual int bottom() const;
 		virtual int right() const;
+		virtual int left() const;
 		virtual element_type get_type() const	{ return type_text_part; }
 	};
 
@@ -67,6 +70,7 @@ namespace litehtml
 		int top() const override;
 		int bottom() const override;
 		int right() const override;
+		int left() const override;
 		element_type get_type() const override	{ return type_inline_start; }
 	};
 
@@ -77,11 +81,32 @@ namespace litehtml
 
 		void place_to(int x, int y) override;
 		int right() const override;
+		int left() const override;
 		element_type get_type() const override	{ return type_inline_end; }
+	};
+
+	class lbi_continue : public lbi_start
+	{
+	public:
+		explicit lbi_continue(const std::shared_ptr<render_item>& element);
+
+		void place_to(int x, int y) override;
+		int right() const override;
+		int left() const override;
+		int width() const override;
+		element_type get_type() const override	{ return type_inline_continue; }
 	};
 
 	class line_box
     {
+		struct va_context
+		{
+			int 			baseline;
+			font_metrics 	fm;
+
+			va_context() : baseline(0) {}
+		};
+
         int		                m_top;
         int		                m_left;
         int		                m_right;
@@ -134,6 +159,7 @@ namespace litehtml
 	private:
         bool				have_last_space() const;
         bool				is_break_only() const;
+		static int			calc_va_baseline(const va_context& current, vertical_align va, const font_metrics& new_font, int top, int bottom);
     };
 }
 
