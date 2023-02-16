@@ -338,6 +338,15 @@ article, aside, footer, header, hgroup, nav, section
 	display: block;
 }
 
+sub {
+	vertical-align: sub;
+	font-size: smaller;
+}
+
+sup {
+	vertical-align: super;
+	font-size: smaller;
+}
 
 )##"; }
 #endif  // LH_MASTER_CSS_H

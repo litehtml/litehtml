@@ -17,15 +17,12 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
         if(el->right() > line_right)
         {
             int new_top = find_next_line_top(el->top(), el->width(), max_width);
-            el->pos().x = get_line_left(new_top) + el->content_margins_left();
-            el->pos().y = new_top + el->content_margins_top();
+            el->pos().x = get_line_left(new_top) + el->content_offset_left();
+            el->pos().y = new_top + el->content_offset_top();
         }
         add_float(el, 0, 0);
-        ret_width = fix_line_width(max_width, float_left);
-        if(!ret_width)
-        {
-            ret_width = el->right();
-        }
+        fix_line_width(max_width, float_left);
+		ret_width = el->right();
     } else if (el->src_el()->css().get_float() == float_right)
     {
         el->render(0, line_top, line_right);
@@ -33,23 +30,19 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
         if(line_left + el->width() > line_right)
         {
             int new_top = find_next_line_top(el->top(), el->width(), max_width);
-            el->pos().x = get_line_right(new_top, max_width) - el->width() + el->content_margins_left();
-            el->pos().y = new_top + el->content_margins_top();
+            el->pos().x = get_line_right(new_top, max_width) - el->width() + el->content_offset_left();
+            el->pos().y = new_top + el->content_offset_top();
         } else
         {
-            el->pos().x = line_right - el->width() + el->content_margins_left();
+            el->pos().x = line_right - el->width() + el->content_offset_left();
         }
         add_float(el, 0, 0);
-        ret_width = fix_line_width(max_width, float_right);
+        fix_line_width(max_width, float_right);
+		line_left	= 0;
+		line_right	= max_width;
+		get_line_left_right(line_top, max_width, line_left, line_right);
 
-        if(!ret_width)
-        {
-            line_left	= 0;
-            line_right	= max_width;
-            get_line_left_right(line_top, max_width, line_left, line_right);
-
-            ret_width = ret_width + (max_width - line_right);
-        }
+		ret_width = ret_width + (max_width - line_right);
     }
     return ret_width;
 }
@@ -129,7 +122,7 @@ int litehtml::render_item_block::get_floats_height(element_float el_float) const
 
         return h;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int h = el_parent->get_floats_height(el_float);
@@ -152,7 +145,7 @@ int litehtml::render_item_block::get_left_floats_height() const
         }
         return h;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int h = el_parent->get_left_floats_height();
@@ -175,7 +168,7 @@ int litehtml::render_item_block::get_right_floats_height() const
         }
         return h;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int h = el_parent->get_right_floats_height();
@@ -208,7 +201,7 @@ int litehtml::render_item_block::get_line_left( int y )
         m_cache_line_left.set_value(y, w);
         return w;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int w = el_parent->get_line_left(y + m_pos.y);
@@ -253,7 +246,7 @@ int litehtml::render_item_block::get_line_right( int y, int def_right )
         m_cache_line_right.set_value(y, w);
         return w;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int w = el_parent->get_line_right(y + m_pos.y, def_right + m_pos.x);
@@ -271,7 +264,7 @@ void litehtml::render_item_block::get_line_left_right( int y, int def_right, int
         ln_right	= get_line_right(y, def_right);
     } else
     {
-        auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+        auto el_parent = parent();
         if (el_parent)
         {
             el_parent->get_line_left_right(y + m_pos.y, def_right + m_pos.x, ln_left, ln_right);
@@ -354,7 +347,7 @@ void litehtml::render_item_block::add_float(const std::shared_ptr<render_item> &
         }
     } else
     {
-        auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+        auto el_parent = parent();
         if (el_parent)
         {
             el_parent->add_float(el, x + m_pos.x, y + m_pos.y);
@@ -470,7 +463,7 @@ int litehtml::render_item_block::find_next_line_top( int top, int width, int def
         }
         return new_top;
     }
-    auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+    auto el_parent = parent();
     if (el_parent)
     {
         int new_top = el_parent->find_next_line_top(top + m_pos.y, width, def_right + m_pos.x);
@@ -511,7 +504,7 @@ void litehtml::render_item_block::update_floats(int dy, const std::shared_ptr<re
         }
     } else
     {
-        auto el_parent = std::dynamic_pointer_cast<render_item_block>(parent());
+        auto el_parent = parent();
         if (el_parent)
         {
             el_parent->update_floats(dy, _parent);
@@ -671,8 +664,8 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
     m_pos.clear();
     m_pos.move_to(x, y);
 
-    m_pos.x += content_margins_left();
-    m_pos.y += content_margins_top();
+    m_pos.x += content_offset_left();
+    m_pos.y += content_offset_top();
     if (src_el()->css().get_display() != display_table_cell && !src_el()->css().get_width().is_predefined())
     {
         int w = calc_width(parent_width);
@@ -698,7 +691,7 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
     {
         if (max_width)
         {
-            max_width -= content_margins_left() + content_margins_right();
+            max_width -= content_offset_left() + content_offset_right();
         }
     }
 
@@ -750,8 +743,8 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
     // calculate the final position
 
     m_pos.move_to(x, y);
-    m_pos.x += content_margins_left();
-    m_pos.y += content_margins_top();
+    m_pos.x += content_offset_left();
+    m_pos.y += content_offset_top();
 
     int block_height = 0;
     if (get_predefined_height(block_height))
@@ -822,7 +815,7 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
         }
     }
 
-    ret_width += content_margins_left() + content_margins_right();
+    ret_width += content_offset_left() + content_offset_right();
 
     // re-render with new width
     if (ret_width < max_width && !second_pass && have_parent())
@@ -836,7 +829,7 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, bool secon
              )))
         {
             _render(x, y, ret_width, true);
-            m_pos.width = ret_width - (content_margins_left() + content_margins_right());
+            m_pos.width = ret_width - (content_offset_left() + content_offset_right());
         }
     }
 

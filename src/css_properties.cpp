@@ -17,7 +17,7 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 	m_box_sizing	 = (box_sizing)		  el->get_enum_property( _box_sizing_,		false,	box_sizing_content_box,	 offset(m_box_sizing));
 	m_overflow		 = (overflow)		  el->get_enum_property( _overflow_,		false,	overflow_visible,		 offset(m_overflow));
 	m_text_align	 = (text_align)		  el->get_enum_property( _text_align_,		true,	text_align_left,		 offset(m_text_align));
-	m_vertical_align = (vertical_align)	  el->get_enum_property( _vertical_align_,	true,	va_baseline,			 offset(m_vertical_align));
+	m_vertical_align = (vertical_align)	  el->get_enum_property( _vertical_align_,	false,	va_baseline,			 offset(m_vertical_align));
 	m_text_transform = (text_transform)	  el->get_enum_property( _text_transform_,	true,	text_transform_none,	 offset(m_text_transform));
 	m_white_space	 = (white_space)	  el->get_enum_property( _white_space_,		true,	white_space_normal,		 offset(m_white_space));
 
@@ -215,24 +215,24 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 	m_css_text_indent = el->get_length_property(_text_indent_, true, 0, offset(m_css_text_indent));
 	doc->cvt_units(m_css_text_indent, font_size);
 
-	m_computed_line_height = el->get_length_property(_line_height_, true, normal, offset(m_computed_line_height));
-	if(m_computed_line_height.is_predefined())
+	m_css_line_height = el->get_length_property(_line_height_, true, normal, offset(m_css_line_height));
+	if(m_css_line_height.is_predefined())
 	{
 		m_line_height = m_font_metrics.height;
-	} else if(m_computed_line_height.units() == css_units_none)
+	} else if(m_css_line_height.units() == css_units_none)
 	{
-		m_line_height = (int) (m_computed_line_height.val() * font_size);
+		m_line_height = (int) (m_css_line_height.val() * font_size);
 	} else
 	{
-		m_line_height = doc->to_pixels(m_computed_line_height, font_size, font_size);
-		m_computed_line_height = (float) m_line_height;
+		m_line_height = doc->to_pixels(m_css_line_height, font_size, font_size);
+		m_css_line_height = (float) m_line_height;
 	}
 
 	m_list_style_type     = (list_style_type)     el->get_enum_property(_list_style_type_,     true, list_style_type_disc,        offset(m_list_style_type));
 	m_list_style_position = (list_style_position) el->get_enum_property(_list_style_position_, true, list_style_position_outside, offset(m_list_style_position));
 
 	m_list_style_image = el->get_string_property(_list_style_image_, true, "", offset(m_list_style_image));
-	if (m_list_style_image != "")
+	if (!m_list_style_image.empty())
 	{
 		m_list_style_image_baseurl = el->get_string_property(_list_style_image_baseurl_, true, "", offset(m_list_style_image_baseurl));
 		doc->container()->load_image(m_list_style_image.c_str(), m_list_style_image_baseurl.c_str(), true);
@@ -363,7 +363,7 @@ void litehtml::css_properties::compute_background(const element* el, const docum
 	m_bg.m_image   = el->get_string_property(_background_image_,         false, "", offset(m_bg.m_image));
 	m_bg.m_baseurl = el->get_string_property(_background_image_baseurl_, false, "", offset(m_bg.m_baseurl));
 
-	if(m_bg.m_image != "")
+	if(!m_bg.m_image.empty())
 	{
 		doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.c_str(), true);
 	}

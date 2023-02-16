@@ -853,6 +853,9 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
 		{
 			annon_tag->set_tagName("table_cell");
 			annon_ri = std::make_shared<render_item_block>(annon_tag);
+		} else if(annon_tag->css().get_display() == display_table_row)
+		{
+			annon_ri = std::make_shared<render_item_table_row>(annon_tag);
 		} else
 		{
 			annon_ri = std::make_shared<render_item_table_part>(annon_tag);
@@ -967,6 +970,9 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 			if(annon_tag->css().get_display() == display_table || annon_tag->css().get_display() == display_inline_table)
 			{
 				annon_ri = std::make_shared<render_item_table>(annon_tag);
+			} else if(annon_tag->css().get_display() == display_table_row)
+			{
+				annon_ri = std::make_shared<render_item_table_row>(annon_tag);
 			} else
 			{
 				annon_ri = std::make_shared<render_item_table_part>(annon_tag);

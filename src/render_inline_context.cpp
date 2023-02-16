@@ -6,6 +6,7 @@
 int litehtml::render_item_inline_context::_render_content(int x, int y, int max_width, bool second_pass, int ret_width)
 {
     m_line_boxes.clear();
+	m_max_line_width = 0;
 
     int block_height = 0;
 
@@ -27,39 +28,54 @@ int litehtml::render_item_inline_context::_render_content(int x, int y, int max_
 
     go_inside_inline go_inside_inlines_selector;
     inline_selector select_inlines;
-    elements_iterator inlines_iter(false, &go_inside_inlines_selector, &select_inlines);
+    elements_iterator inlines_iter(true, &go_inside_inlines_selector, &select_inlines);
 
-    inlines_iter.process(shared_from_this(), [&](const std::shared_ptr<render_item>& el)
+    inlines_iter.process(shared_from_this(), [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type)
         {
-            // skip spaces to make rendering a bit faster
-            if (skip_spaces)
-            {
-                if (el->src_el()->is_white_space())
-                {
-                    if (was_space)
-                    {
-                        el->skip(true);
-                        return;
-                    }
-                    else
-                    {
-                        was_space = true;
-                    }
-                }
-                else
-                {
-                    was_space = false;
-                }
-            }
-            // place element into rendering flow
-            int rw = place_inline(el, max_width);
-            if (rw > ret_width)
-            {
-                ret_width = rw;
-            }
+			switch (item_type)
+			{
+				case iterator_item_type_child:
+					{
+						// skip spaces to make rendering a bit faster
+						if (skip_spaces)
+						{
+							if (el->src_el()->is_white_space())
+							{
+								if (was_space)
+								{
+									el->skip(true);
+									return;
+								} else
+								{
+									was_space = true;
+								}
+							} else
+							{
+								// skip all spaces after line break
+								was_space = el->src_el()->is_break();
+							}
+						}
+						// place element into rendering flow
+						place_inline(std::unique_ptr<line_box_item>(new line_box_item(el)), max_width);
+					}
+					break;
+
+				case iterator_item_type_start_parent:
+					{
+						el->clear_inline_boxes();
+						place_inline(std::unique_ptr<lbi_start>(new lbi_start(el)), max_width);
+					}
+					break;
+
+				case iterator_item_type_end_parent:
+				{
+					place_inline(std::unique_ptr<lbi_end>(new lbi_end(el)), max_width);
+				}
+					break;
+			}
         });
 
-    finish_last_box(true);
+    finish_last_box(true, max_width);
 
     if (!m_line_boxes.empty())
     {
@@ -83,26 +99,27 @@ int litehtml::render_item_inline_context::_render_content(int x, int y, int max_
         }
     }
 
-    return ret_width;
+    return std::max(ret_width, m_max_line_width);
 }
 
-int litehtml::render_item_inline_context::fix_line_width( int max_width, element_float flt )
+void litehtml::render_item_inline_context::fix_line_width( int max_width, element_float flt )
 {
     int ret_width = 0;
     if(!m_line_boxes.empty())
     {
+		auto el_front = m_line_boxes.back()->get_first_text_part();
+
         std::vector<std::shared_ptr<render_item>> els;
-        m_line_boxes.back()->get_elements(els);
         bool was_cleared = false;
-        if(!els.empty() && els.front()->src_el()->css().get_clear() != clear_none)
+        if(el_front && el_front->src_el()->css().get_clear() != clear_none)
         {
-            if(els.front()->src_el()->css().get_clear() == clear_both)
+            if(el_front->src_el()->css().get_clear() == clear_both)
             {
                 was_cleared = true;
             } else
             {
-                if(	(flt == float_left	&& els.front()->src_el()->css().get_clear() == clear_left) ||
-                       (flt == float_right	&& els.front()->src_el()->css().get_clear() == clear_right) )
+                if(	(flt == float_left	&& el_front->src_el()->css().get_clear() == clear_left) ||
+                       (flt == float_right	&& el_front->src_el()->css().get_clear() == clear_right) )
                 {
                     was_cleared = true;
                 }
@@ -111,15 +128,12 @@ int litehtml::render_item_inline_context::fix_line_width( int max_width, element
 
         if(!was_cleared)
         {
+			std::list<std::unique_ptr<line_box_item> > items = std::move(m_line_boxes.back()->items());
             m_line_boxes.pop_back();
 
-            for(const auto& el : els)
+            for(auto& item : items)
             {
-                int rw = place_inline(el, max_width);
-                if(rw > ret_width)
-                {
-                    ret_width = rw;
-                }
+                place_inline(std::move(item), max_width);
             }
         } else
         {
@@ -145,58 +159,56 @@ int litehtml::render_item_inline_context::fix_line_width( int max_width, element
             
             }
 
-            els.clear();
-            m_line_boxes.back()->new_width(line_left, line_right, els);
-            for(auto& el : els)
+            auto items = m_line_boxes.back()->new_width(line_left, line_right);
+            for(auto& item : items)
             {
-                int rw = place_inline(el, max_width);
-                if(rw > ret_width)
-                {
-                    ret_width = rw;
-                }
+                place_inline(std::move(item), max_width);
             }
         }
     }
-
-    return ret_width;
 }
 
-int litehtml::render_item_inline_context::finish_last_box(bool end_of_render)
+std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inline_context::finish_last_box(bool end_of_render, int max_width)
 {
-    int line_top = 0;
+	std::list<std::unique_ptr<line_box_item> > ret;
 
     if(!m_line_boxes.empty())
     {
-        m_line_boxes.back()->finish(end_of_render);
+		ret = m_line_boxes.back()->finish(end_of_render);
 
-        if(m_line_boxes.back()->is_empty())
+        if(m_line_boxes.back()->is_empty() && end_of_render)
         {
-            line_top = m_line_boxes.back()->top();
+			// remove the last empty line
             m_line_boxes.pop_back();
-        }
-
-        if(!m_line_boxes.empty())
-        {
-            line_top = m_line_boxes.back()->bottom();
-        }
+        } else
+		{
+			m_max_line_width = std::max(m_max_line_width,
+										m_line_boxes.back()->min_width() + (max_width - m_line_boxes.back()->line_right()));
+		}
     }
-    return line_top;
+    return ret;
 }
 
-int litehtml::render_item_inline_context::new_box(const std::shared_ptr<render_item> &el, int max_width, line_context& line_ctx)
+int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box_item>& el, int max_width, line_context& line_ctx)
 {
-    line_ctx.top = get_cleared_top(el, finish_last_box());
+	auto items = finish_last_box(false, max_width);
+	int line_top = 0;
+	if(!m_line_boxes.empty())
+	{
+		line_top = m_line_boxes.back()->bottom();
+	}
+    line_ctx.top = get_cleared_top(el->get_el(), line_top);
 
     line_ctx.left = 0;
     line_ctx.right = max_width;
     line_ctx.fix_top();
     get_line_left_right(line_ctx.top, max_width, line_ctx.left, line_ctx.right);
 
-    if(el->src_el()->is_inline_box() || el->src_el()->is_floats_holder())
+    if(el->get_el()->src_el()->is_inline_box() || el->get_el()->src_el()->is_floats_holder())
     {
-        if (el->width() > line_ctx.right - line_ctx.left)
+        if (el->get_el()->width() > line_ctx.right - line_ctx.left)
         {
-            line_ctx.top = find_next_line_top(line_ctx.top, el->width(), max_width);
+            line_ctx.top = find_next_line_top(line_ctx.top, el->get_el()->width(), max_width);
             line_ctx.left = 0;
             line_ctx.right = max_width;
             line_ctx.fix_top();
@@ -219,68 +231,81 @@ int litehtml::render_item_inline_context::new_box(const std::shared_ptr<render_i
         }
     }
 
-    font_metrics fm = src_el()->css().get_font_metrics();
-    m_line_boxes.emplace_back(std::unique_ptr<line_box>(new line_box(line_ctx.top, line_ctx.left + first_line_margin + text_indent, line_ctx.right, src_el()->css().get_line_height(), fm, src_el()->css().get_text_align())));
+    m_line_boxes.emplace_back(std::unique_ptr<line_box>(new line_box(
+			line_ctx.top,
+			line_ctx.left + first_line_margin + text_indent, line_ctx.right,
+			css().get_line_height(),
+			css().get_font_metrics(),
+			css().get_text_align())));
+
+	// Add items returned by finish_last_box function into the new line
+	for(auto& it : items)
+	{
+		m_line_boxes.back()->add_item(std::move(it));
+	}
 
     return line_ctx.top;
 }
 
-int litehtml::render_item_inline_context::place_inline(const std::shared_ptr<render_item> &el, int max_width)
+void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box_item> item, int max_width)
 {
-    if(el->src_el()->css().get_display() == display_none) return 0;
+    if(item->get_el()->src_el()->css().get_display() == display_none) return;
 
-    if(el->src_el()->is_float())
+    if(item->get_el()->src_el()->is_float())
     {
         int line_top = 0;
         if(!m_line_boxes.empty())
         {
             line_top = m_line_boxes.back()->top();
         }
-        return place_float(el, line_top, max_width);
+        int ret = place_float(item->get_el(), line_top, max_width);
+		if(ret > m_max_line_width)
+		{
+			m_max_line_width = ret;
+		}
+		return;
     }
-
-    int ret_width = 0;
 
     line_context line_ctx = {0};
     line_ctx.top = 0;
     if (!m_line_boxes.empty())
     {
-        line_ctx.top = m_line_boxes.back()->top();
+        line_ctx.top = m_line_boxes.back().get()->top();
     }
     line_ctx.left = 0;
     line_ctx.right = max_width;
     line_ctx.fix_top();
     get_line_left_right(line_ctx.top, max_width, line_ctx.left, line_ctx.right);
 
-    switch(el->src_el()->css().get_display())
-    {
-        case display_inline_block:
-        case display_inline_table:
-            ret_width = el->render(line_ctx.left, line_ctx.top, line_ctx.right);
-            break;
-        case display_inline_text:
-        {
-            litehtml::size sz;
-            el->src_el()->get_content_size(sz, line_ctx.right);
-            el->pos() = sz;
-        }
-            break;
-        default:
-            ret_width = 0;
-            break;
-    }
+	if(item->get_type() == line_box_item::type_text_part)
+	{
+		switch (item->get_el()->src_el()->css().get_display())
+		{
+			case display_inline_block:
+			case display_inline_table:
+				item->get_el()->render(line_ctx.left, line_ctx.top, line_ctx.right);
+				break;
+			case display_inline_text:
+			{
+				litehtml::size sz;
+				item->get_el()->src_el()->get_content_size(sz, line_ctx.right);
+				item->get_el()->pos() = sz;
+			}
+				break;
+		}
+	}
 
     bool add_box = true;
     if(!m_line_boxes.empty())
     {
-        if(m_line_boxes.back()->can_hold(el, src_el()->css().get_white_space()))
+        if(m_line_boxes.back()->can_hold(item, src_el()->css().get_white_space()))
         {
             add_box = false;
         }
     }
     if(add_box)
     {
-        new_box(el, max_width, line_ctx);
+        new_box(item, max_width, line_ctx);
     } else if(!m_line_boxes.empty())
     {
         line_ctx.top = m_line_boxes.back()->top();
@@ -294,13 +319,13 @@ int litehtml::render_item_inline_context::place_inline(const std::shared_ptr<ren
         get_line_left_right(line_ctx.top, max_width, line_ctx.left, line_ctx.right);
     }
 
-    if(!el->src_el()->is_inline_box())
+    if(!item->get_el()->src_el()->is_inline_box())
     {
         if(m_line_boxes.size() == 1)
         {
             if(collapse_top_margin())
             {
-                int shift = el->margin_top();
+                int shift = item->get_el()->margin_top();
                 if(shift >= 0)
                 {
                     line_ctx.top -= shift;
@@ -312,9 +337,9 @@ int litehtml::render_item_inline_context::place_inline(const std::shared_ptr<ren
             int shift = 0;
             int prev_margin = m_line_boxes[m_line_boxes.size() - 2]->bottom_margin();
 
-            if(prev_margin > el->margin_top())
+            if(prev_margin > item->get_el()->margin_top())
             {
-                shift = el->margin_top();
+                shift = item->get_el()->margin_top();
             } else
             {
                 shift = prev_margin;
@@ -327,14 +352,7 @@ int litehtml::render_item_inline_context::place_inline(const std::shared_ptr<ren
         }
     }
 
-    m_line_boxes.back()->add_element(el);
-
-    if(el->src_el()->is_inline_box() && !el->skip())
-    {
-        ret_width = el->right() + (max_width - line_ctx.right);
-    }
-
-    return ret_width;
+	m_line_boxes.back()->add_item(std::move(item));
 }
 
 void litehtml::render_item_inline_context::apply_vertical_align()
@@ -384,7 +402,7 @@ int litehtml::render_item_inline_context::get_base_line()
     int bl = 0;
     if(!m_line_boxes.empty())
     {
-        bl = m_line_boxes.back()->baseline() + content_margins_bottom();
+        bl = m_line_boxes.back()->baseline() + content_offset_bottom();
     }
     return bl;
 }

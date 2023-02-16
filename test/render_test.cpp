@@ -13,7 +13,7 @@ using namespace std;
 vector<string> find_htm_files();
 void test(string filename);
 
-const char* test_dir = "../test/"; // ctest is run from litehtml/build
+const char* test_dir = "../test/render/"; // ctest is run from litehtml/build
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 using render_test = testing::TestWithParam<string>;

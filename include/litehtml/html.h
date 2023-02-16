@@ -76,6 +76,11 @@ namespace litehtml
 	{
 		return (float)t_strtod(str.c_str(), endPtr);
 	}
+
+	inline int baseline_align(int line_height, int line_base_line, int height, int baseline)
+	{
+		return (line_height - line_base_line) - (height - baseline);
+	}
 }
 
 #endif  // LH_HTML_H

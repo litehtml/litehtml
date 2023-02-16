@@ -119,10 +119,12 @@ std::shared_ptr<litehtml::render_item> litehtml::element::create_render_item(con
 	   css().get_display() == display_table_column_group ||
 	   css().get_display() == display_table_footer_group ||
 	   css().get_display() == display_table_header_group ||
-	   css().get_display() == display_table_row ||
 	   css().get_display() == display_table_row_group)
 	{
 		ret = std::make_shared<render_item_table_part>(shared_from_this());
+	} else if(css().get_display() == display_table_row)
+	{
+		ret = std::make_shared<render_item_table_row>(shared_from_this());
 	} else if(css().get_display() == display_block ||
 				css().get_display() == display_table_cell ||
 				css().get_display() == display_table_caption ||

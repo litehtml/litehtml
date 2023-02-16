@@ -135,10 +135,10 @@ int litehtml::render_item_image::_render( int x, int y, int _max_width, bool sec
 
     calc_auto_margins(parent_width);
 
-    m_pos.x	+= content_margins_left();
-    m_pos.y += content_margins_top();
+    m_pos.x	+= content_offset_left();
+    m_pos.y += content_offset_top();
 
-    return m_pos.width + content_margins_left() + content_margins_right();
+    return m_pos.width + content_offset_left() + content_offset_right();
 }
 
 int litehtml::render_item_image::calc_max_height(int image_height)

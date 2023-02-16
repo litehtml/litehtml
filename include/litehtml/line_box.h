@@ -27,53 +27,139 @@ namespace litehtml
         }
     };
 
-    class line_box
+	class line_box_item
+	{
+	public:
+		enum element_type
+		{
+			type_text_part,
+			type_inline_start,
+			type_inline_continue,
+			type_inline_end
+		};
+	protected:
+		std::shared_ptr<render_item> m_element;
+	public:
+		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element) {}
+		line_box_item() = default;
+		line_box_item(const line_box_item& el) = default;
+		line_box_item(line_box_item&&) = default;
+
+		int height() const { return right() - left(); }
+		const std::shared_ptr<render_item>& get_el() const { return m_element; }
+		virtual position& pos();
+		virtual void place_to(int x, int y);
+		virtual int width() const;
+		virtual int top() const;
+		virtual int bottom() const;
+		virtual int right() const;
+		virtual int left() const;
+		virtual element_type get_type() const	{ return type_text_part; }
+	};
+
+	class lbi_start : public line_box_item
+	{
+	protected:
+		position m_pos;
+	public:
+		explicit lbi_start(const std::shared_ptr<render_item>& element);
+
+		void place_to(int x, int y) override;
+		int width() const override;
+		position& pos() override { return m_pos; }
+		int top() const override;
+		int bottom() const override;
+		int right() const override;
+		int left() const override;
+		element_type get_type() const override	{ return type_inline_start; }
+	};
+
+	class lbi_end : public lbi_start
+	{
+	public:
+		explicit lbi_end(const std::shared_ptr<render_item>& element);
+
+		void place_to(int x, int y) override;
+		int right() const override;
+		int left() const override;
+		element_type get_type() const override	{ return type_inline_end; }
+	};
+
+	class lbi_continue : public lbi_start
+	{
+	public:
+		explicit lbi_continue(const std::shared_ptr<render_item>& element);
+
+		void place_to(int x, int y) override;
+		int right() const override;
+		int left() const override;
+		int width() const override;
+		element_type get_type() const override	{ return type_inline_continue; }
+	};
+
+	class line_box
     {
-        int		                m_box_top;
-        int		                m_box_left;
-        int		                m_box_right;
-        std::vector< std::shared_ptr<render_item> > m_items;
+		struct va_context
+		{
+			int 			baseline;
+			font_metrics 	fm;
+
+			va_context() : baseline(0) {}
+		};
+
+        int		                m_top;
+        int		                m_left;
+        int		                m_right;
         int						m_height;
         int						m_width;
-        int						m_line_height;
+		int						m_line_height;
+		int						m_default_line_height;
         font_metrics			m_font_metrics;
         int						m_baseline;
         text_align				m_text_align;
+		int 					m_min_width;
+		std::list< std::unique_ptr<line_box_item> > m_items;
     public:
-        line_box(int top, int left, int right, int line_height, font_metrics& fm, text_align align)
-        {
-            m_box_top	    = top;
-            m_box_left	    = left;
-            m_box_right	    = right;
-            m_height		= 0;
-            m_width			= 0;
-            m_font_metrics	= fm;
-            m_line_height	= line_height;
-            m_baseline		= 0;
-            m_text_align	= align;
+        line_box(int top, int left, int right, int line_height, const font_metrics& fm, text_align align) :
+				m_top(top),
+				m_left(left),
+				m_right(right),
+				m_height(0),
+				m_width(0),
+				m_font_metrics(fm),
+				m_default_line_height(line_height),
+				m_baseline(0),
+				m_line_height(0),
+				m_text_align(align),
+				m_min_width(0)
+		{
         }
 
-        int		bottom() const	{ return m_box_top + height();	}
-        int		top() const		{ return m_box_top;				}
-        int		right() const	{ return m_box_left + width();	}
-        int		left() const	{ return m_box_left;			}
+        int		bottom() const	{ return m_top + height();	}
+        int		top() const		{ return m_top;				}
+        int		right() const	{ return m_left + width();	}
+        int		left() const	{ return m_left;			}
+        int		height() const  { return m_height;				}
+        int	 	width() const	{ return m_width;				}
+		int	 	line_right() const	{ return m_right;			}
+		int	 	min_width() const	{ return m_min_width;		}
 
-        int					height() const;
-        int					width() const;
-        void				add_element(const std::shared_ptr<render_item> &el);
-        bool				can_hold(const std::shared_ptr<render_item> &el, white_space ws) const;
-        void				finish(bool last_box = false);
+        void				add_item(std::unique_ptr<line_box_item> item);
+        bool				can_hold(const std::unique_ptr<line_box_item>& item, white_space ws) const;
         bool				is_empty() const;
         int					baseline() const;
-        void				get_elements(std::vector< std::shared_ptr<render_item> >& els);
         int					top_margin() const;
         int					bottom_margin() const;
         void				y_shift(int shift);
-        void				new_width(int left, int right, std::vector< std::shared_ptr<render_item> >& els);
-
-    private:
+		std::list< std::unique_ptr<line_box_item> >	finish(bool last_box = false);
+		std::list< std::unique_ptr<line_box_item> > new_width(int left, int right);
+		std::shared_ptr<render_item> 		get_last_text_part() const;
+		std::shared_ptr<render_item> 		get_first_text_part() const;
+		std::list< std::unique_ptr<line_box_item> >& 	items() { return m_items; }
+	private:
         bool				have_last_space() const;
         bool				is_break_only() const;
+		static int			calc_va_baseline(const va_context& current, vertical_align va, const font_metrics& new_font, int top, int bottom);
     };
 }
 
