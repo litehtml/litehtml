@@ -59,7 +59,7 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
                     }
                 }
 
-                if(el->src_el()->is_replaced() || el->src_el()->is_floats_holder())
+                if(el->src_el()->is_replaced() || el->src_el()->is_floats_holder() || el->src_el()->css().get_display() == display_table)
                 {
                     int ln_left = 0;
                     int ln_right = child_width;
