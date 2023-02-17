@@ -159,10 +159,6 @@ void litehtml::line_box::add_item(std::unique_ptr<line_box_item> item)
 	{
 		item->place_to(m_left + m_width, m_top);
 		m_width += item->width();
-		if(item->get_el()->src_el()->css().get_display() == display_inline_text)
-		{
-			m_line_height = std::max(m_line_height, item->get_el()->css().get_line_height());
-		}
 		m_height = std::max(m_height, item->get_el()->height());
 		m_items.emplace_back(std::move(item));
 	} else
@@ -405,10 +401,12 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		}
 
 		// calculate line height
-		//if(lbi->get_el()->css().get_vertical_align() != va_bottom && lbi->get_el()->css().get_vertical_align() != va_top)
+		line_top = std::min(line_top, lbi->top());
+		line_bottom = std::max(line_bottom, lbi->bottom());
+
+		if(lbi->get_el()->src_el()->css().get_display() == display_inline_text)
 		{
-			line_top = std::min(line_top, lbi->top());
-			line_bottom = std::max(line_bottom, lbi->bottom());
+			m_line_height = std::max(m_line_height, lbi->get_el()->css().get_line_height());
 		}
     }
 
