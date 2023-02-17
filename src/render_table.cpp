@@ -469,7 +469,7 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, int x, int y, cons
     {
         if (flag == draw_block)
         {
-            m_grid->row(row).el_row->src_el()->draw_background(hdc, pos.x, pos.y, clip, shared_from_this());
+            m_grid->row(row).el_row->src_el()->draw_background(hdc, pos.x, pos.y, clip, m_grid->row(row).el_row);
         }
         for (int col = 0; col < m_grid->cols_count(); col++)
         {
