@@ -280,6 +280,12 @@ void litehtml::css_properties::compute_font(const element* el, const document::p
 			if(sz.predef() >= font_size_xx_small && sz.predef() <= font_size_xx_large)
 			{
 				font_size = font_size_table[idx_in_table][sz.predef()];
+			} else if(sz.predef() == font_size_smaller)
+			{
+				font_size = (int) (parent_sz / 1.2);
+			}  else if(sz.predef() == font_size_larger)
+			{
+				font_size = (int) (parent_sz * 1.2);
 			} else
 			{
 				font_size = parent_sz;
@@ -305,6 +311,12 @@ void litehtml::css_properties::compute_font(const element* el, const document::p
 					break;
 				case font_size_xx_large:
 					font_size = doc_font_size * 2;
+					break;
+				case font_size_smaller:
+					font_size = (int) (parent_sz / 1.2);
+					break;
+				case font_size_larger:
+					font_size = (int) (parent_sz * 1.2);
 					break;
 				default:
 					font_size = parent_sz;
