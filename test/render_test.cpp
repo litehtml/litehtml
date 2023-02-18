@@ -41,6 +41,7 @@ vector<string> find_htm_files()
 			ret.push_back(name);
 	}
 	closedir(dir);
+	sort(ret.begin(), ret.end());
 	return ret;
 }
 
@@ -68,7 +69,7 @@ void test(string filename)
 {
 	string html = readfile(filename);
 
-	int width = 800, height = 600; // image will be cropped to contain only the "inked" part
+	int width = 800, height = 1600; // image will be cropped to contain only the "inked" part
 	test_container container(width, height, test_dir);
 
 	auto doc = document::createFromString(html.c_str(), &container);

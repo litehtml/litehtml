@@ -6,9 +6,15 @@ using namespace std;
 string Font::font_dir = "../containers/test/fonts/"; // ctest is run from litehtml/build
 Font::size_name Font::installed_fonts[] =
 {
+	{ 12, "terminus-ascii-bold-12px.yaff" },
 	{ 14, "terminus-ascii-bold-14px.yaff" },
 	{ 16, "terminus-ascii-bold-16px.yaff" },
 	{ 18, "terminus-ascii-bold-18px.yaff" },
+	{ 20, "terminus-ascii-bold-20px.yaff" },
+	{ 22, "terminus-ascii-bold-22px.yaff" },
+	{ 24, "terminus-ascii-bold-24px.yaff" },
+	{ 28, "terminus-ascii-bold-28px.yaff" },
+	{ 32, "terminus-ascii-bold-32px.yaff" },
 	{ 0 }
 };
 
