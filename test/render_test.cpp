@@ -41,6 +41,7 @@ vector<string> find_htm_files()
 			ret.push_back(name);
 	}
 	closedir(dir);
+	sort(ret.begin(), ret.end());
 	return ret;
 }
 
