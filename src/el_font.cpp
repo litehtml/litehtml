@@ -25,6 +25,8 @@ void litehtml::el_font::parse_attributes()
 	if(str)
 	{
 		int sz = atoi(str);
+		if(*str == '+' || *str == '-') sz = 3 + sz; // relative size
+
 		if(sz <= 1)
 		{
 			m_style.add_property(_font_size_, "x-small");
