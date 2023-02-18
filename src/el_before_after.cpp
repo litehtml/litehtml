@@ -17,54 +17,54 @@ void litehtml::el_before_after_base::add_style(const style& style)
 	auto children = m_children;
 	m_children.clear();
 
-	string content = css().get_content();
-	if(!content.empty())
+	const auto& content_property = style.get_property(_content_);
+	if(content_property.m_type == prop_type_string && !content_property.m_string.empty())
 	{
-		int idx = value_index(content, content_property_string);
+		int idx = value_index(content_property.m_string, content_property_string);
 		if(idx < 0)
 		{
 			string fnc;
 			string::size_type i = 0;
-			while(i < content.length() && i != string::npos)
+			while(i < content_property.m_string.length() && i != string::npos)
 			{
-				if(content.at(i) == '"' || content.at(i) == '\'')
+				if(content_property.m_string.at(i) == '"' || content_property.m_string.at(i) == '\'')
 				{
-                    auto chr = content.at(i);
+                    auto chr = content_property.m_string.at(i);
 					fnc.clear();
 					i++;
-					string::size_type pos = content.find(chr, i);
+					string::size_type pos = content_property.m_string.find(chr, i);
 					string txt;
 					if(pos == string::npos)
 					{
-						txt = content.substr(i);
+						txt = content_property.m_string.substr(i);
 						i = string::npos;
 					} else
 					{
-						txt = content.substr(i, pos - i);
+						txt = content_property.m_string.substr(i, pos - i);
 						i = pos + 1;
 					}
 					add_text(txt);
-				} else if(content.at(i) == '(')
+				} else if(content_property.m_string.at(i) == '(')
 				{
 					i++;
 					litehtml::trim(fnc);
 					litehtml::lcase(fnc);
-					string::size_type pos = content.find(')', i);
+					string::size_type pos = content_property.m_string.find(')', i);
 					string params;
 					if(pos == string::npos)
 					{
-						params = content.substr(i);
+						params = content_property.m_string.substr(i);
 						i = string::npos;
 					} else
 					{
-						params = content.substr(i, pos - i);
+						params = content_property.m_string.substr(i, pos - i);
 						i = pos + 1;
 					}
 					add_function(fnc, params);
 					fnc.clear();
 				} else
 				{
-					fnc += content.at(i);
+					fnc += content_property.m_string.at(i);
 					i++;
 				}
 			}
@@ -81,11 +81,26 @@ void litehtml::el_before_after_base::add_text( const string& txt )
 {
 	string word;
 	string esc;
-	for(string::size_type i = 0; i < txt.length(); i++)
+
+	for(auto chr : txt)
 	{
-		if( (txt.at(i) == ' ') || (txt.at(i) == '\t') || (txt.at(i) == '\\' && !esc.empty()) )
+		if(chr == '\\' ||
+			!esc.empty() && esc.length() < 5 && (chr >= '0' && chr <= '9' || chr >= 'A' && chr <= 'Z' || chr >= 'z' && chr <= 'z'))
 		{
-			if(esc.empty())
+			if(!esc.empty() && chr == '\\')
+			{
+				word += convert_escape(esc.c_str() + 1);
+				esc.clear();
+			}
+			esc += chr;
+		} else
+		{
+			if(!esc.empty())
+			{
+				word += convert_escape(esc.c_str() + 1);
+				esc.clear();
+			}
+			if(isspace(chr))
 			{
 				if(!word.empty())
 				{
@@ -93,26 +108,13 @@ void litehtml::el_before_after_base::add_text( const string& txt )
 					appendChild(el);
 					word.clear();
 				}
-
-				element::ptr el = std::make_shared<el_space>(txt.substr(i, 1).c_str(), get_document());
+				word += chr;
+				element::ptr el = std::make_shared<el_text>(word.c_str(), get_document());
 				appendChild(el);
+				word.clear();
 			} else
 			{
-				word += convert_escape(esc.c_str() + 1);
-				esc.clear();
-				if(txt.at(i) == '\\')
-				{
-					esc += txt.at(i);
-				}
-			}
-		} else
-		{
-			if(!esc.empty() || txt.at(i) == '\\')
-			{
-				esc += txt.at(i);
-			} else
-			{
-				word += txt.at(i);
+				word += chr;
 			}
 		}
 	}
