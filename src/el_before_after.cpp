@@ -85,7 +85,7 @@ void litehtml::el_before_after_base::add_text( const string& txt )
 	for(auto chr : txt)
 	{
 		if(chr == '\\' ||
-			!esc.empty() && esc.length() < 5 && (chr >= '0' && chr <= '9' || chr >= 'A' && chr <= 'Z' || chr >= 'z' && chr <= 'z'))
+			!esc.empty() && esc.length() < 5 && (chr >= '0' && chr <= '9' || chr >= 'A' && chr <= 'Z' || chr >= 'a' && chr <= 'z'))
 		{
 			if(!esc.empty() && chr == '\\')
 			{
