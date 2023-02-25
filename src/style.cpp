@@ -1,7 +1,10 @@
 #include "html.h"
 #include "style.h"
 
-std::map<litehtml::string_id, litehtml::string> litehtml::style::m_valid_values =
+namespace litehtml
+{
+
+std::map<string_id, string> style::m_valid_values =
 {
 	{ _display_, style_display_strings },
 	{ _visibility_, visibility_strings },
@@ -29,6 +32,7 @@ std::map<litehtml::string_id, litehtml::string> litehtml::style::m_valid_values 
 	{ _border_bottom_style_, border_style_strings },
 	{ _border_collapse_, border_collapse_strings },
 
+	// these 4 properties are comma-separated lists of keywords, see parse_keyword_comma_list
 	{ _background_attachment_, background_attachment_strings },
 	{ _background_repeat_, background_repeat_strings },
 	{ _background_clip_, background_box_strings },
@@ -42,7 +46,7 @@ std::map<litehtml::string_id, litehtml::string> litehtml::style::m_valid_values 
 	{ _align_self_, flex_align_self_strings },
 };
 
-void litehtml::style::parse(const string& txt, const string& baseurl, document_container* container)
+void style::parse(const string& txt, const string& baseurl, document_container* container)
 {
 	std::vector<string> properties;
 	split_string(txt, properties, ";", "", "\"'");
@@ -53,7 +57,7 @@ void litehtml::style::parse(const string& txt, const string& baseurl, document_c
 	}
 }
 
-void litehtml::style::parse_property(const string& txt, const string& baseurl, document_container* container)
+void style::parse_property(const string& txt, const string& baseurl, document_container* container)
 {
 	string::size_type pos = txt.find_first_of(':');
 	if(pos != string::npos)
@@ -81,7 +85,7 @@ void litehtml::style::parse_property(const string& txt, const string& baseurl, d
 	}
 }
 
-void litehtml::style::add_property(string_id name, const string& val, const string& baseurl, bool important, document_container* container)
+void style::add_property(string_id name, const string& val, const string& baseurl, bool important, document_container* container)
 {
 	if (val.find("var(") != -1) return add_parsed_property(name, property_value(val, important, prop_type_var));
 	if (val == "inherit")       return add_parsed_property(name, property_value(important, prop_type_inherit));
@@ -118,11 +122,6 @@ void litehtml::style::add_property(string_id name, const string& val, const stri
 	case _border_left_style_:
 	case _border_right_style_:
 	case _border_collapse_:
-
-	case _background_attachment_:
-	case _background_repeat_:
-	case _background_clip_:
-	case _background_origin_:
 
 	case _flex_direction_:
 	case _flex_wrap_:
@@ -189,9 +188,14 @@ void litehtml::style::add_property(string_id name, const string& val, const stri
 		break;
 
 	case _background_image_:
-		css::parse_css_url(val, url);
-		add_parsed_property(_background_image_,			property_value(url,     important));
-		add_parsed_property(_background_image_baseurl_, property_value(baseurl, important));
+		parse_background_image(val, baseurl, important);
+		break;
+
+	case _background_attachment_:
+	case _background_repeat_:
+	case _background_clip_:
+	case _background_origin_:
+		parse_keyword_comma_list(name, val, important);
 		break;
 
 	case _background_position_:
@@ -532,7 +536,7 @@ void litehtml::style::add_property(string_id name, const string& val, const stri
 	}
 }
 
-litehtml::css_length litehtml::style::parse_border_width(const string& str)
+css_length style::parse_border_width(const string& str)
 {
 	css_length len;
 	if (t_isdigit(str[0]) || str[0] == '.')
@@ -550,7 +554,7 @@ litehtml::css_length litehtml::style::parse_border_width(const string& str)
 	return len;
 }
 
-void litehtml::style::parse_two_lengths(const string& str, css_length len[2])
+void style::parse_two_lengths(const string& str, css_length len[2])
 {
 	string_vector tokens;
 	split_string(str, tokens, " ");
@@ -567,7 +571,7 @@ void litehtml::style::parse_two_lengths(const string& str, css_length len[2])
 	}
 }
 
-int litehtml::style::parse_four_lengths(const string& str, css_length len[4])
+int style::parse_four_lengths(const string& str, css_length len[4])
 {
 	string_vector tokens;
 	split_string(str, tokens, " ");
@@ -582,78 +586,212 @@ int litehtml::style::parse_four_lengths(const string& str, css_length len[4])
 	return (int)tokens.size();
 }
 
-void litehtml::style::parse_background(const string& val, const string& baseurl, bool important, document_container* container)
+void style::parse_background(const string& val, const string& baseurl, bool important, document_container* container)
 {
-	add_parsed_property(_background_color_,			property_value(web_color::transparent,		 important));
-	add_parsed_property(_background_image_,			property_value("",							 important));
-	add_parsed_property(_background_image_baseurl_,	property_value("",							 important));
-	add_parsed_property(_background_repeat_,		property_value(background_repeat_repeat,	 important));
-	add_parsed_property(_background_origin_,		property_value(background_box_padding,		 important));
-	add_parsed_property(_background_clip_,			property_value(background_box_border,		 important));
-	add_parsed_property(_background_attachment_,	property_value(background_attachment_scroll, important));
+	string_vector tokens;
+	split_string(val, tokens, ",", "", "(");
+	if (tokens.empty()) return;
+
+	web_color color;
+	string_vector images; 
+	int_vector repeats, origins, clips, attachments;
+	length_vector x_positions, y_positions;
+	size_vector sizes;
+
+	for (const auto& token : tokens)
+	{
+		background bg;
+		if (!parse_one_background(token, container, bg))
+			return;
+		
+		color = bg.m_color;
+		images.push_back(bg.m_image[0]);
+		repeats.push_back(bg.m_repeat[0]);
+		origins.push_back(bg.m_origin[0]);
+		clips.push_back(bg.m_clip[0]);
+		attachments.push_back(bg.m_attachment[0]);
+		x_positions.push_back(bg.m_position_x[0]);
+		y_positions.push_back(bg.m_position_y[0]);
+		sizes.push_back(bg.m_size[0]);
+	}
+
+	add_parsed_property(_background_color_,			property_value(color,		important));
+	add_parsed_property(_background_image_,			property_value(images,		important));
+	add_parsed_property(_background_image_baseurl_, property_value(baseurl,		important));
+	add_parsed_property(_background_repeat_,		property_value(repeats,		important));
+	add_parsed_property(_background_origin_,		property_value(origins,		important));
+	add_parsed_property(_background_clip_,			property_value(clips,		important));
+	add_parsed_property(_background_attachment_,	property_value(attachments, important));
+	add_parsed_property(_background_position_x_,	property_value(x_positions, important));
+	add_parsed_property(_background_position_y_,	property_value(y_positions, important));
+	add_parsed_property(_background_size_,			property_value(sizes,		important));
+}
+
+bool style::parse_one_background(const string& val, document_container* container, background& bg)
+{
+	bg.m_color = web_color::transparent;
+	bg.m_image = {""};
+	bg.m_repeat = { background_repeat_repeat };
+	bg.m_origin = { background_box_padding };
+	bg.m_clip = { background_box_border };
+	bg.m_attachment = { background_attachment_scroll };
+	bg.m_position_x = { css_length(0, css_units_percentage) };
+	bg.m_position_y = { css_length(0, css_units_percentage) };
+	bg.m_size = { css_size(css_length::predef_value(background_size_auto), css_length::predef_value(background_size_auto)) };
 
 	if(val == "none")
 	{
-		return;
+		return true;
 	}
 
 	string_vector tokens;
-	split_string(val, tokens, " ", "", "(");
+	split_string(val, tokens, " \t\n\r", "", "(");
+
+	bool color_found = false;
+	bool image_found = false;
 	bool origin_found = false;
+	bool clip_found = false;
+	bool repeat_found = false;
+	bool attachment_found = false;
+
 	string position;
 	for(const auto& token : tokens)
 	{
 		int idx;
 		if(token.substr(0, 3) == "url")
 		{
+			if (image_found) return false;
 			string url;
 			css::parse_css_url(token, url);
-			add_parsed_property(_background_image_,			property_value(url,     important));
-			add_parsed_property(_background_image_baseurl_, property_value(baseurl, important));
+			bg.m_image = { url };
+			image_found = true;
 		} else if( (idx = value_index(token, background_repeat_strings)) >= 0 )
 		{
-			add_parsed_property(_background_repeat_, property_value(idx, important));
+			if (repeat_found) return false;
+			bg.m_repeat = { idx };
+			repeat_found = true;
 		} else if( (idx = value_index(token, background_attachment_strings)) >= 0 )
 		{
-			add_parsed_property(_background_attachment_, property_value(idx, important));
+			if (attachment_found) return false;
+			bg.m_attachment = { idx };
+			attachment_found = true;
 		} else if( (idx = value_index(token, background_box_strings)) >= 0 )
 		{
 			if(!origin_found)
 			{
-				add_parsed_property(_background_origin_, property_value(idx, important));
+				bg.m_origin = { idx };
 				origin_found = true;
 			} else
 			{
-				add_parsed_property(_background_clip_, property_value(idx, important));
+				if (clip_found) return false;
+				bg.m_clip = { idx };
+				clip_found = true;
 			}
 		} else if(	value_in_list(token, background_position_strings) ||
+					token.find('/') != -1 ||
 					t_isdigit(token[0]) ||
 					token[0] == '+'	||
 					token[0] == '-'	||
-					token[0] == '.')
+					token[0] == '.' )
 		{
 			position += " " + token;
 		} else if (web_color::is_color(token, container))
 		{
-			auto color = web_color::from_string(token, container);
-			add_parsed_property(_background_color_, property_value(color, important));
+			if (color_found) return false;
+			bg.m_color = web_color::from_string(token, container);
+			color_found = true;
+		}
+		else
+		{
+			return false;
 		}
 	}
-	parse_background_position(position, important);
+	
+	if (position != "")
+	{
+		string_vector tokens;
+		split_string(position, tokens, "/");
+
+		if (tokens.size() > 2) return false;
+
+		if (tokens.size() == 2 && !parse_one_background_size(tokens[1], bg.m_size[0]))
+			return false;
+
+		if (tokens.size() > 0 && !parse_one_background_position(tokens[0], bg.m_position_x[0], bg.m_position_y[0]))
+			return false;
+	}
+	
+	return true;
 }
 
-void litehtml::style::parse_background_position(const string& val, bool important)
+void style::parse_background_image(const string& val, const string& baseurl, bool important)
+{
+	string_vector tokens;
+	split_string(val, tokens, ",", "", "(");
+	if (tokens.empty()) return;
+
+	string_vector images;
+
+	for (const auto& token : tokens)
+	{
+		string url;
+		css::parse_css_url(token, url);
+		images.push_back(url);
+	}
+
+	add_parsed_property(_background_image_,         property_value(images,  important));
+	add_parsed_property(_background_image_baseurl_, property_value(baseurl, important));
+}
+
+void style::parse_keyword_comma_list(string_id name, const string& val, bool important)
+{
+	string_vector tokens;
+	split_string(val, tokens, ",");
+	if (tokens.empty()) return;
+
+	int_vector vec;
+
+	for (auto& token : tokens)
+	{
+		trim(token);
+		int idx = value_index(token, m_valid_values[name]);
+		if (idx == -1) return;
+		vec.push_back(idx);
+	}
+
+	add_parsed_property(name, property_value(vec, important));
+}
+
+void style::parse_background_position(const string& val, bool important)
+{
+	string_vector tokens;
+	split_string(val, tokens, ",");
+	if (tokens.empty()) return;
+
+	length_vector x_positions, y_positions;
+
+	for (const auto& token : tokens)
+	{
+		css_length x, y;
+		if(!parse_one_background_position(token, x, y)) return;
+		x_positions.push_back(x);
+		y_positions.push_back(y);
+	}
+	
+	add_parsed_property(_background_position_x_, property_value(x_positions, important));
+	add_parsed_property(_background_position_y_, property_value(y_positions, important));
+}
+
+bool style::parse_one_background_position(const string& val, css_length& x, css_length& y)
 {
 	string_vector pos;
 	split_string(val, pos, " \t");
 	
 	if (pos.empty() || pos.size() > 2)
 	{
-		return;
+		return false;
 	}
 	
-	css_length x, y;
-
 	if (pos.size() == 1)
 	{
 		if (value_in_list(pos[0], "left;right;center"))
@@ -731,37 +869,49 @@ void litehtml::style::parse_background_position(const string& val, bool importan
 			break;
 		}
 	}
-
-	add_parsed_property(_background_position_x_, property_value(x, important));
-	add_parsed_property(_background_position_y_, property_value(y, important));
+	return true;
 }
 
-void litehtml::style::parse_background_size(const string& val, bool important)
+void style::parse_background_size(const string& val, bool important)
+{
+	string_vector tokens;
+	split_string(val, tokens, ",");
+	if (tokens.empty()) return;
+
+	size_vector sizes;
+
+	for (const auto& token : tokens)
+	{
+		css_size size;
+		if (!parse_one_background_size(token, size)) return;
+		sizes.push_back(size);
+	}
+
+	add_parsed_property(_background_size_, property_value(sizes, important));
+}
+
+bool style::parse_one_background_size(const string& val, css_size& size)
 {
 	string_vector res;
 	split_string(val, res, " \t");
 	if (res.empty())
 	{
-		return;
+		return false;
 	}
 
-	css_length width, height;
-
-	width.fromString(res[0], background_size_strings);
+	size.width.fromString(res[0], background_size_strings);
 	if (res.size() > 1)
 	{
-		height.fromString(res[1], background_size_strings);
+		size.height.fromString(res[1], background_size_strings);
 	}
 	else
 	{
-		height.predef(background_size_auto);
+		size.height.predef(background_size_auto);
 	}
-
-	add_parsed_property(__litehtml_background_width_,  property_value(width,  important));
-	add_parsed_property(__litehtml_background_height_, property_value(height, important));
+	return true;
 }
 
-void litehtml::style::parse_font(const string& val, bool important)
+void style::parse_font(const string& val, bool important)
 {
 	add_parsed_property(_font_style_,	property_value(font_style_normal,	important));
 	add_parsed_property(_font_variant_, property_value(font_variant_normal,	important));
@@ -824,7 +974,7 @@ void litehtml::style::parse_font(const string& val, bool important)
 	add_parsed_property(_font_family_, property_value(font_family, important));
 }
 
-void litehtml::style::parse_flex(const string& val, bool important)
+void style::parse_flex(const string& val, bool important)
 {
 	auto is_number = [](const string& val)
 	{
@@ -913,7 +1063,7 @@ void litehtml::style::parse_flex(const string& val, bool important)
 	}
 }
 
-void litehtml::style::add_parsed_property( string_id name, const property_value& propval )
+void style::add_parsed_property( string_id name, const property_value& propval )
 {
 	auto prop = m_properties.find(name);
 	if (prop != m_properties.end())
@@ -929,7 +1079,7 @@ void litehtml::style::add_parsed_property( string_id name, const property_value&
 	}
 }
 
-void litehtml::style::remove_property( string_id name, bool important )
+void style::remove_property( string_id name, bool important )
 {
 	auto prop = m_properties.find(name);
 	if(prop != m_properties.end())
@@ -941,7 +1091,7 @@ void litehtml::style::remove_property( string_id name, bool important )
 	}
 }
 
-void litehtml::style::combine(const style& src)
+void style::combine(const style& src)
 {
 	for (const auto& property : src.m_properties)
 	{
@@ -949,7 +1099,7 @@ void litehtml::style::combine(const style& src)
 	}
 }
 
-const litehtml::property_value& litehtml::style::get_property(string_id name) const
+const property_value& style::get_property(string_id name) const
 {
 	auto it = m_properties.find(name);
 	if (it != m_properties.end())
@@ -960,7 +1110,7 @@ const litehtml::property_value& litehtml::style::get_property(string_id name) co
 	return dummy;
 }
 
-void litehtml::style::subst_vars_(string& str, const element* el)
+void style::subst_vars_(string& str, const element* el)
 {
 	while (1)
 	{
@@ -976,7 +1126,7 @@ void litehtml::style::subst_vars_(string& str, const element* el)
 	}
 }
 
-void litehtml::style::subst_vars(const element* el)
+void style::subst_vars(const element* el)
 {
 	for (auto& prop : m_properties)
 	{
@@ -990,3 +1140,5 @@ void litehtml::style::subst_vars(const element* el)
 		}
 	}
 }
+
+} // namespace litehtml

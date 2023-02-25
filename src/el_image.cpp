@@ -49,7 +49,7 @@ void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, 
 		const background* bg = get_background();
 		if (bg)
 		{
-			background_paint bg_paint;
+			std::vector<background_paint> bg_paint;
 			init_background_paint(pos, bg_paint, bg, ri);
 
 			get_document()->container()->draw_background(hdc, bg_paint);
@@ -73,7 +73,7 @@ void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, 
 			bg.border_radius		= css().get_borders().radius.calc_percents(bg.border_box.width, bg.border_box.height);
 			bg.position_x			= pos.x;
 			bg.position_y			= pos.y;
-			get_document()->container()->draw_background(hdc, bg);
+			get_document()->container()->draw_background(hdc, {bg});
 		}
 	}
 

@@ -241,11 +241,13 @@ void cairo_container::draw_image( litehtml::uint_ptr hdc, const char* src, const
 	cairo_restore(cr);
 }
 
-void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::background_paint& bg )
+void cairo_container::draw_background( litehtml::uint_ptr hdc, const std::vector<litehtml::background_paint>& bgvec )
 {
 	cairo_t* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
+
+	const auto& bg = bgvec.back();
 
 	rounded_rectangle(cr, bg.border_box, bg.border_radius);
 	cairo_clip(cr);
@@ -259,61 +261,70 @@ void cairo_container::draw_background( litehtml::uint_ptr hdc, const litehtml::b
 		cairo_paint(cr);
 	}
 
-	std::wstring url;
-	make_url_utf8(bg.image.c_str(), bg.baseurl.c_str(), url);
-
-	lock_images_cache();
-	images_map::iterator img_i = m_images.find(url.c_str());
-	if(img_i != m_images.end() && img_i->second)
+	for (int i = (int)bgvec.size() - 1; i >= 0; i--)
 	{
-		image_ptr bgbmp = img_i->second;
-		
-		image_ptr new_img;
-		if(bg.image_size.width != bgbmp->getWidth() || bg.image_size.height != bgbmp->getHeight())
+		const auto& bg = bgvec[i];
+
+		cairo_rectangle(cr, bg.clip_box.x, bg.clip_box.y, bg.clip_box.width, bg.clip_box.height);
+		cairo_clip(cr);
+
+		std::wstring url;
+		make_url_utf8(bg.image.c_str(), bg.baseurl.c_str(), url);
+
+		lock_images_cache();
+		auto img_i = m_images.find(url);
+		if (img_i != m_images.end() && img_i->second)
 		{
-			new_img = image_ptr(new CTxDIB);
-			bgbmp->resample(bg.image_size.width, bg.image_size.height, new_img.get());
-			bgbmp = new_img;
+			image_ptr bgbmp = img_i->second;
+
+			image_ptr new_img;
+			if (bg.image_size.width != bgbmp->getWidth() || bg.image_size.height != bgbmp->getHeight())
+			{
+				new_img = image_ptr(new CTxDIB);
+				bgbmp->resample(bg.image_size.width, bg.image_size.height, new_img.get());
+				bgbmp = new_img;
+			}
+
+
+			cairo_surface_t* img = cairo_image_surface_create_for_data((unsigned char*)bgbmp->getBits(), CAIRO_FORMAT_ARGB32, bgbmp->getWidth(), bgbmp->getHeight(), bgbmp->getWidth() * 4);
+			cairo_pattern_t* pattern = cairo_pattern_create_for_surface(img);
+			cairo_matrix_t flib_m;
+			cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
+			cairo_matrix_translate(&flib_m, -bg.position_x, -bg.position_y);
+			cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
+			cairo_pattern_set_matrix(pattern, &flib_m);
+
+			switch (bg.repeat)
+			{
+			case litehtml::background_repeat_no_repeat:
+				draw_txdib(cr, bgbmp.get(), bg.position_x, bg.position_y, bgbmp->getWidth(), bgbmp->getHeight());
+				break;
+
+			case litehtml::background_repeat_repeat_x:
+				cairo_set_source(cr, pattern);
+				cairo_rectangle(cr, bg.clip_box.left(), bg.position_y, bg.clip_box.width, bgbmp->getHeight());
+				cairo_fill(cr);
+				break;
+
+			case litehtml::background_repeat_repeat_y:
+				cairo_set_source(cr, pattern);
+				cairo_rectangle(cr, bg.position_x, bg.clip_box.top(), bgbmp->getWidth(), bg.clip_box.height);
+				cairo_fill(cr);
+				break;
+
+			case litehtml::background_repeat_repeat:
+				cairo_set_source(cr, pattern);
+				cairo_rectangle(cr, bg.clip_box.left(), bg.clip_box.top(), bg.clip_box.width, bg.clip_box.height);
+				cairo_fill(cr);
+				break;
+			}
+
+			cairo_pattern_destroy(pattern);
+			cairo_surface_destroy(img);
 		}
-
-
-		cairo_surface_t* img = cairo_image_surface_create_for_data((unsigned char*) bgbmp->getBits(), CAIRO_FORMAT_ARGB32, bgbmp->getWidth(), bgbmp->getHeight(), bgbmp->getWidth() * 4);
-		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(img);
-		cairo_matrix_t flib_m;
-		cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
-		cairo_matrix_translate(&flib_m, -bg.position_x, -bg.position_y);
-		cairo_pattern_set_extend (pattern, CAIRO_EXTEND_REPEAT);
-		cairo_pattern_set_matrix (pattern, &flib_m);
-
-		switch(bg.repeat)
-		{
-		case litehtml::background_repeat_no_repeat:
-			draw_txdib(cr, bgbmp.get(), bg.position_x, bg.position_y, bgbmp->getWidth(), bgbmp->getHeight());
-			break;
-
-		case litehtml::background_repeat_repeat_x:
-			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, bg.clip_box.left(), bg.position_y, bg.clip_box.width, bgbmp->getHeight());
-			cairo_fill(cr);
-			break;
-
-		case litehtml::background_repeat_repeat_y:
-			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, bg.position_x, bg.clip_box.top(), bgbmp->getWidth(), bg.clip_box.height);
-			cairo_fill(cr);
-			break;
-
-		case litehtml::background_repeat_repeat:
-			cairo_set_source(cr, pattern);
-			cairo_rectangle(cr, bg.clip_box.left(), bg.clip_box.top(), bg.clip_box.width, bg.clip_box.height);
-			cairo_fill(cr);
-			break;
-		}
-
-		cairo_pattern_destroy(pattern);
-		cairo_surface_destroy(img);
+		unlock_images_cache();
 	}
-	unlock_images_cache();
+	
 	cairo_restore(cr);
 }
 
