@@ -17,7 +17,6 @@ if(NOT EXTERNAL_GUMBO)
 endif()
 
 set(SOURCE_LITEHTML
-    src/background.cpp
     src/codepoint.cpp
     src/css_length.cpp
     src/css_selector.cpp

@@ -40,8 +40,17 @@ namespace litehtml
 		int						position_x;
 		int						position_y;
 		bool					is_root;
+
 	public:
-		background_paint();
+		background_paint()
+		{
+			attachment		= background_attachment_scroll;
+			repeat			= background_repeat_repeat;
+			color			= web_color::transparent;
+			position_x		= 0;
+			position_y		= 0;
+			is_root			= false;
+		}
 	};
 
 }
