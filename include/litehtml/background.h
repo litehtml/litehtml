@@ -12,22 +12,16 @@ namespace litehtml
 	class background
 	{
 	public:
-		string					m_image;
+		string_vector			m_image;
 		string					m_baseurl;
 		web_color				m_color;
-		background_attachment	m_attachment;
-		css_position			m_position;
-		background_repeat		m_repeat;
-		background_box			m_clip;
-		background_box			m_origin;
-		css_border_radius		m_radius;
-
-	public:
-		background();
-		background(const background& val);
-		~background() = default;
-
-		background& operator=(const background& val);
+		int_vector				m_attachment;
+		length_vector			m_position_x;
+		length_vector			m_position_y;
+		size_vector				m_size;
+		int_vector				m_repeat;
+		int_vector				m_clip;
+		int_vector				m_origin;
 	};
 
 	class background_paint
@@ -46,10 +40,17 @@ namespace litehtml
 		int						position_x;
 		int						position_y;
 		bool					is_root;
+
 	public:
-		background_paint();
-		background_paint(const background_paint& val);
-		background_paint& operator=(const background& val);
+		background_paint()
+		{
+			attachment		= background_attachment_scroll;
+			repeat			= background_repeat_repeat;
+			color			= web_color::transparent;
+			position_x		= 0;
+			position_y		= 0;
+			is_root			= false;
+		}
 	};
 
 }

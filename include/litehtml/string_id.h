@@ -169,8 +169,6 @@ STRING_ID(
 	_background_clip_,
 	_background_attachment_,
 	_background_size_,
-	__litehtml_background_width_,
-	__litehtml_background_height_,
 	_background_position_,
 	_background_position_x_,
 	_background_position_y_,

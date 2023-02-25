@@ -252,36 +252,28 @@ void win32_container::unlock_images_cache()
 	LeaveCriticalSection(&m_img_sync);
 }
 
-static void FillSolidRect(HDC hdc, LPCRECT lpRect, COLORREF clr)
-{
-	COLORREF clrOld = SetBkColor(hdc, clr);
-	ExtTextOut(hdc, 0, 0, ETO_OPAQUE, lpRect, NULL, 0, NULL);
-	SetBkColor(hdc, clrOld);
-}
-
-void win32_container::draw_background( uint_ptr _hdc, const litehtml::background_paint& bg )
+void win32_container::draw_background( uint_ptr _hdc, const std::vector<litehtml::background_paint>& bg )
 {
 	HDC hdc = (HDC)_hdc;
 	apply_clip(hdc);
 
-	RECT rect = { bg.border_box.left(), bg.border_box.top(), bg.border_box.right(), bg.border_box.bottom() };
-	COLORREF color = RGB(bg.color.red, bg.color.green, bg.color.blue);
-	// alpha channel for background color is not supported; alpha below some threshold is considered transparent, above it - opaque
-	if (bg.color.alpha > 30)
-	{
-		FillSolidRect(hdc, &rect, color);
-	}
+	auto border_box = bg.back().border_box;
+	auto color = bg.back().color;
+	fill_rect(hdc, border_box.x, border_box.y, border_box.width, border_box.height, color);
 
-	std::wstring url;
-	make_url_utf8(bg.image.c_str(), bg.baseurl.c_str(), url);
-
-	lock_images_cache();
-	images_map::iterator img = m_images.find(url);
-	if(img != m_images.end() && img->second)
+	for (int i = (int)bg.size() - 1; i >= 0; i--)
 	{
-		draw_img_bg(hdc, img->second, bg);
+		std::wstring url;
+		make_url_utf8(bg[i].image.c_str(), bg[i].baseurl.c_str(), url);
+
+		lock_images_cache();
+		images_map::iterator img = m_images.find(url);
+		if (img != m_images.end() && img->second)
+		{
+			draw_img_bg(hdc, img->second, bg[i]);
+		}
+		unlock_images_cache();
 	}
-	unlock_images_cache();
 
 	release_clip(hdc);
 }

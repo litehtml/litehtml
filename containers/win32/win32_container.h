@@ -34,7 +34,7 @@ public:
 	void		draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker) override;
 	void		load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
 	void		get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
-	void		draw_background(uint_ptr hdc, const litehtml::background_paint& bg) override;
+	void		draw_background(uint_ptr hdc, const std::vector<litehtml::background_paint>& bg) override;
 
 	void		set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) override;
 	void		del_clip() override;

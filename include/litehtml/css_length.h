@@ -32,6 +32,8 @@ namespace litehtml
 		string		to_string() const;
 	};
 
+	using length_vector = std::vector<css_length>;
+
 	// css_length inlines
 
 	inline css_length::css_length()

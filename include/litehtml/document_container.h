@@ -38,7 +38,10 @@ namespace litehtml
 		virtual void				load_image(const char* src, const char* baseurl, bool redraw_on_ready) = 0;
 		virtual void				get_image_size(const char* src, const char* baseurl, litehtml::size& sz) = 0;
 		// Note: regular <img> images are also drawn with draw_background
-		virtual void				draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg) = 0;
+		// bg is guaranteed to have at least one item.
+		// backgrounds in bg are in CSS order - the last one is the farthest from the user.
+		// only the last background has valid background-color.
+		virtual void				draw_background(litehtml::uint_ptr hdc, const std::vector<litehtml::background_paint>& bg) = 0;
 		virtual void				draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) = 0;
 
 		virtual	void				set_caption(const char* caption) = 0;

@@ -41,10 +41,10 @@ int test_container::pt_to_px(int pt) const { return pt * 96 / 72; }
 int test_container::get_default_font_size() const { return 16; }
 const char* test_container::get_default_font_name() const { return ""; }
 
-void test_container::draw_background(uint_ptr hdc, const background_paint& bg)
+void test_container::draw_background(uint_ptr hdc, const std::vector<background_paint>& bg)
 {
 	Bitmap* bmp = (Bitmap*)hdc;
-	bmp->fill_rect(bg.border_box, bg.color);
+	bmp->fill_rect(bg.back().border_box, bg.back().color);
 }
 
 void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool root)

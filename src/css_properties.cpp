@@ -356,28 +356,34 @@ void litehtml::css_properties::compute_background(const element* el, const docum
 	int font_size = get_font_size();
 
 	m_bg.m_color		= el->get_color_property(_background_color_, false, web_color::transparent, offset(m_bg.m_color));
-	
-	m_bg.m_position.x	= el->get_length_property(_background_position_x_, false, css_length(0, css_units_percentage), offset(m_bg.m_position.x));
-	m_bg.m_position.y	= el->get_length_property(_background_position_y_, false, css_length(0, css_units_percentage), offset(m_bg.m_position.y));
-	m_bg.m_position.width	= el->get_length_property(__litehtml_background_width_,  false, css_length::predef_value(background_size_auto), offset(m_bg.m_position.width));
-	m_bg.m_position.height	= el->get_length_property(__litehtml_background_height_, false, css_length::predef_value(background_size_auto), offset(m_bg.m_position.height));
 
-	doc->cvt_units(m_bg.m_position.x,		font_size);
-	doc->cvt_units(m_bg.m_position.y,		font_size);
-	doc->cvt_units(m_bg.m_position.width,	font_size);
-	doc->cvt_units(m_bg.m_position.height,	font_size);
+	const css_size auto_auto(css_length::predef_value(background_size_auto), css_length::predef_value(background_size_auto));
+	m_bg.m_position_x	= el->get_length_vector_property(_background_position_x_, false, { css_length(0, css_units_percentage) }, offset(m_bg.m_position_x));
+	m_bg.m_position_y	= el->get_length_vector_property(_background_position_y_, false, { css_length(0, css_units_percentage) }, offset(m_bg.m_position_y));
+	m_bg.m_size			= el->get_size_vector_property  (_background_size_,       false, { auto_auto }, offset(m_bg.m_size));
 
-	m_bg.m_attachment = (background_attachment) el->get_enum_property(_background_attachment_, false, background_attachment_scroll, offset(m_bg.m_attachment));
-	m_bg.m_repeat     = (background_repeat) 	el->get_enum_property(_background_repeat_,     false, background_repeat_repeat,     offset(m_bg.m_repeat));
-	m_bg.m_clip       = (background_box) 	    el->get_enum_property(_background_clip_,       false, background_box_border,        offset(m_bg.m_clip));
-	m_bg.m_origin     = (background_box)        el->get_enum_property(_background_origin_,     false, background_box_padding,       offset(m_bg.m_origin));
-
-	m_bg.m_image   = el->get_string_property(_background_image_,         false, "", offset(m_bg.m_image));
-	m_bg.m_baseurl = el->get_string_property(_background_image_baseurl_, false, "", offset(m_bg.m_baseurl));
-
-	if(!m_bg.m_image.empty())
+	for (auto& x : m_bg.m_position_x) doc->cvt_units(x, font_size);
+	for (auto& y : m_bg.m_position_y) doc->cvt_units(y, font_size);
+	for (auto& size : m_bg.m_size)
 	{
-		doc->container()->load_image(m_bg.m_image.c_str(), m_bg.m_baseurl.c_str(), true);
+		doc->cvt_units(size.width,  font_size);
+		doc->cvt_units(size.height, font_size);
+	}
+
+	m_bg.m_attachment = el->get_int_vector_property(_background_attachment_, false, { background_attachment_scroll }, offset(m_bg.m_attachment));
+	m_bg.m_repeat     = el->get_int_vector_property(_background_repeat_,     false, { background_repeat_repeat },     offset(m_bg.m_repeat));
+	m_bg.m_clip       = el->get_int_vector_property(_background_clip_,       false, { background_box_border },        offset(m_bg.m_clip));
+	m_bg.m_origin     = el->get_int_vector_property(_background_origin_,     false, { background_box_padding },       offset(m_bg.m_origin));
+
+	m_bg.m_image   = el->get_string_vector_property(_background_image_,  false, {""}, offset(m_bg.m_image));
+	m_bg.m_baseurl = el->get_string_property(_background_image_baseurl_, false, "",   offset(m_bg.m_baseurl));
+
+	for (const auto& image : m_bg.m_image)
+	{
+		if (!image.empty())
+		{
+			doc->container()->load_image(image.c_str(), m_bg.m_baseurl.c_str(), true);
+		}
 	}
 }
 
