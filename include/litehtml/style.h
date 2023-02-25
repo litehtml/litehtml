@@ -117,6 +117,12 @@ namespace litehtml
 
 			switch (val.m_type)
 			{
+			case prop_type_invalid:
+				new(this) property_value();
+				break;
+			case prop_type_inherit:
+				new(this) property_value(val.m_important, val.m_type);
+				break;
 			case prop_type_string:
 			case prop_type_var:
 				new(this) property_value(val.m_string, val.m_important, val.m_type);
