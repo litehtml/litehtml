@@ -105,6 +105,8 @@ namespace litehtml
 		void							append_children_from_string(element& parent, const char* str);
 		void							dump(dumper& cout);
 
+		void update();
+
 		static litehtml::document::ptr	createFromString(const char* str, litehtml::document_container* objPainter, const char* master_styles = litehtml::master_css, const char* user_styles = "");
 	
 	private:
