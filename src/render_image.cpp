@@ -2,7 +2,8 @@
 #include "render_item.h"
 #include "document.h"
 
-int litehtml::render_item_image::_render( int x, int y, int _max_width, bool second_pass )
+int
+litehtml::render_item_image::_render(int x, int y, int _max_width, const containing_block_context &containing_block_size, bool second_pass)
 {
     int parent_width = _max_width;
 
@@ -45,7 +46,7 @@ int litehtml::render_item_image::_render( int x, int y, int _max_width, bool sec
         // check for max-height
         if(!src_el()->css().get_max_height().is_predefined())
         {
-            int max_height = calc_max_height(sz.height);
+            int max_height = calc_max_height(sz.height, containing_block_size.height);
             if(m_pos.height > max_height)
             {
                 m_pos.height = max_height;
@@ -60,7 +61,7 @@ int litehtml::render_item_image::_render( int x, int y, int _max_width, bool sec
         }
     } else if(!src_el()->css().get_height().is_predefined() && src_el()->css().get_width().is_predefined())
     {
-        if (!get_predefined_height(m_pos.height))
+        if (!get_predefined_height(m_pos.height, containing_block_size.height))
         {
             m_pos.height = (int)src_el()->css().get_height().val();
         }
@@ -68,7 +69,7 @@ int litehtml::render_item_image::_render( int x, int y, int _max_width, bool sec
         // check for max-height
         if(!src_el()->css().get_max_height().is_predefined())
         {
-            int max_height = calc_max_height(sz.height);
+            int max_height = calc_max_height(sz.height, containing_block_size.height);
             if(m_pos.height > max_height)
             {
                 m_pos.height = max_height;
@@ -107,7 +108,7 @@ int litehtml::render_item_image::_render( int x, int y, int _max_width, bool sec
     {
         m_pos.width		= (int) src_el()->css().get_width().calc_percent(parent_width);
         m_pos.height	= 0;
-        if (!get_predefined_height(m_pos.height))
+        if (!get_predefined_height(m_pos.height, containing_block_size.height))
         {
             m_pos.height = (int)src_el()->css().get_height().val();
         }
@@ -115,7 +116,7 @@ int litehtml::render_item_image::_render( int x, int y, int _max_width, bool sec
         // check for max-height
         if(!src_el()->css().get_max_height().is_predefined())
         {
-            int max_height = calc_max_height(sz.height);
+            int max_height = calc_max_height(sz.height, containing_block_size.height);
             if(m_pos.height > max_height)
             {
                 m_pos.height = max_height;
@@ -141,20 +142,9 @@ int litehtml::render_item_image::_render( int x, int y, int _max_width, bool sec
     return m_pos.width + content_offset_left() + content_offset_right();
 }
 
-int litehtml::render_item_image::calc_max_height(int image_height)
+int litehtml::render_item_image::calc_max_height(int image_height, int containing_block_height)
 {
     document::ptr doc = src_el()->get_document();
-    int percentSize = 0;
-    if (src_el()->css().get_max_height().units() == css_units_percentage)
-    {
-        auto el_parent = parent();
-        if (el_parent)
-        {
-            if (!el_parent->get_predefined_height(percentSize))
-            {
-                return image_height;
-            }
-        }
-    }
-    return doc->to_pixels(src_el()->css().get_max_height(), src_el()->css().get_font_size(), percentSize);
+    return doc->to_pixels(src_el()->css().get_max_height(), src_el()->css().get_font_size(),
+						  containing_block_height == 0 ? image_height : containing_block_height);
 }

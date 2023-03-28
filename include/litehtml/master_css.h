@@ -37,8 +37,6 @@ script {
 body {
 	display:block; 
 	margin:8px; 
-    height:100%;
-    width:100%;
 }
 
 p {

@@ -45,10 +45,12 @@ namespace litehtml
 		int		width;
 		int		height;
 
-		size()
+		size(int w, int h) : width(w), height(h)
 		{
-			width	= 0;
-			height	= 0;
+		}
+
+		size() : width(0), height(0)
+		{
 		}
 	};
 
@@ -180,6 +182,46 @@ namespace litehtml
 		draw_floats,
 		draw_inlines,
 		draw_positioned,
+	};
+
+	struct containing_block_context
+	{
+		enum cbc_value_type
+		{
+			cbc_value_type_absolute,	// width/height of containing block is defined as absolute value
+			cbc_value_type_percentage,	// width/height of containing block is defined as percentage
+			cbc_value_type_auto,		// width/height of containing block is defined as auto
+			cbc_value_type_none,		// min/max width/height of containing block is defined as none
+		};
+
+		int width;						// width of the containing block
+		cbc_value_type width_type;
+		int min_width;
+		cbc_value_type min_width_type;
+		int max_width;
+		cbc_value_type max_width_type;
+
+		int height;						// height of the containing block
+		cbc_value_type height_type;
+		int min_height;
+		cbc_value_type min_height_type;
+		int max_height;
+		cbc_value_type max_height_type;
+
+		containing_block_context() :
+				width(0),
+				width_type(cbc_value_type_auto),
+				min_width(0),
+				min_width_type(cbc_value_type_none),
+				max_width(0),
+				max_width_type(cbc_value_type_none),
+				height(0),
+				height_type(cbc_value_type_auto),
+				min_height(0),
+				min_height_type(cbc_value_type_none),
+				max_height(0),
+				max_height_type(cbc_value_type_none)
+		{}
 	};
 
 #define  style_display_strings		"none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text;flex;inline-flex"

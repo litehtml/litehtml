@@ -2,7 +2,8 @@
 #include "render_item.h"
 #include "document.h"
 
-int litehtml::render_item_block_context::_render_content(int x, int y, int max_width, bool second_pass, int ret_width)
+int litehtml::render_item_block_context::_render_content(int x, int y, int max_width, bool second_pass, int ret_width,
+														 const containing_block_context &containing_block_size)
 {
     element_position el_position;
 
@@ -20,7 +21,7 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
 
         if(el->src_el()->css().get_float() != float_none)
         {
-            int rw = place_float(el, child_top, max_width);
+            int rw = place_float(el, child_top, max_width, containing_block_size);
             if (rw > ret_width)
             {
                 ret_width = rw;
@@ -29,7 +30,7 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
         {
             if(el->src_el()->css().get_position() == element_position_absolute || el->src_el()->css().get_position() == element_position_fixed)
             {
-                el->render(0, child_top, max_width);
+                el->render(0, child_top, max_width, containing_block_size);
             } else
             {
                 child_top = get_cleared_top(el, child_top);
@@ -70,7 +71,7 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
                     el->pos().height = el->src_el()->css().get_height().calc_percent(el_parent ? el_parent->pos().height : 0);
                 }
 
-                int rw = el->render(child_x, child_top, child_width);
+                int rw = el->render(child_x, child_top, child_width, containing_block_size);
                 if (rw > ret_width)
                 {
                     ret_width = rw;
@@ -81,14 +82,14 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
 
                 if (el->src_el()->css().get_position() == element_position_relative)
                 {
-                    el->apply_relative_shift(max_width);
+                    el->apply_relative_shift(containing_block_size);
                 }
             }
         }
     }
 
     int block_height = 0;
-    if (get_predefined_height(block_height))
+    if (get_predefined_height(block_height, containing_block_size.height))
     {
         m_pos.height = block_height;
     } else

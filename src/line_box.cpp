@@ -191,7 +191,7 @@ int litehtml::line_box::calc_va_baseline(const va_context& current, vertical_ali
 	}
 }
 
-std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish(bool last_box)
+std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish(bool last_box, const containing_block_context &containing_block_size)
 {
 	std::list< std::unique_ptr<line_box_item> > ret_items;
 
@@ -272,8 +272,6 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
         return ret_items;
     }
 
-	m_min_width = m_items.back()->right();
-
     int spc_x = 0;
 
     int add_x = 0;
@@ -317,8 +315,11 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 	current_context.baseline = 0;
 	current_context.fm = m_font_metrics;
 
+	m_min_width = 0;
+
     for (const auto& lbi : m_items)
     {
+		m_min_width += lbi->get_rendered_min_width();
 		{ // start text_align_justify
 			if (spc_x && counter)
 			{
@@ -487,7 +488,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 				lbi->pos().y = m_top + m_height - lbi->get_el()->height() + lbi->get_el()->content_offset_top();
 			}
         }
-        lbi->get_el()->apply_relative_shift(m_right - m_left);
+        lbi->get_el()->apply_relative_shift(containing_block_size);
 
 		// Calculate and push inline box into the render item element
 		if(lbi->get_type() == line_box_item::type_inline_start || lbi->get_type() == line_box_item::type_inline_continue)
@@ -513,7 +514,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 
 	for(auto iter = inlines.rbegin(); iter != inlines.rend(); ++iter)
 	{
-		iter->box.width =  m_min_width - iter->box.x;
+		iter->box.width =  m_items.back()->right() - iter->box.x;
 		iter->element->add_inline_box(iter->box);
 
 		ret_items.emplace_front(std::unique_ptr<line_box_item>(new lbi_continue(iter->element)));
