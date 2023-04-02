@@ -144,11 +144,6 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 		name = m_container->get_default_font_name();
 	}
 
-	if(!size)
-	{
-		size = container()->get_default_font_size();
-	}
-
 	char strSize[20];
 	t_itoa(size, strSize, 20, 10);
 
@@ -255,14 +250,13 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 
 litehtml::uint_ptr litehtml::document::get_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
 {
+	if(!size)
+	{
+		return 0;
+	}
 	if(!name)
 	{
 		name = m_container->get_default_font_name();
-	}
-
-	if(!size)
-	{
-		size = m_container->get_default_font_size();
 	}
 
 	char strSize[20];

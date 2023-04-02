@@ -1265,9 +1265,15 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 	{
 		if (m_css.get_list_style_type() >= list_style_type_armenian)
 		{
-			auto tw_space = get_document()->container()->text_width(" ", lm.font);
-			lm.pos.x = pos.x - tw_space * 2;
-			lm.pos.width = tw_space;
+			if(lm.font)
+			{
+				auto tw_space = get_document()->container()->text_width(" ", lm.font);
+				lm.pos.x = pos.x - tw_space * 2;
+				lm.pos.width = tw_space;
+			} else
+			{
+				lm.pos.width = 0;
+			}
 		}
 		else
 		{
@@ -1285,12 +1291,15 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 		}
 		else
 		{
-			marker_text += ".";
-			auto tw = get_document()->container()->text_width(marker_text.c_str(), lm.font);
-			auto text_pos = lm.pos;
-			text_pos.move_to(text_pos.right() - tw, text_pos.y);
-			text_pos.width = tw;
-			get_document()->container()->draw_text(hdc, marker_text.c_str(), lm.font, lm.color, text_pos);
+			if(lm.font)
+			{
+				marker_text += ".";
+				auto tw = get_document()->container()->text_width(marker_text.c_str(), lm.font);
+				auto text_pos = lm.pos;
+				text_pos.move_to(text_pos.right() - tw, text_pos.y);
+				text_pos.width = tw;
+				get_document()->container()->draw_text(hdc, marker_text.c_str(), lm.font, lm.color, text_pos);
+			}
 		}
 	}
 	else
