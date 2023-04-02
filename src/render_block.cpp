@@ -684,7 +684,8 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 	if(cb_size.width_type == containing_block_context::cbc_value_type_auto &&
 		(src_el()->is_inline_box() ||
 		 src_el()->css().get_float() != float_none ||
-		 src_el()->css().get_display() == display_table_cell
+		 src_el()->css().get_display() == display_table_cell ||
+		 src_el()->css().get_position() > element_position_relative
 		 ))
 	{
 		m_pos.width = ret_width;
