@@ -25,6 +25,16 @@ int litehtml::render_item_table::_render(int x, int y, int max_width, const cont
 
 	containing_block_context cb_size = calculate_containing_block_context(containing_block_size);
 
+	if(cb_size.width_type == containing_block_context::cbc_value_type_auto)
+	{
+		max_width -= content_offset_left() + content_offset_right();
+	} else
+	{
+		max_width -= m_padding.width() + m_borders.width();
+	}
+	if(max_width < 0) max_width = 0;
+	max_width = std::min(max_width, cb_size.width);
+
     // Calculate table spacing
     int table_width_spacing = 0;
     if (src_el()->css().get_border_collapse() == border_collapse_separate)
@@ -87,7 +97,7 @@ int litehtml::render_item_table::_render(int x, int y, int max_width, const cont
                     else
                     {
                         // calculate minimum content width
-                        cell->min_width = cell->el->render(0, 0, 1, cb_size);
+                        cell->min_width = cell->el->render(0, 0, cell->el->content_offset_width(), cb_size);
                         // calculate maximum content width
                         cell->max_width = cell->el->render(0, 0, max_width - table_width_spacing, cb_size);
                     }
@@ -327,8 +337,6 @@ int litehtml::render_item_table::_render(int x, int y, int max_width, const cont
         table_height += m_border_spacing_y;
     }
 
-    m_pos.width = table_width;
-
     // Render table captions
     // Table border doesn't round the caption, so we have to start caption in the border position
     int captions_height = -border_top();
@@ -370,7 +378,7 @@ int litehtml::render_item_table::_render(int x, int y, int max_width, const cont
     m_pos.width = table_width;
     m_pos.height = table_height + captions_height;
 
-    return std::min(table_width, max_table_width) + content_offset_left() + content_offset_right();
+    return std::min(table_width, max_table_width) + content_offset_width();
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()

@@ -1001,6 +1001,10 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	if (src_el()->css().get_display() != display_table_cell)
 	{
 		calc_cb_length(src_el()->css().get_width(), cb_context.width, ret.width, ret.width_type);
+		if (src_el()->css().get_display() == display_table && ret.width_type != containing_block_context::cbc_value_type_auto)
+		{
+			ret.width -= content_offset_width();
+		}
 	}
 	calc_cb_length(src_el()->css().get_min_width(), cb_context.width, ret.min_width, ret.min_width_type);
 	calc_cb_length(src_el()->css().get_max_width(), cb_context.width, ret.max_width, ret.max_width_type);

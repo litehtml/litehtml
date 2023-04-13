@@ -672,10 +672,14 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 
 	containing_block_context cb_size = calculate_containing_block_context(containing_block_size);
 
+	max_width -= content_offset_left() + content_offset_right();
+	if(max_width < 0) max_width = 0;
+	max_width = std::min(max_width, cb_size.width);
+
     //*****************************************
     // Render content
     //*****************************************
-    ret_width = _render_content(x, y, cb_size.width, second_pass, ret_width, cb_size);
+    ret_width = _render_content(x, y, max_width, second_pass, ret_width, cb_size);
     //*****************************************
 
 	bool requires_rerender = false;
@@ -685,6 +689,7 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 		(src_el()->is_inline_box() ||
 		 src_el()->css().get_float() != float_none ||
 		 src_el()->css().get_display() == display_table_cell ||
+		 src_el()->css().get_display() == display_table_caption ||
 		 src_el()->css().get_position() > element_position_relative
 		 ))
 	{
@@ -790,8 +795,6 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 		_render_content(x, y, cb_size.width, true, ret_width, cb_size);
     }
 
-	ret_width += content_offset_left() + content_offset_right();
-
     if (src_el()->is_floats_holder() && !second_pass)
     {
         for (const auto& fb : m_floats_left)
@@ -799,5 +802,5 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
             fb.el->apply_relative_shift(containing_block_size);
         }
     }
-    return ret_width;
+    return ret_width + content_offset_width();
 }
