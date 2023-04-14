@@ -702,6 +702,10 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 	} else
 	{
 		m_pos.width = cb_size.width;
+		if(cb_size.width_type == containing_block_context::cbc_value_type_absolute)
+		{
+			ret_width = cb_size.width;
+		}
 	}
 
 	// Set block height
