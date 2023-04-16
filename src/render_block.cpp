@@ -569,16 +569,20 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
     }
 
     bool has_block_level = false;
-    bool has_inlines = false;
+	bool has_inlines = false;
+	bool has_floats = false;
     for (const auto& el : m_children)
     {
-        if(el->src_el()->is_block_box())
-        {
-            has_block_level = true;
-        } else if(el->src_el()->is_inline_box())
-        {
-            has_inlines = true;
-        }
+		if(!el->src_el()->is_float())
+		{
+			if (el->src_el()->is_block_box())
+			{
+				has_block_level = true;
+			} else if (el->src_el()->is_inline_box())
+			{
+				has_inlines = true;
+			}
+		}
         if(has_block_level && has_inlines)
             break;
     }
