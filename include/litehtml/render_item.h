@@ -221,6 +221,36 @@ namespace litehtml
             return content_offset_top() + content_offset_bottom();
         }
 
+		int box_sizing_left() const
+		{
+			return m_padding.left + m_borders.left;
+		}
+
+		int box_sizing_right() const
+		{
+			return m_padding.right + m_borders.right;
+		}
+
+		int box_sizing_width() const
+		{
+			return box_sizing_left() + border_right();
+		}
+
+		int box_sizing_top() const
+		{
+			return m_padding.top + m_borders.top;
+		}
+
+		int box_sizing_bottom() const
+		{
+			return m_padding.bottom + m_borders.bottom;
+		}
+
+		int box_sizing_height() const
+		{
+			return box_sizing_top() + border_bottom();
+		}
+
         void parent(const std::shared_ptr<render_item>& par)
         {
             m_parent = par;

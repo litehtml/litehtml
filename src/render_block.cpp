@@ -676,9 +676,21 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 
 	containing_block_context cb_size = calculate_containing_block_context(containing_block_size);
 
-	max_width -= content_offset_left() + content_offset_right();
-	if(max_width < 0) max_width = 0;
-	max_width = std::min(max_width, cb_size.width);
+	if(cb_size.width_type != containing_block_context::cbc_value_type_auto)
+	{
+		// If width is absolute value, we render into cb_size.width size
+		max_width = cb_size.width;
+		if(src_el()->css().get_box_sizing() == box_sizing_border_box)
+		{
+			// for style "box-sizing: border-box" we have to decrease rendering width for borders + paddings
+			max_width -= box_sizing_width();
+		}
+	} else
+	{
+		// for "width: auto" we render with max_width minus content offset
+		max_width -= content_offset_width();
+		if (max_width < 0) max_width = 0;
+	}
 
     //*****************************************
     // Render content
@@ -686,47 +698,47 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
     ret_width = _render_content(x, y, max_width, second_pass, ret_width, cb_size);
     //*****************************************
 
-	bool requires_rerender = false;
+	bool requires_rerender = false;		// when true, the second pass for content rendering is required
 
 	// Set block width
-	if(cb_size.width_type == containing_block_context::cbc_value_type_auto &&
-		(src_el()->is_inline_box() ||
-		 src_el()->css().get_float() != float_none ||
-		 src_el()->css().get_display() == display_table_cell ||
-		 src_el()->css().get_display() == display_table_caption ||
-		 src_el()->css().get_position() > element_position_relative
-		 ))
+	if(cb_size.width_type == containing_block_context::cbc_value_type_absolute)
 	{
-		m_pos.width = ret_width;
-		if(ret_width < cb_size.width)
+		m_pos.width = cb_size.width;
+		ret_width = cb_size.width;
+		if(src_el()->css().get_box_sizing() == box_sizing_border_box)
 		{
-			// We have to render content again with new max_width
-			requires_rerender = true;
+			m_pos.width -= box_sizing_width();
+		}
+	} else if(cb_size.width_type == containing_block_context::cbc_value_type_percentage)
+	{
+		m_pos.width = cb_size.width;
+		if(src_el()->css().get_box_sizing() == box_sizing_border_box)
+		{
+			m_pos.width -= box_sizing_width();
 		}
 	} else
 	{
-		m_pos.width = cb_size.width;
-		if(cb_size.width_type == containing_block_context::cbc_value_type_absolute)
+		if(src_el()->is_inline_box() ||
+			src_el()->css().get_float() != float_none ||
+			src_el()->css().get_display() == display_table_cell ||
+			src_el()->css().get_display() == display_table_caption ||
+			src_el()->css().get_position() > element_position_relative)
 		{
-			ret_width = cb_size.width;
+			m_pos.width = ret_width;
+			if(ret_width < cb_size.width)
+			{
+				// We have to render content again with new max_width
+				requires_rerender = true;
+			}
+		} else
+		{
+			m_pos.width = cb_size.width;
+			if(src_el()->css().get_box_sizing() == box_sizing_border_box)
+			{
+				m_pos.width -= box_sizing_width();
+			}
 		}
 	}
-
-	// Set block height
-	if (cb_size.height_type != containing_block_context::cbc_value_type_auto)
-	{
-		m_pos.height = cb_size.height;
-	}
-
-    // add the floats' height to the block height
-    if (src_el()->is_floats_holder())
-    {
-        int floats_height = get_floats_height();
-        if (floats_height > m_pos.height)
-        {
-            m_pos.height = floats_height;
-        }
-    }
 
 	calc_auto_margins(containing_block_size.width);
 
@@ -749,6 +761,26 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 			requires_rerender = true;
 		}
 	}
+
+	// Set block height
+	if (cb_size.height_type != containing_block_context::cbc_value_type_auto)
+	{
+		m_pos.height = cb_size.height;
+		if(src_el()->css().get_box_sizing() == box_sizing_border_box)
+		{
+			m_pos.height -= box_sizing_height();
+		}
+	}
+
+    // add the floats' height to the block height
+    if (src_el()->is_floats_holder())
+    {
+        int floats_height = get_floats_height();
+        if (floats_height > m_pos.height)
+        {
+            m_pos.height = floats_height;
+        }
+    }
 
 	// Fix height with min-height attribute
 	if(cb_size.min_height_type != containing_block_context::cbc_value_type_none)
