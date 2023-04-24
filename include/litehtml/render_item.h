@@ -31,7 +31,7 @@ namespace litehtml
 		void calc_cb_length(const css_length& len,
 									   int percent_base,
 									   int& out_value,
-									   containing_block_context::cbc_value_type& out_type);
+									   containing_block_context::cbc_value_type& out_type) const;
 
     public:
         explicit render_item(std::shared_ptr<element>  src_el);

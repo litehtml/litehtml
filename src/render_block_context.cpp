@@ -72,6 +72,10 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
                 }
 
                 int rw = el->render(child_x, child_top, child_width, containing_block_size);
+				if(el->src_el()->css().get_display() == display_table && rw < child_width)
+				{
+					el->render(child_x, child_top, rw, containing_block_size);
+				}
                 if (rw > ret_width)
                 {
                     ret_width = rw;
