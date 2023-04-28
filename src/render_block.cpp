@@ -830,9 +830,13 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 		m_cache_line_left.invalidate();
 		m_cache_line_right.invalidate();
 
-		cb_size.width = m_pos.width;
+		// don't change self-width for table cells, because it will not be rendered into this width
+		if(src_el()->css().get_display() != display_table_cell)
+		{
+			cb_size.width = m_pos.width;
+		}
 
-		_render_content(x, y, cb_size.width, true, ret_width, cb_size);
+		_render_content(x, y, m_pos.width, true, ret_width, cb_size);
     }
 
     if (src_el()->is_floats_holder() && !second_pass)

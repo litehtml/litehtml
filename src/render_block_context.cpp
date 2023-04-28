@@ -72,7 +72,8 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
                 }
 
                 int rw = el->render(child_x, child_top, child_width, containing_block_size);
-				if(el->src_el()->css().get_display() == display_table && rw < child_width)
+				// Render table with "width: auto" into returned width
+				if(el->src_el()->css().get_display() == display_table && rw < child_width && el->src_el()->css().get_width().is_predefined())
 				{
 					el->render(child_x, child_top, rw, containing_block_size);
 				}

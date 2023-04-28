@@ -172,7 +172,7 @@ int litehtml::render_item_table::_render(int x, int y, int max_width, const cont
     }
     else
     {
-        table_width = m_grid->calc_table_width(max_width - table_width_spacing, true, min_table_width, max_table_width);
+        table_width = m_grid->calc_table_width(max_width - table_width_spacing, cb_size.width_type == containing_block_context::cbc_value_type_auto, min_table_width, max_table_width);
     }
 
     min_table_width += table_width_spacing;
@@ -370,7 +370,14 @@ int litehtml::render_item_table::_render(int x, int y, int max_width, const cont
         }
     }
 
-	int ret = std::min(table_width, max_table_width) + content_offset_width();
+	int ret;
+	if(cb_size.width_type != containing_block_context::cbc_value_type_absolute)
+	{
+		ret = std::min(table_width, max_table_width) + content_offset_width();
+	} else
+	{
+		ret = table_width + content_offset_width();
+	}
 
     m_pos.move_to(x, y);
     m_pos.width = table_width;
