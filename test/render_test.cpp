@@ -59,8 +59,7 @@ Bitmap draw(document::ptr doc, int width, int height)
 
 	doc->draw((uint_ptr)&bmp, 0, 0, &clip);
 
-	position pos = bmp.find_picture();
-	bmp.resize(min(pos.right() + 8, width), min(pos.bottom() + 8, height));
+	bmp.resize(width, height);
 
 	return bmp;
 }
@@ -74,7 +73,7 @@ void test(string filename)
 
 	auto doc = document::createFromString(html.c_str(), &container);
 	doc->render(width);
-	Bitmap bmp = draw(doc, width, height);
+	Bitmap bmp = draw(doc, doc->width(), doc->height());
 
 	Bitmap good(filename + ".png");
 	if (bmp != good)

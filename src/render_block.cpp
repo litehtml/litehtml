@@ -770,11 +770,9 @@ int litehtml::render_item_block::_render(int x, int y, int max_width, const cont
 		{
 			m_pos.height -= box_sizing_height();
 		}
-	}
-
-    // add the floats' height to the block height
-    if (src_el()->is_floats_holder())
+	} else if (src_el()->is_floats_holder())
     {
+		// add the floats' height to the block height
         int floats_height = get_floats_height();
         if (floats_height > m_pos.height)
         {

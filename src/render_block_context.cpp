@@ -9,6 +9,7 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
 
     int child_top = 0;
     int last_margin = 0;
+	std::shared_ptr<render_item> last_margin_el;
     bool is_first = true;
     for (const auto& el : m_children)
     {
@@ -83,6 +84,7 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
                 }
                 child_top += el->height();
                 last_margin = el->get_margins().bottom;
+				last_margin_el = el;
                 is_first = false;
 
                 if (el->src_el()->css().get_position() == element_position_relative)
@@ -107,6 +109,10 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
             {
                 m_margins.bottom = last_margin;
             }
+			if(last_margin_el)
+			{
+				last_margin_el->get_margins().bottom = 0;
+			}
         }
     }
 

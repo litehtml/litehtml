@@ -505,10 +505,15 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, int x /*= 0*
 {
     if(is_visible() && src_el()->css().get_position() != element_position_fixed)
     {
-        sz.width	= std::max(sz.width,	x + right());
-        sz.height	= std::max(sz.height,	y + bottom());
+		if(have_parent() && !src_el()->is_body())
+		{
+			sz.width = std::max(sz.width, x + right());
+			sz.height = std::max(sz.height, y + bottom());
+		}
 
-        if(src_el()->css().get_overflow() == overflow_visible)
+		// All children of tables and blocks with style other than "overflow: visible" are inside element.
+		// We can skip calculating size of children
+        if(src_el()->css().get_overflow() == overflow_visible && src_el()->css().get_display() != display_table)
         {
             for(auto& el : m_children)
             {
@@ -516,14 +521,11 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, int x /*= 0*
             }
         }
 
-        // root element (<html>) have to cover entire window
-        if(!have_parent())
-        {
-            position client_pos;
-            src_el()->get_document()->container()->get_client_rect(client_pos);
-            m_pos.height = std::max(sz.height, client_pos.height) - content_offset_top() - content_offset_bottom();
-            m_pos.width	 = std::max(sz.width, client_pos.width) - content_offset_left() - content_offset_right();
-        }
+		if(!have_parent() || src_el()->is_body())
+		{
+			sz.width += content_offset_right();
+			sz.height += content_offset_bottom();
+		}
     }
 }
 
@@ -1001,15 +1003,19 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	if (src_el()->css().get_display() != display_table_cell)
 	{
 		calc_cb_length(src_el()->css().get_width(), cb_context.width, ret.width, ret.width_type);
-		if (src_el()->css().get_display() == display_table && ret.width_type != containing_block_context::cbc_value_type_auto)
+		calc_cb_length(src_el()->css().get_height(), cb_context.height, ret.height, ret.height_type);
+		if (src_el()->css().get_display() == display_table && ret.width_type != containing_block_context::cbc_value_type_auto || !src_el()->have_parent())
 		{
 			ret.width -= content_offset_width();
+		}
+		if (src_el()->css().get_display() == display_table && ret.height_type != containing_block_context::cbc_value_type_auto || !src_el()->have_parent())
+		{
+			ret.height -= content_offset_height();
 		}
 	}
 	calc_cb_length(src_el()->css().get_min_width(), cb_context.width, ret.min_width, ret.min_width_type);
 	calc_cb_length(src_el()->css().get_max_width(), cb_context.width, ret.max_width, ret.max_width_type);
 
-	calc_cb_length(src_el()->css().get_height(), cb_context.height, ret.height, ret.height_type);
 	calc_cb_length(src_el()->css().get_min_height(), cb_context.height, ret.min_height, ret.min_height_type);
 	calc_cb_length(src_el()->css().get_max_height(), cb_context.height, ret.max_height, ret.max_height_type);
 
