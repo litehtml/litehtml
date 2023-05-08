@@ -194,34 +194,65 @@ namespace litehtml
 			cbc_value_type_none,		// min/max width/height of containing block is defined as none
 		};
 
-		int width;						// width of the containing block
-		cbc_value_type width_type;
-		int min_width;
-		cbc_value_type min_width_type;
-		int max_width;
-		cbc_value_type max_width_type;
+		struct typed_int
+		{
+			int 			value;
+			cbc_value_type	type;
 
-		int height;						// height of the containing block
-		cbc_value_type height_type;
-		int min_height;
-		cbc_value_type min_height_type;
-		int max_height;
-		cbc_value_type max_height_type;
+			typed_int(int val, cbc_value_type tp)
+			{
+				value = val;
+				type = tp;
+			}
+
+			operator int() const
+			{
+				return value;
+			}
+
+			typed_int& operator=(int val)
+			{
+				value = val;
+				return *this;
+			}
+
+			typed_int& operator=(const typed_int& v)
+			{
+				value = v.value;
+				type = v.type;
+				return *this;
+			}
+		};
+
+		typed_int width;						// width of the containing block
+		typed_int render_width;
+		typed_int min_width;
+		typed_int max_width;
+
+		typed_int height;						// height of the containing block
+		typed_int min_height;
+		typed_int max_height;
 
 		containing_block_context() :
-				width(0),
-				width_type(cbc_value_type_auto),
-				min_width(0),
-				min_width_type(cbc_value_type_none),
-				max_width(0),
-				max_width_type(cbc_value_type_none),
-				height(0),
-				height_type(cbc_value_type_auto),
-				min_height(0),
-				min_height_type(cbc_value_type_none),
-				max_height(0),
-				max_height_type(cbc_value_type_none)
+				width(0, cbc_value_type_auto),
+				render_width(0, cbc_value_type_auto),
+				min_width(0, cbc_value_type_none),
+				max_width(0, cbc_value_type_none),
+				height(0, cbc_value_type_auto),
+				min_height(0, cbc_value_type_none),
+				max_height(0, cbc_value_type_none)
 		{}
+
+		containing_block_context new_width(int w) const
+		{
+			containing_block_context ret = *this;
+			//if(ret.width.type != cbc_value_type_absolute)
+			{
+				ret.render_width = w - (ret.width - ret.render_width);
+				ret.width = w;
+			}
+			return ret;
+		}
 	};
 
 #define  style_display_strings		"none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text;flex;inline-flex"

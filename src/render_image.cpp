@@ -3,9 +3,9 @@
 #include "document.h"
 
 int
-litehtml::render_item_image::_render(int x, int y, int _max_width, const containing_block_context &containing_block_size, bool second_pass)
+litehtml::render_item_image::render(int x, int y, const containing_block_context &containing_block_size, bool second_pass)
 {
-    int parent_width = _max_width;
+    int parent_width = containing_block_size.width;
 
     calc_outlines(parent_width);
 
@@ -14,7 +14,7 @@ litehtml::render_item_image::_render(int x, int y, int _max_width, const contain
     document::ptr doc = src_el()->get_document();
 
     litehtml::size sz;
-    src_el()->get_content_size(sz, _max_width);
+    src_el()->get_content_size(sz, containing_block_size.width);
 
     m_pos.width		= sz.width;
     m_pos.height	= sz.height;
@@ -133,8 +133,6 @@ litehtml::render_item_image::_render(int x, int y, int _max_width, const contain
             }
         }
     }
-
-    calc_auto_margins(parent_width);
 
     m_pos.x	+= content_offset_left();
     m_pos.y += content_offset_top();

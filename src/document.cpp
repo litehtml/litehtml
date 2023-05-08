@@ -293,10 +293,10 @@ int litehtml::document::render( int max_width, render_type rt )
 		position client_rc;
 		m_container->get_client_rect(client_rc);
 		containing_block_context cb_context;
-		cb_context.width = client_rc.width;
-		cb_context.width_type = containing_block_context::cbc_value_type_absolute;
+		cb_context.width = max_width;
+		cb_context.width.type = containing_block_context::cbc_value_type_absolute;
 		cb_context.height = client_rc.height;
-		cb_context.height_type = containing_block_context::cbc_value_type_absolute;
+		cb_context.height.type = containing_block_context::cbc_value_type_absolute;
 
 		if(rt == render_fixed_only)
 		{
@@ -304,7 +304,7 @@ int litehtml::document::render( int max_width, render_type rt )
 			m_root_render->render_positioned(rt);
 		} else
 		{
-			ret = m_root_render->render(0, 0, max_width, cb_context);
+			ret = m_root_render->render(0, 0, cb_context);
 			if(m_root_render->fetch_positioned())
 			{
 				m_fixed_boxes.clear();

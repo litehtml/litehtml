@@ -2,8 +2,8 @@
 #include "render_item.h"
 #include "types.h"
 
-int litehtml::render_item_flex::_render_content(int x, int y, int max_width, bool second_pass, int ret_width,
-												const containing_block_context &containing_block_size)
+int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, int ret_width,
+												const containing_block_context &self_size)
 {
     return 0;
 }

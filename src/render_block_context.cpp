@@ -2,8 +2,8 @@
 #include "render_item.h"
 #include "document.h"
 
-int litehtml::render_item_block_context::_render_content(int x, int y, int max_width, bool second_pass, int ret_width,
-														 const containing_block_context &containing_block_size)
+int litehtml::render_item_block_context::_render_content(int x, int y, bool second_pass, int ret_width,
+														 const containing_block_context &self_size)
 {
     element_position el_position;
 
@@ -22,7 +22,7 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
 
         if(el->src_el()->css().get_float() != float_none)
         {
-            int rw = place_float(el, child_top, max_width, containing_block_size);
+            int rw = place_float(el, child_top, self_size);
             if (rw > ret_width)
             {
                 ret_width = rw;
@@ -31,14 +31,14 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
         {
             if(el->src_el()->css().get_position() == element_position_absolute || el->src_el()->css().get_position() == element_position_fixed)
             {
-                el->render(0, child_top, max_width, containing_block_size);
+                el->render(0, child_top, self_size);
             } else
             {
                 child_top = get_cleared_top(el, child_top);
                 int child_x  = 0;
-                int child_width = max_width;
+                int child_width = self_size.render_width;
 
-                el->calc_outlines(max_width);
+                el->calc_outlines(self_size.width);
 
                 // Collapse top margin
                 if(is_first && collapse_top_margin())
@@ -72,11 +72,16 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
                     el->pos().height = el->src_el()->css().get_height().calc_percent(el_parent ? el_parent->pos().height : 0);
                 }
 
-                int rw = el->render(child_x, child_top, child_width, containing_block_size);
+                int rw = el->render(child_x, child_top, self_size.new_width(child_width));
 				// Render table with "width: auto" into returned width
 				if(el->src_el()->css().get_display() == display_table && rw < child_width && el->src_el()->css().get_width().is_predefined())
 				{
-					el->render(child_x, child_top, rw, containing_block_size);
+					el->render(child_x, child_top, self_size.new_width(rw));
+				}
+				int auto_margin = el->calc_auto_margins(child_width);
+				if(auto_margin)
+				{
+					el->pos().x += auto_margin;
 				}
                 if (rw > ret_width)
                 {
@@ -89,14 +94,14 @@ int litehtml::render_item_block_context::_render_content(int x, int y, int max_w
 
                 if (el->src_el()->css().get_position() == element_position_relative)
                 {
-                    el->apply_relative_shift(containing_block_size);
+                    el->apply_relative_shift(self_size);
                 }
             }
         }
     }
 
     int block_height = 0;
-    if (get_predefined_height(block_height, containing_block_size.height))
+    if (get_predefined_height(block_height, self_size.height))
     {
         m_pos.height = block_height;
     } else
