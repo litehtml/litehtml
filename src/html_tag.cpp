@@ -852,7 +852,7 @@ bool litehtml::html_tag::on_lbutton_up()
 
 void litehtml::html_tag::on_click()
 {
-	if (have_parent())
+	if (!is_root())
 	{
 		element::ptr el_parent = parent();
 		if (el_parent)
@@ -902,7 +902,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 			if(bdr.is_visible())
 			{
 				bdr.radius = m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
-				get_document()->container()->draw_borders(hdc, bdr, border_box, !have_parent());
+				get_document()->container()->draw_borders(hdc, bdr, border_box, is_root());
 			}
 		}
 	} else
@@ -1058,8 +1058,8 @@ bool litehtml::html_tag::is_replaced() const
 bool litehtml::html_tag::is_floats_holder() const
 {
 	if(	m_css.get_display() == display_inline_block || 
-		m_css.get_display() == display_table_cell || 
-		!have_parent() ||
+		m_css.get_display() == display_table_cell ||
+		is_root() ||
 		is_body() || 
 		m_css.get_float() != float_none ||
 		m_css.get_position() == element_position_absolute ||
@@ -1207,7 +1207,7 @@ void litehtml::html_tag::init_one_background_paint(int i, position pos, backgrou
 	}
 	bg_paint.border_radius	= m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
 	bg_paint.border_box		= border_box;
-	bg_paint.is_root		= !have_parent();
+	bg_paint.is_root		= is_root();
 }
 
 void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
@@ -1631,7 +1631,7 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 	if(m_css.get_bg().m_image.empty() && !m_css.get_bg().m_color.alpha)
 	{
 		// if this is root element (<html>) try to get background from body
-		if (!have_parent())
+		if (is_root())
 		{
 			for (const auto& el : m_children)
 			{

@@ -1007,11 +1007,11 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	{
 		calc_cb_length(src_el()->css().get_width(), cb_context.width, ret.width);
 		calc_cb_length(src_el()->css().get_height(), cb_context.height, ret.height);
-		if (src_el()->css().get_display() == display_table && ret.width.type != containing_block_context::cbc_value_type_auto || !src_el()->have_parent())
+		if (src_el()->css().get_display() == display_table && ret.width.type != containing_block_context::cbc_value_type_auto || src_el()->is_root())
 		{
 			ret.width.value -= content_offset_width();
 		}
-		if (src_el()->css().get_display() == display_table && ret.height.type != containing_block_context::cbc_value_type_auto || !src_el()->have_parent())
+		if (src_el()->css().get_display() == display_table && ret.height.type != containing_block_context::cbc_value_type_auto || src_el()->is_root())
 		{
 			ret.height.value -= content_offset_height();
 		}

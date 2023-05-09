@@ -73,7 +73,7 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 			{
 				m_display = display_block;
 			}
-		} else if(!el->have_parent())
+		} else if(el->is_root())
 		{
 			// 4. Otherwise, if the element is the root element, 'display' is set according to the table below,
 			//    except that it is undefined in CSS 2.2 whether a specified value of 'list-item' becomes a
