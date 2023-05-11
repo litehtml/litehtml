@@ -22,6 +22,17 @@ namespace litehtml
 		int_vector				m_repeat;
 		int_vector				m_clip;
 		int_vector				m_origin;
+
+		bool is_empty() const
+		{
+			if(m_color.alpha != 0) return false;
+			if(m_image.empty()) return true;
+			for(const auto& img : m_image)
+			{
+				if(!img.empty()) return false;
+			}
+			return true;
+		}
 	};
 
 	class background_paint

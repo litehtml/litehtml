@@ -68,12 +68,12 @@ void test(string filename)
 {
 	string html = readfile(filename);
 
-	int width = 800, height = 1600; // image will be cropped to contain only the "inked" part
+	int width = 800, height = 1600; // image will be cropped to content_width/content_height
 	test_container container(width, height, test_dir);
 
 	auto doc = document::createFromString(html.c_str(), &container);
 	doc->render(width);
-	Bitmap bmp = draw(doc, doc->width(), doc->height());
+	Bitmap bmp = draw(doc, doc->content_width(), doc->content_height());
 
 	Bitmap good(filename + ".png");
 	if (bmp != good)

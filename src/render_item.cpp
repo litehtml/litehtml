@@ -504,14 +504,17 @@ void litehtml::render_item::get_redraw_box(litehtml::position& pos, int x /*= 0*
     }
 }
 
-void litehtml::render_item::calc_document_size( litehtml::size& sz, int x /*= 0*/, int y /*= 0*/ )
+void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::size& content_size, int x /*= 0*/, int y /*= 0*/ )
 {
     if(is_visible() && src_el()->css().get_position() != element_position_fixed)
     {
-		if(have_parent() && !src_el()->is_body())
+		sz.width = std::max(sz.width, x + right());
+		sz.height = std::max(sz.height, y + bottom());
+
+		if(!src_el()->is_root() && !src_el()->is_body())
 		{
-			sz.width = std::max(sz.width, x + right());
-			sz.height = std::max(sz.height, y + bottom());
+			content_size.width = std::max(content_size.width, x + right());
+			content_size.height = std::max(content_size.height, y + bottom());
 		}
 
 		// All children of tables and blocks with style other than "overflow: visible" are inside element.
@@ -520,14 +523,14 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, int x /*= 0*
         {
             for(auto& el : m_children)
             {
-                el->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
+                el->calc_document_size(sz, content_size, x + m_pos.x, y + m_pos.y);
             }
         }
 
-		if(!have_parent() || src_el()->is_body())
+		if(src_el()->is_root() || src_el()->is_body())
 		{
-			sz.width += content_offset_right();
-			sz.height += content_offset_bottom();
+			content_size.width += content_offset_right();
+			content_size.height += content_offset_bottom();
 		}
     }
 }
@@ -1007,11 +1010,11 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	{
 		calc_cb_length(src_el()->css().get_width(), cb_context.width, ret.width);
 		calc_cb_length(src_el()->css().get_height(), cb_context.height, ret.height);
-		if (src_el()->css().get_display() == display_table && ret.width.type != containing_block_context::cbc_value_type_auto || src_el()->is_root())
+		if (ret.width.type != containing_block_context::cbc_value_type_auto && (src_el()->css().get_display() == display_table || src_el()->is_root()))
 		{
 			ret.width.value -= content_offset_width();
 		}
-		if (src_el()->css().get_display() == display_table && ret.height.type != containing_block_context::cbc_value_type_auto || src_el()->is_root())
+		if (ret.height.type != containing_block_context::cbc_value_type_auto && (src_el()->css().get_display() == display_table || src_el()->is_root()))
 		{
 			ret.height.value -= content_offset_height();
 		}

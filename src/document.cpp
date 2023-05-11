@@ -312,7 +312,9 @@ int litehtml::document::render( int max_width, render_type rt )
 			}
 			m_size.width	= 0;
 			m_size.height	= 0;
-			m_root_render->calc_document_size(m_size);
+			m_content_size.width = 0;
+			m_content_size.height = 0;
+			m_root_render->calc_document_size(m_size, m_content_size);
 		}
 	}
 	return ret;
@@ -430,6 +432,17 @@ int litehtml::document::height() const
 {
 	return m_size.height;
 }
+
+int litehtml::document::content_width() const
+{
+	return m_content_size.width;
+}
+
+int litehtml::document::content_height() const
+{
+	return m_content_size.height;
+}
+
 
 void litehtml::document::add_stylesheet( const char* str, const char* baseurl, const char* media )
 {

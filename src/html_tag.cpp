@@ -880,7 +880,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 
 	if(m_css.get_display() != display_inline && m_css.get_display() != display_table_row)
 	{
-		if(el_pos.does_intersect(clip))
+		if(el_pos.does_intersect(clip) || is_root())
 		{
 			auto v_offset = ri->get_draw_vertical_offset();
 			pos.y += v_offset;
@@ -891,6 +891,14 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 			{
 				std::vector<background_paint> bg_paint;
 				init_background_paint(pos, bg_paint, bg, ri);
+				if(is_root())
+				{
+					for(auto& b : bg_paint)
+					{
+						b.clip_box = *clip;
+						b.border_box = *clip;
+					}
+				}
 
 				get_document()->container()->draw_background(hdc, bg_paint);
 			}
@@ -1621,14 +1629,14 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 	if(own_only)
 	{
 		// return own background with check for empty one
-		if(m_css.get_bg().m_image.empty() && !m_css.get_bg().m_color.alpha)
+		if(m_css.get_bg().is_empty())
 		{
 			return nullptr;
 		}
 		return &m_css.get_bg();
 	}
 
-	if(m_css.get_bg().m_image.empty() && !m_css.get_bg().m_color.alpha)
+	if(m_css.get_bg().is_empty())
 	{
 		// if this is root element (<html>) try to get background from body
 		if (is_root())
