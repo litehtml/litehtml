@@ -5,8 +5,6 @@ namespace litehtml{ const char* const master_css = R"##(
 
 html {
     display: block;
-    height:100%;
-    width:100%;
 	position: relative;
 }
 
@@ -37,8 +35,6 @@ script {
 body {
 	display:block; 
 	margin:8px; 
-    height:100%;
-    width:100%;
 }
 
 p {

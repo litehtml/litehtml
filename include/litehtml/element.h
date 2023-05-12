@@ -50,6 +50,7 @@ namespace litehtml
 		bool						is_float()					const;
 
 		bool						have_parent() const;
+		bool						is_root() const;
 		element::ptr				parent() const;
 		void						parent(const element::ptr& par);
 		// returns true for elements inside a table (but outside cells) that don't participate in table rendering
@@ -158,9 +159,9 @@ namespace litehtml
 		return false;
 	}
 
-	inline bool litehtml::element::have_parent() const
+	inline bool litehtml::element::is_root() const
 	{
-		return !m_parent.expired();
+		return m_parent.expired();
 	}
 
 	inline element::ptr litehtml::element::parent() const
