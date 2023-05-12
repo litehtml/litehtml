@@ -1001,6 +1001,7 @@ void litehtml::render_item::calc_cb_length(const css_length& len, int percent_ba
 litehtml::containing_block_context litehtml::render_item::calculate_containing_block_context(const containing_block_context& cb_context)
 {
 	containing_block_context ret;
+	ret.context_idx = cb_context.context_idx + 1;
 	ret.width.value = ret.max_width.value = cb_context.width.value - content_offset_width();
 	if(src_el()->css().get_position() != element_position_absolute && src_el()->css().get_position() != element_position_fixed)
 	{
@@ -1030,9 +1031,28 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	calc_cb_length(src_el()->css().get_min_height(), cb_context.height, ret.min_height);
 	calc_cb_length(src_el()->css().get_max_height(), cb_context.height, ret.max_height);
 
-	if (src_el()->css().get_box_sizing() == box_sizing_border_box && ret.width.type != containing_block_context::cbc_value_type_auto)
+	if (src_el()->css().get_box_sizing() == box_sizing_border_box)
 	{
-		ret.render_width = ret.width - box_sizing_width();
+		if(ret.width.type != containing_block_context::cbc_value_type_auto)
+		{
+			ret.render_width = ret.width - box_sizing_width();
+		}
+		if(ret.min_width.type != containing_block_context::cbc_value_type_none)
+		{
+			ret.min_width.value -= box_sizing_width();
+		}
+		if(ret.max_width.type != containing_block_context::cbc_value_type_none)
+		{
+			ret.max_width.value -= box_sizing_width();
+		}
+		if(ret.min_height.type != containing_block_context::cbc_value_type_none)
+		{
+			ret.min_height.value -= box_sizing_height();
+		}
+		if(ret.max_height.type != containing_block_context::cbc_value_type_none)
+		{
+			ret.max_height.value -= box_sizing_height();
+		}
 	}
 	return ret;
 }

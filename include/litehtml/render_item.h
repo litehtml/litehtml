@@ -353,15 +353,16 @@ namespace litehtml
 		virtual int get_right_floats_height() const	{ return 0; }
 		virtual int get_floats_height(element_float el_float = float_none) const { return 0; }
 		virtual int find_next_line_top( int top, int width, int def_right ) { return 0; }
-		virtual void add_float(const std::shared_ptr<render_item> &el, int x, int y) {}
+		virtual void add_float(const std::shared_ptr<render_item> &el, int x, int y, int context) {}
+		virtual void clear_floats(int context) {}
 		virtual void update_floats(int dy, const std::shared_ptr<render_item> &_parent) {}
 	};
 
     class render_item_block : public render_item
     {
     protected:
-        floated_box::vector m_floats_left;
-        floated_box::vector m_floats_right;
+		std::list<floated_box> m_floats_left;
+		std::list<floated_box> m_floats_right;
         int_int_cache m_cache_line_left;
         int_int_cache m_cache_line_right;
 
@@ -378,15 +379,16 @@ namespace litehtml
         virtual int _render_content(int x, int y, bool second_pass, int ret_width, const containing_block_context &self_size) {return ret_width;}
 		int render(int x, int y, const containing_block_context &containing_block_size, bool second_pass) override;
 
-        int place_float(const std::shared_ptr<render_item> &el, int top, const containing_block_context &containing_block_size);
+        int place_float(const std::shared_ptr<render_item> &el, int top, const containing_block_context &self_size);
         int get_floats_height(element_float el_float = float_none) const override;
         int get_left_floats_height() const override;
         int get_right_floats_height() const override;
         int get_line_left( int y ) override;
         int get_line_right( int y, int def_right ) override;
         void get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) override;
-        void add_float(const std::shared_ptr<render_item> &el, int x, int y) override;
-        int get_cleared_top(const std::shared_ptr<render_item> &el, int line_top) const;
+        void add_float(const std::shared_ptr<render_item> &el, int x, int y, int context) override;
+		void clear_floats(int context) override;
+		int get_cleared_top(const std::shared_ptr<render_item> &el, int line_top) const;
         int find_next_line_top( int top, int width, int def_right ) override;
         virtual void fix_line_width(element_float flt,
 									const containing_block_context &containing_block_size)

@@ -2,47 +2,47 @@
 #include "render_item.h"
 #include "document.h"
 
-int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> &el, int top, const containing_block_context &containing_block_size)
+int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> &el, int top, const containing_block_context &self_size)
 {
     int line_top	= get_cleared_top(el, top);
     int line_left	= 0;
-    int line_right	= containing_block_size.render_width;
-    get_line_left_right(line_top, containing_block_size.render_width, line_left, line_right);
+    int line_right	= self_size.render_width;
+    get_line_left_right(line_top, self_size.render_width, line_left, line_right);
 
     int ret_width = 0;
 
     if (el->src_el()->css().get_float() == float_left)
     {
-        el->render(line_left, line_top, containing_block_size.new_width(line_right));
+        el->render(line_left, line_top, self_size.new_width(line_right));
         if(el->right() > line_right)
         {
-            int new_top = find_next_line_top(el->top(), el->width(), containing_block_size.render_width);
+            int new_top = find_next_line_top(el->top(), el->width(), self_size.render_width);
             el->pos().x = get_line_left(new_top) + el->content_offset_left();
             el->pos().y = new_top + el->content_offset_top();
         }
-        add_float(el, 0, 0);
-		fix_line_width(float_left, containing_block_size);
+        add_float(el, 0, 0, self_size.context_idx);
+		fix_line_width(float_left, self_size);
 		ret_width = el->right();
     } else if (el->src_el()->css().get_float() == float_right)
     {
-        el->render(0, line_top, containing_block_size.new_width(line_right));
+        el->render(0, line_top, self_size.new_width(line_right));
 
         if(line_left + el->width() > line_right)
         {
-            int new_top = find_next_line_top(el->top(), el->width(), containing_block_size.render_width);
-            el->pos().x = get_line_right(new_top, containing_block_size.render_width) - el->width() + el->content_offset_left();
+            int new_top = find_next_line_top(el->top(), el->width(), self_size.render_width);
+            el->pos().x = get_line_right(new_top, self_size.render_width) - el->width() + el->content_offset_left();
             el->pos().y = new_top + el->content_offset_top();
         } else
         {
             el->pos().x = line_right - el->width() + el->content_offset_left();
         }
-        add_float(el, 0, 0);
-		fix_line_width(float_right, containing_block_size);
+        add_float(el, 0, 0, self_size.context_idx);
+		fix_line_width(float_right, self_size);
 		line_left	= 0;
-		line_right	= containing_block_size.render_width;
-		get_line_left_right(line_top, containing_block_size.render_width, line_left, line_right);
+		line_right	= self_size.render_width;
+		get_line_left_right(line_top, self_size.render_width, line_left, line_right);
 
-		ret_width = ret_width + (containing_block_size.render_width - line_right);
+		ret_width = ret_width + (self_size.render_width - line_right);
     }
     return ret_width;
 }
@@ -285,7 +285,46 @@ void litehtml::render_item_block::get_line_left_right( int y, int def_right, int
     }
 }
 
-void litehtml::render_item_block::add_float(const std::shared_ptr<render_item> &el, int x, int y)
+void litehtml::render_item_block::clear_floats(int context)
+{
+	if(src_el()->is_floats_holder())
+	{
+		auto iter = m_floats_left.begin();
+		while(iter != m_floats_left.end())
+		{
+			if(iter->context >= context)
+			{
+				iter = m_floats_left.erase(iter);
+				m_cache_line_left.invalidate();
+			} else
+			{
+				iter++;
+			}
+		}
+
+		iter = m_floats_right.begin();
+		while(iter != m_floats_right.end())
+		{
+			if(iter->context >= context)
+			{
+				iter = m_floats_right.erase(iter);
+				m_cache_line_right.invalidate();
+			} else
+			{
+				iter++;
+			}
+		}
+	} else
+	{
+		auto el_parent = parent();
+		if (el_parent)
+		{
+			el_parent->clear_floats(context);
+		}
+	}
+}
+
+void litehtml::render_item_block::add_float(const std::shared_ptr<render_item> &el, int x, int y, int context)
 {
     if(src_el()->is_floats_holder())
     {
@@ -297,6 +336,7 @@ void litehtml::render_item_block::add_float(const std::shared_ptr<render_item> &
         fb.float_side	= el->src_el()->css().get_float();
         fb.clear_floats	= el->src_el()->css().get_clear();
         fb.el			= el;
+		fb.context		= context;
 
         if(fb.float_side == float_left)
         {
@@ -350,7 +390,7 @@ void litehtml::render_item_block::add_float(const std::shared_ptr<render_item> &
         auto el_parent = parent();
         if (el_parent)
         {
-            el_parent->add_float(el, x + m_pos.x, y + m_pos.y);
+            el_parent->add_float(el, x + m_pos.x, y + m_pos.y, context);
         }
     }
 }
@@ -731,6 +771,23 @@ int litehtml::render_item_block::render(int x, int y, const containing_block_con
 		}
 	}
 
+	// re-render content with new width if required
+	if (requires_rerender && !second_pass && !is_root())
+	{
+		if(src_el()->is_floats_holder())
+		{
+			m_floats_left.clear();
+			m_floats_right.clear();
+		} else
+		{
+			clear_floats(self_size.context_idx);
+		}
+		m_cache_line_left.invalidate();
+		m_cache_line_right.invalidate();
+
+		_render_content(x, y, true, ret_width, self_size.new_width(m_pos.width));
+	}
+
 	// Set block height
 	if (self_size.height.type != containing_block_context::cbc_value_type_auto)
 	{
@@ -786,17 +843,6 @@ int litehtml::render_item_block::render(int x, int y, const containing_block_con
             }
         }
 
-    }
-
-    // re-render content with new width if required
-    if (requires_rerender && !second_pass && !is_root())
-    {
-		m_floats_left.clear();
-		m_floats_right.clear();
-		m_cache_line_left.invalidate();
-		m_cache_line_right.invalidate();
-
-		_render_content(x, y, true, ret_width, self_size.new_width(m_pos.width));
     }
 
     if (src_el()->is_floats_holder() && !second_pass)

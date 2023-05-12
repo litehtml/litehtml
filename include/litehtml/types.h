@@ -233,6 +233,8 @@ namespace litehtml
 		typed_int min_height;
 		typed_int max_height;
 
+		int context_idx;
+
 		containing_block_context() :
 				width(0, cbc_value_type_auto),
 				render_width(0, cbc_value_type_auto),
@@ -240,7 +242,8 @@ namespace litehtml
 				max_width(0, cbc_value_type_none),
 				height(0, cbc_value_type_auto),
 				min_height(0, cbc_value_type_none),
-				max_height(0, cbc_value_type_none)
+				max_height(0, cbc_value_type_none),
+				context_idx(0)
 		{}
 
 		containing_block_context new_width(int w) const
@@ -590,12 +593,11 @@ namespace litehtml
 
 	struct floated_box
 	{
-		typedef std::vector<floated_box>	vector;
-
 		position		                pos;
 		element_float	                float_side;
 		element_clear	                clear_floats;
 		std::shared_ptr<render_item>	el;
+		int								context;
 
 		floated_box() = default;
 		floated_box(const floated_box& val)
@@ -604,6 +606,7 @@ namespace litehtml
 			float_side = val.float_side;
 			clear_floats = val.clear_floats;
 			el = val.el;
+			context = val.context;
 		}
 		floated_box& operator=(const floated_box& val)
 		{
@@ -611,6 +614,7 @@ namespace litehtml
 			float_side = val.float_side;
 			clear_floats = val.clear_floats;
 			el = val.el;
+			context = val.context;
 			return *this;
 		}
 		floated_box(floated_box&& val)
@@ -619,6 +623,7 @@ namespace litehtml
 			float_side = val.float_side;
 			clear_floats = val.clear_floats;
 			el = std::move(val.el);
+			context = val.context;
 		}
 		void operator=(floated_box&& val)
 		{
@@ -626,6 +631,7 @@ namespace litehtml
 			float_side = val.float_side;
 			clear_floats = val.clear_floats;
 			el = std::move(val.el);
+			context = val.context;
 		}
 	};
 
