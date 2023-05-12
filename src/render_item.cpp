@@ -464,7 +464,7 @@ void litehtml::render_item::render_positioned(render_type rt)
 
 void litehtml::render_item::add_positioned(const std::shared_ptr<litehtml::render_item> &el)
 {
-    if (src_el()->css().get_position() != element_position_static || (!have_parent()))
+    if (src_el()->css().get_position() != element_position_static || is_root())
     {
         m_positioned.push_back(el);
     } else
@@ -1002,7 +1002,10 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 {
 	containing_block_context ret;
 	ret.width.value = ret.max_width.value = cb_context.width.value - content_offset_width();
-	ret.height.value = cb_context.height.value - content_offset_height();
+	if(src_el()->css().get_position() != element_position_absolute && src_el()->css().get_position() != element_position_fixed)
+	{
+		ret.height.value = cb_context.height.value - content_offset_height();
+	}
 
 	// Calculate width if css property is not auto
 	// We have to use aut value for display_table_cell also.

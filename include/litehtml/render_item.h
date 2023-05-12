@@ -273,10 +273,10 @@ namespace litehtml
 			return 0;
 		}
 
-        bool have_parent() const
-        {
-            return !m_parent.expired();
-        }
+		bool is_root() const
+		{
+			return m_parent.expired();
+		}
 
         bool collapse_top_margin() const
         {
@@ -285,7 +285,7 @@ namespace litehtml
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.top >= 0 &&
-                   have_parent();
+                   !is_root();
         }
 
         bool collapse_bottom_margin() const
@@ -295,7 +295,7 @@ namespace litehtml
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.bottom >= 0 &&
-                   have_parent();
+                   !is_root();
         }
 
         bool is_visible() const

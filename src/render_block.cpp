@@ -789,7 +789,7 @@ int litehtml::render_item_block::render(int x, int y, const containing_block_con
     }
 
     // re-render content with new width if required
-    if (requires_rerender && !second_pass && have_parent())
+    if (requires_rerender && !second_pass && !is_root())
     {
 		m_floats_left.clear();
 		m_floats_right.clear();
@@ -798,18 +798,6 @@ int litehtml::render_item_block::render(int x, int y, const containing_block_con
 
 		_render_content(x, y, true, ret_width, self_size.new_width(m_pos.width));
     }
-
-	if(src_el()->is_root() || src_el()->is_body())
-	{
-		if(self_size.width.type == containing_block_context::cbc_value_type_auto && m_pos.width < containing_block_size.width - content_offset_width())
-		{
-			m_pos.width = containing_block_size.width - content_offset_width();
-		}
-		if(self_size.height.type == containing_block_context::cbc_value_type_auto && m_pos.height < containing_block_size.height - content_offset_height())
-		{
-			m_pos.height = containing_block_size.height - content_offset_height();
-		}
-	}
 
     if (src_el()->is_floats_holder() && !second_pass)
     {

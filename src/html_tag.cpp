@@ -1068,7 +1068,6 @@ bool litehtml::html_tag::is_floats_holder() const
 	if(	m_css.get_display() == display_inline_block || 
 		m_css.get_display() == display_table_cell ||
 		is_root() ||
-		is_body() || 
 		m_css.get_float() != float_none ||
 		m_css.get_position() == element_position_absolute ||
 		m_css.get_position() == element_position_fixed ||
