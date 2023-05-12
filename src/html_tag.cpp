@@ -294,7 +294,7 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 			bdr_radius -= ri->get_borders();
 			bdr_radius -= ri->get_paddings();
 
-			get_document()->container()->set_clip(pos, bdr_radius, true, true);
+			get_document()->container()->set_clip(pos, bdr_radius);
 		}
 
 		draw_list_marker(hdc, pos);

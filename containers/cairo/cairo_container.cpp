@@ -692,22 +692,9 @@ void cairo_container::draw_borders( litehtml::uint_ptr hdc, const litehtml::bord
 	cairo_restore(cr);
 }
 
-void cairo_container::set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y)
+void cairo_container::set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius)
 {
-	litehtml::position clip_pos = pos;
-	litehtml::position client_pos;
-	get_client_rect(client_pos);
-	if(!valid_x)
-	{
-		clip_pos.x		= client_pos.x;
-		clip_pos.width	= client_pos.width;
-	}
-	if(!valid_y)
-	{
-		clip_pos.y		= client_pos.y;
-		clip_pos.height	= client_pos.height;
-	}
-	m_clips.emplace_back(clip_pos, bdr_radius);
+	m_clips.emplace_back(pos, bdr_radius);
 }
 
 void cairo_container::del_clip()

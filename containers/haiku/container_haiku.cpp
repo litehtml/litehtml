@@ -479,7 +479,7 @@ LiteHtmlView::transform_text(litehtml::tstring& text, litehtml::text_transform t
 }
 
 void 
-LiteHtmlView::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y )
+LiteHtmlView::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius )
 {
 	std::cout << "set_clip" << std::endl;
 }

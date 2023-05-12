@@ -278,7 +278,7 @@ void win32_container::draw_background( uint_ptr _hdc, const std::vector<litehtml
 	release_clip(hdc);
 }
 
-void win32_container::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y )
+void win32_container::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius )
 {
 	litehtml::position clip_pos = pos;
 	litehtml::position client_pos;

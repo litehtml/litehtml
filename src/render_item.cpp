@@ -601,7 +601,7 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
             bdr_radius -= m_borders;
             bdr_radius -= m_padding;
 
-            doc->container()->set_clip(pos, bdr_radius, true, true);
+            doc->container()->set_clip(pos, bdr_radius);
         }
     }
 

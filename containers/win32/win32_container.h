@@ -36,7 +36,7 @@ public:
 	void		get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
 	void		draw_background(uint_ptr hdc, const std::vector<litehtml::background_paint>& bg) override;
 
-	void		set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) override;
+	void		set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
 	void		del_clip() override;
 	litehtml::element::ptr	create_element(const char* tag_name, const litehtml::string_map& attributes, const litehtml::document::ptr& doc) override;
 	void		get_media_features(litehtml::media_features& media) const override;

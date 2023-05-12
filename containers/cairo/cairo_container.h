@@ -70,7 +70,7 @@ public:
 	virtual void						draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) override;
 
 	virtual	void						transform_text(litehtml::string& text, litehtml::text_transform tt) override;
-	virtual void						set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) override;
+	virtual void						set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
 	virtual void						del_clip() override;
 	virtual std::shared_ptr<litehtml::element>	create_element(const char* tag_name, const litehtml::string_map& attributes, const std::shared_ptr<litehtml::document>& doc) override;
 	virtual void						get_media_features(litehtml::media_features& media) const override;

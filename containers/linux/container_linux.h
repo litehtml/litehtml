@@ -79,7 +79,7 @@ public:
 
 
 	void transform_text(litehtml::string& text, litehtml::text_transform tt) override;
-	void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y) override;
+	void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
 	void del_clip() override;
 
 	virtual void make_url( const char* url, const char* basepath, litehtml::string& out );
