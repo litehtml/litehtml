@@ -704,7 +704,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
     el_pos.x	= x - el_pos.x;
     el_pos.y	= y - el_pos.y;
 
-    for(auto i = m_children.begin(); i != m_children.end() && !ret; std::advance(i, 1))
+    for(auto i = m_children.rbegin(); i != m_children.rend() && !ret; std::advance(i, 1))
     {
         auto el = (*i);
 
