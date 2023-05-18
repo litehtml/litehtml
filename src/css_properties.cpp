@@ -1,5 +1,6 @@
 #include "html.h"
 #include "css_properties.h"
+#include <cmath>
 
 #define offset(member) ((uint_ptr)&this->member - (uint_ptr)this)
 
@@ -221,7 +222,7 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 		m_line_height = m_font_metrics.height;
 	} else if(m_css_line_height.units() == css_units_none)
 	{
-		m_line_height = (int) (m_css_line_height.val() * font_size);
+		m_line_height = (int) std::nearbyint(m_css_line_height.val() * font_size);
 	} else
 	{
 		m_line_height = doc->to_pixels(m_css_line_height, font_size, font_size);
