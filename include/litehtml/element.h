@@ -43,13 +43,13 @@ namespace litehtml
 		css_properties&				css_w();
 
 		bool						in_normal_flow()			const;
-		bool						is_inline_box()				const;
+		bool						is_inline()					const;	// returns true if element is inline
+		bool						is_inline_box()				const;	// returns true if element is inline box (inline-table, inline-box, inline-flex)
 		bool						is_block_box()				const;
 		position					get_placement()				const;
 		bool						is_positioned()				const;
 		bool						is_float()					const;
 
-		bool						have_parent() const;
 		bool						is_root() const;
 		element::ptr				parent() const;
 		void						parent(const element::ptr& par);

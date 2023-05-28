@@ -44,12 +44,23 @@ position element::get_placement() const
 	return pos;
 }
 
-bool element::is_inline_box() const
+bool element::is_inline() const
 {
 	if(	css().get_display() == display_inline ||
 		   css().get_display() == display_inline_table ||
 		   css().get_display() == display_inline_block ||
 		   css().get_display() == display_inline_text ||
+		   css().get_display() == display_inline_flex)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool element::is_inline_box() const
+{
+	if(	css().get_display() == display_inline_table ||
+		   css().get_display() == display_inline_block ||
 		   css().get_display() == display_inline_flex)
 	{
 		return true;

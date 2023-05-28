@@ -11,9 +11,14 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
 
     int ret_width = 0;
 
+	int min_rendered_width = el->render(line_left, line_top, self_size.new_width(line_right));
+	if(min_rendered_width < el->width() && el->src_el()->css().get_width().is_predefined())
+	{
+		el->render(line_left, line_top, self_size.new_width(min_rendered_width));
+	}
+
     if (el->src_el()->css().get_float() == float_left)
     {
-        el->render(line_left, line_top, self_size.new_width(line_right));
         if(el->right() > line_right)
         {
             int new_top = find_next_line_top(el->top(), el->width(), self_size.render_width);
@@ -25,8 +30,6 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
 		ret_width = el->right();
     } else if (el->src_el()->css().get_float() == float_right)
     {
-        el->render(0, line_top, self_size.new_width(line_right));
-
         if(line_left + el->width() > line_right)
         {
             int new_top = find_next_line_top(el->top(), el->width(), self_size.render_width);
@@ -618,7 +621,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
 			if (el->src_el()->is_block_box())
 			{
 				has_block_level = true;
-			} else if (el->src_el()->is_inline_box())
+			} else if (el->src_el()->is_inline())
 			{
 				has_inlines = true;
 			}
@@ -637,7 +640,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
         bool not_ws_added = false;
         for (const auto& el : m_children)
         {
-            if(el->src_el()->is_inline_box())
+            if(el->src_el()->is_inline())
             {
                 inlines.push_back(el);
                 if(!el->src_el()->is_white_space())
@@ -733,22 +736,7 @@ int litehtml::render_item_block::render(int x, int y, const containing_block_con
 		m_pos.width = self_size.render_width;
 	} else
 	{
-		if(src_el()->is_inline_box() ||
-			src_el()->css().get_float() != float_none ||
-			src_el()->css().get_display() == display_table_cell ||
-			src_el()->css().get_display() == display_table_caption ||
-			src_el()->css().get_position() > element_position_relative)
-		{
-			m_pos.width = ret_width;
-			if(ret_width < self_size.render_width && !second_pass)
-			{
-				// We have to render content again with new max_width
-				requires_rerender = true;
-			}
-		} else
-		{
-			m_pos.width = self_size.render_width;
-		}
+		m_pos.width = self_size.render_width;
 	}
 
 	// Fix width with min-width attribute

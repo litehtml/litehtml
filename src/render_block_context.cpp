@@ -31,7 +31,11 @@ int litehtml::render_item_block_context::_render_content(int x, int y, bool seco
         {
             if(el->src_el()->css().get_position() == element_position_absolute || el->src_el()->css().get_position() == element_position_fixed)
             {
-                el->render(0, child_top, self_size);
+				int min_rendered_width = el->render(0, child_top, self_size);
+				if(min_rendered_width < el->width() && el->src_el()->css().get_width().is_predefined())
+				{
+					el->render(0, child_top, self_size.new_width(min_rendered_width));
+				}
             } else
             {
                 child_top = get_cleared_top(el, child_top);

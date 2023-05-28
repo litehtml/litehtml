@@ -198,7 +198,7 @@ int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box
     line_ctx.fix_top();
     get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
 
-    if(el->get_el()->src_el()->is_inline_box() || el->get_el()->src_el()->is_floats_holder())
+    if(el->get_el()->src_el()->is_inline() || el->get_el()->src_el()->is_floats_holder())
     {
         if (el->get_el()->width() > line_ctx.right - line_ctx.left)
         {
@@ -273,20 +273,20 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
 
 	if(item->get_type() == line_box_item::type_text_part)
 	{
-		switch (item->get_el()->src_el()->css().get_display())
+		if(item->get_el()->src_el()->is_inline_box())
 		{
-			case display_inline_block:
-			case display_inline_table:
-				item->set_rendered_min_width(item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(line_ctx.right)));
-				break;
-			case display_inline_text:
+			int min_rendered_width = item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(line_ctx.right));
+			if(min_rendered_width < item->get_el()->width() && item->get_el()->src_el()->css().get_width().is_predefined())
 			{
-				litehtml::size sz;
-				item->get_el()->src_el()->get_content_size(sz, line_ctx.right);
-				item->get_el()->pos() = sz;
-				item->set_rendered_min_width(sz.width);
+				item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(min_rendered_width));
 			}
-				break;
+			item->set_rendered_min_width(min_rendered_width);
+		} else if(item->get_el()->src_el()->css().get_display() == display_inline_text)
+		{
+			litehtml::size sz;
+			item->get_el()->src_el()->get_content_size(sz, line_ctx.right);
+			item->get_el()->pos() = sz;
+			item->set_rendered_min_width(sz.width);
 		}
 	}
 
@@ -314,7 +314,7 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
         get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
     }
 
-    if(!item->get_el()->src_el()->is_inline_box())
+    if(!item->get_el()->src_el()->is_inline())
     {
         if(m_line_boxes.size() == 1)
         {

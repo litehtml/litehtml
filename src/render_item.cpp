@@ -632,7 +632,7 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
                     }
                     break;
                 case draw_block:
-                    if (!el->src_el()->is_inline_box() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
+                    if (!el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
                     {
                         el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
                     }
@@ -646,7 +646,7 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
                     }
                     break;
                 case draw_inlines:
-                    if (el->src_el()->is_inline_box() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
+                    if (el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
                     {
                         el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
                         if (el->src_el()->css().get_display() == display_inline_block)
@@ -734,7 +734,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                     }
                     break;
                 case draw_block:
-                    if(!el->src_el()->is_inline_box() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
+                    if(!el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
                     {
                         if(el->is_point_inside(el_pos.x, el_pos.y))
                         {
@@ -755,7 +755,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                     }
                     break;
                 case draw_inlines:
-                    if(el->src_el()->is_inline_box() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
+                    if(el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
                     {
                         if(el->src_el()->css().get_display() == display_inline_block ||
                                 el->src_el()->css().get_display() == display_inline_table ||
