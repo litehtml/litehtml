@@ -304,7 +304,7 @@ int litehtml::document::render( int max_width, render_type rt )
 			m_root_render->render_positioned(rt);
 		} else
 		{
-			ret = m_root_render->render(0, 0, cb_context);
+			ret = m_root_render->render(0, 0, cb_context, nullptr);
 			if(m_root_render->fetch_positioned())
 			{
 				m_fixed_boxes.clear();

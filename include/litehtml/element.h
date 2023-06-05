@@ -119,7 +119,7 @@ namespace litehtml
 		virtual element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
 		virtual element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
 		virtual void				get_content_size(size& sz, int max_width);
-		virtual bool				is_floats_holder() const;
+		virtual bool				is_block_formatting_context() const;
 		virtual void				update_floats(int dy, const ptr &parent);
 		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const;
 		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const;

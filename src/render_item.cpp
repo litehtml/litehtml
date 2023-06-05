@@ -27,6 +27,36 @@ litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
     m_borders.bottom	= doc->to_pixels(src_el()->css().get_borders().bottom.width, fnt_size);
 }
 
+int litehtml::render_item::render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass)
+{
+	int ret;
+
+	calc_outlines(containing_block_size.width);
+
+	m_pos.clear();
+	m_pos.move_to(x, y);
+
+	int content_left = content_offset_left();
+	int content_top = content_offset_top();
+
+	m_pos.x += content_left;
+	m_pos.y += content_top;
+
+
+	if(src_el()->is_block_formatting_context() || ! fmt_ctx)
+	{
+		formatting_context fmt;
+		fmt.push_position(content_left, content_top);
+		ret = _render(x, y, containing_block_size, &fmt, second_pass);
+		fmt.apply_relative_shift(containing_block_size);
+	} else
+	{
+		fmt_ctx->push_position(x + content_left, y + content_top);
+		ret = _render(x, y, containing_block_size, fmt_ctx, second_pass);
+		fmt_ctx->pop_position(x + content_left, y + content_top);
+	}
+	return ret;
+}
 
 void litehtml::render_item::calc_outlines( int parent_width )
 {
@@ -438,7 +468,7 @@ void litehtml::render_item::render_positioned(render_type rt)
             if(need_render)
             {
                 position pos = el->m_pos;
-				el->render(el->left(), el->top(), containing_block_size.new_width(el->width()), true);
+				el->render(el->left(), el->top(), containing_block_size.new_width(el->width()), nullptr, true);
                 el->m_pos = pos;
             }
 

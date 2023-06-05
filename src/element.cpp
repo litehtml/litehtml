@@ -289,7 +289,7 @@ bool element::is_only_child(const element::ptr& el, bool of_type)	 const	LITEHTM
 element::ptr element::get_child( int idx ) const					LITEHTML_RETURN_FUNC(nullptr)
 size_t element::get_children_count() const							LITEHTML_RETURN_FUNC(0)
 void element::update_floats(int dy, const ptr &parent)				LITEHTML_EMPTY_FUNC
-bool element::is_floats_holder() const								LITEHTML_RETURN_FUNC(false)
+bool element::is_block_formatting_context() const								LITEHTML_RETURN_FUNC(false)
 void element::get_content_size( size& sz, int max_width )			LITEHTML_EMPTY_FUNC
 bool element::appendChild(const ptr &el)							LITEHTML_RETURN_FUNC(false)
 bool element::removeChild(const ptr &el)							LITEHTML_RETURN_FUNC(false)

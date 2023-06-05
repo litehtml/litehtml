@@ -1063,10 +1063,11 @@ bool litehtml::html_tag::is_replaced() const
 	return false;
 }
 
-bool litehtml::html_tag::is_floats_holder() const
+bool litehtml::html_tag::is_block_formatting_context() const
 {
-	if(	m_css.get_display() == display_inline_block || 
+	if(	m_css.get_display() == display_inline_block ||
 		m_css.get_display() == display_table_cell ||
+		m_css.get_display() == display_table_caption ||
 		is_root() ||
 		m_css.get_float() != float_none ||
 		m_css.get_position() == element_position_absolute ||
