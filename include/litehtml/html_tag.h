@@ -105,7 +105,6 @@ namespace litehtml
 		void				parse_attributes() override;
 
 		void				get_content_size(size& sz, int max_width) override;
-		bool				is_block_formatting_context() const override;
 		void				add_style(const style& style) override;
 
 		bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const override;

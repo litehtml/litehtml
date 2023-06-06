@@ -1063,22 +1063,6 @@ bool litehtml::html_tag::is_replaced() const
 	return false;
 }
 
-bool litehtml::html_tag::is_block_formatting_context() const
-{
-	if(	m_css.get_display() == display_inline_block ||
-		m_css.get_display() == display_table_cell ||
-		m_css.get_display() == display_table_caption ||
-		is_root() ||
-		m_css.get_float() != float_none ||
-		m_css.get_position() == element_position_absolute ||
-		m_css.get_position() == element_position_fixed ||
-		m_css.get_overflow() > overflow_visible)
-	{
-		return true;
-	}
-	return false;
-}
-
 size_t litehtml::html_tag::get_children_count() const
 {
 	return m_children.size();

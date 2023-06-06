@@ -273,6 +273,21 @@ element::ptr element::_add_before_after(int type, const style& style)
 	return nullptr;
 }
 
+bool element::is_block_formatting_context() const
+{
+	if(	m_css.get_display() == display_inline_block ||
+		   m_css.get_display() == display_table_cell ||
+		   m_css.get_display() == display_table_caption ||
+		   is_root() ||
+		   m_css.get_float() != float_none ||
+		   m_css.get_position() == element_position_absolute ||
+		   m_css.get_position() == element_position_fixed ||
+		   m_css.get_overflow() > overflow_visible)
+	{
+		return true;
+	}
+	return false;
+}
 
 const background* element::get_background(bool own_only)						LITEHTML_RETURN_FUNC(nullptr)
 void element::add_style( const style& style)	        						LITEHTML_EMPTY_FUNC
@@ -288,8 +303,6 @@ bool element::is_nth_child(const element::ptr&, int num, int off, bool of_type) 
 bool element::is_only_child(const element::ptr& el, bool of_type)	 const	LITEHTML_RETURN_FUNC(false)
 element::ptr element::get_child( int idx ) const					LITEHTML_RETURN_FUNC(nullptr)
 size_t element::get_children_count() const							LITEHTML_RETURN_FUNC(0)
-void element::update_floats(int dy, const ptr &parent)				LITEHTML_EMPTY_FUNC
-bool element::is_block_formatting_context() const								LITEHTML_RETURN_FUNC(false)
 void element::get_content_size( size& sz, int max_width )			LITEHTML_EMPTY_FUNC
 bool element::appendChild(const ptr &el)							LITEHTML_RETURN_FUNC(false)
 bool element::removeChild(const ptr &el)							LITEHTML_RETURN_FUNC(false)

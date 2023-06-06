@@ -149,10 +149,10 @@ bool litehtml::render_item::get_predefined_height(int& p_height, int containing_
     if(h.units() == css_units_percentage)
     {
 		p_height = h.calc_percent(containing_block_height);
-		return containing_block_height != 0;
+		return containing_block_height > 0;
     }
     p_height = src_el()->get_document()->to_pixels(h, src_el()->css().get_font_size());
-    return true;
+    return p_height > 0;
 }
 
 int litehtml::render_item::calc_width(int defVal, int containing_block_width) const

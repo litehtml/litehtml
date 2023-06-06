@@ -42,10 +42,12 @@ namespace litehtml
 			ln_left		= get_line_left(y);
 			ln_right	= get_line_right(y, def_right);
 		}
-		virtual int get_line_right( int y, int def_right );
+		int get_line_right( int y, int def_right );
 		int get_cleared_top(const std::shared_ptr<render_item> &el, int line_top) const;
 		void update_floats(int dy, const std::shared_ptr<render_item> &parent);
 		void apply_relative_shift(const containing_block_context &containing_block_size);
+		int find_min_left(int y, int context_idx);
+		int find_min_right(int y, int right, int context_idx);
 	};
 }
 

@@ -21,13 +21,14 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
     {
         if(el->right() > line_right)
         {
-            int new_top = fmt_ctx->find_next_line_top(el->top(), el->width(), self_size.render_width);
-            el->pos().x = fmt_ctx->get_line_left(new_top) + el->content_offset_left();
-            el->pos().y = new_top + el->content_offset_top();
+			line_top = fmt_ctx->find_next_line_top(el->top(), el->width(), self_size.render_width);
+            el->pos().x = fmt_ctx->get_line_left(line_top) + el->content_offset_left();
+            el->pos().y = line_top + el->content_offset_top();
         }
 		fmt_ctx->add_float(el, min_rendered_width, self_size.context_idx);
 		fix_line_width(float_left, self_size, fmt_ctx);
-		ret_width = el->right();
+
+		ret_width = fmt_ctx->find_min_left(line_top, self_size.context_idx);
     } else if (el->src_el()->css().get_float() == float_right)
     {
         if(line_left + el->width() > line_right)
@@ -41,11 +42,8 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
         }
 		fmt_ctx->add_float(el, min_rendered_width, self_size.context_idx);
 		fix_line_width(float_right, self_size, fmt_ctx);
-		line_left	= 0;
-		line_right	= self_size.render_width;
-		fmt_ctx->get_line_left_right(line_top, self_size.render_width, line_left, line_right);
-
-		ret_width = ret_width + (self_size.render_width - line_right);
+		line_right = fmt_ctx->find_min_right(line_top, self_size.render_width, self_size.context_idx);
+		ret_width = self_size.render_width - line_right;
     }
     return ret_width;
 }
@@ -257,7 +255,10 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 	// Set block height
 	if (self_size.height.type != containing_block_context::cbc_value_type_auto)
 	{
-		m_pos.height = self_size.height;
+		if(self_size.height > 0)
+		{
+			m_pos.height = self_size.height;
+		}
 		if(src_el()->css().get_box_sizing() == box_sizing_border_box)
 		{
 			m_pos.height -= box_sizing_height();

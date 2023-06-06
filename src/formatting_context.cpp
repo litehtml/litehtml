@@ -409,3 +409,33 @@ void litehtml::formatting_context::apply_relative_shift(const containing_block_c
 		fb.el->apply_relative_shift(containing_block_size);
 	}
 }
+
+int litehtml::formatting_context::find_min_left(int y, int context_idx)
+{
+	y += m_current_top;
+	int min_left = m_current_left;
+	for(const auto& fb : m_floats_left)
+	{
+		if (y >= fb.pos.top() && y < fb.pos.bottom() && fb.context == context_idx)
+		{
+			min_left += fb.min_width;
+		}
+	}
+	if(min_left < m_current_left) return 0;
+	return min_left - m_current_left;
+}
+
+int litehtml::formatting_context::find_min_right(int y, int right, int context_idx)
+{
+	y += m_current_top;
+	int min_right = right + m_current_left;
+	for(const auto& fb : m_floats_right)
+	{
+		if (y >= fb.pos.top() && y < fb.pos.bottom() && fb.context == context_idx)
+		{
+			min_right -= fb.min_width;
+		}
+	}
+	if(min_right < m_current_left) return 0;
+	return min_right - m_current_left;
+}
