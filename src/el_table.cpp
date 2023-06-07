@@ -30,23 +30,6 @@ void litehtml::el_table::parse_attributes()
 		m_style.add_property(_width_, str);
 	}
 
-	str = get_attr("align");
-	if(str)
-	{
-		int align = value_index(str, "left;center;right");
-		switch(align)
-		{
-		case 1:
-			m_style.add_property(_margin_left_, "auto");
-			m_style.add_property(_margin_right_, "auto");
-			break;
-		case 2:
-			m_style.add_property(_margin_left_, "auto");
-			m_style.add_property(_margin_right_, "0");
-			break;
-		}
-	}
-
 	str = get_attr("cellspacing");
 	if(str)
 	{

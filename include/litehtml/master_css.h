@@ -224,6 +224,19 @@ table[border|=0] td, table[border|=0] th {
     border-style:none;
 }
 
+table[align=left] {
+   float: left;
+}
+
+table[align=right] {
+   float: right;
+}
+
+table[align=center] {
+   margin-left: auto;
+   margin-right: auto;
+}
+
 caption {
 	display: table-caption;
 }
