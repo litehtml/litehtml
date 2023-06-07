@@ -5,6 +5,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <list>
 
 namespace litehtml
 {
@@ -12,7 +13,7 @@ namespace litehtml
 	class element;
 
 	typedef std::map<string, string>					string_map;
-	typedef std::vector< std::shared_ptr<element> >		elements_vector;
+	typedef std::list< std::shared_ptr<element> >		elements_list;
 	typedef std::vector<int>							int_vector;
 	typedef std::vector<string>							string_vector;
 

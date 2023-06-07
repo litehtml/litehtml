@@ -7,7 +7,7 @@ namespace litehtml
 {
 	class el_style : public element
 	{
-		elements_vector		m_children;
+		elements_list		m_children;
 	public:
 		explicit el_style(const std::shared_ptr<document>& doc);
 

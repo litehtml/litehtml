@@ -121,7 +121,7 @@ const char* litehtml::html_tag::get_attr( const char* name, const char* def ) co
 	return def;
 }
 
-litehtml::elements_vector litehtml::html_tag::select_all( const string& selector )
+litehtml::elements_list litehtml::html_tag::select_all(const string& selector )
 {
 	css_selector sel;
 	sel.parse(selector);
@@ -129,14 +129,14 @@ litehtml::elements_vector litehtml::html_tag::select_all( const string& selector
 	return select_all(sel);
 }
 
-litehtml::elements_vector litehtml::html_tag::select_all( const css_selector& selector )
+litehtml::elements_list litehtml::html_tag::select_all(const css_selector& selector )
 {
-	litehtml::elements_vector res;
+	litehtml::elements_list res;
 	select_all(selector, res);
 	return res;
 }
 
-void litehtml::html_tag::select_all(const css_selector& selector, elements_vector& res)
+void litehtml::html_tag::select_all(const css_selector& selector, elements_list& res)
 {
 	if(select(selector))
 	{
@@ -1062,17 +1062,6 @@ bool litehtml::html_tag::is_replaced() const
 {
 	return false;
 }
-
-size_t litehtml::html_tag::get_children_count() const
-{
-	return m_children.size();
-}
-
-litehtml::element::ptr litehtml::html_tag::get_child( int idx ) const
-{
-	return m_children[idx];
-}
-
 
 void litehtml::html_tag::init_background_paint(position pos, std::vector<background_paint>& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri)
 {

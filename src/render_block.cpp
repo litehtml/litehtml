@@ -67,9 +67,8 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
         if (auto p = src_el()->parent())
         {
             int val = atoi(p->get_attr("start", "1"));
-            for (int i = 0; i < (int)p->get_children_count(); i++)
+			for(const auto &child : p->children())
             {
-                auto child = p->get_child(i);
                 if (child == src_el())
                 {
                     src_el()->set_attr("list_index", std::to_string(val).c_str());

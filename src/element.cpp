@@ -291,9 +291,9 @@ bool element::is_block_formatting_context() const
 
 const background* element::get_background(bool own_only)						LITEHTML_RETURN_FUNC(nullptr)
 void element::add_style( const style& style)	        						LITEHTML_EMPTY_FUNC
-void element::select_all(const css_selector& selector, elements_vector& res)	LITEHTML_EMPTY_FUNC
-elements_vector element::select_all(const css_selector& selector)				LITEHTML_RETURN_FUNC(elements_vector())
-elements_vector element::select_all(const string& selector)						LITEHTML_RETURN_FUNC(elements_vector())
+void element::select_all(const css_selector& selector, elements_list& res)	LITEHTML_EMPTY_FUNC
+elements_list element::select_all(const css_selector& selector)				LITEHTML_RETURN_FUNC(elements_list())
+elements_list element::select_all(const string& selector)						LITEHTML_RETURN_FUNC(elements_list())
 element::ptr element::select_one( const css_selector& selector )				LITEHTML_RETURN_FUNC(nullptr)
 element::ptr element::select_one( const string& selector )						LITEHTML_RETURN_FUNC(nullptr)
 element::ptr element::find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/) LITEHTML_RETURN_FUNC(nullptr)
@@ -301,8 +301,6 @@ element::ptr element::find_sibling(const element::ptr& el, const css_selector& s
 bool element::is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const		LITEHTML_RETURN_FUNC(false)
 bool element::is_nth_child(const element::ptr&, int num, int off, bool of_type) const		LITEHTML_RETURN_FUNC(false)
 bool element::is_only_child(const element::ptr& el, bool of_type)	 const	LITEHTML_RETURN_FUNC(false)
-element::ptr element::get_child( int idx ) const					LITEHTML_RETURN_FUNC(nullptr)
-size_t element::get_children_count() const							LITEHTML_RETURN_FUNC(0)
 void element::get_content_size( size& sz, int max_width )			LITEHTML_EMPTY_FUNC
 bool element::appendChild(const ptr &el)							LITEHTML_RETURN_FUNC(false)
 bool element::removeChild(const ptr &el)							LITEHTML_RETURN_FUNC(false)
