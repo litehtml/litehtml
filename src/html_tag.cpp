@@ -203,61 +203,62 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 
 			if(sel->is_media_valid())
 			{
+				auto apply_before_after = [&]()
+					{
+						const auto& content_property = sel->m_style->get_property(_content_);
+						bool content_none = content_property.m_type == prop_type_string && content_property.m_string == "none";
+						bool create = !content_none && (sel->m_right.m_attrs.size() > 1 || sel->m_right.m_tag != star_id);
+
+						element::ptr el;
+						if(apply & select_match_with_after)
+						{
+							el = get_element_after(*sel->m_style, create);
+						} else if(apply & select_match_with_before)
+						{
+							el = get_element_before(*sel->m_style, create);
+						} else
+						{
+							return;
+						}
+						if(el)
+						{
+							if(!content_none)
+							{
+								el->add_style(*sel->m_style);
+							} else
+							{
+								el->parent()->removeChild(el);
+							}
+						} else
+						{
+							if(!content_none)
+							{
+								add_style(*sel->m_style);
+							} else
+							{
+								parent()->removeChild(shared_from_this());
+							}
+						}
+						us->m_used = true;
+					};
+
+
 				if(apply & select_match_pseudo_class)
 				{
 					if(select(*sel, true))
 					{
-						if(apply & select_match_with_after)
+						if((apply & (select_match_with_after | select_match_with_before)))
 						{
-							element::ptr el = get_element_after(*sel->m_style, sel->m_right.m_attrs.size() > 1);
-							if(el)
-							{
-								el->add_style(*sel->m_style);
-							} else
-							{
-								add_style(*sel->m_style);
-								us->m_used = true;
-							}
-						} else if(apply & select_match_with_before)
-						{
-							element::ptr el = get_element_before(*sel->m_style, sel->m_right.m_attrs.size() > 1);
-							if(el)
-							{
-								el->add_style(*sel->m_style);
-							} else
-							{
-								add_style(*sel->m_style);
-								us->m_used = true;
-							}
-						}
-						else
+							apply_before_after();
+						} else
 						{
 							add_style(*sel->m_style);
 							us->m_used = true;
 						}
 					}
-				} else if(apply & select_match_with_after)
+				} else if((apply & (select_match_with_after | select_match_with_before)))
 				{
-					element::ptr el = get_element_after(*sel->m_style, sel->m_right.m_attrs.size() > 1);
-					if(el)
-					{
-						el->add_style(*sel->m_style);
-					} else
-					{
-						add_style(*sel->m_style);
-						us->m_used = true;
-					}
-				} else if(apply & select_match_with_before)
-				{
-					element::ptr el = get_element_before(*sel->m_style, sel->m_right.m_attrs.size() > 1);
-					if(el)
-					{
-						el->add_style(*sel->m_style);
-					} else
-					{
-						add_style(*sel->m_style);
-						us->m_used = true;
-					}
+					apply_before_after();
 				} else
 				{
 					add_style(*sel->m_style);
@@ -553,14 +554,14 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		case select_pseudo_element:
 			if(attr.name == _after_)
 			{
-				if(selector.m_attrs.size() == 1 && m_tag != __tag_after_)
+				if(selector.m_attrs.size() == 1 && selector.m_tag == star_id && m_tag != __tag_after_)
 				{
 					return select_no_match;
 				}
 				res |= select_match_with_after;
 			} else if(attr.name == _before_)
 			{
-				if(selector.m_attrs.size() == 1 && m_tag != __tag_before_)
+				if(selector.m_attrs.size() == 1 && selector.m_tag == star_id && m_tag != __tag_before_)
 				{
 					return select_no_match;
 				}
