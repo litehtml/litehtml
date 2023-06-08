@@ -255,22 +255,18 @@ bool element::find_styles_changes( position::vector& redraw_boxes)
 
 element::ptr element::_add_before_after(int type, const style& style)
 {
-	if(style.get_property(_content_).m_type != prop_type_invalid)
+	element::ptr el;
+	if(type == 0)
 	{
-		element::ptr el;
-		if(type == 0)
-		{
-			el = std::make_shared<el_before>(get_document());
-			m_children.insert(m_children.begin(), el);
-		} else
-		{
-			el = std::make_shared<el_after>(get_document());
-			m_children.insert(m_children.end(), el);
-		}
-		el->parent(shared_from_this());
-		return el;
+		el = std::make_shared<el_before>(get_document());
+		m_children.insert(m_children.begin(), el);
+	} else
+	{
+		el = std::make_shared<el_after>(get_document());
+		m_children.insert(m_children.end(), el);
 	}
-	return nullptr;
+	el->parent(shared_from_this());
+	return el;
 }
 
 bool element::is_block_formatting_context() const

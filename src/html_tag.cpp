@@ -209,17 +209,25 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 					{
 						if(apply & select_match_with_after)
 						{
-							element::ptr el = get_element_after(*sel->m_style, true);
+							element::ptr el = get_element_after(*sel->m_style, sel->m_right.m_attrs.size() > 1);
 							if(el)
 							{
 								el->add_style(*sel->m_style);
+							} else
+							{
+								add_style(*sel->m_style);
+								us->m_used = true;
 							}
 						} else if(apply & select_match_with_before)
 						{
-							element::ptr el = get_element_before(*sel->m_style, true);
+							element::ptr el = get_element_before(*sel->m_style, sel->m_right.m_attrs.size() > 1);
 							if(el)
 							{
 								el->add_style(*sel->m_style);
+							} else
+							{
+								add_style(*sel->m_style);
+								us->m_used = true;
 							}
 						}
 						else
@@ -230,17 +238,25 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 					}
 				} else if(apply & select_match_with_after)
 				{
-					element::ptr el = get_element_after(*sel->m_style, true);
+					element::ptr el = get_element_after(*sel->m_style, sel->m_right.m_attrs.size() > 1);
 					if(el)
 					{
 						el->add_style(*sel->m_style);
+					} else
+					{
+						add_style(*sel->m_style);
+						us->m_used = true;
 					}
 				} else if(apply & select_match_with_before)
 				{
-					element::ptr el = get_element_before(*sel->m_style, true);
+					element::ptr el = get_element_before(*sel->m_style, sel->m_right.m_attrs.size() > 1);
 					if(el)
 					{
 						el->add_style(*sel->m_style);
+					} else
+					{
+						add_style(*sel->m_style);
+						us->m_used = true;
 					}
 				} else
 				{
@@ -537,9 +553,17 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		case select_pseudo_element:
 			if(attr.name == _after_)
 			{
+				if(selector.m_attrs.size() == 1 && m_tag != __tag_after_)
+				{
+					return select_no_match;
+				}
 				res |= select_match_with_after;
 			} else if(attr.name == _before_)
 			{
+				if(selector.m_attrs.size() == 1 && m_tag != __tag_before_)
+				{
+					return select_no_match;
+				}
 				res |= select_match_with_before;
 			} else
 			{

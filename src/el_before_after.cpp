@@ -197,8 +197,3 @@ litehtml::string litehtml::el_before_after_base::convert_escape( const char* txt
     u_str[1] = 0;
 	return litehtml::string(litehtml_from_wchar(u_str));
 }
-
-void litehtml::el_before_after_base::apply_stylesheet( const litehtml::css& stylesheet )
-{
-
-}
