@@ -1086,21 +1086,3 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	}
 	return ret;
 }
-
-void litehtml::render_item_table_row::get_inline_boxes( position::vector& boxes ) const
-{
-	position pos;
-	for(auto& el : m_children)
-	{
-		if(el->src_el()->css().get_display() == display_table_cell)
-		{
-			pos.x		= el->left() + el->margin_left();
-			pos.y		= el->top() - m_padding.top - m_borders.top;
-
-			pos.width	= el->right() - pos.x - el->margin_right() - el->margin_left();
-			pos.height	= el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom;
-
-			boxes.push_back(pos);
-		}
-	}
-}

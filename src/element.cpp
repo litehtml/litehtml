@@ -2,6 +2,9 @@
 #include "element.h"
 #include "document.h"
 #include "render_item.h"
+#include "render_flex.h"
+#include "render_inline.h"
+#include "render_table.h"
 #include "el_before_after.h"
 
 namespace litehtml
