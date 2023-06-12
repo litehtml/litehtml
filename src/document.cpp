@@ -27,6 +27,8 @@
 #include "gumbo.h"
 #include "utf8_strings.h"
 #include "render_item.h"
+#include "render_table.h"
+#include "render_block.h"
 
 litehtml::document::document(document_container* objContainer)
 {
