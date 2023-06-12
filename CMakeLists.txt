@@ -69,6 +69,7 @@ set(SOURCE_LITEHTML
     src/render_table.cpp
     src/render_flex.cpp
     src/render_image.cpp
+    src/formatting_context.cpp
 )
 
 set(HEADER_LITEHTML
@@ -124,6 +125,7 @@ set(HEADER_LITEHTML
     include/litehtml/render_item.h
     include/litehtml/master_css.h
     include/litehtml/string_id.h
+    include/litehtml/formatting_context.h
 )
 
 set(TEST_LITEHTML

@@ -109,7 +109,7 @@ void litehtml::el_before_after_base::add_text( const string& txt )
 					word.clear();
 				}
 				word += chr;
-				element::ptr el = std::make_shared<el_text>(word.c_str(), get_document());
+				element::ptr el = std::make_shared<el_space>(word.c_str(), get_document());
 				appendChild(el);
 				word.clear();
 			} else
@@ -196,9 +196,4 @@ litehtml::string litehtml::el_before_after_base::convert_escape( const char* txt
     u_str[0] = (wchar_t) strtol(txt, &str_end, 16);
     u_str[1] = 0;
 	return litehtml::string(litehtml_from_wchar(u_str));
-}
-
-void litehtml::el_before_after_base::apply_stylesheet( const litehtml::css& stylesheet )
-{
-
 }
