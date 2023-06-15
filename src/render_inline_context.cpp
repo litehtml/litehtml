@@ -1,10 +1,9 @@
 #include "html.h"
-#include "render_item.h"
+#include "render_inline_context.h"
 #include "document.h"
 #include "iterators.h"
 
-int litehtml::render_item_inline_context::_render_content(int x, int y, bool second_pass, int ret_width,
-														  const containing_block_context &self_size)
+int litehtml::render_item_inline_context::_render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
     m_line_boxes.clear();
 	m_max_line_width = 0;
@@ -50,20 +49,20 @@ int litehtml::render_item_inline_context::_render_content(int x, int y, bool sec
 							}
 						}
 						// place element into rendering flow
-						place_inline(std::unique_ptr<line_box_item>(new line_box_item(el)), self_size);
+						place_inline(std::unique_ptr<line_box_item>(new line_box_item(el)), self_size, fmt_ctx);
 					}
 					break;
 
 				case iterator_item_type_start_parent:
 					{
 						el->clear_inline_boxes();
-						place_inline(std::unique_ptr<lbi_start>(new lbi_start(el)), self_size);
+						place_inline(std::unique_ptr<lbi_start>(new lbi_start(el)), self_size, fmt_ctx);
 					}
 					break;
 
 				case iterator_item_type_end_parent:
 				{
-					place_inline(std::unique_ptr<lbi_end>(new lbi_end(el)), self_size);
+					place_inline(std::unique_ptr<lbi_end>(new lbi_end(el)), self_size, fmt_ctx);
 				}
 					break;
 			}
@@ -79,7 +78,7 @@ int litehtml::render_item_inline_context::_render_content(int x, int y, bool sec
             m_margins.top = std::max(m_line_boxes.front()->top_margin(), m_margins.top);
             if (m_margins.top != old_top)
             {
-                update_floats(m_margins.top - old_top, shared_from_this());
+                fmt_ctx->update_floats(m_margins.top - old_top, shared_from_this());
             }
         }
         if (collapse_bottom_margin())
@@ -93,13 +92,13 @@ int litehtml::render_item_inline_context::_render_content(int x, int y, bool sec
         }
     }
 
-    return std::max(ret_width, m_max_line_width);
+    return m_max_line_width;
 }
 
 void litehtml::render_item_inline_context::fix_line_width(element_float flt,
-														  const containing_block_context &self_size)
+														  const containing_block_context &self_size,
+														  formatting_context* fmt_ctx)
 {
-    int ret_width = 0;
     if(!m_line_boxes.empty())
     {
 		auto el_front = m_line_boxes.back()->get_first_text_part();
@@ -128,7 +127,7 @@ void litehtml::render_item_inline_context::fix_line_width(element_float flt,
 
             for(auto& item : items)
             {
-                place_inline(std::move(item), self_size);
+                place_inline(std::move(item), self_size, fmt_ctx);
             }
         } else
         {
@@ -137,7 +136,7 @@ void litehtml::render_item_inline_context::fix_line_width(element_float flt,
 
             int line_left	= 0;
             int line_right	= self_size.render_width;
-            get_line_left_right(line_top, self_size.render_width, line_left, line_right);
+            fmt_ctx->get_line_left_right(line_top, self_size.render_width, line_left, line_right);
 
             if(m_line_boxes.size() == 1)
             {
@@ -157,7 +156,7 @@ void litehtml::render_item_inline_context::fix_line_width(element_float flt,
             auto items = m_line_boxes.back()->new_width(line_left, line_right);
             for(auto& item : items)
             {
-                place_inline(std::move(item), self_size);
+                place_inline(std::move(item), self_size, fmt_ctx);
             }
         }
     }
@@ -183,7 +182,7 @@ std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inlin
     return ret;
 }
 
-int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box_item>& el, line_context& line_ctx, const containing_block_context &self_size)
+int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box_item>& el, line_context& line_ctx, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
 	auto items = finish_last_box(false, self_size);
 	int line_top = 0;
@@ -191,22 +190,22 @@ int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box
 	{
 		line_top = m_line_boxes.back()->bottom();
 	}
-    line_ctx.top = get_cleared_top(el->get_el(), line_top);
+    line_ctx.top = fmt_ctx->get_cleared_top(el->get_el(), line_top);
 
     line_ctx.left = 0;
     line_ctx.right = self_size.render_width;
     line_ctx.fix_top();
-    get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
+	fmt_ctx->get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
 
-    if(el->get_el()->src_el()->is_inline_box() || el->get_el()->src_el()->is_floats_holder())
+    if(el->get_el()->src_el()->is_inline() || el->get_el()->src_el()->is_block_formatting_context())
     {
         if (el->get_el()->width() > line_ctx.right - line_ctx.left)
         {
-            line_ctx.top = find_next_line_top(line_ctx.top, el->get_el()->width(), self_size.render_width);
+            line_ctx.top = fmt_ctx->find_next_line_top(line_ctx.top, el->get_el()->width(), self_size.render_width);
             line_ctx.left = 0;
             line_ctx.right = self_size.render_width;
             line_ctx.fix_top();
-            get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
+			fmt_ctx->get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
         }
     }
 
@@ -241,7 +240,7 @@ int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box
     return line_ctx.top;
 }
 
-void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box_item> item, const containing_block_context &self_size)
+void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box_item> item, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
     if(item->get_el()->src_el()->css().get_display() == display_none) return;
 
@@ -252,7 +251,7 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
         {
             line_top = m_line_boxes.back()->top();
         }
-        int ret = place_float(item->get_el(), line_top, self_size);
+        int ret = place_float(item->get_el(), line_top, self_size, fmt_ctx);
 		if(ret > m_max_line_width)
 		{
 			m_max_line_width = ret;
@@ -269,24 +268,24 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
     line_ctx.left = 0;
     line_ctx.right = self_size.render_width;
     line_ctx.fix_top();
-    get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
+	fmt_ctx->get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
 
 	if(item->get_type() == line_box_item::type_text_part)
 	{
-		switch (item->get_el()->src_el()->css().get_display())
+		if(item->get_el()->src_el()->is_inline_box())
 		{
-			case display_inline_block:
-			case display_inline_table:
-				item->set_rendered_min_width(item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(line_ctx.right)));
-				break;
-			case display_inline_text:
+			int min_rendered_width = item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(line_ctx.right), fmt_ctx);
+			if(min_rendered_width < item->get_el()->width() && item->get_el()->src_el()->css().get_width().is_predefined())
 			{
-				litehtml::size sz;
-				item->get_el()->src_el()->get_content_size(sz, line_ctx.right);
-				item->get_el()->pos() = sz;
-				item->set_rendered_min_width(sz.width);
+				item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(min_rendered_width), fmt_ctx);
 			}
-				break;
+			item->set_rendered_min_width(min_rendered_width);
+		} else if(item->get_el()->src_el()->css().get_display() == display_inline_text)
+		{
+			litehtml::size sz;
+			item->get_el()->src_el()->get_content_size(sz, line_ctx.right);
+			item->get_el()->pos() = sz;
+			item->set_rendered_min_width(sz.width);
 		}
 	}
 
@@ -300,7 +299,7 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
     }
     if(add_box)
     {
-        new_box(item, line_ctx, self_size);
+        new_box(item, line_ctx, self_size, fmt_ctx);
     } else if(!m_line_boxes.empty())
     {
         line_ctx.top = m_line_boxes.back()->top();
@@ -311,10 +310,10 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
         line_ctx.left = 0;
         line_ctx.right = self_size.render_width;
         line_ctx.fix_top();
-        get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
+		fmt_ctx->get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);
     }
 
-    if(!item->get_el()->src_el()->is_inline_box())
+    if(!item->get_el()->src_el()->is_inline())
     {
         if(m_line_boxes.size() == 1)
         {

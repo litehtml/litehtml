@@ -1,9 +1,8 @@
 #include "html.h"
-#include "render_item.h"
+#include "render_image.h"
 #include "document.h"
 
-int
-litehtml::render_item_image::render(int x, int y, const containing_block_context &containing_block_size, bool second_pass)
+int litehtml::render_item_image::_render(int x, int y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass)
 {
     int parent_width = containing_block_size.width;
 

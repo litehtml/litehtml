@@ -2,6 +2,9 @@
 #include "element.h"
 #include "document.h"
 #include "render_item.h"
+#include "render_flex.h"
+#include "render_inline.h"
+#include "render_table.h"
 #include "el_before_after.h"
 
 namespace litehtml
@@ -44,12 +47,23 @@ position element::get_placement() const
 	return pos;
 }
 
-bool element::is_inline_box() const
+bool element::is_inline() const
 {
 	if(	css().get_display() == display_inline ||
 		   css().get_display() == display_inline_table ||
 		   css().get_display() == display_inline_block ||
 		   css().get_display() == display_inline_text ||
+		   css().get_display() == display_inline_flex)
+	{
+		return true;
+	}
+	return false;
+}
+
+bool element::is_inline_box() const
+{
+	if(	css().get_display() == display_inline_table ||
+		   css().get_display() == display_inline_block ||
 		   css().get_display() == display_inline_flex)
 	{
 		return true;
@@ -244,30 +258,41 @@ bool element::find_styles_changes( position::vector& redraw_boxes)
 
 element::ptr element::_add_before_after(int type, const style& style)
 {
-	if(style.get_property(_content_).m_type != prop_type_invalid)
+	element::ptr el;
+	if(type == 0)
 	{
-		element::ptr el;
-		if(type == 0)
-		{
-			el = std::make_shared<el_before>(get_document());
-			m_children.insert(m_children.begin(), el);
-		} else
-		{
-			el = std::make_shared<el_after>(get_document());
-			m_children.insert(m_children.end(), el);
-		}
-		el->parent(shared_from_this());
-		return el;
+		el = std::make_shared<el_before>(get_document());
+		m_children.insert(m_children.begin(), el);
+	} else
+	{
+		el = std::make_shared<el_after>(get_document());
+		m_children.insert(m_children.end(), el);
 	}
-	return nullptr;
+	el->parent(shared_from_this());
+	return el;
 }
 
+bool element::is_block_formatting_context() const
+{
+	if(	m_css.get_display() == display_inline_block ||
+		   m_css.get_display() == display_table_cell ||
+		   m_css.get_display() == display_table_caption ||
+		   is_root() ||
+		   m_css.get_float() != float_none ||
+		   m_css.get_position() == element_position_absolute ||
+		   m_css.get_position() == element_position_fixed ||
+		   m_css.get_overflow() > overflow_visible)
+	{
+		return true;
+	}
+	return false;
+}
 
 const background* element::get_background(bool own_only)						LITEHTML_RETURN_FUNC(nullptr)
 void element::add_style( const style& style)	        						LITEHTML_EMPTY_FUNC
-void element::select_all(const css_selector& selector, elements_vector& res)	LITEHTML_EMPTY_FUNC
-elements_vector element::select_all(const css_selector& selector)				LITEHTML_RETURN_FUNC(elements_vector())
-elements_vector element::select_all(const string& selector)						LITEHTML_RETURN_FUNC(elements_vector())
+void element::select_all(const css_selector& selector, elements_list& res)	LITEHTML_EMPTY_FUNC
+elements_list element::select_all(const css_selector& selector)				LITEHTML_RETURN_FUNC(elements_list())
+elements_list element::select_all(const string& selector)						LITEHTML_RETURN_FUNC(elements_list())
 element::ptr element::select_one( const css_selector& selector )				LITEHTML_RETURN_FUNC(nullptr)
 element::ptr element::select_one( const string& selector )						LITEHTML_RETURN_FUNC(nullptr)
 element::ptr element::find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo /*= true*/, bool* is_pseudo /*= 0*/) LITEHTML_RETURN_FUNC(nullptr)
@@ -275,10 +300,6 @@ element::ptr element::find_sibling(const element::ptr& el, const css_selector& s
 bool element::is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const		LITEHTML_RETURN_FUNC(false)
 bool element::is_nth_child(const element::ptr&, int num, int off, bool of_type) const		LITEHTML_RETURN_FUNC(false)
 bool element::is_only_child(const element::ptr& el, bool of_type)	 const	LITEHTML_RETURN_FUNC(false)
-element::ptr element::get_child( int idx ) const					LITEHTML_RETURN_FUNC(nullptr)
-size_t element::get_children_count() const							LITEHTML_RETURN_FUNC(0)
-void element::update_floats(int dy, const ptr &parent)				LITEHTML_EMPTY_FUNC
-bool element::is_floats_holder() const								LITEHTML_RETURN_FUNC(false)
 void element::get_content_size( size& sz, int max_width )			LITEHTML_EMPTY_FUNC
 bool element::appendChild(const ptr &el)							LITEHTML_RETURN_FUNC(false)
 bool element::removeChild(const ptr &el)							LITEHTML_RETURN_FUNC(false)

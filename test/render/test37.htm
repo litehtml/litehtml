@@ -1,0 +1,46 @@
+<style>
+    .element1
+    {
+        width: 200px;
+        height: 100px;
+        background-color: lightsalmon;
+        margin: 5px;
+        float: left;
+    }
+
+    .element2
+    {
+        width: 200px;
+        height: 50px;
+        background-color: lightpink;
+        margin: 5px;
+        float: left;
+    }
+    .row
+    {
+        background-color: lightgray;
+    }
+
+    ::after, ::before
+    {
+        display: table;
+    }
+
+    .row::before, .row::after {
+        content: "";
+        border: 1px solid black;
+    }
+
+    .row::after {
+        clear: both;
+    }
+</style>
+
+<div class="row">
+    <div class="element1">a</div>
+    <div class="element2">s</div>
+</div>
+<div class="row">
+    <div class="element1">d</div>
+    <div class="element2">f</div>
+</div>

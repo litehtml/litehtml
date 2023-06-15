@@ -27,6 +27,8 @@
 #include "gumbo.h"
 #include "utf8_strings.h"
 #include "render_item.h"
+#include "render_table.h"
+#include "render_block.h"
 
 litehtml::document::document(document_container* objContainer)
 {
@@ -109,7 +111,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 	document::ptr doc = std::make_shared<document>(objPainter);
 
 	// Create litehtml::elements.
-	elements_vector root_elements;
+	elements_list root_elements;
 	doc->create_node(output->root, root_elements, true);
 	if (!root_elements.empty())
 	{
@@ -308,7 +310,7 @@ int litehtml::document::render( int max_width, render_type rt )
 			m_root_render->render_positioned(rt);
 		} else
 		{
-			ret = m_root_render->render(0, 0, cb_context);
+			ret = m_root_render->render(0, 0, cb_context, nullptr);
 			if(m_root_render->fetch_positioned())
 			{
 				m_fixed_boxes.clear();
@@ -722,7 +724,7 @@ void litehtml::document::add_media_list( const media_query_list::ptr& list )
 	}
 }
 
-void litehtml::document::create_node(void* gnode, elements_vector& elements, bool parseTextNode)
+void litehtml::document::create_node(void* gnode, elements_list& elements, bool parseTextNode)
 {
 	auto* node = (GumboNode*)gnode;
 	switch (node->type)
@@ -760,7 +762,7 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 			}
 			if (ret)
 			{
-				elements_vector child;
+				elements_list child;
 				for (unsigned int i = 0; i < node->v.element.children.length; i++)
 				{
 					child.clear();
@@ -1022,7 +1024,7 @@ void litehtml::document::append_children_from_string(element& parent, const char
 	GumboOutput* output = gumbo_parse(str);
 
 	// Create litehtml::elements.
-	elements_vector child_elements;
+	elements_list child_elements;
 	create_node(output->root, child_elements, true);
 
 	// Destroy GumboOutput

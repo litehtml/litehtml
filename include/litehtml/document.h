@@ -112,7 +112,7 @@ namespace litehtml
 	private:
 		uint_ptr	add_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);
 
-		void create_node(void* gnode, elements_vector& elements, bool parseTextNode);
+		void create_node(void* gnode, elements_list& elements, bool parseTextNode);
 		bool update_media_lists(const media_features& features);
 		void fix_tables_layout();
 		void fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str);

@@ -65,10 +65,10 @@ set(SOURCE_LITEHTML
     src/render_block_context.cpp
     src/render_block.cpp
     src/render_inline_context.cpp
-    src/render_inline.cpp
     src/render_table.cpp
     src/render_flex.cpp
     src/render_image.cpp
+    src/formatting_context.cpp
 )
 
 set(HEADER_LITEHTML
@@ -122,8 +122,16 @@ set(HEADER_LITEHTML
     include/litehtml/css_properties.h
     include/litehtml/line_box.h
     include/litehtml/render_item.h
+    include/litehtml/render_flex.h
+    include/litehtml/render_image.h
+    include/litehtml/render_inline.h
+    include/litehtml/render_table.h
+    include/litehtml/render_inline_context.h
+    include/litehtml/render_block_context.h
+    include/litehtml/render_block.h
     include/litehtml/master_css.h
     include/litehtml/string_id.h
+    include/litehtml/formatting_context.h
 )
 
 set(TEST_LITEHTML

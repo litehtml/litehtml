@@ -551,7 +551,7 @@ std::shared_ptr<litehtml::render_item> litehtml::line_box::get_last_text_part() 
 
 bool litehtml::line_box::can_hold(const std::unique_ptr<line_box_item>& item, white_space ws) const
 {
-    if(!item->get_el()->src_el()->is_inline_box()) return false;
+    if(!item->get_el()->src_el()->is_inline()) return false;
 
 	if(item->get_type() == line_box_item::type_text_part)
 	{
