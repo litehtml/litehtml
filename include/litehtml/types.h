@@ -905,6 +905,13 @@ namespace litehtml
 		flex_basis_max_content,
 	};
 
+#define caption_side_strings		"top;bottom"
+
+	enum caption_side
+	{
+		caption_side_top,
+		caption_side_bottom
+	};
 }
 
 #endif  // LH_TYPES_H

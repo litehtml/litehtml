@@ -287,6 +287,8 @@ STRING_ID(
 	_flex_grow_,
 	_flex_shrink_,
 	_flex_basis_,
+
+	_caption_side_,
 );
 #undef STRING_ID
 extern const string_id empty_id; // _id("")

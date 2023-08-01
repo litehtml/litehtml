@@ -44,6 +44,8 @@ std::map<string_id, string> style::m_valid_values =
 	{ _align_items_, flex_align_items_strings },
 	{ _align_content_, flex_align_content_strings },
 	{ _align_self_, flex_align_self_strings },
+
+	{ _caption_side_, caption_side_strings },
 };
 
 void style::parse(const string& txt, const string& baseurl, document_container* container)
@@ -129,6 +131,8 @@ void style::add_property(string_id name, const string& val, const string& baseur
 	case _align_items_:
 	case _align_content_:
 	case _align_self_:
+
+	case _caption_side_:
 
 		idx = value_index(val, m_valid_values[name]);
 		if (idx >= 0)

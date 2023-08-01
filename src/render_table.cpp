@@ -321,40 +321,54 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
 
     // Render table captions
     // Table border doesn't round the caption, so we have to start caption in the border position
-    int captions_height = -border_top();
+    int top_captions = -border_top();
 
     for (auto& caption : m_grid->captions())
     {
-        caption->render(-border_left(), captions_height, self_size.new_width(table_width + border_left() + border_right()), fmt_ctx);
-        captions_height += caption->height();
+		if(caption->css().get_caption_side() == caption_side_top)
+		{
+			caption->render(-border_left(), top_captions, self_size.new_width(table_width + border_left() + border_right()), fmt_ctx);
+			top_captions += caption->height();
+		}
     }
 
-    if (captions_height)
+    if (top_captions)
     {
         // Add border height to get the top of cells
-        captions_height += border_top();
+        top_captions += border_top();
 
         // Save caption height for draw_background
-        m_grid->captions_height(captions_height);
+		m_grid->top_captions_height(top_captions);
 
         // Move table cells to the bottom side
         for (int row = 0; row < m_grid->rows_count(); row++)
         {
-            m_grid->row(row).el_row->pos().y += captions_height;
+            m_grid->row(row).el_row->pos().y += top_captions;
             for (int col = 0; col < m_grid->cols_count(); col++)
             {
                 table_cell* cell = m_grid->cell(col, row);
                 if (cell->el)
                 {
-                    cell->el->pos().y += captions_height;
+                    cell->el->pos().y += top_captions;
                 }
             }
         }
     }
 
+	int bottom_captions = 0;
+
+	for (auto& caption : m_grid->captions())
+	{
+		if(caption->css().get_caption_side() == caption_side_bottom)
+		{
+			caption->render(-border_left(), table_height + top_captions + bottom_captions, self_size.new_width(table_width + border_left() + border_right()), fmt_ctx);
+			bottom_captions += caption->height();
+		}
+	}
+
 	m_pos.move_to(x + content_offset_left(), y + content_offset_top());
 	m_pos.width = table_width;
-	m_pos.height = table_height + captions_height;
+	m_pos.height = table_height + top_captions + bottom_captions;
 
 	if(self_size.width.type != containing_block_context::cbc_value_type_absolute)
 	{
@@ -458,7 +472,7 @@ int litehtml::render_item_table::get_draw_vertical_offset()
 {
     if(m_grid)
     {
-        return m_grid->captions_height();
+        return m_grid->top_captions_height();
     }
     return 0;
 }

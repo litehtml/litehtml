@@ -204,14 +204,16 @@ namespace litehtml
 		table_column::vector	m_columns;
 		table_row::vector		m_rows;
 		std::vector<std::shared_ptr<render_item>> m_captions;
-		int						m_captions_height;
+		int						m_top_captions_height;
+		int						m_bottom_captions_height;
 	public:
 
-		table_grid()
+		table_grid() :
+			m_rows_count(0),
+			m_cols_count(0),
+			m_top_captions_height(0),
+			m_bottom_captions_height(0)
 		{
-			m_rows_count	= 0;
-			m_cols_count	= 0;
-			m_captions_height = 0;
 		}
 
 		void			clear();
@@ -227,8 +229,10 @@ namespace litehtml
 		int				rows_count() const	{ return m_rows_count;	}
 		int				cols_count() const	{ return m_cols_count; }
 
-		void			captions_height(int height) { m_captions_height = height; }
-		int				captions_height() const { return m_captions_height; }
+		void			top_captions_height(int height) { m_top_captions_height = height; }
+		int				top_captions_height() const { return m_top_captions_height; }
+		void			bottom_captions_height(int height) { m_bottom_captions_height = height; }
+		int				bottom_captions_height() const { return m_bottom_captions_height; }
 
 		void			distribute_max_width(int width, int start, int end);
 		void			distribute_min_width(int width, int start, int end);
