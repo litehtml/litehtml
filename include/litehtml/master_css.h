@@ -360,5 +360,17 @@ sup {
 	font-size: smaller;
 }
 
+figure {
+	display: block;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 40px;
+	margin-right: 40px;
+}
+
+figcaption {
+	display: block;
+}
+
 )##"; }
 #endif  // LH_MASTER_CSS_H
