@@ -178,6 +178,11 @@ litehtml::element::ptr litehtml::html_tag::select_one( const css_selector& selec
 
 void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 {
+	if(is_root())
+	{
+		int i = 0;
+		i++;
+	}
 	for(const auto& sel : stylesheet.selectors())
 	{
 		// optimization
@@ -234,9 +239,6 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 							if(!content_none)
 							{
 								add_style(*sel->m_style);
-							} else
-							{
-								parent()->removeChild(shared_from_this());
 							}
 						}
 						us->m_used = true;
