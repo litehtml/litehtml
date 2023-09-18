@@ -31,7 +31,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string(const strin
 		} else if(token.at(0) == '(')
 		{
 			token.erase(0, 1);
-			if(token.at(token.length() - 1) == ')')
+			if(!token.empty() && token.at(token.length() - 1) == ')')
 			{
 				token.erase(token.length() - 1, 1);
 			}
