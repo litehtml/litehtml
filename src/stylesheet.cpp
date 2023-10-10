@@ -13,6 +13,11 @@ void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const
 	while(c_start != string::npos)
 	{
 		string::size_type c_end = text.find("*/", c_start + 2);
+		if(c_end == string::npos)
+		{
+			text.erase(c_start);
+			break;
+		}
 		text.erase(c_start, c_end - c_start + 2);
 		c_start = text.find("/*");
 	}
