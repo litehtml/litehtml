@@ -163,6 +163,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\codepoint.cpp" />
     <ClCompile Include="src\css_borders.cpp" />
     <ClCompile Include="src\css_length.cpp" />
     <ClCompile Include="src\css_properties.cpp" />
@@ -190,6 +191,7 @@
     <ClCompile Include="src\el_text.cpp" />
     <ClCompile Include="src\el_title.cpp" />
     <ClCompile Include="src\el_tr.cpp" />
+    <ClCompile Include="src\formatting_context.cpp" />
     <ClCompile Include="src\gumbo\attribute.c" />
     <ClCompile Include="src\gumbo\char_ref.c" />
     <ClCompile Include="src\gumbo\error.c" />
@@ -211,7 +213,6 @@
     <ClCompile Include="src\render_block_context.cpp" />
     <ClCompile Include="src\render_flex.cpp" />
     <ClCompile Include="src\render_image.cpp" />
-    <ClCompile Include="src\render_inline.cpp" />
     <ClCompile Include="src\render_inline_context.cpp" />
     <ClCompile Include="src\render_item.cpp" />
     <ClCompile Include="src\render_table.cpp" />
@@ -220,6 +221,9 @@
     <ClCompile Include="src\style.cpp" />
     <ClCompile Include="src\stylesheet.cpp" />
     <ClCompile Include="src\table.cpp" />
+    <ClCompile Include="src\tstring_view.cpp" />
+    <ClCompile Include="src\url.cpp" />
+    <ClCompile Include="src\url_path.cpp" />
     <ClCompile Include="src\utf8_strings.cpp" />
     <ClCompile Include="src\web_color.cpp" />
   </ItemGroup>

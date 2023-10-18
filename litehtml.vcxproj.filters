@@ -173,9 +173,6 @@
     <ClCompile Include="src\render_image.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="src\render_inline.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="src\render_inline_context.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -198,6 +195,21 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="src\string_id.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\tstring_view.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\codepoint.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\formatting_context.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\url.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\url_path.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

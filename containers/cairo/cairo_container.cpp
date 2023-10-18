@@ -939,7 +939,7 @@ litehtml::string cairo_container::resolve_color(const litehtml::string& color) c
 {
 	struct custom_color 
 	{
-		char*	name;
+		const char*	name;
 		int					color_index;
 	};
 
