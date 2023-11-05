@@ -859,7 +859,7 @@ namespace litehtml
 		flex_justify_content_space_around
 	};
 
-#define flex_align_items_strings		"flex-start;flex-end;center;baseline;stretch"
+#define flex_align_items_strings		"flex-start;flex-end;center;baseline;stretch;auto"
 
 	enum flex_align_items
 	{
@@ -867,19 +867,8 @@ namespace litehtml
 		flex_align_items_flex_end,
 		flex_align_items_center,
 		flex_align_items_baseline,
-		flex_align_items_stretch
-	};
-
-#define flex_align_self_strings		"auto;flex-start;flex-end;center;baseline;stretch"
-
-	enum flex_align_self
-	{
-		flex_align_self_auto,
-		flex_align_self_flex_start,
-		flex_align_self_flex_end,
-		flex_align_self_center,
-		flex_align_self_baseline,
-		flex_align_self_stretch
+		flex_align_items_stretch,
+		flex_align_items_auto // used for align-self property only
 	};
 
 #define flex_align_content_strings		"flex-start;flex-end;center;space-between;space-around;stretch"

@@ -38,7 +38,6 @@ namespace litehtml
 		{
 			return std::make_shared<render_item_flex>(src_el());
 		}
-		void draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;
 		std::shared_ptr<render_item> init() override;
 	};
 }

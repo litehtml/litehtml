@@ -86,7 +86,7 @@ namespace litehtml
 
         int width() const
         {
-            return m_pos.width + m_margins.left + m_margins.right + m_padding.width() + m_borders.width();
+            return m_pos.width + m_margins.width() + m_padding.width() + m_borders.width();
         }
 
         int padding_top() const
@@ -234,7 +234,7 @@ namespace litehtml
 
 		int box_sizing_width() const
 		{
-			return box_sizing_left() + box_sizing_left();
+			return box_sizing_left() + box_sizing_right();
 		}
 
 		int box_sizing_top() const

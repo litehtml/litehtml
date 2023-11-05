@@ -43,7 +43,7 @@ std::map<string_id, string> style::m_valid_values =
 	{ _justify_content_, flex_justify_content_strings },
 	{ _align_items_, flex_align_items_strings },
 	{ _align_content_, flex_align_content_strings },
-	{ _align_self_, flex_align_self_strings },
+	{ _align_self_, flex_align_items_strings },
 
 	{ _caption_side_, caption_side_strings },
 };

@@ -67,7 +67,7 @@ namespace litehtml
 		flex_wrap				m_flex_wrap;
 		flex_justify_content	m_flex_justify_content;
 		flex_align_items		m_flex_align_items;
-		flex_align_self			m_flex_align_self;
+		flex_align_items		m_flex_align_self;
 		flex_align_content		m_flex_align_content;
 
 		caption_side			m_caption_side;
@@ -119,7 +119,7 @@ namespace litehtml
 				m_flex_wrap(flex_wrap_nowrap),
 				m_flex_justify_content(flex_justify_content_flex_start),
 				m_flex_align_items(flex_align_items_stretch),
-				m_flex_align_self(flex_align_self_auto),
+				m_flex_align_self(flex_align_items_auto),
 				m_flex_align_content(flex_align_content_stretch)
 		{}
 
@@ -250,7 +250,7 @@ namespace litehtml
 		flex_wrap get_flex_wrap() const;
 		flex_justify_content get_flex_justify_content() const;
 		flex_align_items get_flex_align_items() const;
-		flex_align_self get_flex_align_self() const;
+		flex_align_items get_flex_align_self() const;
 		flex_align_content get_flex_align_content() const;
 	};
 
@@ -634,7 +634,7 @@ namespace litehtml
 		return m_flex_align_items;
 	}
 
-	inline flex_align_self css_properties::get_flex_align_self() const
+	inline flex_align_items css_properties::get_flex_align_self() const
 	{
 		return m_flex_align_self;
 	}
