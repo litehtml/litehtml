@@ -9,8 +9,11 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		std::shared_ptr<render_item> el;
 		int basis;		// flex basis
 		int min_width;
+		int main_size;
 		int grow;
 		int shrink;
+		int scaled_flex_shrink_factor;
+		bool frozen;
 		flex_align_items align;
 		explicit flex_item(std::shared_ptr<render_item>& _el) :
 			el(_el),
@@ -18,7 +21,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			grow(0),
 			basis(0),
 			shrink(0),
-			min_width(0) {}
+			min_width(0),
+			frozen(false),
+			main_size(0),
+			scaled_flex_shrink_factor(0) {}
 	};
 
 	struct flex_line
@@ -28,14 +34,19 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		int height; // line height
 		int width;
 		int basis;
-		int total_not_min; // Total items with width > min_width
 		int total_grow;
 		int total_shrink;
-		flex_line() : height(0), top(0), total_grow(0.0), width(0), total_not_min(0), basis(0), total_shrink(0) {}
+		flex_line() :
+			height(0),
+			top(0),
+			total_grow(0),
+			width(0),
+			basis(0),
+			total_shrink(0){}
 		void clear()
 		{
 			items.clear();
-			top = height = width = total_not_min = basis = total_shrink = total_grow = 0;
+			top = height = width = basis = total_shrink = total_grow = 0;
 		}
 	};
 
@@ -77,6 +88,8 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		{
 			item.align = el->css().get_flex_align_self();
 		}
+		item.main_size = item.basis;
+		item.scaled_flex_shrink_factor = item.basis * item.shrink;
 		items.push_back(item);
 	}
 
@@ -89,14 +102,17 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			lines.push_back(line);
 			line.clear();
 		}
-		line.items.push_back(item);
 		line.basis += item.basis;
 		line.total_grow += item.grow;
 		line.total_shrink += item.shrink;
 		if(item.basis > item.min_width)
 		{
-			line.total_not_min++;
+			item.frozen = false;
+		} else
+		{
+			item.frozen = true;
 		}
+		line.items.push_back(item);
 	}
 	if(!line.items.empty())
 	{
@@ -104,64 +120,81 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	}
 
 	int el_y = 0;
+	int ret_width = 0;
 	for(auto& ln : lines)
 	{
 		ln.top = el_y;
 		ln.height = 0;
 		int el_x = 0;
 
+		ret_width += ln.basis;
+
 		// distribute free space to items
-		int line_free_space = self_size.render_width - ln.basis;
-		if(line_free_space < 0)
+		int initial_free_space = self_size.render_width - ln.basis;
+		if(initial_free_space < 0)
 		{
-			int left_space = -line_free_space;
-			int total_not_min = ln.total_not_min;
-			for (auto &item: ln.items)
+			if(ln.total_shrink > 0)
 			{
-				if(total_not_min >= 0)
+				initial_free_space = -initial_free_space;
+				bool processed = true;
+				while (processed)
 				{
-					if (item.basis > item.min_width)
+					int sum_scaled_flex_shrink_factor = 0;
+					int sum_flex_factors = 0;
+					int remaining_free_space = self_size.render_width;
+					int total_not_frozen = 0;
+					for (auto &item: ln.items)
 					{
-						int addSpace = (int) ((float) line_free_space / (float) total_not_min);
-						if (left_space + addSpace < 0)
+						if (!item.frozen)
 						{
-							addSpace = -left_space;
-						}
-						if (item.basis + addSpace <= item.min_width)
-						{
-							addSpace = item.min_width - item.basis;
-							item.basis = item.min_width;
-							total_not_min--;
+							sum_scaled_flex_shrink_factor += item.scaled_flex_shrink_factor;
+							sum_flex_factors += item.shrink;
+							remaining_free_space -= item.basis;
+							total_not_frozen++;
 						} else
 						{
-							item.basis += addSpace;
+							remaining_free_space -= item.main_size;
 						}
-						left_space -= -addSpace;
 					}
-				} else break;
-			}
-			// we have some more free space, add it to the last item
-			if (left_space > 0)
-			{
-				for(auto iter = ln.items.begin(); iter != ln.items.end(); iter++)
-				{
-					if(iter->basis > iter->min_width)
+					if (!total_not_frozen) break;
+					remaining_free_space = -remaining_free_space;
+					if (remaining_free_space)
 					{
-						ln.items.back().basis -= left_space;
-						break;
+						int total_clamped = 0;
+						for (auto &item: ln.items)
+						{
+							if (!item.frozen)
+							{
+								// Distribute free space proportional to the flex factors.
+								int scaled_flex_shrink_factor = item.basis * item.shrink;
+								item.main_size = (int) ((float) item.basis - (float) remaining_free_space *
+																			 (float) scaled_flex_shrink_factor /
+																			 (float) sum_scaled_flex_shrink_factor);
+
+								if (item.main_size <= item.min_width)
+								{
+									total_clamped++;
+									item.main_size = item.min_width;
+									item.frozen = true;
+								}
+							}
+						}
+						if (total_clamped == 0) processed = false;
 					}
 				}
 			}
-		} else if(ln.total_grow > 0)
+		} else
 		{
-			// Distribute free space by flex-grow
-			int left_space = line_free_space;
-			for(auto& item : ln.items)
+			if(ln.total_grow > 0)
 			{
-				if(item.grow > 0)
+				// Distribute free space by flex-grow
+				for (auto &item: ln.items)
 				{
-					int add_space = (int) ((float) line_free_space * (float) item.grow / (float) ln.total_grow);
-					item.basis += add_space;
+					if (item.grow > 0)
+					{
+						int add_space = (int) ((float) initial_free_space * (float) item.grow / (float) ln.total_grow);
+						item.main_size = item.basis + add_space;
+					}
 				}
 			}
 		}
@@ -171,7 +204,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		{
 			item.el->render(el_x,
 							el_y,
-							self_size.new_width(item.basis), fmt_ctx, false);
+							self_size.new_width(item.main_size), fmt_ctx, false);
 			ln.height = std::max(ln.height, item.el->height());
 			el_x += item.el->width();
 		}
@@ -206,13 +239,8 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	m_pos.y += content_offset_top();
 	m_pos.height = el_y;
 
-	return 0;
+	return ret_width + content_offset_width();
 }
-
-/*void litehtml::render_item_flex::draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex)
-{
-
-}*/
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_flex::init()
 {
