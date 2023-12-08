@@ -33,8 +33,8 @@ namespace litehtml
 		std::list<std::weak_ptr<render_item>>	m_renders;
 		used_selector::vector					m_used_styles;
 
-		virtual void select_all(const css_selector& selector, elements_list& res);
-		element::ptr _add_before_after(int type, const style& style);
+		virtual void				select_all(const css_selector& selector, elements_list& res);
+		element::ptr				_add_before_after(int type, const style& style);
 	public:
 		explicit element(const std::shared_ptr<document>& doc);
 		virtual ~element() = default;

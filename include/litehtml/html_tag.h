@@ -32,7 +32,7 @@ namespace litehtml
 		string_map				m_attrs;
 		std::vector<string_id>	m_pseudo_classes;
 
-		void					select_all(const css_selector& selector, elements_vector& res) override;
+		void					select_all(const css_selector& selector, elements_list& res) override;
 
 	private:
 		std::map<string, int>	m_counter_values;
@@ -86,7 +86,7 @@ namespace litehtml
 		size_vector			get_size_vector_property  (string_id name, bool inherited, const size_vector&   default_value, uint_ptr css_properties_member_offset) const override;
 		string				get_custom_property(string_id name, const string& default_value) const override;
 
-		elements_list&	children();
+		elements_list&		children();
 
 		int					select(const string& selector) override;
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;
