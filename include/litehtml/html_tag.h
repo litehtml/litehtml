@@ -22,6 +22,7 @@ namespace litehtml
 		friend class line_box;
 	public:
 		typedef std::shared_ptr<html_tag>	ptr;
+
 	protected:
 		string_id				m_tag;
 		string_id				m_id;
@@ -31,7 +32,10 @@ namespace litehtml
 		string_map				m_attrs;
 		std::vector<string_id>	m_pseudo_classes;
 
-		void			select_all(const css_selector& selector, elements_vector& res) override;
+		void					select_all(const css_selector& selector, elements_vector& res) override;
+
+	private:
+		std::map<string, int>	m_counter_values;
 
 	public:
 		explicit html_tag(const std::shared_ptr<document>& doc);
@@ -122,6 +126,12 @@ namespace litehtml
 		string				get_list_marker_text(int index);
 		element::ptr		get_element_before(const style& style, bool create);
 		element::ptr		get_element_after(const style& style, bool create);
+		string				get_counter_value(const string& counter_name);
+
+	private:
+		void				handle_counter_properties();
+		void				increment_counter(const string& counter_name);
+		void				reset_counter(const string& counter_name);
 	};
 
 	/************************************************************************/

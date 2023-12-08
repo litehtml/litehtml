@@ -1531,9 +1531,59 @@ litehtml::element::ptr litehtml::html_tag::get_element_after(const style& style,
 	return nullptr;
 }
 
+litehtml::string litehtml::html_tag::get_counter_value(const string& counter_name)
+{
+	html_tag::ptr current = std::dynamic_pointer_cast<html_tag>(shared_from_this());
+	while (current != nullptr) {
+		auto i = current->m_counter_values.find(counter_name);
+		if (i != current->m_counter_values.end()) {
+			return std::to_string(i->second);
+		}
+		current = std::dynamic_pointer_cast<html_tag>(current->parent());
+	}
+	return "0";
+}
+
+void litehtml::html_tag::handle_counter_properties()
+{
+	const auto& reset_property = m_style.get_property(string_id::_counter_reset_);
+	if (reset_property.m_type != prop_type_invalid) {
+		reset_counter(reset_property.m_string);
+		return;
+	}
+
+	const auto& inc_property = m_style.get_property(string_id::_counter_increment_);
+	if (inc_property.m_type != prop_type_invalid) {
+		increment_counter(inc_property.m_string);
+		return;
+	}
+}
+
+void litehtml::html_tag::increment_counter(const string& counter_name) 
+{
+	html_tag::ptr current = std::dynamic_pointer_cast<html_tag>(shared_from_this());
+	while (current != nullptr) {
+		auto i = current->m_counter_values.find(counter_name);
+		if (i != current->m_counter_values.end()) {
+			current->m_counter_values[counter_name] = i->second + 1;
+			return;
+		}
+		current = std::dynamic_pointer_cast<html_tag>(current->parent());
+	}
+
+	// if counter is not found, initialize one on this element
+	m_counter_values[counter_name] = 1;
+}
+
+void litehtml::html_tag::reset_counter(const string& counter_name)
+{
+	m_counter_values[counter_name] = 0;
+}
+
 void litehtml::html_tag::add_style(const style& style)
 {
 	m_style.combine(style);
+	handle_counter_properties();
 }
 
 void litehtml::html_tag::refresh_styles()

@@ -155,6 +155,7 @@ void litehtml::el_before_after_base::add_function( const string& fnc, const stri
 		break;
 	// counter
 	case 1:
+		add_text(get_counter_value(params));
 		break;
 	// url
 	case 2:
