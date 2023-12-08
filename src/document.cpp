@@ -27,6 +27,8 @@
 #include "gumbo.h"
 #include "utf8_strings.h"
 #include "render_item.h"
+#include "render_table.h"
+#include "render_block.h"
 
 litehtml::document::document(document_container* objContainer)
 {
@@ -54,7 +56,7 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 	document::ptr doc = std::make_shared<document>(objPainter);
 
 	// Create litehtml::elements.
-	elements_vector root_elements;
+	elements_list root_elements;
 	doc->create_node(output->root, root_elements, true);
 	if (!root_elements.empty())
 	{
@@ -142,11 +144,6 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 	if(!name)
 	{
 		name = m_container->get_default_font_name();
-	}
-
-	if(!size)
-	{
-		size = container()->get_default_font_size();
 	}
 
 	char strSize[20];
@@ -255,14 +252,13 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 
 litehtml::uint_ptr litehtml::document::get_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
 {
+	if(!size)
+	{
+		return 0;
+	}
 	if(!name)
 	{
 		name = m_container->get_default_font_name();
-	}
-
-	if(!size)
-	{
-		size = m_container->get_default_font_size();
 	}
 
 	char strSize[20];
@@ -296,13 +292,21 @@ int litehtml::document::render( int max_width, render_type rt )
 	int ret = 0;
 	if(m_root)
 	{
+		position client_rc;
+		m_container->get_client_rect(client_rc);
+		containing_block_context cb_context;
+		cb_context.width = max_width;
+		cb_context.width.type = containing_block_context::cbc_value_type_absolute;
+		cb_context.height = client_rc.height;
+		cb_context.height.type = containing_block_context::cbc_value_type_absolute;
+
 		if(rt == render_fixed_only)
 		{
 			m_fixed_boxes.clear();
 			m_root_render->render_positioned(rt);
 		} else
 		{
-			ret = m_root_render->render(0, 0, max_width);
+			ret = m_root_render->render(0, 0, cb_context, nullptr);
 			if(m_root_render->fetch_positioned())
 			{
 				m_fixed_boxes.clear();
@@ -310,7 +314,9 @@ int litehtml::document::render( int max_width, render_type rt )
 			}
 			m_size.width	= 0;
 			m_size.height	= 0;
-			m_root_render->calc_document_size(m_size);
+			m_content_size.width = 0;
+			m_content_size.height = 0;
+			m_root_render->calc_document_size(m_size, m_content_size);
 		}
 	}
 	return ret;
@@ -428,6 +434,17 @@ int litehtml::document::height() const
 {
 	return m_size.height;
 }
+
+int litehtml::document::content_width() const
+{
+	return m_content_size.width;
+}
+
+int litehtml::document::content_height() const
+{
+	return m_content_size.height;
+}
+
 
 void litehtml::document::add_stylesheet( const char* str, const char* baseurl, const char* media )
 {
@@ -703,7 +720,7 @@ void litehtml::document::add_media_list( const media_query_list::ptr& list )
 	}
 }
 
-void litehtml::document::create_node(void* gnode, elements_vector& elements, bool parseTextNode)
+void litehtml::document::create_node(void* gnode, elements_list& elements, bool parseTextNode)
 {
 	auto* node = (GumboNode*)gnode;
 	switch (node->type)
@@ -741,7 +758,7 @@ void litehtml::document::create_node(void* gnode, elements_vector& elements, boo
 			}
 			if (ret)
 			{
-				elements_vector child;
+				elements_list child;
 				for (unsigned int i = 0; i < node->v.element.children.length; i++)
 				{
 					child.clear();
@@ -1003,7 +1020,7 @@ void litehtml::document::append_children_from_string(element& parent, const char
 	GumboOutput* output = gumbo_parse(str);
 
 	// Create litehtml::elements.
-	elements_vector child_elements;
+	elements_list child_elements;
 	create_node(output->root, child_elements, true);
 
 	// Destroy GumboOutput

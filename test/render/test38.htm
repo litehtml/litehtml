@@ -1,0 +1,33 @@
+<style>
+    ul {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+        border: 1px solid black;
+        display: inline-block;
+    }
+    li {
+        display: inline;
+    }
+
+    ::after
+    {
+        background-color: lightgreen;
+    }
+
+    .ttt li::after
+    {
+        content: " * ";
+    }
+
+    .ttt li:last-child::after
+    {
+        content: none;
+    }
+</style>
+
+<ul class="ttt">
+    <li class="ttt">item1</li>
+    <li class="ttt">item2</li>
+    <li class="ttt">item3</li>
+</ul>

@@ -8,6 +8,7 @@
 #include "types.h"
 #include "line_box.h"
 #include "table.h"
+#include "formatting_context.h"
 
 namespace litehtml
 {
@@ -26,7 +27,12 @@ namespace litehtml
         bool                                        m_skip;
         std::vector<std::shared_ptr<render_item>>   m_positioned;
 
-        virtual int _render(int x, int y, int max_width, bool second_pass) { return 0; }
+		containing_block_context calculate_containing_block_context(const containing_block_context& cb_context);
+		void calc_cb_length(const css_length& len, int percent_base, containing_block_context::typed_int& out_value) const;
+		virtual int _render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false)
+		{
+			return 0;
+		}
 
     public:
         explicit render_item(std::shared_ptr<element>  src_el);
@@ -216,6 +222,36 @@ namespace litehtml
             return content_offset_top() + content_offset_bottom();
         }
 
+		int box_sizing_left() const
+		{
+			return m_padding.left + m_borders.left;
+		}
+
+		int box_sizing_right() const
+		{
+			return m_padding.right + m_borders.right;
+		}
+
+		int box_sizing_width() const
+		{
+			return box_sizing_left() + box_sizing_left();
+		}
+
+		int box_sizing_top() const
+		{
+			return m_padding.top + m_borders.top;
+		}
+
+		int box_sizing_bottom() const
+		{
+			return m_padding.bottom + m_borders.bottom;
+		}
+
+		int box_sizing_height() const
+		{
+			return box_sizing_top() + box_sizing_bottom();
+		}
+
         void parent(const std::shared_ptr<render_item>& par)
         {
             m_parent = par;
@@ -237,15 +273,10 @@ namespace litehtml
             ri->parent(shared_from_this());
         }
 
-        int render(int x, int y, int max_width)
-        {
-            return _render(x, y, max_width, false);
-        }
-
-        bool have_parent() const
-        {
-            return !m_parent.expired();
-        }
+		bool is_root() const
+		{
+			return m_parent.expired();
+		}
 
         bool collapse_top_margin() const
         {
@@ -254,7 +285,7 @@ namespace litehtml
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.top >= 0 &&
-                   have_parent();
+                   !is_root();
         }
 
         bool collapse_bottom_margin() const
@@ -264,7 +295,7 @@ namespace litehtml
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.bottom >= 0 &&
-                   have_parent();
+                   !is_root();
         }
 
         bool is_visible() const
@@ -272,11 +303,12 @@ namespace litehtml
             return !(m_skip || src_el()->css().get_display() == display_none || src_el()->css().get_visibility() != visibility_visible);
         }
 
-        int calc_width(int defVal) const;
-        bool get_predefined_height(int& p_height) const;
-        void apply_relative_shift(int parent_width);
+		int render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false);
+        int calc_width(int defVal, int containing_block_width) const;
+        bool get_predefined_height(int& p_height, int containing_block_height) const;
+        void apply_relative_shift(const containing_block_context &containing_block_size);
         void calc_outlines( int parent_width );
-        void calc_auto_margins(int parent_width);
+        int calc_auto_margins(int parent_width);	// returns left margin
 
         virtual std::shared_ptr<render_item> init();
         virtual void apply_vertical_align() {}
@@ -294,7 +326,7 @@ namespace litehtml
         void render_positioned(render_type rt = render_all);
         void add_positioned(const std::shared_ptr<litehtml::render_item> &el);
         void get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
-        void calc_document_size( litehtml::size& sz, int x = 0, int y = 0 );
+        void calc_document_size( litehtml::size& sz, litehtml::size& content_size, int x = 0, int y = 0 );
 		virtual void get_inline_boxes( position::vector& boxes ) const {};
 		virtual void set_inline_boxes( position::vector& boxes ) {};
 		virtual void add_inline_box( const position& box ) {};
@@ -314,254 +346,7 @@ namespace litehtml
          * @return
          */
         void get_rendering_boxes( position::vector& redraw_boxes);
-
-		virtual void get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) {}
-		virtual int get_line_left( int y )	{ return 0; }
-		virtual int get_line_right( int y, int def_right ) { return 0; }
-		virtual int get_left_floats_height() const	{ return 0; }
-		virtual int get_right_floats_height() const	{ return 0; }
-		virtual int get_floats_height(element_float el_float = float_none) const { return 0; }
-		virtual int find_next_line_top( int top, int width, int def_right ) { return 0; }
-		virtual void add_float(const std::shared_ptr<render_item> &el, int x, int y) {}
-		virtual void update_floats(int dy, const std::shared_ptr<render_item> &_parent) {}
 	};
-
-    class render_item_block : public render_item
-    {
-    protected:
-        floated_box::vector m_floats_left;
-        floated_box::vector m_floats_right;
-        int_int_cache m_cache_line_left;
-        int_int_cache m_cache_line_right;
-
-        int _render(int x, int y, int max_width, bool second_pass) override;
-
-		/**
-		 * Render block content.
-		 *
-		 * @param x - horizontal position of the content
-		 * @param y - vertical position of the content
-		 * @param max_width - maximal width of the content
-		 * @param second_pass - true is this is the second pass.
-		 * @param ret_width - input minimal width.
-		 * @return return value is the minimal width of the content in block. Must be greater or equal to ret_width parameter
-		 */
-        virtual int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) {return ret_width;}
-
-        int place_float(const std::shared_ptr<render_item> &el, int top, int max_width);
-        int get_floats_height(element_float el_float = float_none) const override;
-        int get_left_floats_height() const override;
-        int get_right_floats_height() const override;
-        int get_line_left( int y ) override;
-        int get_line_right( int y, int def_right ) override;
-        void get_line_left_right( int y, int def_right, int& ln_left, int& ln_right ) override;
-        void add_float(const std::shared_ptr<render_item> &el, int x, int y) override;
-        int get_cleared_top(const std::shared_ptr<render_item> &el, int line_top) const;
-        int find_next_line_top( int top, int width, int def_right ) override;
-        virtual void fix_line_width( int max_width, element_float flt ) {}
-        void update_floats(int dy, const std::shared_ptr<render_item> &_parent) override;
-    public:
-        explicit render_item_block(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))
-        {}
-
-        std::shared_ptr<render_item> clone() override
-        {
-            return std::make_shared<render_item_block>(src_el());
-        }
-        std::shared_ptr<render_item> init() override;
-    };
-
-    /**
-     * In a block formatting context, boxes are laid out one after the other, vertically, beginning at the top of a
-     * containing block.
-     * https://www.w3.org/TR/CSS22/visuren.html#block-formatting
-     */
-    class render_item_block_context : public render_item_block
-    {
-    protected:
-        int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) override;
-
-    public:
-        explicit render_item_block_context(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el))
-        {}
-
-        std::shared_ptr<render_item> clone() override
-        {
-            return std::make_shared<render_item_block_context>(src_el());
-        }
-    };
-
-    /**
-     * An inline formatting context is established by a block container box that contains no block-level boxes.
-     * https://www.w3.org/TR/CSS22/visuren.html#inline-formatting
-     */
-    class render_item_inline_context : public render_item_block
-    {
-		/**
-		 *	Structure contains elements with display: inline
-		 *	members:
-		 *	- element: 		render_item with display: inline
-		 *	- boxes: 		rectangles represented inline element content. There are can be many boxes if content
-		 *			 is split into some lines
-		 *	- start_box:	the start position of currently calculated box
-		 */
-		struct inlines_item
-		{
-			std::shared_ptr<render_item> element;
-			position::vector boxes;
-			position	start_box;
-
-			explicit inlines_item(const std::shared_ptr<render_item>& el) : element(el) {}
-		};
-    protected:
-        std::vector<std::unique_ptr<litehtml::line_box> > m_line_boxes;
-		int m_max_line_width;
-
-        int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) override;
-        void fix_line_width( int max_width, element_float flt ) override;
-
-        std::list<std::unique_ptr<line_box_item> > finish_last_box(bool end_of_render, int max_width);
-        void place_inline(std::unique_ptr<line_box_item> item, int max_width);
-        int new_box(const std::unique_ptr<line_box_item>& el, int max_width, line_context& line_ctx);
-        void apply_vertical_align() override;
-    public:
-        explicit render_item_inline_context(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el)), m_max_line_width(0)
-        {}
-
-        std::shared_ptr<render_item> clone() override
-        {
-            return std::make_shared<render_item_inline_context>(src_el());
-        }
-
-        int get_base_line() override;
-    };
-
-    class render_item_table : public render_item
-    {
-    protected:
-        // data for table rendering
-        std::unique_ptr<table_grid>	m_grid;
-        int						    m_border_spacing_x;
-        int						    m_border_spacing_y;
-
-        int _render(int x, int y, int max_width, bool second_pass) override;
-
-    public:
-        explicit render_item_table(std::shared_ptr<element>  src_el);
-
-        std::shared_ptr<render_item> clone() override
-        {
-            return std::make_shared<render_item_table>(src_el());
-        }
-        void draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;
-        int get_draw_vertical_offset() override;
-        std::shared_ptr<render_item> init() override;
-    };
-
-	class render_item_table_part : public render_item
-	{
-	public:
-		explicit render_item_table_part(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))
-		{}
-
-		int _render(int x, int y, int max_width, bool second_pass) override
-		{return 0;}
-		std::shared_ptr<render_item> clone() override
-		{
-			return std::make_shared<render_item_table_part>(src_el());
-		}
-	};
-
-	class render_item_table_row : public render_item
-	{
-	public:
-		explicit render_item_table_row(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))
-		{}
-
-		int _render(int x, int y, int max_width, bool second_pass) override
-		{return 0;}
-		std::shared_ptr<render_item> clone() override
-		{
-			return std::make_shared<render_item_table_row>(src_el());
-		}
-		void get_inline_boxes( position::vector& boxes ) const override;
-	};
-
-	class render_item_inline : public render_item
-    {
-    protected:
-		position::vector m_boxes;
-
-        int _render(int x, int y, int max_width, bool second_pass) override;
-    public:
-        explicit render_item_inline(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))
-        {}
-
-		void get_inline_boxes( position::vector& boxes ) const override { boxes = m_boxes; }
-		void set_inline_boxes( position::vector& boxes ) override { m_boxes = boxes; }
-		void add_inline_box( const position& box ) override { m_boxes.emplace_back(box); };
-		void clear_inline_boxes() override { m_boxes.clear(); }
-		int get_base_line() override { return src_el()->css().get_font_metrics().base_line(); }
-
-		std::shared_ptr<render_item> clone() override
-        {
-            return std::make_shared<render_item_inline>(src_el());
-        }
-    };
-
-    class render_item_image : public render_item
-    {
-    protected:
-        int _render(int x, int y, int max_width, bool second_pass) override;
-        int calc_max_height(int image_height);
-
-    public:
-        explicit render_item_image(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))
-        {}
-
-        std::shared_ptr<render_item> clone() override
-        {
-            return std::make_shared<render_item_image>(src_el());
-        }
-    };
-
-    class render_item_flex : public render_item_block
-    {
-        struct flex_item
-        {
-            std::shared_ptr<render_item> el;
-            int base_size;
-            int main_size;
-            int min_width;
-            int max_width;
-            int line;
-
-            explicit flex_item(std::shared_ptr<render_item>  _el) :
-                el(std::move(_el)),
-                min_width(0),
-                max_width(0),
-                line(0),
-                base_size(0),
-                main_size(0)
-            {}
-        };
-    protected:
-        std::list<std::unique_ptr<flex_item>>   m_flex_items;
-
-        int _render_content(int x, int y, int max_width, bool second_pass, int ret_width) override;
-
-    public:
-        explicit render_item_flex(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el))
-        {}
-
-        std::shared_ptr<render_item> clone() override
-        {
-            return std::make_shared<render_item_flex>(src_el());
-        }
-        void draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;
-        std::shared_ptr<render_item> init() override;
-    };
-
 }
 
 #endif //LH_RENDER_ITEM_H

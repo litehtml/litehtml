@@ -5,6 +5,7 @@
 #include <memory>
 #include <map>
 #include <vector>
+#include <list>
 
 namespace litehtml
 {
@@ -12,7 +13,7 @@ namespace litehtml
 	class element;
 
 	typedef std::map<string, string>					string_map;
-	typedef std::vector< std::shared_ptr<element> >		elements_vector;
+	typedef std::list< std::shared_ptr<element> >		elements_list;
 	typedef std::vector<int>							int_vector;
 	typedef std::vector<string>							string_vector;
 
@@ -45,10 +46,12 @@ namespace litehtml
 		int		width;
 		int		height;
 
-		size()
+		size(int w, int h) : width(w), height(h)
 		{
-			width	= 0;
-			height	= 0;
+		}
+
+		size() : width(0), height(0)
+		{
 		}
 	};
 
@@ -180,6 +183,80 @@ namespace litehtml
 		draw_floats,
 		draw_inlines,
 		draw_positioned,
+	};
+
+	struct containing_block_context
+	{
+		enum cbc_value_type
+		{
+			cbc_value_type_absolute,	// width/height of containing block is defined as absolute value
+			cbc_value_type_percentage,	// width/height of containing block is defined as percentage
+			cbc_value_type_auto,		// width/height of containing block is defined as auto
+			cbc_value_type_none,		// min/max width/height of containing block is defined as none
+		};
+
+		struct typed_int
+		{
+			int 			value;
+			cbc_value_type	type;
+
+			typed_int(int val, cbc_value_type tp)
+			{
+				value = val;
+				type = tp;
+			}
+
+			operator int() const
+			{
+				return value;
+			}
+
+			typed_int& operator=(int val)
+			{
+				value = val;
+				return *this;
+			}
+
+			typed_int& operator=(const typed_int& v)
+			{
+				value = v.value;
+				type = v.type;
+				return *this;
+			}
+		};
+
+		typed_int width;						// width of the containing block
+		typed_int render_width;
+		typed_int min_width;
+		typed_int max_width;
+
+		typed_int height;						// height of the containing block
+		typed_int min_height;
+		typed_int max_height;
+
+		int context_idx;
+
+		containing_block_context() :
+				width(0, cbc_value_type_auto),
+				render_width(0, cbc_value_type_auto),
+				min_width(0, cbc_value_type_none),
+				max_width(0, cbc_value_type_none),
+				height(0, cbc_value_type_auto),
+				min_height(0, cbc_value_type_none),
+				max_height(0, cbc_value_type_none),
+				context_idx(0)
+		{}
+
+		containing_block_context new_width(int w) const
+		{
+			containing_block_context ret = *this;
+			//if(ret.width.type != cbc_value_type_absolute)
+			{
+				ret.render_width = w - (ret.width - ret.render_width);
+				ret.width = w;
+			}
+			return ret;
+		}
 	};
 
 #define  style_display_strings		"none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text;flex;inline-flex"
@@ -517,12 +594,12 @@ namespace litehtml
 
 	struct floated_box
 	{
-		typedef std::vector<floated_box>	vector;
-
 		position		                pos;
 		element_float	                float_side;
 		element_clear	                clear_floats;
 		std::shared_ptr<render_item>	el;
+		int								context;
+		int 							min_width;
 
 		floated_box() = default;
 		floated_box(const floated_box& val)
@@ -531,6 +608,8 @@ namespace litehtml
 			float_side = val.float_side;
 			clear_floats = val.clear_floats;
 			el = val.el;
+			context = val.context;
+			min_width = val.min_width;
 		}
 		floated_box& operator=(const floated_box& val)
 		{
@@ -538,6 +617,8 @@ namespace litehtml
 			float_side = val.float_side;
 			clear_floats = val.clear_floats;
 			el = val.el;
+			context = val.context;
+			min_width = val.min_width;
 			return *this;
 		}
 		floated_box(floated_box&& val)
@@ -546,6 +627,8 @@ namespace litehtml
 			float_side = val.float_side;
 			clear_floats = val.clear_floats;
 			el = std::move(val.el);
+			context = val.context;
+			min_width = val.min_width;
 		}
 		void operator=(floated_box&& val)
 		{
@@ -553,6 +636,8 @@ namespace litehtml
 			float_side = val.float_side;
 			clear_floats = val.clear_floats;
 			el = std::move(val.el);
+			context = val.context;
+			min_width = val.min_width;
 		}
 	};
 
@@ -820,6 +905,13 @@ namespace litehtml
 		flex_basis_max_content,
 	};
 
+#define caption_side_strings		"top;bottom"
+
+	enum caption_side
+	{
+		caption_side_top,
+		caption_side_bottom
+	};
 }
 
 #endif  // LH_TYPES_H

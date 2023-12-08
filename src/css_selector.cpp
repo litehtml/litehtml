@@ -183,6 +183,11 @@ void litehtml::css_element_selector::parse( const string& txt )
 						string::size_type pos2 = txt.find_first_of('\"', pos + 1);
 						attribute.val = txt.substr(pos + 1, pos2 == string::npos ? pos2 : (pos2 - pos - 1));
 						pos = pos2 == string::npos ? pos2 : (pos2 + 1);
+					} else if(txt[pos] == '\'')
+					{
+						string::size_type pos2 = txt.find_first_of('\'', pos + 1);
+						attribute.val = txt.substr(pos + 1, pos2 == string::npos ? pos2 : (pos2 - pos - 1));
+						pos = pos2 == string::npos ? pos2 : (pos2 + 1);
 					} else if(txt[pos] == ']')
 					{
 						pos ++;

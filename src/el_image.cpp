@@ -1,6 +1,6 @@
 #include "html.h"
 #include "el_image.h"
-#include "render_item.h"
+#include "render_image.h"
 
 litehtml::el_image::el_image(const document::ptr& doc) : html_tag(doc)
 {
@@ -87,7 +87,7 @@ void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, 
 		borders bdr = css().get_borders();
 		bdr.radius = css().get_borders().radius.calc_percents(border_box.width, border_box.height);
 
-		get_document()->container()->draw_borders(hdc, bdr, border_box, !have_parent());
+		get_document()->container()->draw_borders(hdc, bdr, border_box, is_root());
 	}
 }
 

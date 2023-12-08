@@ -50,8 +50,6 @@ namespace litehtml
 		const char*			get_tagName() const override;
 		void				set_tagName(const char* tag) override;
 		void				set_data(const char* data) override;
-		size_t				get_children_count() const override;
-		element::ptr		get_child(int idx) const override;
 
 		void				set_attr(const char* name, const char* val) override;
 		const char*			get_attr(const char* name, const char* def = nullptr) const override;
@@ -88,7 +86,7 @@ namespace litehtml
 		size_vector			get_size_vector_property  (string_id name, bool inherited, const size_vector&   default_value, uint_ptr css_properties_member_offset) const override;
 		string				get_custom_property(string_id name, const string& default_value) const override;
 
-		elements_vector&	children();
+		elements_list&	children();
 
 		int					select(const string& selector) override;
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;
@@ -96,8 +94,8 @@ namespace litehtml
 		int					select_pseudoclass(const css_attribute_selector& sel);
 		int					select_attribute(const css_attribute_selector& sel);
 
-		elements_vector		select_all(const string& selector) override;
-		elements_vector		select_all(const css_selector& selector) override;
+		elements_list		select_all(const string& selector) override;
+		elements_list		select_all(const css_selector& selector) override;
 
 		element::ptr		select_one(const string& selector) override;
 		element::ptr		select_one(const css_selector& selector) override;
@@ -109,7 +107,6 @@ namespace litehtml
 		void				parse_attributes() override;
 
 		void				get_content_size(size& sz, int max_width) override;
-		bool				is_floats_holder() const override;
 		void				add_style(const style& style) override;
 
 		bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const override;
@@ -138,7 +135,7 @@ namespace litehtml
 	/*                        Inline Functions                              */
 	/************************************************************************/
 
-	inline elements_vector& litehtml::html_tag::children()
+	inline elements_list& litehtml::html_tag::children()
 	{
 		return m_children;
 	}

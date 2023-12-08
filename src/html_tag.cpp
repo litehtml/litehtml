@@ -121,7 +121,7 @@ const char* litehtml::html_tag::get_attr( const char* name, const char* def ) co
 	return def;
 }
 
-litehtml::elements_vector litehtml::html_tag::select_all( const string& selector )
+litehtml::elements_list litehtml::html_tag::select_all(const string& selector )
 {
 	css_selector sel;
 	sel.parse(selector);
@@ -129,14 +129,14 @@ litehtml::elements_vector litehtml::html_tag::select_all( const string& selector
 	return select_all(sel);
 }
 
-litehtml::elements_vector litehtml::html_tag::select_all( const css_selector& selector )
+litehtml::elements_list litehtml::html_tag::select_all(const css_selector& selector )
 {
-	litehtml::elements_vector res;
+	litehtml::elements_list res;
 	select_all(selector, res);
 	return res;
 }
 
-void litehtml::html_tag::select_all(const css_selector& selector, elements_vector& res)
+void litehtml::html_tag::select_all(const css_selector& selector, elements_list& res)
 {
 	if(select(selector))
 	{
@@ -178,6 +178,11 @@ litehtml::element::ptr litehtml::html_tag::select_one( const css_selector& selec
 
 void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 {
+	if(is_root())
+	{
+		int i = 0;
+		i++;
+	}
 	for(const auto& sel : stylesheet.selectors())
 	{
 		// optimization
@@ -203,45 +208,59 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 
 			if(sel->is_media_valid())
 			{
+				auto apply_before_after = [&]()
+					{
+						const auto& content_property = sel->m_style->get_property(_content_);
+						bool content_none = content_property.m_type == prop_type_string && content_property.m_string == "none";
+						bool create = !content_none && (sel->m_right.m_attrs.size() > 1 || sel->m_right.m_tag != star_id);
+
+						element::ptr el;
+						if(apply & select_match_with_after)
+						{
+							el = get_element_after(*sel->m_style, create);
+						} else if(apply & select_match_with_before)
+						{
+							el = get_element_before(*sel->m_style, create);
+						} else
+						{
+							return;
+						}
+						if(el)
+						{
+							if(!content_none)
+							{
+								el->add_style(*sel->m_style);
+							} else
+							{
+								el->parent()->removeChild(el);
+							}
+						} else
+						{
+							if(!content_none)
+							{
+								add_style(*sel->m_style);
+							}
+						}
+						us->m_used = true;
+					};
+
+
 				if(apply & select_match_pseudo_class)
 				{
 					if(select(*sel, true))
 					{
-						if(apply & select_match_with_after)
+						if((apply & (select_match_with_after | select_match_with_before)))
 						{
-							element::ptr el = get_element_after(*sel->m_style, true);
-							if(el)
-							{
-								el->add_style(*sel->m_style);
-							}
-						} else if(apply & select_match_with_before)
-						{
-							element::ptr el = get_element_before(*sel->m_style, true);
-							if(el)
-							{
-								el->add_style(*sel->m_style);
-							}
-						}
-						else
+							apply_before_after();
+						} else
 						{
 							add_style(*sel->m_style);
 							us->m_used = true;
 						}
 					}
-				} else if(apply & select_match_with_after)
+				} else if((apply & (select_match_with_after | select_match_with_before)))
 				{
-					element::ptr el = get_element_after(*sel->m_style, true);
-					if(el)
-					{
-						el->add_style(*sel->m_style);
-					}
-				} else if(apply & select_match_with_before)
-				{
-					element::ptr el = get_element_before(*sel->m_style, true);
-					if(el)
-					{
-						el->add_style(*sel->m_style);
-					}
+					apply_before_after();
 				} else
 				{
 					add_style(*sel->m_style);
@@ -294,7 +313,7 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 			bdr_radius -= ri->get_borders();
 			bdr_radius -= ri->get_paddings();
 
-			get_document()->container()->set_clip(pos, bdr_radius, true, true);
+			get_document()->container()->set_clip(pos, bdr_radius);
 		}
 
 		draw_list_marker(hdc, pos);
@@ -537,9 +556,17 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		case select_pseudo_element:
 			if(attr.name == _after_)
 			{
+				if(selector.m_attrs.size() == 1 && selector.m_tag == star_id && m_tag != __tag_after_)
+				{
+					return select_no_match;
+				}
 				res |= select_match_with_after;
 			} else if(attr.name == _before_)
 			{
+				if(selector.m_attrs.size() == 1 && selector.m_tag == star_id && m_tag != __tag_before_)
+				{
+					return select_no_match;
+				}
 				res |= select_match_with_before;
 			} else
 			{
@@ -852,7 +879,7 @@ bool litehtml::html_tag::on_lbutton_up()
 
 void litehtml::html_tag::on_click()
 {
-	if (have_parent())
+	if (!is_root())
 	{
 		element::ptr el_parent = parent();
 		if (el_parent)
@@ -880,7 +907,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 
 	if(m_css.get_display() != display_inline && m_css.get_display() != display_table_row)
 	{
-		if(el_pos.does_intersect(clip))
+		if(el_pos.does_intersect(clip) || is_root())
 		{
 			auto v_offset = ri->get_draw_vertical_offset();
 			pos.y += v_offset;
@@ -891,6 +918,14 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 			{
 				std::vector<background_paint> bg_paint;
 				init_background_paint(pos, bg_paint, bg, ri);
+				if(is_root())
+				{
+					for(auto& b : bg_paint)
+					{
+						b.clip_box = *clip;
+						b.border_box = *clip;
+					}
+				}
 
 				get_document()->container()->draw_background(hdc, bg_paint);
 			}
@@ -902,7 +937,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 			if(bdr.is_visible())
 			{
 				bdr.radius = m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
-				get_document()->container()->draw_borders(hdc, bdr, border_box, !have_parent());
+				get_document()->container()->draw_borders(hdc, bdr, border_box, is_root());
 			}
 		}
 	} else
@@ -1055,33 +1090,6 @@ bool litehtml::html_tag::is_replaced() const
 	return false;
 }
 
-bool litehtml::html_tag::is_floats_holder() const
-{
-	if(	m_css.get_display() == display_inline_block || 
-		m_css.get_display() == display_table_cell || 
-		!have_parent() ||
-		is_body() || 
-		m_css.get_float() != float_none ||
-		m_css.get_position() == element_position_absolute ||
-		m_css.get_position() == element_position_fixed ||
-		m_css.get_overflow() > overflow_visible)
-	{
-		return true;
-	}
-	return false;
-}
-
-size_t litehtml::html_tag::get_children_count() const
-{
-	return m_children.size();
-}
-
-litehtml::element::ptr litehtml::html_tag::get_child( int idx ) const
-{
-	return m_children[idx];
-}
-
-
 void litehtml::html_tag::init_background_paint(position pos, std::vector<background_paint>& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri)
 {
 	bg_paint = { background_paint() };
@@ -1207,7 +1215,7 @@ void litehtml::html_tag::init_one_background_paint(int i, position pos, backgrou
 	}
 	bg_paint.border_radius	= m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
 	bg_paint.border_box		= border_box;
-	bg_paint.is_root		= !have_parent();
+	bg_paint.is_root		= is_root();
 }
 
 void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
@@ -1265,9 +1273,15 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 	{
 		if (m_css.get_list_style_type() >= list_style_type_armenian)
 		{
-			auto tw_space = get_document()->container()->text_width(" ", lm.font);
-			lm.pos.x = pos.x - tw_space * 2;
-			lm.pos.width = tw_space;
+			if(lm.font)
+			{
+				auto tw_space = get_document()->container()->text_width(" ", lm.font);
+				lm.pos.x = pos.x - tw_space * 2;
+				lm.pos.width = tw_space;
+			} else
+			{
+				lm.pos.width = 0;
+			}
 		}
 		else
 		{
@@ -1285,12 +1299,15 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 		}
 		else
 		{
-			marker_text += ".";
-			auto tw = get_document()->container()->text_width(marker_text.c_str(), lm.font);
-			auto text_pos = lm.pos;
-			text_pos.move_to(text_pos.right() - tw, text_pos.y);
-			text_pos.width = tw;
-			get_document()->container()->draw_text(hdc, marker_text.c_str(), lm.font, lm.color, text_pos);
+			if(lm.font)
+			{
+				marker_text += ".";
+				auto tw = get_document()->container()->text_width(marker_text.c_str(), lm.font);
+				auto text_pos = lm.pos;
+				text_pos.move_to(text_pos.right() - tw, text_pos.y);
+				text_pos.width = tw;
+				get_document()->container()->draw_text(hdc, marker_text.c_str(), lm.font, lm.color, text_pos);
+			}
 		}
 	}
 	else
@@ -1662,17 +1679,17 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 	if(own_only)
 	{
 		// return own background with check for empty one
-		if(m_css.get_bg().m_image.empty() && !m_css.get_bg().m_color.alpha)
+		if(m_css.get_bg().is_empty())
 		{
 			return nullptr;
 		}
 		return &m_css.get_bg();
 	}
 
-	if(m_css.get_bg().m_image.empty() && !m_css.get_bg().m_color.alpha)
+	if(m_css.get_bg().is_empty())
 	{
 		// if this is root element (<html>) try to get background from body
-		if (!have_parent())
+		if (is_root())
 		{
 			for (const auto& el : m_children)
 			{

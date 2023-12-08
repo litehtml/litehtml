@@ -39,8 +39,9 @@ namespace litehtml
 		};
 	protected:
 		std::shared_ptr<render_item> m_element;
+		int m_rendered_min_width;
 	public:
-		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element) {}
+		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element), m_rendered_min_width(0) {}
 		line_box_item() = default;
 		line_box_item(const line_box_item& el) = default;
 		line_box_item(line_box_item&&) = default;
@@ -55,6 +56,8 @@ namespace litehtml
 		virtual int right() const;
 		virtual int left() const;
 		virtual element_type get_type() const	{ return type_text_part; }
+		virtual int get_rendered_min_width() const	{ return m_rendered_min_width; }
+		virtual void set_rendered_min_width(int min_width)	{ m_rendered_min_width = min_width; }
 	};
 
 	class lbi_start : public line_box_item
@@ -72,6 +75,7 @@ namespace litehtml
 		int right() const override;
 		int left() const override;
 		element_type get_type() const override	{ return type_inline_start; }
+		int get_rendered_min_width() const override { return width(); }
 	};
 
 	class lbi_end : public lbi_start
@@ -151,7 +155,7 @@ namespace litehtml
         int					top_margin() const;
         int					bottom_margin() const;
         void				y_shift(int shift);
-		std::list< std::unique_ptr<line_box_item> >	finish(bool last_box = false);
+		std::list< std::unique_ptr<line_box_item> >	finish(bool last_box, const containing_block_context &containing_block_size);
 		std::list< std::unique_ptr<line_box_item> > new_width(int left, int right);
 		std::shared_ptr<render_item> 		get_last_text_part() const;
 		std::shared_ptr<render_item> 		get_first_text_part() const;

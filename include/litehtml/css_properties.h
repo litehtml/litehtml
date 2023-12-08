@@ -70,6 +70,8 @@ namespace litehtml
 		flex_align_self			m_flex_align_self;
 		flex_align_content		m_flex_align_content;
 
+		caption_side			m_caption_side;
+
 	private:
 		void compute_font(const element* el, const std::shared_ptr<document>& doc);
 		void compute_background(const element* el, const std::shared_ptr<document>& doc);
@@ -237,6 +239,9 @@ namespace litehtml
 
 		const css_length& get_border_spacing_y() const;
 		void set_border_spacing_y(const css_length& mBorderSpacingY);
+
+		caption_side get_caption_side() const;
+		void set_caption_side(caption_side side);
 
 		float get_flex_grow() const;
 		float get_flex_shrink() const;
@@ -638,6 +643,16 @@ namespace litehtml
 	{
 		return m_flex_align_content;
 	}
+
+	inline caption_side css_properties::get_caption_side() const
+	{
+		return m_caption_side;
+	}
+	inline void css_properties::set_caption_side(caption_side side)
+	{
+		m_caption_side = side;
+	}
+
 }
 
 #endif //LITEHTML_CSS_PROPERTIES_H

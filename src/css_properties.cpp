@@ -1,5 +1,6 @@
 #include "html.h"
 #include "css_properties.h"
+#include <cmath>
 
 #define offset(member) ((uint_ptr)&this->member - (uint_ptr)this)
 
@@ -20,6 +21,7 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 	m_vertical_align = (vertical_align)	  el->get_enum_property( _vertical_align_,	false,	va_baseline,			 offset(m_vertical_align));
 	m_text_transform = (text_transform)	  el->get_enum_property( _text_transform_,	true,	text_transform_none,	 offset(m_text_transform));
 	m_white_space	 = (white_space)	  el->get_enum_property( _white_space_,		true,	white_space_normal,		 offset(m_white_space));
+	m_caption_side	 = (caption_side)	  el->get_enum_property( _caption_side_,	true,	caption_side_top,		 offset(m_caption_side));
 
 	// https://www.w3.org/TR/CSS22/visuren.html#dis-pos-flo
 	if (m_display == display_none)
@@ -73,7 +75,7 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 			{
 				m_display = display_block;
 			}
-		} else if(!el->have_parent())
+		} else if(el->is_root())
 		{
 			// 4. Otherwise, if the element is the root element, 'display' is set according to the table below,
 			//    except that it is undefined in CSS 2.2 whether a specified value of 'list-item' becomes a
@@ -221,7 +223,7 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 		m_line_height = m_font_metrics.height;
 	} else if(m_css_line_height.units() == css_units_none)
 	{
-		m_line_height = (int) (m_css_line_height.val() * font_size);
+		m_line_height = (int) std::nearbyint(m_css_line_height.val() * font_size);
 	} else
 	{
 		m_line_height = doc->to_pixels(m_css_line_height, font_size, font_size);

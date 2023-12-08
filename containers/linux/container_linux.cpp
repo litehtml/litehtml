@@ -703,22 +703,9 @@ void container_linux::transform_text(litehtml::string& text, litehtml::text_tran
 
 }
 
-void container_linux::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius, bool valid_x, bool valid_y )
+void container_linux::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius )
 {
-	litehtml::position clip_pos = pos;
-	litehtml::position client_pos;
-	get_client_rect(client_pos);
-	if(!valid_x)
-	{
-		clip_pos.x		= client_pos.x;
-		clip_pos.width	= client_pos.width;
-	}
-	if(!valid_y)
-	{
-		clip_pos.y		= client_pos.y;
-		clip_pos.height	= client_pos.height;
-	}
-	m_clips.emplace_back(clip_pos, bdr_radius);
+	m_clips.emplace_back(pos, bdr_radius);
 }
 
 void container_linux::del_clip()

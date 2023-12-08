@@ -88,7 +88,7 @@ void litehtml::el_text::compute_styles(bool recursive)
 		font = el_parent->css().get_font();
         fm = el_parent->css().get_font_metrics();
 	}
-	if(is_break())
+	if(is_break() || !font)
 	{
 		m_size.height	= 0;
 		m_size.width	= 0;
@@ -119,8 +119,12 @@ void litehtml::el_text::draw(uint_ptr hdc, int x, int y, const position *clip, c
 			document::ptr doc = get_document();
 
 			uint_ptr font = el_parent->css().get_font();
-			web_color color = el_parent->css().get_color();
-			doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font, color, pos);
+			if(font)
+			{
+				web_color color = el_parent->css().get_color();
+				doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font,
+											color, pos);
+			}
 		}
 	}
 }

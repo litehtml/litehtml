@@ -30,7 +30,7 @@ public:
 	void 			link(const document::ptr& doc, const element::ptr& el) override {}
 
 	void			transform_text(string& text, text_transform tt) override {}
-	void			set_clip(const position& pos, const border_radiuses& bdr_radius, bool valid_x, bool valid_y) override {}
+	void			set_clip(const position& pos, const border_radiuses& bdr_radius) override {}
 	void			del_clip() override {}
 
 	void 			set_caption(const char* caption) override {}

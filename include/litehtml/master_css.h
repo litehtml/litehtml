@@ -5,8 +5,6 @@ namespace litehtml{ const char* const master_css = R"##(
 
 html {
     display: block;
-    height:100%;
-    width:100%;
 	position: relative;
 }
 
@@ -37,8 +35,6 @@ script {
 body {
 	display:block; 
 	margin:8px; 
-    height:100%;
-    width:100%;
 }
 
 p {
@@ -228,6 +224,19 @@ table[border|=0] td, table[border|=0] th {
     border-style:none;
 }
 
+table[align=left] {
+   float: left;
+}
+
+table[align=right] {
+   float: right;
+}
+
+table[align=center] {
+   margin-left: auto;
+   margin-right: auto;
+}
+
 caption {
 	display: table-caption;
 }
@@ -349,6 +358,18 @@ sub {
 sup {
 	vertical-align: super;
 	font-size: smaller;
+}
+
+figure {
+	display: block;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 40px;
+	margin-right: 40px;
+}
+
+figcaption {
+	display: block;
 }
 
 )##"; }

@@ -290,6 +290,8 @@ STRING_ID(
 
 	_counter_reset_,
 	_counter_increment_,
+
+  _caption_side_,
 );
 #undef STRING_ID
 extern const string_id empty_id; // _id("")

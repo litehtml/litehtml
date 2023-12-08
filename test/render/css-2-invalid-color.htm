@@ -1,0 +1,11 @@
+<!-- Check if invalid color declarations are discarded. The text should be red. -->
+<!doctype html>
+<style>
+p {
+	color: red;
+	color: reddit;
+	color: 0;   /* valid in quirks mode */
+}
+</style>
+
+<p>text
