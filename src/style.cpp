@@ -536,6 +536,15 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		add_parsed_property(_flex_basis_, property_value(length, important));
 		break;
 
+	case _counter_increment_:
+	case _counter_reset_:
+	{	
+		string_vector tokens;
+		split_string(val, tokens, " ");
+		add_parsed_property(name, property_value(tokens, important));
+		break;
+	}
+
 	default:
 		add_parsed_property(name, property_value(val, important));
 	}

@@ -10,6 +10,7 @@
 #include "stylesheet.h"
 #include "line_box.h"
 #include "table.h"
+#include "types.h"
 
 namespace litehtml
 {
@@ -126,9 +127,10 @@ namespace litehtml
 		string				get_counter_value(const string& counter_name);
 
 	private:
+		void                parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const;
 		void				handle_counter_properties();
-		void				increment_counter(const string& counter_name);
-		void				reset_counter(const string& counter_name);
+		void				increment_counter(const string& counter_name, const int increment = 1);
+		void				reset_counter(const string& counter_name, const int value = 0);
 	};
 
 	/************************************************************************/

@@ -1561,40 +1561,62 @@ litehtml::string litehtml::html_tag::get_counter_value(const string& counter_nam
 	return "0";
 }
 
+void litehtml::html_tag::parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const{
+	int pos = 0;
+	while (pos < tokens.size()) {
+		string name = tokens[pos];
+		int value = default_value;
+		if (pos < tokens.size() - 1 && litehtml::is_number(tokens[pos + 1], 0)) {
+			value = atoi(tokens[pos + 1].c_str());
+			pos += 2;
+		}
+		else {
+			pos += 1;
+		}
+		handler(name, value);
+	}
+}
+
 void litehtml::html_tag::handle_counter_properties()
 {
 	const auto& reset_property = m_style.get_property(string_id::_counter_reset_);
-	if (reset_property.m_type != prop_type_invalid) {
-		reset_counter(reset_property.m_string);
+	if (reset_property.m_type == prop_type_string_vector) {
+		auto reset_function = [&](const string&name, const int value) {
+			reset_counter(name, value);
+		};
+		parse_counter_tokens(reset_property.m_string_vector, 0, reset_function);
 		return;
 	}
 
 	const auto& inc_property = m_style.get_property(string_id::_counter_increment_);
-	if (inc_property.m_type != prop_type_invalid) {
-		increment_counter(inc_property.m_string);
+	if (inc_property.m_type == prop_type_string_vector) {
+		auto inc_function = [&](const string&name, const int value) {
+			increment_counter(name, value);
+		};
+		parse_counter_tokens(inc_property.m_string_vector, 1, inc_function);
 		return;
 	}
 }
 
-void litehtml::html_tag::increment_counter(const string& counter_name) 
+void litehtml::html_tag::increment_counter(const string& counter_name, const int increment) 
 {
 	html_tag::ptr current = std::dynamic_pointer_cast<html_tag>(shared_from_this());
 	while (current != nullptr) {
 		auto i = current->m_counter_values.find(counter_name);
 		if (i != current->m_counter_values.end()) {
-			current->m_counter_values[counter_name] = i->second + 1;
+			current->m_counter_values[counter_name] = i->second + increment;
 			return;
 		}
 		current = std::dynamic_pointer_cast<html_tag>(current->parent());
 	}
 
 	// if counter is not found, initialize one on this element
-	m_counter_values[counter_name] = 1;
+	m_counter_values[counter_name] = increment;
 }
 
-void litehtml::html_tag::reset_counter(const string& counter_name)
+void litehtml::html_tag::reset_counter(const string& counter_name, const int value)
 {
-	m_counter_values[counter_name] = 0;
+	m_counter_values[counter_name] = value;
 }
 
 void litehtml::html_tag::add_style(const style& style)
