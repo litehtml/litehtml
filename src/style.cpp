@@ -992,18 +992,6 @@ void style::parse_font(const string& val, bool important)
 
 void style::parse_flex(const string& val, bool important)
 {
-	auto is_number = [](const string& val)
-	{
-		for (auto ch : val)
-		{
-			if ((ch < '0' || ch > '9') && ch != '.')
-			{
-				return false;
-			}
-		}
-		return true;
-	};
-
 	css_length _auto = css_length::predef_value(flex_basis_auto);
 
 	if (val == "initial")
@@ -1046,7 +1034,7 @@ void style::parse_flex(const string& val, bool important)
 			float grow = t_strtof(tokens[0]);
 			add_parsed_property(_flex_grow_, property_value(grow, important));
 			
-			if (is_number(tokens[1]))
+			if (litehtml::is_number(tokens[1]))
 			{
 				float shrink = t_strtof(tokens[1]);
 				add_parsed_property(_flex_shrink_, property_value(shrink, important));

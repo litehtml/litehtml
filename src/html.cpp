@@ -277,3 +277,14 @@ litehtml::string litehtml::get_escaped_string(const string& in_str)
 	}
 	return ret;
 }
+
+bool litehtml::is_number(const string& string, const bool allow_dot) {
+	for (auto ch : string)
+	{
+		if (!(t_isdigit(ch) || (allow_dot && ch == '.')))
+		{
+			return false;
+		}
+	}
+	return true;
+}

@@ -36,7 +36,9 @@ namespace litehtml
 
 	int t_strcasecmp(const char *s1, const char *s2);
 	int t_strncasecmp(const char *s1, const char *s2, size_t n);
-	
+
+	bool is_number(const string& string, const bool allow_dot = 1);
+
 	inline int t_isdigit(int c)
 	{
 		return (c >= '0' && c <= '9');
