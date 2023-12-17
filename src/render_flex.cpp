@@ -2,61 +2,233 @@
 #include "types.h"
 #include "render_flex.h"
 
-namespace litehtml
+int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
-	struct flex_item
+	bool is_row_direction = true;
+	int container_main_size = self_size.render_width;
+	if(css().get_flex_direction() == flex_direction_column || css().get_flex_direction() == flex_direction_column_reverse)
 	{
-		std::shared_ptr<render_item> el;
-		int base_size;
-		int min_size;
-		int max_size;
-		int main_size;
-		int grow;
-		int shrink;
-		int scaled_flex_shrink_factor;
-		bool frozen;
-		flex_align_items align;
+		is_row_direction = false;
+		container_main_size = self_size.height;
+	}
 
-		explicit flex_item(std::shared_ptr<render_item> &_el) :
-				el(_el),
-				align(flex_align_items_auto),
-				grow(0),
-				base_size(0),
-				shrink(0),
-				min_size(0),
-				frozen(false),
-				main_size(0),
-				max_size(0),
-				scaled_flex_shrink_factor(0)
-		{}
-	};
+	// Split flex items to lines
+	std::list<flex_line> lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size);
 
-	struct flex_line
+	// Resolving Flexible Lengths
+	// REF: https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
+
+	int el_y = 0;
+	int el_x = 0;
+	int ret_width = 0;
+	for(auto& ln : lines)
 	{
-		std::list<flex_item> items;
-		int top;
-		int cross_size;
-		int base_size;
-		int total_grow;
-		int total_shrink;
+		ln.cross_size = 0;
 
-		flex_line() :
-				cross_size(0),
-				top(0),
-				total_grow(0),
-				base_size(0),
-				total_shrink(0)
-		{}
-
-		void clear()
+		if(is_row_direction)
 		{
-			items.clear();
-			top = cross_size = base_size = total_shrink = total_grow = 0;
+			ret_width += ln.base_size;
 		}
-	};
+
+		ln.distribute_free_space(container_main_size);
+
+		if(is_row_direction)
+		{
+			// render items into new size and find line cross_size
+			for (auto &item: ln.items)
+			{
+				item.el->render(el_x,
+								el_y,
+								self_size.new_width(item.main_size), fmt_ctx, false);
+				ln.cross_size = std::max(ln.cross_size, item.el->height());
+				el_x += item.el->width();
+			}
+			// Align items
+			for (auto &item: ln.items)
+			{
+				switch (item.align)
+				{
+					case flex_align_items_flex_end:
+						item.el->pos().y = el_y + ln.cross_size - item.el->height() + item.el->content_offset_top();
+						break;
+					case flex_align_items_center:
+						item.el->pos().y = el_y + ln.cross_size / 2 - item.el->height() /2 + item.el->content_offset_top();
+						break;
+					case flex_align_items_flex_start:
+						item.el->pos().y = el_y + item.el->content_offset_top();
+						break;
+					default:
+						item.el->pos().y = el_y + item.el->content_offset_top();
+						item.el->pos().height = ln.cross_size - item.el->content_offset_height();
+						break;
+				}
+			}
+			el_y += ln.cross_size;
+			el_x = 0;
+			m_pos.height = el_y;
+		} else
+		{
+			for (auto &item: ln.items)
+			{
+				int el_ret_width = item.el->render(el_x,
+								el_y,
+								self_size, fmt_ctx, false);
+				item.el->render(el_x,
+								el_y,
+								self_size.new_width(el_ret_width), fmt_ctx, false);
+				ln.cross_size = std::max(ln.cross_size, item.el->width());
+				el_y += item.el->height();
+			}
+			for (auto &item: ln.items)
+			{
+				switch (item.align)
+				{
+					case flex_align_items_flex_end:
+						item.el->pos().x = el_x + ln.cross_size - item.el->width() + item.el->content_offset_left();
+						break;
+					case flex_align_items_center:
+						item.el->pos().x = el_x + ln.cross_size / 2 - item.el->width() /2 + item.el->content_offset_left();
+						break;
+					case flex_align_items_flex_start:
+						item.el->pos().x = el_x + item.el->content_offset_left();
+						break;
+					default:
+						item.el->pos().x = el_x + item.el->content_offset_left();
+						item.el->pos().width = ln.cross_size - item.el->content_offset_width();
+						break;
+				}
+			}
+			el_x += ln.cross_size;
+			m_pos.height = std::max(m_pos.height, el_y);
+			el_y = 0;
+		}
+	}
+	// calculate the final position
+	m_pos.move_to(x, y);
+	m_pos.x += content_offset_left();
+	m_pos.y += content_offset_top();
+
+	return ret_width + content_offset_width();
 }
 
-int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
+void
+litehtml::render_item_flex::flex_line::distribute_free_space(int container_main_size)
+{
+	// Determine the used flex factor. Sum the outer hypothetical main sizes of all items on the line.
+	// If the sum is less than the flex container’s inner main size, use the flex grow factor for the
+	// rest of this algorithm; otherwise, use the flex shrink factor.
+	int initial_free_space = container_main_size - base_size;
+	bool grow;
+	int total_flex_factor;
+	if(initial_free_space < 0)
+	{
+		grow = false;
+		total_flex_factor = total_shrink;
+	} else
+	{
+		grow = true;
+		total_flex_factor = total_grow;
+	}
+
+	if(total_flex_factor > 0)
+	{
+		bool processed = true;
+		while (processed)
+		{
+			int sum_scaled_flex_shrink_factor = 0;
+			int sum_flex_factors = 0;
+			int remaining_free_space = container_main_size;
+			int total_not_frozen = 0;
+			for (auto &item: items)
+			{
+				if (!item.frozen)
+				{
+					sum_scaled_flex_shrink_factor += item.scaled_flex_shrink_factor;
+					if(grow)
+					{
+						sum_flex_factors += item.grow;
+					} else
+					{
+						sum_flex_factors += item.shrink;
+					}
+					remaining_free_space -= item.base_size;
+					total_not_frozen++;
+				} else
+				{
+					remaining_free_space -= item.main_size;
+				}
+			}
+			// Check for flexible items. If all the flex items on the line are frozen, free space has
+			// been distributed; exit this loop.
+			if (!total_not_frozen) break;
+
+			remaining_free_space = abs(remaining_free_space);
+			// c. Distribute free space proportional to the flex factors.
+			// If the remaining free space is zero
+			//    Do nothing.
+			if (remaining_free_space)
+			{
+				int total_clamped = 0;
+				for (auto &item: items)
+				{
+					if (!item.frozen)
+					{
+						if(!grow)
+						{
+							// If using the flex shrink factor
+							//    For every unfrozen item on the line, multiply its flex shrink factor by its
+							//    inner flex base size, and note this as its scaled flex shrink factor. Find
+							//    the ratio of the item’s scaled flex shrink factor to the sum of the scaled
+							//    flex shrink factors of all unfrozen items on the line. Set the item’s target
+							//    main size to its flex base size minus a fraction of the absolute value of the
+							//    remaining free space proportional to the ratio.
+							int scaled_flex_shrink_factor = item.base_size * item.shrink;
+							item.main_size = (int) ((float) item.base_size - (float) remaining_free_space *
+																		 (float) scaled_flex_shrink_factor /
+																		 (float) sum_scaled_flex_shrink_factor);
+
+							// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
+							// min and max main sizes and floor its content-box size at zero. If the item’s target
+							// main size was made smaller by this, it’s a max violation. If the item’s target main
+							// size was made larger by this, it’s a min violation.
+							if (item.main_size <= item.min_size)
+							{
+								total_clamped++;
+								item.main_size = item.min_size;
+								item.frozen = true;
+							}
+						} else
+						{
+							// If using the flex grow factor
+							//    Find the ratio of the item’s flex grow factor to the sum of the flex grow
+							//    factors of all unfrozen items on the line. Set the item’s target main size to
+							//    its flex base size plus a fraction of the remaining free space proportional
+							//    to the ratio.
+							item.main_size = (int) ((float) item.base_size +
+													(float) remaining_free_space * (float) item.grow /
+													(float) total_flex_factor);
+							// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
+							// min and max main sizes and floor its content-box size at zero. If the item’s target
+							// main size was made smaller by this, it’s a max violation. If the item’s target main
+							// size was made larger by this, it’s a min violation.
+							if (item.main_size >= container_main_size)
+							{
+								total_clamped++;
+								item.main_size = container_main_size;
+								item.frozen = true;
+							}
+						}
+					}
+				}
+				if (total_clamped == 0) processed = false;
+			}
+		}
+	}
+}
+
+std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get_lines(const litehtml::containing_block_context &self_size,
+																	 litehtml::formatting_context *fmt_ctx,
+																	 bool is_row_direction, int container_main_size)
 {
 	std::list<flex_line> lines;
 	flex_line line;
@@ -66,42 +238,95 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		item.grow = (int) (item.el->css().get_flex_grow() * 1000.0);
 		item.shrink = (int) (item.el->css().get_flex_shrink() * 1000.0);
 		item.el->calc_outlines(self_size.render_width);
-		if(item.el->css().get_min_width().is_predefined())
+		if(is_row_direction)
 		{
-			item.min_size = el->render(0, 0, self_size.new_width(el->content_offset_width()), fmt_ctx);
-		} else
-		{
-			item.min_size = item.el->css().get_min_width().calc_percent(self_size.render_width) + el->content_offset_width();
-		}
-		if(item.el->css().get_max_width().is_predefined())
-		{
-			item.max_size = self_size.render_width;
-		} else
-		{
-			item.max_size = item.el->css().get_max_width().calc_percent(self_size.render_width) + el->content_offset_width();
-		}
-		if(item.el->css().get_flex_basis().is_predefined())
-		{
-			switch (item.el->css().get_flex_basis().predef())
+			if (item.el->css().get_min_width().is_predefined())
 			{
-				case flex_basis_auto:
-					if(!item.el->css().get_width().is_predefined())
-					{
-						item.base_size = item.el->css().get_width().calc_percent(self_size.render_width) + item.el->content_offset_width();
+				item.min_size = el->render(0, 0, self_size.new_width(el->content_offset_width()), fmt_ctx);
+			} else
+			{
+				item.min_size = item.el->css().get_min_width().calc_percent(self_size.render_width) +
+								el->content_offset_width();
+			}
+			if (item.el->css().get_max_width().is_predefined())
+			{
+				item.max_size = self_size.render_width;
+			} else
+			{
+				item.max_size = item.el->css().get_max_width().calc_percent(self_size.render_width) +
+								el->content_offset_width();
+			}
+			if (item.el->css().get_flex_basis().is_predefined())
+			{
+				switch (item.el->css().get_flex_basis().predef())
+				{
+					case flex_basis_auto:
+						if (!item.el->css().get_width().is_predefined())
+						{
+							item.base_size = item.el->css().get_width().calc_percent(self_size.render_width) +
+											 item.el->content_offset_width();
+							break;
+						}
+					case flex_basis_max_content:
+					case flex_basis_fit_content:
+						item.base_size = el->render(0, 0, self_size, fmt_ctx);
 						break;
-					}
-				case flex_basis_max_content:
-				case flex_basis_fit_content:
-					item.base_size = el->render(0, 0, self_size, fmt_ctx);
-					break;
-				case flex_basis_min_content:
-					item.base_size = item.min_size;
-					break;
+					case flex_basis_min_content:
+						item.base_size = item.min_size;
+						break;
+				}
+			} else
+			{
+				item.base_size = item.el->css().get_flex_basis().calc_percent(self_size.render_width) +
+								 item.el->content_offset_width();
 			}
 		} else
 		{
-			item.base_size = item.el->css().get_flex_basis().calc_percent(self_size.render_width) + item.el->content_offset_width();
+			if (item.el->css().get_min_height().is_predefined())
+			{
+				el->render(0, 0, self_size.new_width(self_size.render_width), fmt_ctx);
+				item.min_size = el->height();
+			} else
+			{
+				item.min_size = item.el->css().get_min_height().calc_percent(self_size.height) +
+								el->content_offset_height();
+			}
+			if (item.el->css().get_max_height().is_predefined())
+			{
+				item.max_size = self_size.height;
+			} else
+			{
+				item.max_size = item.el->css().get_max_height().calc_percent(self_size.height) +
+								el->content_offset_width();
+			}
+
+			if (item.el->css().get_flex_basis().is_predefined())
+			{
+				switch (item.el->css().get_flex_basis().predef())
+				{
+					case flex_basis_auto:
+						if (!item.el->css().get_height().is_predefined())
+						{
+							item.base_size = item.el->css().get_height().calc_percent(self_size.height) +
+											 item.el->content_offset_height();
+							break;
+						}
+					case flex_basis_max_content:
+					case flex_basis_fit_content:
+						el->render(0, 0, self_size, fmt_ctx);
+						item.base_size = el->height();
+						break;
+					case flex_basis_min_content:
+						item.base_size = item.min_size;
+						break;
+				}
+			} else
+			{
+				item.base_size = item.el->css().get_flex_basis().calc_percent(self_size.height) +
+								 item.el->content_offset_height();
+			}
 		}
+
 		if(el->css().get_flex_align_self() == flex_align_items_auto)
 		{
 			item.align = css().get_flex_align_items();
@@ -113,7 +338,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		item.scaled_flex_shrink_factor = item.base_size * item.shrink;
 
 		// Add flex item to line
-		if(!line.items.empty() && css().get_flex_wrap() != flex_wrap_nowrap && line.base_size + item.base_size > self_size.render_width)
+		if(!line.items.empty() && css().get_flex_wrap() != flex_wrap_nowrap && line.base_size + item.base_size > container_main_size)
 		{
 			lines.push_back(line);
 			line.clear();
@@ -135,172 +360,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	{
 		lines.push_back(line);
 	}
-
-	// Resolving Flexible Lengths
-	// REF: https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
-
-	int el_y = 0;
-	int ret_width = 0;
-	for(auto& ln : lines)
-	{
-		ln.top = el_y;
-		ln.cross_size = 0;
-		int el_x = 0;
-
-		ret_width += ln.base_size;
-
-		// Determine the used flex factor. Sum the outer hypothetical main sizes of all items on the line.
-		// If the sum is less than the flex container’s inner main size, use the flex grow factor for the
-		// rest of this algorithm; otherwise, use the flex shrink factor.
-		int initial_free_space = self_size.render_width - ln.base_size;
-		bool grow;
-		int total_flex_factor;
-		if(initial_free_space < 0)
-		{
-			grow = false;
-			total_flex_factor = ln.total_shrink;
-		} else
-		{
-			grow = true;
-			total_flex_factor = ln.total_grow;
-		}
-
-		if(total_flex_factor > 0)
-		{
-			bool processed = true;
-			while (processed)
-			{
-				int sum_scaled_flex_shrink_factor = 0;
-				int sum_flex_factors = 0;
-				int remaining_free_space = self_size.render_width;
-				int total_not_frozen = 0;
-				for (auto &item: ln.items)
-				{
-					if (!item.frozen)
-					{
-						sum_scaled_flex_shrink_factor += item.scaled_flex_shrink_factor;
-						if(grow)
-						{
-							sum_flex_factors += item.grow;
-						} else
-						{
-							sum_flex_factors += item.shrink;
-						}
-						remaining_free_space -= item.base_size;
-						total_not_frozen++;
-					} else
-					{
-						remaining_free_space -= item.main_size;
-					}
-				}
-				// Check for flexible items. If all the flex items on the line are frozen, free space has
-				// been distributed; exit this loop.
-				if (!total_not_frozen) break;
-
-				remaining_free_space = std::abs(remaining_free_space);
-				// c. Distribute free space proportional to the flex factors.
-				// If the remaining free space is zero
-				//    Do nothing.
-				if (remaining_free_space)
-				{
-					int total_clamped = 0;
-					for (auto &item: ln.items)
-					{
-						if (!item.frozen)
-						{
-							if(!grow)
-							{
-								// If using the flex shrink factor
-								//    For every unfrozen item on the line, multiply its flex shrink factor by its
-								//    inner flex base size, and note this as its scaled flex shrink factor. Find
-								//    the ratio of the item’s scaled flex shrink factor to the sum of the scaled
-								//    flex shrink factors of all unfrozen items on the line. Set the item’s target
-								//    main size to its flex base size minus a fraction of the absolute value of the
-								//    remaining free space proportional to the ratio.
-								int scaled_flex_shrink_factor = item.base_size * item.shrink;
-								item.main_size = (int) ((float) item.base_size - (float) remaining_free_space *
-																			 (float) scaled_flex_shrink_factor /
-																			 (float) sum_scaled_flex_shrink_factor);
-
-								// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
-								// min and max main sizes and floor its content-box size at zero. If the item’s target
-								// main size was made smaller by this, it’s a max violation. If the item’s target main
-								// size was made larger by this, it’s a min violation.
-								if (item.main_size <= item.min_size)
-								{
-									total_clamped++;
-									item.main_size = item.min_size;
-									item.frozen = true;
-								}
-							} else
-							{
-								// If using the flex grow factor
-								//    Find the ratio of the item’s flex grow factor to the sum of the flex grow
-								//    factors of all unfrozen items on the line. Set the item’s target main size to
-								//    its flex base size plus a fraction of the remaining free space proportional
-								//    to the ratio.
-								item.main_size = (int) ((float) item.base_size +
-														(float) remaining_free_space * (float) item.grow /
-														(float) total_flex_factor);
-								// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
-								// min and max main sizes and floor its content-box size at zero. If the item’s target
-								// main size was made smaller by this, it’s a max violation. If the item’s target main
-								// size was made larger by this, it’s a min violation.
-								if (item.main_size >= self_size.render_width)
-								{
-									total_clamped++;
-									item.main_size = self_size.render_width;
-									item.frozen = true;
-								}
-							}
-						}
-					}
-					if (total_clamped == 0) processed = false;
-				}
-			}
-		}
-
-		// render items into new width
-		for(auto& item : ln.items)
-		{
-			item.el->render(el_x,
-							el_y,
-							self_size.new_width(item.main_size), fmt_ctx, false);
-			ln.cross_size = std::max(ln.cross_size, item.el->height());
-			el_x += item.el->width();
-		}
-		el_y += ln.cross_size;
-	}
-	for(auto& ln : lines)
-	{
-		for(auto& item : ln.items)
-		{
-			switch (item.align)
-			{
-				case flex_align_items_flex_end:
-					item.el->pos().y = ln.top + ln.cross_size - item.el->height() + item.el->content_offset_top();
-					break;
-				case flex_align_items_center:
-					item.el->pos().y = ln.top + ln.cross_size / 2 - item.el->height() /2 + item.el->content_offset_top();
-					break;
-				case flex_align_items_flex_start:
-					item.el->pos().y = ln.top + item.el->content_offset_top();
-					break;
-				default:
-					item.el->pos().y = ln.top + item.el->content_offset_top();
-					item.el->pos().height = ln.cross_size - item.el->content_offset_height();
-					break;
-			}
-		}
-	}
-
-	// calculate the final position
-	m_pos.move_to(x, y);
-	m_pos.x += content_offset_left();
-	m_pos.y += content_offset_top();
-	m_pos.height = el_y;
-
-	return ret_width + content_offset_width();
+	return lines;
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_flex::init()
