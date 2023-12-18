@@ -20,6 +20,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 
 	int el_y = 0;
 	int el_x = 0;
+	int sum_cross_size = 0;
 	int ret_width = 0;
 	for(auto& ln : lines)
 	{
@@ -43,7 +44,59 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				ln.cross_size = std::max(ln.cross_size, item.el->height());
 				el_x += item.el->width();
 			}
-			// Align items
+			sum_cross_size += ln.cross_size;
+			el_x = 0;
+		} else
+		{
+			for (auto &item: ln.items)
+			{
+				int el_ret_width = item.el->render(el_x,
+								el_y,
+								self_size, fmt_ctx, false);
+				item.el->render(el_x,
+								el_y,
+								self_size.new_width(el_ret_width), fmt_ctx, false);
+				ln.cross_size = std::max(ln.cross_size, item.el->width());
+				el_y += item.el->height();
+			}
+			sum_cross_size += ln.cross_size;
+			el_y = 0;
+		}
+	}
+
+	int free_cross_size = 0;
+	int add_cross_size = 0;
+	if(sum_cross_size)
+	{
+		if (is_row_direction)
+		{
+			if (self_size.height.type != containing_block_context::cbc_value_type_auto)
+			{
+				free_cross_size = self_size.height;
+				if (src_el()->css().get_box_sizing() == box_sizing_border_box)
+				{
+					free_cross_size -= box_sizing_height();
+				}
+			}
+		} else
+		{
+			free_cross_size = self_size.render_width;
+		}
+		free_cross_size -= sum_cross_size;
+		add_cross_size = (int) ((float) free_cross_size / (float) lines.size());
+	}
+
+	// Find line cross size and align items
+	el_x = el_y = 0;
+	for(auto& ln : lines)
+	{
+		if(free_cross_size > 0 && add_cross_size > 0)
+		{
+			ln.cross_size += add_cross_size;
+			free_cross_size -= add_cross_size;
+		}
+		if(is_row_direction)
+		{
 			for (auto &item: ln.items)
 			{
 				switch (item.align)
@@ -64,21 +117,9 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				}
 			}
 			el_y += ln.cross_size;
-			el_x = 0;
 			m_pos.height = el_y;
 		} else
 		{
-			for (auto &item: ln.items)
-			{
-				int el_ret_width = item.el->render(el_x,
-								el_y,
-								self_size, fmt_ctx, false);
-				item.el->render(el_x,
-								el_y,
-								self_size.new_width(el_ret_width), fmt_ctx, false);
-				ln.cross_size = std::max(ln.cross_size, item.el->width());
-				el_y += item.el->height();
-			}
 			for (auto &item: ln.items)
 			{
 				switch (item.align)
@@ -94,15 +135,17 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						break;
 					default:
 						item.el->pos().x = el_x + item.el->content_offset_left();
-						item.el->pos().width = ln.cross_size - item.el->content_offset_width();
+						item.el->render(el_x,
+										item.el->pos().y - item.el->content_offset_top(),
+										self_size.new_width(ln.cross_size), fmt_ctx, false);
 						break;
 				}
+				m_pos.height = item.el->bottom();
 			}
 			el_x += ln.cross_size;
-			m_pos.height = std::max(m_pos.height, el_y);
-			el_y = 0;
 		}
 	}
+
 	// calculate the final position
 	m_pos.move_to(x, y);
 	m_pos.x += content_offset_left();
