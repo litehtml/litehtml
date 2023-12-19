@@ -56,6 +56,8 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				item.el->render(el_x,
 								el_y,
 								self_size.new_width(el_ret_width), fmt_ctx, false);
+				// TODO: must be rendered into the specified height
+				item.el->pos().height = item.main_size - item.el->content_offset_height();
 				ln.cross_size = std::max(ln.cross_size, item.el->width());
 				el_y += item.el->height();
 			}
@@ -81,6 +83,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		} else
 		{
 			free_cross_size = self_size.render_width;
+			ret_width = sum_cross_size;
 		}
 		free_cross_size -= sum_cross_size;
 		add_cross_size = (int) ((float) free_cross_size / (float) lines.size());
@@ -112,6 +115,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						break;
 					default:
 						item.el->pos().y = el_y + item.el->content_offset_top();
+						// TODO: must be rendered into the specified height
 						item.el->pos().height = ln.cross_size - item.el->content_offset_height();
 						break;
 				}
@@ -138,6 +142,8 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						item.el->render(el_x,
 										item.el->pos().y - item.el->content_offset_top(),
 										self_size.new_width(ln.cross_size), fmt_ctx, false);
+						// TODO: must be rendered into the specified height
+						item.el->pos().height = item.main_size - item.el->content_offset_height();
 						break;
 				}
 				m_pos.height = item.el->bottom();
@@ -151,7 +157,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	m_pos.x += content_offset_left();
 	m_pos.y += content_offset_top();
 
-	return ret_width + content_offset_width();
+	return ret_width;
 }
 
 void
@@ -209,7 +215,10 @@ litehtml::render_item_flex::flex_line::distribute_free_space(int container_main_
 			// c. Distribute free space proportional to the flex factors.
 			// If the remaining free space is zero
 			//    Do nothing.
-			if (remaining_free_space)
+			if (!remaining_free_space)
+			{
+				processed = false;
+			} else
 			{
 				int total_clamped = 0;
 				for (auto &item: items)
@@ -322,6 +331,7 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 			{
 				item.base_size = item.el->css().get_flex_basis().calc_percent(self_size.render_width) +
 								 item.el->content_offset_width();
+				item.base_size = std::max(item.base_size, item.min_size);
 			}
 		} else
 		{
@@ -389,13 +399,13 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 		line.base_size += item.base_size;
 		line.total_grow += item.grow;
 		line.total_shrink += item.shrink;
-		if(item.base_size > item.min_size)
+		//if(item.base_size > item.min_size)
 		{
 			item.frozen = false;
-		} else
+		} /*else
 		{
 			item.frozen = true;
-		}
+		}*/
 		line.items.push_back(item);
 	}
 	// Add the last line to the lines list

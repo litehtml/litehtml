@@ -972,14 +972,16 @@ void style::parse_font(const string& val, bool important)
 		{
 			string_vector szlh;
 			split_string(token, szlh, "/");
-
-			auto size = css_length::from_string(szlh[0], font_size_strings, -1);
-			add_parsed_property(_font_size_, property_value(size, important));
-
-			if(szlh.size() == 2)
+			if(!szlh.empty())
 			{
-				auto height = css_length::from_string(szlh[1], "normal", -1);
-				add_parsed_property(_line_height_, property_value(height, important));
+				auto size = css_length::from_string(szlh[0], font_size_strings, -1);
+				add_parsed_property(_font_size_, property_value(size, important));
+
+				if (szlh.size() == 2)
+				{
+					auto height = css_length::from_string(szlh[1], "normal", -1);
+					add_parsed_property(_line_height_, property_value(height, important));
+				}
 			}
 		} else
 		{

@@ -276,6 +276,8 @@ bool element::is_block_formatting_context() const
 {
 	if(	m_css.get_display() == display_inline_block ||
 		   m_css.get_display() == display_table_cell ||
+		   m_css.get_display() == display_inline_flex ||
+		   m_css.get_display() == display_flex ||
 		   m_css.get_display() == display_table_caption ||
 		   is_root() ||
 		   m_css.get_float() != float_none ||

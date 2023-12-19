@@ -391,7 +391,7 @@ void litehtml::css_properties::compute_background(const element* el, const docum
 
 void litehtml::css_properties::compute_flex(const element* el, const document::ptr& doc)
 {
-	if (m_display == display_flex)
+	if (m_display == display_flex || m_display == display_inline_flex)
 	{
 		m_flex_direction = (flex_direction) el->get_enum_property(_flex_direction_, false, flex_direction_row, offset(m_flex_direction));
 		m_flex_wrap = (flex_wrap) el->get_enum_property(_flex_wrap_, false, flex_wrap_nowrap, offset(m_flex_wrap));
@@ -401,7 +401,7 @@ void litehtml::css_properties::compute_flex(const element* el, const document::p
 		m_flex_align_content = (flex_align_content) el->get_enum_property(_align_content_, false, flex_align_content_stretch, offset(m_flex_align_content));
 	}
 	auto parent = el->parent();
-	if (parent && parent->css().m_display == display_flex)
+	if (parent && (parent->css().m_display == display_flex || parent->css().m_display == display_inline_flex))
 	{
 		m_flex_grow = el->get_number_property(_flex_grow_, false, 0, offset(m_flex_grow));
 		m_flex_shrink = el->get_number_property(_flex_shrink_, false, 1, offset(m_flex_shrink));

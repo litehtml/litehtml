@@ -679,7 +679,7 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
                     if (el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
                     {
                         el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
-                        if (el->src_el()->css().get_display() == display_inline_block)
+                        if (el->src_el()->css().get_display() == display_inline_block || el->src_el()->css().get_display() == display_inline_flex)
                         {
                             el->draw_stacking_context(hdc, pos.x, pos.y, clip, false);
                             process = false;
@@ -816,7 +816,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                 } else
                 {
                     if(	el->src_el()->css().get_float() == float_none &&
-                           el->src_el()->css().get_display() != display_inline_block)
+                           el->src_el()->css().get_display() != display_inline_block && el->src_el()->css().get_display() != display_inline_flex)
                     {
                         element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex);
                         if(child)
@@ -845,25 +845,23 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(i
         z_indexes[i->src_el()->css().get_z_index()];
     }
 
-    for(const auto& zindex : z_indexes)
+    for(auto iter = z_indexes.rbegin(); iter != z_indexes.rend(); iter++)
     {
-        if(zindex.first > 0)
+        if(iter->first > 0)
         {
-            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, zindex.first);
-            break;
+            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, iter->first);
+			if(ret) return ret;
         }
     }
-    if(ret) return ret;
 
     for(const auto& z_index : z_indexes)
     {
         if(z_index.first == 0)
         {
             ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, z_index.first);
-            break;
+			if(ret) return ret;
         }
     }
-    if(ret) return ret;
 
     ret = get_child_by_point(x, y, client_x, client_y, draw_inlines, 0);
     if(ret) return ret;
@@ -875,15 +873,14 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(i
     if(ret) return ret;
 
 
-    for(const auto& z_index : z_indexes)
-    {
-        if(z_index.first < 0)
+	for(auto iter = z_indexes.rbegin(); iter != z_indexes.rend(); iter++)
+	{
+        if(iter->first < 0)
         {
-            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, z_index.first);
-            break;
+            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, iter->first);
+			if(ret) return ret;
         }
     }
-    if(ret) return ret;
 
     if(src_el()->css().get_position() == element_position_fixed)
     {
