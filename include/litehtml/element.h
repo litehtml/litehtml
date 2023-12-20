@@ -35,6 +35,10 @@ namespace litehtml
 
 		virtual void				select_all(const css_selector& selector, elements_list& res);
 		element::ptr				_add_before_after(int type, const style& style);
+
+	private:
+		std::map<string, int>	    m_counter_values;
+
 	public:
 		explicit element(const std::shared_ptr<document>& doc);
 		virtual ~element() = default;
@@ -142,6 +146,13 @@ namespace litehtml
 		{
 			return _add_before_after(1, style);
 		}
+
+		string				get_counter_value(const string& counter_name);
+		void				increment_counter(const string& counter_name, const int increment = 1);
+		void				reset_counter(const string& counter_name, const int value = 0);
+
+	private:
+		void                parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const;
 	};
 
 	//////////////////////////////////////////////////////////////////////////

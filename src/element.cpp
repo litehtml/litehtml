@@ -288,6 +288,56 @@ bool element::is_block_formatting_context() const
 	return false;
 }
 
+litehtml::string litehtml::element::get_counter_value(const string& counter_name)
+{
+	element::ptr current = shared_from_this();
+	while (current != nullptr) {
+		auto i = current->m_counter_values.find(counter_name);
+		if (i != current->m_counter_values.end()) {
+			return std::to_string(i->second);
+		}
+		current = current->parent();
+	}
+	return "0";
+}
+
+void litehtml::element::parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const {
+	int pos = 0;
+	while (pos < tokens.size()) {
+		string name = tokens[pos];
+		int value = default_value;
+		if (pos < tokens.size() - 1 && litehtml::is_number(tokens[pos + 1], 0)) {
+			value = atoi(tokens[pos + 1].c_str());
+			pos += 2;
+		}
+		else {
+			pos += 1;
+		}
+		handler(name, value);
+	}
+}
+
+void litehtml::element::increment_counter(const string& counter_name, const int increment)
+{
+	element::ptr current = shared_from_this();
+	while (current != nullptr) {
+		auto i = current->m_counter_values.find(counter_name);
+		if (i != current->m_counter_values.end()) {
+			current->m_counter_values[counter_name] = i->second + increment;
+			return;
+		}
+		current = current->parent();
+	}
+
+	// if counter is not found, initialize one on this element
+	m_counter_values[counter_name] = increment;
+}
+
+void litehtml::element::reset_counter(const string& counter_name, const int value)
+{
+	m_counter_values[counter_name] = value;
+}
+
 const background* element::get_background(bool own_only)						LITEHTML_RETURN_FUNC(nullptr)
 void element::add_style( const style& style)	        						LITEHTML_EMPTY_FUNC
 void element::select_all(const css_selector& selector, elements_list& res)	LITEHTML_EMPTY_FUNC

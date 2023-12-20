@@ -1548,34 +1548,6 @@ litehtml::element::ptr litehtml::html_tag::get_element_after(const style& style,
 	return nullptr;
 }
 
-litehtml::string litehtml::html_tag::get_counter_value(const string& counter_name)
-{
-	html_tag::ptr current = std::dynamic_pointer_cast<html_tag>(shared_from_this());
-	while (current != nullptr) {
-		auto i = current->m_counter_values.find(counter_name);
-		if (i != current->m_counter_values.end()) {
-			return std::to_string(i->second);
-		}
-		current = std::dynamic_pointer_cast<html_tag>(current->parent());
-	}
-	return "0";
-}
-
-void litehtml::html_tag::parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const{
-	int pos = 0;
-	while (pos < tokens.size()) {
-		string name = tokens[pos];
-		int value = default_value;
-		if (pos < tokens.size() - 1 && litehtml::is_number(tokens[pos + 1], 0)) {
-			value = atoi(tokens[pos + 1].c_str());
-			pos += 2;
-		}
-		else {
-			pos += 1;
-		}
-		handler(name, value);
-	}
-}
 
 void litehtml::html_tag::handle_counter_properties()
 {
@@ -1598,26 +1570,6 @@ void litehtml::html_tag::handle_counter_properties()
 	}
 }
 
-void litehtml::html_tag::increment_counter(const string& counter_name, const int increment) 
-{
-	html_tag::ptr current = std::dynamic_pointer_cast<html_tag>(shared_from_this());
-	while (current != nullptr) {
-		auto i = current->m_counter_values.find(counter_name);
-		if (i != current->m_counter_values.end()) {
-			current->m_counter_values[counter_name] = i->second + increment;
-			return;
-		}
-		current = std::dynamic_pointer_cast<html_tag>(current->parent());
-	}
-
-	// if counter is not found, initialize one on this element
-	m_counter_values[counter_name] = increment;
-}
-
-void litehtml::html_tag::reset_counter(const string& counter_name, const int value)
-{
-	m_counter_values[counter_name] = value;
-}
 
 void litehtml::html_tag::add_style(const style& style)
 {

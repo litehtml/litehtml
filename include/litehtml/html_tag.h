@@ -35,9 +35,6 @@ namespace litehtml
 
 		void					select_all(const css_selector& selector, elements_list& res) override;
 
-	private:
-		std::map<string, int>	m_counter_values;
-
 	public:
 		explicit html_tag(const std::shared_ptr<document>& doc);
 		// constructor for anonymous wrapper boxes
@@ -124,13 +121,10 @@ namespace litehtml
 		string				get_list_marker_text(int index);
 		element::ptr		get_element_before(const style& style, bool create);
 		element::ptr		get_element_after(const style& style, bool create);
-		string				get_counter_value(const string& counter_name);
 
 	private:
-		void                parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const;
 		void				handle_counter_properties();
-		void				increment_counter(const string& counter_name, const int increment = 1);
-		void				reset_counter(const string& counter_name, const int value = 0);
+
 	};
 
 	/************************************************************************/
