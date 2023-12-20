@@ -859,13 +859,16 @@ namespace litehtml
 		flex_justify_content_space_around
 	};
 
-#define flex_align_items_strings		"flex-start;flex-end;center;baseline;stretch;auto"
+#define flex_align_items_strings		"normal;flex-start;flex-end;center;start;end;baseline;stretch;auto"
 
 	enum flex_align_items
 	{
+		flex_align_items_flex_normal,
 		flex_align_items_flex_start,
 		flex_align_items_flex_end,
 		flex_align_items_center,
+		flex_align_items_start,
+		flex_align_items_end,
 		flex_align_items_baseline,
 		flex_align_items_stretch,
 		flex_align_items_auto // used for align-self property only

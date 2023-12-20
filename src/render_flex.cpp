@@ -5,11 +5,29 @@
 int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
 	bool is_row_direction = true;
+	bool reverse = false;
 	int container_main_size = self_size.render_width;
-	if(css().get_flex_direction() == flex_direction_column || css().get_flex_direction() == flex_direction_column_reverse)
+
+	switch (css().get_flex_direction())
 	{
-		is_row_direction = false;
-		container_main_size = self_size.height;
+		case flex_direction_column:
+			is_row_direction = false;
+			reverse = false;
+			container_main_size = self_size.height;
+			break;
+		case flex_direction_column_reverse:
+			is_row_direction = false;
+			reverse = true;
+			container_main_size = self_size.height;
+			break;
+		case flex_direction_row:
+			is_row_direction = true;
+			reverse = false;
+			break;
+		case flex_direction_row_reverse:
+			is_row_direction = true;
+			reverse = true;
+			break;
 	}
 
 	// Split flex items to lines
@@ -105,12 +123,14 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				switch (item.align)
 				{
 					case flex_align_items_flex_end:
+					case flex_align_items_end:
 						item.el->pos().y = el_y + ln.cross_size - item.el->height() + item.el->content_offset_top();
 						break;
 					case flex_align_items_center:
 						item.el->pos().y = el_y + ln.cross_size / 2 - item.el->height() /2 + item.el->content_offset_top();
 						break;
 					case flex_align_items_flex_start:
+					case flex_align_items_start:
 						item.el->pos().y = el_y + item.el->content_offset_top();
 						break;
 					default:
@@ -129,11 +149,13 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				switch (item.align)
 				{
 					case flex_align_items_flex_end:
+					case flex_align_items_end:
 						item.el->pos().x = el_x + ln.cross_size - item.el->width() + item.el->content_offset_left();
 						break;
 					case flex_align_items_center:
 						item.el->pos().x = el_x + ln.cross_size / 2 - item.el->width() /2 + item.el->content_offset_left();
 						break;
+					case flex_align_items_start:
 					case flex_align_items_flex_start:
 						item.el->pos().x = el_x + item.el->content_offset_left();
 						break;

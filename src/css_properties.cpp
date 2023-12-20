@@ -397,7 +397,7 @@ void litehtml::css_properties::compute_flex(const element* el, const document::p
 		m_flex_wrap = (flex_wrap) el->get_enum_property(_flex_wrap_, false, flex_wrap_nowrap, offset(m_flex_wrap));
 
 		m_flex_justify_content = (flex_justify_content) el->get_enum_property(_justify_content_, false, flex_justify_content_flex_start, offset(m_flex_justify_content));
-		m_flex_align_items = (flex_align_items) el->get_enum_property(_align_items_, false, flex_align_items_stretch, offset(m_flex_align_items));
+		m_flex_align_items = (flex_align_items) el->get_enum_property(_align_items_, false, flex_align_items_flex_normal, offset(m_flex_align_items));
 		m_flex_align_content = (flex_align_content) el->get_enum_property(_align_content_, false, flex_align_content_stretch, offset(m_flex_align_content));
 	}
 	auto parent = el->parent();
