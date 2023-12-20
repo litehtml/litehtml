@@ -13,14 +13,14 @@ using namespace std;
 vector<string> find_htm_files();
 void test(string filename);
 
-const char* test_dir = "../test/render/"; // ctest is run from litehtml/build
+const char* test_dir = "../test/render"; // ctest is run from litehtml/build
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 using render_test = testing::TestWithParam<string>;
 
 TEST_P(render_test, _)
 {
-	test(test_dir + GetParam());
+	test(string(test_dir) + "/" + GetParam());
 }
 
 INSTANTIATE_TEST_SUITE_P(, render_test, testing::ValuesIn(find_htm_files()));
@@ -28,19 +28,35 @@ INSTANTIATE_TEST_SUITE_P(, render_test, testing::ValuesIn(find_htm_files()));
 
 void error(const char* msg) { puts(msg); exit(1); }
 
-vector<string> find_htm_files()
+void read_dir(const string& subdir, vector<string>& files)
 {
-	DIR* dir = opendir(test_dir);
-	if (!dir) error("Cannot read test directory");
-	vector<string> ret;
+	string full_path = string(test_dir) + "/" + subdir;
+	DIR* dir = opendir(full_path.c_str());
+	if (!dir) error(full_path.c_str());
 	while (dirent* ent = readdir(dir))
 	{
-		if (ent->d_type != DT_REG) continue; // if not regular file
 		string name = ent->d_name;
-		if (name[0] != '-' && name.size() > 4 && name.substr(name.size() - 4) == ".htm")
-			ret.push_back(name);
+		if (ent->d_type == DT_DIR)
+		{
+			if(name != "." && name != "..")
+			{
+				read_dir(subdir + "/" + name, files);
+			}
+		} else
+		{
+			if (ent->d_type != DT_REG) continue; // if not regular file
+			if (name[0] != '-' && name.size() > 4 &&
+				(name.substr(name.size() - 4) == ".htm" || name.substr(name.size() - 5) == ".html"))
+				files.push_back(subdir + "/" + name);
+		}
 	}
 	closedir(dir);
+}
+
+vector<string> find_htm_files()
+{
+	vector<string> ret;
+	read_dir("", ret);
 	sort(ret.begin(), ret.end());
 	return ret;
 }
