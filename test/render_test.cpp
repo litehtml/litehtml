@@ -85,7 +85,16 @@ void test(string filename)
 	string html = readfile(filename);
 
 	int width = 800, height = 1600; // image will be cropped to content_width/content_height
-	test_container container(width, height, test_dir);
+	auto last_slash_pos = filename.find_last_of('/');
+	string base_path;
+	if(last_slash_pos != string::npos)
+	{
+		base_path = filename.substr(0, last_slash_pos);
+	} else
+	{
+		base_path = test_dir;
+	}
+	test_container container(width, height, base_path);
 
 	auto doc = document::createFromString(html.c_str(), &container);
 	doc->render(width);
