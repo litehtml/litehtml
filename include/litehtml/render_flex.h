@@ -38,7 +38,8 @@ namespace litehtml
 		{
 			std::list<flex_item> items;
 			int top;
-			int cross_size;
+			int main_size;	// sum of all items main size
+			int cross_size;	// sum of all items cross size
 			int base_size;
 			int total_grow;
 			int total_shrink;
@@ -48,13 +49,14 @@ namespace litehtml
 					top(0),
 					total_grow(0),
 					base_size(0),
-					total_shrink(0)
+					total_shrink(0),
+					main_size(0)
 			{}
 
 			void clear()
 			{
 				items.clear();
-				top = cross_size = base_size = total_shrink = total_grow = 0;
+				top = cross_size = main_size = base_size = total_shrink = total_grow = 0;
 			}
 
 			void distribute_free_space(int container_main_size);
