@@ -37,7 +37,7 @@ namespace litehtml
 		element::ptr				_add_before_after(int type, const style& style);
 
 	private:
-		std::map<string, int>	    m_counter_values;
+		std::map<string, int>		m_counter_values;
 
 	public:
 		explicit element(const std::shared_ptr<document>& doc);
@@ -152,7 +152,9 @@ namespace litehtml
 		void				reset_counter(const string& counter_name, const int value = 0);
 
 	private:
-		void                parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const;
+		std::vector<element::ptr> get_siblings_before() const;
+		bool				find_counter(const string& counter_name, std::map<string, int>::iterator& map_iterator);
+		void				parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const;
 	};
 
 	//////////////////////////////////////////////////////////////////////////

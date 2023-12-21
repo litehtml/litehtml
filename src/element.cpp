@@ -290,16 +290,54 @@ bool element::is_block_formatting_context() const
 
 litehtml::string litehtml::element::get_counter_value(const string& counter_name)
 {
-	element::ptr current = shared_from_this();
-	while (current != nullptr) {
-		auto i = current->m_counter_values.find(counter_name);
-		if (i != current->m_counter_values.end()) {
-			return std::to_string(i->second);
-		}
-		current = current->parent();
+	std::map<string, int>::iterator i;
+	if (find_counter(counter_name, i))
+	{
+		return std::to_string(i->second);
 	}
 	return "0";
 }
+
+bool litehtml::element::find_counter(const string& counter_name, std::map<string, int>::iterator& map_iterator) {
+	element::ptr current = shared_from_this();
+
+	// search upwards
+	while (current != nullptr)
+	{
+		map_iterator = current->m_counter_values.find(counter_name);
+		if (map_iterator != current->m_counter_values.end()) {
+			return true;
+		}
+
+		// on each level, search previous siblings too
+		std::vector<element::ptr> siblings = current->get_siblings_before();
+		std::reverse(siblings.begin(), siblings.end());
+		for (const element::ptr& sibling : siblings) {
+			map_iterator = sibling->m_counter_values.find(counter_name);
+			if (map_iterator != sibling->m_counter_values.end()) {
+				return true;
+			}
+		}
+		current = current->parent();
+	}
+	
+	return false;
+}
+
+std::vector<element::ptr> litehtml::element::get_siblings_before() const
+{
+	std::vector<element::ptr> siblings;
+	if (parent() != nullptr) {
+		for (const element::ptr& sybling : parent()->children()) {
+			if (sybling == shared_from_this()) {
+				break;
+			}
+			siblings.push_back(sybling);
+		}
+	}
+	return siblings;
+}
+
 
 void litehtml::element::parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string&, const int)> handler) const {
 	int pos = 0;
@@ -319,18 +357,14 @@ void litehtml::element::parse_counter_tokens(const string_vector& tokens, const 
 
 void litehtml::element::increment_counter(const string& counter_name, const int increment)
 {
-	element::ptr current = shared_from_this();
-	while (current != nullptr) {
-		auto i = current->m_counter_values.find(counter_name);
-		if (i != current->m_counter_values.end()) {
-			current->m_counter_values[counter_name] = i->second + increment;
-			return;
-		}
-		current = current->parent();
+	std::map<string, int>::iterator i;
+	if (find_counter(counter_name, i)) {
+		i->second = i->second + increment;
 	}
-
-	// if counter is not found, initialize one on this element
-	m_counter_values[counter_name] = increment;
+	else {
+		// if counter is not found, initialize one on this element
+		m_counter_values[counter_name] = increment;
+	}
 }
 
 void litehtml::element::reset_counter(const string& counter_name, const int value)
