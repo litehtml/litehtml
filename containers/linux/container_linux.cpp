@@ -314,6 +314,8 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const std::vector
 	{
 		const auto& bg = bgvec[i];
 
+		if(bg.image_size.height == 0 || bg.image_size.width == 0) continue;
+
 		cairo_rectangle(cr, bg.clip_box.x, bg.clip_box.y, bg.clip_box.width, bg.clip_box.height);
 		cairo_clip(cr);
 
