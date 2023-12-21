@@ -117,11 +117,25 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			ret_width = sum_cross_size;
 		}
 		free_cross_size -= sum_cross_size;
+		sum_cross_size += free_cross_size;
 		add_cross_size = (int) ((float) free_cross_size / (float) lines.size());
 	}
 
 	// Find line cross size and align items
 	el_x = el_y = 0;
+	bool is_wrap_reverse = css().get_flex_wrap() == flex_wrap_wrap_reverse;
+
+	if(is_wrap_reverse)
+	{
+		if(is_row_direction)
+		{
+			el_y = sum_cross_size;
+		} else
+		{
+			el_x = sum_cross_size;
+		}
+	}
+
 	for(auto& ln : lines)
 	{
 		if(free_cross_size > 0 && add_cross_size > 0)
@@ -132,6 +146,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		if(is_row_direction)
 		{
 			el_x = reverse ? container_main_size : 0;
+			if(is_wrap_reverse)
+			{
+				el_y -= ln.cross_size;
+			}
 			for (auto &item: ln.items)
 			{
 				if(!reverse)
@@ -162,9 +180,12 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						item.el->pos().height = ln.cross_size - item.el->content_offset_height();
 						break;
 				}
+				m_pos.height = std::max(m_pos.height, item.el->bottom());
 			}
-			el_y += ln.cross_size;
-			m_pos.height = el_y;
+			if(!is_wrap_reverse)
+			{
+				el_y += ln.cross_size;
+			}
 		} else
 		{
 			if(!reverse)
@@ -179,6 +200,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				{
 					el_y = self_size.height;
 				}
+			}
+			if(is_wrap_reverse)
+			{
+				el_x -= ln.cross_size;
 			}
 			for (auto &item: ln.items)
 			{
@@ -215,7 +240,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				}
 				m_pos.height = std::max(m_pos.height, item.el->bottom());
 			}
-			el_x += ln.cross_size;
+			if(!is_wrap_reverse)
+			{
+				el_x += ln.cross_size;
+			}
 		}
 	}
 
