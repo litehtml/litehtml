@@ -2,6 +2,85 @@
 #include "types.h"
 #include "render_flex.h"
 
+namespace litehtml
+{
+	class flex_justify_content_spread
+	{
+		flex_justify_content m_type;
+		int m_num_items;
+		int m_free_space;
+	public:
+		flex_justify_content_spread(flex_justify_content type, int num_items, int free_space) :
+			m_type(type), m_num_items(num_items), m_free_space(0)
+		{
+			set_free_space(free_space);
+		}
+
+		void set_free_space(int free_space)
+		{
+			m_free_space = free_space;
+			switch (m_type)
+			{
+
+				case flex_justify_content_space_between:
+					// If the leftover free-space is negative or there is only a single flex item on the line, this
+					// value is identical to flex-start.
+					if(m_num_items == 1 || m_free_space < 0)  m_type = flex_justify_content_flex_start;
+					break;
+				case flex_justify_content_space_around:
+					// If the leftover free-space is negative or there is only a single flex item on the line, this
+					// value is identical to center
+					if(m_num_items == 1 || m_free_space < 0)  m_type = flex_justify_content_center;
+					break;
+				default:
+					break;
+			}
+		}
+
+		int start()
+		{
+			switch (m_type)
+			{
+				case flex_justify_content_flex_end:
+					return m_free_space;
+				case flex_justify_content_center:
+					return m_free_space / 2;
+				case flex_justify_content_space_between:
+				case flex_justify_content_space_around:
+				default:
+					// using flex-start b y default
+					return 0;
+			}
+		}
+
+		int before_item()
+		{
+			switch (m_type)
+			{
+				case flex_justify_content_space_between:
+					return 0;
+				case flex_justify_content_space_around:
+					return m_free_space / (m_num_items * 2);
+				default:
+					return 0;
+			}
+		}
+
+		int after_item()
+		{
+			switch (m_type)
+			{
+				case flex_justify_content_space_between:
+					return m_free_space / (m_num_items - 1);
+				case flex_justify_content_space_around:
+					return m_free_space / (m_num_items * 2);
+				default:
+					return 0;
+			}
+		}
+	};
+}
+
 int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
 	bool is_row_direction = true;
@@ -143,21 +222,34 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			ln.cross_size += add_cross_size;
 			free_cross_size -= add_cross_size;
 		}
+		flex_justify_content_spread content_spread(css().get_flex_justify_content(),
+												   (int) ln.items.size(),
+												   container_main_size - ln.main_size);
 		if(is_row_direction)
 		{
-			el_x = reverse ? container_main_size : 0;
 			if(is_wrap_reverse)
 			{
 				el_y -= ln.cross_size;
+			}
+			if(reverse)
+			{
+				el_x = container_main_size - content_spread.start();
+			} else
+			{
+				el_x = content_spread.start();
 			}
 			for (auto &item: ln.items)
 			{
 				if(!reverse)
 				{
+					// justify content [before_item]
+					el_x += content_spread.before_item();
 					item.el->pos().x = el_x + item.el->content_offset_left();
 					el_x += item.el->width();
 				} else
 				{
+					// justify content [before_item]
+					el_x -= content_spread.before_item();
 					el_x -= item.el->width();
 					item.el->pos().x = el_x + item.el->content_offset_left();
 				}
@@ -181,6 +273,14 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						break;
 				}
 				m_pos.height = std::max(m_pos.height, item.el->bottom());
+				// justify content [after_item]
+				if(!reverse)
+				{
+					el_x += content_spread.after_item();
+				} else
+				{
+					el_x -= content_spread.after_item();
+				}
 			}
 			if(!is_wrap_reverse)
 			{
@@ -190,16 +290,19 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		{
 			if(!reverse)
 			{
-				el_y = 0;
+				el_y = content_spread.start();
 			} else
 			{
 				if(self_size.height.type == containing_block_context::cbc_value_type_auto)
 				{
+					content_spread.set_free_space(0);
 					el_y = ln.main_size;
 				} else
 				{
+					content_spread.set_free_space(self_size.height - ln.main_size);
 					el_y = self_size.height;
 				}
+				el_y -= content_spread.start();
 			}
 			if(is_wrap_reverse)
 			{
@@ -209,10 +312,16 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			{
 				if(!reverse)
 				{
+					// justify content [before_item]
+					el_y += content_spread.before_item();
+
 					item.el->pos().y = el_y + item.el->content_offset_top();
 					el_y += item.el->height();
 				} else
 				{
+					// justify content [before_item]
+					el_y -= content_spread.before_item();
+
 					el_y -= item.el->height();
 					item.el->pos().y = el_y + item.el->content_offset_top();
 				}
@@ -239,6 +348,14 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						break;
 				}
 				m_pos.height = std::max(m_pos.height, item.el->bottom());
+				// justify content [after_item]
+				if(!reverse)
+				{
+					el_y += content_spread.after_item();
+				} else
+				{
+					el_y -= content_spread.after_item();
+				}
 			}
 			if(!is_wrap_reverse)
 			{
