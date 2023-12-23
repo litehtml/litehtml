@@ -79,6 +79,107 @@ namespace litehtml
 			}
 		}
 	};
+
+	class flex_align_content_spread
+	{
+		flex_align_content m_type;
+		int m_num_lines;
+		int m_free_space;
+		flex_wrap m_wrap;
+	public:
+		flex_align_content_spread(flex_align_content type, flex_wrap wrap, int num_lines, int free_space) :
+				m_type(type), m_num_lines(num_lines), m_free_space(0), m_wrap(wrap)
+		{
+			if(m_wrap == flex_wrap_nowrap)
+			{
+				m_type = flex_align_content_stretch;
+			}
+			set_free_space(free_space);
+		}
+
+		void set_free_space(int free_space)
+		{
+			m_free_space = free_space;
+			switch (m_type)
+			{
+
+				case flex_align_content_space_between:
+					// If the leftover free-space is negative or there is only a single flex line in the flex
+					// container, this value is identical to flex-start.
+					if(m_num_lines == 1 || m_free_space < 0) m_type = flex_align_content_flex_start;
+					break;
+				case flex_align_content_space_around:
+					// If the leftover free-space is negative this value is identical to center.
+					if(m_num_lines == 1 || m_free_space < 0) m_type = flex_align_content_center;
+					break;
+				default:
+					break;
+			}
+		}
+
+		int start()
+		{
+			switch (m_type)
+			{
+				case flex_align_content_flex_end:
+				case flex_align_content_end:
+					return m_free_space;
+				case flex_align_content_center:
+					return m_free_space / 2;
+				case flex_align_content_stretch:
+				case flex_align_content_space_between:
+				case flex_align_content_space_around:
+				default:
+					// using stretch by default
+					return 0;
+			}
+		}
+
+		int add_line_size()
+		{
+			switch (m_type)
+			{
+
+				case flex_align_content_flex_start:
+				case flex_align_content_flex_end:
+				case flex_align_content_start:
+				case flex_align_content_end:
+				case flex_align_content_center:
+				case flex_align_content_space_between:
+				case flex_align_content_space_around:
+					return 0;
+				case flex_align_content_stretch:
+				default:
+					return m_free_space / m_num_lines;
+			}
+		}
+
+		int before_line()
+		{
+			switch (m_type)
+			{
+				case flex_align_content_space_between:
+					return 0;
+				case flex_align_content_space_around:
+					return m_free_space / (m_num_lines * 2);
+				default:
+					return 0;
+			}
+		}
+
+		int after_line()
+		{
+			switch (m_type)
+			{
+				case flex_align_content_space_between:
+					return m_free_space / (m_num_lines - 1);
+				case flex_align_content_space_around:
+					return m_free_space / (m_num_lines * 2);
+				default:
+					return 0;
+			}
+		}
+	};
 }
 
 int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
@@ -177,51 +278,56 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	}
 
 	int free_cross_size = 0;
-	int add_cross_size = 0;
 	if(sum_cross_size)
 	{
 		if (is_row_direction)
 		{
 			if (self_size.height.type != containing_block_context::cbc_value_type_auto)
 			{
-				free_cross_size = self_size.height;
+				int height = self_size.height;
 				if (src_el()->css().get_box_sizing() == box_sizing_border_box)
 				{
-					free_cross_size -= box_sizing_height();
+					height -= box_sizing_height();
 				}
+				free_cross_size = height - sum_cross_size;
 			}
 		} else
 		{
-			free_cross_size = self_size.render_width;
+			free_cross_size = self_size.render_width - sum_cross_size;
 			ret_width = sum_cross_size;
 		}
-		free_cross_size -= sum_cross_size;
-		sum_cross_size += free_cross_size;
-		add_cross_size = (int) ((float) free_cross_size / (float) lines.size());
 	}
 
 	// Find line cross size and align items
 	el_x = el_y = 0;
 	bool is_wrap_reverse = css().get_flex_wrap() == flex_wrap_wrap_reverse;
 
+	flex_align_content_spread lines_spread(css().get_flex_align_content(), css().get_flex_wrap(), (int) lines.size(), free_cross_size);
+
 	if(is_wrap_reverse)
 	{
 		if(is_row_direction)
 		{
-			el_y = sum_cross_size;
+			el_y = sum_cross_size - lines_spread.start();
 		} else
 		{
-			el_x = sum_cross_size;
+			el_x = sum_cross_size - lines_spread.start();
+		}
+	} else
+	{
+		if(is_row_direction)
+		{
+			el_y = lines_spread.start();
+		} else
+		{
+			el_x = lines_spread.start();
 		}
 	}
 
 	for(auto& ln : lines)
 	{
-		if(free_cross_size > 0 && add_cross_size > 0)
-		{
-			ln.cross_size += add_cross_size;
-			free_cross_size -= add_cross_size;
-		}
+		ln.cross_size += lines_spread.add_line_size();
+
 		flex_justify_content_spread content_spread(css().get_flex_justify_content(),
 												   (int) ln.items.size(),
 												   container_main_size - ln.main_size);
@@ -229,7 +335,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		{
 			if(is_wrap_reverse)
 			{
-				el_y -= ln.cross_size;
+				el_y -= ln.cross_size - lines_spread.before_line();
+			} else
+			{
+				el_y += lines_spread.before_line();
 			}
 			if(reverse)
 			{
@@ -284,7 +393,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			}
 			if(!is_wrap_reverse)
 			{
-				el_y += ln.cross_size;
+				el_y += ln.cross_size + lines_spread.after_line();
+			} else
+			{
+				el_y -= lines_spread.after_line();
 			}
 		} else
 		{
@@ -306,7 +418,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			}
 			if(is_wrap_reverse)
 			{
-				el_x -= ln.cross_size;
+				el_x -= ln.cross_size - lines_spread.before_line();
+			} else
+			{
+				el_x += lines_spread.before_line();
 			}
 			for (auto &item: ln.items)
 			{
@@ -359,7 +474,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			}
 			if(!is_wrap_reverse)
 			{
-				el_x += ln.cross_size;
+				el_x += ln.cross_size + lines_spread.after_line();
+			} else
+			{
+				el_x -= lines_spread.after_line();
 			}
 		}
 	}

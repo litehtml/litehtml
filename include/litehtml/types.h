@@ -874,12 +874,14 @@ namespace litehtml
 		flex_align_items_auto // used for align-self property only
 	};
 
-#define flex_align_content_strings		"flex-start;flex-end;center;space-between;space-around;stretch"
+#define flex_align_content_strings		"flex-start;start;flex-end;end;center;space-between;space-around;stretch"
 
 	enum flex_align_content
 	{
 		flex_align_content_flex_start,
+		flex_align_content_start,
 		flex_align_content_flex_end,
+		flex_align_content_end,
 		flex_align_content_center,
 		flex_align_content_space_between,
 		flex_align_content_space_around,

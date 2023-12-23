@@ -38,13 +38,12 @@ void read_dir(const string& subdir, vector<string>& files)
 		string name = ent->d_name;
 		if (ent->d_type == DT_DIR)
 		{
-			if(name != "." && name != "..")
+			if(name != "." && name != ".." && name[0] != '-')
 			{
 				read_dir(subdir + "/" + name, files);
 			}
-		} else
+		} else if (ent->d_type == DT_REG)
 		{
-			if (ent->d_type != DT_REG) continue; // if not regular file
 			if (name[0] != '-' && name.size() > 4 &&
 				(name.substr(name.size() - 4) == ".htm" || name.substr(name.size() - 5) == ".html"))
 				files.push_back(subdir + "/" + name);
