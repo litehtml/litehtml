@@ -240,6 +240,8 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 		doc->container()->load_image(m_list_style_image.c_str(), m_list_style_image_baseurl.c_str(), true);
 	}
 
+	m_order = el->get_int_property(_order_, false, 0, offset(m_order));
+
 	compute_background(el, doc);
 	compute_flex(el, doc);
 }

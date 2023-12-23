@@ -536,6 +536,10 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		add_parsed_property(_flex_basis_, property_value(length, important));
 		break;
 
+	case _order_: // <integer>
+		add_parsed_property(name, property_value(atoi(val.c_str()), important));
+		break;
+
 	default:
 		add_parsed_property(name, property_value(val, important));
 	}

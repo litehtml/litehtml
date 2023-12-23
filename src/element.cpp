@@ -334,6 +334,7 @@ bool element::is_replaced() const									LITEHTML_RETURN_FUNC(false)
 void element::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) LITEHTML_EMPTY_FUNC
 void element::draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) LITEHTML_EMPTY_FUNC
 int				element::get_enum_property			(string_id name, bool inherited, int defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(0)
+int				element::get_int_property			(string_id name, bool inherited, int defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(0)
 css_length		element::get_length_property		(string_id name, bool inherited, css_length defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(0)
 web_color		element::get_color_property			(string_id name, bool inherited, web_color defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(web_color())
 string			element::get_string_property		(string_id name, bool inherited, const string& defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC("")

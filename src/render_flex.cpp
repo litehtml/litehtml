@@ -496,13 +496,29 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 {
 	std::list<flex_line> lines;
 	flex_line line;
+	std::list<flex_item> items;
+	int src_order = 0;
+	bool sort_required = false;
+	def_value<int> prev_order(0);
+
 	for( auto& el : m_children)
 	{
 		flex_item item(el);
 		item.grow = (int) (item.el->css().get_flex_grow() * 1000.0);
 		item.shrink = (int) (item.el->css().get_flex_shrink() * 1000.0);
 		item.el->calc_outlines(self_size.render_width);
-		if(is_row_direction)
+		item.order = item.el->css().get_order();
+		item.src_order = src_order++;
+
+		if(prev_order.is_default())
+		{
+			prev_order = item.order;
+		} else if(!sort_required && item.order != prev_order)
+		{
+			sort_required = true;
+		}
+
+		if (is_row_direction)
 		{
 			if (item.el->css().get_min_width().is_predefined())
 			{
@@ -592,7 +608,7 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 			}
 		}
 
-		if(el->css().get_flex_align_self() == flex_align_items_auto)
+		if (el->css().get_flex_align_self() == flex_align_items_auto)
 		{
 			item.align = css().get_flex_align_items();
 		} else
@@ -601,8 +617,19 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 		}
 		item.main_size = item.base_size;
 		item.scaled_flex_shrink_factor = item.base_size * item.shrink;
+		item.frozen = false;
 
-		// Add flex item to line
+		items.push_back(item);
+	}
+
+	if(sort_required)
+	{
+		items.sort();
+	}
+
+	// Add flex items to lines
+	for(auto& item : items)
+	{
 		if(!line.items.empty() && css().get_flex_wrap() != flex_wrap_nowrap && line.base_size + item.base_size > container_main_size)
 		{
 			lines.push_back(line);
@@ -611,13 +638,6 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 		line.base_size += item.base_size;
 		line.total_grow += item.grow;
 		line.total_shrink += item.shrink;
-		//if(item.base_size > item.min_size)
-		{
-			item.frozen = false;
-		} /*else
-		{
-			item.frozen = true;
-		}*/
 		line.items.push_back(item);
 	}
 	// Add the last line to the lines list

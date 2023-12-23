@@ -289,6 +289,7 @@ STRING_ID(
 	_flex_basis_,
 
 	_caption_side_,
+	_order_,
 );
 #undef STRING_ID
 extern const string_id empty_id; // _id("")

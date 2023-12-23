@@ -367,6 +367,11 @@ int litehtml::html_tag::get_enum_property(string_id name, bool inherited, int de
 	return get_property_impl<int, prop_type_enum_item, &property_value::m_enum_item>(name, inherited, default_value, css_properties_member_offset);
 }
 
+int litehtml::html_tag::get_int_property(string_id name, bool inherited, int default_value, uint_ptr css_properties_member_offset) const
+{
+	return get_property_impl<int, prop_type_enum_item, &property_value::m_enum_item>(name, inherited, default_value, css_properties_member_offset);
+}
+
 litehtml::css_length litehtml::html_tag::get_length_property(string_id name, bool inherited, css_length default_value, uint_ptr css_properties_member_offset) const
 {
 	return get_property_impl<css_length, prop_type_length, &property_value::m_length>(name, inherited, default_value, css_properties_member_offset);

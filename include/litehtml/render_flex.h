@@ -18,6 +18,8 @@ namespace litehtml
 			int shrink;
 			int scaled_flex_shrink_factor;
 			bool frozen;
+			int order;
+			int src_order;
 			flex_align_items align;
 
 			explicit flex_item(std::shared_ptr<render_item> &_el) :
@@ -30,8 +32,17 @@ namespace litehtml
 					frozen(false),
 					main_size(0),
 					max_size(0),
+					order(0),
+					src_order(0),
 					scaled_flex_shrink_factor(0)
 			{}
+
+			bool operator<(const flex_item& b) const
+			{
+				if(order < b.order) return true;
+				if(order == b.order) return src_order < b.src_order;
+				return false;
+			}
 		};
 
 		struct flex_line
