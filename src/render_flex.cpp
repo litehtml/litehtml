@@ -193,20 +193,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		case flex_direction_column:
 			is_row_direction = false;
 			reverse = false;
-			container_main_size = self_size.height;
-			if (css().get_box_sizing() == box_sizing_border_box)
-			{
-				container_main_size -= box_sizing_height();
-			}
 			break;
 		case flex_direction_column_reverse:
 			is_row_direction = false;
 			reverse = true;
-			container_main_size = self_size.height;
-			if (css().get_box_sizing() == box_sizing_border_box)
-			{
-				container_main_size -= box_sizing_height();
-			}
 			break;
 		case flex_direction_row:
 			is_row_direction = true;
@@ -218,8 +208,29 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			break;
 	}
 
+	bool single_line = css().get_flex_wrap() == flex_wrap_nowrap;
+	bool fit_container = false;
+
+	if(!is_row_direction)
+	{
+		if(self_size.height.type != containing_block_context::cbc_value_type_auto)
+		{
+			container_main_size = self_size.height;
+			if (css().get_box_sizing() == box_sizing_border_box)
+			{
+				container_main_size -= box_sizing_height();
+			}
+		} else
+		{
+			// Direction columns, height is auto - always in single line
+			container_main_size = 0;
+			single_line = true;
+			fit_container = true;
+		}
+	}
+
 	// Split flex items to lines
-	std::list<flex_line> lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size);
+	std::list<flex_line> lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
 
 	// Resolving Flexible Lengths
 	// REF: https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
@@ -238,7 +249,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			ret_width += ln.base_size;
 		}
 
-		ln.distribute_free_space(container_main_size);
+		if(!fit_container)
+		{
+			ln.distribute_free_space(container_main_size);
+		}
 
 		if(is_row_direction)
 		{
@@ -267,8 +281,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				item.el->render(el_x,
 								el_y,
 								self_size.new_width(el_ret_width), fmt_ctx, false);
-				// TODO: must be rendered into the specified height
-				item.el->pos().height = item.main_size - item.el->content_offset_height();
 				ln.cross_size = std::max(ln.cross_size, item.el->width());
 				el_y += item.el->height();
 			}
@@ -278,24 +290,21 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	}
 
 	int free_cross_size = 0;
-	if(sum_cross_size)
+	if (is_row_direction)
 	{
-		if (is_row_direction)
+		if (self_size.height.type != containing_block_context::cbc_value_type_auto)
 		{
-			if (self_size.height.type != containing_block_context::cbc_value_type_auto)
+			int height = self_size.height;
+			if (src_el()->css().get_box_sizing() == box_sizing_border_box)
 			{
-				int height = self_size.height;
-				if (src_el()->css().get_box_sizing() == box_sizing_border_box)
-				{
-					height -= box_sizing_height();
-				}
-				free_cross_size = height - sum_cross_size;
+				height -= box_sizing_height();
 			}
-		} else
-		{
-			free_cross_size = self_size.render_width - sum_cross_size;
-			ret_width = sum_cross_size;
+			free_cross_size = height - sum_cross_size;
 		}
+	} else
+	{
+		free_cross_size = self_size.render_width - sum_cross_size;
+		ret_width = sum_cross_size;
 	}
 
 	// Find line cross size and align items
@@ -377,8 +386,11 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						break;
 					default:
 						item.el->pos().y = el_y + item.el->content_offset_top();
-						// TODO: must be rendered into the specified height
-						item.el->pos().height = ln.cross_size - item.el->content_offset_height();
+						if(item.el->css().get_height().is_predefined())
+						{
+							// TODO: must be rendered into the specified height
+							item.el->pos().height = ln.cross_size - item.el->content_offset_height();
+						}
 						break;
 				}
 				m_pos.height = std::max(m_pos.height, item.el->bottom());
@@ -458,8 +470,11 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						item.el->render(el_x,
 										item.el->pos().y - item.el->content_offset_top(),
 										self_size.new_width(ln.cross_size), fmt_ctx, false);
-						// TODO: must be rendered into the specified height
-						item.el->pos().height = item.main_size - item.el->content_offset_height();
+						if(item.el->css().get_width().is_predefined())
+						{
+							// TODO: must be rendered into the specified height
+							item.el->pos().height = item.main_size - item.el->content_offset_height();
+						}
 						break;
 				}
 				m_pos.height = std::max(m_pos.height, item.el->bottom());
@@ -610,7 +625,8 @@ litehtml::render_item_flex::flex_line::distribute_free_space(int container_main_
 
 std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get_lines(const litehtml::containing_block_context &self_size,
 																	 litehtml::formatting_context *fmt_ctx,
-																	 bool is_row_direction, int container_main_size)
+																	 bool is_row_direction, int container_main_size,
+																	 bool single_line)
 {
 	std::list<flex_line> lines;
 	flex_line line;
@@ -748,7 +764,7 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 	// Add flex items to lines
 	for(auto& item : items)
 	{
-		if(!line.items.empty() && css().get_flex_wrap() != flex_wrap_nowrap && line.base_size + item.base_size > container_main_size)
+		if(!line.items.empty() && !single_line && line.base_size + item.base_size > container_main_size)
 		{
 			lines.push_back(line);
 			line.clear();
