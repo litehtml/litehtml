@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/flex-grow-005.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><meta charset="utf-8">
+<title>CSS Flexbox Test: flex-grow - (invalid when applied to flex container)</title>
+<link href="http://www.intel.com/" rel="author" title="Intel">
+<link href="mailto:shiyoux.tan@intel.com" rel="author" title="Shiyou Tan">
+<link href="http://www.w3.org/TR/css-flexbox-1/#flex-grow-property" rel="help" title="7.3.1. The 'flex-grow' property">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square.htm" rel="match">
+<meta content="" name="flags">
+<meta content="The 'flex-grow' property is invalid when the property applied to flex container." name="assert">
+<style>
+  #container {
+    background-color: green;
+    display: flex;
+    flex-grow: 2;
+    height: 100px;
+    width: 100px;
+  }
+  #container div {
+    background-color: red;
+    height: 100px;
+    width: 25px;
+  }
+  #cover {
+    background-color: green;
+    height: 100px;
+    position: relative;
+    top: -100px;
+    width: 50px;
+  }
+</style>
+</head><body>
+  <p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+  <div id="container">
+    <div></div>
+    <div></div>
+  </div>
+  <div id="cover"></div>
+
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/flex-grow-005.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

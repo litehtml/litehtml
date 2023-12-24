@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/contain-layout-baseline-002.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><meta charset="utf-8">
+<title>CSS Containment Test: Layout containment supress baseline in flex items</title>
+<link href="mailto:rego@igalia.com" rel="author" title="Manuel Rego Casasnovas">
+<link href="https://drafts.csswg.org/css-contain-1/#containment-layout" rel="help">
+<link href="https://drafts.csswg.org/css-flexbox-1/#valdef-align-items-baseline" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square.htm" rel="match">
+<meta content="Flex items with layout containment are treated as having no baseline, for that reason their baseline is synthesized from the flex item's border box when they're baseline aligned." name="assert">
+<style>
+#flex {
+  display: inline-flex;
+  align-items: baseline;
+  background: red;
+}
+
+canvas {
+  background: green;
+  width: 50px;
+  height: 100px;
+}
+
+#item {
+  contain: layout;
+  color: transparent;
+  background: green;
+  width: 50px;
+  height: 100px;
+}
+</style>
+</head><body><p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+<div id="flex">
+  <canvas></canvas>
+  <div id="item">item</div>
+</div>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/contain-layout-baseline-002.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

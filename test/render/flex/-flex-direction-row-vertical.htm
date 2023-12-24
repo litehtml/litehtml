@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/flex-direction-row-vertical.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head>
+  <title>CSS Test: flex-direction:row has the same orientation as inline axis</title>
+  <link href="mailto:galineau@adobe.com" rel="author" title="Sylvain Galineau">
+  <link href="mailto:arronei@microsoft.com" rel="reviewer" title="Arron Eicholz">
+  <link href="http://www.w3.org/TR/css-flexbox-1/#flex-direction" rel="help">
+  <link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/flex-direction-row-vertical-ref.htm" rel="match">
+  <meta content="" name="flags">
+  <meta content="This test checks that the main axis of the row flex-direction has the same orientation as the inline axis of the current vertical writing mode" name="assert">
+  <style>
+    #vertical {
+      writing-mode: vertical-lr;
+    }
+
+    .test {
+      display: flex;
+      width: 3em;
+      flex-direction :row;
+    }
+
+    .test > span {
+      width: 1em;
+      direction: ltr;
+    }
+
+    #row-ltr {
+      direction: ltr;
+    }
+
+    #row-rtl {
+      direction: rtl;
+    }
+  </style>
+ </head>
+ <body>
+  <p>Test passes if both the two columns below are identical.</p>
+  <div id="vertical">
+    <div class="test" id="row-ltr">
+      <span>A</span><span>B</span><span>C</span>
+    </div>
+    <div class="test" id="row-rtl">
+      <span>C</span><span>B</span><span>A</span>
+    </div>
+  </div>
+ 
+
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/flex-direction-row-vertical.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

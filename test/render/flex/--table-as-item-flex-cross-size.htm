@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-flex-cross-size.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><link href="https://drafts.csswg.org/css-flexbox-1/#resolve-flexible-lengths" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square.htm" rel="match">
+<meta content="The table's main-axis (block-size) size is flex to consume the available space." name="assert">
+</head><body><p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+<div style="display: flex; flex-direction: column; width: 100px; height: 100px; background: red;">
+  <table style="border-spacing: 0; flex-grow: 1;">
+    <caption style="height: 10px; background: green;"></caption>
+    <caption style="height: 20px; background: green; caption-side: bottom;"></caption>
+    <tbody><tr><td style="background: green;"></td>
+  </tr></tbody></table>
+</div>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-flex-cross-size.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

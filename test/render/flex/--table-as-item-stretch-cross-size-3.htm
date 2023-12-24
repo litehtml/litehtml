@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-stretch-cross-size-3.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><link href="mailto:tlin@mozilla.com" rel="author" title="Ting-Yu Lin">
+<link href="https://drafts.csswg.org/css-flexbox-1/#valdef-align-items-stretch" rel="help">
+<link href="https://bugzilla.mozilla.org/show_bug.cgi?id=799725" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square.htm" rel="match">
+<meta content="The table's cross-axis (inline-size) is stretched while the main-axis is not growing." name="assert">
+<style>
+#reference-overlapped-red {
+  position: absolute;
+  background-color: red;
+  width: 100px;
+  height: 100px;
+  z-index: -1;
+}
+</style>
+
+</head><body><p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+<div id="reference-overlapped-red"></div>
+
+<div style="display: flex; flex-direction: column; width: 100px; background: red;">
+  <table style="border-spacing: 0; height: 90px;">
+    <caption style="height: 10px; background: green;"></caption>
+    <tbody><tr><td style="background: green;"></td>
+  </tr></tbody></table>
+</div>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-stretch-cross-size-3.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

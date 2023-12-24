@@ -1,0 +1,40 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD//XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/align-content-006.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head>
+        <title>CSS Test: A multi-line flex container with the 'align-content' property set to 'stretch'</title>
+        <link href="http://www.microsoft.com/" rel="author" title="Microsoft">
+        <link href="http://www.w3.org/TR/css-flexbox-1/#align-content-property" rel="help">
+        <link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/align-content-001-ref.htm" rel="match">
+        <meta content="" name="flags">
+        <meta content="This test checks that a multi-line flex container with 'align-content: stretch' stretches lines to take up the remaining space." name="assert">
+        <style type="text/css">
+            #flexbox
+            {
+                background: red;
+                align-content: stretch;
+                display: flex;
+                flex-flow: wrap;
+                height: 100px;
+                width: 300px;
+            }
+            div div
+            {
+                background-color: green;
+                width: 150px;
+            }
+        </style>
+    </head>
+    <body>
+        <p>Test passes if there is no red visible on the page.</p>
+        <div id="flexbox">
+            <div></div>
+            <div></div>
+            <div></div>
+            <div></div>
+        </div>
+    
+
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/align-content-006.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

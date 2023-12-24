@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-percent-width-cell-001.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><meta charset="utf-8">
+<title>Flexbox Test: display:table flex items with percent-width cells and content keywords for used flex-basis</title>
+<link href="mailto:dholbert@mozilla.com" rel="author" title="Daniel Holbert">
+<link href="https://drafts.csswg.org/css-flexbox-1/#valdef-flex-basis-content" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/table-as-item-percent-width-cell-001-ref.htm" rel="match">
+<meta content="If a table as a flex item has used 'flex-basis:content' (or another content-based keyword), and default flex factors, and plenty of space, then it should be sized similarly to a table with 'width:max-content' in a block formatting context." name="assert">
+<style>
+  .container {
+    display: flex;
+    width: 200px;
+    border: 1px solid black;
+  }
+  td {
+    background-color: cyan;
+    width: 100%;
+    border: 1px solid gray;
+  }
+
+</style>
+</head><body>
+  <div class="container">
+    <!-- The used value of flex-basis is 'content' here, due to the flex-basis
+         and the main-size property both having the value 'auto'. -->
+    <table><tbody><tr><td>1</td><td>2</td></tr></tbody></table>
+  </div>
+  <div class="container">
+    <table style="flex-basis: content"><tbody><tr><td>1</td><td>2</td></tr></tbody></table>
+  </div>
+  <div class="container">
+    <table style="flex-basis: min-content"><tbody><tr><td>1</td><td>2</td></tr></tbody></table>
+  </div>
+  <div class="container">
+    <table style="flex-basis: max-content"><tbody><tr><td>1</td><td>2</td></tr></tbody></table>
+  </div>
+
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-percent-width-cell-001.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

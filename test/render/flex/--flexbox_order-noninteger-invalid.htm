@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/flexbox_order-noninteger-invalid.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><title>flexbox | flex-flow: column-reverse wrap-reverse; order</title>
+<link href="http://opera.com/" rel="author" title="Opera Software">
+<link href="http://www.w3.org/TR/css-flexbox-1/#order-property" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/blank.htm" rel="match">
+<link content="invalid" rel="flags">
+<style>
+div {
+	width: 200px;
+	height: 4em;
+	display: flex;
+}
+span {
+	background: red;
+	order: 1.5;
+	flex: 1 0 0%;
+}
+span+span {
+	background: white;
+	order: 0;
+}
+/* irrelevant */
+* {margin: 0;}
+h1 {
+	width: 100px;
+	height: 4em;
+	background: white;
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+</style>
+
+</head><body><div>
+	<span></span>
+	<span></span>
+</div>
+
+<h1></h1>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/flexbox_order-noninteger-invalid.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>
