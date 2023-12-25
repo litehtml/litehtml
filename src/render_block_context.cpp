@@ -47,20 +47,26 @@ int litehtml::render_item_block_context::_render_content(int x, int y, bool seco
                 // Collapse top margin
                 if(is_first && collapse_top_margin())
                 {
-                    child_top -= el->get_margins().top;
-                    if(el->get_margins().top > get_margins().top)
-                    {
-                        m_margins.top = el->get_margins().top;
-                    }
+					if(el->get_margins().top > 0)
+					{
+						child_top -= el->get_margins().top;
+						if (el->get_margins().top > get_margins().top)
+						{
+							m_margins.top = el->get_margins().top;
+						}
+					}
                 } else
                 {
-                    if(last_margin > el->get_margins().top)
-                    {
-                        child_top -= el->get_margins().top;
-                    } else
-                    {
-                        child_top -= last_margin;
-                    }
+					if(el->get_margins().top > 0)
+					{
+						if (last_margin > el->get_margins().top)
+						{
+							child_top -= el->get_margins().top;
+						} else
+						{
+							child_top -= last_margin;
+						}
+					}
                 }
 
                 if(el->src_el()->is_replaced() || el->src_el()->is_block_formatting_context() || el->src_el()->css().get_display() == display_table)
