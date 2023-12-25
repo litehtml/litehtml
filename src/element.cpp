@@ -298,6 +298,39 @@ litehtml::string litehtml::element::get_counter_value(const string& counter_name
 	return "0";
 }
 
+string litehtml::element::get_counters_value(const string_vector& parameters)
+{
+	string result = "";
+	if (parameters.size() >= 2) {
+		const string& counter_name = parameters[0];
+		string delims = parameters[1];
+		litehtml::trim(delims, "\"'");
+
+		string_vector values;
+		
+		element::ptr current = shared_from_this();
+		while (current != nullptr)
+		{
+			auto map_iterator = current->m_counter_values.find(counter_name);
+			if (map_iterator != current->m_counter_values.end()) {
+				values.push_back(std::to_string(map_iterator->second));
+			}
+			current = current->parent();
+		}
+		if (values.empty()) {
+			// if no counter is found, instancieate one with value '0'
+			shared_from_this()->m_counter_values[counter_name] = 0;
+			result = "0";
+		}
+		else {
+			std::reverse(values.begin(), values.end());
+			litehtml::join_string(result, values, delims);
+		}
+	}
+	return result;
+}
+
+
 bool litehtml::element::find_counter(const string& counter_name, std::map<string, int>::iterator& map_iterator) {
 	element::ptr current = shared_from_this();
 

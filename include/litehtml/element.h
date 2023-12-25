@@ -148,6 +148,7 @@ namespace litehtml
 		}
 
 		string				get_counter_value(const string& counter_name);
+		string				get_counters_value(const string_vector& parameters);
 		void				increment_counter(const string& counter_name, const int increment = 1);
 		void				reset_counter(const string& counter_name, const int value = 0);
 

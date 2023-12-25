@@ -23,7 +23,7 @@
 
 namespace litehtml
 {
-	void trim(string &s);
+	void trim(string &s, const string& chars_to_trim = " \n\r\t");
 	void lcase(string &s);
 	int	 value_index(const string& val, const string& strings, int defValue = -1, char delim = ';');
     string index_value(int index, const string& strings, char delim = ';');
