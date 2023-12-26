@@ -1553,8 +1553,8 @@ void litehtml::html_tag::handle_counter_properties()
 {
 	const auto& reset_property = m_style.get_property(string_id::_counter_reset_);
 	if (reset_property.m_type == prop_type_string_vector) {
-		auto reset_function = [&](const string&name, const int value) {
-			reset_counter(name, value);
+		auto reset_function = [&](const string_id&name_id, const int value) {
+			reset_counter(name_id, value);
 		};
 		parse_counter_tokens(reset_property.m_string_vector, 0, reset_function);
 		return;
@@ -1562,8 +1562,8 @@ void litehtml::html_tag::handle_counter_properties()
 
 	const auto& inc_property = m_style.get_property(string_id::_counter_increment_);
 	if (inc_property.m_type == prop_type_string_vector) {
-		auto inc_function = [&](const string&name, const int value) {
-			increment_counter(name, value);
+		auto inc_function = [&](const string_id&name_id, const int value) {
+			increment_counter(name_id, value);
 		};
 		parse_counter_tokens(inc_property.m_string_vector, 1, inc_function);
 		return;
