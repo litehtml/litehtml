@@ -208,15 +208,24 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 	bool requires_rerender = false;		// when true, the second pass for content rendering is required
 
 	// Set block width
-	if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
+	if(!self_size.width_is_flex_basis)
 	{
-		ret_width = m_pos.width = self_size.render_width;
-	} else if(self_size.width.type == containing_block_context::cbc_value_type_percentage)
-	{
-		m_pos.width = self_size.render_width;
+		if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
+		{
+			ret_width = m_pos.width = self_size.render_width;
+		} else
+		{
+			m_pos.width = self_size.render_width;
+		}
 	} else
 	{
-		m_pos.width = self_size.render_width;
+		if(ret_width > self_size.render_width)
+		{
+			m_pos.width = ret_width;
+		} else
+		{
+			m_pos.width = self_size.render_width;
+		}
 	}
 
 	// Fix width with min-width attribute

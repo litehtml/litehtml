@@ -1039,8 +1039,55 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	// We have to use aut value for display_table_cell also.
 	if (src_el()->css().get_display() != display_table_cell)
 	{
-		calc_cb_length(src_el()->css().get_width(), cb_context.width, ret.width);
-		calc_cb_length(src_el()->css().get_height(), cb_context.height, ret.height);
+		auto par = parent();
+		if(cb_context.size_mode & containing_block_context::cbc_size_mode_exact_width)
+		{
+			ret.width.value = cb_context.width;
+			ret.width.type = containing_block_context::cbc_value_type_absolute;
+		} else
+		{
+			auto *width = &css().get_width();
+			if(par && (par->css().get_display() == display_flex || par->css().get_display() == display_inline_flex))
+			{
+				if(!css().get_flex_basis().is_predefined() && css().get_flex_basis().val() >= 0)
+				{
+					if(par->css().get_flex_direction() == flex_direction_row || par->css().get_flex_direction() == flex_direction_row_reverse)
+					{
+						ret.width.type = containing_block_context::cbc_value_type_auto;
+						ret.width.value = 0;
+						width = nullptr;
+					}
+				}
+			}
+			if(width)
+			{
+				calc_cb_length(*width, cb_context.width, ret.width);
+			}
+		}
+		if(cb_context.size_mode & containing_block_context::cbc_size_mode_exact_height)
+		{
+			ret.height.value = cb_context.height;
+			ret.height.type = containing_block_context::cbc_value_type_absolute;
+		} else
+		{
+			auto *height = &css().get_height();
+			if(par && (par->css().get_display() == display_flex || par->css().get_display() == display_inline_flex))
+			{
+				if(!css().get_flex_basis().is_predefined() && css().get_flex_basis().val() >= 0)
+				{
+					if(par->css().get_flex_direction() == flex_direction_column || par->css().get_flex_direction() == flex_direction_column_reverse)
+					{
+						ret.height.type = containing_block_context::cbc_value_type_auto;
+						ret.height.value = 0;
+						height = nullptr;
+					}
+				}
+			}
+			if(height)
+			{
+				calc_cb_length(*height, cb_context.height, ret.height);
+			}
+		}
 		if (ret.width.type != containing_block_context::cbc_value_type_auto && (src_el()->css().get_display() == display_table || src_el()->is_root()))
 		{
 			ret.width.value -= content_offset_width();

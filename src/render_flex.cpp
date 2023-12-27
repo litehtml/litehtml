@@ -263,7 +263,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 
 				item.el->render(el_x,
 								el_y,
-								self_size.new_width(item.main_size), fmt_ctx, false);
+								self_size.new_width(item.main_size - item.el->content_offset_width(), containing_block_context::cbc_size_mode_exact_width), fmt_ctx, false);
 				ln.cross_size = std::max(ln.cross_size, item.el->height());
 				el_x += item.el->width();
 			}
@@ -280,7 +280,11 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 								self_size, fmt_ctx, false);
 				item.el->render(el_x,
 								el_y,
-								self_size.new_width(el_ret_width), fmt_ctx, false);
+								self_size.new_width_height(el_ret_width - item.el->content_offset_width(),
+														   item.main_size - item.el->content_offset_height(),
+														   containing_block_context::cbc_size_mode_exact_width |
+														   containing_block_context::cbc_size_mode_exact_height),
+														   fmt_ctx, false);
 				ln.cross_size = std::max(ln.cross_size, item.el->width());
 				el_y += item.el->height();
 			}
@@ -290,6 +294,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	}
 
 	int free_cross_size = 0;
+	int cross_end = 0;
 	if (is_row_direction)
 	{
 		if (self_size.height.type != containing_block_context::cbc_value_type_auto)
@@ -300,11 +305,16 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				height -= box_sizing_height();
 			}
 			free_cross_size = height - sum_cross_size;
+			cross_end = std::max(sum_cross_size, height);
+		} else
+		{
+			cross_end = sum_cross_size;
 		}
 	} else
 	{
 		free_cross_size = self_size.render_width - sum_cross_size;
 		ret_width = sum_cross_size;
+		cross_end = std::max(sum_cross_size, (int) self_size.render_width);
 	}
 
 	// Find line cross size and align items
@@ -317,10 +327,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	{
 		if(is_row_direction)
 		{
-			el_y = sum_cross_size - lines_spread.start();
+			el_y = cross_end - lines_spread.start();
 		} else
 		{
-			el_x = sum_cross_size - lines_spread.start();
+			el_x = cross_end - lines_spread.start();
 		}
 	} else
 	{
@@ -390,6 +400,9 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						{
 							// TODO: must be rendered into the specified height
 							item.el->pos().height = ln.cross_size - item.el->content_offset_height();
+						} else if(is_wrap_reverse)
+						{
+							item.el->pos().y = el_y + ln.cross_size - item.el->height() + item.el->content_offset_top();
 						}
 						break;
 				}
@@ -467,13 +480,24 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						break;
 					default:
 						item.el->pos().x = el_x + item.el->content_offset_left();
-						item.el->render(el_x,
-										item.el->pos().y - item.el->content_offset_top(),
-										self_size.new_width(ln.cross_size), fmt_ctx, false);
-						if(item.el->css().get_width().is_predefined())
+						if(!item.el->css().get_width().is_predefined())
 						{
-							// TODO: must be rendered into the specified height
-							item.el->pos().height = item.main_size - item.el->content_offset_height();
+							item.el->render(el_x,
+											item.el->pos().y - item.el->content_offset_top(),
+											self_size.new_width(ln.cross_size), fmt_ctx, false);
+						} else
+						{
+							item.el->render(el_x,
+											item.el->pos().y - item.el->content_offset_top(),
+											self_size.new_width_height(ln.cross_size - item.el->content_offset_width(),
+																	   item.main_size - item.el->content_offset_height(),
+																	   containing_block_context::cbc_size_mode_exact_width |
+																	   containing_block_context::cbc_size_mode_exact_height),
+											fmt_ctx, false);
+						}
+						if(!item.el->css().get_width().is_predefined() && is_wrap_reverse)
+						{
+							item.el->pos().x = el_x + ln.cross_size - item.el->width() + item.el->content_offset_left();
 						}
 						break;
 				}

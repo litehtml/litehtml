@@ -110,10 +110,9 @@ int litehtml::render_item_block_context::_render_content(int x, int y, bool seco
         }
     }
 
-    int block_height = 0;
-    if (get_predefined_height(block_height, self_size.height))
+    if (self_size.height.type != containing_block_context::cbc_value_type_auto  && self_size.height > 0)
     {
-        m_pos.height = block_height;
+        m_pos.height = self_size.height;
     } else
     {
         m_pos.height = child_top;
