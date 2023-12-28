@@ -10,7 +10,6 @@
 #include "stylesheet.h"
 #include "line_box.h"
 #include "table.h"
-#include "types.h"
 
 namespace litehtml
 {
@@ -23,7 +22,6 @@ namespace litehtml
 		friend class line_box;
 	public:
 		typedef std::shared_ptr<html_tag>	ptr;
-
 	protected:
 		string_id				m_tag;
 		string_id				m_id;
@@ -33,7 +31,7 @@ namespace litehtml
 		string_map				m_attrs;
 		std::vector<string_id>	m_pseudo_classes;
 
-		void					select_all(const css_selector& selector, elements_list& res) override;
+		void			select_all(const css_selector& selector, elements_list& res) override;
 
 	public:
 		explicit html_tag(const std::shared_ptr<document>& doc);
@@ -84,7 +82,7 @@ namespace litehtml
 		size_vector			get_size_vector_property  (string_id name, bool inherited, const size_vector&   default_value, uint_ptr css_properties_member_offset) const override;
 		string				get_custom_property(string_id name, const string& default_value) const override;
 
-		elements_list&		children();
+		elements_list&	children();
 
 		int					select(const string& selector) override;
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;

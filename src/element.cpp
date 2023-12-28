@@ -334,7 +334,6 @@ string litehtml::element::get_counters_value(const string_vector& parameters)
 bool litehtml::element::find_counter(const string_id& counter_name_id, std::map<string_id, int>::iterator& map_iterator) {
 	element::ptr current = shared_from_this();
 
-	// search upwards
 	while (current != nullptr)
 	{
 		map_iterator = current->m_counter_values.find(counter_name_id);
