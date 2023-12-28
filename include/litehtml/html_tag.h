@@ -119,6 +119,10 @@ namespace litehtml
 		string				get_list_marker_text(int index);
 		element::ptr		get_element_before(const style& style, bool create);
 		element::ptr		get_element_after(const style& style, bool create);
+
+	private:
+		void				handle_counter_properties();
+
 	};
 
 	/************************************************************************/

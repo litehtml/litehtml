@@ -536,6 +536,15 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		add_parsed_property(_flex_basis_, property_value(length, important));
 		break;
 
+	case _counter_increment_:
+	case _counter_reset_:
+	{	
+		string_vector tokens;
+		split_string(val, tokens, " ");
+		add_parsed_property(name, property_value(tokens, important));
+		break;
+	}
+
 	default:
 		add_parsed_property(name, property_value(val, important));
 	}
@@ -992,18 +1001,6 @@ void style::parse_font(const string& val, bool important)
 
 void style::parse_flex(const string& val, bool important)
 {
-	auto is_number = [](const string& val)
-	{
-		for (auto ch : val)
-		{
-			if ((ch < '0' || ch > '9') && ch != '.')
-			{
-				return false;
-			}
-		}
-		return true;
-	};
-
 	css_length _auto = css_length::predef_value(flex_basis_auto);
 
 	if (val == "initial")
@@ -1046,7 +1043,7 @@ void style::parse_flex(const string& val, bool important)
 			float grow = t_strtof(tokens[0]);
 			add_parsed_property(_flex_grow_, property_value(grow, important));
 			
-			if (is_number(tokens[1]))
+			if (litehtml::is_number(tokens[1]))
 			{
 				float shrink = t_strtof(tokens[1]);
 				add_parsed_property(_flex_shrink_, property_value(shrink, important));
