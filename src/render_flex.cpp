@@ -683,6 +683,22 @@ litehtml::render_item_flex::flex_line::distribute_free_space(int container_main_
 				if (total_clamped == 0) processed = false;
 			}
 		}
+		// Distribute remaining after algorithm space
+		int sum_main_size = 0;
+		for(auto &item : items)
+		{
+			sum_main_size += item.main_size;
+		}
+		int free_space = container_main_size - sum_main_size;
+		if(free_space > 0)
+		{
+			for(auto &item : items)
+			{
+				if(free_space == 0) break;
+				item.main_size++;
+				free_space--;
+			}
+		}
 	}
 }
 
