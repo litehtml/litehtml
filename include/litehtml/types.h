@@ -868,15 +868,22 @@ namespace litehtml
 		flex_wrap_wrap_reverse
 	};
 
-#define flex_justify_content_strings		"flex-start;flex-end;center;space-between;space-around"
+#define flex_justify_content_strings		"normal;flex-start;flex-end;center;space-between;space-around;start;end;left;right;space-evenly;stretch"
 
 	enum flex_justify_content
 	{
+		flex_justify_content_normal,
 		flex_justify_content_flex_start,
 		flex_justify_content_flex_end,
 		flex_justify_content_center,
 		flex_justify_content_space_between,
-		flex_justify_content_space_around
+		flex_justify_content_space_around,
+		flex_justify_content_start,
+		flex_justify_content_end,
+		flex_justify_content_left,
+		flex_justify_content_right,
+		flex_justify_content_space_evenly,
+		flex_justify_content_stretch,
 	};
 
 #define flex_align_items_strings		"normal;flex-start;flex-end;center;start;end;baseline;stretch;auto"

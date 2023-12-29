@@ -9,9 +9,11 @@ namespace litehtml
 		flex_justify_content m_type;
 		int m_num_items;
 		int m_free_space;
+		bool m_row_direction;
+		bool m_reverse;
 	public:
-		flex_justify_content_spread(flex_justify_content type, int num_items, int free_space) :
-			m_type(type), m_num_items(num_items), m_free_space(0)
+		flex_justify_content_spread(flex_justify_content type, int num_items, int free_space, bool row_direction, bool reverse) :
+			m_type(type), m_num_items(num_items), m_free_space(0), m_row_direction(row_direction), m_reverse(reverse)
 		{
 			set_free_space(free_space);
 		}
@@ -28,9 +30,17 @@ namespace litehtml
 					if(m_num_items == 1 || m_free_space < 0)  m_type = flex_justify_content_flex_start;
 					break;
 				case flex_justify_content_space_around:
+				case flex_justify_content_space_evenly:
 					// If the leftover free-space is negative or there is only a single flex item on the line, this
 					// value is identical to center
 					if(m_num_items == 1 || m_free_space < 0)  m_type = flex_justify_content_center;
+					break;
+				case flex_justify_content_right:
+				case flex_justify_content_left:
+					if(!m_row_direction)
+					{
+						m_type = flex_justify_content_start;
+					}
 					break;
 				default:
 					break;
@@ -41,14 +51,28 @@ namespace litehtml
 		{
 			switch (m_type)
 			{
+				case flex_justify_content_right:
+					if(!m_reverse)
+					{
+						return m_free_space;
+					}
+					return 0;
+				case flex_justify_content_start:
+				case flex_justify_content_left:
+					if(m_reverse)
+					{
+						return m_free_space;
+					}
+					return 0;
 				case flex_justify_content_flex_end:
+				case flex_justify_content_end:
 					return m_free_space;
 				case flex_justify_content_center:
 					return m_free_space / 2;
 				case flex_justify_content_space_between:
 				case flex_justify_content_space_around:
 				default:
-					// using flex-start b y default
+					// using flex-start by default
 					return 0;
 			}
 		}
@@ -57,6 +81,8 @@ namespace litehtml
 		{
 			switch (m_type)
 			{
+				case flex_justify_content_space_evenly:
+					return m_free_space / (m_num_items + 1);
 				case flex_justify_content_space_between:
 					return 0;
 				case flex_justify_content_space_around:
@@ -227,6 +253,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			single_line = true;
 			fit_container = true;
 		}
+		if(self_size.min_height.type != containing_block_context::cbc_value_type_auto && self_size.min_height > container_main_size)
+		{
+			container_main_size = self_size.min_height;
+		}
 	}
 
 	// Split flex items to lines
@@ -238,11 +268,12 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	int el_y = 0;
 	int el_x = 0;
 	int sum_cross_size = 0;
+	int sum_main_size = 0;
 	int ret_width = 0;
 	for(auto& ln : lines)
 	{
 		ln.cross_size = 0;
-		ln.main_size =0;
+		ln.main_size = 0;
 
 		if(is_row_direction)
 		{
@@ -291,10 +322,15 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			sum_cross_size += ln.cross_size;
 			el_y = 0;
 		}
+		sum_main_size = std::max(sum_main_size, ln.main_size);
 	}
 
 	int free_cross_size = 0;
 	int cross_end = 0;
+	if(container_main_size == 0)
+	{
+		container_main_size = sum_main_size;
+	}
 	if (is_row_direction)
 	{
 		if (self_size.height.type != containing_block_context::cbc_value_type_auto)
@@ -349,7 +385,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 
 		flex_justify_content_spread content_spread(css().get_flex_justify_content(),
 												   (int) ln.items.size(),
-												   container_main_size - ln.main_size);
+												   container_main_size - ln.main_size, is_row_direction, reverse);
 		if(is_row_direction)
 		{
 			if(is_wrap_reverse)
@@ -484,7 +520,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 						{
 							item.el->render(el_x,
 											item.el->pos().y - item.el->content_offset_top(),
-											self_size.new_width(ln.cross_size), fmt_ctx, false);
+											self_size.new_width_height(ln.cross_size,
+																	   item.main_size - item.el->content_offset_height(),
+																	   containing_block_context::cbc_size_mode_exact_height),
+											fmt_ctx, false);
 						} else
 						{
 							item.el->render(el_x,
