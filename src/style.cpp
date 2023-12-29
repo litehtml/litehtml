@@ -1042,6 +1042,10 @@ void style::parse_flex(const string& val, bool important)
 			float grow = t_strtof(tokens[0]);
 			float shrink = t_strtof(tokens[1]);
 			auto basis = css_length::from_string(tokens[2], flex_basis_strings, -1);
+			if(!basis.is_predefined() && basis.units() == css_units_none && basis.val() == 0)
+			{
+				basis.set_value(basis.val(), css_units_px);
+			}
 			
 			add_parsed_property(_flex_grow_,	property_value(grow, important));
 			add_parsed_property(_flex_shrink_,	property_value(shrink, important));
@@ -1056,6 +1060,7 @@ void style::parse_flex(const string& val, bool important)
 			{
 				float shrink = t_strtof(tokens[1]);
 				add_parsed_property(_flex_shrink_, property_value(shrink, important));
+				add_parsed_property(_flex_basis_, property_value(css_length(0), important));
 			}
 			else
 			{
@@ -1069,16 +1074,14 @@ void style::parse_flex(const string& val, bool important)
 			{
 				float grow = t_strtof(tokens[0]);
 				add_parsed_property(_flex_grow_, property_value(grow, important));
-				
-				if (grow >= 1)
-				{
-					add_parsed_property(_flex_shrink_, property_value(1.f, important));
-					add_parsed_property(_flex_basis_,  property_value(css_length(0), important));
-				}
+				add_parsed_property(_flex_shrink_, property_value(1.f, important));
+				add_parsed_property(_flex_basis_,  property_value(css_length(0), important));
 			}
 			else
 			{
 				auto basis = css_length::from_string(tokens[0], flex_basis_strings, -1);
+				add_parsed_property(_flex_grow_, property_value(1.f, important));
+				add_parsed_property(_flex_shrink_, property_value(1.f, important));
 				add_parsed_property(_flex_basis_, property_value(basis, important));
 			}
 		}
