@@ -274,6 +274,14 @@ element::ptr element::_add_before_after(int type, const style& style)
 
 bool element::is_block_formatting_context() const
 {
+	if(m_css.get_display() == display_block)
+	{
+		auto par = parent();
+		if(par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex))
+		{
+			return true;
+		}
+	}
 	if(	m_css.get_display() == display_inline_block ||
 		   m_css.get_display() == display_table_cell ||
 		   m_css.get_display() == display_inline_flex ||

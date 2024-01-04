@@ -1040,7 +1040,7 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	if (src_el()->css().get_display() != display_table_cell)
 	{
 		auto par = parent();
-		if(cb_context.size_mode & containing_block_context::cbc_size_mode_exact_width)
+		if(cb_context.size_mode & containing_block_context::size_mode_exact_width)
 		{
 			ret.width.value = cb_context.width;
 			ret.width.type = containing_block_context::cbc_value_type_absolute;
@@ -1064,7 +1064,7 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 				calc_cb_length(*width, cb_context.width, ret.width);
 			}
 		}
-		if(cb_context.size_mode & containing_block_context::cbc_size_mode_exact_height)
+		if(cb_context.size_mode & containing_block_context::size_mode_exact_height)
 		{
 			ret.height.value = cb_context.height;
 			ret.height.type = containing_block_context::cbc_value_type_absolute;

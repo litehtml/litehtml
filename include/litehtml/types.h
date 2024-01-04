@@ -197,9 +197,10 @@ namespace litehtml
 
 		enum cbc_size_mode
 		{
-			cbc_size_mode_normal = 0x00,
-			cbc_size_mode_exact_width = 0x01,
-			cbc_size_mode_exact_height = 0x02,
+			size_mode_normal = 0x00,
+			size_mode_exact_width = 0x01,
+			size_mode_exact_height = 0x02,
+			size_mode_content = 0x04,
 		};
 
 		struct typed_int
@@ -233,13 +234,11 @@ namespace litehtml
 		};
 
 		typed_int width;						// width of the containing block
-		bool width_is_flex_basis;
 		typed_int render_width;
 		typed_int min_width;
 		typed_int max_width;
 
 		typed_int height;						// height of the containing block
-		bool height_is_flex_basis;
 		typed_int min_height;
 		typed_int max_height;
 
@@ -254,12 +253,11 @@ namespace litehtml
 				height(0, cbc_value_type_auto),
 				min_height(0, cbc_value_type_none),
 				max_height(0, cbc_value_type_none),
-				context_idx(0), width_is_flex_basis(false),
-				height_is_flex_basis(false),
-				size_mode(cbc_size_mode_normal)
+				context_idx(0),
+				size_mode(size_mode_normal)
 		{}
 
-		containing_block_context new_width(int w, uint32_t _size_mode = cbc_size_mode_normal) const
+		containing_block_context new_width(int w, uint32_t _size_mode = size_mode_normal) const
 		{
 			containing_block_context ret = *this;
 			ret.render_width = w - (ret.width - ret.render_width);
@@ -268,7 +266,7 @@ namespace litehtml
 			return ret;
 		}
 
-		containing_block_context new_width_height(int w, int h, uint32_t _size_mode = cbc_size_mode_normal) const
+		containing_block_context new_width_height(int w, int h, uint32_t _size_mode = size_mode_normal) const
 		{
 			containing_block_context ret = *this;
 			ret.render_width = w - (ret.width - ret.render_width);
