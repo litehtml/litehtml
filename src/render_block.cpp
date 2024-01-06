@@ -285,7 +285,7 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 	{
 		if(self_size.height.type == containing_block_context::cbc_value_type_absolute)
 		{
-			if(self_size.height > m_pos.height)
+			if(m_pos.height > self_size.height)
 			{
 				m_pos.height = self_size.height;
 			}
