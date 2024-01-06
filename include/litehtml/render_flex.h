@@ -12,7 +12,7 @@ namespace litehtml
 			std::shared_ptr<render_item> el;
 			int base_size;
 			int min_size;
-			int max_size;
+			def_value<int> max_size;
 			int main_size;
 			int grow;
 			int shrink;
@@ -20,6 +20,8 @@ namespace litehtml
 			bool frozen;
 			int order;
 			int src_order;
+			def_value<int> auto_margin_start;
+			def_value<int> auto_margin_end;
 			flex_align_items align;
 
 			explicit flex_item(std::shared_ptr<render_item> &_el) :
@@ -34,7 +36,9 @@ namespace litehtml
 					max_size(0),
 					order(0),
 					src_order(0),
-					scaled_flex_shrink_factor(0)
+					scaled_flex_shrink_factor(0),
+					auto_margin_start(0),
+					auto_margin_end(0)
 			{}
 
 			bool operator<(const flex_item& b) const
@@ -54,6 +58,8 @@ namespace litehtml
 			int base_size;
 			int total_grow;
 			int total_shrink;
+			int num_auto_margin_start;	// number of items with auto margin left/top
+			int num_auto_margin_end;	// number of items with auto margin right/bottom
 
 			flex_line() :
 					cross_size(0),
@@ -61,13 +67,15 @@ namespace litehtml
 					total_grow(0),
 					base_size(0),
 					total_shrink(0),
-					main_size(0)
+					main_size(0),
+					num_auto_margin_start(0),
+					num_auto_margin_end(0)
 			{}
 
 			void clear()
 			{
 				items.clear();
-				top = cross_size = main_size = base_size = total_shrink = total_grow = 0;
+				num_auto_margin_start = num_auto_margin_end = top = cross_size = main_size = base_size = total_shrink = total_grow = 0;
 			}
 
 			void distribute_free_space(int container_main_size);

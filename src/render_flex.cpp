@@ -290,11 +290,10 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			// render items into new size and find line cross_size
 			for (auto &item: ln.items)
 			{
-				ln.main_size += item.main_size;
-
 				item.el->render(el_x,
 								el_y,
 								self_size.new_width(item.main_size - item.el->content_offset_width(), containing_block_context::size_mode_exact_width), fmt_ctx, false);
+				ln.main_size += item.el->width();
 				ln.cross_size = std::max(ln.cross_size, item.el->height());
 				el_x += item.el->width();
 			}
@@ -304,8 +303,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		{
 			for (auto &item: ln.items)
 			{
-				ln.main_size += item.main_size;
-
 				int el_ret_width = item.el->render(el_x,
 								el_y,
 								self_size, fmt_ctx, false);
@@ -316,6 +313,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 														   containing_block_context::size_mode_exact_width |
 														   containing_block_context::size_mode_exact_height),
 														   fmt_ctx, false);
+				ln.main_size += item.el->height();
 				ln.cross_size = std::max(ln.cross_size, item.el->width());
 				el_y += item.el->height();
 			}
@@ -381,11 +379,53 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 
 	for(auto& ln : lines)
 	{
+		int free_main_size = container_main_size - ln.main_size;
+		// distribute auto margins
+		if(free_main_size > 0 && (ln.num_auto_margin_start || ln.num_auto_margin_end))
+		{
+			int add = (int) (free_main_size / (ln.items.size() * 2));
+			for (auto &item: ln.items)
+			{
+				if(!item.auto_margin_start.is_default())
+				{
+					item.auto_margin_start = add;
+					item.main_size += add;
+					ln.main_size += add;
+					free_main_size -= add;
+				}
+				if(!item.auto_margin_end.is_default())
+				{
+					item.auto_margin_end = add;
+					item.main_size += add;
+					ln.main_size += add;
+					free_main_size -= add;
+				}
+			}
+			while (free_main_size > 0)
+			{
+				for (auto &item: ln.items)
+				{
+					if(!item.auto_margin_start.is_default())
+					{
+						item.auto_margin_start = item.auto_margin_start + 1;
+						free_main_size--;
+						if(!free_main_size) break;
+					}
+					if(!item.auto_margin_end.is_default())
+					{
+						item.auto_margin_end = item.auto_margin_end + 1;
+						free_main_size--;
+						if(!free_main_size) break;
+					}
+				}
+			}
+		}
+
 		ln.cross_size += lines_spread.add_line_size();
 
 		flex_justify_content_spread content_spread(css().get_flex_justify_content(),
 												   (int) ln.items.size(),
-												   container_main_size - ln.main_size, is_row_direction, reverse);
+												   free_main_size, is_row_direction, reverse);
 		if(is_row_direction)
 		{
 			if(is_wrap_reverse)
@@ -404,6 +444,13 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			}
 			for (auto &item: ln.items)
 			{
+				// apply auto margins to item
+				if(!item.auto_margin_start.is_default())
+				{
+					item.el->get_margins().left = item.auto_margin_start;
+					item.el->pos().x += item.auto_margin_start;
+				}
+				if(!item.auto_margin_end.is_default()) item.el->get_margins().right = item.auto_margin_end;
 				if(!reverse)
 				{
 					// justify content [before_item]
@@ -486,6 +533,14 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			}
 			for (auto &item: ln.items)
 			{
+				// apply auto margins to item
+				if(!item.auto_margin_start.is_default())
+				{
+					item.el->get_margins().top = item.auto_margin_start;
+					item.el->pos().y += item.auto_margin_start;
+				}
+				if(!item.auto_margin_end.is_default()) item.el->get_margins().bottom = item.auto_margin_end;
+
 				if(!reverse)
 				{
 					// justify content [before_item]
@@ -534,6 +589,14 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 																	   containing_block_context::size_mode_exact_height),
 											fmt_ctx, false);
 						}
+						// apply auto margins to item after rendering
+						if(!item.auto_margin_start.is_default())
+						{
+							item.el->get_margins().top = item.auto_margin_start;
+							item.el->pos().y += item.auto_margin_start;
+						}
+						if(!item.auto_margin_end.is_default()) item.el->get_margins().bottom = item.auto_margin_end;
+
 						if(!item.el->css().get_width().is_predefined() && is_wrap_reverse)
 						{
 							item.el->pos().x = el_x + ln.cross_size - item.el->width() + item.el->content_offset_left();
@@ -657,6 +720,12 @@ litehtml::render_item_flex::flex_line::distribute_free_space(int container_main_
 								item.main_size = item.min_size;
 								item.frozen = true;
 							}
+							if(!item.max_size.is_default() && item.main_size >= item.max_size)
+							{
+								total_clamped++;
+								item.main_size = item.max_size;
+								item.frozen = true;
+							}
 						} else
 						{
 							// If using the flex grow factor
@@ -675,6 +744,12 @@ litehtml::render_item_flex::flex_line::distribute_free_space(int container_main_
 							{
 								total_clamped++;
 								item.main_size = container_main_size;
+								item.frozen = true;
+							}
+							if(!item.max_size.is_default() && item.main_size >= item.max_size)
+							{
+								total_clamped++;
+								item.main_size = item.max_size;
 								item.frozen = true;
 							}
 						}
@@ -733,6 +808,14 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 
 		if (is_row_direction)
 		{
+			if(item.el->css().get_margins().left.is_predefined())
+			{
+				item.auto_margin_start = 0;
+			}
+			if(item.el->css().get_margins().right.is_predefined())
+			{
+				item.auto_margin_end = 0;
+			}
 			if (item.el->css().get_min_width().is_predefined())
 			{
 				item.min_size = el->render(0, 0,
@@ -743,10 +826,7 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 				item.min_size = item.el->css().get_min_width().calc_percent(self_size.render_width) +
 								el->content_offset_width();
 			}
-			if (item.el->css().get_max_width().is_predefined())
-			{
-				item.max_size = self_size.render_width;
-			} else
+			if (!item.el->css().get_max_width().is_predefined())
 			{
 				item.max_size = item.el->css().get_max_width().calc_percent(self_size.render_width) +
 								el->content_offset_width();
@@ -794,6 +874,14 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 			}
 		} else
 		{
+			if(item.el->css().get_margins().top.is_predefined())
+			{
+				item.auto_margin_start = 0;
+			}
+			if(item.el->css().get_margins().bottom.is_predefined())
+			{
+				item.auto_margin_end = 0;
+			}
 			if (item.el->css().get_min_height().is_predefined())
 			{
 				el->render(0, 0, self_size.new_width(self_size.render_width, containing_block_context::size_mode_content), fmt_ctx);
@@ -803,10 +891,7 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 				item.min_size = item.el->css().get_min_height().calc_percent(self_size.height) +
 								el->content_offset_height();
 			}
-			if (item.el->css().get_max_height().is_predefined())
-			{
-				item.max_size = self_size.height;
-			} else
+			if (!item.el->css().get_max_height().is_predefined())
 			{
 				item.max_size = item.el->css().get_max_height().calc_percent(self_size.height) +
 								el->content_offset_width();
@@ -884,6 +969,8 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 		line.base_size += item.base_size;
 		line.total_grow += item.grow;
 		line.total_shrink += item.shrink;
+		if(!item.auto_margin_start.is_default()) line.num_auto_margin_start++;
+		if(!item.auto_margin_end.is_default()) line.num_auto_margin_end++;
 		line.items.push_back(item);
 	}
 	// Add the last line to the lines list
