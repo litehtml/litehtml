@@ -792,8 +792,17 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 	for( auto& el : m_children)
 	{
 		flex_item item(el);
+
 		item.grow = (int) (item.el->css().get_flex_grow() * 1000.0);
+		// Negative numbers are invalid.
+		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-grow-number
+		if(item.grow < 0) item.grow = 0;
+
 		item.shrink = (int) (item.el->css().get_flex_shrink() * 1000.0);
+		// Negative numbers are invalid.
+		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-shrink-number
+		if(item.shrink < 0) item.shrink = 1000.0;
+
 		item.el->calc_outlines(self_size.render_width);
 		item.order = item.el->css().get_order();
 		item.src_order = src_order++;
