@@ -409,7 +409,7 @@ void litehtml::css_properties::compute_flex(const element* el, const document::p
 		m_flex_shrink = el->get_number_property(_flex_shrink_, false, 1, offset(m_flex_shrink));
 		m_flex_align_self = (flex_align_items) el->get_enum_property(_align_self_, false, flex_align_items_auto, offset(m_flex_align_self));
 		m_flex_basis = el->get_length_property(_flex_basis_, false, css_length::predef_value(flex_basis_auto), offset(m_flex_basis));
-		if(!m_flex_basis.is_predefined() && m_flex_basis.units() == css_units_none)
+		if(!m_flex_basis.is_predefined() && m_flex_basis.units() == css_units_none && m_flex_basis.val() != 0)
 		{
 			// flex-basis property must contain units
 			m_flex_basis.predef(flex_basis_auto);
