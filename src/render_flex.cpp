@@ -1,6 +1,7 @@
 #include "html.h"
 #include "types.h"
 #include "render_flex.h"
+#include <cmath>
 
 namespace litehtml
 {
@@ -644,10 +645,32 @@ litehtml::render_item_flex::flex_line::distribute_free_space(int container_main_
 	{
 		grow = false;
 		total_flex_factor = total_shrink;
+		// Flex values between 0 and 1 have a somewhat special behavior: when the sum of the flex values on the line
+		// is less than 1, they will take up less than 100% of the free space.
+		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-flex-grow
+		if(total_flex_factor < 1000)
+		{
+			for(auto &item : items)
+			{
+				item.main_size += initial_free_space * item.shrink / 1000;
+			}
+			return;
+		}
 	} else
 	{
 		grow = true;
 		total_flex_factor = total_grow;
+		// Flex values between 0 and 1 have a somewhat special behavior: when the sum of the flex values on the line
+		// is less than 1, they will take up less than 100% of the free space.
+		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-flex-grow
+		if(total_flex_factor < 1000)
+		{
+			for(auto &item : items)
+			{
+				item.main_size += initial_free_space * item.grow / 1000;
+			}
+			return;
+		}
 	}
 
 	if(total_flex_factor > 0)
@@ -793,15 +816,15 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 	{
 		flex_item item(el);
 
-		item.grow = (int) (item.el->css().get_flex_grow() * 1000.0);
+		item.grow = (int) std::nearbyint(item.el->css().get_flex_grow() * 1000.0);
 		// Negative numbers are invalid.
 		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-grow-number
 		if(item.grow < 0) item.grow = 0;
 
-		item.shrink = (int) (item.el->css().get_flex_shrink() * 1000.0);
+		item.shrink = (int) std::nearbyint(item.el->css().get_flex_shrink() * 1000.0);
 		// Negative numbers are invalid.
 		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-shrink-number
-		if(item.shrink < 0) item.shrink = 1000.0;
+		if(item.shrink < 0) item.shrink = 1000;
 
 		item.el->calc_outlines(self_size.render_width);
 		item.order = item.el->css().get_order();
