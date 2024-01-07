@@ -258,6 +258,11 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		{
 			container_main_size = self_size.min_height;
 		}
+		if(self_size.max_height.type != containing_block_context::cbc_value_type_auto && self_size.max_height > container_main_size)
+		{
+			container_main_size = self_size.max_height;
+			single_line = false;
+		}
 	}
 
 	// Split flex items to lines
