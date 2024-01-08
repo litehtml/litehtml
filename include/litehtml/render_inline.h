@@ -18,7 +18,14 @@ namespace litehtml
 		void set_inline_boxes( position::vector& boxes ) override { m_boxes = boxes; }
 		void add_inline_box( const position& box ) override { m_boxes.emplace_back(box); };
 		void clear_inline_boxes() override { m_boxes.clear(); }
-		int get_base_line() override { return src_el()->css().get_font_metrics().base_line(); }
+		int get_first_baseline() override
+		{
+			return src_el()->css().get_font_metrics().height - src_el()->css().get_font_metrics().base_line();
+		}
+		int get_last_baseline() override
+		{
+			return src_el()->css().get_font_metrics().height - src_el()->css().get_font_metrics().base_line();
+		}
 
 		std::shared_ptr<render_item> clone() override
 		{
@@ -28,3 +35,4 @@ namespace litehtml
 }
 
 #endif //LITEHTML_RENDER_INLINE_H
+

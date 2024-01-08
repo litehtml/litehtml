@@ -896,7 +896,11 @@ namespace litehtml
 		flex_align_items_end,
 		flex_align_items_baseline,
 		flex_align_items_stretch,
-		flex_align_items_auto // used for align-self property only
+		flex_align_items_auto, // used for align-self property only
+		flex_align_items_first = 0x100,
+		flex_align_items_last = 0x200,
+		flex_align_items_unsafe = 0x400,
+		flex_align_items_safe  = 0x800,
 	};
 
 #define flex_align_content_strings		"flex-start;start;flex-end;end;center;space-between;space-around;stretch"

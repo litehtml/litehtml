@@ -215,6 +215,9 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	bool reverse = false;
 	int container_main_size = self_size.render_width;
 
+	m_first_baseline.reset(0);
+	m_last_baseline.reset(0);
+
 	switch (css().get_flex_direction())
 	{
 		case flex_direction_column:
@@ -266,7 +269,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	}
 
 	// Split flex items to lines
-	std::list<flex_line> lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
+	m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
 
 	// Resolving Flexible Lengths
 	// REF: https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
@@ -276,10 +279,12 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	int sum_cross_size = 0;
 	int sum_main_size = 0;
 	int ret_width = 0;
-	for(auto& ln : lines)
+	for(auto& ln : m_lines)
 	{
 		ln.cross_size = 0;
 		ln.main_size = 0;
+		ln.first_baseline = 0;
+		ln.last_baseline = 0;
 
 		if(is_row_direction)
 		{
@@ -294,17 +299,48 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		if(is_row_direction)
 		{
 			// render items into new size and find line cross_size
+			bool has_baseline_alignment = false;
 			for (auto &item: ln.items)
 			{
-				item.el->render(el_x,
-								el_y,
+				item.el->render(0,
+								0,
 								self_size.new_width(item.main_size - item.el->content_offset_width(), containing_block_context::size_mode_exact_width), fmt_ctx, false);
+				if((item.align & 0xFF) == flex_align_items_baseline)
+				{
+					has_baseline_alignment = true;
+					if(item.align & flex_align_items_last)
+					{
+						ln.last_baseline = std::max(ln.last_baseline, item.el->get_last_baseline());
+					} else
+					{
+						ln.first_baseline = std::max(ln.first_baseline, item.el->get_first_baseline());
+					}
+				}
 				ln.main_size += item.el->width();
 				ln.cross_size = std::max(ln.cross_size, item.el->height());
-				el_x += item.el->width();
+			}
+			if(has_baseline_alignment)
+			{
+				int top = 0;
+				int bottom = 0;
+				for (auto &item: ln.items)
+				{
+					if((item.align & 0xFF) == flex_align_items_baseline)
+					{
+						if(item.align & flex_align_items_last)
+						{
+							item.el->pos().y = ln.last_baseline - item.el->get_last_baseline() + item.el->content_offset_top();
+						} else
+						{
+							item.el->pos().y = ln.first_baseline - item.el->get_first_baseline() + item.el->content_offset_top();
+						}
+					}
+					top = std::min(top, item.el->top());
+					bottom = std::max(bottom, item.el->bottom());
+				}
+				ln.cross_size = bottom - top;
 			}
 			sum_cross_size += ln.cross_size;
-			el_x = 0;
 		} else
 		{
 			for (auto &item: ln.items)
@@ -361,7 +397,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	el_x = el_y = 0;
 	bool is_wrap_reverse = css().get_flex_wrap() == flex_wrap_wrap_reverse;
 
-	flex_align_content_spread lines_spread(css().get_flex_align_content(), css().get_flex_wrap(), (int) lines.size(), free_cross_size);
+	flex_align_content_spread lines_spread(css().get_flex_align_content(), css().get_flex_wrap(), (int) m_lines.size(), free_cross_size);
 
 	if(is_wrap_reverse)
 	{
@@ -383,7 +419,8 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		}
 	}
 
-	for(auto& ln : lines)
+	int line_num = 0;
+	for(auto& ln : m_lines)
 	{
 		int free_main_size = container_main_size - ln.main_size;
 		// distribute auto margins
@@ -470,8 +507,22 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 					el_x -= item.el->width();
 					item.el->pos().x = el_x + item.el->content_offset_left();
 				}
-				switch (item.align)
+				switch (item.align & 0xFF)
 				{
+					case flex_align_items_baseline:
+						if(item.align & flex_align_items_last)
+						{
+							item.el->pos().y = el_y + ln.last_baseline - item.el->get_last_baseline() + item.el->content_offset_top();
+							m_last_baseline = el_y + ln.last_baseline + content_offset_top();
+						} else
+						{
+							item.el->pos().y = el_y + ln.first_baseline - item.el->get_first_baseline() + item.el->content_offset_top();
+							if(line_num == 0)
+							{
+								m_first_baseline = el_y + ln.first_baseline + content_offset_top();
+							}
+						}
+						break;
 					case flex_align_items_flex_end:
 					case flex_align_items_end:
 						item.el->pos().y = el_y + ln.cross_size - item.el->height() + item.el->content_offset_top();
@@ -512,7 +563,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			{
 				el_y -= lines_spread.after_line();
 			}
-		} else
+		} else	// if(is_row_direction)
 		{
 			if(!reverse)
 			{
@@ -626,7 +677,8 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 			{
 				el_x -= lines_spread.after_line();
 			}
-		}
+		} // if(is_row_direction)
+		line_num++;
 	}
 
 	// calculate the final position
@@ -1001,7 +1053,7 @@ std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get
 		if(!line.items.empty() && !single_line && line.base_size + item.base_size > container_main_size)
 		{
 			lines.push_back(line);
-			line.clear();
+			line = flex_line();
 		}
 		line.base_size += item.base_size;
 		line.total_grow += item.grow;
@@ -1089,4 +1141,50 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_flex::init()
     children() = new_children;
 
     return shared_from_this();
+}
+
+int litehtml::render_item_flex::get_first_baseline()
+{
+	if(css().get_flex_direction() == flex_direction_row || css().get_flex_direction() == flex_direction_row_reverse)
+	{
+		if(!m_first_baseline.is_default())
+		{
+			return m_first_baseline;
+		}
+		if(!m_last_baseline.is_default())
+		{
+			return m_last_baseline;
+		}
+	}
+	if(!m_lines.empty())
+	{
+		if(!m_lines.front().items.empty())
+		{
+			return m_lines.front().items.front().el->get_first_baseline() + content_offset_top();
+		}
+	}
+	return height();
+}
+
+int litehtml::render_item_flex::get_last_baseline()
+{
+	if(css().get_flex_direction() == flex_direction_row || css().get_flex_direction() == flex_direction_row_reverse)
+	{
+		if(!m_last_baseline.is_default())
+		{
+			return m_last_baseline;
+		}
+		if(!m_first_baseline.is_default())
+		{
+			return m_first_baseline;
+		}
+	}
+	if(!m_lines.empty())
+	{
+		if(!m_lines.front().items.empty())
+		{
+			return m_lines.front().items.front().el->get_last_baseline() + content_offset_top();
+		}
+	}
+	return height();
 }

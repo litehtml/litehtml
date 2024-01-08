@@ -138,37 +138,6 @@ void litehtml::render_item::apply_relative_shift(const containing_block_context 
     }
 }
 
-bool litehtml::render_item::get_predefined_height(int& p_height, int containing_block_height) const
-{
-    css_length h = src_el()->css().get_height();
-    if(h.is_predefined())
-    {
-        p_height = m_pos.height;
-        return false;
-    }
-    if(h.units() == css_units_percentage)
-    {
-		p_height = h.calc_percent(containing_block_height);
-		return containing_block_height > 0;
-    }
-    p_height = src_el()->get_document()->to_pixels(h, src_el()->css().get_font_size());
-    return p_height > 0;
-}
-
-int litehtml::render_item::calc_width(int defVal, int containing_block_width) const
-{
-    css_length w = src_el()->css().get_width();
-    if(w.is_predefined() || src_el()->css().get_display() == display_table_cell)
-    {
-        return defVal;
-    }
-    if(w.units() == css_units_percentage)
-    {
-		return w.calc_percent(containing_block_width);
-    }
-    return 	src_el()->get_document()->to_pixels(w, src_el()->css().get_font_size());
-}
-
 std::tuple<
         std::shared_ptr<litehtml::render_item>,
         std::shared_ptr<litehtml::render_item>,

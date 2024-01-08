@@ -128,9 +128,7 @@ void style::add_property(string_id name, const string& val, const string& baseur
 	case _flex_direction_:
 	case _flex_wrap_:
 	case _justify_content_:
-	case _align_items_:
 	case _align_content_:
-	case _align_self_:
 
 	case _caption_side_:
 
@@ -139,6 +137,11 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		{
 			add_parsed_property(name, property_value(idx, important));
 		}
+		break;
+
+	case _align_items_:
+	case _align_self_:
+		parse_align_self(name, val, important);
 		break;
 
 	// <length>
@@ -1084,6 +1087,51 @@ void style::parse_flex(const string& val, bool important)
 				add_parsed_property(_flex_shrink_, property_value(1.f, important));
 				add_parsed_property(_flex_basis_, property_value(basis, important));
 			}
+		}
+	}
+}
+
+void style::parse_align_self(string_id name, const string& val, bool important)
+{
+	string_vector tokens;
+	split_string(val, tokens, " ");
+	if(tokens.size() == 1)
+	{
+		int idx = value_index(val, m_valid_values[name]);
+		if (idx >= 0)
+		{
+			add_parsed_property(name, property_value(idx, important));
+		}
+	} else
+	{
+		int val1 = 0;
+		int val2 = -1;
+		for(auto &token : tokens)
+		{
+			if(token == "first")
+			{
+				val1 |= flex_align_items_first;
+			} else if(token == "last")
+			{
+				val1 |= flex_align_items_last;
+			} else if(token == "safe")
+			{
+				val1 |= flex_align_items_safe;
+			} else if(token == "unsafe")
+			{
+				val1 |= flex_align_items_unsafe;
+			} else
+			{
+				int idx = value_index(token, m_valid_values[name]);
+				if(idx >= 0)
+				{
+					val2 = idx;
+				}
+			}
+		}
+		if(val2 >= 0)
+		{
+			add_parsed_property(name, property_value(val1 | val2, important));
 		}
 	}
 }

@@ -23,6 +23,8 @@ namespace litehtml
 		{
 			return std::make_shared<render_item_block_context>(src_el());
 		}
+		int get_first_baseline() override;
+		int get_last_baseline() override;
 	};
 }
 

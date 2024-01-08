@@ -304,15 +304,23 @@ namespace litehtml
         }
 
 		int render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false);
-        int calc_width(int defVal, int containing_block_width) const;
-        bool get_predefined_height(int& p_height, int containing_block_height) const;
         void apply_relative_shift(const containing_block_context &containing_block_size);
         void calc_outlines( int parent_width );
         int calc_auto_margins(int parent_width);	// returns left margin
 
         virtual std::shared_ptr<render_item> init();
         virtual void apply_vertical_align() {}
-        virtual int get_base_line() { return 0; }
+		/**
+		 * Get first baseline position. Default position is element bottom without bottom margin.
+		 * @returns offset of the first baseline from element top
+		 */
+		virtual int get_first_baseline() { return height() - margin_bottom(); }
+		/**
+		 * Get last baseline position.  Default position is element bottom without bottom margin.
+		 * @returns offset of the last baseline from element top
+		 */
+		virtual int get_last_baseline() { return height() - margin_bottom(); }
+
         virtual std::shared_ptr<render_item> clone()
         {
             return std::make_shared<render_item>(src_el());

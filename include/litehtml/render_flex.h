@@ -60,6 +60,8 @@ namespace litehtml
 			int total_shrink;
 			int num_auto_margin_start;	// number of items with auto margin left/top
 			int num_auto_margin_end;	// number of items with auto margin right/bottom
+			int first_baseline;
+			int last_baseline;
 
 			flex_line() :
 					cross_size(0),
@@ -69,24 +71,25 @@ namespace litehtml
 					total_shrink(0),
 					main_size(0),
 					num_auto_margin_start(0),
-					num_auto_margin_end(0)
+					num_auto_margin_end(0),
+					first_baseline(0),
+					last_baseline(0)
 			{}
-
-			void clear()
-			{
-				items.clear();
-				num_auto_margin_start = num_auto_margin_end = top = cross_size = main_size = base_size = total_shrink = total_grow = 0;
-			}
 
 			void distribute_free_space(int container_main_size);
 		};
+
+		std::list<flex_line> m_lines;
+		def_value<int>	m_first_baseline;
+		def_value<int>	m_last_baseline;
 
 		std::list<flex_line> get_lines(const containing_block_context &self_size, formatting_context *fmt_ctx, bool is_row_direction,
 									   int container_main_size, bool single_line);
 		int _render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx) override;
 
 	public:
-		explicit render_item_flex(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el))
+		explicit render_item_flex(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el)),
+																	  m_first_baseline(0), m_last_baseline(0)
 		{}
 
 		std::shared_ptr<render_item> clone() override
@@ -94,6 +97,9 @@ namespace litehtml
 			return std::make_shared<render_item_flex>(src_el());
 		}
 		std::shared_ptr<render_item> init() override;
+
+		int get_first_baseline() override;
+		int get_last_baseline() override;
 	};
 }
 

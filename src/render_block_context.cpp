@@ -132,3 +132,23 @@ int litehtml::render_item_block_context::_render_content(int x, int y, bool seco
 
     return ret_width;
 }
+
+int litehtml::render_item_block_context::get_first_baseline()
+{
+	if(m_children.empty())
+	{
+		return height() - margin_bottom();
+	}
+	const auto &item = m_children.front();
+	return content_offset_top() + item->top() + item->get_first_baseline();
+}
+
+int litehtml::render_item_block_context::get_last_baseline()
+{
+	if(m_children.empty())
+	{
+		return height() - margin_bottom();
+	}
+	const auto &item = m_children.back();
+	return content_offset_top() + item->top() + item->get_last_baseline();
+}
