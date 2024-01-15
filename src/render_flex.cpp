@@ -215,9 +215,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	bool reverse = false;
 	int container_main_size = self_size.render_width;
 
-	m_first_baseline.reset(0);
-	m_last_baseline.reset(0);
-
 	switch (css().get_flex_direction())
 	{
 		case flex_direction_column:
@@ -268,112 +265,50 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		}
 	}
 
-	// Split flex items to lines
+	/////////////////////////////////////////////////////////////////
+	/// Split flex items to lines
+	/////////////////////////////////////////////////////////////////
 	m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
-
-	// Resolving Flexible Lengths
-	// REF: https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
 
 	int el_y = 0;
 	int el_x = 0;
 	int sum_cross_size = 0;
 	int sum_main_size = 0;
 	int ret_width = 0;
+
+	/////////////////////////////////////////////////////////////////
+	/// Resolving Flexible Lengths
+	/// REF: https://www.w3.org/TR/css-flexbox-1/#resolve-flexible-lengths
+	/////////////////////////////////////////////////////////////////
 	for(auto& ln : m_lines)
 	{
-		ln.cross_size = 0;
-		ln.main_size = 0;
-		ln.first_baseline = 0;
-		ln.last_baseline = 0;
-
 		if(is_row_direction)
 		{
 			ret_width += ln.base_size;
 		}
-
-		if(!fit_container)
-		{
-			ln.distribute_free_space(container_main_size);
-		}
-
-		if(is_row_direction)
-		{
-			// render items into new size and find line cross_size
-			bool has_baseline_alignment = false;
-			for (auto &item: ln.items)
-			{
-				item.el->render(0,
-								0,
-								self_size.new_width(item.main_size - item.el->content_offset_width(), containing_block_context::size_mode_exact_width), fmt_ctx, false);
-				if((item.align & 0xFF) == flex_align_items_baseline)
-				{
-					has_baseline_alignment = true;
-					if(item.align & flex_align_items_last)
-					{
-						ln.last_baseline = std::max(ln.last_baseline, item.el->get_last_baseline());
-					} else
-					{
-						ln.first_baseline = std::max(ln.first_baseline, item.el->get_first_baseline());
-					}
-				}
-				ln.main_size += item.el->width();
-				ln.cross_size = std::max(ln.cross_size, item.el->height());
-			}
-			if(has_baseline_alignment)
-			{
-				int top = 0;
-				int bottom = 0;
-				for (auto &item: ln.items)
-				{
-					if((item.align & 0xFF) == flex_align_items_baseline)
-					{
-						if(item.align & flex_align_items_last)
-						{
-							item.el->pos().y = ln.last_baseline - item.el->get_last_baseline() + item.el->content_offset_top();
-						} else
-						{
-							item.el->pos().y = ln.first_baseline - item.el->get_first_baseline() + item.el->content_offset_top();
-						}
-					}
-					top = std::min(top, item.el->top());
-					bottom = std::max(bottom, item.el->bottom());
-				}
-				ln.cross_size = bottom - top;
-			}
-			sum_cross_size += ln.cross_size;
-		} else
-		{
-			for (auto &item: ln.items)
-			{
-				int el_ret_width = item.el->render(el_x,
-								el_y,
-								self_size, fmt_ctx, false);
-				item.el->render(el_x,
-								el_y,
-								self_size.new_width_height(el_ret_width - item.el->content_offset_width(),
-														   item.main_size - item.el->content_offset_height(),
-														   containing_block_context::size_mode_exact_width |
-														   containing_block_context::size_mode_exact_height),
-														   fmt_ctx, false);
-				ln.main_size += item.el->height();
-				ln.cross_size = std::max(ln.cross_size, item.el->width());
-				el_y += item.el->height();
-			}
-			sum_cross_size += ln.cross_size;
-			el_y = 0;
-		}
+		ln.init(container_main_size, fit_container, is_row_direction, self_size, fmt_ctx);
+		sum_cross_size += ln.cross_size;
 		sum_main_size = std::max(sum_main_size, ln.main_size);
+		if(reverse)
+		{
+			ln.items.reverse();
+		}
 	}
 
 	int free_cross_size = 0;
-	int cross_end = 0;
+	int cross_start = 0;
 	bool is_wrap_reverse = css().get_flex_wrap() == flex_wrap_wrap_reverse;
 	if(container_main_size == 0)
 	{
 		container_main_size = sum_main_size;
 	}
+
+	/////////////////////////////////////////////////////////////////
+	/// Calculate free cross size
+	/////////////////////////////////////////////////////////////////
 	if (is_row_direction)
 	{
+		cross_start = content_offset_top();
 		if (self_size.height.type != containing_block_context::cbc_value_type_auto)
 		{
 			int height = self_size.height;
@@ -382,364 +317,130 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 				height -= box_sizing_height();
 			}
 			free_cross_size = height - sum_cross_size;
-			cross_end = height;
-		} else
-		{
-			cross_end = sum_cross_size;
 		}
 	} else
 	{
+		cross_start = content_offset_left();
 		free_cross_size = self_size.render_width - sum_cross_size;
 		ret_width = sum_cross_size;
-		cross_end = std::max(sum_cross_size, (int) self_size.render_width);
 	}
 
-	// Find line cross size and align items
-	el_x = el_y = 0;
-
-	flex_align_content_spread lines_spread(css().get_flex_align_content(), css().get_flex_wrap(), (int) m_lines.size(), free_cross_size);
-
-	if(is_wrap_reverse)
+	/////////////////////////////////////////////////////////////////
+	/// Fix align-content property
+	/////////////////////////////////////////////////////////////////
+	flex_align_content align_content = css().get_flex_align_content();
+	if(align_content == flex_align_content_space_between)
 	{
-		if(is_row_direction)
+		// If the leftover free-space is negative or there is only a single flex line in the flex
+		// container, this value is identical to flex-start.
+		if (m_lines.size() == 1 || free_cross_size < 0) align_content = flex_align_content_flex_start;
+	}
+	if(align_content == flex_align_content_space_around)
+	{
+		// If the leftover free-space is negative or there is only a single flex line in the flex
+		// container, this value is identical to flex-start.
+		if (m_lines.size() == 1 || free_cross_size < 0) align_content = flex_align_content_center;
+	}
+
+	/////////////////////////////////////////////////////////////////
+	/// Distribute free cross size for align-content: stretch
+	/////////////////////////////////////////////////////////////////
+	if(css().get_flex_align_content() == flex_align_content_stretch && free_cross_size > 0)
+	{
+		int add = (int)((double) free_cross_size / (double) m_lines.size());
+		if(add > 0)
 		{
-			el_y = cross_end - lines_spread.start();
-		} else
-		{
-			el_x = cross_end - lines_spread.start();
+			for (auto &ln: m_lines)
+			{
+				ln.cross_size += add;
+				free_cross_size -= add;
+			}
 		}
-	} else
-	{
-		if(is_row_direction)
+		if(!m_lines.empty())
 		{
-			el_y = lines_spread.start();
-		} else
-		{
-			el_x = lines_spread.start();
+			while (free_cross_size > 0)
+			{
+				for (auto &ln: m_lines)
+				{
+					ln.cross_size++;
+					free_cross_size--;
+				}
+			}
 		}
 	}
 
+	/// Reverse lines for flex-wrap: wrap-reverse
+	if(css().get_flex_wrap() == flex_wrap_wrap_reverse)
+	{
+		m_lines.reverse();
+	}
+
+	/////////////////////////////////////////////////////////////////
+	/// Align flex lines
+	/////////////////////////////////////////////////////////////////
+	int line_pos = 0;
+	int add_before_line = 0;
+	int add_after_line = 0;
+	switch (align_content)
+	{
+		case flex_align_content_flex_start:
+			if(is_wrap_reverse)
+			{
+				line_pos = free_cross_size;
+			}
+			break;
+		case flex_align_content_flex_end:
+			if(!is_wrap_reverse)
+			{
+				line_pos = free_cross_size;
+			}
+			break;
+		case flex_align_content_end:
+			line_pos = free_cross_size;
+			break;
+		case flex_align_content_center:
+			line_pos = free_cross_size / 2;
+			break;
+		case flex_align_content_space_between:
+			add_after_line = free_cross_size / ((int) m_lines.size() - 1);
+			break;
+		case flex_align_content_space_around:
+			add_before_line = add_after_line = free_cross_size / ((int) m_lines.size() * 2);
+			break;
+		default:
+			if(is_wrap_reverse)
+			{
+				line_pos = free_cross_size;
+			}
+			break;
+	}
+	for(auto &ln : m_lines)
+	{
+		line_pos += add_before_line;
+		ln.cross_start = line_pos;
+		line_pos += ln.cross_size + add_after_line;
+	}
+
+	/// Fix justify-content property
+	flex_justify_content justify_content = css().get_flex_justify_content();
+	if((justify_content == flex_justify_content_right || justify_content == flex_justify_content_left) && !is_row_direction)
+	{
+		justify_content = flex_justify_content_start;
+	}
+
+	/////////////////////////////////////////////////////////////////
+	/// Align flex items in flex lines
+	/////////////////////////////////////////////////////////////////
 	int line_num = 0;
-	for(auto& ln : m_lines)
+	for(auto &ln : m_lines)
 	{
-		int free_main_size = container_main_size - ln.main_size;
-		// distribute auto margins
-		if(free_main_size > 0 && (ln.num_auto_margin_main_start || ln.num_auto_margin_main_end))
-		{
-			int add = (int) (free_main_size / (ln.items.size() * 2));
-			for (auto &item: ln.items)
-			{
-				if(!item.auto_margin_main_start.is_default())
-				{
-					item.auto_margin_main_start = add;
-					item.main_size += add;
-					ln.main_size += add;
-					free_main_size -= add;
-				}
-				if(!item.auto_margin_main_end.is_default())
-				{
-					item.auto_margin_main_end = add;
-					item.main_size += add;
-					ln.main_size += add;
-					free_main_size -= add;
-				}
-			}
-			while (free_main_size > 0)
-			{
-				for (auto &item: ln.items)
-				{
-					if(!item.auto_margin_main_start.is_default())
-					{
-						item.auto_margin_main_start = item.auto_margin_main_start + 1;
-						free_main_size--;
-						if(!free_main_size) break;
-					}
-					if(!item.auto_margin_main_end.is_default())
-					{
-						item.auto_margin_main_end = item.auto_margin_main_end + 1;
-						free_main_size--;
-						if(!free_main_size) break;
-					}
-				}
-			}
-		}
-
-		ln.cross_size += lines_spread.add_line_size();
-		if(is_wrap_reverse)
-		{
-			ln.first_baseline += lines_spread.add_line_size();
-			ln.last_baseline += lines_spread.add_line_size();
-		}
-
-		flex_justify_content_spread content_spread(css().get_flex_justify_content(),
-												   (int) ln.items.size(),
-												   free_main_size, is_row_direction, reverse);
-		if(is_row_direction)
-		{
-			if(is_wrap_reverse)
-			{
-				el_y -= ln.cross_size - lines_spread.before_line();
-			} else
-			{
-				el_y += lines_spread.before_line();
-			}
-			if(reverse)
-			{
-				el_x = container_main_size - content_spread.start();
-			} else
-			{
-				el_x = content_spread.start();
-			}
-			for (auto &item: ln.items)
-			{
-				// apply auto margins to item
-				if(!item.auto_margin_main_start.is_default())
-				{
-					item.el->get_margins().left = item.auto_margin_main_start;
-					item.el->pos().x += item.auto_margin_main_start;
-				}
-				if(!item.auto_margin_main_end.is_default()) item.el->get_margins().right = item.auto_margin_main_end;
-				if(!reverse)
-				{
-					// justify content [before_item]
-					el_x += content_spread.before_item();
-					item.el->pos().x = el_x + item.el->content_offset_left();
-					el_x += item.el->width();
-				} else
-				{
-					// justify content [before_item]
-					el_x -= content_spread.before_item();
-					el_x -= item.el->width();
-					item.el->pos().x = el_x + item.el->content_offset_left();
-				}
-				if(item.auto_margin_cross_end || item.auto_margin_cross_start)
-				{
-					int margins_num = 0;
-					if(item.auto_margin_cross_end)
-					{
-						margins_num++;
-					}
-					if(item.auto_margin_cross_start)
-					{
-						margins_num++;
-					}
-					int margin = (ln.cross_size - item.el->height()) / margins_num;
-					if(item.auto_margin_cross_start)
-					{
-						item.el->get_margins().top = margin;
-						item.el->pos().y = el_y + item.el->content_offset_top();
-					}
-					if(item.auto_margin_cross_end)
-					{
-						item.el->get_margins().bottom = margin;
-					}
-				} else
-				{
-					switch (item.align & 0xFF)
-					{
-						case flex_align_items_baseline:
-							if (item.align & flex_align_items_last)
-							{
-								item.el->pos().y = el_y + ln.last_baseline - item.el->get_last_baseline() +
-												   item.el->content_offset_top();
-								m_last_baseline = el_y + ln.last_baseline + content_offset_top();
-							} else
-							{
-								item.el->pos().y = el_y + ln.first_baseline - item.el->get_first_baseline() +
-												   item.el->content_offset_top();
-								if (line_num == 0)
-								{
-									m_first_baseline = el_y + ln.first_baseline + content_offset_top();
-								}
-							}
-							break;
-						case flex_align_items_flex_end:
-						case flex_align_items_end:
-							item.el->pos().y = el_y + ln.cross_size - item.el->height() + item.el->content_offset_top();
-							break;
-						case flex_align_items_center:
-							item.el->pos().y =
-									el_y + ln.cross_size / 2 - item.el->height() / 2 + item.el->content_offset_top();
-							break;
-						case flex_align_items_flex_start:
-						case flex_align_items_start:
-							item.el->pos().y = el_y + item.el->content_offset_top();
-							break;
-						default:
-							item.el->pos().y = el_y + item.el->content_offset_top();
-							if (item.el->css().get_height().is_predefined())
-							{
-								// TODO: must be rendered into the specified height
-								item.el->pos().height = ln.cross_size - item.el->content_offset_height();
-							} else if (is_wrap_reverse)
-							{
-								item.el->pos().y =
-										el_y + ln.cross_size - item.el->height() + item.el->content_offset_top();
-							}
-							break;
-					}
-				}
-				m_pos.height = std::max(m_pos.height, item.el->bottom());
-				// justify content [after_item]
-				if(!reverse)
-				{
-					el_x += content_spread.after_item();
-				} else
-				{
-					el_x -= content_spread.after_item();
-				}
-			}
-			if(!is_wrap_reverse)
-			{
-				el_y += ln.cross_size + lines_spread.after_line();
-			} else
-			{
-				el_y -= lines_spread.after_line();
-			}
-		} else	// if(is_row_direction)
-		{
-			if(!reverse)
-			{
-				el_y = content_spread.start();
-			} else
-			{
-				if(self_size.height.type == containing_block_context::cbc_value_type_auto)
-				{
-					content_spread.set_free_space(0);
-					el_y = ln.main_size;
-				} else
-				{
-					content_spread.set_free_space(self_size.height - ln.main_size);
-					el_y = self_size.height;
-				}
-				el_y -= content_spread.start();
-			}
-			if(is_wrap_reverse)
-			{
-				el_x -= ln.cross_size - lines_spread.before_line();
-			} else
-			{
-				el_x += lines_spread.before_line();
-			}
-			for (auto &item: ln.items)
-			{
-				// apply auto margins to item
-				if(!item.auto_margin_main_start.is_default())
-				{
-					item.el->get_margins().top = item.auto_margin_main_start;
-					item.el->pos().y += item.auto_margin_main_start;
-				}
-				if(!item.auto_margin_main_end.is_default()) item.el->get_margins().bottom = item.auto_margin_main_end;
-
-				if(!reverse)
-				{
-					// justify content [before_item]
-					el_y += content_spread.before_item();
-
-					item.el->pos().y = el_y + item.el->content_offset_top();
-					el_y += item.el->height();
-				} else
-				{
-					// justify content [before_item]
-					el_y -= content_spread.before_item();
-
-					el_y -= item.el->height();
-					item.el->pos().y = el_y + item.el->content_offset_top();
-				}
-				if(item.auto_margin_cross_end || item.auto_margin_cross_start)
-				{
-					int margins_num = 0;
-					if(item.auto_margin_cross_end)
-					{
-						margins_num++;
-					}
-					if(item.auto_margin_cross_start)
-					{
-						margins_num++;
-					}
-					int margin = (ln.cross_size - item.el->height()) / margins_num;
-					if(item.auto_margin_cross_start)
-					{
-						item.el->get_margins().left = margin;
-						item.el->pos().x = el_x + item.el->content_offset_left();
-					}
-					if(item.auto_margin_cross_end)
-					{
-						item.el->get_margins().right = margin;
-					}
-				} else
-				{
-					switch (item.align)
-					{
-						case flex_align_items_flex_end:
-						case flex_align_items_end:
-							item.el->pos().x = el_x + ln.cross_size - item.el->width() + item.el->content_offset_left();
-							break;
-						case flex_align_items_center:
-							item.el->pos().x =
-									el_x + ln.cross_size / 2 - item.el->width() / 2 + item.el->content_offset_left();
-							break;
-						case flex_align_items_start:
-						case flex_align_items_flex_start:
-							item.el->pos().x = el_x + item.el->content_offset_left();
-							break;
-						default:
-							item.el->pos().x = el_x + item.el->content_offset_left();
-							if (!item.el->css().get_width().is_predefined())
-							{
-								item.el->render(el_x,
-												item.el->pos().y - item.el->content_offset_top(),
-												self_size.new_width_height(ln.cross_size,
-																		   item.main_size -
-																		   item.el->content_offset_height(),
-																		   containing_block_context::size_mode_exact_height),
-												fmt_ctx, false);
-							} else
-							{
-								item.el->render(el_x,
-												item.el->pos().y - item.el->content_offset_top(),
-												self_size.new_width_height(
-														ln.cross_size - item.el->content_offset_width(),
-														item.main_size - item.el->content_offset_height(),
-														containing_block_context::size_mode_exact_width |
-														containing_block_context::size_mode_exact_height),
-												fmt_ctx, false);
-							}
-							// apply auto margins to item after rendering
-							if (!item.auto_margin_main_start.is_default())
-							{
-								item.el->get_margins().top = item.auto_margin_main_start;
-								item.el->pos().y += item.auto_margin_main_start;
-							}
-							if (!item.auto_margin_main_end.is_default()) item.el->get_margins().bottom = item.auto_margin_main_end;
-
-							if (!item.el->css().get_width().is_predefined() && is_wrap_reverse)
-							{
-								item.el->pos().x =
-										el_x + ln.cross_size - item.el->width() + item.el->content_offset_left();
-							}
-							break;
-					}
-				}
-				m_pos.height = std::max(m_pos.height, item.el->bottom());
-				// justify content [after_item]
-				if(!reverse)
-				{
-					el_y += content_spread.after_item();
-				} else
-				{
-					el_y -= content_spread.after_item();
-				}
-			}
-			if(!is_wrap_reverse)
-			{
-				el_x += ln.cross_size + lines_spread.after_line();
-			} else
-			{
-				el_x -= lines_spread.after_line();
-			}
-		} // if(is_row_direction)
+		int height = ln.calculate_items_position(container_main_size,
+									justify_content,
+									is_row_direction,
+									self_size,
+									fmt_ctx);
 		line_num++;
+		m_pos.height = std::max(m_pos.height, height);
 	}
 
 	// calculate the final position
@@ -750,399 +451,85 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	return ret_width;
 }
 
-void
-litehtml::render_item_flex::flex_line::distribute_free_space(int container_main_size)
-{
-	// Determine the used flex factor. Sum the outer hypothetical main sizes of all items on the line.
-	// If the sum is less than the flex container’s inner main size, use the flex grow factor for the
-	// rest of this algorithm; otherwise, use the flex shrink factor.
-	int initial_free_space = container_main_size - base_size;
-	bool grow;
-	int total_flex_factor;
-	if(initial_free_space < 0)
-	{
-		grow = false;
-		total_flex_factor = total_shrink;
-		// Flex values between 0 and 1 have a somewhat special behavior: when the sum of the flex values on the line
-		// is less than 1, they will take up less than 100% of the free space.
-		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-flex-grow
-		if(total_flex_factor < 1000)
-		{
-			for(auto &item : items)
-			{
-				item.main_size += initial_free_space * item.shrink / 1000;
-			}
-			return;
-		}
-	} else
-	{
-		grow = true;
-		total_flex_factor = total_grow;
-		// Flex values between 0 and 1 have a somewhat special behavior: when the sum of the flex values on the line
-		// is less than 1, they will take up less than 100% of the free space.
-		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-flex-grow
-		if(total_flex_factor < 1000)
-		{
-			for(auto &item : items)
-			{
-				item.main_size += initial_free_space * item.grow / 1000;
-			}
-			return;
-		}
-	}
-
-	if(total_flex_factor > 0)
-	{
-		bool processed = true;
-		while (processed)
-		{
-			int sum_scaled_flex_shrink_factor = 0;
-			int sum_flex_factors = 0;
-			int remaining_free_space = container_main_size;
-			int total_not_frozen = 0;
-			for (auto &item: items)
-			{
-				if (!item.frozen)
-				{
-					sum_scaled_flex_shrink_factor += item.scaled_flex_shrink_factor;
-					if(grow)
-					{
-						sum_flex_factors += item.grow;
-					} else
-					{
-						sum_flex_factors += item.shrink;
-					}
-					remaining_free_space -= item.base_size;
-					total_not_frozen++;
-				} else
-				{
-					remaining_free_space -= item.main_size;
-				}
-			}
-			// Check for flexible items. If all the flex items on the line are frozen, free space has
-			// been distributed; exit this loop.
-			if (!total_not_frozen) break;
-
-			remaining_free_space = abs(remaining_free_space);
-			// c. Distribute free space proportional to the flex factors.
-			// If the remaining free space is zero
-			//    Do nothing.
-			if (!remaining_free_space)
-			{
-				processed = false;
-			} else
-			{
-				int total_clamped = 0;
-				for (auto &item: items)
-				{
-					if (!item.frozen)
-					{
-						if(!grow)
-						{
-							// If using the flex shrink factor
-							//    For every unfrozen item on the line, multiply its flex shrink factor by its
-							//    inner flex base size, and note this as its scaled flex shrink factor. Find
-							//    the ratio of the item’s scaled flex shrink factor to the sum of the scaled
-							//    flex shrink factors of all unfrozen items on the line. Set the item’s target
-							//    main size to its flex base size minus a fraction of the absolute value of the
-							//    remaining free space proportional to the ratio.
-							int scaled_flex_shrink_factor = item.base_size * item.shrink;
-							item.main_size = (int) ((float) item.base_size - (float) remaining_free_space *
-																		 (float) scaled_flex_shrink_factor /
-																		 (float) sum_scaled_flex_shrink_factor);
-
-							// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
-							// min and max main sizes and floor its content-box size at zero. If the item’s target
-							// main size was made smaller by this, it’s a max violation. If the item’s target main
-							// size was made larger by this, it’s a min violation.
-							if (item.main_size <= item.min_size)
-							{
-								total_clamped++;
-								item.main_size = item.min_size;
-								item.frozen = true;
-							}
-							if(!item.max_size.is_default() && item.main_size >= item.max_size)
-							{
-								total_clamped++;
-								item.main_size = item.max_size;
-								item.frozen = true;
-							}
-						} else
-						{
-							// If using the flex grow factor
-							//    Find the ratio of the item’s flex grow factor to the sum of the flex grow
-							//    factors of all unfrozen items on the line. Set the item’s target main size to
-							//    its flex base size plus a fraction of the remaining free space proportional
-							//    to the ratio.
-							item.main_size = (int) ((float) item.base_size +
-													(float) remaining_free_space * (float) item.grow /
-													(float) total_flex_factor);
-							// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
-							// min and max main sizes and floor its content-box size at zero. If the item’s target
-							// main size was made smaller by this, it’s a max violation. If the item’s target main
-							// size was made larger by this, it’s a min violation.
-							if (item.main_size >= container_main_size)
-							{
-								total_clamped++;
-								item.main_size = container_main_size;
-								item.frozen = true;
-							}
-							if(!item.max_size.is_default() && item.main_size >= item.max_size)
-							{
-								total_clamped++;
-								item.main_size = item.max_size;
-								item.frozen = true;
-							}
-						}
-					}
-				}
-				if (total_clamped == 0) processed = false;
-			}
-		}
-		// Distribute remaining after algorithm space
-		int sum_main_size = 0;
-		for(auto &item : items)
-		{
-			sum_main_size += item.main_size;
-		}
-		int free_space = container_main_size - sum_main_size;
-		if(free_space > 0)
-		{
-			for(auto &item : items)
-			{
-				if(free_space == 0) break;
-				item.main_size++;
-				free_space--;
-			}
-		}
-	}
-}
-
-std::list<litehtml::render_item_flex::flex_line> litehtml::render_item_flex::get_lines(const litehtml::containing_block_context &self_size,
+std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(const litehtml::containing_block_context &self_size,
 																	 litehtml::formatting_context *fmt_ctx,
 																	 bool is_row_direction, int container_main_size,
 																	 bool single_line)
 {
+	bool reverse_main;
+	bool reverse_cross = css().get_flex_wrap() == flex_wrap_wrap_reverse;
+
+	if(is_row_direction)
+	{
+		reverse_main = css().get_flex_direction() == flex_direction_row_reverse;
+	} else
+	{
+		reverse_main = css().get_flex_direction() == flex_direction_column_reverse;
+	}
+
 	std::list<flex_line> lines;
-	flex_line line;
-	std::list<flex_item> items;
+	flex_line line(reverse_main, reverse_cross);
+	std::list<std::shared_ptr<flex_item>> items;
 	int src_order = 0;
 	bool sort_required = false;
 	def_value<int> prev_order(0);
 
 	for( auto& el : m_children)
 	{
-		flex_item item(el);
-
-		item.grow = (int) std::nearbyint(item.el->css().get_flex_grow() * 1000.0);
-		// Negative numbers are invalid.
-		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-grow-number
-		if(item.grow < 0) item.grow = 0;
-
-		item.shrink = (int) std::nearbyint(item.el->css().get_flex_shrink() * 1000.0);
-		// Negative numbers are invalid.
-		// https://www.w3.org/TR/css-flexbox-1/#valdef-flex-shrink-number
-		if(item.shrink < 0) item.shrink = 1000;
-
-		item.el->calc_outlines(self_size.render_width);
-		item.order = item.el->css().get_order();
-		item.src_order = src_order++;
+		std::shared_ptr<flex_item> item = nullptr;
+		if(is_row_direction)
+		{
+			item = std::make_shared<flex_item_row_direction>(el);
+		} else
+		{
+			item = std::make_shared<flex_item_column_direction>(el);
+		}
+		item->init(self_size, fmt_ctx, css().get_flex_align_items());
+		item->src_order = src_order++;
 
 		if(prev_order.is_default())
 		{
-			prev_order = item.order;
-		} else if(!sort_required && item.order != prev_order)
+			prev_order = item->order;
+		} else if(!sort_required && item->order != prev_order)
 		{
 			sort_required = true;
 		}
 
-		if (is_row_direction)
-		{
-			if(item.el->css().get_margins().left.is_predefined())
-			{
-				item.auto_margin_main_start = 0;
-			}
-			if(item.el->css().get_margins().right.is_predefined())
-			{
-				item.auto_margin_main_end = 0;
-			}
-			if(item.el->css().get_margins().top.is_predefined())
-			{
-				item.auto_margin_cross_start = true;
-			}
-			if(item.el->css().get_margins().bottom.is_predefined())
-			{
-				item.auto_margin_cross_end = true;
-			}
-			if (item.el->css().get_min_width().is_predefined())
-			{
-				item.min_size = el->render(0, 0,
-										   self_size.new_width(el->content_offset_width(),
-															   containing_block_context::size_mode_content), fmt_ctx);
-			} else
-			{
-				item.min_size = item.el->css().get_min_width().calc_percent(self_size.render_width) +
-								el->content_offset_width();
-			}
-			if (!item.el->css().get_max_width().is_predefined())
-			{
-				item.max_size = item.el->css().get_max_width().calc_percent(self_size.render_width) +
-								el->content_offset_width();
-			}
-			bool flex_basis_predefined = item.el->css().get_flex_basis().is_predefined();
-			int predef = flex_basis_auto;
-			if(flex_basis_predefined)
-			{
-				predef = item.el->css().get_flex_basis().predef();
-			} else
-			{
-				if(item.el->css().get_flex_basis().val() < 0)
-				{
-					flex_basis_predefined = true;
-				}
-			}
-
-			if (flex_basis_predefined)
-			{
-				switch (predef)
-				{
-					case flex_basis_auto:
-						if (!item.el->css().get_width().is_predefined())
-						{
-							item.base_size = item.el->css().get_width().calc_percent(self_size.render_width) +
-											 item.el->content_offset_width();
-							break;
-						}
-					case flex_basis_max_content:
-					case flex_basis_fit_content:
-						item.base_size = el->render(0, 0, self_size, fmt_ctx);
-						break;
-					case flex_basis_min_content:
-						item.base_size = item.min_size;
-						break;
-					default:
-						item.base_size = 0;
-						break;
-				}
-			} else
-			{
-				item.base_size = item.el->css().get_flex_basis().calc_percent(self_size.render_width) +
-								 item.el->content_offset_width();
-				item.base_size = std::max(item.base_size, item.min_size);
-			}
-		} else
-		{
-			if(item.el->css().get_margins().top.is_predefined())
-			{
-				item.auto_margin_main_start = 0;
-			}
-			if(item.el->css().get_margins().bottom.is_predefined())
-			{
-				item.auto_margin_main_end = 0;
-			}
-			if(item.el->css().get_margins().left.is_predefined())
-			{
-				item.auto_margin_cross_start = true;
-			}
-			if(item.el->css().get_margins().right.is_predefined())
-			{
-				item.auto_margin_cross_end = true;
-			}
-			if (item.el->css().get_min_height().is_predefined())
-			{
-				el->render(0, 0, self_size.new_width(self_size.render_width, containing_block_context::size_mode_content), fmt_ctx);
-				item.min_size = el->height();
-			} else
-			{
-				item.min_size = item.el->css().get_min_height().calc_percent(self_size.height) +
-								el->content_offset_height();
-			}
-			if (!item.el->css().get_max_height().is_predefined())
-			{
-				item.max_size = item.el->css().get_max_height().calc_percent(self_size.height) +
-								el->content_offset_width();
-			}
-
-			bool flex_basis_predefined = item.el->css().get_flex_basis().is_predefined();
-			int predef = flex_basis_auto;
-			if(flex_basis_predefined)
-			{
-				predef = item.el->css().get_flex_basis().predef();
-			} else
-			{
-				if(item.el->css().get_flex_basis().val() < 0)
-				{
-					flex_basis_predefined = true;
-				}
-			}
-
-			if (flex_basis_predefined)
-			{
-				switch (predef)
-				{
-					case flex_basis_auto:
-						if (!item.el->css().get_height().is_predefined())
-						{
-							item.base_size = item.el->css().get_height().calc_percent(self_size.height) +
-											 item.el->content_offset_height();
-							break;
-						}
-					case flex_basis_max_content:
-					case flex_basis_fit_content:
-						el->render(0, 0, self_size, fmt_ctx);
-						item.base_size = el->height();
-						break;
-					case flex_basis_min_content:
-						item.base_size = item.min_size;
-						break;
-					default:
-						item.base_size = 0;
-				}
-			} else
-			{
-				item.base_size = item.el->css().get_flex_basis().calc_percent(self_size.height) +
-								 item.el->content_offset_height();
-			}
-		}
-
-		if (el->css().get_flex_align_self() == flex_align_items_auto)
-		{
-			item.align = css().get_flex_align_items();
-		} else
-		{
-			item.align = el->css().get_flex_align_self();
-		}
-		item.main_size = item.base_size;
-		item.scaled_flex_shrink_factor = item.base_size * item.shrink;
-		item.frozen = false;
-
-		items.push_back(item);
+		items.emplace_back(item);
 	}
 
 	if(sort_required)
 	{
-		items.sort();
+		items.sort([](const std::shared_ptr<flex_item>& item1, const std::shared_ptr<flex_item>& item2)
+					   {
+					   		if(item1->order < item2->order) return true;
+					   		if(item1->order == item2->order)
+							{
+								return item1->src_order < item2->src_order;
+							}
+							return false;
+					   });
 	}
 
 	// Add flex items to lines
 	for(auto& item : items)
 	{
-		if(!line.items.empty() && !single_line && line.base_size + item.base_size > container_main_size)
+		if(!line.items.empty() && !single_line && line.base_size + item->base_size > container_main_size)
 		{
-			lines.push_back(line);
-			line = flex_line();
+			lines.emplace_back(line);
+			line = flex_line(reverse_main, reverse_cross);
 		}
-		line.base_size += item.base_size;
-		line.total_grow += item.grow;
-		line.total_shrink += item.shrink;
-		if(!item.auto_margin_main_start.is_default()) line.num_auto_margin_main_start++;
-		if(!item.auto_margin_main_end.is_default()) line.num_auto_margin_main_end++;
+		line.base_size += item->base_size;
+		line.total_grow += item->grow;
+		line.total_shrink += item->shrink;
+		if(!item->auto_margin_main_start.is_default()) line.num_auto_margin_main_start++;
+		if(!item->auto_margin_main_end.is_default()) line.num_auto_margin_main_end++;
 		line.items.push_back(item);
 	}
 	// Add the last line to the lines list
 	if(!line.items.empty())
 	{
-		lines.push_back(line);
+		lines.emplace_back(line);
 	}
 	return lines;
 }
@@ -1224,20 +611,24 @@ int litehtml::render_item_flex::get_first_baseline()
 {
 	if(css().get_flex_direction() == flex_direction_row || css().get_flex_direction() == flex_direction_row_reverse)
 	{
-		if(!m_first_baseline.is_default())
+		if(!m_lines.empty())
 		{
-			return m_first_baseline;
-		}
-		if(!m_last_baseline.is_default())
-		{
-			return m_last_baseline;
+			const auto &first_line = m_lines.front();
+			if(first_line.first_baseline.type() != baseline::baseline_type_none)
+			{
+				return first_line.cross_start + first_line.first_baseline.get_offset_from_top(first_line.cross_size) + content_offset_top();
+			}
+			if(first_line.last_baseline.type() != baseline::baseline_type_none)
+			{
+				return first_line.cross_start + first_line.last_baseline.get_offset_from_top(first_line.cross_size) + content_offset_top();
+			}
 		}
 	}
 	if(!m_lines.empty())
 	{
 		if(!m_lines.front().items.empty())
 		{
-			return m_lines.front().items.front().el->get_first_baseline() + content_offset_top();
+			return m_lines.front().items.front()->el->get_first_baseline() + content_offset_top();
 		}
 	}
 	return height();
@@ -1247,20 +638,24 @@ int litehtml::render_item_flex::get_last_baseline()
 {
 	if(css().get_flex_direction() == flex_direction_row || css().get_flex_direction() == flex_direction_row_reverse)
 	{
-		if(!m_last_baseline.is_default())
+		if(!m_lines.empty())
 		{
-			return m_last_baseline;
-		}
-		if(!m_first_baseline.is_default())
-		{
-			return m_first_baseline;
+			const auto &first_line = m_lines.front();
+			if(first_line.last_baseline.type() != baseline::baseline_type_none)
+			{
+				return first_line.cross_start + first_line.last_baseline.get_offset_from_top(first_line.cross_size) + content_offset_top();
+			}
+			if(first_line.first_baseline.type() != baseline::baseline_type_none)
+			{
+				return first_line.cross_start + first_line.first_baseline.get_offset_from_top(first_line.cross_size) + content_offset_top();
+			}
 		}
 	}
 	if(!m_lines.empty())
 	{
 		if(!m_lines.front().items.empty())
 		{
-			return m_lines.front().items.front().el->get_last_baseline() + content_offset_top();
+			return m_lines.front().items.front()->el->get_last_baseline() + content_offset_top();
 		}
 	}
 	return height();

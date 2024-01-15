@@ -711,7 +711,7 @@ namespace litehtml
 			m_is_default	= true;
 			m_val			= def_val;
 		}
-		bool is_default()
+		bool is_default() const
 		{
 			return m_is_default;
 		}
@@ -721,10 +721,70 @@ namespace litehtml
 			m_is_default	= false;
 			return m_val;
 		}
-		operator T()
+		operator T() const
 		{
 			return m_val;
 		}
+	};
+
+	class baseline
+	{
+	public:
+		enum _baseline_type
+		{
+			baseline_type_none,
+			baseline_type_top,
+			baseline_type_bottom,
+		};
+
+	public:
+		baseline() : m_value(0), m_type(baseline_type_none) {}
+		baseline(int _value, _baseline_type _type) : m_value(_value), m_type(_type) {}
+
+		int value() const				{ return m_value; 	}
+		void value(int _value) 			{ m_value = _value; }
+		_baseline_type type() const		{ return m_type; 	}
+		void type(_baseline_type _type)	{ m_type = _type; 	}
+
+		operator int() const	{ return m_value; 	}
+		baseline& operator=(int _value) { m_value = _value; return *this; }
+
+		void set(int _value, _baseline_type _type)	{ m_value = _value; m_type =_type; }
+		/**
+		 * Get baseline offset from top of element with specified height
+		 * @param height - element height
+		 * @return baseline offset
+		 */
+		int get_offset_from_top(int height) const
+		{
+			if(m_type == baseline_type_top) return m_value;
+			return height - m_value;
+		}
+		/**
+		 * Get baseline offset from bottom of element with specified height
+		 * @param height - element height
+		 * @return baseline offset
+		 */
+		int get_offset_from_bottom(int height) const
+		{
+			if(m_type == baseline_type_bottom) return m_value;
+			return height - m_value;
+		}
+		/**
+		 * Calculate baseline by top and bottom positions of element aligned by baseline == 0
+		 * @param top - top of the aligned element
+		 * @param bottom - bottom of the aligned element
+		 */
+		void calc(int top, int bottom)
+		{
+			if(m_type == baseline_type_top)
+				m_value = -top;
+			else if(m_type == baseline_type_bottom)
+				m_value = bottom;
+		}
+	private:
+		int m_value;
+		_baseline_type m_type;
 	};
 
 
