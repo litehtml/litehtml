@@ -88,8 +88,7 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string(const strin
 			}
 		} else
 		{
-			query->m_media_type = (media_type) value_index(token, media_type_strings, media_type_all);
-
+			query->m_media_type = (media_type) value_index(token, media_type_strings, media_type_none);
 		}
 	}
 
