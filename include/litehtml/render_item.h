@@ -224,12 +224,20 @@ namespace litehtml
 
 		int box_sizing_left() const
 		{
-			return m_padding.left + m_borders.left;
+			if(css().get_box_sizing() == box_sizing_border_box)
+			{
+				return m_padding.left + m_borders.left;
+			}
+			return 0;
 		}
 
 		int box_sizing_right() const
 		{
-			return m_padding.right + m_borders.right;
+			if(css().get_box_sizing() == box_sizing_border_box)
+			{
+				return m_padding.right + m_borders.right;
+			}
+			return 0;
 		}
 
 		int box_sizing_width() const
@@ -239,12 +247,20 @@ namespace litehtml
 
 		int box_sizing_top() const
 		{
-			return m_padding.top + m_borders.top;
+			if(css().get_box_sizing() == box_sizing_border_box)
+			{
+				return m_padding.top + m_borders.top;
+			}
+			return 0;
 		}
 
 		int box_sizing_bottom() const
 		{
-			return m_padding.bottom + m_borders.bottom;
+			if(css().get_box_sizing() == box_sizing_border_box)
+			{
+				return m_padding.bottom + m_borders.bottom;
+			}
+			return 0;
 		}
 
 		int box_sizing_height() const

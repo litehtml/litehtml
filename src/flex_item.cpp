@@ -234,8 +234,13 @@ void litehtml::flex_item_row_direction::align_stretch(flex_line &ln, const conta
 	set_cross_position(ln.cross_start);
 	if (el->css().get_height().is_predefined())
 	{
-		// TODO: must be rendered into the specified height
-		el->pos().height = ln.cross_size - el->content_offset_height();
+		el->render(el->left(), el->top(), self_size.new_width_height(
+				el->pos().width + el->box_sizing_width(),
+				ln.cross_size - el->content_offset_height() + el->box_sizing_height(),
+				containing_block_context::size_mode_exact_width |
+				containing_block_context::size_mode_exact_height
+				), fmt_ctx);
+		apply_main_auto_margins();
 	}
 }
 
@@ -337,6 +342,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 	{
 		base_size = el->css().get_flex_basis().calc_percent(self_size.height) +
 					el->content_offset_height();
+		base_size = std::max(base_size, min_size);
 	}
 }
 
@@ -397,9 +403,8 @@ void litehtml::flex_item_column_direction::align_stretch(flex_line &ln, const co
 	{
 		el->render(ln.cross_start,
 				   el->pos().y - el->content_offset_top(),
-				   self_size.new_width_height(ln.cross_size,
-											  main_size -
-											  el->content_offset_height(),
+				   self_size.new_width_height(ln.cross_size - el->content_offset_width() + el->box_sizing_width(),
+											  main_size - el->content_offset_height() + el->box_sizing_height(),
 											  containing_block_context::size_mode_exact_height),
 				   fmt_ctx, false);
 	} else
@@ -407,8 +412,8 @@ void litehtml::flex_item_column_direction::align_stretch(flex_line &ln, const co
 		el->render(ln.cross_start,
 				   el->pos().y - el->content_offset_top(),
 				   self_size.new_width_height(
-						   ln.cross_size - el->content_offset_width(),
-						   main_size - el->content_offset_height(),
+						   ln.cross_size - el->content_offset_width() + el->box_sizing_width(),
+						   main_size - el->content_offset_height() + el->box_sizing_height(),
 						   containing_block_context::size_mode_exact_width |
 						   containing_block_context::size_mode_exact_height),
 				   fmt_ctx, false);
@@ -421,7 +426,14 @@ void litehtml::flex_item_column_direction::align_baseline(litehtml::flex_line &l
 														  const containing_block_context &self_size,
 														  formatting_context *fmt_ctx)
 {
-	align_stretch(ln, self_size, fmt_ctx);
+	// The fallback alignment for first baseline is start, the one for last baseline is end.
+	if(align & flex_align_items_last)
+	{
+		set_cross_position(ln.cross_start + ln.cross_size - get_el_cross_size());
+	} else
+	{
+		set_cross_position(ln.cross_start);
+	}
 }
 
 int litehtml::flex_item_column_direction::get_el_main_size()

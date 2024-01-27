@@ -234,6 +234,9 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 			m_pos.width = self_size.min_width;
 			requires_rerender = true;
 		}
+	} else if(m_pos.width < 0)
+	{
+		m_pos.width = 0;
 	}
 
 	// Fix width with max-width attribute
@@ -264,7 +267,15 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 	if (self_size.height.type != containing_block_context::cbc_value_type_auto &&
 	    !(containing_block_size.size_mode & containing_block_context::size_mode_content))
 	{
-		if (self_size.height > 0)
+		// TODO: Something wrong here
+		// Percentage height from undefined containing block height is usually <= 0
+		if(self_size.height.type == containing_block_context::cbc_value_type_percentage)
+		{
+			if (self_size.height > 0)
+			{
+				m_pos.height = self_size.height;
+			}
+		} else
 		{
 			m_pos.height = self_size.height;
 		}
@@ -299,6 +310,9 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 		{
 			m_pos.height = self_size.min_height;
 		}
+	} else if(m_pos.height < 0)
+	{
+		m_pos.height = 0;
 	}
 
 	// Fix width with max-width attribute
