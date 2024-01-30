@@ -301,6 +301,7 @@ namespace litehtml
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.top >= 0 &&
+				   !is_flex_item() &&
                    !is_root();
         }
 
@@ -318,6 +319,16 @@ namespace litehtml
         {
             return !(m_skip || src_el()->css().get_display() == display_none || src_el()->css().get_visibility() != visibility_visible);
         }
+
+		bool is_flex_item() const
+		{
+			auto par = parent();
+			if(par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex))
+			{
+				return true;
+			}
+			return false;
+		}
 
 		int render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false);
         void apply_relative_shift(const containing_block_context &containing_block_size);

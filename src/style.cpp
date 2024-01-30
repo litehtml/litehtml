@@ -540,7 +540,14 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		break;
 
 	case _order_: // <integer>
-		add_parsed_property(name, property_value(atoi(val.c_str()), important));
+		{
+			char* end;
+			int int_val = (int) strtol(val.c_str(), &end, 10);
+			if(end[0] == '\0')
+			{
+				add_parsed_property(name, property_value(int_val, important));
+			}
+		}
 		break;
 
 	default:

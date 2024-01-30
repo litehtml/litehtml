@@ -226,6 +226,16 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 		}
 	}
 
+	// Fix width with max-width attribute
+	if(self_size.max_width.type != containing_block_context::cbc_value_type_none)
+	{
+		if(m_pos.width > self_size.max_width)
+		{
+			m_pos.width = self_size.max_width;
+			requires_rerender = true;
+		}
+	}
+
 	// Fix width with min-width attribute
 	if(self_size.min_width.type != containing_block_context::cbc_value_type_none)
 	{
@@ -237,16 +247,6 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 	} else if(m_pos.width < 0)
 	{
 		m_pos.width = 0;
-	}
-
-	// Fix width with max-width attribute
-	if(self_size.max_width.type != containing_block_context::cbc_value_type_none)
-	{
-		if(m_pos.width > self_size.max_width)
-		{
-			m_pos.width = self_size.max_width;
-			requires_rerender = true;
-		}
 	}
 
 	// re-render content with new width if required

@@ -121,11 +121,13 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 	{
 		auto_margin_cross_end = true;
 	}
+	def_value<int> content_size(0);
 	if (el->css().get_min_width().is_predefined())
 	{
 		min_size = el->render(0, 0,
 							  self_size.new_width(el->content_offset_width(),
 												  containing_block_context::size_mode_content), fmt_ctx);
+		content_size = min_size;
 	} else
 	{
 		min_size = el->css().get_min_width().calc_percent(self_size.render_width) +
@@ -160,12 +162,27 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 								el->content_offset_width();
 					break;
 				}
-			case flex_basis_max_content:
+				// if width is not predefined, use content size as base size
 			case flex_basis_fit_content:
-				base_size = el->render(0, 0, self_size, fmt_ctx);
+			case flex_basis_content:
+				base_size = el->render(0, 0, self_size.new_width(self_size.render_width + el->content_offset_width(),
+																 containing_block_context::size_mode_content |
+																 containing_block_context::size_mode_exact_width),
+									   fmt_ctx);
 				break;
 			case flex_basis_min_content:
-				base_size = min_size;
+				if(content_size.is_default())
+				{
+					content_size = el->render(0, 0,
+											  self_size.new_width(el->content_offset_width(),
+																  containing_block_context::size_mode_content),
+											  fmt_ctx);
+				}
+				base_size = content_size;
+				break;
+			case flex_basis_max_content:
+				el->render(0, 0, self_size, fmt_ctx);
+				base_size = el->width();
 				break;
 			default:
 				base_size = 0;
@@ -340,8 +357,20 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 		}
 	} else
 	{
-		base_size = el->css().get_flex_basis().calc_percent(self_size.height) +
-					el->content_offset_height();
+		if(el->css().get_flex_basis().units() == css_units_percentage)
+		{
+			if(self_size.height.type == containing_block_context::cbc_value_type_absolute)
+			{
+				base_size = el->css().get_flex_basis().calc_percent(self_size.height) +
+							el->content_offset_height();
+			} else
+			{
+				base_size = 0;
+			}
+		} else
+		{
+			base_size = (int) el->css().get_flex_basis().val() + el->content_offset_height();
+		}
 		base_size = std::max(base_size, min_size);
 	}
 }
@@ -429,10 +458,22 @@ void litehtml::flex_item_column_direction::align_baseline(litehtml::flex_line &l
 	// The fallback alignment for first baseline is start, the one for last baseline is end.
 	if(align & flex_align_items_last)
 	{
-		set_cross_position(ln.cross_start + ln.cross_size - get_el_cross_size());
+		if(ln.reverse_cross)
+		{
+			set_cross_position(ln.cross_start);
+		} else
+		{
+			set_cross_position(ln.cross_start + ln.cross_size - get_el_cross_size());
+		}
 	} else
 	{
-		set_cross_position(ln.cross_start);
+		if(!ln.reverse_cross)
+		{
+			set_cross_position(ln.cross_start);
+		} else
+		{
+			set_cross_position(ln.cross_start + ln.cross_size - get_el_cross_size());
+		}
 	}
 }
 
