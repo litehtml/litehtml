@@ -363,7 +363,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
                 case va_super:
 					{
 						int bl = calc_va_baseline(current_context, lbi->get_el()->css().get_vertical_align(), current_context.fm, line_top, line_bottom);
-						lbi->pos().y = bl - lbi->get_el()->height() + lbi->get_el()->get_base_line() +
+						lbi->pos().y = bl - lbi->get_el()->get_last_baseline() +
 								lbi->get_el()->content_offset_top();
 					}
 					break;
@@ -374,7 +374,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 					lbi->pos().y = line_top + lbi->get_el()->content_offset_top();
 					break;
                 case va_baseline:
-					lbi->pos().y = current_context.baseline - lbi->get_el()->height() + lbi->get_el()->get_base_line() +
+					lbi->pos().y = current_context.baseline - lbi->get_el()->get_last_baseline() +
 							lbi->get_el()->content_offset_top();
                     break;
                 case va_text_top:
@@ -555,10 +555,23 @@ bool litehtml::line_box::can_hold(const std::unique_ptr<line_box_item>& item, wh
 
 	if(item->get_type() == line_box_item::type_text_part)
 	{
+		// force new line on floats clearing
+		if (item->get_el()->src_el()->is_break() && item->get_el()->src_el()->css().get_clear() != clear_none)
+		{
+			return false;
+		}
+
 		auto last_el = get_last_text_part();
 
+		// the first word is always can be hold
+		if(!last_el)
+		{
+			return true;
+		}
+
 		// force new line if the last placed element was line break
-		if (last_el && last_el->src_el()->is_break())
+		// Skip If there are the only break item - this is float clearing
+		if (last_el && last_el->src_el()->is_break() && m_items.size() > 1)
 		{
 			return false;
 		}
@@ -597,6 +610,12 @@ bool litehtml::line_box::have_last_space()  const
 bool litehtml::line_box::is_empty() const
 {
     if(m_items.empty()) return true;
+	if(m_items.size() == 1 &&
+		m_items.front()->get_el()->src_el()->is_break() &&
+		m_items.front()->get_el()->src_el()->css().get_clear() != clear_none)
+	{
+		return true;
+	}
     for (const auto& el : m_items)
     {
 		if(el->get_type() == line_box_item::type_text_part)

@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-specified-height.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><title>table is flex item</title>
+<link href="mailto:dgrogan@chromium.org" rel="author" title="David Grogan">
+<link href="mailto:tlin@mozilla.com" rel="author" title="Ting-Yu Lin">
+<link href="https://www.w3.org/TR/css-flexbox-1/#layout-algorithm" rel="help" title="9. Flex Layout Algorithm">
+<link href="https://drafts.csswg.org/css-tables-3/#computing-the-table-height" rel="help">
+<link href="https://bugzilla.mozilla.org/show_bug.cgi?id=1692116" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square-only.htm" rel="match">
+<meta content="Table's specified height does not count as another min-height for the purposes of the flexbox algorithm." name="assert">
+
+</head><body><p>Test passes if there is a filled green square.</p>
+
+<div style="display: flex; flex-direction: column; width: 100px;">
+  <div style="display: table; width: 100px; height: 500px; background: green; flex: 0 0 100px;"></div>
+</div>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-specified-height.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

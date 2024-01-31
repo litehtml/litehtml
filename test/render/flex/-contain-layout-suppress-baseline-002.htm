@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/contain-layout-suppress-baseline-002.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head>
+  <meta charset="utf-8">
+  <title>CSS Test: 'contain: layout' should make elements behave as if they have no baseline</title>
+  <link href="mailto:dholbert@mozilla.com" rel="author" title="Daniel Holbert">
+  <link href="https://drafts.csswg.org/css-contain/#containment-layout" rel="help">
+  <link href="https://drafts.csswg.org/css-flexbox-1/#valdef-align-items-baseline" rel="help">
+  <link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/contain-layout-suppress-baseline-002-ref.htm" rel="match">
+  <style>
+  .flexBaselineCheck {
+    display: flex;
+    border: 1px solid black;
+  }
+  .flexBaselineCheck > * {
+    contain: layout;
+    border: 2px solid teal;
+    align-self: baseline;
+    margin: 2px;
+  }
+  canvas {
+    background: purple;
+    width: 20px;
+    height: 50px;
+    box-sizing: border-box;
+  }
+  </style>
+</head>
+<body>
+  <div class="flexBaselineCheck">
+    <!-- This canvas just exists to establish a precise, far-down baseline
+         alignment position: -->
+    <canvas></canvas>
+    <!-- "contain:layout" should force all the elements below to behave as if
+         they have no baseline. That means they all should *synthesize* a
+         baseline from their border-box edge, in order to participate in flex
+         item baseline alignment (to honor the outer flex container's
+         "align-items:baseline"). So, the expectation here is that all of these
+         elements' border-bottom edges should be aligned. -->
+    <button>btn</button>
+    <input type="button" value="i-btn">
+    <input type="submit" value="i-sub">
+  </div>
+
+  <!-- Same as above, but with different form controls:
+       (split into multiple flex containers so as not to be too wide): -->
+  <div class="flexBaselineCheck">
+    <canvas></canvas>
+    <input type="text" value="text">
+    <input type="number" value="0">
+  </div>
+
+  <div class="flexBaselineCheck">
+    <canvas></canvas>
+    <input type="date">
+    <input type="time">
+  </div>
+
+  <div class="flexBaselineCheck">
+    <canvas></canvas>
+    <input type="file">
+    <textarea>textarea</textarea>
+  </div>
+
+  <div class="flexBaselineCheck">
+    <canvas></canvas>
+    <select><option>dropdown</option></select>
+    <select style="max-height:40px" multiple=""><option>multi</option></select>
+  </div>
+
+
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/contain-layout-suppress-baseline-002.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

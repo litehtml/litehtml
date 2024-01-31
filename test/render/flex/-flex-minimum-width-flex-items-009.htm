@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html><head><title>CSS Flexible Box Test: Minimum width of flex items</title>
+<link href="mailto:dgrogan@chromium.org" rel="author" title="David Grogan">
+<link href="mailto:rego@igalia.com" rel="author" title="Manuel Rego Casasnovas">
+<link href="http://www.w3.org/TR/css-flexbox-1/#min-size-auto" rel="help" title="4.5. Implied Minimum Size of Flex Items">
+<link href="reference/ref-filled-green-100px-square.htm" rel="match">
+<meta content="Implied minimum main content suggestion accounts for minimum cross size when items have an aspect ratio." name="assert">
+<style type="text/css">
+    #reference-overlapped-red {
+        position: absolute;
+        background-color: red;
+        width: 100px;
+        height: 100px;
+        z-index: -1;
+    }
+
+    #constrained-flex {
+        display: flex;
+        width: 10px;
+    }
+
+    #test-flex-item-overlapping-green {
+        min-height: 100px;
+    }
+</style>
+</head><body><p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+
+<div id="reference-overlapped-red"></div>
+<div id="constrained-flex">
+    <img src="support/60x60-green.png" id="test-flex-item-overlapping-green">
+</div>
+</body></html>

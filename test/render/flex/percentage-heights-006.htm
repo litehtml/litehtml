@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/percentage-heights-006.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><title>Definite cross sizes</title>
+<link href="mailto:dgrogan@chromium.org" rel="author" title="David Grogan">
+<link href="https://drafts.csswg.org/css-flexbox-1/#definite-sizes" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square.htm" rel="match">
+<meta content="" name="flags">
+<meta content="In a column flexbox, the height of a fully inflexible item with fixed flex-basis is definite, and percent children resolve against the flex basis, not the specified height." name="assert">
+
+<style>
+x-flexbox {
+  display: flex;
+  flex-direction: column;
+}
+
+x-item {
+  height: 0px;
+  flex: 0 0 100px;
+}
+
+x-item>div {
+  width: 100px;
+  height: 100%;
+  background: green;
+}
+
+#reference-overlapped-red {
+  position: absolute;
+  background-color: red;
+  width: 100px;
+  height: 100px;
+  z-index: -1;
+}
+</style>
+
+</head><body><p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+
+<div id="reference-overlapped-red"></div>
+
+<x-flexbox>
+  <x-item>
+    <div></div>
+  </x-item>
+</x-flexbox>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/percentage-heights-006.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

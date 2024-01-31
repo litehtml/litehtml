@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-fixed-min-width-3.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><title>table is flex item</title>
+<link href="mailto:dgrogan@chromium.org" rel="author" title="David Grogan">
+<link href="https://www.w3.org/TR/css-flexbox-1/#layout-algorithm" rel="help" title="9. Flex Layout Algorithm">
+<link href="https://drafts.csswg.org/css-tables-3/#used-min-width-of-table" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square.htm" rel="match">
+<meta content="Flex item table's min-content width is honored when it is larger than the table's specified min-width, and the sum of the flex base sizes are greater than the container's available size." name="assert">
+
+</head><body><p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+
+<!-- This test passed in Chrome 83, was broken in 84 and 85, and will start to pass again in 86. -->
+
+<div style="display: flex; width: 100px;">
+  <div style="display: table; min-width: 50px; background: green;">
+    <div style="display:table-cell;">
+      <div style="width: 100px; height: 100px;"></div>
+    </div>
+  </div>
+  <div style="height: 100px; background: red; flex-basis: 100px; min-width: 0px;"></div>
+</div>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-fixed-min-width-3.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

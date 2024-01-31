@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/negative-flex-margins-crash.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><title>CSS Flexbox: Crash caused by negative width in flex box</title>
+<link href="mailto:cbiesinger@chromium.org" rel="author" title="Christian Biesinger">
+<link href="https://drafts.csswg.org/css-flexbox-1/#box-model" rel="help">
+<link href="https://crbug.com/490423" rel="issue">
+<meta content="Check that crash doesn't happen in flex box with negative margin." name="assert">
+
+<style>
+div {
+  display: flex;
+}
+
+.inner {
+  margin-left: -4em;
+}
+</style>
+</head><body><div>
+    <div>
+        <div class="inner">PASS if we don't assert</div>
+    </div>
+</div>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/negative-flex-margins-crash.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

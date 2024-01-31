@@ -195,6 +195,14 @@ namespace litehtml
 			cbc_value_type_none,		// min/max width/height of containing block is defined as none
 		};
 
+		enum cbc_size_mode
+		{
+			size_mode_normal = 0x00,
+			size_mode_exact_width = 0x01,
+			size_mode_exact_height = 0x02,
+			size_mode_content = 0x04,
+		};
+
 		struct typed_int
 		{
 			int 			value;
@@ -235,6 +243,7 @@ namespace litehtml
 		typed_int max_height;
 
 		int context_idx;
+		uint32_t size_mode;
 
 		containing_block_context() :
 				width(0, cbc_value_type_auto),
@@ -244,17 +253,26 @@ namespace litehtml
 				height(0, cbc_value_type_auto),
 				min_height(0, cbc_value_type_none),
 				max_height(0, cbc_value_type_none),
-				context_idx(0)
+				context_idx(0),
+				size_mode(size_mode_normal)
 		{}
 
-		containing_block_context new_width(int w) const
+		containing_block_context new_width(int w, uint32_t _size_mode = size_mode_normal) const
 		{
 			containing_block_context ret = *this;
-			//if(ret.width.type != cbc_value_type_absolute)
-			{
-				ret.render_width = w - (ret.width - ret.render_width);
-				ret.width = w;
-			}
+			ret.render_width = w - (ret.width - ret.render_width);
+			ret.width = w;
+			ret.size_mode = _size_mode;
+			return ret;
+		}
+
+		containing_block_context new_width_height(int w, int h, uint32_t _size_mode = size_mode_normal) const
+		{
+			containing_block_context ret = *this;
+			ret.render_width = w - (ret.width - ret.render_width);
+			ret.width = w;
+			ret.height = h;
+			ret.size_mode = _size_mode;
 			return ret;
 		}
 	};
@@ -693,7 +711,7 @@ namespace litehtml
 			m_is_default	= true;
 			m_val			= def_val;
 		}
-		bool is_default()
+		bool is_default() const
 		{
 			return m_is_default;
 		}
@@ -703,10 +721,70 @@ namespace litehtml
 			m_is_default	= false;
 			return m_val;
 		}
-		operator T()
+		operator T() const
 		{
 			return m_val;
 		}
+	};
+
+	class baseline
+	{
+	public:
+		enum _baseline_type
+		{
+			baseline_type_none,
+			baseline_type_top,
+			baseline_type_bottom,
+		};
+
+	public:
+		baseline() : m_value(0), m_type(baseline_type_none) {}
+		baseline(int _value, _baseline_type _type) : m_value(_value), m_type(_type) {}
+
+		int value() const				{ return m_value; 	}
+		void value(int _value) 			{ m_value = _value; }
+		_baseline_type type() const		{ return m_type; 	}
+		void type(_baseline_type _type)	{ m_type = _type; 	}
+
+		operator int() const	{ return m_value; 	}
+		baseline& operator=(int _value) { m_value = _value; return *this; }
+
+		void set(int _value, _baseline_type _type)	{ m_value = _value; m_type =_type; }
+		/**
+		 * Get baseline offset from top of element with specified height
+		 * @param height - element height
+		 * @return baseline offset
+		 */
+		int get_offset_from_top(int height) const
+		{
+			if(m_type == baseline_type_top) return m_value;
+			return height - m_value;
+		}
+		/**
+		 * Get baseline offset from bottom of element with specified height
+		 * @param height - element height
+		 * @return baseline offset
+		 */
+		int get_offset_from_bottom(int height) const
+		{
+			if(m_type == baseline_type_bottom) return m_value;
+			return height - m_value;
+		}
+		/**
+		 * Calculate baseline by top and bottom positions of element aligned by baseline == 0
+		 * @param top - top of the aligned element
+		 * @param bottom - bottom of the aligned element
+		 */
+		void calc(int top, int bottom)
+		{
+			if(m_type == baseline_type_top)
+				m_value = -top;
+			else if(m_type == baseline_type_bottom)
+				m_value = bottom;
+		}
+	private:
+		int m_value;
+		_baseline_type m_type;
 	};
 
 
@@ -848,46 +926,51 @@ namespace litehtml
 		flex_wrap_wrap_reverse
 	};
 
-#define flex_justify_content_strings		"flex-start;flex-end;center;space-between;space-around"
+#define flex_justify_content_strings		"normal;flex-start;flex-end;center;space-between;space-around;start;end;left;right;space-evenly;stretch"
 
 	enum flex_justify_content
 	{
+		flex_justify_content_normal,
 		flex_justify_content_flex_start,
 		flex_justify_content_flex_end,
 		flex_justify_content_center,
 		flex_justify_content_space_between,
-		flex_justify_content_space_around
+		flex_justify_content_space_around,
+		flex_justify_content_start,
+		flex_justify_content_end,
+		flex_justify_content_left,
+		flex_justify_content_right,
+		flex_justify_content_space_evenly,
+		flex_justify_content_stretch,
 	};
 
-#define flex_align_items_strings		"flex-start;flex-end;center;baseline;stretch"
+#define flex_align_items_strings		"normal;flex-start;flex-end;center;start;end;baseline;stretch;auto"
 
 	enum flex_align_items
 	{
+		flex_align_items_flex_normal,
 		flex_align_items_flex_start,
 		flex_align_items_flex_end,
 		flex_align_items_center,
+		flex_align_items_start,
+		flex_align_items_end,
 		flex_align_items_baseline,
-		flex_align_items_stretch
+		flex_align_items_stretch,
+		flex_align_items_auto, // used for align-self property only
+		flex_align_items_first = 0x100,
+		flex_align_items_last = 0x200,
+		flex_align_items_unsafe = 0x400,
+		flex_align_items_safe  = 0x800,
 	};
 
-#define flex_align_self_strings		"auto;flex-start;flex-end;center;baseline;stretch"
-
-	enum flex_align_self
-	{
-		flex_align_self_auto,
-		flex_align_self_flex_start,
-		flex_align_self_flex_end,
-		flex_align_self_center,
-		flex_align_self_baseline,
-		flex_align_self_stretch
-	};
-
-#define flex_align_content_strings		"flex-start;flex-end;center;space-between;space-around;stretch"
+#define flex_align_content_strings		"flex-start;start;flex-end;end;center;space-between;space-around;stretch"
 
 	enum flex_align_content
 	{
 		flex_align_content_flex_start,
+		flex_align_content_start,
 		flex_align_content_flex_end,
+		flex_align_content_end,
 		flex_align_content_center,
 		flex_align_content_space_between,
 		flex_align_content_space_around,

@@ -157,6 +157,35 @@ namespace litehtml
 			if (bottom_left_x < 0) bottom_left_x = 0;
 			if (bottom_left_y < 0) bottom_left_y = 0;
 		}
+		void fix_values(int width, int height)
+		{
+			fix_values();
+			int half_width = width / 2;
+			int half_height = height / 2;
+			auto fix_one = [&](int& radii_x, int& radii_y)
+				{
+					double factor = std::min((double) half_width / (double) radii_x, (double) half_height / (double) radii_y);
+					radii_x = (int) ((double) radii_x * factor);
+					radii_y = (int) ((double) radii_y * factor);
+				};
+
+			if(top_left_x > half_width || top_left_y > half_height)
+			{
+				fix_one(top_left_x, top_left_y);
+			}
+			if(top_right_x > half_width || top_right_y > half_height)
+			{
+				fix_one(top_right_x, top_right_y);
+			}
+			if(bottom_right_x > half_width || bottom_right_y > half_height)
+			{
+				fix_one(bottom_right_x, bottom_right_y);
+			}
+			if(bottom_left_x > half_width || bottom_left_y > half_height)
+			{
+				fix_one(bottom_left_x, bottom_left_y);
+			}
+		}
 	};
 
 	struct css_border_radius
@@ -213,6 +242,7 @@ namespace litehtml
 			ret.top_right_y = top_right_y.calc_percent(height);
 			ret.bottom_right_x = bottom_right_x.calc_percent(width);
 			ret.bottom_right_y = bottom_right_y.calc_percent(height);
+			ret.fix_values(width, height);
 			return ret;
 		}
 	};

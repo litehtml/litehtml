@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/cross-axis-scrollbar.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><title>CSS Flexbox: Scrollbars and flex-direction.</title>
+<link href="support/flexbox.css" rel="stylesheet">
+<link href="https://www.w3.org/TR/css-flexbox-1/#flex-direction-property" rel="help">
+<link href="https://www.w3.org/TR/css-overflow-4/#classic-scrollbars" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/cross-axis-scrollbar-ref.htm" rel="match">
+<meta content="This test ensures that flexbox scrollbars take flex-direction into account." name="assert">
+<style>
+body {
+    margin: 0;
+}
+
+.flexbox {
+    background-color: red;
+}
+
+.vertical-rl {
+    writing-mode: vertical-rl;
+}
+
+.vertical-lr {
+    writing-mode: vertical-lr;
+}
+
+.column > div {
+    flex: none;
+    background-color: green;
+    width: 100px;
+    height: 10px;
+}
+
+.row > div {
+    background-color: green;
+    flex: 1;
+    height: 50px;
+    min-height: 0;
+}
+
+.vertical-lr > .column > div {
+    flex: none;
+    height: 50px;
+    width: 20px;
+}
+
+.vertical-lr > .row > div {
+    flex: 1;
+    width: 100px;
+}
+
+</style>
+</head><body>
+
+This test passes if no red is showing.
+
+<div style="position: relative;">
+
+<div style="position: absolute; top: 0; left: 0;">
+<div style="overflow-x: scroll; overflow-y: hidden; border-bottom: 10px solid green;" class="flexbox column">
+    <div class="align-self-flex-start"></div>
+    <div class="align-self-center"></div>
+    <div class="align-self-flex-end"></div>
+    <div class="align-self-baseline"></div>
+    <div class="align-self-stretch"></div>
+</div>
+</div>
+
+<div style="position: absolute; top: 0; left: 150px;">
+<div style="overflow-y: scroll; overflow-x: hidden; border-right: 10px solid green;" class="flexbox column">
+    <div class="align-self-flex-start"></div>
+    <div class="align-self-center"></div>
+    <div class="align-self-flex-end"></div>
+    <div class="align-self-baseline"></div>
+    <div class="align-self-stretch"></div>
+</div>
+</div>
+
+<div style="position: absolute; top:0; left: 300px" class="vertical-lr">
+<div style="overflow-y: scroll; overflow-x: hidden; border-right: 10px solid green;" class="flexbox column">
+    <div class="align-self-flex-start"></div>
+    <div class="align-self-center"></div>
+    <div class="align-self-flex-end"></div>
+    <div class="align-self-baseline"></div>
+    <div class="align-self-flex-start"></div>
+</div>
+</div>
+
+<div style="position: absolute; top:0; left: 450px;" class="vertical-lr">
+<div style="overflow-x: scroll; overflow-y: hidden; border-bottom: 10px solid green;" class="flexbox column">
+    <div class="align-self-flex-start"></div>
+    <div class="align-self-center"></div>
+    <div class="align-self-flex-end"></div>
+    <div class="align-self-baseline"></div>
+    <div class="align-self-flex-start"></div>
+</div>
+</div>
+
+<div style="height: 20px; width: 100px; position: absolute; top: 100px; left: 0">
+<div style="overflow-x: scroll; overflow-y: hidden; border-bottom: 10px solid green;" class="flexbox row">
+    <div class="align-self-flex-start"></div>
+    <div class="align-self-center"></div>
+    <div class="align-self-flex-end"></div>
+    <div class="align-self-baseline"></div>
+    <div class="align-self-stretch"></div>
+</div>
+</div>
+
+<div style="height: 20px; width: 100px; position: absolute; top: 100px; left: 150px">
+<div style="overflow-y: scroll; overflow-x: hidden; border-right: 10px solid green;" class="flexbox row">
+    <div class="align-self-flex-start"></div>
+    <div class="align-self-center"></div>
+    <div class="align-self-flex-end"></div>
+    <div class="align-self-baseline"></div>
+    <div class="align-self-stretch"></div>
+</div>
+</div>
+
+<div style="height: 50px; width: 50px; position: absolute; top: 100px; left: 300px" class="vertical-lr">
+<div style="overflow-x: scroll; overflow-y: hidden; border-bottom: 10px solid green;" class="flexbox row">
+    <div class="align-self-flex-start"></div>
+    <div class="align-self-center"></div>
+    <div class="align-self-flex-end"></div>
+    <div class="align-self-baseline"></div>
+    <div class="align-self-stretch"></div>
+</div>
+</div>
+
+<div style="height: 50px; width: 50px; position: absolute; top: 100px; left: 450px" class="vertical-lr">
+<div style="overflow-y: scroll; overflow-x: hidden; border-right: 10px solid green;" class="flexbox row">
+    <div class="align-self-flex-start"></div>
+    <div class="align-self-center"></div>
+    <div class="align-self-flex-end"></div>
+    <div class="align-self-baseline"></div>
+    <div class="align-self-stretch"></div>
+</div>
+</div>
+
+</div>
+<!-- FIXME: Add tests for vertical-rl.  Setting the logical
+bottom border on these tests cause additional scrollbars to appear. -->
+
+
+
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/cross-axis-scrollbar.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

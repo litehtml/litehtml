@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/space-evenly-001.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><meta charset="utf-8">
+  <title>CSS Box Alignment: space-evenly &amp; flexbox with single item</title>
+  <link href="https://florian.rivoal.net/" rel="author" title="Florian Rivoal">
+  <meta content="" name="flags">
+  <meta content="justify-content: space-evenly with flexbox and a single item must center it" name="assert">
+  <link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square.htm" rel="match">
+  <link href="https://drafts.csswg.org/css-align/#distribution-values" rel="help">
+  <link href="https://drafts.csswg.org/css-align/#fallback-alignment" rel="help">
+  <link href="https://drafts.csswg.org/css-flexbox-1/#justify-content-property" rel="help">
+<style>
+.red {
+  position: absolute;
+  z-index: -1;
+  width: 100px;
+  height: 100px;
+  background: red;
+}
+.container {
+  margin-left: -100px;
+  width: 300px;
+  display: flex;
+  justify-content: space-evenly;
+}
+.container div {
+  width: 100px;
+  height: 100px;
+  background: green;
+}
+</style>
+
+</head><body><p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+<div class="red"></div>
+<div class="container"><div></div></div>
+
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/space-evenly-001.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

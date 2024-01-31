@@ -261,10 +261,10 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
 
     // calculate block height
     int block_height = 0;
-    if (get_predefined_height(block_height, containing_block_size.height))
-    {
-        block_height -= m_padding.height() + m_borders.height();
-    }
+	if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height > 0)
+	{
+		block_height = self_size.height - (m_padding.height() + m_borders.height());
+	}
 
     // calculate minimum height from m_css.get_min_height()
     int min_height = 0;

@@ -274,8 +274,18 @@ element::ptr element::_add_before_after(int type, const style& style)
 
 bool element::is_block_formatting_context() const
 {
+	if(m_css.get_display() == display_block)
+	{
+		auto par = parent();
+		if(par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex))
+		{
+			return true;
+		}
+	}
 	if(	m_css.get_display() == display_inline_block ||
 		   m_css.get_display() == display_table_cell ||
+		   m_css.get_display() == display_inline_flex ||
+		   m_css.get_display() == display_flex ||
 		   m_css.get_display() == display_table_caption ||
 		   is_root() ||
 		   m_css.get_float() != float_none ||
@@ -448,6 +458,7 @@ bool element::is_replaced() const									LITEHTML_RETURN_FUNC(false)
 void element::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) LITEHTML_EMPTY_FUNC
 void element::draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) LITEHTML_EMPTY_FUNC
 int				element::get_enum_property			(string_id name, bool inherited, int defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(0)
+int				element::get_int_property			(string_id name, bool inherited, int defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(0)
 css_length		element::get_length_property		(string_id name, bool inherited, css_length defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(0)
 web_color		element::get_color_property			(string_id name, bool inherited, web_color defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC(web_color())
 string			element::get_string_property		(string_id name, bool inherited, const string& defval, uint_ptr css_properties_member_offset) const LITEHTML_RETURN_FUNC("")

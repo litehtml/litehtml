@@ -382,21 +382,30 @@ void litehtml::render_item_inline_context::apply_vertical_align()
     }
 }
 
-int litehtml::render_item_inline_context::get_base_line()
+int litehtml::render_item_inline_context::get_first_baseline()
 {
-    auto el_parent = parent();
-    if(el_parent && src_el()->css().get_display() == display_inline_flex)
-    {
-        return el_parent->get_base_line();
-    }
-    if(src_el()->is_replaced())
-    {
-        return 0;
-    }
-    int bl = 0;
-    if(!m_line_boxes.empty())
-    {
-        bl = m_line_boxes.back()->baseline() + content_offset_bottom();
-    }
-    return bl;
+	int bl;
+	if(!m_line_boxes.empty())
+	{
+		const auto &line = m_line_boxes.front();
+		bl = line->bottom() - line->baseline() + content_offset_top();
+	} else
+	{
+		bl = height() - margin_bottom();
+	}
+	return bl;
+}
+
+int litehtml::render_item_inline_context::get_last_baseline()
+{
+	int bl;
+	if(!m_line_boxes.empty())
+	{
+		const auto &line = m_line_boxes.back();
+		bl = line->bottom() - line->baseline() + content_offset_top();
+	} else
+	{
+		bl = height() - margin_bottom();
+	}
+	return bl;
 }

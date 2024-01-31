@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-stretch-cross-size-4.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head><link href="mailto:dgrogan@chromium.org" rel="author" title="David Grogan">
+<link href="https://drafts.csswg.org/css-flexbox-1/#valdef-align-items-stretch" rel="help">
+<link href="https://drafts.csswg.org/css-tables-3/#used-min-width-of-table" rel="help">
+<link href="https://crbug.com/1189359" rel="bookmark">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/ref-filled-green-100px-square.htm" rel="match">
+<meta content="Flex doesn't stretch the table to an inline size less than the table's used min-width." name="assert">
+
+<style>
+#reference-overlapped-red {
+  position: absolute;
+  background-color: red;
+  width: 100px;
+  height: 100px;
+  z-index: -1;
+}
+</style>
+
+</head><body><p>Test passes if there is a filled green square and <strong>no red</strong>.</p>
+<div id="reference-overlapped-red"></div>
+
+<!-- No table html elements so I don't have to reset border-spacing, cellpadding etc -->
+<div style="display: flex; flex-direction: column; width: 50px;">
+  <div style="display: table; background: green">
+    <div style="display: table-cell;">
+      <div style="height: 100px; width: 100px;"></div>
+    </div>
+  </div>
+</div>
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/table-as-item-stretch-cross-size-4.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

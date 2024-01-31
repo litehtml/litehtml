@@ -43,7 +43,7 @@ std::map<string_id, string> style::m_valid_values =
 	{ _justify_content_, flex_justify_content_strings },
 	{ _align_items_, flex_align_items_strings },
 	{ _align_content_, flex_align_content_strings },
-	{ _align_self_, flex_align_self_strings },
+	{ _align_self_, flex_align_items_strings },
 
 	{ _caption_side_, caption_side_strings },
 };
@@ -128,9 +128,7 @@ void style::add_property(string_id name, const string& val, const string& baseur
 	case _flex_direction_:
 	case _flex_wrap_:
 	case _justify_content_:
-	case _align_items_:
 	case _align_content_:
-	case _align_self_:
 
 	case _caption_side_:
 
@@ -139,6 +137,11 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		{
 			add_parsed_property(name, property_value(idx, important));
 		}
+		break;
+
+	case _align_items_:
+	case _align_self_:
+		parse_align_self(name, val, important);
 		break;
 
 	// <length>
@@ -536,6 +539,16 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		add_parsed_property(_flex_basis_, property_value(length, important));
 		break;
 
+	case _order_: // <integer>
+		{
+			char* end;
+			int int_val = (int) strtol(val.c_str(), &end, 10);
+			if(end[0] == '\0')
+			{
+				add_parsed_property(name, property_value(int_val, important));
+			}
+		}
+		break;
 	case _counter_increment_:
 	case _counter_reset_:
 	{	
@@ -981,14 +994,16 @@ void style::parse_font(const string& val, bool important)
 		{
 			string_vector szlh;
 			split_string(token, szlh, "/");
-
-			auto size = css_length::from_string(szlh[0], font_size_strings, -1);
-			add_parsed_property(_font_size_, property_value(size, important));
-
-			if(szlh.size() == 2)
+			if(!szlh.empty())
 			{
-				auto height = css_length::from_string(szlh[1], "normal", -1);
-				add_parsed_property(_line_height_, property_value(height, important));
+				auto size = css_length::from_string(szlh[0], font_size_strings, -1);
+				add_parsed_property(_font_size_, property_value(size, important));
+
+				if (szlh.size() == 2)
+				{
+					auto height = css_length::from_string(szlh[1], "normal", -1);
+					add_parsed_property(_line_height_, property_value(height, important));
+				}
 			}
 		} else
 		{
@@ -1033,6 +1048,10 @@ void style::parse_flex(const string& val, bool important)
 			float grow = t_strtof(tokens[0]);
 			float shrink = t_strtof(tokens[1]);
 			auto basis = css_length::from_string(tokens[2], flex_basis_strings, -1);
+			if(!basis.is_predefined() && basis.units() == css_units_none && basis.val() == 0)
+			{
+				basis.set_value(basis.val(), css_units_px);
+			}
 			
 			add_parsed_property(_flex_grow_,	property_value(grow, important));
 			add_parsed_property(_flex_shrink_,	property_value(shrink, important));
@@ -1047,6 +1066,7 @@ void style::parse_flex(const string& val, bool important)
 			{
 				float shrink = t_strtof(tokens[1]);
 				add_parsed_property(_flex_shrink_, property_value(shrink, important));
+				add_parsed_property(_flex_basis_, property_value(css_length(0), important));
 			}
 			else
 			{
@@ -1060,18 +1080,61 @@ void style::parse_flex(const string& val, bool important)
 			{
 				float grow = t_strtof(tokens[0]);
 				add_parsed_property(_flex_grow_, property_value(grow, important));
-				
-				if (grow >= 1)
-				{
-					add_parsed_property(_flex_shrink_, property_value(1.f, important));
-					add_parsed_property(_flex_basis_,  property_value(css_length(0), important));
-				}
+				add_parsed_property(_flex_shrink_, property_value(1.f, important));
+				add_parsed_property(_flex_basis_,  property_value(css_length(0), important));
 			}
 			else
 			{
 				auto basis = css_length::from_string(tokens[0], flex_basis_strings, -1);
+				add_parsed_property(_flex_grow_, property_value(1.f, important));
+				add_parsed_property(_flex_shrink_, property_value(1.f, important));
 				add_parsed_property(_flex_basis_, property_value(basis, important));
 			}
+		}
+	}
+}
+
+void style::parse_align_self(string_id name, const string& val, bool important)
+{
+	string_vector tokens;
+	split_string(val, tokens, " ");
+	if(tokens.size() == 1)
+	{
+		int idx = value_index(val, m_valid_values[name]);
+		if (idx >= 0)
+		{
+			add_parsed_property(name, property_value(idx, important));
+		}
+	} else
+	{
+		int val1 = 0;
+		int val2 = -1;
+		for(auto &token : tokens)
+		{
+			if(token == "first")
+			{
+				val1 |= flex_align_items_first;
+			} else if(token == "last")
+			{
+				val1 |= flex_align_items_last;
+			} else if(token == "safe")
+			{
+				val1 |= flex_align_items_safe;
+			} else if(token == "unsafe")
+			{
+				val1 |= flex_align_items_unsafe;
+			} else
+			{
+				int idx = value_index(token, m_valid_values[name]);
+				if(idx >= 0)
+				{
+					val2 = idx;
+				}
+			}
+		}
+		if(val2 >= 0)
+		{
+			add_parsed_property(name, property_value(val1 | val2, important));
 		}
 	}
 }

@@ -86,7 +86,7 @@ namespace litehtml
 
         int width() const
         {
-            return m_pos.width + m_margins.left + m_margins.right + m_padding.width() + m_borders.width();
+            return m_pos.width + m_margins.width() + m_padding.width() + m_borders.width();
         }
 
         int padding_top() const
@@ -224,27 +224,43 @@ namespace litehtml
 
 		int box_sizing_left() const
 		{
-			return m_padding.left + m_borders.left;
+			if(css().get_box_sizing() == box_sizing_border_box)
+			{
+				return m_padding.left + m_borders.left;
+			}
+			return 0;
 		}
 
 		int box_sizing_right() const
 		{
-			return m_padding.right + m_borders.right;
+			if(css().get_box_sizing() == box_sizing_border_box)
+			{
+				return m_padding.right + m_borders.right;
+			}
+			return 0;
 		}
 
 		int box_sizing_width() const
 		{
-			return box_sizing_left() + box_sizing_left();
+			return box_sizing_left() + box_sizing_right();
 		}
 
 		int box_sizing_top() const
 		{
-			return m_padding.top + m_borders.top;
+			if(css().get_box_sizing() == box_sizing_border_box)
+			{
+				return m_padding.top + m_borders.top;
+			}
+			return 0;
 		}
 
 		int box_sizing_bottom() const
 		{
-			return m_padding.bottom + m_borders.bottom;
+			if(css().get_box_sizing() == box_sizing_border_box)
+			{
+				return m_padding.bottom + m_borders.bottom;
+			}
+			return 0;
 		}
 
 		int box_sizing_height() const
@@ -285,6 +301,7 @@ namespace litehtml
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.top >= 0 &&
+				   !is_flex_item() &&
                    !is_root();
         }
 
@@ -303,16 +320,34 @@ namespace litehtml
             return !(m_skip || src_el()->css().get_display() == display_none || src_el()->css().get_visibility() != visibility_visible);
         }
 
+		bool is_flex_item() const
+		{
+			auto par = parent();
+			if(par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex))
+			{
+				return true;
+			}
+			return false;
+		}
+
 		int render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false);
-        int calc_width(int defVal, int containing_block_width) const;
-        bool get_predefined_height(int& p_height, int containing_block_height) const;
         void apply_relative_shift(const containing_block_context &containing_block_size);
         void calc_outlines( int parent_width );
         int calc_auto_margins(int parent_width);	// returns left margin
 
         virtual std::shared_ptr<render_item> init();
         virtual void apply_vertical_align() {}
-        virtual int get_base_line() { return 0; }
+		/**
+		 * Get first baseline position. Default position is element bottom without bottom margin.
+		 * @returns offset of the first baseline from element top
+		 */
+		virtual int get_first_baseline() { return height() - margin_bottom(); }
+		/**
+		 * Get last baseline position.  Default position is element bottom without bottom margin.
+		 * @returns offset of the last baseline from element top
+		 */
+		virtual int get_last_baseline() { return height() - margin_bottom(); }
+
         virtual std::shared_ptr<render_item> clone()
         {
             return std::make_shared<render_item>(src_el());

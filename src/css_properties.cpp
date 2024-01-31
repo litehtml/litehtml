@@ -240,6 +240,8 @@ void litehtml::css_properties::compute(const element* el, const document::ptr& d
 		doc->container()->load_image(m_list_style_image.c_str(), m_list_style_image_baseurl.c_str(), true);
 	}
 
+	m_order = el->get_int_property(_order_, false, 0, offset(m_order));
+
 	compute_background(el, doc);
 	compute_flex(el, doc);
 }
@@ -391,22 +393,27 @@ void litehtml::css_properties::compute_background(const element* el, const docum
 
 void litehtml::css_properties::compute_flex(const element* el, const document::ptr& doc)
 {
-	if (m_display == display_flex)
+	if (m_display == display_flex || m_display == display_inline_flex)
 	{
 		m_flex_direction = (flex_direction) el->get_enum_property(_flex_direction_, false, flex_direction_row, offset(m_flex_direction));
 		m_flex_wrap = (flex_wrap) el->get_enum_property(_flex_wrap_, false, flex_wrap_nowrap, offset(m_flex_wrap));
 
 		m_flex_justify_content = (flex_justify_content) el->get_enum_property(_justify_content_, false, flex_justify_content_flex_start, offset(m_flex_justify_content));
-		m_flex_align_items = (flex_align_items) el->get_enum_property(_align_items_, false, flex_align_items_stretch, offset(m_flex_align_items));
+		m_flex_align_items = (flex_align_items) el->get_enum_property(_align_items_, false, flex_align_items_flex_normal, offset(m_flex_align_items));
 		m_flex_align_content = (flex_align_content) el->get_enum_property(_align_content_, false, flex_align_content_stretch, offset(m_flex_align_content));
 	}
+	m_flex_align_self = (flex_align_items) el->get_enum_property(_align_self_, false, flex_align_items_auto, offset(m_flex_align_self));
 	auto parent = el->parent();
-	if (parent && parent->css().m_display == display_flex)
+	if (parent && (parent->css().m_display == display_flex || parent->css().m_display == display_inline_flex))
 	{
 		m_flex_grow = el->get_number_property(_flex_grow_, false, 0, offset(m_flex_grow));
 		m_flex_shrink = el->get_number_property(_flex_shrink_, false, 1, offset(m_flex_shrink));
-		m_flex_align_self = (flex_align_self) el->get_enum_property(_align_self_, false, flex_align_self_auto, offset(m_flex_align_self));
-		m_flex_basis = el->get_length_property(_flex_shrink_, false, css_length::predef_value(flex_basis_auto), offset(m_flex_basis));
+		m_flex_basis = el->get_length_property(_flex_basis_, false, css_length::predef_value(flex_basis_auto), offset(m_flex_basis));
+		if(!m_flex_basis.is_predefined() && m_flex_basis.units() == css_units_none && m_flex_basis.val() != 0)
+		{
+			// flex-basis property must contain units
+			m_flex_basis.predef(flex_basis_auto);
+		}
 		doc->cvt_units(m_flex_basis, get_font_size());
 		if(m_display == display_inline || m_display == display_inline_block)
 		{

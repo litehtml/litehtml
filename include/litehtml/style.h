@@ -199,6 +199,7 @@ namespace litehtml
 		bool parse_one_background_size(const string& val, css_size& size);
 		void parse_font(const string& val, bool important);
 		void parse_flex(const string& val, bool important);
+		void parse_align_self(string_id name, const string& val, bool important);
 		static css_length parse_border_width(const string& str);
 		static void parse_two_lengths(const string& str, css_length len[2]);
 		static int parse_four_lengths(const string& str, css_length len[4]);

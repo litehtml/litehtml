@@ -48,7 +48,8 @@ namespace litehtml
 			return std::make_shared<render_item_inline_context>(src_el());
 		}
 
-		int get_base_line() override;
+		int get_first_baseline() override;
+		int get_last_baseline() override;
 	};
 }
 

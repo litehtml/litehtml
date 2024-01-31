@@ -84,7 +84,7 @@ void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
 
 void test_container::import_css(string& text, const string& url, string& baseurl)
 {
-	baseurl = basedir + url;
+	baseurl = basedir + "/" + url;
 	text = readfile(baseurl);
 }
 

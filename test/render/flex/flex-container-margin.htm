@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/flex-container-margin.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+<head>
+<title>CSS Test: flex-container-margin-not-collapse-with-content-margin</title>
+<link href="http://www.github.com/sskyy" rel="author" title="houzhenyu">
+<link href="https://drafts.csswg.org/css-flexbox-1/#item-margins" rel="help">
+<link href="http://test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/reference/flex-container-margin-ref.htm" rel="match">
+<meta content="The margins of adjacent flex items do not collapse." name="assert">
+<style>
+    .flex-container{
+        display: flex;
+        margin:20px;
+        background: #333;
+    }
+    .flex-item{
+        width:50px;
+        height:50px;
+        margin:20px;
+        background: #eee;
+    }
+</style>
+</head>
+<body>
+    <div class="flex-container">
+        <div class="flex-item"></div>
+        <div class="flex-item"></div>
+        <div class="flex-item"></div>
+    </div>
+
+
+</body>
+<!-- Mirrored from test.csswg.org/suites/css-flexbox-1_dev/nightly-unstable/html/flex-container-margin.htm by HTTrack Website Copier/3.x [XR&CO'2014], Sat, 23 Dec 2023 16:15:11 GMT -->
+</html>

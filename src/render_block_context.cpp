@@ -47,20 +47,26 @@ int litehtml::render_item_block_context::_render_content(int x, int y, bool seco
                 // Collapse top margin
                 if(is_first && collapse_top_margin())
                 {
-                    child_top -= el->get_margins().top;
-                    if(el->get_margins().top > get_margins().top)
-                    {
-                        m_margins.top = el->get_margins().top;
-                    }
+					if(el->get_margins().top > 0)
+					{
+						child_top -= el->get_margins().top;
+						if (el->get_margins().top > get_margins().top)
+						{
+							m_margins.top = el->get_margins().top;
+						}
+					}
                 } else
                 {
-                    if(last_margin > el->get_margins().top)
-                    {
-                        child_top -= el->get_margins().top;
-                    } else
-                    {
-                        child_top -= last_margin;
-                    }
+					if(el->get_margins().top > 0)
+					{
+						if (last_margin > el->get_margins().top)
+						{
+							child_top -= el->get_margins().top;
+						} else
+						{
+							child_top -= last_margin;
+						}
+					}
                 }
 
                 if(el->src_el()->is_replaced() || el->src_el()->is_block_formatting_context() || el->src_el()->css().get_display() == display_table)
@@ -104,10 +110,9 @@ int litehtml::render_item_block_context::_render_content(int x, int y, bool seco
         }
     }
 
-    int block_height = 0;
-    if (get_predefined_height(block_height, self_size.height))
+    if (self_size.height.type != containing_block_context::cbc_value_type_auto  && self_size.height > 0)
     {
-        m_pos.height = block_height;
+        m_pos.height = self_size.height;
     } else
     {
         m_pos.height = child_top;
@@ -126,4 +131,24 @@ int litehtml::render_item_block_context::_render_content(int x, int y, bool seco
     }
 
     return ret_width;
+}
+
+int litehtml::render_item_block_context::get_first_baseline()
+{
+	if(m_children.empty())
+	{
+		return height() - margin_bottom();
+	}
+	const auto &item = m_children.front();
+	return content_offset_top() + item->top() + item->get_first_baseline();
+}
+
+int litehtml::render_item_block_context::get_last_baseline()
+{
+	if(m_children.empty())
+	{
+		return height() - margin_bottom();
+	}
+	const auto &item = m_children.back();
+	return content_offset_top() + item->top() + item->get_last_baseline();
 }

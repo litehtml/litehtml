@@ -72,6 +72,7 @@ namespace litehtml
 		template<class Type, property_type property_value_type, Type property_value::* property_value_member>
 		const Type&			get_property_impl  (string_id name, bool inherited, const Type&   default_value, uint_ptr css_properties_member_offset) const;
 		int					get_enum_property  (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const override;
+		int					get_int_property   (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const override;
 		css_length			get_length_property(string_id name, bool inherited, css_length    default_value, uint_ptr css_properties_member_offset) const override;
 		web_color			get_color_property (string_id name, bool inherited, web_color     default_value, uint_ptr css_properties_member_offset) const override;
 		string				get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const override;
