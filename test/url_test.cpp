@@ -103,10 +103,10 @@ TEST(URLTest, Parse)
             "https", "datatracker.ietf.org", "/doc/html/rfc3986", "", "section-2.2" },
 
         { "file:///home/litehtml/build/hipster.html",
-            "file", "", "/home/litehtml/build/hipster.html" },
+            "file", "", "/home/litehtml/build/hipster.html", "", "" },
 
         { "/home/litehtml/Projects/litehtml/build/hipster.html",
-            "", "", "/home/litehtml/Projects/litehtml/build/hipster.html" },
+            "", "", "/home/litehtml/Projects/litehtml/build/hipster.html", "", "" },
     };
 
     for (auto& testcase : testcases) {
@@ -166,7 +166,7 @@ TEST(URLTest, Build)
         //    "file", "", "/home/litehtml/build/hipster.html" },
 
         { "/home/litehtml/Projects/litehtml/build/hipster.html",
-            "", "", "/home/litehtml/Projects/litehtml/build/hipster.html" },
+            "", "", "/home/litehtml/Projects/litehtml/build/hipster.html", "", "" },
     };
 
     for (auto& testcase : testcases) {

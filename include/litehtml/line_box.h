@@ -25,6 +25,7 @@ namespace litehtml
         {
             calculatedTop = top;
         }
+		line_context() : calculatedTop(0), top(0), left(0), right(0) {}
     };
 
 	class line_box_item
@@ -42,7 +43,7 @@ namespace litehtml
 		int m_rendered_min_width;
 	public:
 		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element), m_rendered_min_width(0) {}
-		line_box_item() = default;
+		line_box_item() : m_element(), m_rendered_min_width(0) {};
 		line_box_item(const line_box_item& el) = default;
 		line_box_item(line_box_item&&) = default;
 
@@ -130,10 +131,10 @@ namespace litehtml
 				m_right(right),
 				m_height(0),
 				m_width(0),
-				m_font_metrics(fm),
-				m_default_line_height(line_height),
-				m_baseline(0),
 				m_line_height(0),
+				m_default_line_height(line_height),
+				m_font_metrics(fm),
+				m_baseline(0),
 				m_text_align(align),
 				m_min_width(0)
 		{

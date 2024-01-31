@@ -15,7 +15,7 @@ Font::size_name Font::installed_fonts[] =
 	{ 24, "terminus-ascii-bold-24px.yaff" },
 	{ 28, "terminus-ascii-bold-28px.yaff" },
 	{ 32, "terminus-ascii-bold-32px.yaff" },
-	{ 0 }
+	{ 0, "" }
 };
 
 Font::Font(int size)
@@ -66,18 +66,18 @@ void Font::load(string filename)
 
 	int i;
 	// parse header
-	for (i = 0; i < lines.size(); i++)
+	for (i = 0; i < (int) lines.size(); i++)
 	{
 		string line = lines[i];
 		trim(line);
-		if (line == "" || line[0] == '#') continue; // skip empty lines and comments
+		if (line.empty() || line[0] == '#') continue; // skip empty lines and comments
 
 		auto sep = line.find(':');
-		if (sep == -1) return; // line without ':' - error
+		if (sep == string::npos) return; // line without ':' - error
 
 		auto key = line.substr(0, sep);   trim(key);
 		auto val = line.substr(sep + 1);  trim(val);
-		if (val == "") break; // end of header
+		if (val.empty()) break; // end of header
 
 		if (key == "cell-size")    sscanf(val.c_str(), "%d %d", &width, &height);
 		else if (key == "ascent")  ascent = atoi(val.c_str());
@@ -89,21 +89,21 @@ void Font::load(string filename)
 	// only u+NNNN: label is recognized, all others are skipped
 	auto parse_key = [&]() {
 		int ch = -1;
-		for (; i < lines.size(); i++)
+		for (; i < (int) lines.size(); i++)
 		{
 			string line = lines[i];
 			trim(line);
-			if (line == "") continue;
-			if (line.find(':') == -1) break; // start of glyph data
+			if (line.empty()) continue;
+			if (line.find(':') == string::npos) break; // start of glyph data
 			if (line.substr(0, 2) == "u+")
-				sscanf(line.c_str(), "u+%X:", &ch);
+				sscanf(line.c_str(), "u+%X:", (unsigned int*) &ch);
 		}
 		return ch;
 	};
 	
 	auto parse_glyph = [&](int ch) {
 		Bitmap& glyph = glyphs[ch] = Bitmap(width, height, web_color::transparent);
-		for (int y = 0; i < lines.size() && y < height; i++, y++)
+		for (int y = 0; i < (int) lines.size() && y < height; i++, y++)
 		{
 			string line = lines[i];
 			trim(line);
@@ -115,7 +115,7 @@ void Font::load(string filename)
 		}
 	};
 
-	while (i < lines.size())
+	while (i < (int) lines.size())
 	{
 		int ch = parse_key();
 		if (ch < 0 || ch >= 128) break;

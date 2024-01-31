@@ -237,7 +237,7 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 			}
 		}
 
-		font_item fi= {0};
+		font_item fi= {0, {}};
 
 		fi.font = m_container->create_font(name, size, fw, fs, decor, &fi.metrics);
 		m_fonts[key] = fi;
@@ -393,7 +393,7 @@ int litehtml::document::to_pixels( const css_length& val, int fontSize, int size
 	return ret;
 }
 
-void litehtml::document::cvt_units( css_length& val, int fontSize, int size ) const
+void litehtml::document::cvt_units( css_length& val, int fontSize, int /*size*/ ) const
 {
 	if(val.is_predefined())
 	{
@@ -421,6 +421,8 @@ void litehtml::document::cvt_units( css_length& val, int fontSize, int size ) co
 		case css_units_mm:
 			ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
 			val.set_value((float) ret, css_units_px);
+			break;
+		default:
 			break;
 	}
 }
@@ -564,7 +566,7 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 	return false;
 }
 
-bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
+bool litehtml::document::on_lbutton_up( int /*x*/, int /*y*/, int /*client_x*/, int /*client_y*/, position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
 	{

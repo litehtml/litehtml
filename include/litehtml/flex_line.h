@@ -25,12 +25,12 @@ namespace litehtml
 		bool reverse_cross;
 
 		flex_line(bool _reverse_main, bool _reverse_cross) :
-				cross_size(0),
 				cross_start(0),
-				total_grow(0),
-				base_size(0),
-				total_shrink(0),
 				main_size(0),
+				cross_size(0),
+				base_size(0),
+				total_grow(0),
+				total_shrink(0),
 				num_auto_margin_main_start(0),
 				num_auto_margin_main_end(0),
 				first_baseline(),

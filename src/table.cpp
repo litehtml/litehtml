@@ -480,7 +480,7 @@ void litehtml::table_grid::calc_vertical_positions( const margins& table_borders
 	}
 }
 
-void litehtml::table_grid::calc_rows_height(int blockHeight, int borderSpacingY)
+void litehtml::table_grid::calc_rows_height(int blockHeight, int /*borderSpacingY*/)
 {
 	int min_table_height = 0;
 

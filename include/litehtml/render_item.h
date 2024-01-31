@@ -29,7 +29,7 @@ namespace litehtml
 
 		containing_block_context calculate_containing_block_context(const containing_block_context& cb_context);
 		void calc_cb_length(const css_length& len, int percent_base, containing_block_context::typed_int& out_value) const;
-		virtual int _render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false)
+		virtual int _render(int /*x*/, int /*y*/, const containing_block_context& /*containing_block_size*/, formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
 		{
 			return 0;
 		}
@@ -362,9 +362,9 @@ namespace litehtml
         void add_positioned(const std::shared_ptr<litehtml::render_item> &el);
         void get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
         void calc_document_size( litehtml::size& sz, litehtml::size& content_size, int x = 0, int y = 0 );
-		virtual void get_inline_boxes( position::vector& boxes ) const {};
-		virtual void set_inline_boxes( position::vector& boxes ) {};
-		virtual void add_inline_box( const position& box ) {};
+		virtual void get_inline_boxes( position::vector& /*boxes*/ ) const {};
+		virtual void set_inline_boxes( position::vector& /*boxes*/ ) {};
+		virtual void add_inline_box( const position& /*box*/ ) {};
 		virtual void clear_inline_boxes() {};
         void draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned );
         virtual void draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );

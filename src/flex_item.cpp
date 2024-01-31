@@ -50,9 +50,13 @@ void litehtml::flex_item::place(flex_line &ln, int main_pos,
 			case flex_align_items_flex_end:
 				if(ln.reverse_cross)
 				{
+					/// If cross axis is reversed position item from start
 					set_cross_position(ln.cross_start);
-					break;	/// If cross axis is reversed position item from start
+				} else
+				{
+					set_cross_position(ln.cross_start + ln.cross_size - get_el_cross_size());
 				}
+				break;
 			case flex_align_items_end:
 				set_cross_position(ln.cross_start + ln.cross_size - get_el_cross_size());
 				break;
@@ -63,8 +67,11 @@ void litehtml::flex_item::place(flex_line &ln, int main_pos,
 				if(ln.reverse_cross)	/// If cross axis is reversed position item from end
 				{
 					set_cross_position(ln.cross_start + ln.cross_size - get_el_cross_size());
-					break;
+				} else
+				{
+					set_cross_position(ln.cross_start);
 				}
+				break;
 			case flex_align_items_start:
 				set_cross_position(ln.cross_start);
 				break;
@@ -153,16 +160,18 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 
 	if (flex_basis_predefined)
 	{
+		if(predef == flex_basis_auto && el->css().get_width().is_predefined())
+		{
+			// if width is not predefined, use content size as base size
+			predef = flex_basis_content;
+		}
+
 		switch (predef)
 		{
 			case flex_basis_auto:
-				if (!el->css().get_width().is_predefined())
-				{
-					base_size = el->css().get_width().calc_percent(self_size.render_width) +
-								el->content_offset_width();
-					break;
-				}
-				// if width is not predefined, use content size as base size
+				base_size = el->css().get_width().calc_percent(self_size.render_width) +
+							el->content_offset_width();
+				break;
 			case flex_basis_fit_content:
 			case flex_basis_content:
 				base_size = el->render(0, 0, self_size.new_width(self_size.render_width + el->content_offset_width(),
@@ -262,8 +271,8 @@ void litehtml::flex_item_row_direction::align_stretch(flex_line &ln, const conta
 }
 
 void litehtml::flex_item_row_direction::align_baseline(litehtml::flex_line &ln,
-													   const containing_block_context &self_size,
-													   formatting_context *fmt_ctx)
+													   const containing_block_context &/*self_size*/,
+													   formatting_context */*fmt_ctx*/)
 {
 	if (align & flex_align_items_last)
 	{
@@ -335,15 +344,16 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 
 	if (flex_basis_predefined)
 	{
+		if(predef == flex_basis_auto && el->css().get_height().is_predefined())
+		{
+			predef = flex_basis_fit_content;
+		}
 		switch (predef)
 		{
 			case flex_basis_auto:
-				if (!el->css().get_height().is_predefined())
-				{
-					base_size = el->css().get_height().calc_percent(self_size.height) +
-								el->content_offset_height();
-					break;
-				}
+				base_size = el->css().get_height().calc_percent(self_size.height) +
+							el->content_offset_height();
+				break;
 			case flex_basis_max_content:
 			case flex_basis_fit_content:
 				el->render(0, 0, self_size, fmt_ctx);
@@ -452,8 +462,8 @@ void litehtml::flex_item_column_direction::align_stretch(flex_line &ln, const co
 }
 
 void litehtml::flex_item_column_direction::align_baseline(litehtml::flex_line &ln,
-														  const containing_block_context &self_size,
-														  formatting_context *fmt_ctx)
+														  const containing_block_context &/*self_size*/,
+														  formatting_context */*fmt_ctx*/)
 {
 	// The fallback alignment for first baseline is start, the one for last baseline is end.
 	if(align & flex_align_items_last)

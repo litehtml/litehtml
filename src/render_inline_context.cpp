@@ -3,7 +3,7 @@
 #include "document.h"
 #include "iterators.h"
 
-int litehtml::render_item_inline_context::_render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
+int litehtml::render_item_inline_context::_render_content(int /*x*/, int /*y*/, bool /*second_pass*/, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
     m_line_boxes.clear();
 	m_max_line_width = 0;
@@ -259,13 +259,11 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
 		return;
     }
 
-    line_context line_ctx = {0};
-    line_ctx.top = 0;
+    line_context line_ctx;
     if (!m_line_boxes.empty())
     {
         line_ctx.top = m_line_boxes.back().get()->top();
     }
-    line_ctx.left = 0;
     line_ctx.right = self_size.render_width;
     line_ctx.fix_top();
 	fmt_ctx->get_line_left_right(line_ctx.top, self_size.render_width, line_ctx.left, line_ctx.right);

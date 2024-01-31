@@ -13,7 +13,7 @@ litehtml::el_text::el_text(const char* text, const document::ptr& doc) : element
     css_w().set_display(display_inline_text);
 }
 
-void litehtml::el_text::get_content_size( size& sz, int max_width )
+void litehtml::el_text::get_content_size( size& sz, int /*max_width*/ )
 {
 	sz = m_size;
 }
@@ -23,7 +23,7 @@ void litehtml::el_text::get_text( string& text )
 	text += m_text;
 }
 
-void litehtml::el_text::compute_styles(bool recursive)
+void litehtml::el_text::compute_styles(bool /*recursive*/)
 {
     element::ptr el_parent = parent();
     if (el_parent)

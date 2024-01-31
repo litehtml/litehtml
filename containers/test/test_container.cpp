@@ -3,7 +3,7 @@
 string readfile(string filename);
 
 // note: font is selected only by size, name and style are not used
-uint_ptr test_container::create_font(const char* faceName, int size, int weight, font_style italic, unsigned int decoration, font_metrics* fm)
+uint_ptr test_container::create_font(const char* /*faceName*/, int size, int /*weight*/, font_style /*italic*/, unsigned int /*decoration*/, font_metrics* fm)
 {
 	Font* font = new Font(size);
 
@@ -25,7 +25,7 @@ int test_container::text_width(const char* text, uint_ptr hFont)
 
 void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos)
 {
-	Bitmap* bmp = (Bitmap*)hdc;
+	auto bmp = (Bitmap*)hdc;
 	Font* font = (Font*)hFont;
 
 	int x = pos.x;
@@ -43,13 +43,13 @@ const char* test_container::get_default_font_name() const { return ""; }
 
 void test_container::draw_background(uint_ptr hdc, const std::vector<background_paint>& bg)
 {
-	Bitmap* bmp = (Bitmap*)hdc;
+	auto bmp = (Bitmap*)hdc;
 	bmp->fill_rect(bg.back().border_box, bg.back().color);
 }
 
-void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool root)
+void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool /*root*/)
 {
-	Bitmap* bmp = (Bitmap*)hdc;
+	auto bmp = (Bitmap*)hdc;
 
 	// left border
 	for (int x = 0; x < borders.left.width; x++)
@@ -78,7 +78,7 @@ void test_container::draw_borders(uint_ptr hdc, const borders& borders, const po
 
 void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
 {
-	Bitmap* bmp = (Bitmap*)hdc;
+	auto bmp = (Bitmap*)hdc;
 	bmp->fill_rect(marker.pos, marker.color);
 }
 

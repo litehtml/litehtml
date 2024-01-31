@@ -33,21 +33,21 @@ namespace litehtml
 
 		explicit flex_item(std::shared_ptr<render_item> &_el) :
 				el(_el),
-				align(flex_align_items_auto),
-				grow(0),
 				base_size(0),
-				shrink(0),
 				min_size(0),
-				frozen(false),
-				main_size(0),
 				max_size(0),
+				main_size(0),
+				grow(0),
+				shrink(0),
+				scaled_flex_shrink_factor(0),
+				frozen(false),
 				order(0),
 				src_order(0),
-				scaled_flex_shrink_factor(0),
 				auto_margin_main_start(0),
 				auto_margin_main_end(0),
 				auto_margin_cross_start(false),
-				auto_margin_cross_end(false)
+				auto_margin_cross_end(false),
+				align(flex_align_items_auto)
 		{}
 
 		virtual ~flex_item() = default;

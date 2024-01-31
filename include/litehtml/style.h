@@ -48,39 +48,39 @@ namespace litehtml
 		{
 		}
 		property_value(const string& str, bool important, property_type type = prop_type_string)
-			: m_string(str), m_type(type), m_important(important)
+			: m_type(type), m_important(important), m_string(str)
 		{
 		}
 		property_value(const string_vector& vec, bool important)
-			: m_string_vector(vec), m_type(prop_type_string_vector), m_important(important)
+			: m_type(prop_type_string_vector), m_important(important), m_string_vector(vec)
 		{
 		}
 		property_value(const css_length& length, bool important)
-			: m_length(length), m_type(prop_type_length), m_important(important)
+			: m_type(prop_type_length), m_important(important), m_length(length)
 		{
 		}
 		property_value(const length_vector& vec, bool important)
-			: m_length_vector(vec), m_type(prop_type_length_vector), m_important(important)
+			: m_type(prop_type_length_vector), m_important(important), m_length_vector(vec)
 		{
 		}
 		property_value(float number, bool important)
-			: m_number(number), m_type(prop_type_number), m_important(important)
+			: m_type(prop_type_number), m_important(important), m_number(number)
 		{
 		}
 		property_value(int enum_item, bool important)
-			: m_enum_item(enum_item), m_type(prop_type_enum_item), m_important(important)
+			: m_type(prop_type_enum_item), m_important(important), m_enum_item(enum_item)
 		{
 		}
 		property_value(const int_vector& vec, bool important)
-			: m_enum_item_vector(vec), m_type(prop_type_enum_item_vector), m_important(important)
+			: m_type(prop_type_enum_item_vector), m_important(important), m_enum_item_vector(vec)
 		{
 		}
 		property_value(web_color color, bool important)
-			: m_color(color), m_type(prop_type_color), m_important(important)
+			: m_type(prop_type_color), m_important(important), m_color(color)
 		{
 		}
 		property_value(const size_vector& vec, bool important)
-			: m_size_vector(vec), m_type(prop_type_size_vector), m_important(important)
+			: m_type(prop_type_size_vector), m_important(important), m_size_vector(vec)
 		{
 		}
 		~property_value()
@@ -108,6 +108,8 @@ namespace litehtml
 				break;
 			case prop_type_size_vector:
 				m_size_vector.~size_vector();
+				break;
+			default:
 				break;
 			}
 		}

@@ -2,7 +2,7 @@
 #include "types.h"
 #include "render_flex.h"
 
-int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
+int litehtml::render_item_flex::_render_content(int x, int y, bool /*second_pass*/, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
 	bool is_row_direction = true;
 	bool reverse = false;
@@ -63,8 +63,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	/////////////////////////////////////////////////////////////////
 	m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
 
-	int el_y = 0;
-	int el_x = 0;
 	int sum_cross_size = 0;
 	int sum_main_size = 0;
 	int ret_width = 0;
@@ -89,7 +87,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	}
 
 	int free_cross_size = 0;
-	int cross_start = 0;
 	bool is_wrap_reverse = css().get_flex_wrap() == flex_wrap_wrap_reverse;
 	if(container_main_size == 0)
 	{
@@ -101,7 +98,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	/////////////////////////////////////////////////////////////////
 	if (is_row_direction)
 	{
-		cross_start = content_offset_top();
 		if (self_size.height.type != containing_block_context::cbc_value_type_auto)
 		{
 			int height = self_size.height;
@@ -113,7 +109,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 		}
 	} else
 	{
-		cross_start = content_offset_left();
 		free_cross_size = self_size.render_width - sum_cross_size;
 		ret_width = sum_cross_size;
 	}
@@ -224,7 +219,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 	/////////////////////////////////////////////////////////////////
 	/// Align flex items in flex lines
 	/////////////////////////////////////////////////////////////////
-	int line_num = 0;
 	for(auto &ln : m_lines)
 	{
 		int height = ln.calculate_items_position(container_main_size,
@@ -232,7 +226,6 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool second_pass, 
 									is_row_direction,
 									self_size,
 									fmt_ctx);
-		line_num++;
 		m_pos.height = std::max(m_pos.height, height);
 	}
 

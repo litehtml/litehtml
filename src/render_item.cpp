@@ -273,14 +273,10 @@ void litehtml::render_item::render_positioned(render_type rt)
         if(process)
         {
 			containing_block_context containing_block_size;
-            int client_x		= 0;
-            int client_y		= 0;
             if(el_position == element_position_fixed)
             {
 				containing_block_size.height	= wnd_position.height;
 				containing_block_size.width		= wnd_position.width;
-                client_x		= wnd_position.left();
-                client_y		= wnd_position.top();
             } else
             {
 				containing_block_size.height	= m_pos.height;
