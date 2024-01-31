@@ -55,7 +55,7 @@ litehtml::string litehtml::index_value(int index, const string& strings, char de
 	string delims;
 	delims.push_back(delim);
 	split_string(strings, vals, delims);
-	if(index >= 0 && index < vals.size())
+	if(index >= 0 && index < (int) vals.size())
 	{
 		return vals[index];
 	}
@@ -205,7 +205,7 @@ int litehtml::t_strncasecmp(const char *s1, const char *s2, size_t n)
 {
 	int i, d, c;
 
-	for (i = 0; i < n; i++)
+	for (i = 0; i < (int) n; i++)
 	{
 		c = t_tolower((unsigned char)s1[i]);
 		d = c - t_tolower((unsigned char)s2[i]);

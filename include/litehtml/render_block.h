@@ -18,11 +18,11 @@ namespace litehtml
 		 * @param self_size - defines calculated size of block
 		 * @return return value is the minimal width of the content in block. Must be greater or equal to ret_width parameter
 		 */
-		virtual int _render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx) {return 0;}
+		virtual int _render_content(int /*x*/, int /*y*/, bool /*second_pass*/, const containing_block_context &/*self_size*/, formatting_context* /*fmt_ctx*/) {return 0;}
 		int _render(int x, int y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass) override;
 		int place_float(const std::shared_ptr<render_item> &el, int top, const containing_block_context &self_size, formatting_context* fmt_ctx);
-		virtual void fix_line_width(element_float flt,
-									const containing_block_context &containing_block_size, formatting_context* fmt_ctx)
+		virtual void fix_line_width(element_float /*flt*/,
+									const containing_block_context &/*containing_block_size*/, formatting_context* /*fmt_ctx*/)
 		{}
 
 	public:

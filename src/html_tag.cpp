@@ -679,6 +679,8 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& sel)
 				return select_no_match;
 			}
 			break;
+		default:
+			break;
 		}
 
 	}
@@ -752,6 +754,8 @@ int litehtml::html_tag::select_attribute(const css_attribute_selector& sel)
 				return select_no_match;
 			}
 		}
+		break;
+	default:
 		break;
 	}
 	return select_match;
@@ -1113,16 +1117,16 @@ void litehtml::html_tag::init_background_paint(position pos, std::vector<backgro
 
 void litehtml::html_tag::init_one_background_paint(int i, position pos, background_paint& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri)
 {
-	bg_paint.image		= i < bg->m_image.size() ? bg->m_image[i] : "";
+	bg_paint.image		= i < (int) bg->m_image.size() ? bg->m_image[i] : "";
 	bg_paint.baseurl	= bg->m_baseurl;
-	bg_paint.attachment = i < bg->m_attachment.size() ? (background_attachment)bg->m_attachment[i] : background_attachment_scroll;
-	bg_paint.repeat		= i < bg->m_repeat.size() ? (background_repeat)bg->m_repeat[i] : background_repeat_repeat;
-	int clip			= i < bg->m_clip.size() ? bg->m_clip[i] : background_box_border;
-	int origin			= i < bg->m_origin.size() ? bg->m_origin[i] : background_box_padding;
+	bg_paint.attachment = i < (int) bg->m_attachment.size() ? (background_attachment)bg->m_attachment[i] : background_attachment_scroll;
+	bg_paint.repeat		= i < (int) bg->m_repeat.size() ? (background_repeat)bg->m_repeat[i] : background_repeat_repeat;
+	int clip			= i < (int) bg->m_clip.size() ? bg->m_clip[i] : background_box_border;
+	int origin			= i < (int) bg->m_origin.size() ? bg->m_origin[i] : background_box_padding;
 	const css_size auto_auto(css_length::predef_value(background_size_auto), css_length::predef_value(background_size_auto));
-	css_size size		= i < bg->m_size.size() ? bg->m_size[i] : auto_auto;
-	css_length position_x = i < bg->m_position_x.size() ? bg->m_position_x[i] : css_length(0, css_units_percentage);
-	css_length position_y = i < bg->m_position_y.size() ? bg->m_position_y[i] : css_length(0, css_units_percentage);
+	css_size size		= i < (int) bg->m_size.size() ? bg->m_size[i] : auto_auto;
+	css_length position_x = i < (int) bg->m_position_x.size() ? bg->m_position_x[i] : css_length(0, css_units_percentage);
+	css_length position_y = i < (int) bg->m_position_y.size() ? bg->m_position_y[i] : css_length(0, css_units_percentage);
 
 	position content_box	= pos;
 	position padding_box	= pos;
@@ -1191,7 +1195,6 @@ void litehtml::html_tag::init_one_background_paint(int i, position pos, backgrou
 						img_new_sz.height = bg_paint.origin_box.height;
 						img_new_sz.width	= (int) ((double) bg_paint.origin_box.height * img_ar_width);
 					}
-					break;
 					break;
 				case background_size_auto:
 					if(!size.height.is_predefined())

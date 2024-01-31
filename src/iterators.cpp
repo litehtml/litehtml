@@ -5,9 +5,9 @@
 #include <iterator>
 
 litehtml::elements_iterator::elements_iterator(bool return_parents, iterator_selector* go_inside, iterator_selector* select) :
-    m_return_parent(return_parents),
-    m_go_inside(go_inside),
-    m_select(select)
+	m_go_inside(go_inside),
+    m_select(select),
+	m_return_parent(return_parents)
 {
 }
 

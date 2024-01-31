@@ -520,7 +520,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		ret_items.emplace_front(std::unique_ptr<line_box_item>(new lbi_continue(iter->element)));
 	}
 
-	return std::move(ret_items);
+	return ret_items;
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::line_box::get_first_text_part() const

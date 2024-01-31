@@ -128,6 +128,8 @@ void litehtml::css_element_selector::parse( const string& txt )
 					lcase(val);
 					attribute.val = val;
 					break;
+				default:
+					break;
 				}
 
 				m_attrs.push_back(attribute);

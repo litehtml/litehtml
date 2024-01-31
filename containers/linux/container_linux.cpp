@@ -246,7 +246,7 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 	}
 }
 
-void container_linux::load_image( const char* src, const char* baseurl, bool redraw_on_ready )
+void container_linux::load_image( const char* src, const char* baseurl, bool /*redraw_on_ready*/ )
 {
 	litehtml::string url;
 	make_url(src, baseurl, url);
@@ -377,7 +377,7 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const std::vector
 	cairo_restore(cr);
 }
 
-void container_linux::make_url(const char* url,	const char* basepath, litehtml::string& out)
+void container_linux::make_url(const char* url,	const char* /*basepath*/, litehtml::string& out)
 {
 	out = url;
 }
@@ -408,7 +408,7 @@ void container_linux::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 	}
 }
 
-void container_linux::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root)
+void container_linux::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool /*root*/)
 {
 	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
@@ -688,7 +688,7 @@ void container_linux::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
 	cairo_restore(cr);
 }
 
-void container_linux::transform_text(litehtml::string& text, litehtml::text_transform tt)
+void container_linux::transform_text(litehtml::string& /*text*/, litehtml::text_transform /*tt*/)
 {
 
 }
@@ -772,9 +772,9 @@ const char* container_linux::get_default_font_name() const
 	return "Times New Roman";
 }
 
-std::shared_ptr<litehtml::element>	container_linux::create_element(const char *tag_name,
-																	  const litehtml::string_map &attributes,
-																	  const std::shared_ptr<litehtml::document> &doc)
+std::shared_ptr<litehtml::element>	container_linux::create_element(const char */*tag_name*/,
+																	  const litehtml::string_map &/*attributes*/,
+																	  const std::shared_ptr<litehtml::document> &/*doc*/)
 {
 	return nullptr;
 }
@@ -902,7 +902,7 @@ void container_linux::get_language(litehtml::string& language, litehtml::string&
 	culture = "";
 }
 
-void container_linux::link(const std::shared_ptr<litehtml::document> &ptr, const litehtml::element::ptr& el)
+void container_linux::link(const std::shared_ptr<litehtml::document> &/*ptr*/, const litehtml::element::ptr& /*el*/)
 {
 
 }

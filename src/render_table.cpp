@@ -11,7 +11,7 @@ litehtml::render_item_table::render_item_table(std::shared_ptr<element> _src_el)
 {
 }
 
-int litehtml::render_item_table::_render(int x, int y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass)
+int litehtml::render_item_table::_render(int x, int y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool /*second_pass*/)
 {
     if (!m_grid) return 0;
 
@@ -388,7 +388,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 
     elements_iterator row_iter(false, &table_selector, &row_selector);
 
-    row_iter.process(shared_from_this(), [&](std::shared_ptr<render_item>& el, iterator_item_type item_type)
+    row_iter.process(shared_from_this(), [&](std::shared_ptr<render_item>& el, iterator_item_type /*item_type*/)
         {
             m_grid->begin_row(el);
 

@@ -7,9 +7,9 @@ litehtml::el_image::el_image(const document::ptr& doc) : html_tag(doc)
 	m_css.set_display(display_inline_block);
 }
 
-void litehtml::el_image::get_content_size( size& sz, int max_width )
+void litehtml::el_image::get_content_size( size& sz, int /*max_width*/ )
 {
-	get_document()->container()->get_image_size(m_src.c_str(), 0, sz);
+	get_document()->container()->get_image_size(m_src.c_str(), nullptr, sz);
 }
 
 bool litehtml::el_image::is_replaced() const
