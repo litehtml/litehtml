@@ -1,8 +1,14 @@
 cmake_minimum_required(VERSION 3.11)
 
 project(litehtml LANGUAGES C CXX)
-include(CTest)
-enable_testing()
+
+
+option(LITEHTML_BUILD_TESTING "enable testing for litehtml" ON)
+
+if(LITEHTML_BUILD_TESTING)
+    include(CTest)
+    enable_testing()
+endif()
 
 # Soname
 # MAJOR is incremented when symbols are removed or changed in an incompatible way
@@ -186,7 +192,7 @@ install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib${LIB_S
 
 # Tests
 
-if (BUILD_TESTING)
+if (LITEHTML_BUILD_TESTING)
     option(EXTERNAL_GTEST "Use external GoogleTest instead of fetching from GitHub" OFF)
 
     if (EXTERNAL_GTEST)

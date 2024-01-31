@@ -298,6 +298,122 @@ bool element::is_block_formatting_context() const
 	return false;
 }
 
+litehtml::string litehtml::element::get_counter_value(const string& counter_name)
+{
+	std::map<string_id, int>::iterator i;
+	if (find_counter(_id(counter_name), i))
+	{
+		return std::to_string(i->second);
+	}
+	return "0";
+}
+
+string litehtml::element::get_counters_value(const string_vector& parameters)
+{
+	string result = "";
+	if (parameters.size() >= 2) {
+		const string_id counter_name_id = _id(parameters[0]);
+		string delims = parameters[1];
+		litehtml::trim(delims, "\"'");
+
+		string_vector values;
+		
+		element::ptr current = shared_from_this();
+		while (current != nullptr)
+		{
+			auto map_iterator = current->m_counter_values.find(counter_name_id);
+			if (map_iterator != current->m_counter_values.end()) {
+				values.push_back(std::to_string(map_iterator->second));
+			}
+			current = current->parent();
+		}
+		if (values.empty()) {
+			// if no counter is found, instanciate one with value '0'
+			shared_from_this()->m_counter_values[counter_name_id] = 0;
+			result = "0";
+		}
+		else {
+			std::reverse(values.begin(), values.end());
+			litehtml::join_string(result, values, delims);
+		}
+	}
+	return result;
+}
+
+
+bool litehtml::element::find_counter(const string_id& counter_name_id, std::map<string_id, int>::iterator& map_iterator) {
+	element::ptr current = shared_from_this();
+
+	while (current != nullptr)
+	{
+		map_iterator = current->m_counter_values.find(counter_name_id);
+		if (map_iterator != current->m_counter_values.end()) {
+			return true;
+		}
+
+		// on each level, search previous siblings too
+		std::vector<element::ptr> siblings = current->get_siblings_before();
+		std::reverse(siblings.begin(), siblings.end());
+		for (const element::ptr& sibling : siblings) {
+			map_iterator = sibling->m_counter_values.find(counter_name_id);
+			if (map_iterator != sibling->m_counter_values.end()) {
+				return true;
+			}
+		}
+		current = current->parent();
+	}
+	
+	return false;
+}
+
+std::vector<element::ptr> litehtml::element::get_siblings_before() const
+{
+	std::vector<element::ptr> siblings;
+	if (parent() != nullptr) {
+		for (const element::ptr& sybling : parent()->children()) {
+			if (sybling == shared_from_this()) {
+				break;
+			}
+			siblings.push_back(sybling);
+		}
+	}
+	return siblings;
+}
+
+
+void litehtml::element::parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string_id&, const int)> handler) const {
+	int pos = 0;
+	while (pos < tokens.size()) {
+		string name = tokens[pos];
+		int value = default_value;
+		if (pos < tokens.size() - 1 && litehtml::is_number(tokens[pos + 1], 0)) {
+			value = atoi(tokens[pos + 1].c_str());
+			pos += 2;
+		}
+		else {
+			pos += 1;
+		}
+		handler(_id(name), value);
+	}
+}
+
+void litehtml::element::increment_counter(const string_id& counter_name_id, const int increment)
+{
+	std::map<string_id, int>::iterator i;
+	if (find_counter(counter_name_id, i)) {
+		i->second = i->second + increment;
+	}
+	else {
+		// if counter is not found, initialize one on this element
+		m_counter_values[counter_name_id] = increment;
+	}
+}
+
+void litehtml::element::reset_counter(const string_id& counter_name_id, const int value)
+{
+	m_counter_values[counter_name_id] = value;
+}
+
 const background* element::get_background(bool own_only)						LITEHTML_RETURN_FUNC(nullptr)
 void element::add_style( const style& style)	        						LITEHTML_EMPTY_FUNC
 void element::select_all(const css_selector& selector, elements_list& res)	LITEHTML_EMPTY_FUNC

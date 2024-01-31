@@ -133,7 +133,7 @@ void litehtml::el_before_after_base::add_text( const string& txt )
 
 void litehtml::el_before_after_base::add_function( const string& fnc, const string& params )
 {
-	int idx = value_index(fnc, "attr;counter;url");
+	int idx = value_index(fnc, "attr;counter;counters;url");
 	switch(idx)
 	{
 	// attr
@@ -155,9 +155,18 @@ void litehtml::el_before_after_base::add_function( const string& fnc, const stri
 		break;
 	// counter
 	case 1:
+		add_text(get_counter_value(params));
+		break;
+	// counters
+	case 2:
+		{
+			string_vector tokens;
+			split_string(params, tokens, ",");
+			add_text(get_counters_value(tokens));
+		}
 		break;
 	// url
-	case 2:
+	case 3:
 		{
 			string p_url = params;
 			trim(p_url);

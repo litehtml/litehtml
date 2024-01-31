@@ -1,0 +1,79 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0//EN" "http://www.w3.org/TR/REC-html40/strict.dtd">
+<html>
+<head>
+  <title>
+    css counters
+  </title>
+  <style type="text/css">
+      body {
+        counter-reset: section;
+      }
+
+      h1 {
+        counter-reset: subsection;
+      }
+
+      h1::before {
+        counter-increment: section;
+        content: "Section " counter(section) ". ";
+      }
+
+      h2::before {
+        counter-increment: subsection;
+        content: counter(section) "." counter(subsection) " ";
+      }
+
+      ol {
+        counter-reset: section;
+        list-style-type: none;
+      }
+
+      li::before {
+        counter-increment: section;
+        content: counters(section,".") " ";
+      }
+  </style>
+</head>
+<body>
+    <h1>HTML/CSS Tutorials</h1>
+    <h2>HTML</h2>
+    <h2>CSS</h2>
+    <h2>Bootstrap</h2>
+    <h2>W3.CSS</h2>
+
+    <h1>Scripting Tutorials</h1>
+    <h2>JavaScript</h2>
+    <h2>jQuery</h2>
+    <h2>React</h2>
+
+    <h1>Programming Tutorials</h1>
+    <h2>Python</h2>
+    <h2>Java</h2>
+    <h2>C++</h2>
+    <ol>
+      <li>item</li>
+      <li>item   
+      <ol>
+          <li>item</li>
+          <li>item</li>
+          <li>item
+          <ol>
+          <li>item</li>
+          <li>item</li>
+          <li>item</li>
+          </ol>
+          </li>
+          <li>item</li>
+      </ol>
+      </li>
+      <li>item</li>
+      <li>item</li>
+      </ol>
+  
+      <ol>
+      <li>item</li>
+      <li>item</li>
+      </ol>
+  
+</body>
+</html>

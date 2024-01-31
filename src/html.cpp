@@ -2,9 +2,9 @@
 #include "types.h"
 #include "utf8_strings.h"
 
-void litehtml::trim(string &s) 
+void litehtml::trim(string &s, const string& chars_to_trim)
 {
-	string::size_type pos = s.find_first_not_of(" \n\r\t");
+	string::size_type pos = s.find_first_not_of(chars_to_trim);
 	if(pos != string::npos)
 	{
 		s.erase(s.begin(), s.begin() + pos);
@@ -14,7 +14,7 @@ void litehtml::trim(string &s)
 		s = "";
 		return;
 	}
-	pos = s.find_last_not_of(" \n\r\t");
+	pos = s.find_last_not_of(chars_to_trim);
 	if(pos != string::npos)
 	{
 		s.erase(s.begin() + pos + 1, s.end());
@@ -276,4 +276,15 @@ litehtml::string litehtml::get_escaped_string(const string& in_str)
 		}
 	}
 	return ret;
+}
+
+bool litehtml::is_number(const string& string, const bool allow_dot) {
+	for (auto ch : string)
+	{
+		if (!(t_isdigit(ch) || (allow_dot && ch == '.')))
+		{
+			return false;
+		}
+	}
+	return true;
 }
