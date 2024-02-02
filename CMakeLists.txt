@@ -165,7 +165,7 @@ if (MSVC)
     add_compile_options(/W4)
 else()
     # additional warnings
-    add_compile_options(-Werror -Wall -Wextra -Wpedantic)
+    add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 add_library(${PROJECT_NAME} ${SOURCE_LITEHTML})
