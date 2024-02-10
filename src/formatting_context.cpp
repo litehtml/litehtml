@@ -66,7 +66,7 @@ void litehtml::formatting_context::add_float(const std::shared_ptr<render_item> 
 
 int litehtml::formatting_context::get_floats_height(element_float el_float) const
 {
-	int h = 0;
+	int h = m_current_top;
 
 	for(const auto& fb : m_floats_left)
 	{
