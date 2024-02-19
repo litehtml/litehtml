@@ -3,6 +3,8 @@
 #include <fstream>
 #ifdef _WIN32
 	#include "dirent.h"
+	#undef min
+	#undef max
 #else
 	#include <dirent.h>
 #endif
