@@ -247,43 +247,17 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 	}
 }
 
-void container_linux::load_image( const char* src, const char* baseurl, bool /*redraw_on_ready*/ )
-{
-	litehtml::string url;
-	make_url(src, baseurl, url);
-	if(m_images.find(url) == m_images.end())
-	{
-		try
-		{
-			Glib::RefPtr<Gdk::Pixbuf> img = get_image(url.c_str(), true);
-			if(img)
-			{
-				m_images[url.c_str()] = img;
-			}
-		} catch(...)
-		{
-            m_images[url.c_str()] = Glib::RefPtr<Gdk::Pixbuf>(nullptr);
-		}
-	}
-}
-
 void container_linux::get_image_size( const char* src, const char* baseurl, litehtml::size& sz )
 {
 	litehtml::string url;
 	make_url(src, baseurl, url);
 
-	auto img = m_images.find(url);
-	if(img != m_images.end())
+	auto img = get_image(url);
+	if(img)
 	{
-        if(img->second)
-        {
-            sz.width = img->second->get_width();
-            sz.height = img->second->get_height();
-        } else
-        {
-            sz.width	= 0;
-            sz.height	= 0;
-        }
+		sz.width = cairo_image_surface_get_width(img);
+		sz.height = cairo_image_surface_get_height(img);
+		cairo_surface_destroy(img);
 	} else
 	{
 		sz.width	= 0;
@@ -323,21 +297,17 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const std::vector
 		std::string url;
 		make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
 
-		//lock_images_cache();
-		auto img_i = m_images.find(url);
-		if(img_i != m_images.end() && img_i->second)
+		auto bgbmp = get_image(url);
+		if(bgbmp)
 		{
-			Glib::RefPtr<Gdk::Pixbuf> bgbmp = img_i->second;
-
-			Glib::RefPtr<Gdk::Pixbuf> new_img;
-			if(bg.image_size.width != bgbmp->get_width() || bg.image_size.height != bgbmp->get_height())
+			if(bg.image_size.width != cairo_image_surface_get_width(bgbmp) || bg.image_size.height != cairo_image_surface_get_height(bgbmp))
 			{
-				new_img = bgbmp->scale_simple(bg.image_size.width, bg.image_size.height, Gdk::INTERP_BILINEAR);
+				auto new_img = scale_surface(bgbmp, bg.image_size.width, bg.image_size.height);
+				cairo_surface_destroy(bgbmp);
 				bgbmp = new_img;
 			}
 
-			cairo_surface_t* img = surface_from_pixbuf(bgbmp);
-			cairo_pattern_t *pattern = cairo_pattern_create_for_surface(img);
+			cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bgbmp);
 			cairo_matrix_t flib_m;
 			cairo_matrix_init_identity(&flib_m);
 			cairo_matrix_translate(&flib_m, -bg.position_x, -bg.position_y);
@@ -347,18 +317,18 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const std::vector
 			switch(bg.repeat)
 			{
 			case litehtml::background_repeat_no_repeat:
-				draw_pixbuf(cr, bgbmp, bg.position_x, bg.position_y, bgbmp->get_width(), bgbmp->get_height());
+				draw_pixbuf(cr, bgbmp, bg.position_x, bg.position_y, cairo_image_surface_get_width(bgbmp), cairo_image_surface_get_height(bgbmp));
 				break;
 
 			case litehtml::background_repeat_repeat_x:
 				cairo_set_source(cr, pattern);
-				cairo_rectangle(cr, bg.clip_box.left(), bg.position_y, bg.clip_box.width, bgbmp->get_height());
+				cairo_rectangle(cr, bg.clip_box.left(), bg.position_y, bg.clip_box.width, cairo_image_surface_get_height(bgbmp));
 				cairo_fill(cr);
 				break;
 
 			case litehtml::background_repeat_repeat_y:
 				cairo_set_source(cr, pattern);
-				cairo_rectangle(cr, bg.position_x, bg.clip_box.top(), bgbmp->get_width(), bg.clip_box.height);
+				cairo_rectangle(cr, bg.position_x, bg.clip_box.top(), cairo_image_surface_get_width(bgbmp), bg.clip_box.height);
 				cairo_fill(cr);
 				break;
 
@@ -370,9 +340,8 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const std::vector
 			}
 
 			cairo_pattern_destroy(pattern);
-			cairo_surface_destroy(img);
+			cairo_surface_destroy(bgbmp);
 		}
-		//unlock_images_cache();
 	}
 
 	cairo_restore(cr);
@@ -681,25 +650,38 @@ void container_linux::rounded_rectangle( cairo_t* cr, const litehtml::position &
 	}
 }
 
-void container_linux::draw_pixbuf(cairo_t* cr, const Glib::RefPtr<Gdk::Pixbuf>& bmp, int x,	int y, int cx, int cy)
+cairo_surface_t* container_linux::scale_surface(cairo_surface_t* surface, int width, int height)
+{
+	int s_width = cairo_image_surface_get_width(surface);
+	int s_height = cairo_image_surface_get_height(surface);
+	cairo_surface_t *result = cairo_surface_create_similar(surface, cairo_surface_get_content(surface), width, height);
+	cairo_t *cr = cairo_create(result);
+	cairo_scale(cr, (double) width / (double) s_width, (double) height / (double) s_height);
+	cairo_set_source_surface(cr, surface, 0, 0);
+	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+	cairo_paint(cr);
+	cairo_destroy(cr);
+	return result;
+}
+
+void container_linux::draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x,	int y, int cx, int cy)
 {
 	cairo_save(cr);
 
 	{
-		Cairo::RefPtr<Cairo::Context> crobj(new Cairo::Context(cr, false));
+		cairo_matrix_t flip_m;
+		cairo_matrix_init(&flip_m, 1, 0, 0, -1, 0, 0);
 
-		cairo_matrix_t flib_m;
-		cairo_matrix_init(&flib_m, 1, 0, 0, -1, 0, 0);
-
-		if(cx != bmp->get_width() || cy != bmp->get_height())
+		if(cx != cairo_image_surface_get_width(bmp) || cy != cairo_image_surface_get_height(bmp))
 		{
-			Glib::RefPtr<Gdk::Pixbuf> new_img = bmp->scale_simple(cx, cy, Gdk::INTERP_BILINEAR);
-			Gdk::Cairo::set_source_pixbuf(crobj, new_img, x, y);
-			crobj->paint();
+			auto bmp_scaled = scale_surface(bmp, cx, cy);
+			cairo_set_source_surface(cr, bmp_scaled, x, y);
+			cairo_paint(cr);
+			cairo_surface_destroy(bmp_scaled);
 		} else
 		{
-			Gdk::Cairo::set_source_pixbuf(crobj, bmp, x, y);
-			crobj->paint();
+			cairo_set_source_surface(cr, bmp, x, y);
+			cairo_paint(cr);
 		}
 	}
 

@@ -52,7 +52,6 @@ class container_linux :	public litehtml::document_container
 protected:
 	cairo_surface_t*			m_temp_surface;
 	cairo_t*					m_temp_cr;
-	images_map					m_images;
     cairo_clip_box::vector		m_clips;
 public:
 	container_linux();
@@ -65,7 +64,6 @@ public:
 	int pt_to_px(int pt) const override;
 	int get_default_font_size() const override;
 	const char*	get_default_font_name() const override;
-	void load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
 	void get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
 	void draw_background(litehtml::uint_ptr hdc, const std::vector<litehtml::background_paint>& bg) override;
 	void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) override;
@@ -83,7 +81,7 @@ public:
 	void del_clip() override;
 
 	virtual void make_url( const char* url, const char* basepath, litehtml::string& out );
-	virtual Glib::RefPtr<Gdk::Pixbuf>	get_image(const char* url, bool redraw_on_ready) = 0;
+	virtual cairo_surface_t* get_image(const std::string& url) = 0;
 
 	void clear_images();
 
@@ -98,7 +96,8 @@ private:
 	static void add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg);
 	static void set_color(cairo_t* cr, const litehtml::web_color& color)	{ cairo_set_source_rgba(cr, color.red / 255.0, color.green / 255.0, color.blue / 255.0, color.alpha / 255.0); }
 	static cairo_surface_t* surface_from_pixbuf(const Glib::RefPtr<Gdk::Pixbuf>& bmp);
-    static void draw_pixbuf(cairo_t* cr, const Glib::RefPtr<Gdk::Pixbuf>& bmp, int x, int y, int cx, int cy);
+    static void draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x, int y, int cx, int cy);
+	static cairo_surface_t* scale_surface(cairo_surface_t* surface, int width, int height);
 };
 
 #endif
