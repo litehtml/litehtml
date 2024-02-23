@@ -1,20 +1,20 @@
-#include "cairo_pango.h"
+#include "container_cairo_pango.h"
 
-cairo_pango::cairo_pango()
+container_cairo_pango::container_cairo_pango()
 {
 	m_temp_surface	= cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 2, 2);
 	m_temp_cr		= cairo_create(m_temp_surface);
 }
 
-cairo_pango::~cairo_pango()
+container_cairo_pango::~container_cairo_pango()
 {
 	clear_images();
 	cairo_surface_destroy(m_temp_surface);
 	cairo_destroy(m_temp_cr);
 }
 
-litehtml::uint_ptr cairo_pango::create_font(const char *faceName, int size, int weight, litehtml::font_style italic,
-											unsigned int decoration, litehtml::font_metrics *fm)
+litehtml::uint_ptr container_cairo_pango::create_font(const char *faceName, int size, int weight, litehtml::font_style italic,
+													  unsigned int decoration, litehtml::font_metrics *fm)
 {
 	PangoFontDescription *desc = pango_font_description_from_string (faceName);
 	pango_font_description_set_absolute_size(desc, size * PANGO_SCALE);
@@ -90,7 +90,7 @@ litehtml::uint_ptr cairo_pango::create_font(const char *faceName, int size, int 
 	return (litehtml::uint_ptr) ret;
 }
 
-void cairo_pango::delete_font(litehtml::uint_ptr hFont)
+void container_cairo_pango::delete_font(litehtml::uint_ptr hFont)
 {
 	auto* fnt = (cairo_font*) hFont;
 	if(fnt)
@@ -100,7 +100,7 @@ void cairo_pango::delete_font(litehtml::uint_ptr hFont)
 	}
 }
 
-int cairo_pango::text_width(const char *text, litehtml::uint_ptr hFont)
+int container_cairo_pango::text_width(const char *text, litehtml::uint_ptr hFont)
 {
 	auto* fnt = (cairo_font*) hFont;
 
@@ -122,8 +122,8 @@ int cairo_pango::text_width(const char *text, litehtml::uint_ptr hFont)
 	return (int) x_width;
 }
 
-void cairo_pango::draw_text(litehtml::uint_ptr hdc, const char *text, litehtml::uint_ptr hFont,
-							litehtml::web_color color, const litehtml::position &pos)
+void container_cairo_pango::draw_text(litehtml::uint_ptr hdc, const char *text, litehtml::uint_ptr hFont,
+									  litehtml::web_color color, const litehtml::position &pos)
 {
 	auto* fnt = (cairo_font*) hFont;
 	auto* cr = (cairo_t*) hdc;

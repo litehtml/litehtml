@@ -29,13 +29,13 @@ struct cairo_clip_box
 	}
 };
 
-class container_linux :	public litehtml::document_container
+class container_cairo : public litehtml::document_container
 {
 protected:
     cairo_clip_box::vector		m_clips;
 public:
-	container_linux() = default;
-	virtual ~container_linux() = default;
+	container_cairo() = default;
+	virtual ~container_cairo() = default;
 
 	int pt_to_px(int pt) const override;
 	int get_default_font_size() const override;

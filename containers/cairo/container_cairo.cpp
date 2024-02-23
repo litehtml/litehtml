@@ -1,4 +1,4 @@
-#include "container_linux.h"
+#include "container_cairo.h"
 #include "cairo_borders.h"
 #include <cmath>
 
@@ -7,19 +7,19 @@
 #endif
 
 
-int container_linux::pt_to_px( int pt ) const
+int container_cairo::pt_to_px(int pt ) const
 {
 	double dpi = get_screen_dpi();
 
 	return (int) ((double) pt * dpi / 72.0);
 }
 
-int container_linux::get_default_font_size() const
+int container_cairo::get_default_font_size() const
 {
 	return pt_to_px(12);
 }
 
-void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::list_marker& marker )
+void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker )
 {
 	if(!marker.image.empty())
 	{
@@ -71,7 +71,7 @@ void container_linux::draw_list_marker( litehtml::uint_ptr hdc, const litehtml::
 	}
 }
 
-void container_linux::get_image_size( const char* src, const char* baseurl, litehtml::size& sz )
+void container_cairo::get_image_size(const char* src, const char* baseurl, litehtml::size& sz )
 {
 	litehtml::string url;
 	make_url(src, baseurl, url);
@@ -89,7 +89,7 @@ void container_linux::get_image_size( const char* src, const char* baseurl, lite
 	}
 }
 
-void container_linux::draw_background( litehtml::uint_ptr hdc, const std::vector<litehtml::background_paint>& bgvec )
+void container_cairo::draw_background(litehtml::uint_ptr hdc, const std::vector<litehtml::background_paint>& bgvec )
 {
 	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
@@ -171,12 +171,12 @@ void container_linux::draw_background( litehtml::uint_ptr hdc, const std::vector
 	cairo_restore(cr);
 }
 
-void container_linux::make_url(const char* url,	const char* /*basepath*/, litehtml::string& out)
+void container_cairo::make_url(const char* url, const char* /*basepath*/, litehtml::string& out)
 {
 	out = url;
 }
 
-void container_linux::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg)
+void container_cairo::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg)
 {
 	if(rx > 0 && ry > 0)
 	{
@@ -202,7 +202,7 @@ void container_linux::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 	}
 }
 
-void container_linux::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool /*root*/)
+void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool /*root*/)
 {
 	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
@@ -326,17 +326,17 @@ void container_linux::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
 	cairo_restore(cr);
 }
 
-void container_linux::transform_text(litehtml::string& /*text*/, litehtml::text_transform /*tt*/)
+void container_cairo::transform_text(litehtml::string& /*text*/, litehtml::text_transform /*tt*/)
 {
 
 }
 
-void container_linux::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius )
+void container_cairo::set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius )
 {
 	m_clips.emplace_back(pos, bdr_radius);
 }
 
-void container_linux::del_clip()
+void container_cairo::del_clip()
 {
 	if(!m_clips.empty())
 	{
@@ -344,7 +344,7 @@ void container_linux::del_clip()
 	}
 }
 
-void container_linux::apply_clip( cairo_t* cr )
+void container_cairo::apply_clip(cairo_t* cr )
 {
 	for(const auto& clip_box : m_clips)
 	{
@@ -353,7 +353,7 @@ void container_linux::apply_clip( cairo_t* cr )
 	}
 }
 
-void container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width )
+void container_cairo::draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width )
 {
 	if(!cr || !width || !height) return;
 	cairo_save(cr);
@@ -373,7 +373,7 @@ void container_linux::draw_ellipse( cairo_t* cr, int x, int y, int width, int he
 	cairo_restore(cr);
 }
 
-void container_linux::fill_ellipse( cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color )
+void container_cairo::fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color )
 {
 	if(!cr || !width || !height) return;
 	cairo_save(cr);
@@ -392,7 +392,7 @@ void container_linux::fill_ellipse( cairo_t* cr, int x, int y, int width, int he
 	cairo_restore(cr);
 }
 
-void container_linux::clear_images()
+void container_cairo::clear_images()
 {
 /*	for(images_map::iterator i = m_images.begin(); i != m_images.end(); i++)
 	{
@@ -405,19 +405,19 @@ void container_linux::clear_images()
 */
 }
 
-const char* container_linux::get_default_font_name() const
+const char* container_cairo::get_default_font_name() const
 {
 	return "Times New Roman";
 }
 
-std::shared_ptr<litehtml::element>	container_linux::create_element(const char */*tag_name*/,
+std::shared_ptr<litehtml::element>	container_cairo::create_element(const char */*tag_name*/,
 																	  const litehtml::string_map &/*attributes*/,
 																	  const std::shared_ptr<litehtml::document> &/*doc*/)
 {
 	return nullptr;
 }
 
-void container_linux::rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius )
+void container_cairo::rounded_rectangle(cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius )
 {
 	cairo_new_path(cr);
 	if(radius.top_left_x && radius.top_left_y)
@@ -474,7 +474,7 @@ void container_linux::rounded_rectangle( cairo_t* cr, const litehtml::position &
 	}
 }
 
-cairo_surface_t* container_linux::scale_surface(cairo_surface_t* surface, int width, int height)
+cairo_surface_t* container_cairo::scale_surface(cairo_surface_t* surface, int width, int height)
 {
 	int s_width = cairo_image_surface_get_width(surface);
 	int s_height = cairo_image_surface_get_height(surface);
@@ -488,7 +488,7 @@ cairo_surface_t* container_linux::scale_surface(cairo_surface_t* surface, int wi
 	return result;
 }
 
-void container_linux::draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x,	int y, int cx, int cy)
+void container_cairo::draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x, int y, int cx, int cy)
 {
 	cairo_save(cr);
 
@@ -512,7 +512,7 @@ void container_linux::draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x,	int 
 	cairo_restore(cr);
 }
 
-void container_linux::get_media_features(litehtml::media_features& media) const
+void container_cairo::get_media_features(litehtml::media_features& media) const
 {
 	litehtml::position client;
     get_client_rect(client);
@@ -527,13 +527,13 @@ void container_linux::get_media_features(litehtml::media_features& media) const
 	media.resolution	= 96;
 }
 
-void container_linux::get_language(litehtml::string& language, litehtml::string& culture) const
+void container_cairo::get_language(litehtml::string& language, litehtml::string& culture) const
 {
 	language = "en";
 	culture = "";
 }
 
-void container_linux::link(const std::shared_ptr<litehtml::document> &/*ptr*/, const litehtml::element::ptr& /*el*/)
+void container_cairo::link(const std::shared_ptr<litehtml::document> &/*ptr*/, const litehtml::element::ptr& /*el*/)
 {
 
 }
