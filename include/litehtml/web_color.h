@@ -47,6 +47,16 @@ namespace litehtml
 		static web_color	from_string(const string& str, document_container* callback);
 		static string		resolve_name(const string& name, document_container* callback);
 		static bool			is_color(const string& str, document_container* callback);
+		web_color darken(double fraction) const
+		{
+			int v_red = (int) red;
+			int v_blue = (int) blue;
+			int v_green = (int) green;
+			v_red = (int) std::max(v_red - (v_red * fraction), 0.0);
+			v_blue = (int) std::max(v_blue - (v_blue * fraction), 0.0);
+			v_green = (int) std::max(v_green - (v_green * fraction), 0.0);
+			return {(byte) v_red, (byte) v_green, (byte) v_blue, alpha};
+		}
 	};
 }
 
