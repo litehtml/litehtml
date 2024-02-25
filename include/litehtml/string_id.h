@@ -293,7 +293,7 @@ STRING_ID(
 
   _counter_reset_,
 	_counter_increment_,
-);
+)
 #undef STRING_ID
 extern const string_id empty_id; // _id("")
 extern const string_id star_id; // _id("*")

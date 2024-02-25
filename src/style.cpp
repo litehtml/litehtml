@@ -227,7 +227,7 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		split_string(val, tokens, " ", "", "(");
 		for (const auto& token : tokens)
 		{
-			int idx = value_index(token, border_style_strings);
+			idx = value_index(token, border_style_strings);
 			if (idx >= 0)
 			{
 				property_value style(idx, important);
@@ -267,7 +267,7 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		split_string(val, tokens, " ", "", "(");
 		for (const auto& token : tokens)
 		{
-			int idx = value_index(token, border_style_strings);
+			idx = value_index(token, border_style_strings);
 			if (idx >= 0)
 			{
 				add_parsed_property(_id(_s(name) + "-style"), property_value(idx, important));
@@ -436,7 +436,7 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		split_string(val, tokens, " ", "", "(");
 		for (const auto& token : tokens)
 		{
-			int idx = value_index(token, list_style_type_strings);
+			idx = value_index(token, list_style_type_strings);
 			if (idx >= 0)
 			{
 				add_parsed_property(_list_style_type_, property_value(idx, important));
@@ -511,7 +511,6 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		split_string(val, tokens, " ");
 		for (const auto& tok : tokens)
 		{
-			int idx;
 			if ((idx = value_index(tok, flex_direction_strings)) >= 0)
 			{
 				add_parsed_property(_flex_direction_, property_value(idx, important));
@@ -736,7 +735,6 @@ bool style::parse_one_background(const string& val, document_container* containe
 	
 	if (position != "")
 	{
-		string_vector tokens;
 		split_string(position, tokens, "/");
 
 		if (tokens.size() > 2) return false;

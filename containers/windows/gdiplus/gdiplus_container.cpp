@@ -1,3 +1,4 @@
+#define NOMINMAX
 #include <windows.h>
 #include <gdiplus.h>
 #include "gdiplus_container.h"

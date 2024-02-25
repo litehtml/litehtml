@@ -2,6 +2,7 @@
 #include <gtest/gtest.h>
 #include <fstream>
 #ifdef _WIN32
+	#define NOMINMAX
 	#include "dirent.h"
 #else
 	#include <dirent.h>
