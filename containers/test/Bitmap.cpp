@@ -36,12 +36,12 @@ void Bitmap::draw_line(int x0, int y0, int x1, int y1, web_color color)
 	}
 }
 
-void Bitmap::draw_rect(int x, int y, int Width, int Height, web_color color)
+void Bitmap::draw_rect(int x, int y, int width, int height, web_color color)
 {
-	draw_line(x, y,              x + Width, y,              color); // top
-	draw_line(x, y + Height - 1, x + Width, y + Height - 1, color); // bottom
-	draw_line(x,             y, x,             y + Height, color); // left
-	draw_line(x + Width - 1, y, x + Width - 1, y + Height, color); // right
+	draw_line(x, y,              x + width, y,              color); // top
+	draw_line(x, y + height - 1, x + width, y + height - 1, color); // bottom
+	draw_line(x,             y, x,             y + height, color); // left
+	draw_line(x + width - 1, y, x + width - 1, y + height, color); // right
 }
 
 void Bitmap::fill_rect(position rect, web_color color)
