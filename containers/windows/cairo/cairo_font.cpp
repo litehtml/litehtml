@@ -139,10 +139,10 @@ void cairo_font::show_text( cairo_t* cr, int x, int y, const char* str )
 
 void cairo_font::split_text( const char* src, text_chunk::vector& chunks )
 {
-	wchar_t* str = cairo_font::utf8_to_wchar(src);
-	wchar_t* str_start = str;
+	auto str = cairo_font::utf8_to_wchar(src);
+	const wchar_t* str_start = str.c_str();
 
-	int cch = lstrlen(str);
+	int cch = str.length();
 
 	HDC hdc = GetDC(NULL);
 	SelectObject(hdc, m_hFont);
@@ -153,7 +153,7 @@ void cairo_font::split_text( const char* src, text_chunk::vector& chunks )
 		long cchActual;
 		if(m_font_link)
 		{
-			hr = m_font_link->GetStrCodePages(str, cch, m_font_code_pages, &dwActualCodePages, &cchActual);
+			hr = m_font_link->GetStrCodePages(str.c_str(), cch, m_font_code_pages, &dwActualCodePages, &cchActual);
 		} else
 		{
 			hr = S_FALSE;
@@ -166,9 +166,9 @@ void cairo_font::split_text( const char* src, text_chunk::vector& chunks )
 		
 		text_chunk* chk = new text_chunk;
 
-		int sz = WideCharToMultiByte(CP_UTF8, 0, str, cchActual, chk->text, 0, NULL, NULL) + 1;
+		int sz = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), cchActual, chk->text, 0, NULL, NULL) + 1;
 		chk->text = new CHAR[sz];
-		sz = WideCharToMultiByte(CP_UTF8, 0, str, cchActual, chk->text, sz, NULL, NULL);
+		sz = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), cchActual, chk->text, sz, NULL, NULL);
 		chk->text[sz] = 0;
 		chk->font = NULL;
 
@@ -212,16 +212,15 @@ void cairo_font::split_text( const char* src, text_chunk::vector& chunks )
 	{
 		text_chunk* chk = new text_chunk;
 
-		int sz = WideCharToMultiByte(CP_UTF8, 0, str, -1, chk->text, 0, NULL, NULL) + 1;
+		int sz = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), -1, chk->text, 0, NULL, NULL) + 1;
 		chk->text = new CHAR[sz];
-		sz = WideCharToMultiByte(CP_UTF8, 0, str, -1, chk->text, sz, NULL, NULL);
+		sz = WideCharToMultiByte(CP_UTF8, 0, str.c_str(), -1, chk->text, sz, NULL, NULL);
 		chk->text[sz] = 0;
 		chk->font = NULL;
 		chunks.push_back(chk);
 	}
 
 	ReleaseDC(NULL, hdc);
-	delete str_start;
 }
 
 void cairo_font::free_text_chunks( text_chunk::vector& chunks )
@@ -350,22 +349,26 @@ void cairo_font::init()
 	m_bStrikeOut		= FALSE;
 }
 
-wchar_t* cairo_font::utf8_to_wchar( const char* src )
+std::wstring cairo_font::utf8_to_wchar(const std::string& src )
 {
-	if(!src) return NULL;
+	if (src.empty()) return std::wstring();
 
-	int len = (int) strlen(src);
-	wchar_t* ret = new wchar_t[len + 1];
-	MultiByteToWideChar(CP_UTF8, 0, src, -1, ret, len + 1);
+	int len = (int) src.size();
+	wchar_t* str = new wchar_t[len + 1];
+	MultiByteToWideChar(CP_UTF8, 0, src.c_str(), -1, str, len + 1);
+	std::wstring ret(str);
+	delete str;
 	return ret;
 }
 
-char* cairo_font::wchar_to_utf8( const wchar_t* src )
+std::string cairo_font::wchar_to_utf8(const std::wstring& src)
 {
-	if(!src) return NULL;
+	if(src.empty()) return std::string();
 
-	int len = WideCharToMultiByte(CP_UTF8, 0, src, -1, NULL, 0, NULL, NULL);
-	char* ret = new char[len];
-	WideCharToMultiByte(CP_UTF8, 0, src, -1, ret, len, NULL, NULL);
+	int len = WideCharToMultiByte(CP_UTF8, 0, src.c_str(), -1, NULL, 0, NULL, NULL);
+	char* str = new char[len];
+	WideCharToMultiByte(CP_UTF8, 0, src.c_str(), -1, str, len, NULL, NULL);
+	std::string ret(str);
+	delete str;
 	return ret;
 }

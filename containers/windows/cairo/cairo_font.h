@@ -71,8 +71,8 @@ public:
 	int					text_width(cairo_t* cr, const char* str);
 	void				load_metrics(cairo_t* cr);
 	cairo_font_metrics&	metrics();
-	static wchar_t*		utf8_to_wchar(const char* src);
-	static char*		wchar_to_utf8(const wchar_t* src);
+	static std::wstring	utf8_to_wchar(const std::string& src);
+	static std::string	wchar_to_utf8(const std::wstring& src);
 private:
 	void				split_text(const char* str, text_chunk::vector& chunks);
 	void				free_text_chunks(text_chunk::vector& chunks);

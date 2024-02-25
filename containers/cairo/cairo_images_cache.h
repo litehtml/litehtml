@@ -68,6 +68,16 @@ public:
 		return nullptr;
 	}
 
+	void reserve(const std::string& url)
+	{
+		std::unique_lock<std::mutex> lock(m_mutex);
+		auto iter = m_images.find(url);
+		if (iter == m_images.end())
+		{
+			m_images[url] = cairo_surface_wrapper();
+		}
+	}
+
 	bool exists(const std::string& url)
 	{
 		std::unique_lock<std::mutex> lock(m_mutex);
