@@ -106,7 +106,7 @@ void litehtml::el_before_after_base::add_text( const string& txt )
 				word += convert_escape(esc.c_str() + 1);
 				esc.clear();
 			}
-			if(isspace(chr))
+			if(isspace((unsigned char) chr))
 			{
 				if(!word.empty())
 				{
