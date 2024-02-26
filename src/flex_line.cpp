@@ -261,7 +261,7 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 		{
 			item->el->render(0,
 							 0,
-							 self_size.new_width(item->main_size - item->el->content_offset_width(), containing_block_context::size_mode_exact_width), fmt_ctx, false);
+							 self_size.new_width(item->main_size - item->el->render_offset_width(), containing_block_context::size_mode_exact_width), fmt_ctx, false);
 
 			if((item->align & 0xFF) == flex_align_items_baseline)
 			{
