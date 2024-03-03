@@ -382,6 +382,11 @@ litehtml::web_color litehtml::html_tag::get_color_property(string_id name, bool 
 	return get_property_impl<web_color, prop_type_color, &property_value::m_color>(name, inherited, default_value, css_properties_member_offset);
 }
 
+std::vector<litehtml::background_image> litehtml::html_tag::get_images_property (string_id name, bool inherited, const std::vector<background_image>& default_value, uint_ptr css_properties_member_offset) const
+{
+	return get_property_impl<std::vector<litehtml::background_image>, prop_type_bg_image, &property_value::m_bg_images>(name, inherited, default_value, css_properties_member_offset);
+}
+
 litehtml::string litehtml::html_tag::get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const
 {
 	return get_property_impl<string, prop_type_string, &property_value::m_string>(name, inherited, default_value, css_properties_member_offset);
@@ -927,16 +932,16 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 			{
 				std::vector<background_paint> bg_paint;
 				init_background_paint(pos, bg_paint, bg, ri);
-				if(is_root())
-				{
-					for(auto& b : bg_paint)
-					{
-						b.clip_box = *clip;
-						b.border_box = *clip;
-					}
-				}
 
-				get_document()->container()->draw_background(hdc, bg_paint);
+				for(auto iter = bg_paint.rbegin(); iter != bg_paint.rend(); iter++)
+				{
+					if(is_root())
+					{
+						iter->clip_box = *clip;
+						iter->border_box = *clip;
+					}
+					get_document()->container()->draw_background(hdc, *iter);
+				}
 			}
 			position border_box = pos;
 			border_box += ri->get_paddings();
@@ -1009,11 +1014,11 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 
 				if(bg)
 				{
-					for (auto& bgp : bg_paint)
+					for(auto iter = bg_paint.rbegin(); iter != bg_paint.rend(); iter++)
 					{
-						bgp.border_radius = bdr.radius.calc_percents(bgp.border_box.width, bgp.border_box.width);
+						iter->border_radius = bdr.radius.calc_percents(iter->border_box.width, iter->border_box.width);
+						get_document()->container()->draw_background(hdc, *iter);
 					}
-					get_document()->container()->draw_background(hdc, bg_paint);
 				}
 				if(bdr.is_visible())
 				{
@@ -1101,32 +1106,94 @@ bool litehtml::html_tag::is_replaced() const
 
 void litehtml::html_tag::init_background_paint(position pos, std::vector<background_paint>& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri)
 {
-	bg_paint = { background_paint() };
+	bg_paint.clear();
 	if (!bg) return;
 
-	int bg_count = std::max((int)bg->m_image.size(), 1);
-	bg_paint.resize(bg_count);
-
-	for (int i = 0; i < bg_count; i++)
+	if(!bg->m_image.empty())
 	{
-		init_one_background_paint(i, pos, bg_paint[i], bg, ri);
-	}
+		bg_paint.resize(bg->m_image.size());
 
-	bg_paint.back().color = bg->m_color;
+		for (int i = 0; i < (int) bg->m_image.size(); i++)
+		{
+			init_one_background_paint(i, pos, bg_paint[i], bg, ri);
+		}
+	}
+	if(bg->m_color != web_color::transparent)
+	{
+		auto bp = background_paint();
+		bp.color = bg->m_color;
+
+		position content_box = pos;
+		position padding_box = pos;
+		padding_box += ri->get_paddings();
+		position border_box = padding_box;
+		border_box += ri->get_borders();
+
+		if(!bg_paint.empty())
+		{
+			bp.clip_box = bg_paint.back().clip_box;
+		} else
+		{
+			int clip = !bg->m_clip.empty() ? bg->m_clip.front() : background_box_border;
+
+			switch (clip)
+			{
+				case background_box_padding:
+					bp.clip_box = padding_box;
+					break;
+				case background_box_content:
+					bp.clip_box = content_box;
+					break;
+				default:
+					bp.clip_box = border_box;
+					break;
+			}
+		}
+		bp.border_radius	= m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
+		bp.border_box		= border_box;
+		bp.is_root			= is_root();
+		bg_paint.emplace_back(bp);
+	}
 }
 
 void litehtml::html_tag::init_one_background_paint(int i, position pos, background_paint& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri)
 {
-	bg_paint.image		= i < (int) bg->m_image.size() ? bg->m_image[i] : "";
-	bg_paint.baseurl	= bg->m_baseurl;
-	bg_paint.attachment = i < (int) bg->m_attachment.size() ? (background_attachment)bg->m_attachment[i] : background_attachment_scroll;
-	bg_paint.repeat		= i < (int) bg->m_repeat.size() ? (background_repeat)bg->m_repeat[i] : background_repeat_repeat;
-	int clip			= i < (int) bg->m_clip.size() ? bg->m_clip[i] : background_box_border;
-	int origin			= i < (int) bg->m_origin.size() ? bg->m_origin[i] : background_box_padding;
+	if(i < (int) bg->m_image.size())
+	{
+		switch (bg->m_image[i].type)
+		{
+			case background_image::bg_image_type_url:
+				bg_paint.image = bg->m_image[i].url;
+				break;
+			case background_image::bg_image_type_gradient:
+				bg_paint.gradient = bg->m_image[i].gradient;
+				break;
+			default:
+				bg_paint.image = "";
+				bg_paint.gradient = background_gradient();
+				break;
+		}
+	} else
+	{
+		bg_paint.image = "";
+		bg_paint.gradient = background_gradient();
+	}
+	bg_paint.baseurl = bg->m_baseurl;
+	bg_paint.attachment = bg->m_attachment.empty() ? background_attachment_scroll :
+			(background_attachment)bg->m_attachment[i % bg->m_attachment.size()];
+	bg_paint.repeat = bg->m_repeat.empty() ? background_repeat_repeat :
+			(background_repeat)bg->m_repeat[i % bg->m_repeat.size()];
+	int clip = bg->m_clip.empty() ? background_box_border:
+			bg->m_clip[i % bg->m_clip.size()];
+	int origin = bg->m_origin.empty() ? background_box_padding :
+			bg->m_origin[i % bg->m_origin.size()];
 	const css_size auto_auto(css_length::predef_value(background_size_auto), css_length::predef_value(background_size_auto));
-	css_size size		= i < (int) bg->m_size.size() ? bg->m_size[i] : auto_auto;
-	css_length position_x = i < (int) bg->m_position_x.size() ? bg->m_position_x[i] : css_length(0, css_units_percentage);
-	css_length position_y = i < (int) bg->m_position_y.size() ? bg->m_position_y[i] : css_length(0, css_units_percentage);
+	css_size size = bg->m_size.empty() ? auto_auto :
+			bg->m_size[i % bg->m_size.size()];
+	css_length position_x = bg->m_position_x.empty() ? css_length(0, css_units_percentage) :
+			bg->m_position_x[i % bg->m_position_x.size()];
+	css_length position_y = bg->m_position_y.empty() ? css_length(0, css_units_percentage):
+			bg->m_position_y[i % bg->m_position_y.size()];
 
 	position content_box	= pos;
 	position padding_box	= pos;

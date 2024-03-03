@@ -379,14 +379,28 @@ void litehtml::css_properties::compute_background(const element* el, const docum
 	m_bg.m_clip       = el->get_int_vector_property(_background_clip_,       false, { background_box_border },        offset(m_bg.m_clip));
 	m_bg.m_origin     = el->get_int_vector_property(_background_origin_,     false, { background_box_padding },       offset(m_bg.m_origin));
 
-	m_bg.m_image   = el->get_string_vector_property(_background_image_,  false, {""}, offset(m_bg.m_image));
+	m_bg.m_image   = el->get_images_property(_background_image_,  false, {std::vector<background_image>()}, offset(m_bg.m_image));
 	m_bg.m_baseurl = el->get_string_property(_background_image_baseurl_, false, "",   offset(m_bg.m_baseurl));
 
-	for (const auto& image : m_bg.m_image)
+	for (auto& image : m_bg.m_image)
 	{
-		if (!image.empty())
+		switch (image.type)
 		{
-			doc->container()->load_image(image.c_str(), m_bg.m_baseurl.c_str(), true);
+
+			case background_image::bg_image_type_none:
+				break;
+			case background_image::bg_image_type_url:
+				if (!image.url.empty())
+				{
+					doc->container()->load_image(image.url.c_str(), m_bg.m_baseurl.c_str(), true);
+				}
+				break;
+			case background_image::bg_image_type_gradient:
+				for(auto& item : image.gradient.m_colors)
+				{
+					doc->cvt_units(item.length,  font_size);
+				}
+				break;
 		}
 	}
 }

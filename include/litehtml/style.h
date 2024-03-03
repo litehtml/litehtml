@@ -14,6 +14,7 @@ namespace litehtml
 		prop_type_length_vector,
 		prop_type_number,
 		prop_type_color,
+		prop_type_bg_image,
 		prop_type_string,
 		prop_type_string_vector,
 		prop_type_size_vector,
@@ -34,6 +35,7 @@ namespace litehtml
 			length_vector	m_length_vector;
 			float			m_number;
 			web_color		m_color;
+			std::vector<background_image> m_bg_images;
 			string			m_string;
 			string_vector	m_string_vector;
 			size_vector		m_size_vector;
@@ -79,6 +81,10 @@ namespace litehtml
 			: m_type(prop_type_color), m_important(important), m_color(color)
 		{
 		}
+		property_value(const std::vector<background_image>& images, bool important)
+			: m_type(prop_type_bg_image), m_important(important), m_bg_images(images)
+		{
+		}
 		property_value(const size_vector& vec, bool important)
 			: m_type(prop_type_size_vector), m_important(important), m_size_vector(vec)
 		{
@@ -105,6 +111,9 @@ namespace litehtml
 				break;
 			case prop_type_color:
 				m_color.~web_color();
+				break;
+			case prop_type_bg_image:
+				m_bg_images.~vector<background_image>();
 				break;
 			case prop_type_size_vector:
 				m_size_vector.~size_vector();
@@ -150,6 +159,9 @@ namespace litehtml
 			case prop_type_color:
 				new(this) property_value(val.m_color, val.m_important);
 				break;
+			case prop_type_bg_image:
+				new(this) property_value(val.m_bg_images, val.m_important);
+				break;
 			case prop_type_size_vector:
 				new(this) property_value(val.m_size_vector, val.m_important);
 				break;
@@ -192,7 +204,7 @@ namespace litehtml
 		void parse(const string& txt, const string& baseurl, document_container* container);
 		void parse_background(const string& val, const string& baseurl, bool important, document_container* container);
 		bool parse_one_background(const string& val, document_container* container, background& bg);
-		void parse_background_image(const string& val, const string& baseurl, bool important);
+		void parse_background_image(const string& val, document_container* container, const string& baseurl, bool important);
 		// parse comma-separated list of keywords
 		void parse_keyword_comma_list(string_id name, const string& val, bool important);
 		void parse_background_position(const string& val, bool important);

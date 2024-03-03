@@ -172,6 +172,7 @@ STRING_ID(
 	_background_position_,
 	_background_position_x_,
 	_background_position_y_,
+	_background_gradient_,
 
 	_border_,
 	_border_width_,

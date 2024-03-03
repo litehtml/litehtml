@@ -58,6 +58,8 @@ namespace litehtml
 			return {(byte) v_red, (byte) v_green, (byte) v_blue, alpha};
 		}
 	};
+
+	typedef std::vector<web_color>	web_color_vector;
 }
 
 #endif  // LH_WEB_COLOR_H

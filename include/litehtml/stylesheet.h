@@ -28,6 +28,8 @@ namespace litehtml
 		void	parse_stylesheet(const char* str, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media);
 		void	sort_selectors();
 		static void	parse_css_url(const string& str, string& url);
+		static bool parse_css_angle(const string& str, double& angle);
+		static void parse_gradient(const string &token, document_container *container, background_gradient& grad);
 
 	private:
 		void	parse_atrule(const string& text, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media);
