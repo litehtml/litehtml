@@ -194,7 +194,7 @@ void style::add_property(string_id name, const string& val, const string& baseur
 		break;
 
 	case _background_image_:
-		parse_background_image(val, baseurl, important);
+		parse_background_image(val, container, baseurl, important);
 		break;
 
 	case _background_attachment_:
@@ -619,10 +619,11 @@ void style::parse_background(const string& val, const string& baseurl, bool impo
 	if (tokens.empty()) return;
 
 	web_color color;
-	string_vector images; 
+	std::vector<background_image> images;
 	int_vector repeats, origins, clips, attachments;
 	length_vector x_positions, y_positions;
 	size_vector sizes;
+	background_gradient grad;
 
 	for (const auto& token : tokens)
 	{
@@ -656,7 +657,7 @@ void style::parse_background(const string& val, const string& baseurl, bool impo
 bool style::parse_one_background(const string& val, document_container* container, background& bg)
 {
 	bg.m_color = web_color::transparent;
-	bg.m_image = {""};
+	bg.m_image = { background_image() };
 	bg.m_repeat = { background_repeat_repeat };
 	bg.m_origin = { background_box_padding };
 	bg.m_clip = { background_box_border };
@@ -689,7 +690,10 @@ bool style::parse_one_background(const string& val, document_container* containe
 			if (image_found) return false;
 			string url;
 			css::parse_css_url(token, url);
-			bg.m_image = { url };
+			background_image img;
+			img.type = background_image::bg_image_type_url;
+			img.url = url;
+			bg.m_image = { img };
 			image_found = true;
 		} else if( (idx = value_index(token, background_repeat_strings)) >= 0 )
 		{
@@ -726,6 +730,16 @@ bool style::parse_one_background(const string& val, document_container* containe
 			if (color_found) return false;
 			bg.m_color = web_color::from_string(token, container);
 			color_found = true;
+		} else if (	token.substr(0, 15) == "linear-gradient" || token.substr(0, 25) == "repeating-linear-gradient" ||
+				token.substr(0, 15) == "radial-gradient" || token.substr(0, 25) == "repeating-radial-gradient")
+		{
+			if (image_found) return false;
+			background_image img;
+			img.type = background_image::bg_image_type_gradient;
+			css::parse_gradient(token, container, img.gradient);
+			if(img.is_empty()) return false;
+			bg.m_image = { img };
+			image_found = true;
 		}
 		else
 		{
@@ -733,7 +747,7 @@ bool style::parse_one_background(const string& val, document_container* containe
 		}
 	}
 	
-	if (position != "")
+	if (!position.empty())
 	{
 		tokens.clear();
 		split_string(position, tokens, "/");
@@ -743,30 +757,50 @@ bool style::parse_one_background(const string& val, document_container* containe
 		if (tokens.size() == 2 && !parse_one_background_size(tokens[1], bg.m_size[0]))
 			return false;
 
-		if (tokens.size() > 0 && !parse_one_background_position(tokens[0], bg.m_position_x[0], bg.m_position_y[0]))
+		if (!tokens.empty() && !parse_one_background_position(tokens[0], bg.m_position_x[0], bg.m_position_y[0]))
 			return false;
 	}
 	
 	return true;
 }
 
-void style::parse_background_image(const string& val, const string& baseurl, bool important)
+void style::parse_background_image(const string& val, document_container* container, const string& baseurl, bool important)
 {
 	string_vector tokens;
 	split_string(val, tokens, ",", "", "(");
 	if (tokens.empty()) return;
 
-	string_vector images;
+	std::vector<background_image> images;
 
-	for (const auto& token : tokens)
+	for (auto& token : tokens)
 	{
-		string url;
-		css::parse_css_url(token, url);
-		images.push_back(url);
+		trim(token);
+		if(token.substr(0, 3) == "url")
+		{
+			string url;
+			css::parse_css_url(token, url);
+			background_image img;
+			img.type = background_image::bg_image_type_url;
+			img.url = url;
+			images.emplace_back(img);
+		} else if (token.substr(0, 15) == "linear-gradient" || token.substr(0, 25) == "repeating-linear-gradient" ||
+				   token.substr(0, 15) == "radial-gradient" || token.substr(0, 25) == "repeating-radial-gradient")
+		{
+			background_image img;
+			img.type = background_image::bg_image_type_gradient;
+			css::parse_gradient(token, container, img.gradient);
+			if(!img.is_empty())
+			{
+				images.emplace_back(img);
+			}
+		}
 	}
 
-	add_parsed_property(_background_image_,         property_value(images,  important));
-	add_parsed_property(_background_image_baseurl_, property_value(baseurl, important));
+	if(!images.empty())
+	{
+		add_parsed_property(_background_image_, property_value(images, important));
+		add_parsed_property(_background_image_baseurl_, property_value(baseurl, important));
+	}
 }
 
 void style::parse_keyword_comma_list(string_id name, const string& val, bool important)

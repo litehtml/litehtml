@@ -41,7 +41,7 @@ public:
 	int get_default_font_size() const override;
 	const char*	get_default_font_name() const override;
 	void get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
-	void draw_background(litehtml::uint_ptr hdc, const std::vector<litehtml::background_paint>& bg) override;
+	void draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg) override;
 	void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) override;
 	void draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) override;
 	std::shared_ptr<litehtml::element>	create_element(const char *tag_name,

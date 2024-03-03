@@ -3,6 +3,9 @@
 #include <algorithm>
 #include "document.h"
 
+#ifndef M_PI
+#       define M_PI    3.14159265358979323846
+#endif
 
 void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
 {
@@ -76,6 +79,143 @@ void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const
 		if(pos != string::npos)
 		{
 			pos = text.find_first_not_of(" \n\r\t", pos);
+		}
+	}
+}
+
+bool litehtml::css::parse_css_angle(const string& str, double& angle)
+{
+	const char* start = str.c_str();
+	for(;start[0]; start++)
+	{
+		if(!isspace(start[0])) break;
+	}
+	if(start[0] == 0) return false;
+	char* end = nullptr;
+	double a = strtod(start, &end);
+	if(end && end[0] != 0) return false;
+	if(!strcmp(end, "deg"))
+	{
+		a = a * M_PI / 180.0;
+	} else if(!strcmp(end, "grad"))
+	{
+		a = a * M_PI / 200.0;
+	} else if(!strcmp(end, "turn"))
+	{
+		a = a * 2.0 * M_PI;
+	} else if(!strcmp(end, "rad"))
+	{
+		return false;
+	}
+	angle = a;
+	return true;
+}
+
+void litehtml::css::parse_gradient(const string &token, document_container *container, background_gradient& grad)
+{
+	size_t pos1 = token.find('(');
+	size_t pos2 = token.find_last_of(')');
+	std::string grad_str;
+	if(pos1 != std::string::npos)
+	{
+		auto gradient_type_str = token.substr(0, pos1);
+		trim(gradient_type_str);
+		background_gradient::gradient_type gradient_type = (background_gradient::gradient_type) (value_index(
+				gradient_type_str,
+				"linear-gradient;repeating-linear-gradient;radial-gradient;repeating-radial-gradient", -2) + 1);
+
+		if(pos2 != std::string::npos)
+		{
+			grad_str = token.substr(pos1 + 1, pos2 - pos1 - 1);
+		} else
+		{
+			grad_str = token.substr(pos1);
+		}
+		string_vector items;
+		split_string(grad_str, items, ",", "", "()");
+		int num_colors = 0;
+
+		auto parse_color_stop_list = [&](string_vector& parts)
+			{
+				auto color = web_color::from_string(parts[0], container);
+				css_length length;
+				if(parts.size() > 1)
+				{
+					length.fromString(parts[1]);
+					if(!length.is_predefined())
+					{
+						background_gradient::gradient_color gc;
+						gc.color = color;
+						gc.length = length;
+						grad.m_colors.push_back(gc);
+						num_colors++;
+					}
+					if(parts.size() > 2)
+					{
+						length.fromString(parts[2]);
+						if(!length.is_predefined())
+						{
+							background_gradient::gradient_color gc;
+							gc.color = color;
+							gc.length = length;
+							grad.m_colors.push_back(gc);
+							num_colors++;
+						}
+					}
+				} else
+				{
+					background_gradient::gradient_color gc;
+					gc.color = color;
+					grad.m_colors.push_back(gc);
+					num_colors++;
+				}
+			};
+
+		if(gradient_type == background_gradient::linear_gradient || gradient_type == background_gradient::repeating_linear_gradient)
+		{
+			for (const auto &item: items)
+			{
+				string_vector parts;
+				split_string(item, parts, " \t", "", "()");
+				if (!parts.empty())
+				{
+					if (parts[0] == "to")
+					{
+						for (size_t part_idx = 1; part_idx < parts.size(); part_idx++)
+						{
+							int side = value_index(parts[1], "left;right;top;bottom");
+							if (side >= 0)
+							{
+								grad.m_side |= (background_gradient::gradient_side) (1 << side);
+							}
+						}
+					} else if (parts.size() == 1 && css::parse_css_angle(parts[0], grad.angle))
+					{
+						continue;
+					} else if (web_color::is_color(parts[0], container))
+					{
+						parse_color_stop_list(parts);
+					} else
+					{
+						css_length length;
+						length.fromString(parts[0]);
+						if (!length.is_predefined())
+						{
+							background_gradient::gradient_color gc;
+							gc.length = length;
+							gc.is_color_hint = true;
+							grad.m_colors.push_back(gc);
+						}
+					}
+				}
+			}
+		} else if(gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_linear_gradient)
+		{
+
+		}
+		if(num_colors >= 2)
+		{
+			grad.m_type = gradient_type;
 		}
 	}
 }
