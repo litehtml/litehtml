@@ -301,6 +301,7 @@ void litehtml::css::parse_atrule(const string& text, const char* baseurl, const 
 			if(url.empty())
 			{
 				url = tokens.front();
+				trim(url, "\"");
 			}
 			tokens.erase(tokens.begin());
 			if(doc)
