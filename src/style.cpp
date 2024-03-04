@@ -87,10 +87,38 @@ void style::parse_property(const string& txt, const string& baseurl, document_co
 	}
 }
 
+void style::inherit_property(string_id name, bool important)
+{
+	switch (name)
+	{
+		case _font_:
+			add_parsed_property(_font_style_, property_value(important, prop_type_inherit));
+			add_parsed_property(_font_variant_, property_value(important, prop_type_inherit));
+			add_parsed_property(_font_weight_, property_value(important, prop_type_inherit));
+			add_parsed_property(_font_size_, property_value(important, prop_type_inherit));
+			add_parsed_property(_line_height_, property_value(important, prop_type_inherit));
+			break;
+		case _background_:
+			add_parsed_property(_background_color_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_position_x_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_position_y_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_repeat_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_attachment_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_image_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_image_baseurl_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_size_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_origin_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_clip_, property_value(important, prop_type_inherit));
+			break;
+		default:
+			add_parsed_property(name, property_value(important, prop_type_inherit));
+	}
+}
+
 void style::add_property(string_id name, const string& val, const string& baseurl, bool important, document_container* container)
 {
 	if (val.find("var(") != string::npos) return add_parsed_property(name, property_value(val, important, prop_type_var));
-	if (val == "inherit" && name != _font_)       return add_parsed_property(name, property_value(important, prop_type_inherit));
+	if (val == "inherit" && name != _font_) return inherit_property(name, important);
 
 	string url;
 	css_length len[4], length;
@@ -973,22 +1001,11 @@ bool style::parse_one_background_size(const string& val, css_size& size)
 
 void style::parse_font(const string& val, bool important)
 {
-	if (val == "inherit")
-	{
-		add_parsed_property(_font_style_, property_value(important, prop_type_inherit));
-		add_parsed_property(_font_variant_, property_value(important, prop_type_inherit));
-		add_parsed_property(_font_weight_, property_value(important, prop_type_inherit));
-		add_parsed_property(_font_size_, property_value(important, prop_type_inherit));
-		add_parsed_property(_line_height_, property_value(important, prop_type_inherit));
-		return;
-	} else
-	{
-		add_parsed_property(_font_style_, property_value(font_style_normal, important));
-		add_parsed_property(_font_variant_, property_value(font_variant_normal, important));
-		add_parsed_property(_font_weight_, property_value(font_weight_normal, important));
-		add_parsed_property(_font_size_, property_value(font_size_medium, important));
-		add_parsed_property(_line_height_, property_value(line_height_normal, important));
-	}
+	add_parsed_property(_font_style_, property_value(font_style_normal, important));
+	add_parsed_property(_font_variant_, property_value(font_variant_normal, important));
+	add_parsed_property(_font_weight_, property_value(font_weight_normal, important));
+	add_parsed_property(_font_size_, property_value(font_size_medium, important));
+	add_parsed_property(_line_height_, property_value(line_height_normal, important));
 
 	string_vector tokens;
 	split_string(val, tokens, " ", "", "\"");

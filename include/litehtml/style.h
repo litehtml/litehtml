@@ -200,6 +200,7 @@ namespace litehtml
 		void subst_vars(const element* el);
 
 	private:
+		void inherit_property(string_id name, bool important);
 		void parse_property(const string& txt, const string& baseurl, document_container* container);
 		void parse(const string& txt, const string& baseurl, document_container* container);
 		void parse_background(const string& val, const string& baseurl, bool important, document_container* container);
