@@ -4,6 +4,8 @@
 #include "style.h"
 #include "types.h"
 #include "master_css.h"
+#include "encodings.h"
+typedef struct GumboInternalOutput GumboOutput;
 
 namespace litehtml
 {
@@ -70,6 +72,7 @@ namespace litehtml
 		media_features						m_media;
 		string								m_lang;
 		string								m_culture;
+		string								m_text;
 	public:
 		document(document_container* objContainer);
 		virtual ~document();
@@ -105,11 +108,17 @@ namespace litehtml
 		void							append_children_from_string(element& parent, const char* str);
 		void							dump(dumper& cout);
 
-		static litehtml::document::ptr	createFromString(const char* str, litehtml::document_container* objPainter, const char* master_styles = litehtml::master_css, const char* user_styles = "");
+		// see doc/document_createFromString.txt
+		static document::ptr  createFromString(
+			const estring&       str,
+			document_container*  container,
+			const string&        master_styles = litehtml::master_css,
+			const string&        user_styles = "");
 	
 	private:
 		uint_ptr	add_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);
 
+		GumboOutput* parse_html(estring str);
 		void create_node(void* gnode, elements_list& elements, bool parseTextNode);
 		bool update_media_lists(const media_features& features);
 		void fix_tables_layout();

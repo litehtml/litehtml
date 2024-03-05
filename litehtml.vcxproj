@@ -191,6 +191,7 @@
     <ClCompile Include="src\el_text.cpp" />
     <ClCompile Include="src\el_title.cpp" />
     <ClCompile Include="src\el_tr.cpp" />
+    <ClCompile Include="src\encodings.cpp" />
     <ClCompile Include="src\flex_item.cpp" />
     <ClCompile Include="src\flex_line.cpp" />
     <ClCompile Include="src\formatting_context.cpp" />
@@ -261,6 +262,7 @@
     <ClInclude Include="include\litehtml\el_text.h" />
     <ClInclude Include="include\litehtml\el_title.h" />
     <ClInclude Include="include\litehtml\el_tr.h" />
+    <ClInclude Include="include\litehtml\encodings.h" />
     <ClInclude Include="include\litehtml\flex_item.h" />
     <ClInclude Include="include\litehtml\flex_line.h" />
     <ClInclude Include="include\litehtml\master_css.h" />

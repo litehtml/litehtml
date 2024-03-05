@@ -23,19 +23,20 @@
 #include "el_tr.h"
 #include <cmath>
 #include <cstdio>
-#include <algorithm>
 #include "gumbo.h"
-#include "utf8_strings.h"
 #include "render_item.h"
 #include "render_table.h"
 #include "render_block.h"
 
-litehtml::document::document(document_container* objContainer)
+namespace litehtml
 {
-	m_container	= objContainer;
+
+document::document(document_container* container)
+{
+	m_container	= container;
 }
 
-litehtml::document::~document()
+document::~document()
 {
 	m_over_element = nullptr;
 	if(m_container)
@@ -47,13 +48,17 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const char* str, document_container* objPainter, const char* master_styles, const char* user_styles )
+document::ptr document::createFromString(
+	const estring& str, 
+	document_container* container, 
+	const string& master_styles, 
+	const string& user_styles )
 {
-	// parse document into GumboOutput
-	GumboOutput* output = gumbo_parse(str);
-
 	// Create litehtml::document
-	document::ptr doc = std::make_shared<document>(objPainter);
+	document::ptr doc = make_shared<document>(container);
+
+	// Parse document into GumboOutput
+	GumboOutput* output = doc->parse_html(str);
 
 	// Create litehtml::elements.
 	elements_list root_elements;
@@ -65,14 +70,14 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
-	if (master_styles && *master_styles)
+	if (master_styles != "")
 	{
-		doc->m_master_css.parse_stylesheet(master_styles, nullptr, doc, nullptr);
+		doc->m_master_css.parse_stylesheet(master_styles.c_str(), nullptr, doc, nullptr);
 		doc->m_master_css.sort_selectors();
 	}
-	if (user_styles && *user_styles)
+	if (user_styles != "")
 	{
-		doc->m_user_css.parse_stylesheet(user_styles, nullptr, doc, nullptr);
+		doc->m_user_css.parse_stylesheet(user_styles.c_str(), nullptr, doc, nullptr);
 		doc->m_user_css.sort_selectors();
 	}
 
@@ -130,11 +135,121 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 		doc->fix_tables_layout();
 
 		// Finally initialize elements
-		// init() return pointer to the render_init element because it can change its type
+		// init() returns pointer to the render_init element because it can change its type
 		doc->m_root_render = doc->m_root_render->init();
 	}
 
 	return doc;
+}
+
+// https://html.spec.whatwg.org/multipage/parsing.html#change-the-encoding
+encoding adjust_meta_encoding(encoding meta_encoding, encoding current_encoding)
+{
+	// 1.
+	if (current_encoding == encoding::utf_16le || current_encoding == encoding::utf_16be)
+		return current_encoding;
+
+	// 2.
+	if (meta_encoding == encoding::utf_16le || meta_encoding == encoding::utf_16be)
+		return encoding::utf_8;
+
+	// 3.
+	if (meta_encoding == encoding::x_user_defined)
+		return encoding::windows_1252;
+
+	// 4,5,6.
+	return meta_encoding;
+}
+
+// https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inhead:change-the-encoding
+encoding get_meta_encoding(GumboNode* root)
+{
+	// find <head>
+	GumboNode* head = 0;
+	for (size_t i = 0; i < root->v.element.children.length; i++)
+	{
+		GumboNode* node = (GumboNode*)root->v.element.children.data[i];
+		if (node->type == GUMBO_NODE_ELEMENT && node->v.element.tag == GUMBO_TAG_HEAD)
+		{
+			head = node;
+			break;
+		}
+	}
+	if (!head) return encoding::null;
+
+	// go through <meta> tags in <head>
+	for (size_t i = 0; i < head->v.element.children.length; i++)
+	{
+		GumboNode* node = (GumboNode*)head->v.element.children.data[i];
+		if (node->type != GUMBO_NODE_ELEMENT || node->v.element.tag != GUMBO_TAG_META)
+			continue;
+
+		auto charset    = gumbo_get_attribute(&node->v.element.attributes, "charset");
+		auto http_equiv = gumbo_get_attribute(&node->v.element.attributes, "http-equiv");
+		auto content    = gumbo_get_attribute(&node->v.element.attributes, "content");
+		// 1. If the element has a charset attribute...
+		if (charset)
+		{
+			auto encoding = get_encoding(charset->value);
+			if (encoding != encoding::null)
+				return encoding;
+		}
+		// 2. Otherwise, if the element has an http-equiv attribute...
+		else if (http_equiv && t_strcasecmp(http_equiv->value, "content-type") == 0 && content)
+		{
+			auto encoding = extract_encoding_from_meta_element(content->value);
+			if (encoding != encoding::null)
+				return encoding;
+		}
+	}
+
+	return encoding::null;
+}
+
+// substitute for gumbo_parse that handles encodings
+GumboOutput* document::parse_html(estring str)
+{
+	// https://html.spec.whatwg.org/multipage/parsing.html#the-input-byte-stream
+	encoding_sniffing_algorithm(str);
+	// cannot store output in local variable because gumbo keeps pointers into it, 
+	// which will be accessed later in gumbo_tag_from_original_text
+	if (str.encoding == encoding::utf_8)
+		m_text = str;
+	else
+		decode(str, str.encoding, m_text);
+
+	// Gumbo does not support callbacks on node creation, so we cannot change encoding while parsing.
+	// Instead, we parse entire file and then handle <meta> tags.
+
+	// Using gumbo_parse_with_options to pass string length (m_text may contain NUL chars).
+	GumboOutput* output = gumbo_parse_with_options(&kGumboDefaultOptions, m_text.data(), m_text.size());
+
+	if (str.confidence == confidence::certain)
+		return output;
+
+	// Otherwise: confidence is tentative.
+
+	// If valid HTML encoding is specified in <meta> tag...
+	encoding meta_encoding = get_meta_encoding(output->root);
+	if (meta_encoding != encoding::null)
+	{
+		// ...and it is different from currently used encoding...
+		encoding new_encoding = adjust_meta_encoding(meta_encoding, str.encoding);
+		if (new_encoding != str.encoding)
+		{
+			// ...reparse with the new encoding.
+			gumbo_destroy_output(&kGumboDefaultOptions, output);
+			m_text.clear();
+
+			if (new_encoding == encoding::utf_8)
+				m_text = str;
+			else
+				decode(str, new_encoding, m_text);
+			output = gumbo_parse_with_options(&kGumboDefaultOptions, m_text.data(), m_text.size());
+		}
+	}
+
+	return output;
 }
 
 litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
@@ -1066,3 +1181,5 @@ void litehtml::document::dump(dumper& cout)
 		m_root_render->dump(cout);
 	}
 }
+
+} // namespace litehtml

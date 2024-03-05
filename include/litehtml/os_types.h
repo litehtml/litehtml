@@ -2,12 +2,15 @@
 #define LH_OS_TYPES_H
 
 #include <string>
+#include <memory>
 #include <cstdint>
 
 namespace litehtml
 {
 	using std::string;
-	typedef std::uintptr_t	uint_ptr;
+	using std::shared_ptr;
+	using std::make_shared;
+	using uint_ptr = std::uintptr_t;
 
 #if defined( WIN32 ) || defined( _WIN32 ) || defined( WINCE )
 

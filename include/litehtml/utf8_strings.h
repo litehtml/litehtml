@@ -6,6 +6,9 @@
 
 namespace litehtml
 {
+	// converts UTF-32 ch to UTF-8 and appends it to str
+	void append_char(string& str, int ch);
+
 	class utf8_to_wchar
 	{
 		const byte* m_utf8;
