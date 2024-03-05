@@ -252,6 +252,190 @@ GumboOutput* document::parse_html(estring str)
 	return output;
 }
 
+void document::create_node(void* gnode, elements_list& elements, bool parseTextNode)
+{
+	auto* node = (GumboNode*)gnode;
+	switch (node->type)
+	{
+	case GUMBO_NODE_ELEMENT:
+	{
+		string_map attrs;
+		GumboAttribute* attr;
+		for (unsigned int i = 0; i < node->v.element.attributes.length; i++)
+		{
+			attr = (GumboAttribute*)node->v.element.attributes.data[i];
+			attrs[attr->name] = attr->value;
+		}
+
+
+		element::ptr ret;
+		const char* tag = gumbo_normalized_tagname(node->v.element.tag);
+		if (tag[0])
+		{
+			ret = create_element(tag, attrs);
+		}
+		else
+		{
+			if (node->v.element.original_tag.data && node->v.element.original_tag.length)
+			{
+				string str;
+				gumbo_tag_from_original_text(&node->v.element.original_tag);
+				str.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
+				ret = create_element(str.c_str(), attrs);
+			}
+		}
+		if (!strcmp(tag, "script"))
+		{
+			parseTextNode = false;
+		}
+		if (ret)
+		{
+			elements_list child;
+			for (unsigned int i = 0; i < node->v.element.children.length; i++)
+			{
+				child.clear();
+				create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child, parseTextNode);
+				std::for_each(child.begin(), child.end(),
+					[&ret](element::ptr& el)
+					{
+						ret->appendChild(el);
+					}
+				);
+			}
+			elements.push_back(ret);
+		}
+	}
+	break;
+	case GUMBO_NODE_TEXT:
+	{
+		if (!parseTextNode)
+		{
+			elements.push_back(std::make_shared<el_text>(node->v.text.text, shared_from_this()));
+		}
+		else
+		{
+			m_container->split_text(node->v.text.text,
+				[this, &elements](const char* text) { elements.push_back(std::make_shared<el_text>(text, shared_from_this())); },
+				[this, &elements](const char* text) { elements.push_back(std::make_shared<el_space>(text, shared_from_this())); });
+		}
+	}
+	break;
+	case GUMBO_NODE_CDATA:
+	{
+		element::ptr ret = std::make_shared<el_cdata>(shared_from_this());
+		ret->set_data(node->v.text.text);
+		elements.push_back(ret);
+	}
+	break;
+	case GUMBO_NODE_COMMENT:
+	{
+		element::ptr ret = std::make_shared<el_comment>(shared_from_this());
+		ret->set_data(node->v.text.text);
+		elements.push_back(ret);
+	}
+	break;
+	case GUMBO_NODE_WHITESPACE:
+	{
+		string str = node->v.text.text;
+		for (size_t i = 0; i < str.length(); i++)
+		{
+			elements.push_back(std::make_shared<el_space>(str.substr(i, 1).c_str(), shared_from_this()));
+		}
+	}
+	break;
+	default:
+		break;
+	}
+}
+
+element::ptr document::create_element(const char* tag_name, const string_map& attributes)
+{
+	element::ptr newTag;
+	document::ptr this_doc = shared_from_this();
+	if (m_container)
+	{
+		newTag = m_container->create_element(tag_name, attributes, this_doc);
+	}
+	if (!newTag)
+	{
+		if (!strcmp(tag_name, "br"))
+		{
+			newTag = std::make_shared<el_break>(this_doc);
+		}
+		else if (!strcmp(tag_name, "p"))
+		{
+			newTag = std::make_shared<el_para>(this_doc);
+		}
+		else if (!strcmp(tag_name, "img"))
+		{
+			newTag = std::make_shared<el_image>(this_doc);
+		}
+		else if (!strcmp(tag_name, "table"))
+		{
+			newTag = std::make_shared<el_table>(this_doc);
+		}
+		else if (!strcmp(tag_name, "td") || !strcmp(tag_name, "th"))
+		{
+			newTag = std::make_shared<el_td>(this_doc);
+		}
+		else if (!strcmp(tag_name, "link"))
+		{
+			newTag = std::make_shared<el_link>(this_doc);
+		}
+		else if (!strcmp(tag_name, "title"))
+		{
+			newTag = std::make_shared<el_title>(this_doc);
+		}
+		else if (!strcmp(tag_name, "a"))
+		{
+			newTag = std::make_shared<el_anchor>(this_doc);
+		}
+		else if (!strcmp(tag_name, "tr"))
+		{
+			newTag = std::make_shared<el_tr>(this_doc);
+		}
+		else if (!strcmp(tag_name, "style"))
+		{
+			newTag = std::make_shared<el_style>(this_doc);
+		}
+		else if (!strcmp(tag_name, "base"))
+		{
+			newTag = std::make_shared<el_base>(this_doc);
+		}
+		else if (!strcmp(tag_name, "body"))
+		{
+			newTag = std::make_shared<el_body>(this_doc);
+		}
+		else if (!strcmp(tag_name, "div"))
+		{
+			newTag = std::make_shared<el_div>(this_doc);
+		}
+		else if (!strcmp(tag_name, "script"))
+		{
+			newTag = std::make_shared<el_script>(this_doc);
+		}
+		else if (!strcmp(tag_name, "font"))
+		{
+			newTag = std::make_shared<el_font>(this_doc);
+		}
+		else
+		{
+			newTag = std::make_shared<html_tag>(this_doc);
+		}
+	}
+
+	if (newTag)
+	{
+		newTag->set_tagName(tag_name);
+		for (const auto& attribute : attributes)
+		{
+			newTag->set_attr(attribute.first.c_str(), attribute.second.c_str());
+		}
+	}
+
+	return newTag;
+}
+
 uint_ptr document::add_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
 {
 	uint_ptr ret = 0;
@@ -697,79 +881,6 @@ bool document::on_lbutton_up( int /*x*/, int /*y*/, int /*client_x*/, int /*clie
 	return false;
 }
 
-element::ptr document::create_element(const char* tag_name, const string_map& attributes)
-{
-	element::ptr newTag;
-	document::ptr this_doc = shared_from_this();
-	if(m_container)
-	{
-		newTag = m_container->create_element(tag_name, attributes, this_doc);
-	}
-	if(!newTag)
-	{
-		if(!strcmp(tag_name, "br"))
-		{
-			newTag = std::make_shared<el_break>(this_doc);
-		} else if(!strcmp(tag_name, "p"))
-		{
-			newTag = std::make_shared<el_para>(this_doc);
-		} else if(!strcmp(tag_name, "img"))
-		{
-			newTag = std::make_shared<el_image>(this_doc);
-		} else if(!strcmp(tag_name, "table"))
-		{
-			newTag = std::make_shared<el_table>(this_doc);
-		} else if(!strcmp(tag_name, "td") || !strcmp(tag_name, "th"))
-		{
-			newTag = std::make_shared<el_td>(this_doc);
-		} else if(!strcmp(tag_name, "link"))
-		{
-			newTag = std::make_shared<el_link>(this_doc);
-		} else if(!strcmp(tag_name, "title"))
-		{
-			newTag = std::make_shared<el_title>(this_doc);
-		} else if(!strcmp(tag_name, "a"))
-		{
-			newTag = std::make_shared<el_anchor>(this_doc);
-		} else if(!strcmp(tag_name, "tr"))
-		{
-			newTag = std::make_shared<el_tr>(this_doc);
-		} else if(!strcmp(tag_name, "style"))
-		{
-			newTag = std::make_shared<el_style>(this_doc);
-		} else if(!strcmp(tag_name, "base"))
-		{
-			newTag = std::make_shared<el_base>(this_doc);
-		} else if(!strcmp(tag_name, "body"))
-		{
-			newTag = std::make_shared<el_body>(this_doc);
-		} else if(!strcmp(tag_name, "div"))
-		{
-			newTag = std::make_shared<el_div>(this_doc);
-		} else if(!strcmp(tag_name, "script"))
-		{
-			newTag = std::make_shared<el_script>(this_doc);
-		} else if(!strcmp(tag_name, "font"))
-		{
-			newTag = std::make_shared<el_font>(this_doc);
-		} else
-		{
-			newTag = std::make_shared<html_tag>(this_doc);
-		}
-	}
-
-	if(newTag)
-	{
-		newTag->set_tagName(tag_name);
-		for (const auto & attribute : attributes)
-		{
-			newTag->set_attr(attribute.first.c_str(), attribute.second.c_str());
-		}
-	}
-
-	return newTag;
-}
-
 void document::get_fixed_boxes( position::vector& fixed_boxes )
 {
 	fixed_boxes = m_fixed_boxes;
@@ -834,102 +945,6 @@ void document::add_media_list( const media_query_list::ptr& list )
 		{
 			m_media_lists.push_back(list);
 		}
-	}
-}
-
-void document::create_node(void* gnode, elements_list& elements, bool parseTextNode)
-{
-	auto* node = (GumboNode*)gnode;
-	switch (node->type)
-	{
-	case GUMBO_NODE_ELEMENT:
-		{
-			string_map attrs;
-			GumboAttribute* attr;
-			for (unsigned int i = 0; i < node->v.element.attributes.length; i++)
-			{
-				attr = (GumboAttribute*)node->v.element.attributes.data[i];
-				attrs[attr->name] = attr->value;
-			}
-
-
-			element::ptr ret;
-			const char* tag = gumbo_normalized_tagname(node->v.element.tag);
-			if (tag[0])
-			{
-				ret = create_element(tag, attrs);
-			}
-			else
-			{
-				if (node->v.element.original_tag.data && node->v.element.original_tag.length)
-				{
-					std::string strA;
-					gumbo_tag_from_original_text(&node->v.element.original_tag);
-					strA.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
-					ret = create_element(strA.c_str(), attrs);
-				}
-			}
-			if (!strcmp(tag, "script"))
-			{
-				parseTextNode = false;
-			}
-			if (ret)
-			{
-				elements_list child;
-				for (unsigned int i = 0; i < node->v.element.children.length; i++)
-				{
-					child.clear();
-					create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child, parseTextNode);
-					std::for_each(child.begin(), child.end(), 
-						[&ret](element::ptr& el)
-						{
-							ret->appendChild(el);
-						}
-					);
-				}
-				elements.push_back(ret);
-			}
-		}
-		break;
-	case GUMBO_NODE_TEXT:
-		{
-			if (!parseTextNode)
-			{
-				elements.push_back(std::make_shared<el_text>(node->v.text.text, shared_from_this()));
-			}
-			else
-			{
-				m_container->split_text(node->v.text.text,
-					[this, &elements](const char* text) { elements.push_back(std::make_shared<el_text>(text, shared_from_this())); },
-					[this, &elements](const char* text) { elements.push_back(std::make_shared<el_space>(text, shared_from_this())); });
-			}
-		}
-		break;
-	case GUMBO_NODE_CDATA:
-		{
-			element::ptr ret = std::make_shared<el_cdata>(shared_from_this());
-			ret->set_data(node->v.text.text);
-			elements.push_back(ret);
-		}
-		break;
-	case GUMBO_NODE_COMMENT:
-		{
-			element::ptr ret = std::make_shared<el_comment>(shared_from_this());
-			ret->set_data(node->v.text.text);
-			elements.push_back(ret);
-		}
-		break;
-	case GUMBO_NODE_WHITESPACE:
-		{
-			string str = node->v.text.text;
-			for (size_t i = 0; i < str.length(); i++)
-			{
-				elements.push_back(std::make_shared<el_space>(str.substr(i, 1).c_str(), shared_from_this()));
-			}
-		}
-		break;
-	default:
-		break;
 	}
 }
 
