@@ -49,6 +49,7 @@ set(SOURCE_LITEHTML
     src/el_text.cpp
     src/el_title.cpp
     src/el_tr.cpp
+    src/encodings.cpp
     src/html.cpp
     src/html_tag.cpp
     src/iterators.cpp
@@ -111,6 +112,7 @@ set(HEADER_LITEHTML
     include/litehtml/el_title.h
     include/litehtml/el_tr.h
     include/litehtml/element.h
+    include/litehtml/encodings.h
     include/litehtml/html.h
     include/litehtml/html_tag.h
     include/litehtml/iterators.h
