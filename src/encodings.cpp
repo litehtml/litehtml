@@ -4,7 +4,7 @@
 
 #define out
 #define inout
-#define countof(a) (sizeof(a)/sizeof(a[0]))
+#define countof(a) int(sizeof(a)/sizeof(a[0]))
 
 #define is_surrogate(ch) ((ch) >= 0xD800 && (ch) < 0xE000)
 
@@ -133,14 +133,9 @@ decoder::result decoder::process_an_item(string& input, int& index, string& outp
 // https://encoding.spec.whatwg.org/#bom-sniff
 encoding bom_sniff(const string& str)
 {
-	if (str.size() < 2) return encoding::null;
-
-	byte utf8_bom[] = {0xEF, 0xBB, 0xBF};
-	if (str.size() >= 3 && memcmp(str.data(), utf8_bom, 3) == 0) return encoding::utf_8;
-
-	if (str[0] == 0xFE && str[1] == 0xFF) return encoding::utf_16be;
-	if (str[0] == 0xFF && str[1] == 0xFE) return encoding::utf_16le;
-
+	if (str.substr(0, 3) == "\xEF\xBB\xBF") return encoding::utf_8;
+	if (str.substr(0, 2) == "\xFE\xFF") return encoding::utf_16be;
+	if (str.substr(0, 2) == "\xFF\xFE") return encoding::utf_16le;
 	return encoding::null;
 }
 
@@ -183,7 +178,7 @@ struct utf_8_decoder : decoder
 // https://encoding.spec.whatwg.org/#utf-8-decoder
 decoder::result utf_8_decoder::handler(inout string& input, inout int& index, out int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read byte from input
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read byte from input
 
 	// 1. If byte is end-of-queue and UTF-8 bytes needed is not 0, set UTF-8 bytes needed to 0 and return error.
 	if (b == EOF && m_bytes_needed != 0)
@@ -385,7 +380,7 @@ int* single_byte_decoder::m_indexes[] =
 // https://encoding.spec.whatwg.org/#single-byte-decoder
 decoder::result single_byte_decoder::handler(string& input, int& index, int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue, return finished.
 	if (b == EOF) return result_finished;
@@ -459,7 +454,7 @@ int gb18030_decoder::ranges_code_point(int pointer)
 // https://encoding.spec.whatwg.org/#gb18030-decoder
 decoder::result gb18030_decoder::handler(string& input, int& index, int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue and gb18030 first, gb18030 second, and gb18030 third are 0x00, return finished.
 	if (b == EOF && m_first == 0 && m_second == 0 && m_third == 0)
@@ -611,7 +606,7 @@ int big5_decoder::m_index[] = {null,null,null,null,null,null,null,null,null,null
 // https://encoding.spec.whatwg.org/#big5-decoder
 decoder::result big5_decoder::handler(inout string& input, inout int& index, out int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue and Big5 lead is not 0x00, set Big5 lead to 0x00 and return error.
 	if (b == EOF && m_lead != 0)
@@ -703,7 +698,7 @@ struct euc_jp_decoder : jis_decoder
 // https://encoding.spec.whatwg.org/#euc-jp-decoder
 decoder::result euc_jp_decoder::handler(inout string& input, inout int& index, out int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue and EUC-JP lead is not 0x00, set EUC-JP lead to 0x00, and return error.
 	if (b == EOF && m_lead != 0)
@@ -812,7 +807,7 @@ struct iso_2022_jp_decoder : jis_decoder
 // https://encoding.spec.whatwg.org/#iso-2022-jp-decoder
 decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& index, out int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	switch (m_state)
 	{
@@ -1013,7 +1008,7 @@ struct shift_jis_decoder : jis_decoder
 // https://encoding.spec.whatwg.org/#shift_jis-decoder
 decoder::result shift_jis_decoder::handler(inout string& input, inout int& index, out int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue and Shift_JIS lead is not 0x00, set Shift_JIS lead to 0x00 and return error.
 	if (b == EOF && m_lead != 0)
@@ -1107,7 +1102,7 @@ int euc_kr_decoder::m_index[] = {44034,44035,44037,44038,44043,44044,44045,44046
 // https://encoding.spec.whatwg.org/#euc-kr-decoder
 decoder::result euc_kr_decoder::handler(inout string& input, inout int& index, out int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue and EUC-KR lead is not 0x00, set EUC-KR lead to 0x00 and return error.
 	if (b == EOF && m_lead != 0)
@@ -1175,10 +1170,10 @@ struct replacement_decoder : decoder
 };
 
 // https://encoding.spec.whatwg.org/#replacement-decoder
-decoder::result replacement_decoder::handler(inout string& input, inout int& index, out int ch[2])
+decoder::result replacement_decoder::handler(inout string& input, inout int& index, int[2])
 {
 	// 1. If byte is end-of-queue, return finished.
-	if (index == input.size())
+	if (index == (int)input.size())
 		return result_finished;
 
 	// 2. If replacement error returned is false, set replacement error returned to true and return error.
@@ -1208,7 +1203,7 @@ struct utf_16_decoder : decoder
 // https://encoding.spec.whatwg.org/#shared-utf-16-decoder
 decoder::result utf_16_decoder::handler(inout string& input, inout int& index, out int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue and either UTF-16 lead byte or UTF-16 lead surrogate is non-null, set UTF-16 lead byte and UTF-16 lead surrogate to null, and return error.
 	if (b == EOF && (m_lead_byte != 0 || m_lead_surrogate != 0))
@@ -1285,7 +1280,7 @@ struct x_user_defined_decoder : decoder
 // https://encoding.spec.whatwg.org/#x-user-defined-decoder
 decoder::result x_user_defined_decoder::handler(inout string& input, inout int& index, out int ch[2])
 {
-	int b = index == input.size() ? EOF : (byte)input[index++]; // read input byte
+	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue, return finished.
 	if (b == EOF)
@@ -1341,11 +1336,12 @@ decoder::ptr get_decoder(encoding _encoding)
 
 	case encoding::x_user_defined:
 		return make_shared<x_user_defined_decoder>();
-	}
 
-	// single-byte encoding
-	if (_encoding >= encoding::ibm866 && _encoding <= encoding::x_mac_cyrillic)
-		return make_shared<single_byte_decoder>(_encoding);
+	default:
+		// single-byte encoding
+		if (_encoding >= encoding::ibm866 && _encoding <= encoding::x_mac_cyrillic)
+			return make_shared<single_byte_decoder>(_encoding);
+	}
 
 	return nullptr;
 }
@@ -1357,7 +1353,7 @@ decoder::ptr get_decoder(encoding _encoding)
 // https://encoding.spec.whatwg.org/encodings.json
 struct {
 	const char* name;
-	encoding encoding;
+	encoding coding;
 } labels[] =
 {
 	"unicode-1-1-utf-8",	encoding::utf_8,
@@ -1636,7 +1632,7 @@ encoding get_encoding(string label)
 	for (int i = 0; i < countof(labels); i++)
 	{
 		if (label == labels[i].name)
-			return labels[i].encoding;
+			return labels[i].coding;
 	}
 	return encoding::null;
 }
