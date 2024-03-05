@@ -38,11 +38,11 @@ namespace litehtml
     {
     public:
         virtual ~dumper() {}
-        virtual void begin_node(const litehtml::string& descr) = 0;
+        virtual void begin_node(const string& descr) = 0;
         virtual void end_node() = 0;
-        virtual void begin_attrs_group(const litehtml::string& descr) = 0;
+        virtual void begin_attrs_group(const string& descr) = 0;
         virtual void end_attrs_group() = 0;
-        virtual void add_attr(const litehtml::string& name, const litehtml::string& value) = 0;
+        virtual void add_attr(const string& name, const string& value) = 0;
     };
 
 	class html_tag;
