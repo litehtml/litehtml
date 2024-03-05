@@ -1,8 +1,10 @@
 #include "html.h"
 #include "types.h"
-#include "utf8_strings.h"
 
-void litehtml::trim(string &s, const string& chars_to_trim)
+namespace litehtml
+{
+
+string& trim(string &s, const string& chars_to_trim)
 {
 	string::size_type pos = s.find_first_not_of(chars_to_trim);
 	if(pos != string::npos)
@@ -12,13 +14,14 @@ void litehtml::trim(string &s, const string& chars_to_trim)
 	else
 	{
 		s = "";
-		return;
+		return s;
 	}
 	pos = s.find_last_not_of(chars_to_trim);
 	if(pos != string::npos)
 	{
 		s.erase(s.begin() + pos + 1, s.end());
 	}
+	return s;
 }
 
 void litehtml::lcase(string &s) 
@@ -288,3 +291,5 @@ bool litehtml::is_number(const string& string, const bool allow_dot) {
 	}
 	return true;
 }
+
+} // namespace litehtml

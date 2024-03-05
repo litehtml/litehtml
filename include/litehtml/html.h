@@ -23,7 +23,7 @@
 
 namespace litehtml
 {
-	void trim(string &s, const string& chars_to_trim = " \n\r\t");
+	string& trim(string &s, const string& chars_to_trim = " \n\r\f\t");
 	void lcase(string &s);
 	int	 value_index(const string& val, const string& strings, int defValue = -1, char delim = ';');
     string index_value(int index, const string& strings, char delim = ';');
@@ -38,6 +38,12 @@ namespace litehtml
 	int t_strncasecmp(const char *s1, const char *s2, size_t n);
 
 	bool is_number(const string& string, const bool allow_dot = 1);
+
+	// https://infra.spec.whatwg.org/#ascii-whitespace
+	inline bool is_whitespace(char c)
+	{
+		return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f';
+	}
 
 	inline int t_isdigit(int c)
 	{
