@@ -54,8 +54,11 @@ by current user locale or smth else. Any such encoding should be passed with con
 The precedence of these guesses is specified in the encoding sniffing algorithm, see litehtml::encoding_sniffing_algorithm
 and https://html.spec.whatwg.org/multipage/parsing.html#encoding-sniffing-algorithm
 
-litehtml implements only the first and the last step of this algorithm:
-it sets encoding to BOM encoding if BOM is present and it tentatively sets encoding to UTF-8 if encoding is unknown.
+litehtml implements only the 3 steps of this algorithm:
+1. set encoding to BOM encoding if BOM is present
+5. prescan the input to determine its encoding - this only called if no BOM found and user didn't specify encoding or specified tentative encoding
+9. return an implementation-defined default character encoding (UTF-8) - this only called if there is no BOM, user didn't specify an encoding and
+   prescan failed.
 
 If your program is displaying html files from the web it is recommended to detect HTTP encoding, because
 it is not very unusual for web pages to have encoding specified only in HTTP header or meta encoding be different

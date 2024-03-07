@@ -31,7 +31,7 @@ struct decoder
 
 	// https://encoding.spec.whatwg.org/#index-code-point
 	template<int N>
-	static int index_code_point(int pointer, int(&index)[N])
+	static int index_code_point(int pointer, int (&index)[N])
 	{
 		if (pointer >= 0 && pointer < N)
 			return index[pointer];
@@ -1637,10 +1637,11 @@ encoding get_encoding(string label)
 	return encoding::null;
 }
 
+const size_t EOL = string::npos;
+
 // https://html.spec.whatwg.org/multipage/urls-and-fetching.html#algorithm-for-extracting-a-character-encoding-from-a-meta-element
 encoding extract_encoding_from_meta_element(string s)
 {
-	const auto EOL = string::npos;
 	lcase(s); // for step 2.
 
 	// 1. Let position be a pointer into s, initially pointing at the start of the string.
@@ -1687,7 +1688,328 @@ loop:
 	return get_encoding(s.substr(pos, end - pos)); // works for end == EOL too
 }
 
+// see step 5 of https://html.spec.whatwg.org/multipage/parsing.html#encoding-sniffing-algorithm
+bool end_condition(size_t index)
+{
+	return index >= 1024;
+}
+
+void increment(size_t& index, const string& str)
+{
+	index++;
+	if (index >= str.size() || end_condition(index))
+		throw 0; // abort prescan
+}
+
+// https://html.spec.whatwg.org/multipage/parsing.html#concept-get-attributes-when-sniffing
+bool prescan_get_attribute(const string& str, inout size_t& index, out string& name, out string& value)
+{
+	// 1.
+	while (is_whitespace(str[index]) || str[index] == '/') increment(index, str);
+
+	// 2.
+	if (str[index] == '>') return false;
+
+	// 3.
+	name = value = "";
+
+	// 4.
+step_4:
+	if (str[index] == '=' && name != "")
+	{
+		increment(index, str);
+		goto process_value;
+	}
+	else if (is_whitespace(str[index]))
+		goto spaces;
+	else if (str[index] == '/' || str[index] == '>')
+		return true;
+	else // A..Z or anything else
+		name += lowcase(str[index]);
+
+	// 5.
+	increment(index, str);
+	goto step_4;
+
+	// 6.
+spaces:
+	while (is_whitespace(str[index])) increment(index, str);
+
+	// 7.
+	if (str[index] != '=')
+		return true;
+
+	// 8.
+	increment(index, str); // skip '='
+
+	// 9.
+process_value:
+	while (is_whitespace(str[index])) increment(index, str);
+
+	// 10.
+	if (str[index] == '"' || str[index] == '\'')
+	{
+		// 1.
+		char b = str[index];
+
+		// 2.
+	quote_loop:
+		increment(index, str);
+
+		// 3.
+		if (str[index] == b)
+		{
+			increment(index, str);
+			return true;
+		}
+
+		// 4,5.
+		else
+			value += lowcase(str[index]);
+
+		// 6.
+		goto quote_loop;
+	}
+	else if (str[index] == '>')
+		return true;
+	else // A..Z or anything else
+		value += lowcase(str[index]);
+
+	// 11.
+step_11:
+	if (is_whitespace(str[index]) || str[index] == '>')
+		return true;
+	else // A..Z or anything else
+		value += lowcase(str[index]);
+
+	// 12.
+	increment(index, str);
+	goto step_11;
+}
+
+template<class T>
+bool contains(const std::vector<T>& vector, const T& item)
+{
+	return std::find(vector.begin(), vector.end(), item) != vector.end();
+}
+bool is_one_of(int x, int a, int b, int c)
+{
+	return x == a || x == b || x == c;
+}
+bool equal_i(const string& s1, const string& s2)
+{
+	if (s1.size() != s2.size()) return false;
+	return t_strncasecmp(s1.c_str(), s2.c_str(), s1.size()) == 0;
+}
+bool match(const string& str, size_t index, const string& substr)
+{
+	return str.substr(index, substr.size()) == substr;
+}
+bool match_i(const string& str, size_t index, const string& substr)
+{
+	return equal_i(str.substr(index, substr.size()), substr);
+}
+int is_letter(int c)
+{
+	return t_isalpha(c);
+}
+
+
+// https://html.spec.whatwg.org/multipage/parsing.html#prescan-a-byte-stream-to-determine-its-encoding
+encoding prescan_a_byte_stream_to_determine_its_encoding(const string& str)
+{
+	// 1. Let fallback encoding be null. - bogus, never used
+	// 2. Let position be a pointer to a byte in the input byte stream, initially pointing at the first byte.
+	size_t index = 0;
+
+	// 3. Prescan for UTF-16 XML declarations:
+	if (match(str, index, {"<\0?\0x\0", 6})) return encoding::utf_16le;
+	if (match(str, index, {"\0<\0?\0x", 6})) return encoding::utf_16be;
+
+	// 4.
+loop:
+	if (match(str, index, "<!--"))
+	{
+		index = str.find("-->", index);
+		if (index == EOL || end_condition(index)) throw 0; // abort prescan
+		index += 2; // not 3 because it will be incremented one more time in step 5 (next_byte)
+	}
+	else if (match_i(str, index, "<meta") && (is_whitespace(str[index + 5]) || str[index + 5] == '/'))
+	{
+		// 1.
+		// NOTE: Should be 6, but the standard says 5. It doesn't really matter because prescan_get_attribute will skip the WS or / anyway.
+		index += 5; 
+		// 2,3,4,5.
+		string_vector attribute_list;
+		bool got_pragma = false;
+		int need_pragma = -1; // three values: -1 ("null"), true and false
+		encoding charset = encoding::null;
+			
+		// 6.
+	attributes:
+		string attr_name, attr_value;
+		if (!prescan_get_attribute(str, index, attr_name, attr_value))
+			goto processing;
+			
+		// 7. If the attribute's name is already in attribute list, then return to the step labeled attributes.
+		if (contains(attribute_list, attr_name))
+			goto attributes;
+
+		// 8.
+		attribute_list.push_back(attr_name);
+
+		// 9.
+		// NOTE: attr_name and attr_value are already lowcased, see prescan_get_attribute
+		if (attr_name == "http-equiv" && attr_value == "content-type") 
+		{
+			got_pragma = true;
+		}
+		else if (attr_name == "content")
+		{
+			auto encoding = extract_encoding_from_meta_element(attr_value);
+			// If a character encoding is returned, and if charset is still set to null
+			if (encoding != encoding::null && charset == encoding::null)
+			{
+				charset = encoding;
+				need_pragma = true;
+			}
+		}
+		else if (attr_name == "charset")
+		{
+			charset = get_encoding(attr_value);
+			need_pragma = false;
+		}
+
+		// 10.
+		goto attributes;
+
+		// 11. Processing: If need pragma is null, then jump to the step below labeled next byte.
+	processing:
+		if (need_pragma == -1)
+			goto next_byte;
+			
+		// 12.
+		if (need_pragma == (int)true && !got_pragma)
+			goto next_byte;
+
+		// 13.
+		if (charset == encoding::null)
+			goto next_byte;
+
+		// 14.
+		if (charset == encoding::utf_16be || charset == encoding::utf_16le)
+			charset = encoding::utf_8;
+
+		// 15.
+		if (charset == encoding::x_user_defined)
+			charset = encoding::windows_1252;
+
+		// 16.
+		return charset;
+	}
+	else if ((str[index] == '<' && str[index + 1] == '/' && is_letter(str[index + 2])) ||
+		(str[index] == '<' && is_letter(str[index + 1])))
+	{
+		// 1.
+		index = str.find_first_of(" \t\r\n\f>", index);
+		if (index == EOL || end_condition(index)) throw 0; // abort prescan
+			
+		// 2.
+		string tmp;
+		while (prescan_get_attribute(str, index, tmp, tmp)) {}
+		goto next_byte;
+	}
+	else if (str[index] == '<' && is_one_of(str[index + 1], '!', '/', '?'))
+	{
+		index = str.find('>', index);
+		if (index == EOL || end_condition(index)) throw 0; // abort prescan
+	}
+
+	// 5.
+next_byte:
+	increment(index, str);
+	goto loop;
+}
+
+// https://html.spec.whatwg.org/multipage/parsing.html#concept-get-xml-encoding-when-sniffing
+encoding get_xml_encoding(const string& str)
+{
+	// 1. Let encodingPosition be a pointer to the start of the stream.
+	size_t index = 0;
+
+	// 2.
+	if (!match(str, index, "<?xml"))
+		return encoding::null;
+
+	// 3.
+	// NOTE: xmlDeclarationEnd is unused
+	index = str.find('>', index);
+	if (index == EOL) return encoding::null;
+
+	// 4.
+	index = str.find("encoding", index);
+	if (index == EOL) return encoding::null;
+
+	// 5.
+	index += strlen("encoding");
+
+	// 6.
+	while ((byte)str[index] <= 0x20) index++;
+
+	// 7.
+	if (str[index] != '=') return encoding::null;
+
+	// 8.
+	index++; // skip '='
+
+	// 9.
+	while ((byte)str[index] <= 0x20) index++;
+
+	// 10. Let quoteMark be the byte at encodingPosition.
+	char q = str[index];
+
+	// 11.
+	if (q != '"' && q != '\'') return encoding::null;
+
+	// 12.
+	index++; // skip q
+
+	// 13. Let encodingEndPosition be the position of the next occurrence of quoteMark
+	size_t end = str.find(q, index);
+	if (index == EOL) return encoding::null;
+
+	// 14.
+	string potentialEncoding = str.substr(index, end - index);
+
+	// 15.
+	for(byte ch: potentialEncoding) if (ch <= 0x20) return encoding::null;
+
+	// 16.
+	// NOTE: all encoding labels are pure ASCII, no need to do isomorphic decoding
+	encoding encoding = get_encoding(potentialEncoding);
+
+	// 17.
+	if (encoding == encoding::utf_16be || encoding == encoding::utf_16le)
+		encoding = encoding::utf_8;
+
+	// 18.
+	return encoding;
+}
+
+// https://html.spec.whatwg.org/multipage/parsing.html#prescan-a-byte-stream-to-determine-its-encoding
+encoding prescan_for_encoding(const string& str)
+{
+	try {
+		return prescan_a_byte_stream_to_determine_its_encoding(str);
+	}
+	catch (int)
+	{
+		return get_xml_encoding(str);
+	}
+}
+
 // https://html.spec.whatwg.org/multipage/parsing.html#encoding-sniffing-algorithm
+// see also doc/document_createFromString.txt
 void encoding_sniffing_algorithm(estring& str)
 {
 	// 1. If the result of BOM sniffing is an encoding, return that encoding with confidence certain.
@@ -1705,10 +2027,19 @@ void encoding_sniffing_algorithm(estring& str)
 
 	// 4. HTTP encoding -> return { encoding, confidence: certain}
 
+	if (str.encoding != encoding::null && str.confidence == confidence::certain)
+		return;
+
 		//    all below return confidence: tentative
 
 	// 5. Optionally prescan the byte stream to determine its encoding -> return { encoding, confidence: tentative}
-	//    NOT IMPLEMENTED
+	encoding = prescan_for_encoding(str);
+	if (encoding != encoding::null)
+	{
+		str.encoding = encoding;
+		str.confidence = confidence::tentative;
+		return;
+	}
 
 	// 6. encoding from parent document
 
@@ -1725,6 +2056,7 @@ void encoding_sniffing_algorithm(estring& str)
 		str.encoding = encoding::utf_8;
 		str.confidence = confidence::tentative; // tentative means it will be overriden by <meta> encoding if present
 	}
+	// otherwise use str.encoding (tentative)
 }
 
 } // namespace litehtml
