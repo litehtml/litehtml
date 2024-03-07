@@ -1191,8 +1191,8 @@ decoder::result replacement_decoder::handler(inout string& input, inout int& ind
 
 struct utf_16_decoder : decoder
 {
-	byte m_lead_byte       = 0;
-	int  m_lead_surrogate  = 0;
+	int  m_lead_byte       = null;
+	int  m_lead_surrogate  = null;
 	bool m_utf_16be;
 
 	utf_16_decoder(encoding _encoding) : m_utf_16be(_encoding == encoding::utf_16be) {}
@@ -1206,19 +1206,19 @@ decoder::result utf_16_decoder::handler(inout string& input, inout int& index, o
 	int b = index == (int)input.size() ? EOF : (byte)input[index++]; // read input byte
 
 	// 1. If byte is end-of-queue and either UTF-16 lead byte or UTF-16 lead surrogate is non-null, set UTF-16 lead byte and UTF-16 lead surrogate to null, and return error.
-	if (b == EOF && (m_lead_byte != 0 || m_lead_surrogate != 0))
+	if (b == EOF && (m_lead_byte != null || m_lead_surrogate != null))
 	{
-		m_lead_byte = 0;
-		m_lead_surrogate = 0;
+		m_lead_byte = null;
+		m_lead_surrogate = null;
 		return result_error;
 	}
 
 	// 2. If byte is end-of-queue and UTF-16 lead byte and UTF-16 lead surrogate are null, return finished.
-	if (b == EOF && m_lead_byte == 0 && m_lead_surrogate == 0)
+	if (b == EOF && m_lead_byte == null && m_lead_surrogate == null)
 		return result_finished;
 
 	// 3. If UTF-16 lead byte is null, set UTF-16 lead byte to byte and return continue.
-	if (m_lead_byte == 0)
+	if (m_lead_byte == null)
 	{
 		m_lead_byte = b;
 		return result_continue;
@@ -1226,13 +1226,13 @@ decoder::result utf_16_decoder::handler(inout string& input, inout int& index, o
 
 	// 4.
 	int code_unit = m_utf_16be ? (m_lead_byte << 8) + b : (b << 8) + m_lead_byte;
-	m_lead_byte = 0;
+	m_lead_byte = null;
 
 	// 5.
-	if (m_lead_surrogate != 0)
+	if (m_lead_surrogate != null)
 	{
 		int lead_surrogate = m_lead_surrogate;
-		m_lead_surrogate = 0;
+		m_lead_surrogate = null;
 
 		// 1. If code unit is in the range U+DC00 to U+DFFF, inclusive, return a code point whose value is 0x10000 + ((lead surrogate − 0xD800) << 10) + (code unit − 0xDC00).
 		if (code_unit >= 0xDC00 && code_unit <= 0xDFFF)
@@ -1242,8 +1242,8 @@ decoder::result utf_16_decoder::handler(inout string& input, inout int& index, o
 		}
 		
 		// 2,3.
-		char b1 = code_unit >> 8;
-		char b2 = code_unit & 0xFF;
+		char b1 = char(code_unit >> 8);
+		char b2 = char(code_unit & 0xFF);
 		
 		// 4. Let bytes be two bytes whose values are byte1 and byte2, if is UTF-16BE decoder is true, and byte2 and byte1 otherwise.
 		string bytes = m_utf_16be ? string{b1, b2} : string{b2, b1};
