@@ -781,24 +781,25 @@ decoder::result euc_jp_decoder::handler(inout string& input, inout int& index, o
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+#undef NULL
 
 struct iso_2022_jp_decoder : jis_decoder
 {
 	enum state
 	{
-		state_null,
-		state_ascii,
-		state_roman,
-		state_katakana,
-		state_lead_byte,
-		state_trail_byte,
-		state_escape_start,
-		state_escape
+		NULL,
+		ASCII,
+		ROMAN,
+		KATAKANA,
+		LEAD_BYTE,
+		TRAIL_BYTE,
+		ESCAPE_START,
+		ESCAPE
 	};
 
 	byte  m_lead           = 0;
-	state m_state          = state_ascii;
-	state m_output_state   = state_ascii;
+	state m_state          = ASCII;
+	state m_output_state   = ASCII;
 	bool  m_output         = false;
 
 	result handler(string& input, int& index, int ch[2]) override;
@@ -811,10 +812,10 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 
 	switch (m_state)
 	{
-	case state_ascii:
+	case ASCII:
 		if (b == 0x1B)
 		{
-			m_state = state_escape_start;
+			m_state = ESCAPE_START;
 			return result_continue;
 		}
 		else if (b >= 0 && b <= 0x7F && b != 0x0E && b != 0x0F && b != 0x1B)
@@ -834,10 +835,10 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 		}
 		break;
 
-	case state_roman:
+	case ROMAN:
 		if (b == 0x1B)
 		{
-			m_state = state_escape_start;
+			m_state = ESCAPE_START;
 			return result_continue;
 		}
 		else if (b == 0x5C)
@@ -869,10 +870,10 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 		}
 		break;
 
-	case state_katakana:
+	case KATAKANA:
 		if (b == 0x1B)
 		{
-			m_state = state_escape_start;
+			m_state = ESCAPE_START;
 			return result_continue;
 		}
 		else if (b >= 0x21 && b <= 0x5F)
@@ -892,17 +893,17 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 		}
 		break;
 
-	case state_lead_byte:
+	case LEAD_BYTE:
 		if (b == 0x1B)
 		{
-			m_state = state_escape_start;
+			m_state = ESCAPE_START;
 			return result_continue;
 		}
 		else if (b >= 0x21 && b <= 0x7E)
 		{
 			m_output = false;
 			m_lead = b;
-			m_state = state_trail_byte;
+			m_state = TRAIL_BYTE;
 			return result_continue;
 		}
 		else if (b == EOF)
@@ -916,15 +917,15 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 		}
 		break;
 
-	case state_trail_byte:
+	case TRAIL_BYTE:
 		if (b == 0x1B)
 		{
-			m_state = state_escape_start;
+			m_state = ESCAPE_START;
 			return result_error;
 		}
 		else if (b >= 0x21 && b <= 0x7E)
 		{
-			m_state = state_lead_byte;
+			m_state = LEAD_BYTE;
 			int pointer = (m_lead - 0x21) * 94 + b - 0x21;
 			int code_point = index_code_point(pointer, m_jis0208_index);
 			if (code_point == null) return result_error;
@@ -933,22 +934,22 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 		}
 		else if (b == EOF) // same as last else
 		{
-			m_state = state_lead_byte;
+			m_state = LEAD_BYTE;
 			return result_error;
 		}
 		else
 		{
-			m_state = state_lead_byte;
+			m_state = LEAD_BYTE;
 			return result_error;
 		}
 		break;
 
-	case state_escape_start:
+	case ESCAPE_START:
 		// 1.
 		if (b == 0x24 || b == 0x28)
 		{
 			m_lead = b;
-			m_state = state_escape;
+			m_state = ESCAPE;
 			return result_continue;
 		}
 		// 2.
@@ -958,17 +959,17 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 		m_state = m_output_state;
 		return result_error;
 	
-	case state_escape:
+	case ESCAPE:
 		{
 			// 1.
 			int lead = m_lead;
 			m_lead = 0;
 			// 2,3,4,5,6.
-			auto state = state_null;
-			if      (lead == 0x28 && b == 0x42) state = state_ascii;
-			else if (lead == 0x28 && b == 0x4A) state = state_roman;
-			else if (lead == 0x28 && b == 0x49) state = state_katakana;
-			else if (lead == 0x24 && (b == 0x40 || b == 0x42)) state = state_lead_byte;
+			state state = NULL;
+			if      (lead == 0x28 && b == 0x42) state = ASCII;
+			else if (lead == 0x28 && b == 0x4A) state = ROMAN;
+			else if (lead == 0x28 && b == 0x49) state = KATAKANA;
+			else if (lead == 0x24 && (b == 0x40 || b == 0x42)) state = LEAD_BYTE;
 			// 7.
 			if (m_state)
 			{
