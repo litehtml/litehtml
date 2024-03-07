@@ -40,7 +40,7 @@ namespace litehtml
 	bool is_number(const string& string, const bool allow_dot = 1);
 
 	// https://infra.spec.whatwg.org/#ascii-whitespace
-	inline bool is_whitespace(char c)
+	inline bool is_whitespace(int c)
 	{
 		return c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f';
 	}
@@ -59,7 +59,12 @@ namespace litehtml
 	{
 		return (c >= 'A' && c <= 'Z' ? c + 'a' - 'A' : c);
 	}
-	
+	// https://infra.spec.whatwg.org/#ascii-lowercase
+	inline int lowcase(int c)
+	{
+		return t_tolower(c);
+	}
+
 	inline int round_f(float val)
 	{
 		int int_val = (int) val;
