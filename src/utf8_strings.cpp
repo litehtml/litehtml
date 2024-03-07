@@ -13,7 +13,7 @@ utf8_to_wchar::utf8_to_wchar(const char* val)
 	{
 		ucode_t wch = get_char();
 		if (!wch) break;
-		m_str += wch;
+		m_str += (wchar_t)wch;
 	}
 }
 
@@ -73,7 +73,7 @@ void append_char(string& str, int code)
 	}
 	else if (code <= 0x7FF)
 	{
-		str += (code >> 6) + 192;
+		str += char((code >> 6) + 192);
 		str += (code & 63) + 128;
 	}
 	else if (0xd800 <= code && code <= 0xdfff)
@@ -82,13 +82,13 @@ void append_char(string& str, int code)
 	}
 	else if (code <= 0xFFFF)
 	{
-		str += (code >> 12) + 224;
+		str += char((code >> 12) + 224);
 		str += ((code >> 6) & 63) + 128;
 		str += (code & 63) + 128;
 	}
 	else if (code <= 0x10FFFF)
 	{
-		str += (code >> 18) + 240;
+		str += char((code >> 18) + 240);
 		str += ((code >> 12) & 63) + 128;
 		str += ((code >> 6) & 63) + 128;
 		str += (code & 63) + 128;

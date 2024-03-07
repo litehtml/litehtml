@@ -92,7 +92,6 @@ void style::add_property(string_id name, const string& val, const string& baseur
 	if (val.find("var(") != string::npos) return add_parsed_property(name, property_value(val, important, prop_type_var));
 	if (val == "inherit" && name != _font_)       return add_parsed_property(name, property_value(important, prop_type_inherit));
 
-	int idx;
 	string url;
 	css_length len[4], length;
 
@@ -131,14 +130,14 @@ void style::add_property(string_id name, const string& val, const string& baseur
 	case _align_content_:
 
 	case _caption_side_:
-
-		idx = value_index(val, m_valid_values[name]);
+	{
+		int idx = value_index(val, m_valid_values[name]);
 		if (idx >= 0)
 		{
 			add_parsed_property(name, property_value(idx, important));
 		}
 		break;
-
+	}
 	case _align_items_:
 	case _align_self_:
 		parse_align_self(name, val, important);
@@ -736,7 +735,7 @@ bool style::parse_one_background(const string& val, document_container* containe
 	
 	if (position != "")
 	{
-		string_vector tokens;
+		tokens.clear();
 		split_string(position, tokens, "/");
 
 		if (tokens.size() > 2) return false;

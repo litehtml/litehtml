@@ -16,7 +16,7 @@ void litehtml::document_container::split_text(const char* text, const std::funct
 				on_word(wchar_to_utf8(str.c_str()));
 				str.clear();
 			}
-			str += c;
+			str += (wchar_t)c;
 			on_space(wchar_to_utf8(str.c_str()));
 			str.clear();
 		}
@@ -28,13 +28,13 @@ void litehtml::document_container::split_text(const char* text, const std::funct
 				on_word(wchar_to_utf8(str.c_str()));
 				str.clear();
 			}
-			str += c;
+			str += (wchar_t)c;
 			on_word(wchar_to_utf8(str.c_str()));
 			str.clear();
 		}
 		else
 		{
-			str += c;
+			str += (wchar_t)c;
 		}
 	}
 	if (!str.empty())

@@ -27,7 +27,7 @@ struct decoder
 	// invalid value of code_point or pointer (in std terminology, pointer is an offset into index table).
 	// it is called null to match the standard.
 	enum { null = -2 };
-	static_assert(null != 0 && null != EOF);
+	static_assert(null != 0 && null != EOF, "");
 
 	// https://encoding.spec.whatwg.org/#index-code-point
 	template<int N>
@@ -407,9 +407,9 @@ decoder::result single_byte_decoder::handler(string& input, int& index, int ch[2
 
 struct gb18030_decoder : decoder
 {
-	byte m_first = 0;
-	byte m_second = 0;
-	byte m_third = 0;
+	int m_first = 0;
+	int m_second = 0;
+	int m_third = 0;
 	
 	result handler(string& input, int& index, int ch[2]) override;
 
@@ -536,7 +536,7 @@ decoder::result gb18030_decoder::handler(string& input, int& index, int ch[2])
 		}
 		
 		// 2.
-		byte lead = m_first;
+		int lead = m_first;
 		int pointer = null;
 		m_first = 0;
 
@@ -593,7 +593,7 @@ decoder::result gb18030_decoder::handler(string& input, int& index, int ch[2])
 
 struct big5_decoder : decoder
 {
-	byte m_lead = 0;
+	int m_lead = 0;
 	
 	result handler(string& input, int& index, int ch[2]) override;
 
@@ -689,7 +689,7 @@ int jis_decoder::m_jis0212_index[] = {null,null,null,null,null,null,null,null,nu
 
 struct euc_jp_decoder : jis_decoder
 {
-	byte m_lead = 0;
+	int m_lead = 0;
 	bool m_jis0212 = false;
 
 	result handler(string& input, int& index, int ch[2]) override;
@@ -797,7 +797,7 @@ struct iso_2022_jp_decoder : jis_decoder
 		ESCAPE
 	};
 
-	byte  m_lead           = 0;
+	int   m_lead           = 0;
 	state m_state          = ASCII;
 	state m_output_state   = ASCII;
 	bool  m_output         = false;
@@ -980,7 +980,7 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 			}
 			// 8. If byte is end-of-queue, then prepend lead to ioQueue. Otherwise, prepend lead and byte to ioQueue.
 			if (b == EOF)
-				input.insert(index, 1, lead);
+				input.insert(index, 1, (char)lead);
 			else
 				input.insert(index, {(char)lead, (char)b});
 			// 9.
@@ -1001,7 +1001,7 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 
 struct shift_jis_decoder : jis_decoder
 {
-	byte m_lead = 0;
+	int m_lead = 0;
 
 	result handler(string& input, int& index, int ch[2]) override;
 };
@@ -1090,7 +1090,7 @@ decoder::result shift_jis_decoder::handler(inout string& input, inout int& index
 
 struct euc_kr_decoder : decoder
 {
-	byte m_lead = 0;
+	int m_lead = 0;
 
 	result handler(string& input, int& index, int ch[2]) override;
 
@@ -1119,7 +1119,7 @@ decoder::result euc_kr_decoder::handler(inout string& input, inout int& index, o
 	// 3.
 	if (m_lead != 0)
 	{
-		byte lead = m_lead;
+		int lead = m_lead;
 		int pointer = null;
 		m_lead = 0;
 		
@@ -1726,7 +1726,7 @@ step_4:
 	else if (str[index] == '/' || str[index] == '>')
 		return true;
 	else // A..Z or anything else
-		name += lowcase(str[index]);
+		name += (char)lowcase(str[index]);
 
 	// 5.
 	increment(index, str);
@@ -1766,7 +1766,7 @@ process_value:
 
 		// 4,5.
 		else
-			value += lowcase(str[index]);
+			value += (char)lowcase(str[index]);
 
 		// 6.
 		goto quote_loop;
@@ -1774,14 +1774,14 @@ process_value:
 	else if (str[index] == '>')
 		return true;
 	else // A..Z or anything else
-		value += lowcase(str[index]);
+		value += (char)lowcase(str[index]);
 
 	// 11.
 step_11:
 	if (is_whitespace(str[index]) || str[index] == '>')
 		return true;
 	else // A..Z or anything else
-		value += lowcase(str[index]);
+		value += (char)lowcase(str[index]);
 
 	// 12.
 	increment(index, str);
