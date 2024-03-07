@@ -28,7 +28,7 @@ void lcase(string &s)
 {
 	for(char & i : s)
 	{
-		i = t_tolower(i);
+		i = (char)t_tolower(i);
 	}
 }
 
