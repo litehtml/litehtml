@@ -1955,7 +1955,7 @@ encoding get_xml_encoding(const string& str)
 	index += strlen("encoding");
 
 	// 6.
-	while ((byte)str[index] <= 0x20) index++;
+	while ((byte)str[index] <= 0x20 && index < str.size()) index++;
 
 	// 7.
 	if (str[index] != '=') return encoding::null;
@@ -1964,7 +1964,7 @@ encoding get_xml_encoding(const string& str)
 	index++; // skip '='
 
 	// 9.
-	while ((byte)str[index] <= 0x20) index++;
+	while ((byte)str[index] <= 0x20 && index < str.size()) index++;
 
 	// 10. Let quoteMark be the byte at encodingPosition.
 	char q = str[index];
