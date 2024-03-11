@@ -89,84 +89,131 @@ void container_cairo::get_image_size(const char* src, const char* baseurl, liteh
 	}
 }
 
-void container_cairo::draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg )
+void container_cairo::clip_background_layer(cairo_t* cr, const litehtml::background_layer& layer)
+{
+	rounded_rectangle(cr, layer.border_box, layer.border_radius);
+	cairo_clip(cr);
+
+	cairo_rectangle(cr, layer.clip_box.x, layer.clip_box.y, layer.clip_box.width, layer.clip_box.height);
+	cairo_clip(cr);
+}
+
+void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url)
+{
+	if(url.empty() || (!layer.clip_box.width && !layer.clip_box.height) )
+	{
+		return;
+	}
+
+	auto* cr = (cairo_t*) hdc;
+	cairo_save(cr);
+	apply_clip(cr);
+
+	clip_background_layer(cr, layer);
+
+	std::string img_url;
+	make_url(url.c_str(), base_url.c_str(), img_url);
+
+	auto bgbmp = get_image(img_url);
+	if (bgbmp)
+	{
+		if (layer.origin_box.width != cairo_image_surface_get_width(bgbmp) ||
+				layer.origin_box.height != cairo_image_surface_get_height(bgbmp))
+		{
+			auto new_img = scale_surface(bgbmp, layer.origin_box.width, layer.origin_box.height);
+			cairo_surface_destroy(bgbmp);
+			bgbmp = new_img;
+		}
+
+		cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bgbmp);
+		cairo_matrix_t flib_m;
+		cairo_matrix_init_identity(&flib_m);
+		cairo_matrix_translate(&flib_m, -layer.origin_box.x, -layer.origin_box.y);
+		cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
+		cairo_pattern_set_matrix(pattern, &flib_m);
+
+		switch (layer.repeat)
+		{
+			case litehtml::background_repeat_no_repeat:
+				draw_pixbuf(cr, bgbmp, layer.origin_box.x, layer.origin_box.y, cairo_image_surface_get_width(bgbmp),
+							cairo_image_surface_get_height(bgbmp));
+				break;
+
+			case litehtml::background_repeat_repeat_x:
+				cairo_set_source(cr, pattern);
+				cairo_rectangle(cr, layer.clip_box.left(), layer.origin_box.y, layer.clip_box.width,
+								cairo_image_surface_get_height(bgbmp));
+				cairo_fill(cr);
+				break;
+
+			case litehtml::background_repeat_repeat_y:
+				cairo_set_source(cr, pattern);
+				cairo_rectangle(cr, layer.origin_box.x, layer.clip_box.top(), cairo_image_surface_get_width(bgbmp),
+								layer.clip_box.height);
+				cairo_fill(cr);
+				break;
+
+			case litehtml::background_repeat_repeat:
+				cairo_set_source(cr, pattern);
+				cairo_rectangle(cr, layer.clip_box.left(), layer.clip_box.top(), layer.clip_box.width,
+								layer.clip_box.height);
+				cairo_fill(cr);
+				break;
+		}
+
+		cairo_pattern_destroy(pattern);
+		cairo_surface_destroy(bgbmp);
+	}
+	cairo_restore(cr);
+}
+
+void container_cairo::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::web_color& color)
+{
+	if(color == litehtml::web_color::transparent)
+	{
+		return;
+	}
+
+	auto* cr = (cairo_t*) hdc;
+	cairo_save(cr);
+	apply_clip(cr);
+
+	clip_background_layer(cr, layer);
+
+	set_color(cr, color);
+	cairo_paint(cr);
+
+	cairo_restore(cr);
+}
+
+void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::background_layer::linear_gradient& gradient)
 {
 	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
 	apply_clip(cr);
 
-	rounded_rectangle(cr, bg.border_box, bg.border_radius);
+	clip_background_layer(cr, layer);
+
+	cairo_rectangle(cr, layer.origin_box.x, layer.origin_box.y, layer.origin_box.width, layer.origin_box.height);
 	cairo_clip(cr);
 
-	cairo_rectangle(cr, bg.clip_box.x, bg.clip_box.y, bg.clip_box.width, bg.clip_box.height);
-	cairo_clip(cr);
-
-	if(bg.color != litehtml::web_color::transparent)
+	cairo_pattern_t* pattern = cairo_pattern_create_linear(gradient.start.x,
+														   gradient.start.y,
+														   gradient.end.x,
+														   gradient.end.y);
+	for(const auto& color_stop : gradient.color_points)
 	{
-		set_color(cr, bg.color);
-		cairo_paint(cr);
-	} else if(!bg.image.empty())
-	{
-		if(bg.image_size.height != 0 && bg.image_size.width != 0)
-		{
-			cairo_rectangle(cr, bg.clip_box.x, bg.clip_box.y, bg.clip_box.width, bg.clip_box.height);
-			cairo_clip(cr);
-
-			std::string url;
-			make_url(bg.image.c_str(), bg.baseurl.c_str(), url);
-
-			auto bgbmp = get_image(url);
-			if (bgbmp)
-			{
-				if (bg.image_size.width != cairo_image_surface_get_width(bgbmp) ||
-					bg.image_size.height != cairo_image_surface_get_height(bgbmp))
-				{
-					auto new_img = scale_surface(bgbmp, bg.image_size.width, bg.image_size.height);
-					cairo_surface_destroy(bgbmp);
-					bgbmp = new_img;
-				}
-
-				cairo_pattern_t *pattern = cairo_pattern_create_for_surface(bgbmp);
-				cairo_matrix_t flib_m;
-				cairo_matrix_init_identity(&flib_m);
-				cairo_matrix_translate(&flib_m, -bg.position_x, -bg.position_y);
-				cairo_pattern_set_extend(pattern, CAIRO_EXTEND_REPEAT);
-				cairo_pattern_set_matrix(pattern, &flib_m);
-
-				switch (bg.repeat)
-				{
-					case litehtml::background_repeat_no_repeat:
-						draw_pixbuf(cr, bgbmp, bg.position_x, bg.position_y, cairo_image_surface_get_width(bgbmp),
-									cairo_image_surface_get_height(bgbmp));
-						break;
-
-					case litehtml::background_repeat_repeat_x:
-						cairo_set_source(cr, pattern);
-						cairo_rectangle(cr, bg.clip_box.left(), bg.position_y, bg.clip_box.width,
-										cairo_image_surface_get_height(bgbmp));
-						cairo_fill(cr);
-						break;
-
-					case litehtml::background_repeat_repeat_y:
-						cairo_set_source(cr, pattern);
-						cairo_rectangle(cr, bg.position_x, bg.clip_box.top(), cairo_image_surface_get_width(bgbmp),
-										bg.clip_box.height);
-						cairo_fill(cr);
-						break;
-
-					case litehtml::background_repeat_repeat:
-						cairo_set_source(cr, pattern);
-						cairo_rectangle(cr, bg.clip_box.left(), bg.clip_box.top(), bg.clip_box.width,
-										bg.clip_box.height);
-						cairo_fill(cr);
-						break;
-				}
-
-				cairo_pattern_destroy(pattern);
-				cairo_surface_destroy(bgbmp);
-			}
-		}
+		cairo_pattern_add_color_stop_rgba(pattern,
+										  color_stop.offset,
+										  color_stop.color.red / 255.0,
+										  color_stop.color.green / 255.0,
+										  color_stop.color.blue / 255.0,
+										  color_stop.color.alpha / 255.0);
 	}
+
+	cairo_set_source(cr, pattern);
+	cairo_rectangle(cr, layer.origin_box.x, layer.origin_box.y, layer.origin_box.width, layer.origin_box.height);
+	cairo_fill(cr);
 
 	cairo_restore(cr);
 }
