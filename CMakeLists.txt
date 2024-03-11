@@ -76,7 +76,8 @@ set(SOURCE_LITEHTML
     src/render_image.cpp
     src/formatting_context.cpp
     src/flex_item.cpp
-    src/flex_line.cpp)
+    src/flex_line.cpp
+    src/background.cpp)
 
 set(HEADER_LITEHTML
     include/litehtml.h

@@ -83,7 +83,7 @@ void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const
 	}
 }
 
-bool litehtml::css::parse_css_angle(const string& str, double& angle)
+bool litehtml::css::parse_css_angle(const string& str, float& angle)
 {
 	const char* start = str.c_str();
 	for(;start[0]; start++)
@@ -92,18 +92,18 @@ bool litehtml::css::parse_css_angle(const string& str, double& angle)
 	}
 	if(start[0] == 0) return false;
 	char* end = nullptr;
-	double a = strtod(start, &end);
-	if(end && end[0] != 0) return false;
-	if(!strcmp(end, "deg"))
+	float a = strtof(start, &end);
+	if(end && end[0] == 0) return false;
+	if(!strcmp(end, "rad"))
 	{
-		a = a * M_PI / 180.0;
+		a = (float) (a * 180.0 / M_PI);
 	} else if(!strcmp(end, "grad"))
 	{
-		a = a * M_PI / 200.0;
+		a = a * 180.0f / 200.0f;
 	} else if(!strcmp(end, "turn"))
 	{
-		a = a * 2.0 * M_PI;
-	} else if(!strcmp(end, "rad"))
+		a = a * 360.0f;
+	} else if(strcmp(end, "deg"))
 	{
 		return false;
 	}
@@ -181,13 +181,37 @@ void litehtml::css::parse_gradient(const string &token, document_container *cont
 				{
 					if (parts[0] == "to")
 					{
+						uint32_t grad_side = 0;
 						for (size_t part_idx = 1; part_idx < parts.size(); part_idx++)
 						{
-							int side = value_index(parts[1], "left;right;top;bottom");
+							int side = value_index(parts[part_idx], "left;right;top;bottom");
 							if (side >= 0)
 							{
-								grad.m_side |= (background_gradient::gradient_side) (1 << side);
+								grad_side |= 1 << side;
 							}
+						}
+						switch(grad_side)
+						{
+							case background_gradient::gradient_side_top:
+								grad.angle = 0;
+								break;
+							case background_gradient::gradient_side_bottom:
+								grad.angle = 180;
+								break;
+							case background_gradient::gradient_side_left:
+								grad.angle = 270;
+								break;
+							case background_gradient::gradient_side_right:
+								grad.angle = 90;
+								break;
+							case background_gradient::gradient_side_top | background_gradient::gradient_side_left:
+							case background_gradient::gradient_side_top | background_gradient::gradient_side_right:
+							case background_gradient::gradient_side_bottom | background_gradient::gradient_side_left:
+							case background_gradient::gradient_side_bottom | background_gradient::gradient_side_right:
+								grad.m_side = grad_side;
+								break;
+							default:
+								break;
 						}
 					} else if (parts.size() == 1 && css::parse_css_angle(parts[0], grad.angle))
 					{

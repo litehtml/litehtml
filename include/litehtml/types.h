@@ -41,6 +41,17 @@ namespace litehtml
 		int height()	const	{ return top + bottom; } 
 	};
 
+	struct pointF
+	{
+		float x;
+		float y;
+
+		pointF() : x(0), y(0) {}
+		pointF(float _x, float _y) : x(_x), y(_y) {}
+
+		void set(float _x, float _y) { x = _x; y = _y; }
+	};
+
 	struct size
 	{
 		int		width;

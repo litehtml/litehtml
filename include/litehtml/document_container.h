@@ -41,7 +41,10 @@ namespace litehtml
 		// bg is guaranteed to have at least one item.
 		// backgrounds in bg are in CSS order - the last one is the farthest from the user.
 		// only the last background has valid background-color.
-		virtual void				draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg) = 0;
+		//virtual void				draw_background(litehtml::uint_ptr hdc, const litehtml::background_paint& bg) = 0;
+		virtual void				draw_image(litehtml::uint_ptr hdc, const background_layer& layer, const std::string& url, const std::string& base_url) = 0;
+		virtual void				draw_solid_fill(litehtml::uint_ptr hdc, const background_layer& layer, const web_color& color) = 0;
+		virtual void				draw_linear_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient) = 0;
 		virtual void				draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) = 0;
 
 		virtual	void				set_caption(const char* caption) = 0;
