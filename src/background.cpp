@@ -270,6 +270,13 @@ static void EndPointsFromAngle(float angle_deg,
 	first_point.set(half_width - end_x, half_height + end_y);
 }
 
+static float distance(const litehtml::pointF& p1, const litehtml::pointF& p2)
+{
+	double dx = p2.x - p1.x;
+	double dy = p2.y - p1.y;
+	return (float) sqrt(dx * dx + dy * dy);
+}
+
 std::unique_ptr<litehtml::background_layer::linear_gradient> litehtml::background::get_linear_gradient_layer(int idx, const background_layer& layer) const
 {
 	if(idx < 0 || idx >= (int) m_image.size()) return {};
@@ -302,9 +309,74 @@ std::unique_ptr<litehtml::background_layer::linear_gradient> litehtml::backgroun
 	ret->end.x += (float) layer.origin_box.x;
 	ret->end.y += (float) layer.origin_box.y;
 
+	auto line_len = distance(ret->start, ret->end);
+
+	int none_units = 0;
 	for(const auto& item : m_image[idx].gradient.m_colors)
 	{
-		ret->color_points.emplace_back(item.length.val() / 100.0, item.color);
+		if(item.length.units() == css_units_percentage)
+		{
+			ret->color_points.emplace_back(item.length.val() / 100.0, item.color);
+		} else if(item.length.units() != css_units_none)
+		{
+			if(line_len != 0)
+			{
+				ret->color_points.emplace_back(item.length.val() / line_len, item.color);
+			}
+		} else
+		{
+			if(!ret->color_points.empty())
+			{
+				none_units++;
+			}
+			ret->color_points.emplace_back(0, item.color);
+		}
+	}
+	if(ret->color_points.empty())
+	{
+		return {};
+	}
+
+	// Add color point with offset 0 if not exists
+	if(ret->color_points[0].offset != 0)
+	{
+		ret->color_points.emplace(ret->color_points.begin(), 0, ret->color_points[0].color);
+	}
+	// Add color point with offset 1.0 if not exists
+	if(ret->color_points.back().offset < 1)
+	{
+		if(ret->color_points.back().offset == 0)
+		{
+			ret->color_points.back().offset = 1;
+			none_units--;
+		} else
+		{
+			ret->color_points.emplace_back(1.0, ret->color_points.back().color);
+		}
+	}
+
+	if(none_units > 0)
+	{
+		size_t i = 1;
+		while(i < ret->color_points.size())
+		{
+			if(ret->color_points[i].offset != 0)
+			{
+				i++;
+				continue;
+			}
+			// Find next defined offset
+			size_t j = i + 1;
+			while (ret->color_points[j].offset == 0) j++;
+			size_t num = j - i;
+			float sum = ret->color_points[i - 1].offset + ret->color_points[j].offset;
+			float offset = sum / (float) (num + 1);
+			while(i < j)
+			{
+				ret->color_points[i].offset = ret->color_points[i - 1].offset + offset;
+				i++;
+			}
+		}
 	}
 
 	return ret;
