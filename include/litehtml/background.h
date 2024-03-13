@@ -27,14 +27,18 @@ namespace litehtml
 			gradient_side_right = 0x02,
 			gradient_side_top = 0x04,
 			gradient_side_bottom = 0x08,
+			gradient_side_x_center = 0x10,
+			gradient_side_y_center = 0x20,
+			gradient_side_x_length = 0x40,
+			gradient_side_y_length = 0x80,
 		};
-		enum radial_shape
+		enum radial_shape_t
 		{
 			radial_shape_none,
 			radial_shape_circle,
 			radial_shape_ellipse,
 		};
-		enum radial_extent
+		enum radial_extent_t
 		{
 			radial_extent_none,
 			radial_extent_closest_corner,
@@ -57,12 +61,25 @@ namespace litehtml
 		uint32_t m_side;
 		float angle;
 		std::vector<gradient_color> m_colors;
+		css_length radial_position_x;
+		css_length radial_position_y;
+		radial_extent_t radial_extent;
+		radial_shape_t radial_shape;
+		css_length radial_length_x;
+		css_length radial_length_y;
+
 
 		explicit background_gradient(gradient_type type = no_gradient)
 		{
 			m_type = type;
 			m_side = gradient_side_none;
 			angle = 180;
+			radial_extent = radial_extent_none;
+			radial_shape = radial_shape_ellipse;
+			radial_length_x.predef(0);
+			radial_length_y.predef(0);
+			radial_position_x.predef(0);
+			radial_position_y.predef(0);
 		}
 
 		bool is_empty() const

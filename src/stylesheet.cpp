@@ -111,6 +111,48 @@ bool litehtml::css::parse_css_angle(const string& str, float& angle)
 	return true;
 }
 
+static inline void parse_radial_position(litehtml::background_gradient &grad, const litehtml::string_vector &parts, size_t i)
+{
+	grad.m_side = 0;
+	while (i < parts.size())
+	{
+		int side = litehtml::value_index(parts[i], "left;right;top;bottom;center");
+		if (side >= 0)
+		{
+			if(side == 4)
+			{
+				if(grad.m_side & litehtml::background_gradient::gradient_side_x_center)
+				{
+					grad.m_side |= litehtml::background_gradient::gradient_side_y_center;
+				} else
+				{
+					grad.m_side |= litehtml::background_gradient::gradient_side_x_center;
+				}
+			} else
+			{
+				grad.m_side |= 1 << side;
+			}
+		} else
+		{
+			litehtml::css_length length;
+			length.fromString(parts[i]);
+			if (!length.is_predefined())
+			{
+				if(grad.m_side & litehtml::background_gradient::gradient_side_x_length)
+				{
+					grad.m_side |= litehtml::background_gradient::gradient_side_y_length;
+					grad.radial_position_y = length;
+				} else
+				{
+					grad.m_side |= litehtml::background_gradient::gradient_side_x_length;
+					grad.radial_position_x = length;
+				}
+			}
+		}
+		i++;
+	}
+}
+
 void litehtml::css::parse_gradient(const string &token, document_container *container, background_gradient& grad)
 {
 	size_t pos1 = token.find('(');
@@ -235,8 +277,59 @@ void litehtml::css::parse_gradient(const string &token, document_container *cont
 			}
 		} else if(gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_linear_gradient)
 		{
-
-		}
+			for (const auto &item: items)
+			{
+				string_vector parts;
+				split_string(item, parts, " \t", "", "()");
+				if (!parts.empty())
+				{
+					if (web_color::is_color(parts[0], container))
+					{
+						parse_color_stop_list(parts);
+					} else
+					{
+						size_t i = 0;
+						while(i < parts.size())
+						{
+							if(parts[i] == "at")
+							{
+								parse_radial_position(grad, parts, i + 1);
+								break;
+							} else // parts[i] == "at"
+							{
+								int val = value_index(parts[i], "closest-corner;closest-side;farthest-corner;farthest-side");
+								if(val >= 0)
+								{
+									grad.radial_extent = (background_gradient::radial_extent_t) (val + 1);
+								} else
+								{
+									val = value_index(parts[i], "circle;ellipse");
+									if(val >= 0)
+									{
+										grad.radial_shape = (background_gradient::radial_shape_t)  (val + 1);
+									} else
+									{
+										css_length length;
+										length.fromString(parts[i]);
+										if (!length.is_predefined())
+										{
+											if(!grad.radial_length_x.is_predefined())
+											{
+												grad.radial_length_y = length;
+											} else
+											{
+												grad.radial_length_x = length;
+											}
+										}
+									}
+								}
+							} // else parts[i] == "at"
+							i++;
+						} // while(i < parts.size())
+					} // else web_color::is_color(parts[0], container)
+				} // !parts.empty()
+			} // for
+		} // gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_linear_gradient
 		if(num_colors >= 2)
 		{
 			grad.m_type = gradient_type;
