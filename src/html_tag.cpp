@@ -1012,7 +1012,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 					for(int i = num_layers - 1; i >= 0; i--)
 					{
 						background_layer layer;
-						if(!bg->get_layer(i, pos, this, ri, layer)) continue;
+						if(!bg->get_layer(i, content_box, this, ri, layer)) continue;
 						layer.border_radius = bdr.radius.calc_percents(layer.border_box.width, layer.border_box.width);
 						bg->draw_layer(hdc, i, layer, get_document()->container());
 					}
