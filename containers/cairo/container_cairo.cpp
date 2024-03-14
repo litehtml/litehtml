@@ -215,6 +215,7 @@ void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtm
 	cairo_rectangle(cr, layer.origin_box.x, layer.origin_box.y, layer.origin_box.width, layer.origin_box.height);
 	cairo_fill(cr);
 
+	cairo_pattern_destroy(pattern);
 	cairo_restore(cr);
 }
 
@@ -583,4 +584,55 @@ void container_cairo::get_language(litehtml::string& language, litehtml::string&
 void container_cairo::link(const std::shared_ptr<litehtml::document> &/*ptr*/, const litehtml::element::ptr& /*el*/)
 {
 
+}
+
+void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer &layer,
+										   const litehtml::background_layer::radial_gradient &gradient)
+{
+	auto* cr = (cairo_t*) hdc;
+	cairo_save(cr);
+	apply_clip(cr);
+
+	clip_background_layer(cr, layer);
+
+	cairo_rectangle(cr, layer.origin_box.x, layer.origin_box.y, layer.origin_box.width, layer.origin_box.height);
+	cairo_clip(cr);
+
+	cairo_pattern_t* pattern = cairo_pattern_create_radial(gradient.position.x,
+														   gradient.position.y,
+														   0,
+														   gradient.position.x,
+														   gradient.position.y,
+														   gradient.radius.x);
+
+	for(const auto& color_stop : gradient.color_points)
+	{
+		cairo_pattern_add_color_stop_rgba(pattern,
+										  color_stop.offset,
+										  color_stop.color.red / 255.0,
+										  color_stop.color.green / 255.0,
+										  color_stop.color.blue / 255.0,
+										  color_stop.color.alpha / 255.0);
+	}
+
+	float aspect_ratio = 1;
+	auto top = (float) layer.origin_box.y;
+	auto height = (float) layer.origin_box.height;
+	if(gradient.radius.x != gradient.radius.y)
+	{
+		aspect_ratio = gradient.radius.x / gradient.radius.y;
+		top -= (height / 2) * aspect_ratio;
+		height *= 2 * aspect_ratio;
+
+		cairo_translate(cr, gradient.position.x, gradient.position.y);
+		cairo_scale(cr, 1, gradient.radius.y / gradient.radius.x);
+		cairo_translate(cr, -gradient.position.x, -gradient.position.y);
+	}
+
+	cairo_set_source(cr, pattern);
+	cairo_rectangle(cr, layer.origin_box.x, top, layer.origin_box.width, height);
+	cairo_fill(cr);
+
+	cairo_pattern_destroy(pattern);
+	cairo_restore(cr);
 }

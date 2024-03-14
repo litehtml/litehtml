@@ -148,31 +148,40 @@ namespace litehtml
 			std::string base_url;
 		};
 
+		struct color_point
+		{
+			float offset;
+			web_color color;
+			color_point() { offset = 0.0; }
+			color_point(float _offset, web_color _color) : offset(_offset), color(_color) {}
+		};
+
 		class color
 		{
 		public:
 			web_color color;
 		};
 
-		class linear_gradient
+		class gradient_base
 		{
 		public:
-			struct color_point
-			{
-				float offset;
-				web_color color;
-				color_point() { offset = 0.0; }
-				color_point(float _offset, web_color _color) : offset(_offset), color(_color) {}
-			};
-
-			pointF start;
-			pointF end;
 			std::vector<color_point> color_points;
+
+			bool prepare_color_points(float len, const std::vector<background_gradient::gradient_color>& colors);
 		};
 
-		class radial_gradient
+		class linear_gradient : public gradient_base
 		{
+		public:
+			pointF start;
+			pointF end;
+		};
 
+		class radial_gradient : public gradient_base
+		{
+		public:
+			pointF position;
+			pointF radius;
 		};
 	};
 
@@ -224,7 +233,7 @@ namespace litehtml
 		std::unique_ptr<background_layer::image> get_image_layer(int idx) const;
 		std::unique_ptr<background_layer::color> get_color_layer(int idx) const;
 		std::unique_ptr<background_layer::linear_gradient> get_linear_gradient_layer(int idx, const background_layer& layer) const;
-		std::unique_ptr<background_layer::radial_gradient> get_radial_gradient_layer(int idx) const;
+		std::unique_ptr<background_layer::radial_gradient> get_radial_gradient_layer(int idx, const background_layer& layer) const;
 		void draw_layer(uint_ptr hdc, int idx, const background_layer& layer, document_container* container) const;
 	};
 }

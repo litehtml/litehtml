@@ -329,6 +329,21 @@ void litehtml::css::parse_gradient(const string &token, document_container *cont
 					} // else web_color::is_color(parts[0], container)
 				} // !parts.empty()
 			} // for
+			if(grad.radial_extent == background_gradient::radial_extent_none)
+			{
+				if(grad.radial_length_x.is_predefined())
+				{
+					grad.radial_extent = background_gradient::radial_extent_farthest_corner;
+				} else if(grad.radial_length_y.is_predefined())
+				{
+					grad.radial_length_y = grad.radial_length_x.val();
+					grad.radial_shape = background_gradient::radial_shape_circle;
+				}
+			}
+			if(grad.radial_shape == background_gradient::radial_shape_none)
+			{
+				grad.radial_shape = background_gradient::radial_shape_ellipse;
+			}
 		} // gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_linear_gradient
 		if(num_colors >= 2)
 		{
