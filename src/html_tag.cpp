@@ -178,11 +178,6 @@ litehtml::element::ptr litehtml::html_tag::select_one( const css_selector& selec
 
 void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 {
-	if(is_root())
-	{
-		int i = 0;
-		i++;
-	}
 	for(const auto& sel : stylesheet.selectors())
 	{
 		// optimization
