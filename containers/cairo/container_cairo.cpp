@@ -620,9 +620,11 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
 	auto height = (float) layer.origin_box.height;
 	if(gradient.radius.x != gradient.radius.y)
 	{
+		// Scale height and top of the origin box
 		aspect_ratio = gradient.radius.x / gradient.radius.y;
-		top -= (height / 2) * aspect_ratio;
-		height *= 2 * aspect_ratio;
+		height *= aspect_ratio;
+		auto center_y = (gradient.position.y - (float ) layer.origin_box.y) * aspect_ratio;
+		top = gradient.position.y - center_y;
 
 		cairo_translate(cr, gradient.position.x, gradient.position.y);
 		cairo_scale(cr, 1, gradient.radius.y / gradient.radius.x);
