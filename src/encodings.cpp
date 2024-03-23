@@ -27,7 +27,7 @@ struct decoder
 	// invalid value of code_point or pointer (in std terminology, pointer is an offset into index table).
 	// it is called null to match the standard.
 	enum { null = -2 };
-	static_assert(null != 0 && null != EOF, "");
+	static_assert(null != 0 && null != EOF);
 
 	// https://encoding.spec.whatwg.org/#index-code-point
 	template<int N>

@@ -89,8 +89,8 @@ void style::parse_property(const string& txt, const string& baseurl, document_co
 
 void style::add_property(string_id name, const string& val, const string& baseurl, bool important, document_container* container)
 {
-	if (val.find("var(") != string::npos) return add_parsed_property(name, property_value(val, important, prop_type_var));
-	if (val == "inherit" && name != _font_)       return add_parsed_property(name, property_value(important, prop_type_inherit));
+	if (val.find("var(") != string::npos) return add_parsed_property(name, property_value(val, important, true));
+	if (val == "inherit" && name != _font_)       return add_parsed_property(name, property_value(inherit(), important));
 
 	string url;
 	css_length len[4], length;
@@ -941,11 +941,11 @@ void style::parse_font(const string& val, bool important)
 {
 	if (val == "inherit")
 	{
-		add_parsed_property(_font_style_, property_value(important, prop_type_inherit));
-		add_parsed_property(_font_variant_, property_value(important, prop_type_inherit));
-		add_parsed_property(_font_weight_, property_value(important, prop_type_inherit));
-		add_parsed_property(_font_size_, property_value(important, prop_type_inherit));
-		add_parsed_property(_line_height_, property_value(important, prop_type_inherit));
+		add_parsed_property(_font_style_, property_value(inherit(), important));
+		add_parsed_property(_font_variant_, property_value(inherit(), important));
+		add_parsed_property(_font_weight_, property_value(inherit(), important));
+		add_parsed_property(_font_size_, property_value(inherit(), important));
+		add_parsed_property(_line_height_, property_value(inherit(), important));
 		return;
 	} else
 	{
@@ -1181,8 +1181,8 @@ const property_value& style::get_property(string_id name) const
 	{
 		return it->second;
 	}
-	static property_value dummy;
-	return dummy;
+	static property_value _invalid(invalid(), false);
+	return _invalid;
 }
 
 void style::subst_vars_(string& str, const element* el)
@@ -1205,13 +1205,14 @@ void style::subst_vars(const element* el)
 {
 	for (auto& prop : m_properties)
 	{
-		if (prop.second.m_type == prop_type_var)
+		if (prop.second.m_has_var)
 		{
-			subst_vars_(prop.second.m_string, el);
+			string str = prop.second.get<string>();
+			subst_vars_(str, el);
 			// re-adding the same property
 			// if it is a custom property it will be readded as a string (currently it is prop_type_var)
 			// if it is a standard css property it will be parsed and properly added as typed property
-			add_property(prop.first, prop.second.m_string, "", prop.second.m_important, el->get_document()->container());
+			add_property(prop.first, str, "", prop.second.m_important, el->get_document()->container());
 		}
 	}
 }

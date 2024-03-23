@@ -1,162 +1,36 @@
 #ifndef LH_STYLE_H
 #define LH_STYLE_H
+#include <variant>
 
 namespace litehtml
 {
-	enum property_type
+	struct invalid {}; // indicates "not found" condition in style::get_property
+	struct inherit {}; // "inherit" was specified as the value of this property
+	using property_value_base = std::variant<
+		invalid,
+		inherit,
+		int,
+		int_vector,
+		css_length,
+		length_vector,
+		float,
+		web_color,
+		string,
+		string_vector,
+		size_vector
+	>;
+
+	struct property_value : property_value_base
 	{
-		prop_type_invalid, // indicates "not found" condition in style::get_property
-		prop_type_inherit, // "inherit" was specified as the value of this property
+		bool m_important = false;
+		bool m_has_var   = false; // string; parsing is delayed because of var()
 
-		prop_type_enum_item,
-		prop_type_enum_item_vector,
-		prop_type_length,
-		prop_type_length_vector,
-		prop_type_number,
-		prop_type_color,
-		prop_type_string,
-		prop_type_string_vector,
-		prop_type_size_vector,
+		property_value() {}
+		template<class T> property_value(const T& val, bool important, bool has_var = false) 
+			: property_value_base(val), m_important(important), m_has_var(has_var) {}
 
-		prop_type_var, // also string, but needs further parsing because of var()
-	};
-
-	class property_value
-	{
-	public:
-		property_type	m_type;
-		bool			m_important;
-
-		union {
-			int 			m_enum_item;
-			int_vector		m_enum_item_vector;
-			css_length		m_length;
-			length_vector	m_length_vector;
-			float			m_number;
-			web_color		m_color;
-			string			m_string;
-			string_vector	m_string_vector;
-			size_vector		m_size_vector;
-		};
-
-		property_value()
-			: m_type(prop_type_invalid)
-		{
-		}
-		property_value(bool important, property_type type)
-			: m_type(type), m_important(important)
-		{
-		}
-		property_value(const string& str, bool important, property_type type = prop_type_string)
-			: m_type(type), m_important(important), m_string(str)
-		{
-		}
-		property_value(const string_vector& vec, bool important)
-			: m_type(prop_type_string_vector), m_important(important), m_string_vector(vec)
-		{
-		}
-		property_value(const css_length& length, bool important)
-			: m_type(prop_type_length), m_important(important), m_length(length)
-		{
-		}
-		property_value(const length_vector& vec, bool important)
-			: m_type(prop_type_length_vector), m_important(important), m_length_vector(vec)
-		{
-		}
-		property_value(float number, bool important)
-			: m_type(prop_type_number), m_important(important), m_number(number)
-		{
-		}
-		property_value(int enum_item, bool important)
-			: m_type(prop_type_enum_item), m_important(important), m_enum_item(enum_item)
-		{
-		}
-		property_value(const int_vector& vec, bool important)
-			: m_type(prop_type_enum_item_vector), m_important(important), m_enum_item_vector(vec)
-		{
-		}
-		property_value(web_color color, bool important)
-			: m_type(prop_type_color), m_important(important), m_color(color)
-		{
-		}
-		property_value(const size_vector& vec, bool important)
-			: m_type(prop_type_size_vector), m_important(important), m_size_vector(vec)
-		{
-		}
-		~property_value()
-		{
-			switch (m_type)
-			{
-			case prop_type_string:
-			case prop_type_var:
-				m_string.~string();
-				break;
-			case prop_type_string_vector:
-				m_string_vector.~string_vector();
-				break;
-			case prop_type_length:
-				m_length.~css_length();
-				break;
-			case prop_type_length_vector:
-				m_length_vector.~length_vector();
-				break;
-			case prop_type_enum_item_vector:
-				m_enum_item_vector.~int_vector();
-				break;
-			case prop_type_color:
-				m_color.~web_color();
-				break;
-			case prop_type_size_vector:
-				m_size_vector.~size_vector();
-				break;
-			default:
-				break;
-			}
-		}
-		property_value& operator=(const property_value& val)
-		{
-			this->~property_value();
-
-			switch (val.m_type)
-			{
-			case prop_type_invalid:
-				new(this) property_value();
-				break;
-			case prop_type_inherit:
-				new(this) property_value(val.m_important, val.m_type);
-				break;
-			case prop_type_string:
-			case prop_type_var:
-				new(this) property_value(val.m_string, val.m_important, val.m_type);
-				break;
-			case prop_type_string_vector:
-				new(this) property_value(val.m_string_vector, val.m_important);
-				break;
-			case prop_type_enum_item:
-				new(this) property_value(val.m_enum_item, val.m_important);
-				break;
-			case prop_type_enum_item_vector:
-				new(this) property_value(val.m_enum_item_vector, val.m_important);
-				break;
-			case prop_type_length:
-				new(this) property_value(val.m_length, val.m_important);
-				break;
-			case prop_type_length_vector:
-				new(this) property_value(val.m_length_vector, val.m_important);
-				break;
-			case prop_type_number:
-				new(this) property_value(val.m_number, val.m_important);
-				break;
-			case prop_type_color:
-				new(this) property_value(val.m_color, val.m_important);
-				break;
-			case prop_type_size_vector:
-				new(this) property_value(val.m_size_vector, val.m_important);
-				break;
-			}
-
-			return *this;
-		}
+		template<class T> bool is() const { return std::holds_alternative<T>(*this); }
+		template<class T> const T& get() const { return std::get<T>(*this); }
 	};
 
 	typedef std::map<string_id, property_value>	props_map;

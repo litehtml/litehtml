@@ -69,7 +69,7 @@ namespace litehtml
 		void				draw_background(uint_ptr hdc, int x, int y, const position *clip,
 									const std::shared_ptr<render_item> &ri) override;
 
-		template<class Type, property_type property_value_type, Type property_value::* property_value_member>
+		template<class Type>
 		const Type&			get_property_impl  (string_id name, bool inherited, const Type&   default_value, uint_ptr css_properties_member_offset) const;
 		int					get_enum_property  (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const override;
 		int					get_int_property   (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const override;
