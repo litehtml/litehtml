@@ -457,17 +457,6 @@ bool element::set_class( const char* /*pclass*/, bool /*add*/ )				LITEHTML_RETU
 bool element::is_replaced() const									LITEHTML_RETURN_FUNC(false)
 void element::draw(uint_ptr /*hdc*/, int /*x*/, int /*y*/, const position */*clip*/, const std::shared_ptr<render_item> &/*ri*/) LITEHTML_EMPTY_FUNC
 void element::draw_background(uint_ptr /*hdc*/, int /*x*/, int /*y*/, const position */*clip*/, const std::shared_ptr<render_item> &/*ri*/) LITEHTML_EMPTY_FUNC
-int				element::get_enum_property			(string_id /*name*/, bool /*inherited*/, int /*defval*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC(0)
-int				element::get_int_property			(string_id /*name*/, bool /*inherited*/, int /*defval*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC(0)
-css_length		element::get_length_property		(string_id /*name*/, bool /*inherited*/, css_length /*defval*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC(0)
-web_color		element::get_color_property			(string_id /*name*/, bool /*inherited*/, web_color /*defval*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC(web_color())
-string			element::get_string_property		(string_id /*name*/, bool /*inherited*/, const string& /*defval*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC("")
-float			element::get_number_property		(string_id /*name*/, bool /*inherited*/, float /*defval*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC(0)
-string_vector	element::get_string_vector_property	(string_id /*name*/, bool /*inherited*/, const string_vector& /*default_value*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC({})
-int_vector		element::get_int_vector_property	(string_id /*name*/, bool /*inherited*/, const int_vector& /*default_value*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC({})
-length_vector	element::get_length_vector_property	(string_id /*name*/, bool /*inherited*/, const length_vector& /*default_value*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC({})
-size_vector		element::get_size_vector_property	(string_id /*name*/, bool /*inherited*/, const size_vector& /*default_value*/, uint_ptr /*css_properties_member_offset*/) const LITEHTML_RETURN_FUNC({})
-string			element::get_custom_property		(string_id /*name*/, const string& /*defval*/) const LITEHTML_RETURN_FUNC("")
 void element::get_text( string& /*text*/ )									LITEHTML_EMPTY_FUNC
 void element::parse_attributes()										LITEHTML_EMPTY_FUNC
 int element::select(const string& /*selector*/)								LITEHTML_RETURN_FUNC(select_no_match)

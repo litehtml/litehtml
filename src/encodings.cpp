@@ -27,7 +27,7 @@ struct decoder
 	// invalid value of code_point or pointer (in std terminology, pointer is an offset into index table).
 	// it is called null to match the standard.
 	enum { null = -2 };
-	static_assert(null != 0 && null != EOF, "");
+	static_assert(null != 0 && null != EOF);
 
 	// https://encoding.spec.whatwg.org/#index-code-point
 	template<int N>
@@ -235,7 +235,7 @@ decoder::result utf_8_decoder::handler(inout string& input, inout int& index, ou
 		m_lower_boundary = 0x80;
 		m_upper_boundary = 0xBF;
 
-		// 2. Prepend byte to ioQueue.
+		// 2. Restore byte to ioQueue.
 		index--;
 
 		// 3.
@@ -475,7 +475,7 @@ decoder::result gb18030_decoder::handler(string& input, int& index, int ch[2])
 		// 1. If byte is not in the range 0x30 to 0x39, inclusive, then:
 		if (!(b >= 0x30 && b <= 0x39))
 		{
-			// 1. Prepend gb18030 second, gb18030 third, and byte to ioQueue.
+			// 1. Restore « gb18030 second, gb18030 third, byte » to ioQueue.
 			input.insert(index, {(char)m_second, (char)m_third, (char)b});
 
 			// 2. Set gb18030 first, gb18030 second, and gb18030 third to 0x00.
@@ -517,8 +517,7 @@ decoder::result gb18030_decoder::handler(string& input, int& index, int ch[2])
 			return result_continue;
 		}
 
-		// Prepend gb18030 second followed by byte to ioQueue
-		// https://github.com/whatwg/encoding/issues/325 - clarify insertion order
+		// Restore « gb18030 second, byte » to ioQueue
 		input.insert(index, {(char)m_second, (char)b});
 		m_first = 0;
 		m_second = 0;
@@ -557,7 +556,7 @@ decoder::result gb18030_decoder::handler(string& input, int& index, int ch[2])
 			return result_codepoint;
 		}
 
-		// 7. If byte is an ASCII byte, prepend byte to ioQueue.
+		// 7. If byte is an ASCII byte, restore byte to ioQueue.
 		if (b >= 0 && b <= 0x7F) index--;
 
 		// 8.
@@ -649,7 +648,7 @@ decoder::result big5_decoder::handler(inout string& input, inout int& index, out
 			return result_codepoint;
 		}
 
-		// 6. If byte is an ASCII byte, prepend byte to ioQueue.
+		// 6. If byte is an ASCII byte, restore byte to ioQueue.
 		if (b >= 0 && b <= 0x7F) index--;
 
 		// 7.
@@ -755,7 +754,7 @@ decoder::result euc_jp_decoder::handler(inout string& input, inout int& index, o
 			return result_codepoint;
 		}
 
-		// 5. If byte is an ASCII byte, prepend byte to ioQueue.
+		// 5. If byte is an ASCII byte, restore byte to ioQueue.
 		if (b >= 0 && b <= 0x7F) index--;
 
 		// 6.
@@ -978,7 +977,7 @@ decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& ind
 				m_output = true;
 				return output == false ? result_continue : result_error;
 			}
-			// 8. If byte is end-of-queue, then prepend lead to ioQueue. Otherwise, prepend lead and byte to ioQueue.
+			// 8. If byte is end-of-queue, then restore lead to ioQueue; otherwise, restore « lead, byte » to ioQueue.
 			if (b == EOF)
 				input.insert(index, 1, (char)lead);
 			else
@@ -1054,10 +1053,10 @@ decoder::result shift_jis_decoder::handler(inout string& input, inout int& index
 			return result_codepoint;
 		}
 
-		// 5. If byte is an ASCII byte, prepend byte to ioQueue.
+		// 7. If byte is an ASCII byte, restore byte to ioQueue.
 		if (b >= 0 && b <= 0x7F) index--;
 
-		// 6.
+		// 8.
 		return result_error;
 	}
 
@@ -1136,7 +1135,7 @@ decoder::result euc_kr_decoder::handler(inout string& input, inout int& index, o
 			return result_codepoint;
 		}
 		
-		// 4. If byte is an ASCII byte, prepend byte to ioQueue.
+		// 4. If byte is an ASCII byte, restore byte to ioQueue.
 		if (b >= 0 && b <= 0x7F) index--;
 		
 		// 5.
@@ -1249,8 +1248,7 @@ decoder::result utf_16_decoder::handler(inout string& input, inout int& index, o
 		// 4. Let bytes be two bytes whose values are byte1 and byte2, if is UTF-16BE decoder is true, and byte2 and byte1 otherwise.
 		string bytes = m_utf_16be ? string{b1, b2} : string{b2, b1};
 		
-		// 5. Prepend the bytes to ioQueue and return error.
-		// NOTE: In the standard ioQueue starts at the next input byte, so inserting at index.
+		// 5. Restore bytes to ioQueue and return error.
 		input.insert(index, bytes);
 		return result_error;
 	}
@@ -1955,7 +1953,7 @@ encoding get_xml_encoding(const string& str)
 	index += strlen("encoding");
 
 	// 6.
-	while ((byte)str[index] <= 0x20) index++;
+	while ((byte)str[index] <= 0x20 && index < str.size()) index++;
 
 	// 7.
 	if (str[index] != '=') return encoding::null;
@@ -1964,7 +1962,7 @@ encoding get_xml_encoding(const string& str)
 	index++; // skip '='
 
 	// 9.
-	while ((byte)str[index] <= 0x20) index++;
+	while ((byte)str[index] <= 0x20 && index < str.size()) index++;
 
 	// 10. Let quoteMark be the byte at encodingPosition.
 	char q = str[index];

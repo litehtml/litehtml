@@ -10,7 +10,7 @@
 
 namespace litehtml
 {
-	class element;
+	class html_tag;
 	class document;
 
 	class css_properties
@@ -75,9 +75,9 @@ namespace litehtml
 		int 					m_order;
 
 	private:
-		void compute_font(const element* el, const std::shared_ptr<document>& doc);
-		void compute_background(const element* el, const std::shared_ptr<document>& doc);
-		void compute_flex(const element* el, const std::shared_ptr<document>& doc);
+		void compute_font(const html_tag* el, const std::shared_ptr<document>& doc);
+		void compute_background(const html_tag* el, const std::shared_ptr<document>& doc);
+		void compute_flex(const html_tag* el, const std::shared_ptr<document>& doc);
 
 	public:
 		css_properties() :
@@ -126,7 +126,7 @@ namespace litehtml
 				m_order(0)
 		{}
 
-		void compute(const element* el, const std::shared_ptr<document>& doc);
+		void compute(const html_tag* el, const std::shared_ptr<document>& doc);
 		std::vector<std::tuple<string, string>> dump_get_attrs();
 
 		element_position get_position() const;
