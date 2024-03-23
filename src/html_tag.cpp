@@ -333,83 +333,11 @@ litehtml::string litehtml::html_tag::get_custom_property(string_id name, const s
 	{
 		return value.get<string>();
 	}
-	else if (auto _parent = parent())
+	else if (auto _parent = dynamic_cast<html_tag*>(parent().get()))
 	{
 		return _parent->get_custom_property(name, default_value);
 	}
 	return default_value;
-}
-
-template<class Type>
-const Type& litehtml::html_tag::get_property_impl(string_id name, bool inherited, const Type& default_value, uint_ptr css_properties_member_offset) const
-{
-	const property_value& value = m_style.get_property(name);
-
-	if (value.is<Type>())
-	{
-		return value.get<Type>();
-	}
-	else if (inherited || value.is<inherit>())
-	{
-		if (auto _parent = parent())
-		{
-			return *(Type*)((byte*)&_parent->css() + css_properties_member_offset);
-		}
-		return default_value;
-	}
-	// value must be invalid here
-	//assert(value.m_type == prop_type_invalid);
-	return default_value;
-}
-
-int litehtml::html_tag::get_enum_property(string_id name, bool inherited, int default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<int>(name, inherited, default_value, css_properties_member_offset);
-}
-
-int litehtml::html_tag::get_int_property(string_id name, bool inherited, int default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<int>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::css_length litehtml::html_tag::get_length_property(string_id name, bool inherited, css_length default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<css_length>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::web_color litehtml::html_tag::get_color_property(string_id name, bool inherited, web_color default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<web_color>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::string litehtml::html_tag::get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<string>(name, inherited, default_value, css_properties_member_offset);
-}
-
-float litehtml::html_tag::get_number_property(string_id name, bool inherited, float default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<float>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::string_vector litehtml::html_tag::get_string_vector_property(string_id name, bool inherited, const string_vector& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<string_vector>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::int_vector litehtml::html_tag::get_int_vector_property(string_id name, bool inherited, const int_vector& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<int_vector>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::length_vector litehtml::html_tag::get_length_vector_property(string_id name, bool inherited, const length_vector& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<length_vector>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::size_vector litehtml::html_tag::get_size_vector_property(string_id name, bool inherited, const size_vector& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<size_vector>(name, inherited, default_value, css_properties_member_offset);
 }
 
 void litehtml::html_tag::compute_styles(bool recursive)

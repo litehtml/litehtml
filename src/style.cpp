@@ -1185,7 +1185,7 @@ const property_value& style::get_property(string_id name) const
 	return _invalid;
 }
 
-void style::subst_vars_(string& str, const element* el)
+void style::subst_vars_(string& str, const html_tag* el)
 {
 	while (true)
 	{
@@ -1201,7 +1201,7 @@ void style::subst_vars_(string& str, const element* el)
 	}
 }
 
-void style::subst_vars(const element* el)
+void style::subst_vars(const html_tag* el)
 {
 	for (auto& prop : m_properties)
 	{

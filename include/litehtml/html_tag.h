@@ -10,6 +10,7 @@
 #include "stylesheet.h"
 #include "line_box.h"
 #include "table.h"
+#include <assert.h>
 
 namespace litehtml
 {
@@ -70,18 +71,8 @@ namespace litehtml
 									const std::shared_ptr<render_item> &ri) override;
 
 		template<class Type>
-		const Type&			get_property_impl  (string_id name, bool inherited, const Type&   default_value, uint_ptr css_properties_member_offset) const;
-		int					get_enum_property  (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const override;
-		int					get_int_property   (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const override;
-		css_length			get_length_property(string_id name, bool inherited, css_length    default_value, uint_ptr css_properties_member_offset) const override;
-		web_color			get_color_property (string_id name, bool inherited, web_color     default_value, uint_ptr css_properties_member_offset) const override;
-		string				get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const override;
-		float				get_number_property(string_id name, bool inherited, float         default_value, uint_ptr css_properties_member_offset) const override;
-		string_vector		get_string_vector_property(string_id name, bool inherited, const string_vector& default_value, uint_ptr css_properties_member_offset) const override;
-		int_vector			get_int_vector_property   (string_id name, bool inherited, const int_vector&    default_value, uint_ptr css_properties_member_offset) const override;
-		length_vector		get_length_vector_property(string_id name, bool inherited, const length_vector& default_value, uint_ptr css_properties_member_offset) const override;
-		size_vector			get_size_vector_property  (string_id name, bool inherited, const size_vector&   default_value, uint_ptr css_properties_member_offset) const override;
-		string				get_custom_property(string_id name, const string& default_value) const override;
+		const Type&			get_property(string_id name, bool inherited, const Type& default_value, uint_ptr css_properties_member_offset) const;
+		string				get_custom_property(string_id name, const string& default_value) const;
 
 		elements_list&	children();
 
@@ -134,6 +125,28 @@ namespace litehtml
 	{
 		return m_children;
 	}
+
+	template<class Type>
+	const Type& html_tag::get_property(string_id name, bool inherited, const Type& default_value, uint_ptr css_properties_member_offset) const
+	{
+		const property_value& value = m_style.get_property(name);
+
+		if (value.is<Type>())
+		{
+			return value.get<Type>();
+		}
+		else if (inherited || value.is<inherit>())
+		{
+			if (auto _parent = parent())
+			{
+				return *(Type*)((byte*)&_parent->css() + css_properties_member_offset);
+			}
+			return default_value;
+		}
+		assert(value.is<invalid>());
+		return default_value;
+	}
+
 }
 
 #endif  // LH_HTML_TAG_H
