@@ -11,7 +11,7 @@ class cairo_surface_wrapper
 	cairo_surface_t* surface;
 public:
 	cairo_surface_wrapper() : surface(nullptr) {}
-	cairo_surface_wrapper(cairo_surface_wrapper& v) : surface(v.surface)
+	cairo_surface_wrapper(const cairo_surface_wrapper& v) : surface(v.surface)
 	{
 		if(v.surface)
 		{
