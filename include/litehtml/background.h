@@ -19,6 +19,8 @@ namespace litehtml
 			repeating_linear_gradient,
 			radial_gradient,
 			repeating_radial_gradient,
+			conic_gradient,
+			repeating_conic_gradient,
 		};
 		enum gradient_side
 		{
@@ -46,15 +48,49 @@ namespace litehtml
 			radial_extent_farthest_corner,
 			radial_extent_farthest_side,
 		};
+		enum conic_color_space_t
+		{
+			conic_color_space_none,
+			// rectangular-color-space
+			conic_color_space_srgb,
+			conic_color_space_srgb_linear,
+			conic_color_space_display_p3,
+			conic_color_space_a98_rgb,
+			conic_color_space_prophoto_rgb,
+			conic_color_space_rec2020,
+			conic_color_space_lab,
+			conic_color_space_oklab,
+			conic_color_space_xyz,
+			conic_color_space_xyz_d50,
+			conic_color_space_xyz_d65,
+
+			// polar-color-space
+			conic_color_space_polar_start,
+			conic_color_space_hsl,
+			conic_color_space_hwb,
+			conic_color_space_lch,
+			conic_color_space_oklch,
+		};
+		enum interpolation_method_t
+		{
+			interpolation_method_none,
+			interpolation_method_hue,
+			interpolation_method_shorter_hue,
+			interpolation_method_longer_hue,
+			interpolation_method_increasing_hue,
+			interpolation_method_decreasing_hue
+		};
+
 		class gradient_color
 		{
 		public:
 			bool is_color_hint;
 			web_color	color;
 			css_length	length;
+			def_value<float> angle;
 
 			gradient_color() :
-					is_color_hint(false)
+					is_color_hint(false), angle(0)
 			{}
 		};
 		gradient_type m_type;
@@ -67,6 +103,9 @@ namespace litehtml
 		radial_shape_t radial_shape;
 		css_length radial_length_x;
 		css_length radial_length_y;
+		float conic_from_angle;
+		conic_color_space_t conic_color_space;
+		interpolation_method_t conic_interpolation;
 
 
 		explicit background_gradient(gradient_type type = no_gradient)
@@ -80,6 +119,9 @@ namespace litehtml
 			radial_length_y.predef(0);
 			radial_position_x.predef(0);
 			radial_position_y.predef(0);
+			conic_from_angle = 0;
+			conic_color_space = conic_color_space_none;
+			conic_interpolation = interpolation_method_none;
 		}
 
 		bool is_empty() const
@@ -168,6 +210,7 @@ namespace litehtml
 			std::vector<color_point> color_points;
 
 			bool prepare_color_points(float len, const std::vector<background_gradient::gradient_color>& colors);
+			bool prepare_angle_color_points(const std::vector<background_gradient::gradient_color>& colors);
 		};
 
 		class linear_gradient : public gradient_base
@@ -183,6 +226,19 @@ namespace litehtml
 			pointF position;
 			pointF radius;
 		};
+
+		class conic_gradient : public gradient_base
+		{
+		public:
+			pointF position;
+			float angle;
+			background_gradient::conic_color_space_t color_space;
+			background_gradient::interpolation_method_t interpolation;
+			conic_gradient() : angle(0),
+							   color_space(background_gradient::conic_color_space_none),
+							   interpolation(background_gradient::interpolation_method_none)
+			{}
+		};
 	};
 
 	class background
@@ -194,7 +250,8 @@ namespace litehtml
 			type_color,
 			type_image,
 			type_linear_gradient,
-			type_radial_gradient
+			type_radial_gradient,
+			type_conic_gradient,
 		};
 
 		std::vector<background_image> m_image;
@@ -234,6 +291,7 @@ namespace litehtml
 		std::unique_ptr<background_layer::color> get_color_layer(int idx) const;
 		std::unique_ptr<background_layer::linear_gradient> get_linear_gradient_layer(int idx, const background_layer& layer) const;
 		std::unique_ptr<background_layer::radial_gradient> get_radial_gradient_layer(int idx, const background_layer& layer) const;
+		std::unique_ptr<background_layer::conic_gradient> get_conic_gradient_layer(int idx, const background_layer& layer) const;
 		void draw_layer(uint_ptr hdc, int idx, const background_layer& layer, document_container* container) const;
 	};
 }

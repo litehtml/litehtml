@@ -551,6 +551,57 @@ std::unique_ptr<litehtml::background_layer::radial_gradient> litehtml::backgroun
 	return {};
 }
 
+std::unique_ptr<litehtml::background_layer::conic_gradient> litehtml::background::get_conic_gradient_layer(int idx, const background_layer& layer) const
+{
+	if(idx < 0 || idx >= (int) m_image.size()) return {};
+	if(m_image[idx].type != background_image::bg_image_type_gradient) return {};
+	if(m_image[idx].gradient.m_type != background_gradient::conic_gradient) return {};
+
+	auto ret = std::unique_ptr<background_layer::conic_gradient>(new background_layer::conic_gradient());
+
+	ret->position.x = (float) layer.origin_box.x + (float) layer.origin_box.width / 2.0f;
+	ret->position.y = (float) layer.origin_box.y + (float) layer.origin_box.height / 2.0f;
+
+	if(m_image[idx].gradient.m_side & background_gradient::gradient_side_left)
+	{
+		ret->position.x = (float) layer.origin_box.left();
+	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_right)
+	{
+		ret->position.x = (float) layer.origin_box.right();
+	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_x_center)
+	{
+		ret->position.x = (float) layer.origin_box.left() + (float) layer.origin_box.width / 2.0f;
+	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_x_length)
+	{
+		ret->position.x = (float) layer.origin_box.left() + (float) m_image[idx].gradient.radial_position_x.calc_percent(layer.origin_box.width);
+	}
+
+	if(m_image[idx].gradient.m_side & background_gradient::gradient_side_top)
+	{
+		ret->position.y = (float) layer.origin_box.top();
+	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_bottom)
+	{
+		ret->position.y = (float) layer.origin_box.bottom();
+	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_y_center)
+	{
+		ret->position.y = (float) layer.origin_box.top() + (float) layer.origin_box.height / 2.0f;
+	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_y_length)
+	{
+		ret->position.y = (float) layer.origin_box.top() + (float) m_image[idx].gradient.radial_position_y.calc_percent(layer.origin_box.height);
+	}
+
+	ret->angle = m_image[idx].gradient.conic_from_angle;
+	ret->color_space = m_image[idx].gradient.conic_color_space;
+	ret->interpolation = m_image[idx].gradient.conic_interpolation;
+
+	if(ret->prepare_angle_color_points(m_image[idx].gradient.m_colors))
+	{
+		return ret;
+	}
+
+	return {};
+}
+
 litehtml::background::layer_type litehtml::background::get_layer_type(int idx) const
 {
 	if(idx >= 0 && idx < (int) m_image.size())
@@ -568,6 +619,8 @@ litehtml::background::layer_type litehtml::background::get_layer_type(int idx) c
 						return type_linear_gradient;
 					case background_gradient::radial_gradient:
 						return type_radial_gradient;
+					case background_gradient::conic_gradient:
+						return type_conic_gradient;
 					default:
 						break;
 				}
@@ -614,13 +667,22 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_radial_gradient:
-		{
-			auto gradient_layer = get_radial_gradient_layer(idx, layer);
-			if(gradient_layer)
 			{
-				container->draw_radial_gradient(hdc, layer, *gradient_layer);
+				auto gradient_layer = get_radial_gradient_layer(idx, layer);
+				if(gradient_layer)
+				{
+					container->draw_radial_gradient(hdc, layer, *gradient_layer);
+				}
 			}
-		}
+			break;
+		case background::type_conic_gradient:
+			{
+				auto gradient_layer = get_conic_gradient_layer(idx, layer);
+				if(gradient_layer)
+				{
+					container->draw_conic_gradient(hdc, layer, *gradient_layer);
+				}
+			}
 			break;
 		default:
 			break;
@@ -670,6 +732,74 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 		} else
 		{
 			color_points.emplace_back(1.0, color_points.back().color);
+		}
+	}
+
+	if(none_units > 0)
+	{
+		size_t i = 1;
+		while(i < color_points.size())
+		{
+			if(color_points[i].offset != 0)
+			{
+				i++;
+				continue;
+			}
+			// Find next defined offset
+			size_t j = i + 1;
+			while (color_points[j].offset == 0) j++;
+			size_t num = j - i;
+			float sum = color_points[i - 1].offset + color_points[j].offset;
+			float offset = sum / (float) (num + 1);
+			while(i < j)
+			{
+				color_points[i].offset = color_points[i - 1].offset + offset;
+				i++;
+			}
+		}
+	}
+
+	return true;
+}
+
+bool litehtml::background_layer::gradient_base::prepare_angle_color_points(const std::vector<background_gradient::gradient_color> &colors)
+{
+	int none_units = 0;
+	float max_len = 360.0f;
+	for(const auto& item : colors)
+	{
+		if(item.angle.is_default())
+		{
+			if(!color_points.empty())
+			{
+				none_units++;
+			}
+			color_points.emplace_back(0, item.color);
+		} else
+		{
+			color_points.emplace_back(item.angle, item.color);
+		}
+	}
+	if(color_points.empty())
+	{
+		return false;
+	}
+
+	// Add color point with offset 0 if not exists
+	if(color_points[0].offset != 0)
+	{
+		color_points.emplace(color_points.begin(), 0, color_points[0].color);
+	}
+	// Add color point with offset 1.0 if not exists
+	if(color_points.back().offset < 360.0f)
+	{
+		if(color_points.back().offset == 0)
+		{
+			color_points.back().offset = 360.0f;
+			none_units--;
+		} else
+		{
+			color_points.emplace_back(360.0f, color_points.back().color);
 		}
 	}
 

@@ -2,6 +2,7 @@
 #include "stylesheet.h"
 #include <algorithm>
 #include "document.h"
+#include "gradient.h"
 
 #ifndef M_PI
 #       define M_PI    3.14159265358979323846
@@ -83,76 +84,6 @@ void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const
 	}
 }
 
-bool litehtml::css::parse_css_angle(const string& str, float& angle)
-{
-	const char* start = str.c_str();
-	for(;start[0]; start++)
-	{
-		if(!isspace(start[0])) break;
-	}
-	if(start[0] == 0) return false;
-	char* end = nullptr;
-	float a = strtof(start, &end);
-	if(end && end[0] == 0) return false;
-	if(!strcmp(end, "rad"))
-	{
-		a = (float) (a * 180.0 / M_PI);
-	} else if(!strcmp(end, "grad"))
-	{
-		a = a * 180.0f / 200.0f;
-	} else if(!strcmp(end, "turn"))
-	{
-		a = a * 360.0f;
-	} else if(strcmp(end, "deg"))
-	{
-		return false;
-	}
-	angle = a;
-	return true;
-}
-
-static inline void parse_radial_position(litehtml::background_gradient &grad, const litehtml::string_vector &parts, size_t i)
-{
-	grad.m_side = 0;
-	while (i < parts.size())
-	{
-		int side = litehtml::value_index(parts[i], "left;right;top;bottom;center");
-		if (side >= 0)
-		{
-			if(side == 4)
-			{
-				if(grad.m_side & litehtml::background_gradient::gradient_side_x_center)
-				{
-					grad.m_side |= litehtml::background_gradient::gradient_side_y_center;
-				} else
-				{
-					grad.m_side |= litehtml::background_gradient::gradient_side_x_center;
-				}
-			} else
-			{
-				grad.m_side |= 1 << side;
-			}
-		} else
-		{
-			litehtml::css_length length;
-			length.fromString(parts[i]);
-			if (!length.is_predefined())
-			{
-				if(grad.m_side & litehtml::background_gradient::gradient_side_x_length)
-				{
-					grad.m_side |= litehtml::background_gradient::gradient_side_y_length;
-					grad.radial_position_y = length;
-				} else
-				{
-					grad.m_side |= litehtml::background_gradient::gradient_side_x_length;
-					grad.radial_position_x = length;
-				}
-			}
-		}
-		i++;
-	}
-}
-
 void litehtml::css::parse_gradient(const string &token, document_container *container, background_gradient& grad)
 {
 	size_t pos1 = token.find('(');
@@ -164,7 +95,7 @@ void litehtml::css::parse_gradient(const string &token, document_container *cont
 		trim(gradient_type_str);
 		background_gradient::gradient_type gradient_type = (background_gradient::gradient_type) (value_index(
 				gradient_type_str,
-				"linear-gradient;repeating-linear-gradient;radial-gradient;repeating-radial-gradient", -2) + 1);
+				"linear-gradient;repeating-linear-gradient;radial-gradient;repeating-radial-gradient;conic-gradient;repeating-conic-gradient", -2) + 1);
 
 		if(pos2 != std::string::npos)
 		{
@@ -173,179 +104,18 @@ void litehtml::css::parse_gradient(const string &token, document_container *cont
 		{
 			grad_str = token.substr(pos1);
 		}
-		string_vector items;
-		split_string(grad_str, items, ",", "", "()");
-		int num_colors = 0;
-
-		auto parse_color_stop_list = [&](string_vector& parts)
-			{
-				auto color = web_color::from_string(parts[0], container);
-				css_length length;
-				if(parts.size() > 1)
-				{
-					length.fromString(parts[1]);
-					if(!length.is_predefined())
-					{
-						background_gradient::gradient_color gc;
-						gc.color = color;
-						gc.length = length;
-						grad.m_colors.push_back(gc);
-						num_colors++;
-					}
-					if(parts.size() > 2)
-					{
-						length.fromString(parts[2]);
-						if(!length.is_predefined())
-						{
-							background_gradient::gradient_color gc;
-							gc.color = color;
-							gc.length = length;
-							grad.m_colors.push_back(gc);
-							num_colors++;
-						}
-					}
-				} else
-				{
-					background_gradient::gradient_color gc;
-					gc.color = color;
-					grad.m_colors.push_back(gc);
-					num_colors++;
-				}
-			};
 
 		if(gradient_type == background_gradient::linear_gradient || gradient_type == background_gradient::repeating_linear_gradient)
 		{
-			for (const auto &item: items)
-			{
-				string_vector parts;
-				split_string(item, parts, " \t", "", "()");
-				if (!parts.empty())
-				{
-					if (parts[0] == "to")
-					{
-						uint32_t grad_side = 0;
-						for (size_t part_idx = 1; part_idx < parts.size(); part_idx++)
-						{
-							int side = value_index(parts[part_idx], "left;right;top;bottom");
-							if (side >= 0)
-							{
-								grad_side |= 1 << side;
-							}
-						}
-						switch(grad_side)
-						{
-							case background_gradient::gradient_side_top:
-								grad.angle = 0;
-								break;
-							case background_gradient::gradient_side_bottom:
-								grad.angle = 180;
-								break;
-							case background_gradient::gradient_side_left:
-								grad.angle = 270;
-								break;
-							case background_gradient::gradient_side_right:
-								grad.angle = 90;
-								break;
-							case background_gradient::gradient_side_top | background_gradient::gradient_side_left:
-							case background_gradient::gradient_side_top | background_gradient::gradient_side_right:
-							case background_gradient::gradient_side_bottom | background_gradient::gradient_side_left:
-							case background_gradient::gradient_side_bottom | background_gradient::gradient_side_right:
-								grad.m_side = grad_side;
-								break;
-							default:
-								break;
-						}
-					} else if (parts.size() == 1 && css::parse_css_angle(parts[0], grad.angle))
-					{
-						continue;
-					} else if (web_color::is_color(parts[0], container))
-					{
-						parse_color_stop_list(parts);
-					} else
-					{
-						css_length length;
-						length.fromString(parts[0]);
-						if (!length.is_predefined())
-						{
-							background_gradient::gradient_color gc;
-							gc.length = length;
-							gc.is_color_hint = true;
-							grad.m_colors.push_back(gc);
-						}
-					}
-				}
-			}
-		} else if(gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_linear_gradient)
+			parse_linear_gradient(grad_str, container, grad);
+		} else if(gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_radial_gradient)
 		{
-			for (const auto &item: items)
-			{
-				string_vector parts;
-				split_string(item, parts, " \t", "", "()");
-				if (!parts.empty())
-				{
-					if (web_color::is_color(parts[0], container))
-					{
-						parse_color_stop_list(parts);
-					} else
-					{
-						size_t i = 0;
-						while(i < parts.size())
-						{
-							if(parts[i] == "at")
-							{
-								parse_radial_position(grad, parts, i + 1);
-								break;
-							} else // parts[i] == "at"
-							{
-								int val = value_index(parts[i], "closest-corner;closest-side;farthest-corner;farthest-side");
-								if(val >= 0)
-								{
-									grad.radial_extent = (background_gradient::radial_extent_t) (val + 1);
-								} else
-								{
-									val = value_index(parts[i], "circle;ellipse");
-									if(val >= 0)
-									{
-										grad.radial_shape = (background_gradient::radial_shape_t)  (val + 1);
-									} else
-									{
-										css_length length;
-										length.fromString(parts[i]);
-										if (!length.is_predefined())
-										{
-											if(!grad.radial_length_x.is_predefined())
-											{
-												grad.radial_length_y = length;
-											} else
-											{
-												grad.radial_length_x = length;
-											}
-										}
-									}
-								}
-							} // else parts[i] == "at"
-							i++;
-						} // while(i < parts.size())
-					} // else web_color::is_color(parts[0], container)
-				} // !parts.empty()
-			} // for
-			if(grad.radial_extent == background_gradient::radial_extent_none)
-			{
-				if(grad.radial_length_x.is_predefined())
-				{
-					grad.radial_extent = background_gradient::radial_extent_farthest_corner;
-				} else if(grad.radial_length_y.is_predefined())
-				{
-					grad.radial_length_y = grad.radial_length_x.val();
-					grad.radial_shape = background_gradient::radial_shape_circle;
-				}
-			}
-			if(grad.radial_shape == background_gradient::radial_shape_none)
-			{
-				grad.radial_shape = background_gradient::radial_shape_ellipse;
-			}
-		} // gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_linear_gradient
-		if(num_colors >= 2)
+			parse_radial_gradient(grad_str, container, grad);
+		} else if(gradient_type == background_gradient::conic_gradient || gradient_type == background_gradient::repeating_conic_gradient)
+		{
+			parse_conic_gradient(grad_str, container, grad);
+		}
+		if(grad.m_colors.size() >= 2)
 		{
 			grad.m_type = gradient_type;
 		}
