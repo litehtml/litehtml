@@ -638,3 +638,16 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
 	cairo_pattern_destroy(pattern);
 	cairo_restore(cr);
 }
+
+void container_cairo::draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer &layer,
+										  const litehtml::background_layer::conic_gradient &gradient)
+{
+	auto* cr = (cairo_t*) hdc;
+	cairo_save(cr);
+	apply_clip(cr);
+
+	clip_background_layer(cr, layer);
+
+
+	cairo_restore(cr);
+}

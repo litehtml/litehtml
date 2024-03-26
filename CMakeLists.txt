@@ -78,7 +78,9 @@ set(SOURCE_LITEHTML
     src/formatting_context.cpp
     src/flex_item.cpp
     src/flex_line.cpp
-    src/background.cpp)
+    src/background.cpp
+    src/gradient.cpp
+)
 
 set(HEADER_LITEHTML
     include/litehtml.h
@@ -144,6 +146,7 @@ set(HEADER_LITEHTML
     include/litehtml/formatting_context.h
     include/litehtml/flex_item.h
     include/litehtml/flex_line.h
+    include/litehtml/gradient.h
 )
 
 set(TEST_LITEHTML

@@ -759,7 +759,8 @@ bool style::parse_one_background(const string& val, document_container* containe
 			bg.m_color = web_color::from_string(token, container);
 			color_found = true;
 		} else if (	token.substr(0, 15) == "linear-gradient" || token.substr(0, 25) == "repeating-linear-gradient" ||
-				token.substr(0, 15) == "radial-gradient" || token.substr(0, 25) == "repeating-radial-gradient")
+				token.substr(0, 15) == "radial-gradient" || token.substr(0, 25) == "repeating-radial-gradient" ||
+				token.substr(0, 14) == "conic-gradient" || token.substr(0, 24) == "repeating-conic-gradient")
 		{
 			if (image_found) return false;
 			background_image img;
@@ -812,7 +813,8 @@ void style::parse_background_image(const string& val, document_container* contai
 			img.url = url;
 			images.emplace_back(img);
 		} else if (token.substr(0, 15) == "linear-gradient" || token.substr(0, 25) == "repeating-linear-gradient" ||
-				   token.substr(0, 15) == "radial-gradient" || token.substr(0, 25) == "repeating-radial-gradient")
+				   token.substr(0, 15) == "radial-gradient" || token.substr(0, 25) == "repeating-radial-gradient" ||
+				   token.substr(0, 14) == "conic-gradient" || token.substr(0, 24) == "repeating-conic-gradient")
 		{
 			background_image img;
 			img.type = background_image::bg_image_type_gradient;
