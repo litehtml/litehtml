@@ -186,6 +186,87 @@ void container_cairo::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::ba
 	cairo_restore(cr);
 }
 
+/**
+ * @brief Draw pattern using layer.repeat property.
+ *
+ * Pattern must be defined relatively to the (layer.origin_box.x, layer.origin_box.y) point.
+ * Function calculates rectangles for repeat-x/repeat-y properties and transform pattern to the correct position.
+ * Then call draw callback to draw single pattern.
+ *
+ * @param cr - cairo context
+ * @param pattern - cairo pattern
+ * @param layer - background layer
+ * @param draw - pattern draw function
+ */
+static void draw_pattern(cairo_t* cr, cairo_pattern_t* pattern,
+						 const litehtml::background_layer& layer,
+						 const std::function<void(cairo_t* cr, cairo_pattern_t* pattern, int x, int y, int width, int height)>& draw)
+{
+	int start_x = layer.origin_box.x;
+	int num_x = 1;
+	int start_y = layer.origin_box.y;
+	int num_y = 1;
+	if(layer.repeat == litehtml::background_repeat_repeat_x || layer.repeat == litehtml::background_repeat_repeat)
+	{
+		if(layer.origin_box.left() > layer.clip_box.left())
+		{
+			int num_left = (layer.origin_box.left() - layer.clip_box.left()) / layer.origin_box.width;
+			if(layer.origin_box.left() - num_left * layer.origin_box.width > layer.clip_box.left())
+			{
+				num_left++;
+			}
+			start_x = layer.origin_box.left() - num_left * layer.origin_box.width;
+			num_x += num_left;
+		}
+		if(layer.origin_box.right() < layer.clip_box.right())
+		{
+			int num_right = (layer.clip_box.right() - layer.origin_box.right()) / layer.origin_box.width;
+			if(layer.origin_box.left() + num_right * layer.origin_box.width < layer.clip_box.right())
+			{
+				num_right++;
+			}
+			num_x += num_right;
+		}
+	}
+	if(layer.repeat == litehtml::background_repeat_repeat_y || layer.repeat == litehtml::background_repeat_repeat)
+	{
+		if(layer.origin_box.top() > layer.clip_box.top())
+		{
+			int num_top = (layer.origin_box.top() - layer.clip_box.top()) / layer.origin_box.height;
+			if(layer.origin_box.top() - num_top * layer.origin_box.height > layer.clip_box.top())
+			{
+				num_top++;
+			}
+			start_y = layer.origin_box.top() - num_top * layer.origin_box.height;
+			num_y += num_top;
+		}
+		if(layer.origin_box.bottom() < layer.clip_box.bottom())
+		{
+			int num_bottom = (layer.clip_box.bottom() - layer.origin_box.bottom()) / layer.origin_box.height;
+			if(layer.origin_box.bottom() + num_bottom * layer.origin_box.height < layer.clip_box.bottom())
+			{
+				num_bottom++;
+			}
+			num_y += num_bottom;
+		}
+	}
+
+	for(int i_x = 0; i_x < num_x; i_x++)
+	{
+		for(int i_y= 0; i_y < num_y; i_y++)
+		{
+			cairo_matrix_t flib_m;
+			cairo_matrix_init_translate(&flib_m, -(start_x + i_x * layer.origin_box.width), -(start_y + i_y * layer.origin_box.height));
+			cairo_pattern_set_matrix(pattern, &flib_m);
+			draw(cr, pattern,
+				 start_x + i_x * layer.origin_box.width,
+				 start_y + i_y * layer.origin_box.height,
+				 layer.origin_box.width,
+				 layer.origin_box.height);
+		}
+	}
+}
+
 void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::background_layer::linear_gradient& gradient)
 {
 	auto* cr = (cairo_t*) hdc;
@@ -194,13 +275,12 @@ void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtm
 
 	clip_background_layer(cr, layer);
 
-	cairo_rectangle(cr, layer.origin_box.x, layer.origin_box.y, layer.origin_box.width, layer.origin_box.height);
-	cairo_clip(cr);
+	// Translate pattern to the (layer.origin_box.x, layer.origin_box.y) point
+	cairo_pattern_t* pattern = cairo_pattern_create_linear(gradient.start.x - (float) layer.origin_box.x,
+														   gradient.start.y - (float) layer.origin_box.y,
+														   gradient.end.x - (float) layer.origin_box.x,
+														   gradient.end.y - (float) layer.origin_box.y);
 
-	cairo_pattern_t* pattern = cairo_pattern_create_linear(gradient.start.x,
-														   gradient.start.y,
-														   gradient.end.x,
-														   gradient.end.y);
 	for(const auto& color_stop : gradient.color_points)
 	{
 		cairo_pattern_add_color_stop_rgba(pattern,
@@ -211,9 +291,13 @@ void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtm
 										  color_stop.color.alpha / 255.0);
 	}
 
-	cairo_set_source(cr, pattern);
-	cairo_rectangle(cr, layer.origin_box.x, layer.origin_box.y, layer.origin_box.width, layer.origin_box.height);
-	cairo_fill(cr);
+	draw_pattern(cr, pattern, layer, [](cairo_t* cr, cairo_pattern_t* pattern, int x, int y, int width, int height)
+		{
+			cairo_set_source(cr, pattern);
+			cairo_rectangle(cr, x, y, width, height);
+			cairo_fill(cr);
+		}
+	);
 
 	cairo_pattern_destroy(pattern);
 	cairo_restore(cr);
@@ -595,14 +679,16 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
 
 	clip_background_layer(cr, layer);
 
-	cairo_rectangle(cr, layer.origin_box.x, layer.origin_box.y, layer.origin_box.width, layer.origin_box.height);
-	cairo_clip(cr);
+	// Translate pattern to the (layer.origin_box.x, layer.origin_box.y) point
+	litehtml::pointF position = gradient.position;
+	position.x -= (float) layer.origin_box.x;
+	position.y -= (float) layer.origin_box.y;
 
-	cairo_pattern_t* pattern = cairo_pattern_create_radial(gradient.position.x,
-														   gradient.position.y,
+	cairo_pattern_t* pattern = cairo_pattern_create_radial(position.x,
+														   position.y,
 														   0,
-														   gradient.position.x,
-														   gradient.position.y,
+														   position.x,
+														   position.y,
 														   gradient.radius.x);
 
 	for(const auto& color_stop : gradient.color_points)
@@ -615,32 +701,43 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
 										  color_stop.color.alpha / 255.0);
 	}
 
-	float aspect_ratio = 1;
-	auto top = (float) layer.origin_box.y;
-	auto height = (float) layer.origin_box.height;
-	if(gradient.radius.x != gradient.radius.y)
-	{
-		// Scale height and top of the origin box
-		aspect_ratio = gradient.radius.x / gradient.radius.y;
-		height *= aspect_ratio;
-		auto center_y = (gradient.position.y - (float ) layer.origin_box.y) * aspect_ratio;
-		top = gradient.position.y - center_y;
+	draw_pattern(cr, pattern, layer, [&gradient, &position](cairo_t* cr, cairo_pattern_t* pattern, int x, int y, int w, int h)
+		{
+			cairo_matrix_t save_matrix;
+			cairo_get_matrix(cr, &save_matrix);
 
-		cairo_translate(cr, gradient.position.x, gradient.position.y);
-		cairo_scale(cr, 1, gradient.radius.y / gradient.radius.x);
-		cairo_translate(cr, -gradient.position.x, -gradient.position.y);
-	}
+			auto top = (float) y;
+			auto height = (float) h;
+			if(gradient.radius.x != gradient.radius.y)
+			{
+				litehtml::pointF pos = position;
+				pos.x += (float) x;
+				pos.y += (float) y;
+				// Scale height and top of the origin box
+				float aspect_ratio = gradient.radius.x / gradient.radius.y;
+				height *= aspect_ratio;
+				auto center_y = (pos.y - (float ) y) * aspect_ratio;
+				top = pos.y - center_y;
 
-	cairo_set_source(cr, pattern);
-	cairo_rectangle(cr, layer.origin_box.x, top, layer.origin_box.width, height);
-	cairo_fill(cr);
+				cairo_translate(cr, pos.x, pos.y);
+				cairo_scale(cr, 1, gradient.radius.y / gradient.radius.x);
+				cairo_translate(cr, -pos.x, -pos.y);
+			}
+
+			cairo_set_source(cr, pattern);
+			cairo_rectangle(cr, x, top, w, height);
+			cairo_fill(cr);
+
+			cairo_set_matrix(cr, &save_matrix);
+		}
+	);
 
 	cairo_pattern_destroy(pattern);
 	cairo_restore(cr);
 }
 
 void container_cairo::draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer &layer,
-										  const litehtml::background_layer::conic_gradient &gradient)
+										  const litehtml::background_layer::conic_gradient &/*gradient*/)
 {
 	auto* cr = (cairo_t*) hdc;
 	cairo_save(cr);
