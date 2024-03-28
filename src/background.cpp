@@ -728,6 +728,41 @@ static void repeat_color_points(std::vector<litehtml::background_layer::color_po
 	}
 }
 
+void litehtml::background_layer::gradient_base::color_points_transparent_fix()
+{
+	for(int i = 0; i < (int) color_points.size(); i++)
+	{
+		if(color_points[i].color.alpha == 0)
+		{
+			if(i == 0)
+			{
+				if(i + 1 < (int) color_points.size())
+				{
+					color_points[i].color = color_points[i + 1].color;
+					color_points[i].color.alpha = 0;
+				}
+			} else if(i + 1 == (int) color_points.size())
+			{
+				if(i - 1 >= 0)
+				{
+					color_points[i].color = color_points[i - 1].color;
+					color_points[i].color.alpha = 0;
+				}
+			} else
+			{
+				color_points[i].color = color_points[i + 1].color;
+				color_points[i].color.alpha = 0;
+				background_layer::color_point cpt;
+				cpt.color = color_points[i - 1].color;
+				cpt.color.alpha = 0;
+				cpt.offset = color_points[i].offset;
+				color_points.emplace(std::next(color_points.begin(), i), cpt);
+				i++;
+			}
+		}
+	}
+}
+
 bool litehtml::background_layer::gradient_base::prepare_color_points(float line_len, background_gradient::gradient_type g_type, const std::vector<background_gradient::gradient_color> &colors)
 {
 	bool repeating;
@@ -742,8 +777,13 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 		return false;
 	}
 	int none_units = 0;
+	bool has_transparent = false;
 	for(const auto& item : colors)
 	{
+		if(item.color.alpha == 0)
+		{
+			has_transparent = true;
+		}
 		if(item.length.units() == css_units_percentage)
 		{
 			color_points.emplace_back(item.length.val() / 100.0, item.color);
@@ -820,6 +860,12 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 		}
 	}
 
+	// process transparent
+	if(has_transparent)
+	{
+		color_points_transparent_fix();
+	}
+
 	if(repeating)
 	{
 		repeat_color_points(color_points, 1.0f);
@@ -842,8 +888,13 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(backg
 		return false;
 	}
 	int none_units = 0;
+	bool has_transparent = false;
 	for(const auto& item : colors)
 	{
+		if(item.color.alpha == 0)
+		{
+			has_transparent = true;
+		}
 		if(item.angle.is_default())
 		{
 			if(!color_points.empty())
@@ -911,6 +962,12 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(backg
 				i++;
 			}
 		}
+	}
+
+	// process transparent
+	if(has_transparent)
+	{
+		color_points_transparent_fix();
 	}
 
 	if(repeating)

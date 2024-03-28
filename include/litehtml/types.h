@@ -717,6 +717,11 @@ namespace litehtml
 			m_is_default	= true;
 			m_val			= def_val;
 		}
+		def_value(const def_value<T>& val)
+		{
+			m_is_default	= val.m_is_default;
+			m_val			= val.m_val;
+		}
 		void reset(T def_val)
 		{
 			m_is_default	= true;
@@ -731,6 +736,12 @@ namespace litehtml
 			m_val			= new_val;
 			m_is_default	= false;
 			return m_val;
+		}
+		def_value<T>& operator=(const def_value<T>& val)
+		{
+			m_is_default	= val.m_is_default;
+			m_val			= val.m_val;
+			return *this;
 		}
 		operator T() const
 		{
@@ -914,6 +925,8 @@ namespace litehtml
 		render_no_fixed,
 		render_fixed_only,
 	};
+
+	const char* const split_delims_spaces = " \t\r\n\f\v";
 
 	// List of the Void Elements (can't have any contents)
 	const char* const void_elements = "area;base;br;col;command;embed;hr;img;input;keygen;link;meta;param;source;track;wbr";
