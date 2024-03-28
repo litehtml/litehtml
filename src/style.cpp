@@ -876,7 +876,7 @@ void style::parse_background_position(const string& val, bool important)
 bool style::parse_one_background_position(const string& val, css_length& x, css_length& y)
 {
 	string_vector pos;
-	split_string(val, pos, " \t");
+	split_string(val, pos, split_delims_spaces);
 	
 	if (pos.empty() || pos.size() > 2)
 	{
@@ -984,7 +984,7 @@ void style::parse_background_size(const string& val, bool important)
 bool style::parse_one_background_size(const string& val, css_size& size)
 {
 	string_vector res;
-	split_string(val, res, " \t");
+	split_string(val, res, split_delims_spaces);
 	if (res.empty())
 	{
 		return false;

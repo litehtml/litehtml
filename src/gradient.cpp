@@ -23,7 +23,7 @@ namespace litehtml
 		}
 		if(start[0] == 0) return false;
 		char* end = nullptr;
-		float a = strtof(start, &end);
+		auto a = (float) t_strtod(start, &end);
 		if(end && end[0] == 0) return false;
 		if(!strcmp(end, "rad"))
 		{
@@ -66,7 +66,7 @@ namespace litehtml
 	 * @param container
 	 * @param grad
 	 */
-	static void parse_color_stop_list(const string_vector& parts, document_container *container, background_gradient& grad)
+	static void parse_color_stop_list(const string_vector& parts, document_container *container, std::vector<background_gradient::gradient_color>& colors)
 	{
 		auto color = web_color::from_string(parts[0], container);
 		css_length length;
@@ -78,7 +78,7 @@ namespace litehtml
 				background_gradient::gradient_color gc;
 				gc.color = color;
 				gc.length = length;
-				grad.m_colors.push_back(gc);
+				colors.push_back(gc);
 			}
 			if(parts.size() > 2)
 			{
@@ -88,14 +88,14 @@ namespace litehtml
 					background_gradient::gradient_color gc;
 					gc.color = color;
 					gc.length = length;
-					grad.m_colors.push_back(gc);
+					colors.push_back(gc);
 				}
 			}
 		} else
 		{
 			background_gradient::gradient_color gc;
 			gc.color = color;
-			grad.m_colors.push_back(gc);
+			colors.push_back(gc);
 		}
 	}
 
@@ -166,10 +166,11 @@ namespace litehtml
 		string_vector items;
 		split_string(gradient_str, items, ",", "", "()");
 
-		for (const auto &item: items)
+		for (auto &item: items)
 		{
+			trim(item);
 			string_vector parts;
-			split_string(item, parts, " \t", "", "()");
+			split_string(item, parts, split_delims_spaces, "", "()");
 			if (parts.empty()) continue;
 
 			if (parts[0] == "to")
@@ -211,7 +212,7 @@ namespace litehtml
 				continue;
 			} else if (web_color::is_color(parts[0], container))
 			{
-				parse_color_stop_list(parts, container, grad);
+				parse_color_stop_list(parts, container, grad.m_colors);
 			} else
 			{
 				css_length length;
@@ -336,15 +337,16 @@ namespace litehtml
 		string_vector items;
 		split_string(gradient_str, items, ",", "", "()");
 
-		for (const auto &item: items)
+		for (auto &item: items)
 		{
+			trim(item);
 			string_vector parts;
-			split_string(item, parts, " \t", "", "()");
+			split_string(item, parts, split_delims_spaces, "", "()");
 			if (parts.empty()) continue;
 
 			if (web_color::is_color(parts[0], container))
 			{
-				parse_color_stop_list(parts, container, grad);
+				parse_color_stop_list(parts, container, grad.m_colors);
 			} else
 			{
 				size_t i = 0;
@@ -471,10 +473,11 @@ namespace litehtml
 		string_vector items;
 		split_string(gradient_str, items, ",", "", "()");
 
-		for (const auto &item: items)
+		for (auto &item: items)
 		{
+			trim(item);
 			string_vector parts;
-			split_string(item, parts, " \t", "", "()");
+			split_string(item, parts, split_delims_spaces, "", "()");
 			if (parts.empty()) continue;
 
 			// Parse colors stop list

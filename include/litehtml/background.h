@@ -209,6 +209,7 @@ namespace litehtml
 		public:
 			std::vector<color_point> color_points;
 
+			void color_points_transparent_fix();
 			bool prepare_color_points(float len, background_gradient::gradient_type g_type, const std::vector<background_gradient::gradient_color>& colors);
 			bool prepare_angle_color_points(background_gradient::gradient_type g_type, const std::vector<background_gradient::gradient_color>& colors);
 		};
