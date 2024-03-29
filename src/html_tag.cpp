@@ -206,7 +206,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 				auto apply_before_after = [&]()
 					{
 						const auto& content_property = sel->m_style->get_property(_content_);
-						bool content_none = content_property.m_type == prop_type_string && content_property.m_string == "none";
+						bool content_none = content_property.is<string>() && content_property.get<string>() == "none";
 						bool create = !content_none && (sel->m_right.m_attrs.size() > 1 || sel->m_right.m_tag != star_id);
 
 						element::ptr el;
@@ -324,92 +324,15 @@ litehtml::string litehtml::html_tag::get_custom_property(string_id name, const s
 {
 	const property_value& value = m_style.get_property(name);
 
-	if (value.m_type == prop_type_string)
+	if (value.is<string>())
 	{
-		return value.m_string;
+		return value.get<string>();
 	}
-	else if (auto _parent = parent())
+	else if (auto _parent = dynamic_cast<html_tag*>(parent().get()))
 	{
 		return _parent->get_custom_property(name, default_value);
 	}
 	return default_value;
-}
-
-template<class Type, litehtml::property_type property_value_type, Type litehtml::property_value::* property_value_member>
-const Type& litehtml::html_tag::get_property_impl(string_id name, bool inherited, const Type& default_value, uint_ptr css_properties_member_offset) const
-{
-	const property_value& value = m_style.get_property(name);
-
-	if (value.m_type == property_value_type)
-	{
-		return value.*property_value_member;
-	}
-	else if (inherited || value.m_type == prop_type_inherit)
-	{
-		if (auto _parent = parent())
-		{
-			return *(Type*)((byte*)&_parent->css() + css_properties_member_offset);
-		}
-		return default_value;
-	}
-	// value must be invalid here
-	//assert(value.m_type == prop_type_invalid);
-	return default_value;
-}
-
-int litehtml::html_tag::get_enum_property(string_id name, bool inherited, int default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<int, prop_type_enum_item, &property_value::m_enum_item>(name, inherited, default_value, css_properties_member_offset);
-}
-
-int litehtml::html_tag::get_int_property(string_id name, bool inherited, int default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<int, prop_type_enum_item, &property_value::m_enum_item>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::css_length litehtml::html_tag::get_length_property(string_id name, bool inherited, css_length default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<css_length, prop_type_length, &property_value::m_length>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::web_color litehtml::html_tag::get_color_property(string_id name, bool inherited, web_color default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<web_color, prop_type_color, &property_value::m_color>(name, inherited, default_value, css_properties_member_offset);
-}
-
-std::vector<litehtml::background_image> litehtml::html_tag::get_images_property (string_id name, bool inherited, const std::vector<background_image>& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<std::vector<litehtml::background_image>, prop_type_bg_image, &property_value::m_bg_images>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::string litehtml::html_tag::get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<string, prop_type_string, &property_value::m_string>(name, inherited, default_value, css_properties_member_offset);
-}
-
-float litehtml::html_tag::get_number_property(string_id name, bool inherited, float default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<float, prop_type_number, &property_value::m_number>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::string_vector litehtml::html_tag::get_string_vector_property(string_id name, bool inherited, const string_vector& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<string_vector, prop_type_string_vector, &property_value::m_string_vector>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::int_vector litehtml::html_tag::get_int_vector_property(string_id name, bool inherited, const int_vector& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<int_vector, prop_type_enum_item_vector, &property_value::m_enum_item_vector>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::length_vector litehtml::html_tag::get_length_vector_property(string_id name, bool inherited, const length_vector& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<length_vector, prop_type_length_vector, &property_value::m_length_vector>(name, inherited, default_value, css_properties_member_offset);
-}
-
-litehtml::size_vector litehtml::html_tag::get_size_vector_property(string_id name, bool inherited, const size_vector& default_value, uint_ptr css_properties_member_offset) const
-{
-	return get_property_impl<size_vector, prop_type_size_vector, &property_value::m_size_vector>(name, inherited, default_value, css_properties_member_offset);
 }
 
 void litehtml::html_tag::compute_styles(bool recursive)
@@ -1429,21 +1352,21 @@ litehtml::element::ptr litehtml::html_tag::get_element_after(const style& style,
 
 void litehtml::html_tag::handle_counter_properties()
 {
-	const auto& reset_property = m_style.get_property(string_id::_counter_reset_);
-	if (reset_property.m_type == prop_type_string_vector) {
+	const auto& reset_property = m_style.get_property(_counter_reset_);
+	if (reset_property.is<string_vector>()) {
 		auto reset_function = [&](const string_id&name_id, const int value) {
 			reset_counter(name_id, value);
 		};
-		parse_counter_tokens(reset_property.m_string_vector, 0, reset_function);
+		parse_counter_tokens(reset_property.get<string_vector>(), 0, reset_function);
 		return;
 	}
 
-	const auto& inc_property = m_style.get_property(string_id::_counter_increment_);
-	if (inc_property.m_type == prop_type_string_vector) {
+	const auto& inc_property = m_style.get_property(_counter_increment_);
+	if (inc_property.is<string_vector>()) {
 		auto inc_function = [&](const string_id&name_id, const int value) {
 			increment_counter(name_id, value);
 		};
-		parse_counter_tokens(inc_property.m_string_vector, 1, inc_function);
+		parse_counter_tokens(inc_property.get<string_vector>(), 1, inc_function);
 		return;
 	}
 }

@@ -92,33 +92,33 @@ void style::inherit_property(string_id name, bool important)
 	switch (name)
 	{
 		case _font_:
-			add_parsed_property(_font_style_, property_value(important, prop_type_inherit));
-			add_parsed_property(_font_variant_, property_value(important, prop_type_inherit));
-			add_parsed_property(_font_weight_, property_value(important, prop_type_inherit));
-			add_parsed_property(_font_size_, property_value(important, prop_type_inherit));
-			add_parsed_property(_line_height_, property_value(important, prop_type_inherit));
+			add_parsed_property(_font_style_,   property_value(inherit(), important));
+			add_parsed_property(_font_variant_, property_value(inherit(), important));
+			add_parsed_property(_font_weight_,  property_value(inherit(), important));
+			add_parsed_property(_font_size_,    property_value(inherit(), important));
+			add_parsed_property(_line_height_,  property_value(inherit(), important));
 			break;
 		case _background_:
-			add_parsed_property(_background_color_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_position_x_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_position_y_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_repeat_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_attachment_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_image_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_image_baseurl_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_size_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_origin_, property_value(important, prop_type_inherit));
-			add_parsed_property(_background_clip_, property_value(important, prop_type_inherit));
+			add_parsed_property(_background_color_,         property_value(inherit(), important));
+			add_parsed_property(_background_position_x_,    property_value(inherit(), important));
+			add_parsed_property(_background_position_y_,    property_value(inherit(), important));
+			add_parsed_property(_background_repeat_,        property_value(inherit(), important));
+			add_parsed_property(_background_attachment_,    property_value(inherit(), important));
+			add_parsed_property(_background_image_,         property_value(inherit(), important));
+			add_parsed_property(_background_image_baseurl_, property_value(inherit(), important));
+			add_parsed_property(_background_size_,          property_value(inherit(), important));
+			add_parsed_property(_background_origin_,        property_value(inherit(), important));
+			add_parsed_property(_background_clip_,          property_value(inherit(), important));
 			break;
 		default:
-			add_parsed_property(name, property_value(important, prop_type_inherit));
+			add_parsed_property(name, property_value(inherit(), important));
 	}
 }
 
 void style::add_property(string_id name, const string& val, const string& baseurl, bool important, document_container* container)
 {
-	if (val.find("var(") != string::npos) return add_parsed_property(name, property_value(val, important, prop_type_var));
-	if (val == "inherit" && name != _font_) return inherit_property(name, important);
+	if (val.find("var(") != string::npos) return add_parsed_property(name, property_value(val, important, true));
+	if (val == "inherit") return inherit_property(name, important);
 
 	string url;
 	css_length len[4], length;
@@ -1003,11 +1003,11 @@ bool style::parse_one_background_size(const string& val, css_size& size)
 
 void style::parse_font(const string& val, bool important)
 {
-	add_parsed_property(_font_style_, property_value(font_style_normal, important));
+	add_parsed_property(_font_style_,   property_value(font_style_normal, important));
 	add_parsed_property(_font_variant_, property_value(font_variant_normal, important));
-	add_parsed_property(_font_weight_, property_value(font_weight_normal, important));
-	add_parsed_property(_font_size_, property_value(font_size_medium, important));
-	add_parsed_property(_line_height_, property_value(line_height_normal, important));
+	add_parsed_property(_font_weight_,  property_value(font_weight_normal, important));
+	add_parsed_property(_font_size_,    property_value(font_size_medium, important));
+	add_parsed_property(_line_height_,  property_value(line_height_normal, important));
 
 	string_vector tokens;
 	split_string(val, tokens, " ", "", "\"");
@@ -1234,11 +1234,11 @@ const property_value& style::get_property(string_id name) const
 	{
 		return it->second;
 	}
-	static property_value dummy;
-	return dummy;
+	static property_value _invalid(invalid(), false);
+	return _invalid;
 }
 
-void style::subst_vars_(string& str, const element* el)
+void style::subst_vars_(string& str, const html_tag* el)
 {
 	while (true)
 	{
@@ -1254,17 +1254,18 @@ void style::subst_vars_(string& str, const element* el)
 	}
 }
 
-void style::subst_vars(const element* el)
+void style::subst_vars(const html_tag* el)
 {
 	for (auto& prop : m_properties)
 	{
-		if (prop.second.m_type == prop_type_var)
+		if (prop.second.m_has_var)
 		{
-			subst_vars_(prop.second.m_string, el);
+			string str = prop.second.get<string>();
+			subst_vars_(str, el);
 			// re-adding the same property
-			// if it is a custom property it will be readded as a string (currently it is prop_type_var)
+			// if it is a custom property it will be readded as a string
 			// if it is a standard css property it will be parsed and properly added as typed property
-			add_property(prop.first, prop.second.m_string, "", prop.second.m_important, el->get_document()->container());
+			add_property(prop.first, str, "", prop.second.m_important, el->get_document()->container());
 		}
 	}
 }

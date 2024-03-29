@@ -112,7 +112,7 @@ void Bitmap::resize(int new_width, int new_height)
 
 void Bitmap::load(string filename)
 {
-	vector<byte> image;
+	vector<unsigned char> image;
 	unsigned w, h;
 	lodepng::decode(image, w, h, filename);
 	if (w * h == 0) return;
@@ -125,5 +125,5 @@ void Bitmap::load(string filename)
 
 void Bitmap::save(string filename)
 {
-	lodepng::encode(filename, (byte*)data.data(), width, height);
+	lodepng::encode(filename, (unsigned char*)data.data(), width, height);
 }
