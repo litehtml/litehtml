@@ -2,7 +2,11 @@
 #include "stylesheet.h"
 #include <algorithm>
 #include "document.h"
+#include "gradient.h"
 
+#ifndef M_PI
+#       define M_PI    3.14159265358979323846
+#endif
 
 void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
 {
@@ -76,6 +80,44 @@ void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const
 		if(pos != string::npos)
 		{
 			pos = text.find_first_not_of(" \n\r\t", pos);
+		}
+	}
+}
+
+void litehtml::css::parse_gradient(const string &token, document_container *container, background_gradient& grad)
+{
+	size_t pos1 = token.find('(');
+	size_t pos2 = token.find_last_of(')');
+	std::string grad_str;
+	if(pos1 != std::string::npos)
+	{
+		auto gradient_type_str = token.substr(0, pos1);
+		trim(gradient_type_str);
+		background_gradient::gradient_type gradient_type = (background_gradient::gradient_type) (value_index(
+				gradient_type_str,
+				"linear-gradient;repeating-linear-gradient;radial-gradient;repeating-radial-gradient;conic-gradient;repeating-conic-gradient", -2) + 1);
+
+		if(pos2 != std::string::npos)
+		{
+			grad_str = token.substr(pos1 + 1, pos2 - pos1 - 1);
+		} else
+		{
+			grad_str = token.substr(pos1);
+		}
+
+		if(gradient_type == background_gradient::linear_gradient || gradient_type == background_gradient::repeating_linear_gradient)
+		{
+			parse_linear_gradient(grad_str, container, grad);
+		} else if(gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_radial_gradient)
+		{
+			parse_radial_gradient(grad_str, container, grad);
+		} else if(gradient_type == background_gradient::conic_gradient || gradient_type == background_gradient::repeating_conic_gradient)
+		{
+			parse_conic_gradient(grad_str, container, grad);
+		}
+		if(grad.m_colors.size() >= 2)
+		{
+			grad.m_type = gradient_type;
 		}
 	}
 }
@@ -161,6 +203,7 @@ void litehtml::css::parse_atrule(const string& text, const char* baseurl, const 
 			if(url.empty())
 			{
 				url = tokens.front();
+				trim(url, "\"");
 			}
 			tokens.erase(tokens.begin());
 			if(doc)

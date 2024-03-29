@@ -41,7 +41,11 @@ public:
 	int get_default_font_size() const override;
 	const char*	get_default_font_name() const override;
 	void get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
-	void draw_background(litehtml::uint_ptr hdc, const std::vector<litehtml::background_paint>& bg) override;
+	void draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url) override;
+	void draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::web_color& color) override;
+	void draw_linear_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::background_layer::linear_gradient& gradient) override;
+	void draw_radial_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::background_layer::radial_gradient& gradient) override;
+	void draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::background_layer::conic_gradient& gradient) override;
 	void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) override;
 	void draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) override;
 	std::shared_ptr<litehtml::element>	create_element(const char *tag_name,
@@ -69,6 +73,7 @@ protected:
 	virtual void fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color);
 	virtual void rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius );
 
+	void clip_background_layer(cairo_t* cr, const litehtml::background_layer& layer);
 	void apply_clip(cairo_t* cr);
 	static void set_color(cairo_t* cr, const litehtml::web_color& color)
 	{

@@ -15,6 +15,7 @@ namespace litehtml
 		length_vector,
 		float,
 		web_color,
+		std::vector<background_image>,
 		string,
 		string_vector,
 		size_vector
@@ -63,11 +64,12 @@ namespace litehtml
 		void subst_vars(const html_tag* el);
 
 	private:
+		void inherit_property(string_id name, bool important);
 		void parse_property(const string& txt, const string& baseurl, document_container* container);
 		void parse(const string& txt, const string& baseurl, document_container* container);
 		void parse_background(const string& val, const string& baseurl, bool important, document_container* container);
 		bool parse_one_background(const string& val, document_container* container, background& bg);
-		void parse_background_image(const string& val, const string& baseurl, bool important);
+		void parse_background_image(const string& val, document_container* container, const string& baseurl, bool important);
 		// parse comma-separated list of keywords
 		void parse_keyword_comma_list(string_id name, const string& val, bool important);
 		void parse_background_position(const string& val, bool important);
