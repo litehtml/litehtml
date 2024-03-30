@@ -4,7 +4,7 @@
 namespace litehtml
 {
 
-utf8_to_wchar::utf8_to_wchar(const char* val)
+utf8_to_utf32::utf8_to_utf32(const char* val)
 {
 	m_utf8 = (const byte*) val;
 	if (!m_utf8) return;
@@ -17,9 +17,9 @@ utf8_to_wchar::utf8_to_wchar(const char* val)
 	}
 }
 
-ucode_t utf8_to_wchar::get_char()
+char32_t utf8_to_utf32::get_char()
 {
-	ucode_t b1 = getb();
+	char32_t b1 = getb();
 
 	if (!b1)
 	{
@@ -37,14 +37,14 @@ ucode_t utf8_to_wchar::get_char()
 	else if ((b1 & 0xe0) == 0xc0)
 	{
 		// 2-byte sequence: 00000yyyyyxxxxxx = 110yyyyy 10xxxxxx
-		ucode_t r = (b1 & 0x1f) << 6;
+		char32_t r = (b1 & 0x1f) << 6;
 		r |= get_next_utf8(getb());
 		return r;
 	}
 	else if ((b1 & 0xf0) == 0xe0)
 	{
 		// 3-byte sequence: zzzzyyyyyyxxxxxx = 1110zzzz 10yyyyyy 10xxxxxx
-		ucode_t r = (b1 & 0x0f) << 12;
+		char32_t r = (b1 & 0x0f) << 12;
 		r |= get_next_utf8(getb()) << 6;
 		r |= get_next_utf8(getb());
 		return r;
@@ -54,9 +54,9 @@ ucode_t utf8_to_wchar::get_char()
 		// 4-byte sequence: 11101110wwwwzzzzyy + 110111yyyyxxxxxx
 		//     = 11110uuu 10uuzzzz 10yyyyyy 10xxxxxx
 		// (uuuuu = wwww + 1)
-		int b2 = get_next_utf8(getb());
-		int b3 = get_next_utf8(getb());
-		int b4 = get_next_utf8(getb());
+		char32_t b2 = get_next_utf8(getb());
+		char32_t b3 = get_next_utf8(getb());
+		char32_t b4 = get_next_utf8(getb());
 		return ((b1 & 7) << 18) | ((b2 & 0x3f) << 12) |
 			((b3 & 0x3f) << 6) | (b4 & 0x3f);
 	}
@@ -65,7 +65,7 @@ ucode_t utf8_to_wchar::get_char()
 	return '?';
 }
 
-void append_char(string& str, int code)
+void append_char(string& str, char32_t code)
 {
 	if (code <= 0x7F)
 	{
@@ -95,7 +95,7 @@ void append_char(string& str, int code)
 	}
 }
 
-wchar_to_utf8::wchar_to_utf8(const std::wstring& wstr)
+utf32_to_utf8::utf32_to_utf8(const std::u32string& wstr)
 {
 	for (auto ch: wstr)
 		append_char(m_str, ch);

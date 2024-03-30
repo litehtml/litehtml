@@ -208,8 +208,8 @@ void litehtml::el_before_after_base::add_function( const string& fnc, const stri
 litehtml::string litehtml::el_before_after_base::convert_escape( const char* txt )
 {
     char* str_end;
-	wchar_t u_str[2];
-    u_str[0] = (wchar_t) strtol(txt, &str_end, 16);
+	char32_t u_str[2];
+    u_str[0] = (char32_t) strtol(txt, &str_end, 16);
     u_str[1] = 0;
-	return litehtml::string(litehtml_from_wchar(u_str));
+	return litehtml::string(litehtml_from_utf32(u_str));
 }

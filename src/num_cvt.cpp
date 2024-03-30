@@ -4,7 +4,7 @@
 
 static std::vector<char> latin_lower = { 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z' };
 static std::vector<char> latin_upper = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z' };
-static std::vector<std::wstring> greek_lower = { L"α", L"β", L"γ", L"δ", L"ε", L"ζ", L"η", L"θ", L"ι", L"κ", L"λ", L"μ", L"ν", L"ξ", L"ο", L"π", L"ρ", L"σ", L"τ", L"υ", L"φ", L"χ", L"ψ", L"ω" };
+static std::vector<std::u32string> greek_lower = { U"α", U"β", U"γ", U"δ", U"ε", U"ζ", U"η", U"θ", U"ι", U"κ", U"λ", U"μ", U"ν", U"ξ", U"ο", U"π", U"ρ", U"σ", U"τ", U"υ", U"φ", U"χ", U"ψ", U"ω" };
 
 static litehtml::string to_mapped_alpha(int num, const std::vector<char>& map)
 {
@@ -22,7 +22,7 @@ static litehtml::string to_mapped_alpha(int num, const std::vector<char>& map)
 	return out;
 }
 
-static litehtml::string to_mapped_alpha(int num, const std::vector<std::wstring>& map)
+static litehtml::string to_mapped_alpha(int num, const std::vector<std::u32string>& map)
 {
 	int dividend = num;
 	litehtml::string out;
@@ -31,7 +31,7 @@ static litehtml::string to_mapped_alpha(int num, const std::vector<std::wstring>
 	while (dividend > 0)
 	{
 		modulo = (dividend - 1) % map.size();
-		out = litehtml_from_wchar(map[modulo]).c_str() + out;
+		out = litehtml_from_utf32(map[modulo]).c_str() + out;
 		dividend = (int)((dividend - modulo) / map.size());
 	}
 
