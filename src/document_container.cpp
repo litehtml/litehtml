@@ -5,10 +5,8 @@ void litehtml::document_container::split_text(const char* text, const std::funct
 {
 	std::u32string str;
 	std::u32string str_in = (const char32_t*)utf8_to_utf32(text);
-	ucode_t c;
-	for (size_t i = 0; i < str_in.length(); i++)
+	for (auto c : str_in)
 	{
-		c = (ucode_t)str_in[i];
 		if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
 		{
 			if (!str.empty())
@@ -16,7 +14,7 @@ void litehtml::document_container::split_text(const char* text, const std::funct
 				on_word(utf32_to_utf8(str));
 				str.clear();
 			}
-			str += (wchar_t)c;
+			str += c;
 			on_space(utf32_to_utf8(str));
 			str.clear();
 		}
@@ -28,13 +26,13 @@ void litehtml::document_container::split_text(const char* text, const std::funct
 				on_word(utf32_to_utf8(str));
 				str.clear();
 			}
-			str += (wchar_t)c;
+			str += c;
 			on_word(utf32_to_utf8(str));
 			str.clear();
 		}
 		else
 		{
-			str += (wchar_t)c;
+			str += c;
 		}
 	}
 	if (!str.empty())

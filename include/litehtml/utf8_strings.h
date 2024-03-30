@@ -49,7 +49,7 @@ namespace litehtml
 	};
 
 #define litehtml_from_utf32(str)	litehtml::utf32_to_utf8(str)
-#define litehtml_to_utf32(str)		litehtml::utf8_to_wchar(str)
+#define litehtml_to_utf32(str)		litehtml::utf8_to_utf32(str)
 }
 
 #endif  // LH_UTF8_STRINGS_H

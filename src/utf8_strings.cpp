@@ -11,9 +11,9 @@ utf8_to_utf32::utf8_to_utf32(const char* val)
 
 	while (true)
 	{
-		ucode_t wch = get_char();
+		char32_t wch = get_char();
 		if (!wch) break;
-		m_str += (wchar_t)wch;
+		m_str += wch;
 	}
 }
 
