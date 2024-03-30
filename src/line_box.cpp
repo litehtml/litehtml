@@ -556,7 +556,7 @@ bool litehtml::line_box::can_hold(const std::unique_ptr<line_box_item>& item, wh
 	if(item->get_type() == line_box_item::type_text_part)
 	{
 		// force new line on floats clearing
-		if (item->get_el()->src_el()->is_break() && item->get_el()->src_el()->css().get_clear() != clear_none)
+		if (item->get_el()->src_el()->is_break() && item->get_el()->css().get_clear() != clear_none)
 		{
 			return false;
 		}
@@ -570,8 +570,8 @@ bool litehtml::line_box::can_hold(const std::unique_ptr<line_box_item>& item, wh
 		}
 
 		// force new line if the last placed element was line break
-		// Skip If there are the only break item - this is float clearing
-		if (last_el && last_el->src_el()->is_break() && m_items.size() > 1)
+		// Skip If the break item is float clearing
+		if (last_el && last_el->src_el()->is_break() && last_el->css().get_clear() == clear_none)
 		{
 			return false;
 		}
