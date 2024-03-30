@@ -167,6 +167,7 @@
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\background.cpp" />
     <ClCompile Include="src\codepoint.cpp" />
     <ClCompile Include="src\css_borders.cpp" />
     <ClCompile Include="src\css_length.cpp" />
@@ -199,6 +200,7 @@
     <ClCompile Include="src\flex_item.cpp" />
     <ClCompile Include="src\flex_line.cpp" />
     <ClCompile Include="src\formatting_context.cpp" />
+    <ClCompile Include="src\gradient.cpp" />
     <ClCompile Include="src\gumbo\attribute.c" />
     <ClCompile Include="src\gumbo\char_ref.c" />
     <ClCompile Include="src\gumbo\error.c" />
