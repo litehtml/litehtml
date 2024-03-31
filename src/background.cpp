@@ -653,6 +653,7 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_image:
+			if(layer.origin_box.width != 0 && layer.origin_box.height != 0)
 			{
 				auto image_layer = get_image_layer(idx);
 				if(image_layer)
@@ -662,6 +663,7 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_linear_gradient:
+			if(layer.origin_box.width != 0 && layer.origin_box.height != 0)
 			{
 				auto gradient_layer = get_linear_gradient_layer(idx, layer);
 				if(gradient_layer)
@@ -671,6 +673,7 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_radial_gradient:
+			if(layer.origin_box.width != 0 && layer.origin_box.height != 0)
 			{
 				auto gradient_layer = get_radial_gradient_layer(idx, layer);
 				if(gradient_layer)
@@ -680,6 +683,7 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_conic_gradient:
+			if(layer.origin_box.width != 0 && layer.origin_box.height != 0)
 			{
 				auto gradient_layer = get_conic_gradient_layer(idx, layer);
 				if(gradient_layer)
