@@ -786,7 +786,7 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 		}
 		if(item.length.units() == css_units_percentage)
 		{
-			color_points.emplace_back(item.length.val() / 100.0, item.color);
+			color_points.emplace_back(item.length.val() / 100.0f, item.color);
 		} else if(item.length.units() != css_units_none)
 		{
 			if(line_len != 0)
@@ -799,7 +799,7 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 			{
 				none_units++;
 			}
-			color_points.emplace_back(0, item.color);
+			color_points.emplace_back(0.0f, item.color);
 		}
 	}
 	if(color_points.empty())
@@ -812,7 +812,7 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 		// Add color point with offset 0 if not exists
 		if(color_points[0].offset != 0)
 		{
-			color_points.emplace(color_points.begin(), 0, color_points[0].color);
+			color_points.emplace(color_points.begin(), 0.0f, color_points[0].color);
 		}
 		// Add color point with offset 1.0 if not exists
 		if (color_points.back().offset < 1)
@@ -823,7 +823,7 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 				none_units--;
 			} else
 			{
-				color_points.emplace_back(1.0, color_points.back().color);
+				color_points.emplace_back(1.0f, color_points.back().color);
 			}
 		}
 	} else
@@ -901,7 +901,7 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(backg
 			{
 				none_units++;
 			}
-			color_points.emplace_back(0, item.color);
+			color_points.emplace_back(0.0f, item.color);
 		} else
 		{
 			color_points.emplace_back(item.angle, item.color);
@@ -917,7 +917,7 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(backg
 		// Add color point with offset 0 if not exists
 		if (color_points[0].offset != 0)
 		{
-			color_points.emplace(color_points.begin(), 0, color_points[0].color);
+			color_points.emplace(color_points.begin(), 0.0f, color_points[0].color);
 		}
 		// Add color point with offset 1.0 if not exists
 		if (color_points.back().offset < 360.0f)
