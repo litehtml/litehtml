@@ -770,7 +770,7 @@ bool style::parse_one_background(const string& val, document_container* containe
 			bg.m_image = { img };
 			image_found = true;
 		}
-		else
+		else if(token != "none")
 		{
 			return false;
 		}
