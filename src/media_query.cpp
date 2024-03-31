@@ -25,7 +25,11 @@ litehtml::media_query::ptr litehtml::media_query::create_from_string(const strin
 
 	for(auto & token : tokens)
 	{
-		if(token == "not")
+		if(token == "and" || token == "only")
+		{
+			continue;
+		}
+		else if(token == "not")
 		{
 			query->m_not = true;
 		} else if(token.at(0) == '(')
