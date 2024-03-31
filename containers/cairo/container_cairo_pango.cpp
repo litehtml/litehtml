@@ -16,7 +16,15 @@ container_cairo_pango::~container_cairo_pango()
 litehtml::uint_ptr container_cairo_pango::create_font(const char *faceName, int size, int weight, litehtml::font_style italic,
 													  unsigned int decoration, litehtml::font_metrics *fm)
 {
-	PangoFontDescription *desc = pango_font_description_from_string (faceName);
+	litehtml::string_vector tokens;
+	litehtml::split_string(faceName, tokens, ",");
+	std::string fonts;
+	for(auto& font : tokens)
+	{
+		litehtml::trim(font, " \t\r\n\f\v\"\'");
+		fonts += font + ",";
+	}
+	PangoFontDescription *desc = pango_font_description_from_string (fonts.c_str());
 	pango_font_description_set_absolute_size(desc, size * PANGO_SCALE);
 	if(italic == litehtml::font_style_italic)
 	{
