@@ -141,7 +141,6 @@ namespace litehtml
 			}
 			return default_value;
 		}
-		assert(value.is<invalid>());
 		return default_value;
 	}
 
