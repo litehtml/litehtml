@@ -4,6 +4,23 @@ container_cairo_pango::container_cairo_pango()
 {
 	m_temp_surface	= cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 2, 2);
 	m_temp_cr		= cairo_create(m_temp_surface);
+	cairo_save(m_temp_cr);
+	PangoLayout *layout = pango_cairo_create_layout(m_temp_cr);
+	PangoContext *context = pango_layout_get_context(layout);
+	PangoFontFamily** families;
+	int n;
+	pango_context_list_families(context, &families, &n);
+	for(int i = 0; i < n; i++)
+	{
+		PangoFontFamily* family = families[i];
+		if (!PANGO_IS_FONT_FAMILY(family)) continue;
+		std::string font_name = pango_font_family_get_name(family);
+		litehtml::lcase(font_name);
+		m_all_fonts.insert(font_name);
+	}
+	g_free(families);
+	cairo_restore(m_temp_cr);
+	g_object_unref(layout);
 }
 
 container_cairo_pango::~container_cairo_pango()
@@ -19,11 +36,29 @@ litehtml::uint_ptr container_cairo_pango::create_font(const char *faceName, int 
 	litehtml::string_vector tokens;
 	litehtml::split_string(faceName, tokens, ",");
 	std::string fonts;
+
 	for(auto& font : tokens)
 	{
 		litehtml::trim(font, " \t\r\n\f\v\"\'");
-		fonts += font + ",";
+		if(litehtml::value_in_list(font, "serif;sans-serif;monospace;cursive;fantasy;"))
+		{
+			fonts = font + ",";
+			break;
+		}
+		litehtml::lcase(font);
+		if(m_all_fonts.find(font) != m_all_fonts.end())
+		{
+			fonts = font;
+			fonts += ",";
+			break;
+		}
 	}
+
+	if(fonts.empty())
+	{
+		fonts = "serif,";
+	}
+
 	PangoFontDescription *desc = pango_font_description_from_string (fonts.c_str());
 	pango_font_description_set_absolute_size(desc, size * PANGO_SCALE);
 	if(italic == litehtml::font_style_italic)
