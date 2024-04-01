@@ -1245,11 +1245,23 @@ void style::subst_vars_(string& str, const html_tag* el)
 		auto start = str.find("var(");
 		if (start == string::npos) break;
 		if (start > 0 && isalnum(str[start - 1])) break;
-		auto end = str.find(')', start + 4);
+		auto end = str.rfind(')');
 		if (end == string::npos) break;
 		auto name = str.substr(start + 4, end - start - 4);
-		trim(name);
-		string val = el->get_custom_property(_id(name), "");
+		string_vector args;
+		split_string(name, args, ",", "", "(");
+		if(args.empty() || args.size() > 2) break;
+		trim(args[0]);
+		string val = el->get_custom_property(_id(args[0]), "");
+		if(val.empty() && args.size() > 1)
+		{
+			trim(args[1]);
+			if(args[1].find("var(") != string::npos)
+			{
+				subst_vars_(args[1], el);
+			}
+			val = args[1];
+		}
 		str.replace(start, end - start + 1, val);
 	}
 }
