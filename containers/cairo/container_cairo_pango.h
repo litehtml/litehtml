@@ -6,6 +6,7 @@
 #include <cairo.h>
 #include <pango/pangocairo.h>
 #include <pango/pango-font.h>
+#include <set>
 
 struct cairo_font
 {
@@ -25,6 +26,7 @@ class container_cairo_pango : public container_cairo
 {
 	cairo_surface_t*			m_temp_surface;
 	cairo_t*					m_temp_cr;
+	std::set<std::string>		m_all_fonts;
 public:
 	container_cairo_pango();
 	~container_cairo_pango() override;
