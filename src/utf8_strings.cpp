@@ -1,28 +1,25 @@
 #include "html.h"
 #include "utf8_strings.h"
 
-
-litehtml::utf8_to_wchar::utf8_to_wchar(const char* val)
+namespace litehtml
 {
-	m_utf8 = (const byte*) val;
-	if (!m_utf8) return;
 
-	while (true)
+// consume one utf-8 char and increment index accordingly
+// if str[index] == 0 index is not incremented
+ucode_t read_utf8_char(const string& str, int& index)
+{
+	auto getb = [&]() -> ucode_t
 	{
-		ucode_t wch = get_char();
-		if (!wch) break;
-		m_str += wch;
-	}
-}
+		if (!str[index]) return 0;
+		return str[index++];
+	};
+	
+	auto get_next_utf8 = [](ucode_t val)
+	{
+		return val & 0x3f;
+	};
 
-litehtml::ucode_t litehtml::utf8_to_wchar::get_char()
-{
 	ucode_t b1 = getb();
-
-	if (!b1)
-	{
-		return 0;
-	}
 
 	// Determine whether we are dealing
 	// with a one-, two-, three-, or four-
@@ -55,45 +52,65 @@ litehtml::ucode_t litehtml::utf8_to_wchar::get_char()
 		int b2 = get_next_utf8(getb());
 		int b3 = get_next_utf8(getb());
 		int b4 = get_next_utf8(getb());
-		return ((b1 & 7) << 18) | ((b2 & 0x3f) << 12) |
-			((b3 & 0x3f) << 6) | (b4 & 0x3f);
+		return ((b1 & 7) << 18) | (b2 << 12) | (b3 << 6) | b4;
 	}
 
-	//bad start for UTF-8 multi-byte sequence
-	return '?';
+	// bad start for UTF-8 multi-byte sequence
+	return 0xFFFD;
 }
 
-litehtml::wchar_to_utf8::wchar_to_utf8(const std::wstring& val)
+// Almost no error handling, will work inconsistent with read_utf8_char on invalid UTF-8 string.
+// Currently used only in css parser, where actual char value is not needed, so it returns void.
+void prev_utf8_char(const string& str, int& index)
 {
-	unsigned int code;
-	for (int i = 0; val[i]; i++)
+	if (!index || ((byte)str[--index] >> 7) == 0) return;
+	if (!index || ((byte)str[--index] >> 5) == 0b110) return;
+	if (!index || ((byte)str[--index] >> 4) == 0b1110) return;
+	if (index) index--;
+}
+
+
+utf8_to_wchar::utf8_to_wchar(const std::string& val)
+{
+	int index = 0;
+	while (ucode_t wch = read_utf8_char(val, index))
+		m_str += (wchar_t)wch;
+}
+
+void append_char(string& str, int code)
+{
+	if (code <= 0x7F)
 	{
-		code = val[i];
-		if (code <= 0x7F)
-		{
-			m_str += (char)code;
-		}
-		else if (code <= 0x7FF)
-		{
-			m_str += (code >> 6) + 192;
-			m_str += (code & 63) + 128;
-		}
-		else if (0xd800 <= code && code <= 0xdfff)
-		{
-			//invalid block of utf8
-		}
-		else if (code <= 0xFFFF)
-		{
-			m_str += (code >> 12) + 224;
-			m_str += ((code >> 6) & 63) + 128;
-			m_str += (code & 63) + 128;
-		}
-		else if (code <= 0x10FFFF)
-		{
-			m_str += (code >> 18) + 240;
-			m_str += ((code >> 12) & 63) + 128;
-			m_str += ((code >> 6) & 63) + 128;
-			m_str += (code & 63) + 128;
-		}
+		str += (char)code;
+	}
+	else if (code <= 0x7FF)
+	{
+		str += char((code >> 6) + 192);
+		str += (code & 63) + 128;
+	}
+	else if (0xd800 <= code && code <= 0xdfff)
+	{
+		// error: unexpected surrogate (code is UTF-32, not UTF-16)
+	}
+	else if (code <= 0xFFFF)
+	{
+		str += char((code >> 12) + 224);
+		str += ((code >> 6) & 63) + 128;
+		str += (code & 63) + 128;
+	}
+	else if (code <= 0x10FFFF)
+	{
+		str += char((code >> 18) + 240);
+		str += ((code >> 12) & 63) + 128;
+		str += ((code >> 6) & 63) + 128;
+		str += (code & 63) + 128;
 	}
 }
+
+wchar_to_utf8::wchar_to_utf8(const std::wstring& val)
+{
+	for (int i = 0; val[i]; i++)
+		append_char(m_str, val[i]);
+}
+
+} // namespace litehtml

@@ -11,6 +11,10 @@
 #include "line_box.h"
 #include <stack>
 #include "render_item.h"
+#include "internal.h"
+
+namespace litehtml
+{
 
 litehtml::html_tag::html_tag(const std::shared_ptr<document>& doc) : element(doc)
 {
@@ -178,11 +182,6 @@ litehtml::element::ptr litehtml::html_tag::select_one( const css_selector& selec
 
 void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 {
-	if(is_root())
-	{
-		int i = 0;
-		i++;
-	}
 	for(const auto& sel : stylesheet.selectors())
 	{
 		// optimization
@@ -194,8 +193,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 			if (!r.m_attrs.empty())
 			{
 				const auto& attr = r.m_attrs[0];
-				if (attr.type == select_class &&
-					std::find(m_classes.begin(), m_classes.end(), attr.name) == m_classes.end())
+				if (attr.type == select_class && !(attr.name in m_classes))
 					continue;
 			}
 		}
@@ -325,19 +323,20 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 	}
 }
 
-litehtml::string litehtml::html_tag::get_custom_property(string_id name, const string& default_value) const
+bool html_tag::get_custom_property(string_id name, css_token_vector& result) const
 {
 	const property_value& value = m_style.get_property(name);
 
-	if (value.m_type == prop_type_string)
+	if (value.m_type == prop_type_custom || value.m_type == prop_type_var)
 	{
-		return value.m_string;
+		result = value.m_token_vector;
+		return true;
 	}
 	else if (auto _parent = parent())
 	{
-		return _parent->get_custom_property(name, default_value);
+		return _parent->get_custom_property(name, result);
 	}
-	return default_value;
+	return false;
 }
 
 template<class Type, litehtml::property_type property_value_type, Type litehtml::property_value::* property_value_member>
@@ -380,6 +379,11 @@ litehtml::css_length litehtml::html_tag::get_length_property(string_id name, boo
 litehtml::web_color litehtml::html_tag::get_color_property(string_id name, bool inherited, web_color default_value, uint_ptr css_properties_member_offset) const
 {
 	return get_property_impl<web_color, prop_type_color, &property_value::m_color>(name, inherited, default_value, css_properties_member_offset);
+}
+
+std::vector<litehtml::image> litehtml::html_tag::get_images_property (string_id name, bool inherited, const std::vector<image>& default_value, uint_ptr css_properties_member_offset) const
+{
+	return get_property_impl<std::vector<litehtml::image>, prop_type_bg_image, &property_value::m_bg_images>(name, inherited, default_value, css_properties_member_offset);
 }
 
 litehtml::string litehtml::html_tag::get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const
@@ -438,6 +442,16 @@ void litehtml::html_tag::compute_styles(bool recursive)
 bool litehtml::html_tag::is_white_space() const
 {
 	return false;
+}
+
+int	html_tag::select(const css_selector::vector& selector_list, bool apply_pseudo)
+{
+	for (auto sel : selector_list)
+	{
+		if (int result = select(*sel, apply_pseudo))
+			return result;
+	}
+	return select_no_match;
 }
 
 int litehtml::html_tag::select(const string& selector)
@@ -547,7 +561,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		switch(attr.type)
 		{
 		case select_class:
-			if (std::find(m_classes.begin(), m_classes.end(), attr.name) == m_classes.end())
+			if (!(attr.name in m_classes))
 			{
 				return select_no_match;
 			}
@@ -600,7 +614,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 	return res;
 }
 
-int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& sel)
+int html_tag::select_pseudoclass(const css_attribute_selector& sel)
 {
 	element::ptr el_parent = parent();
 
@@ -686,19 +700,19 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& sel)
 	}
 	break;
 	case _not_:
-		if (select(*sel.sel, true))
+		if (select(sel.selector_list, true))
 		{
 			return select_no_match;
 		}
 		break;
 	case _lang_:
-		if (!get_document()->match_lang(sel.val))
+		if (!get_document()->match_lang(sel.value))
 		{
 			return select_no_match;
 		}
 		break;
 	default:
-		if (std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), sel.name) == m_pseudo_classes.end())
+		if (!(sel.name in m_pseudo_classes))
 		{
 			return select_no_match;
 		}
@@ -707,61 +721,69 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& sel)
 	return select_match;
 }
 
-int litehtml::html_tag::select_attribute(const css_attribute_selector& sel)
+// https://www.w3.org/TR/selectors-4/#attribute-selectors
+int html_tag::select_attribute(const css_attribute_selector& sel)
 {
-	const char* attr_value = get_attr(_s(sel.name).c_str());
+	const char* sz_attr_value = get_attr(_s(sel.name).c_str());
 
-	switch (sel.type)
+	if (!sz_attr_value) return select_no_match;
+
+	string attr_value = sel.caseless_match ? lowcase(sz_attr_value) : sz_attr_value;
+
+	switch (sel.matcher)
 	{
-	case select_exists:
-		if (!attr_value)
+	case attribute_exists:
+		return select_match;
+
+	case attribute_equals:
+		if (attr_value == sel.value)
 		{
-			return select_no_match;
+			return select_match;
 		}
 		break;
-	case select_equal:
-		if (!attr_value || strcmp(attr_value, sel.val.c_str()))
+
+	case attribute_contains_string: // *=
+		if (sel.value != "" && contains(attr_value, sel.value))
 		{
-			return select_no_match;
+			return select_match;
 		}
 		break;
-	case select_contain_str:
-		if (!attr_value || !strstr(attr_value, sel.val.c_str()))
+
+	// Attribute value is a whitespace-separated list of words, one of which is exactly sel.value
+	case attribute_contains_word: // ~=
+		if (sel.value != "" && contains(split_string(attr_value), sel.value))
 		{
-			return select_no_match;
+			return select_match;
 		}
 		break;
-	case select_start_str:
-		if (!attr_value || strncmp(attr_value, sel.val.c_str(), sel.val.length()))
+
+	case attribute_starts_with_string: // ^=
+		if (sel.value != "" && match(attr_value, 0, sel.value))
 		{
-			return select_no_match;
+			return select_match;
 		}
 		break;
-	case select_end_str:
-		if (!attr_value)
+
+	// Attribute value is either equals sel.value or begins with sel.value immediately followed by "-".
+	case attribute_starts_with_string_hyphen: // |=
+		// Note: no special treatment for sel.value == ""
+		if (attr_value == sel.value || match(attr_value, 0, sel.value + '-'))
 		{
-			return select_no_match;
-		}
-		else if (strncmp(attr_value, sel.val.c_str(), sel.val.length()))
-		{
-			const char* s = attr_value + strlen(attr_value) - sel.val.length() - 1;
-			if (s < attr_value)
-			{
-				return select_no_match;
-			}
-			if (sel.val != s)
-			{
-				return select_no_match;
-			}
+			return select_match;
 		}
 		break;
-	default:
+
+	case attribute_ends_with_string: // $=
+		if (sel.value != "" && match(attr_value, -(int)sel.value.size(), sel.value))
+		{
+			return select_match;
+		}
 		break;
 	}
-	return select_match;
+	return select_no_match;
 }
 
-litehtml::element::ptr litehtml::html_tag::find_ancestor(const css_selector& selector, bool apply_pseudo, bool* is_pseudo)
+element::ptr html_tag::find_ancestor(const css_selector& selector, bool apply_pseudo, bool* is_pseudo)
 {
 	element::ptr el_parent = parent();
 	if (!el_parent)
@@ -925,18 +947,18 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 			const background* bg = get_background();
 			if(bg)
 			{
-				std::vector<background_paint> bg_paint;
-				init_background_paint(pos, bg_paint, bg, ri);
-				if(is_root())
+				int num_layers = bg->get_layers_number();
+				for(int i = num_layers - 1; i >= 0; i--)
 				{
-					for(auto& b : bg_paint)
+					background_layer layer;
+					if(!bg->get_layer(i, pos, this, ri, layer)) continue;
+					if(is_root())
 					{
-						b.clip_box = *clip;
-						b.border_box = *clip;
+						layer.clip_box = *clip;
+						layer.border_box = *clip;
 					}
+					bg->draw_layer(hdc, i, layer, get_document()->container());
 				}
-
-				get_document()->container()->draw_background(hdc, bg_paint);
 			}
 			position border_box = pos;
 			border_box += ri->get_paddings();
@@ -956,7 +978,6 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 		position::vector boxes;
 		ri->get_inline_boxes(boxes);
 
-		std::vector<background_paint> bg_paint;
 		position content_box;
 
 		for(auto box = boxes.begin(); box != boxes.end(); box++)
@@ -969,11 +990,6 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 				content_box = *box;
 				content_box -= ri->get_borders();
 				content_box -= ri->get_paddings();
-
-				if(bg)
-				{
-					init_background_paint(content_box, bg_paint, bg, ri);
-				}
 
 				css_borders bdr;
 
@@ -1009,11 +1025,14 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 
 				if(bg)
 				{
-					for (auto& bgp : bg_paint)
+					int num_layers = bg->get_layers_number();
+					for(int i = num_layers - 1; i >= 0; i--)
 					{
-						bgp.border_radius = bdr.radius.calc_percents(bgp.border_box.width, bgp.border_box.width);
+						background_layer layer;
+						if(!bg->get_layer(i, content_box, this, ri, layer)) continue;
+						layer.border_radius = bdr.radius.calc_percents(layer.border_box.width, layer.border_box.width);
+						bg->draw_layer(hdc, i, layer, get_document()->container());
 					}
-					get_document()->container()->draw_background(hdc, bg_paint);
 				}
 				if(bdr.is_visible())
 				{
@@ -1097,133 +1116,6 @@ bool litehtml::html_tag::set_class( const char* pclass, bool add )
 bool litehtml::html_tag::is_replaced() const
 {
 	return false;
-}
-
-void litehtml::html_tag::init_background_paint(position pos, std::vector<background_paint>& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri)
-{
-	bg_paint = { background_paint() };
-	if (!bg) return;
-
-	int bg_count = std::max((int)bg->m_image.size(), 1);
-	bg_paint.resize(bg_count);
-
-	for (int i = 0; i < bg_count; i++)
-	{
-		init_one_background_paint(i, pos, bg_paint[i], bg, ri);
-	}
-
-	bg_paint.back().color = bg->m_color;
-}
-
-void litehtml::html_tag::init_one_background_paint(int i, position pos, background_paint& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri)
-{
-	bg_paint.image		= i < (int) bg->m_image.size() ? bg->m_image[i] : "";
-	bg_paint.baseurl	= bg->m_baseurl;
-	bg_paint.attachment = i < (int) bg->m_attachment.size() ? (background_attachment)bg->m_attachment[i] : background_attachment_scroll;
-	bg_paint.repeat		= i < (int) bg->m_repeat.size() ? (background_repeat)bg->m_repeat[i] : background_repeat_repeat;
-	int clip			= i < (int) bg->m_clip.size() ? bg->m_clip[i] : background_box_border;
-	int origin			= i < (int) bg->m_origin.size() ? bg->m_origin[i] : background_box_padding;
-	const css_size auto_auto(css_length::predef_value(background_size_auto), css_length::predef_value(background_size_auto));
-	css_size size		= i < (int) bg->m_size.size() ? bg->m_size[i] : auto_auto;
-	css_length position_x = i < (int) bg->m_position_x.size() ? bg->m_position_x[i] : css_length(0, css_units_percentage);
-	css_length position_y = i < (int) bg->m_position_y.size() ? bg->m_position_y[i] : css_length(0, css_units_percentage);
-
-	position content_box	= pos;
-	position padding_box	= pos;
-	padding_box += ri->get_paddings();
-	position border_box		= padding_box;
-	border_box += ri->get_borders();
-
-	switch(clip)
-	{
-	case background_box_padding:
-		bg_paint.clip_box = padding_box;
-		break;
-	case background_box_content:
-		bg_paint.clip_box = content_box;
-		break;
-	default:
-		bg_paint.clip_box = border_box;
-		break;
-	}
-
-	switch(origin)
-	{
-	case background_box_border:
-		bg_paint.origin_box = border_box;
-		break;
-	case background_box_content:
-		bg_paint.origin_box = content_box;
-		break;
-	default:
-		bg_paint.origin_box = padding_box;
-		break;
-	}
-
-	if(!bg_paint.image.empty())
-	{
-		get_document()->container()->get_image_size(bg_paint.image.c_str(), bg_paint.baseurl.c_str(), bg_paint.image_size);
-		if(bg_paint.image_size.width && bg_paint.image_size.height)
-		{
-			litehtml::size img_new_sz = bg_paint.image_size;
-			double img_ar_width		= (double) bg_paint.image_size.width / (double) bg_paint.image_size.height;
-			double img_ar_height	= (double) bg_paint.image_size.height / (double) bg_paint.image_size.width;
-
-
-			if(size.width.is_predefined())
-			{
-				switch(size.width.predef())
-				{
-				case background_size_contain:
-					if( (int) ((double) bg_paint.origin_box.width * img_ar_height) <= bg_paint.origin_box.height )
-					{
-						img_new_sz.width = bg_paint.origin_box.width;
-						img_new_sz.height	= (int) ((double) bg_paint.origin_box.width * img_ar_height);
-					} else
-					{
-						img_new_sz.height = bg_paint.origin_box.height;
-						img_new_sz.width	= (int) ((double) bg_paint.origin_box.height * img_ar_width);
-					}
-					break;
-				case background_size_cover:
-					if( (int) ((double) bg_paint.origin_box.width * img_ar_height) >= bg_paint.origin_box.height )
-					{
-						img_new_sz.width = bg_paint.origin_box.width;
-						img_new_sz.height	= (int) ((double) bg_paint.origin_box.width * img_ar_height);
-					} else
-					{
-						img_new_sz.height = bg_paint.origin_box.height;
-						img_new_sz.width	= (int) ((double) bg_paint.origin_box.height * img_ar_width);
-					}
-					break;
-				case background_size_auto:
-					if(!size.height.is_predefined())
-					{
-						img_new_sz.height	= size.height.calc_percent(bg_paint.origin_box.height);
-						img_new_sz.width	= (int) ((double) img_new_sz.height * img_ar_width);
-					}
-					break;
-				}
-			} else
-			{
-				img_new_sz.width = size.width.calc_percent(bg_paint.origin_box.width);
-				if(size.height.is_predefined())
-				{
-					img_new_sz.height = (int) ((double) img_new_sz.width * img_ar_height);
-				} else
-				{
-					img_new_sz.height = size.height.calc_percent(bg_paint.origin_box.height);
-				}
-			}
-
-			bg_paint.image_size = img_new_sz;
-			bg_paint.position_x = bg_paint.origin_box.x + (int) position_x.calc_percent(bg_paint.origin_box.width - bg_paint.image_size.width);
-			bg_paint.position_y = bg_paint.origin_box.y + (int) position_y.calc_percent(bg_paint.origin_box.height - bg_paint.image_size.height);
-		}
-	}
-	bg_paint.border_radius	= m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
-	bg_paint.border_box		= border_box;
-	bg_paint.is_root		= is_root();
 }
 
 void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
@@ -1701,7 +1593,7 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 	return &m_css.get_bg();
 }
 
-litehtml::string litehtml::html_tag::dump_get_name()
+string html_tag::dump_get_name()
 {
 	if(m_tag == empty_id)
 	{
@@ -1709,3 +1601,42 @@ litehtml::string litehtml::html_tag::dump_get_name()
 	}
 	return _s(m_tag) + " [html_tag]";
 }
+
+// https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-pixel-length-property
+void html_tag::map_to_pixel_length_property(string_id prop_name, string attr_value)
+{
+	int n;
+	if (html_parse_non_negative_integer(attr_value, n))
+	{
+		css_token tok(DIMENSION, (float)n, css_number_integer, "px");
+		m_style.add_property(prop_name, {tok});
+	}
+}
+
+// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-border
+void html_tag::map_to_pixel_length_property_with_default_value(string_id prop_name, string attr_value, int default_value)
+{
+	int n = default_value;
+	html_parse_non_negative_integer(attr_value, n);
+	css_token tok(DIMENSION, (float)n, css_number_integer, "px");
+	m_style.add_property(prop_name, {tok});
+}
+
+// https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-dimension-property-(ignoring-zero)
+void html_tag::map_to_dimension_property_ignoring_zero(string_id prop_name, string attr_value)
+{
+	float x;
+	html_dimension_type type;
+	if (!html_parse_nonzero_dimension_value(attr_value, x, type))
+		return;
+
+	css_token tok;
+	if (type == html_length)
+		tok = {DIMENSION,  x, css_number_number, "px"};
+	else
+		tok = {PERCENTAGE, x, css_number_number};
+		
+	m_style.add_property(prop_name, {tok});
+}
+
+} // namespace litehtml

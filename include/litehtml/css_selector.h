@@ -3,6 +3,7 @@
 
 #include "style.h"
 #include "media_query.h"
+#include "css_tokenizer.h"
 
 namespace litehtml
 {
@@ -121,104 +122,91 @@ namespace litehtml
 	{
 		select_class,
 		select_id,
-
-		select_exists,
-		select_equal,
-		select_contain_str,
-		select_start_str,
-		select_end_str,
-
+		select_attr,
 		select_pseudo_class,
 		select_pseudo_element,
 	};
 
-	//////////////////////////////////////////////////////////////////////////
-
-	class css_element_selector;
-
-	struct css_attribute_selector
+	// https://www.w3.org/TR/selectors-4/#attribute-selectors
+	enum attr_matcher : char
 	{
-		typedef std::vector<css_attribute_selector>	vector;
-
-		attr_select_type	type;
-		string_id			name; // .name, #name, [name], :name
-		string				val;  // [name=val], :lang(val)
-
-		std::shared_ptr<css_element_selector> sel; // :not(sel)
-		int a, b; // :nth-child(an+b)
-
-		css_attribute_selector()
-		{
-			type = select_class;
-			name = empty_id;
-			a = b = 0;
-		}
+		attribute_exists                    = 0,
+		attribute_equals                    = '=',
+		attribute_contains_string           = '*', // *=
+		attribute_contains_word             = '~', // ~=
+		attribute_starts_with_string        = '^', // ^=
+		attribute_starts_with_string_hyphen = '|', // |=
+		attribute_ends_with_string          = '$', // $=
 	};
 
 	//////////////////////////////////////////////////////////////////////////
 
-	class css_element_selector
+	class css_selector;
+	class html_tag;
+
+	// <subclass-selector> | <pseudo-element-selector>
+	// = <id-selector> | <class-selector> | <attribute-selector> | <pseudo-class-selector> | <pseudo-element-selector>
+	struct css_attribute_selector
+	{
+		using vector = std::vector<css_attribute_selector>;
+
+		attr_select_type	type;
+		string_id			prefix;   // [prefix|name]
+		string_id			name;     // .name, #name, [name], :name
+		string				value;    // [name=value], :lang(value)
+		
+		attr_matcher		matcher;         // <attr-matcher>   = ~= |= ^= $= *=
+		bool				caseless_match;  // value is matched ASCII case-insensitively
+
+		std::vector<shared_ptr<css_selector>> selector_list; // :not(selector_list)
+		int a, b; // :nth-child(an+b of selector_list)
+
+		css_attribute_selector(attr_select_type type = select_class, string name = "")
+			: type(type), prefix(empty_id), name(_id(name)), matcher(), caseless_match(0), a(0), b(0) {}
+
+		operator bool() const { return name != empty_id; }
+	};
+
+	//////////////////////////////////////////////////////////////////////////
+
+	class css_element_selector // compound selector: div.class:hover
 	{
 	public:
-		string_id						m_tag;
-		css_attribute_selector::vector	m_attrs;
+		using ptr = shared_ptr<css_element_selector>;
 	public:
-
-		void parse(const string& txt);
-		static void parse_nth_child_params(const string& param, int& num, int& off);
+		string_id						m_prefix;
+		string_id						m_tag;
+		css_attribute_selector::vector	m_attrs; // subclass and pseudo-element selectors
 	};
 
 	//////////////////////////////////////////////////////////////////////////
 
 	enum css_combinator
 	{
-		combinator_descendant,
-		combinator_child,
-		combinator_adjacent_sibling,
-		combinator_general_sibling
+		combinator_descendant        = ' ',
+		combinator_child             = '>',
+		combinator_adjacent_sibling  = '+',
+		combinator_general_sibling   = '~'
 	};
 
 	//////////////////////////////////////////////////////////////////////////
 
-	class css_selector
+	class css_selector // complex selector: div + p
 	{
 	public:
-		typedef std::shared_ptr<css_selector>	ptr;
-		typedef std::vector<css_selector::ptr>	vector;
+		using ptr    = shared_ptr<css_selector>;
+		using vector = std::vector<css_selector::ptr>;
+
 	public:
-		selector_specificity	m_specificity;
-		css_element_selector	m_right;
-		css_selector::ptr		m_left;
-		css_combinator			m_combinator;
-		style::ptr				m_style;
-		int						m_order;
-		media_query_list::ptr	m_media_query;
+		selector_specificity		m_specificity;
+		int							m_order = 0;
+		css_selector::ptr			m_left;
+		css_element_selector		m_right;
+		css_combinator				m_combinator = combinator_descendant;
+		media_query_list_list::ptr	m_media_query;
+		style::ptr					m_style;
+
 	public:
-		explicit css_selector(const media_query_list::ptr& media = nullptr)
-		{
-			m_media_query	= media;
-			m_combinator	= combinator_descendant;
-			m_order			= 0;
-		}
-
-		~css_selector() = default;
-
-		css_selector(const css_selector& val)
-		{
-			m_right			= val.m_right;
-			if(val.m_left)
-			{
-				m_left = std::make_shared<css_selector>(*val.m_left);
-			} else
-			{
-				m_left = nullptr;
-			}
-			m_combinator	= val.m_combinator;
-			m_specificity	= val.m_specificity;
-			m_order			= val.m_order;
-			m_media_query	= val.m_media_query;
-		}
-
 		bool parse(const string& text);
 		void calc_specificity();
 		bool is_media_valid() const;
@@ -281,20 +269,16 @@ namespace litehtml
 			m_used		= used;
 			m_selector	= selector;
 		}
-
-		used_selector(const used_selector& val)
-		{
-			m_used = val.m_used;
-			m_selector = val.m_selector;
-		}
-
-		used_selector& operator=(const used_selector& val)
-		{
-			m_used = val.m_used;
-			m_selector = val.m_selector;
-			return *this;
-		}
 	};
+
+
+	enum {
+		strict_mode = 0,
+		forgiving_mode = 1,
+		forbid_pseudo_elements = 1 << 1,
+	};
+
+	css_selector::vector parse_selector_list(const css_token_vector& compvals, int options);
 }
 
 #endif  // LH_CSS_SELECTOR_H

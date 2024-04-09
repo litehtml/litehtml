@@ -48,7 +48,7 @@ namespace litehtml
 		uint_ptr				m_font;
 		css_length				m_font_size;
 		string					m_font_family;
-		font_weight				m_font_weight;
+		css_length				m_font_weight;
 		font_style				m_font_style;
 		string					m_text_decoration;
 		font_metrics			m_font_metrics;

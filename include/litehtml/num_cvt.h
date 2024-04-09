@@ -1,8 +1,7 @@
 #ifndef NUM_CVT_H
 #define NUM_CVT_H
 
-#include <string>
-#include "os_types.h"
+#include "types.h"
 
 namespace litehtml
 {

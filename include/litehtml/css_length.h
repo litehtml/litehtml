@@ -2,9 +2,22 @@
 #define LH_CSS_LENGTH_H
 
 #include "types.h"
+#include "css_tokenizer.h"
 
 namespace litehtml
 {
+	// from_token options (flags)
+	enum {
+		f_length     = 1, // <length> (includes unitless zero)
+		f_percentage = 2, // <percentage>
+		f_length_percentage = f_length | f_percentage, // <length-percentage>
+		f_number     = 4, // <number>
+		f_integer    = 8, // <integer>
+		f_positive   = 16 // ⩾0 (non-negative)
+	};
+
+	// <length> | <percentage> | <number> | auto | none | normal
+	// https://developer.mozilla.org/en-US/docs/Web/CSS/length
 	class css_length
 	{
 		union
@@ -27,6 +40,7 @@ namespace litehtml
 		float		val() const;
 		css_units	units() const;
 		int			calc_percent(int width) const;
+		bool		from_token(const css_token& token, int options, const string& predefined_keywords = "");
 		void		fromString(const string& str, const string& predefs = "", int defValue = 0);
 		static css_length from_string(const string& str, const string& predefs = "", int defValue = 0);
 		string		to_string() const;

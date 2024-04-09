@@ -2,7 +2,10 @@
 #include "types.h"
 #include "utf8_strings.h"
 
-void litehtml::trim(string &s, const string& chars_to_trim)
+namespace litehtml
+{
+
+string& trim(string &s, const string& chars_to_trim)
 {
 	string::size_type pos = s.find_first_not_of(chars_to_trim);
 	if(pos != string::npos)
@@ -12,21 +15,30 @@ void litehtml::trim(string &s, const string& chars_to_trim)
 	else
 	{
 		s = "";
-		return;
+		return s;
 	}
 	pos = s.find_last_not_of(chars_to_trim);
 	if(pos != string::npos)
 	{
 		s.erase(s.begin() + pos + 1, s.end());
 	}
+	return s;
 }
 
-void litehtml::lcase(string &s) 
+litehtml::string litehtml::trim(const string& s, const string& chars_to_trim)
+{
+	string str = s;
+	trim(str, chars_to_trim);
+	return str;
+}
+
+litehtml::string& litehtml::lcase(string &s)
 {
 	for(char & i : s)
 	{
-		i = t_tolower(i);
+		i = (char)t_tolower(i);
 	}
+	return s;
 }
 
 litehtml::string::size_type litehtml::find_close_bracket(const string &s, string::size_type off, char open_b, char close_b)
@@ -109,7 +121,14 @@ bool litehtml::value_in_list( const string& val, const string& strings, char del
 	return false;
 }
 
-void litehtml::split_string(const string& str, string_vector& tokens, const string& delims, const string& delims_preserve, const string& quote)
+string_vector split_string(const string& str, const string& delims, const string& delims_preserve, const string& quote)
+{
+	string_vector result;
+	split_string(str, result, delims, delims_preserve, quote);
+	return result;
+}
+
+void split_string(const string& str, string_vector& tokens, const string& delims, const string& delims_preserve, const string& quote)
 {
 	if(str.empty() || (delims.empty() && delims_preserve.empty()))
 	{
@@ -288,3 +307,5 @@ bool litehtml::is_number(const string& string, const bool allow_dot) {
 	}
 	return true;
 }
+
+} // namespace litehtml

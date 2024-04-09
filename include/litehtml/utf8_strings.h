@@ -6,27 +6,19 @@
 
 namespace litehtml
 {
+	ucode_t read_utf8_char(const string& str, int& index);
+	void prev_utf8_char(const string& str, int& index);
+	void append_char(string& str, int ch);
+
 	class utf8_to_wchar
 	{
-		const byte* m_utf8;
 		std::wstring m_str;
 	public:
-		utf8_to_wchar(const char* val);
+		utf8_to_wchar(const std::string& val);
 		operator const wchar_t*() const
 		{
 			return m_str.c_str();
 		}
-	private:
-		ucode_t getb()
-		{
-			if (!(*m_utf8)) return 0;
-			return *m_utf8++;
-		}
-		ucode_t get_next_utf8(ucode_t val)
-		{
-			return (val & 0x3f);
-		}
-		ucode_t get_char();
 	};
 
 	class wchar_to_utf8
@@ -38,7 +30,6 @@ namespace litehtml
 		{
 			return m_str.c_str();
 		}
-
 		const char* c_str() const
 		{
 			return m_str.c_str();

@@ -19,7 +19,11 @@ public:
 	const char*		get_default_font_name() const override;
 	void 			load_image(const char* /*src*/, const char* /*baseurl*/, bool /*redraw_on_ready*/) override {}
 	void			get_image_size(const char* /*src*/, const char* /*baseurl*/, size& /*sz*/) override {}
-	void			draw_background(uint_ptr hdc, const std::vector<background_paint>& bg) override;
+	void			draw_image(litehtml::uint_ptr /*hdc*/, const background_layer& /*layer*/, const std::string& /*url*/, const std::string& /*base_url*/) override {};
+	void			draw_solid_fill(litehtml::uint_ptr hdc, const background_layer& layer, const web_color& color) override;
+	void			draw_linear_gradient(litehtml::uint_ptr /*hdc*/, const background_layer& /*layer*/, const background_layer::linear_gradient& /*gradient*/) override {};
+	void			draw_radial_gradient(litehtml::uint_ptr /*hdc*/, const background_layer& /*layer*/, const background_layer::radial_gradient& /*gradient*/) override {};
+	void 			draw_conic_gradient(litehtml::uint_ptr /*hdc*/, const litehtml::background_layer& /*layer*/, const litehtml::background_layer::conic_gradient& /*gradient*/) override {};
 	void			draw_borders(uint_ptr hdc, const borders& borders, const position& draw_pos, bool root) override;
 	void 			draw_list_marker(uint_ptr hdc, const list_marker& marker) override;
 	element::ptr	create_element(const char* /*tag_name*/,

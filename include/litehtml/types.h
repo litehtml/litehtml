@@ -1,14 +1,25 @@
 #ifndef LH_TYPES_H
 #define LH_TYPES_H
 
-#include <cstdlib>
 #include <memory>
-#include <map>
+#include <string>
 #include <vector>
+#include <map>
 #include <list>
+#include <set>
+#include <variant>
 
 namespace litehtml
 {
+	using uint_ptr = std::uintptr_t;
+	using std::string;
+	using std::vector;
+	using std::shared_ptr;
+	using std::make_shared;
+	using std::min;
+	using std::max;
+	using std::swap;
+
 	class document;
 	class element;
 
@@ -16,6 +27,15 @@ namespace litehtml
 	typedef std::list< std::shared_ptr<element> >		elements_list;
 	typedef std::vector<int>							int_vector;
 	typedef std::vector<string>							string_vector;
+
+	template <class... Types>
+	struct variant : std::variant<Types...>
+	{
+		using base = variant<Types...>; // for derived class ctors
+		using std::variant<Types...>::variant; // inherit ctors
+		template<class T> bool is() const { return std::holds_alternative<T>(*this); }
+		template<class T> const T& get() const { return std::get<T>(*this); }
+	};
 
 	const unsigned int font_decoration_none			= 0x00;
 	const unsigned int font_decoration_underline	= 0x01;
@@ -39,6 +59,17 @@ namespace litehtml
 
 		int width()		const	{ return left + right; } 
 		int height()	const	{ return top + bottom; } 
+	};
+
+	struct pointF
+	{
+		float x;
+		float y;
+
+		pointF() : x(0), y(0) {}
+		pointF(float _x, float _y) : x(_x), y(_y) {}
+
+		void set(float _x, float _y) { x = _x; y = _y; }
 	};
 
 	struct size
@@ -108,10 +139,10 @@ namespace litehtml
 			height	= sz.height;
 		}
 
-		void move_to(int X, int Y)
+		void move_to(int _x, int _y)
 		{
-			this->x = X;
-			this->y = Y;
+			x = _x;
+			y = _y;
 		}
 
 		bool does_intersect(const position* val) const
@@ -139,9 +170,9 @@ namespace litehtml
 			return false;
 		}
 
-		bool is_point_inside(int X, int Y) const
+		bool is_point_inside(int _x, int _y) const
 		{
-			if(X >= left() && X <= right() && Y >= top() && Y <= bottom())
+			if(_x >= left() && _x <= right() && _y >= top() && _y <= bottom())
 			{
 				return true;
 			}
@@ -339,7 +370,7 @@ namespace litehtml
 		font_variant_small_caps
 	};
 
-#define  font_weight_strings	"normal;bold;bolder;lighter;100;200;300;400;500;600;700;800;900"
+#define  font_weight_strings	"normal;bold;bolder;lighter"
 
 	enum font_weight
 	{
@@ -347,15 +378,6 @@ namespace litehtml
 		font_weight_bold,
 		font_weight_bolder,
 		font_weight_lighter,
-		font_weight_100,
-		font_weight_200,
-		font_weight_300,
-		font_weight_400,
-		font_weight_500,
-		font_weight_600,
-		font_weight_700,
-		font_weight_800,
-		font_weight_900
 	};
 
 #define  list_style_type_strings	"none;circle;disc;square;armenian;cjk-ideographic;decimal;decimal-leading-zero;georgian;hebrew;hiragana;hiragana-iroha;katakana;katakana-iroha;lower-alpha;lower-greek;lower-latin;lower-roman;upper-alpha;upper-latin;upper-roman"
@@ -456,9 +478,9 @@ namespace litehtml
 		clear_both
 	};
 
-#define  css_units_strings	"none;%;in;cm;mm;em;ex;pt;pc;px;dpi;dpcm;vw;vh;vmin;vmax;rem"
+#define  css_units_strings	"none;%;in;cm;mm;em;ex;pt;pc;px;vw;vh;vmin;vmax;rem"
 
-	enum css_units : byte
+	enum css_units : byte // see css_length
 	{
 		css_units_none,
 		css_units_percentage,
@@ -470,8 +492,6 @@ namespace litehtml
 		css_units_pt,
 		css_units_pc,
 		css_units_px,
-		css_units_dpi,
-		css_units_dpcm,
 		css_units_vw,
 		css_units_vh,
 		css_units_vmin,
@@ -497,6 +517,7 @@ namespace litehtml
 		background_repeat_no_repeat
 	};
 
+// https://drafts.csswg.org/css-box-4/#typedef-visual-box
 #define  background_box_strings	"border-box;padding-box;content-box"
 
 	enum background_box
@@ -506,14 +527,15 @@ namespace litehtml
 		background_box_content
 	};
 
-#define  background_position_strings	"top;bottom;left;right;center"
+#define  background_position_strings				"left;right;top;bottom;center"
+	const float background_position_percentages[] =	 {0,   100,  0,  100,    50};
 
 	enum background_position
 	{
-		background_position_top,
-		background_position_bottom,
 		background_position_left,
 		background_position_right,
+		background_position_top,
+		background_position_bottom,
 		background_position_center,
 	};
 
@@ -574,7 +596,7 @@ namespace litehtml
 
 	enum background_size
 	{
-		background_size_auto,
+		background_size_auto,	// must be first, see parse_bg_size
 		background_size_cover,
 		background_size_contain,
 	};
@@ -788,63 +810,6 @@ namespace litehtml
 	};
 
 
-#define media_orientation_strings		"portrait;landscape"
-
-	enum media_orientation
-	{
-		media_orientation_portrait,
-		media_orientation_landscape,
-	};
-
-#define media_feature_strings		"none;width;min-width;max-width;height;min-height;max-height;device-width;min-device-width;max-device-width;device-height;min-device-height;max-device-height;orientation;aspect-ratio;min-aspect-ratio;max-aspect-ratio;device-aspect-ratio;min-device-aspect-ratio;max-device-aspect-ratio;color;min-color;max-color;color-index;min-color-index;max-color-index;monochrome;min-monochrome;max-monochrome;resolution;min-resolution;max-resolution"
-
-	enum media_feature
-	{
-		media_feature_none,
-
-		media_feature_width,
-		media_feature_min_width,
-		media_feature_max_width,
-
-		media_feature_height,
-		media_feature_min_height,
-		media_feature_max_height,
-
-		media_feature_device_width,
-		media_feature_min_device_width,
-		media_feature_max_device_width,
-
-		media_feature_device_height,
-		media_feature_min_device_height,
-		media_feature_max_device_height,
-
-		media_feature_orientation,
-
-		media_feature_aspect_ratio,
-		media_feature_min_aspect_ratio,
-		media_feature_max_aspect_ratio,
-
-		media_feature_device_aspect_ratio,
-		media_feature_min_device_aspect_ratio,
-		media_feature_max_device_aspect_ratio,
-
-		media_feature_color,
-		media_feature_min_color,
-		media_feature_max_color,
-
-		media_feature_color_index,
-		media_feature_min_color_index,
-		media_feature_max_color_index,
-
-		media_feature_monochrome,
-		media_feature_min_monochrome,
-		media_feature_max_monochrome,
-
-		media_feature_resolution,
-		media_feature_min_resolution,
-		media_feature_max_resolution,
-	};
-
 #define box_sizing_strings		"content-box;border-box"
 
 	enum box_sizing
@@ -853,22 +818,17 @@ namespace litehtml
 		box_sizing_border_box,
 	};
 
-
-#define media_type_strings		"none;all;screen;print;braille;embossed;handheld;projection;speech;tty;tv"
+// https://drafts.csswg.org/mediaqueries/#media-types
+// User agents must recognize the following media types as valid, but must make them match nothing.
+#define deprecated_media_type_strings	"tty;tv;projection;handheld;braille;embossed;aural;speech"
+#define media_type_strings				"all;print;screen;" deprecated_media_type_strings
 
 	enum media_type
 	{
-		media_type_none,
 		media_type_all,
-		media_type_screen,
 		media_type_print,
-		media_type_braille,
-		media_type_embossed,
-		media_type_handheld,
-		media_type_projection,
-		media_type_speech,
-		media_type_tty,
-		media_type_tv,
+		media_type_screen,
+		media_type_first_deprecated
 	};
 
 	struct media_features
@@ -885,8 +845,9 @@ namespace litehtml
 
 		media_features()
 		{
-			type = media_type::media_type_none,
-			width =0;
+			// this matches @media all, but not @media print or @media screen, see media_query::check
+			type = media_type_all,
+			width = 0;
 			height = 0;
 			device_width = 0;
 			device_height = 0;
@@ -903,6 +864,8 @@ namespace litehtml
 		render_no_fixed,
 		render_fixed_only,
 	};
+
+	const char* const split_delims_spaces = " \t\r\n\f\v";
 
 	// List of the Void Elements (can't have any contents)
 	const char* const void_elements = "area;base;br;col;command;embed;hr;img;input;keygen;link;meta;param;source;track;wbr";
@@ -944,19 +907,24 @@ namespace litehtml
 		flex_justify_content_stretch,
 	};
 
-#define flex_align_items_strings		"normal;flex-start;flex-end;center;start;end;baseline;stretch;auto"
+#define self_position_strings		"center;start;end;self-start;self-end;flex-start;flex-end"
+#define flex_align_items_strings	"auto;normal;stretch;baseline;" self_position_strings
 
 	enum flex_align_items
 	{
-		flex_align_items_flex_normal,
-		flex_align_items_flex_start,
-		flex_align_items_flex_end,
+		flex_align_items_auto, // used for align-self property only
+		flex_align_items_normal,
+		flex_align_items_stretch,
+		flex_align_items_baseline,
+
 		flex_align_items_center,
 		flex_align_items_start,
 		flex_align_items_end,
-		flex_align_items_baseline,
-		flex_align_items_stretch,
-		flex_align_items_auto, // used for align-self property only
+		flex_align_items_self_start,
+		flex_align_items_self_end,
+		flex_align_items_flex_start,
+		flex_align_items_flex_end,
+
 		flex_align_items_first = 0x100,
 		flex_align_items_last = 0x200,
 		flex_align_items_unsafe = 0x400,

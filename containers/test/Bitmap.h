@@ -1,15 +1,31 @@
 #include <litehtml.h>
 using namespace litehtml;
 
+// color != web_color because sizeof(web_color) != 4
+struct color
+{
+	byte r, g, b, a;
+
+	color() : r(0), g(0), b(0), a(0) {}
+	color(byte r, byte g, byte b, byte a) : r(r), g(g), b(b), a(a) {}
+	color(web_color c) : r(c.red), g(c.green), b(c.blue), a(c.alpha) {}
+
+	bool operator==(color c) const { return r == c.r && g == c.g && b == c.b && a == c.a; }
+	bool operator!=(color c) const { return !(*this == c); }
+};
+const color white(255,255,255,255);
+const color black(0,0,0,255);
+const color transparent(0,0,0,0);
+
 class Bitmap
 {
 public:
 	int width  = 0;
 	int height = 0;
-	std::vector<web_color> data;
+	vector<color> data;
 
 	Bitmap() {}
-	Bitmap(int width, int height, web_color color = web_color::white) : width(width), height(height)
+	Bitmap(int width, int height, color color = white) : width(width), height(height)
 	{
 		data.resize(width * height, color);
 	}
@@ -21,15 +37,15 @@ public:
 	bool operator==(const Bitmap& bmp) const { return width == bmp.width && height == bmp.height && data == bmp.data; }
 	bool operator!=(const Bitmap& bmp) const { return !(*this == bmp); }
 
-	web_color get_pixel(int x, int y) const;
-	void set_pixel(int x, int y, web_color color);
-	void draw_line(int x0, int y0, int x1, int y1, web_color color);
-	void draw_rect(int x, int y, int width, int height, web_color color);
-	void fill_rect(position rect, web_color color);
+	color get_pixel(int x, int y) const;
+	void set_pixel(int x, int y, color color);
+	void draw_line(int x0, int y0, int x1, int y1, color color);
+	void draw_rect(int x, int y, int width, int height, color color);
+	void fill_rect(position rect, color color);
 	void draw_bitmap(int x, int y, const Bitmap& bmp);
-	void replace_color(web_color original, web_color replacement);
+	void replace_color(color original, color replacement);
 
-	position find_picture(web_color bgcolor = web_color::white);
+	position find_picture(color bgcolor = white);
 	void resize(int new_width, int new_height);
 	void load(string filename);
 	void save(string filename);

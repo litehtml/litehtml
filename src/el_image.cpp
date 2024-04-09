@@ -35,59 +35,26 @@ void litehtml::el_image::parse_attributes()
 
 void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
 {
+	html_tag::draw(hdc, x, y, clip, ri);
 	position pos = ri->pos();
 	pos.x += x;
 	pos.y += y;
 
-	position el_pos = pos;
-	el_pos += ri->get_paddings();
-	el_pos += ri->get_borders();
-
-	// draw standard background here
-	if (el_pos.does_intersect(clip))
-	{
-		const background* bg = get_background();
-		if (bg)
-		{
-			std::vector<background_paint> bg_paint;
-			init_background_paint(pos, bg_paint, bg, ri);
-
-			get_document()->container()->draw_background(hdc, bg_paint);
-		}
-	}
-
 	// draw image as background
 	if(pos.does_intersect(clip))
 	{
-		if (pos.width > 0 && pos.height > 0) {
-			background_paint bg;
-			bg.image				= m_src;
-			bg.clip_box				= pos;
-			bg.origin_box			= pos;
-			bg.border_box			= pos;
-			bg.border_box			+= ri->get_paddings();
-			bg.border_box			+= ri->get_borders();
-			bg.repeat				= background_repeat_no_repeat;
-			bg.image_size.width		= pos.width;
-			bg.image_size.height	= pos.height;
-			bg.border_radius		= css().get_borders().radius.calc_percents(bg.border_box.width, bg.border_box.height);
-			bg.position_x			= pos.x;
-			bg.position_y			= pos.y;
-			get_document()->container()->draw_background(hdc, {bg});
+		if (pos.width > 0 && pos.height > 0)
+		{
+			background_layer layer;
+			layer.clip_box = pos;
+			layer.origin_box = pos;
+			layer.border_box = pos;
+			layer.border_box += ri->get_paddings();
+			layer.border_box += ri->get_borders();
+			layer.repeat = background_repeat_no_repeat;
+			layer.border_radius = css().get_borders().radius.calc_percents(layer.border_box.width, layer.border_box.height);
+			get_document()->container()->draw_image(hdc, layer, m_src, {});
 		}
-	}
-
-	// draw borders
-	if (el_pos.does_intersect(clip))
-	{
-		position border_box = pos;
-		border_box += ri->get_paddings();
-		border_box += ri->get_borders();
-
-		borders bdr = css().get_borders();
-		bdr.radius = css().get_borders().radius.calc_percents(border_box.width, border_box.height);
-
-		get_document()->container()->draw_borders(hdc, bdr, border_box, is_root());
 	}
 }
 

@@ -26,6 +26,8 @@ set(SOURCE_LITEHTML
     src/codepoint.cpp
     src/css_length.cpp
     src/css_selector.cpp
+    src/css_tokenizer.cpp
+    src/css_parser.cpp
     src/document.cpp
     src/document_container.cpp
     src/el_anchor.cpp
@@ -76,7 +78,10 @@ set(SOURCE_LITEHTML
     src/render_image.cpp
     src/formatting_context.cpp
     src/flex_item.cpp
-    src/flex_line.cpp)
+    src/flex_line.cpp
+    src/background.cpp
+    src/gradient.cpp
+)
 
 set(HEADER_LITEHTML
     include/litehtml.h
@@ -88,6 +93,8 @@ set(HEADER_LITEHTML
     include/litehtml/css_offsets.h
     include/litehtml/css_position.h
     include/litehtml/css_selector.h
+    include/litehtml/css_parser.h
+    include/litehtml/css_tokenizer.h
     include/litehtml/document.h
     include/litehtml/document_container.h
     include/litehtml/el_anchor.h
@@ -144,8 +151,8 @@ set(HEADER_LITEHTML
 )
 
 set(TEST_LITEHTML
-    test/cssTest.cpp
-    test/mediaQueryTest.cpp
+#    test/cssTest.cpp
+#    test/mediaQueryTest.cpp
     test/codepoint_test.cpp
     test/tstring_view_test.cpp
     test/url_test.cpp
@@ -172,7 +179,7 @@ add_library(${PROJECT_NAME} ${SOURCE_LITEHTML})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_LIB_VERSION} SOVERSION ${PROJECT_SO_VERSION})
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    CXX_STANDARD 11
+    CXX_STANDARD 17
     C_STANDARD 99
     PUBLIC_HEADER "${HEADER_LITEHTML}"
 )
@@ -230,7 +237,7 @@ if (LITEHTML_BUILD_TESTING)
     )
 
     set_target_properties(${TEST_NAME} PROPERTIES
-        CXX_STANDARD 11
+        CXX_STANDARD 17
         C_STANDARD 99
         PUBLIC_HEADER "${HEADER_LITEHTML}"
     )

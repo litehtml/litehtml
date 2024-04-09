@@ -1,162 +1,169 @@
 #include "html.h"
 #include "media_query.h"
-#include "document.h"
+#include "css_parser.h"
+#include <assert.h>
+#include <iso646.h>
 
-
-litehtml::media_query::media_query()
+namespace litehtml
 {
-	m_media_type	= media_type_all;
-	m_not			= false;
-}
 
-litehtml::media_query::media_query( const media_query& val )
+bool eval_op(float x, short op, float value)
 {
-	m_not			= val.m_not;
-	m_expressions	= val.m_expressions;
-	m_media_type	= val.m_media_type;
-}
-
-litehtml::media_query::ptr litehtml::media_query::create_from_string(const string& str, const std::shared_ptr<document>& doc)
-{
-	media_query::ptr query = std::make_shared<media_query>();
-
-	string_vector tokens;
-	split_string(str, tokens, " \t\r\n", "", "(");
-
-	for(auto & token : tokens)
+	const float ε = 0.00001f;
+	if (abs(x - value) < ε)
 	{
-		if(token == "not")
-		{
-			query->m_not = true;
-		} else if(token.at(0) == '(')
-		{
-			token.erase(0, 1);
-			if(!token.empty() && token.at(token.length() - 1) == ')')
-			{
-				token.erase(token.length() - 1, 1);
-			}
-			media_query_expression expr;
-			string_vector expr_tokens;
-			split_string(token, expr_tokens, ":");
-			if(!expr_tokens.empty())
-			{
-				trim(expr_tokens[0]);
-				expr.feature = (media_feature) value_index(expr_tokens[0], media_feature_strings, media_feature_none);
-				if(expr.feature != media_feature_none)
-				{
-					if(expr_tokens.size() == 1)
-					{
-						expr.check_as_bool = true;
-					} else
-					{
-						trim(expr_tokens[1]);
-						expr.check_as_bool = false;
-						if(expr.feature == media_feature_orientation)
-						{
-							expr.val = value_index(expr_tokens[1], media_orientation_strings, media_orientation_landscape);
-						} else
-						{
-							string::size_type slash_pos = expr_tokens[1].find('/');
-							if( slash_pos != string::npos )
-							{
-								string val1 = expr_tokens[1].substr(0, slash_pos);
-								string val2 = expr_tokens[1].substr(slash_pos + 1);
-								trim(val1);
-								trim(val2);
-								expr.val = atoi(val1.c_str());
-								expr.val2 = atoi(val2.c_str());
-							} else
-							{
-								css_length length;
-								length.fromString(expr_tokens[1]);
-								if(length.units() == css_units_dpcm || length.units() == css_units_dpi)
-								{
-									expr.val = (int) (length.val() * 2.54);
-								} else
-								{
-									if(doc)
-									{
-										doc->cvt_units(length, doc->container()->get_default_font_size());
-									}
-									expr.val = (int) length.val();
-								}
-							}
-						}
-					}
-					query->m_expressions.push_back(expr);
-				}
-			}
-		} else
-		{
-			query->m_media_type = (media_type) value_index(token, media_type_strings, media_type_none);
-		}
+		if (is_one_of(op, '=', '>=', '<=')) return true;
+		if (op == '!=') return false;
 	}
 
-	return query;
+	switch (op)
+	{
+	case '<':  return x < value;
+	case '<=': return x <= value;
+	case '>':  return x > value;
+	case '>=': return x >= value;
+	case '=':  return x == value;
+	case '!=': return x != value;
+	default:   return false;
+	}
 }
 
-bool litehtml::media_query::check( const media_features& features ) const
+bool media_feature::compare(float x) const
 {
-	bool res = false;
-	if(m_media_type == media_type_all || m_media_type == features.type)
-	{
-		res = true;
-		for(auto expression : m_expressions)
-		{
-			if(!expression.check(features))
-			{
-				res = false;
-                break;
-			}
-		}
-	}
-
-	if(m_not)
-	{
-		res = !res;
-	}
-
-	return res;
+	if (!op2) return eval_op(x, op, value);
+	return eval_op(value, op, x) && eval_op(x, op2, value2);
 }
 
-//////////////////////////////////////////////////////////////////////////
-
-litehtml::media_query_list::ptr litehtml::media_query_list::create_from_string(const string& str, const std::shared_ptr<document>& doc)
+bool media_feature::check(const media_features& feat) const
 {
-	media_query_list::ptr list = std::make_shared<media_query_list>();
-
-	string_vector tokens;
-	split_string(str, tokens, ",");
-
-	for(auto & token : tokens)
+	switch (_id(name))
 	{
-		trim(token);
-		lcase(token);
-
-		litehtml::media_query::ptr query = media_query::create_from_string(token, doc);
-		if(query)
-		{
-			list->m_queries.push_back(query);
-		}
+	case _width_:
+		return compare(feat.width);
+	case _height_:
+		return compare(feat.height);
+	case _device_width_:
+		return compare(feat.device_width);
+	case _device_height_:
+		return compare(feat.device_height);
+	case _orientation_:
+		return compare(feat.height >= feat.width ? _portrait_ : _landscape_);
+	case _aspect_ratio_:
+		return feat.height ? compare(float(feat.width) / feat.height) : false;
+	case _device_aspect_ratio_:
+		return feat.device_height ? compare(float(feat.device_width) / feat.device_height) : false;
+	case _color_:
+		return compare(feat.color);
+	case _color_index_:
+		return compare(feat.color_index);
+	case _monochrome_:
+		return compare(feat.monochrome);
+	case _resolution_:
+		return compare(feat.resolution);
+	default:
+		assert(0); // must never happen, unknown media features are handled in parse_media_feature
+		return false;
 	}
-	if(list->m_queries.empty())
-	{
-		list = nullptr;
-	}
-
-	return list;
 }
 
-bool litehtml::media_query_list::apply_media_features( const media_features& features )
+trilean media_condition::check(const media_features& features) const
 {
-	bool apply = false;
+	if (op == _not_)
+		return not m_conditions[0].check(features);
 	
-	for(auto & query : m_queries)
+	if (op == _and_)
 	{
-		if(query->check(features))
+		// https://drafts.csswg.org/mediaqueries/#evaluating
+		// The result is true if the <media-in-parens> child term and all of the <media-in-parens> 
+		// children of the <media-and> child terms are true, false if at least one of these 
+		// <media-in-parens> terms are false, and unknown otherwise.
+		trilean result = True;
+		for (const auto& condition : m_conditions)
 		{
-			apply = true;
-            break;
+			result = result && condition.check(features);
+			if (result == False) return result; // no need to check further
+		}
+		return result;
+	}
+	if (op == _or_)
+	{
+		// The result is false if the <media-in-parens> child term and all of the <media-in-parens> 
+		// children of the <media-or> child terms are false, true if at least one of these 
+		// <media-in-parens> terms are true, and unknown otherwise.
+		trilean result = False;
+		for (const auto& condition : m_conditions)
+		{
+			result = result || condition.check(features);
+			if (result == True) return result; // no need to check further
+		}
+		return result;
+	}
+	return False;
+}
+
+trilean media_in_parens::check(const media_features& features) const
+{
+	if (is<media_condition>()) return get<media_condition>().check(features);
+	if (is<media_feature>()) return (trilean)get<media_feature>().check(features);
+	// <general-enclosed>  https://drafts.csswg.org/mediaqueries/#evaluating
+	return Unknown;
+}
+
+trilean media_query::check(const media_features& features) const
+{
+	trilean result;
+	// https://drafts.csswg.org/mediaqueries/#media-types
+	// User agents must recognize the following media types as valid, but must make them match nothing.
+	if (m_media_type >= media_type_first_deprecated)
+		result = False;
+	else if (m_media_type == media_type_all)
+		result = True;
+	else 
+		result = (trilean)(m_media_type == features.type);
+
+	if (result == True)
+	{
+		for (const auto& condition : m_conditions)
+		{
+			result = result && condition.check(features);
+			if (result == False) break; // no need to check further
+		}
+	}
+
+	if (m_not) result = not result;
+
+	return result;
+}
+
+// https://drafts.csswg.org/mediaqueries/#mq-list
+bool media_query_list::check(const media_features& features) const
+{
+	if (empty()) return true; // An empty media query list evaluates to true.
+
+	trilean result = False;
+	for (const auto& query : m_queries)
+	{
+		result = result || query.check(features);
+		if (result == True) break; // no need to check further
+	}
+
+	// https://drafts.csswg.org/mediaqueries/#evaluating
+	// If the result ... is used in any context that expects a two-valued boolean, “unknown” must be converted to “false”.
+	return result == True;
+}
+
+// nested @media rules: https://drafts.csswg.org/css-conditional-3/#processing
+// all of them must be true for style rules to apply
+bool media_query_list_list::apply_media_features(const media_features& features)
+{
+	bool apply = true;
+
+	for (const auto& mq_list: m_media_query_lists)
+	{
+		if (!mq_list.check(features))
+		{
+			apply = false;
+			break;
 		}
 	}
 
@@ -165,266 +172,501 @@ bool litehtml::media_query_list::apply_media_features( const media_features& fea
 	return ret;
 }
 
-bool litehtml::media_query_expression::check( const media_features& features ) const
+
+bool parse_media_query(const css_token_vector& tokens, media_query& mquery, document::ptr doc);
+
+// https://drafts.csswg.org/mediaqueries-5/#typedef-media-query-list
+media_query_list parse_media_query_list(const css_token_vector& _tokens, document::ptr doc)
 {
-	switch(feature)
+	auto keep_whitespace = [](auto left_token, auto right_token)
 	{
-	case media_feature_width:
-		if(check_as_bool)
-		{
-			return (features.width != 0);
-		} else if(features.width == val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_min_width:
-		if(features.width >= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_max_width:
-		if(features.width <= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_height:
-		if(check_as_bool)
-		{
-			return (features.height != 0);
-		} else if(features.height == val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_min_height:
-		if(features.height >= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_max_height:
-		if(features.height <= val)
-		{
-			return true;
-		}
-		break;
+		return is_one_of(left_token.ch, '<', '>') && right_token.ch == '=';
+	};
+	css_token_vector tokens = normalize(_tokens, f_componentize | f_remove_whitespace, keep_whitespace);
+	// this needs special treatment because empty media query list evaluates to true
+	if (tokens.empty()) return {};
 
-	case media_feature_device_width:
-		if(check_as_bool)
-		{
-			return (features.device_width != 0);
-		} else if(features.device_width == val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_min_device_width:
-		if(features.device_width >= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_max_device_width:
-		if(features.device_width <= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_device_height:
-		if(check_as_bool)
-		{
-			return (features.device_height != 0);
-		} else if(features.device_height == val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_min_device_height:
-		if(features.device_height >= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_max_device_height:
-		if(features.device_height <= val)
-		{
-			return true;
-		}
-		break;
+	media_query_list result;
+	auto list_of_lists = parse_comma_separated_list(tokens);
+	for (const auto& list : list_of_lists)
+	{
+		media_query query;
+		parse_media_query(list, query, doc);
+		// Note: appending even if media query failed to parse, as per standard.
+		result.m_queries.push_back(query);
+	}
+	return result;
+}
 
-	case media_feature_orientation:
-		if(features.height >= features.width)
-		{
-			if(val == media_orientation_portrait)
-			{
-				return true;
-			}
-		} else
-		{
-			if(val == media_orientation_landscape)
-			{
-				return true;
-			}
-		}
-		break;
-	case media_feature_aspect_ratio:
-		if(features.height && val2)
-		{
-			int ratio_this = round_d( (double) val / (double) val2 * 100 );
-			int ratio_feat = round_d( (double) features.width / (double) features.height * 100.0 );
-			if(ratio_this == ratio_feat)
-			{
-				return true;
-			}
-		}
-		break;
-	case media_feature_min_aspect_ratio:
-		if(features.height && val2)
-		{
-			int ratio_this = round_d( (double) val / (double) val2 * 100 );
-			int ratio_feat = round_d( (double) features.width / (double) features.height * 100.0 );
-			if(ratio_feat >= ratio_this)
-			{
-				return true;
-			}
-		}
-		break;
-	case media_feature_max_aspect_ratio:
-		if(features.height && val2)
-		{
-			int ratio_this = round_d( (double) val / (double) val2 * 100 );
-			int ratio_feat = round_d( (double) features.width / (double) features.height * 100.0 );
-			if(ratio_feat <= ratio_this)
-			{
-				return true;
-			}
-		}
-		break;
+media_query_list parse_media_query_list(const string& str, shared_ptr<document> doc)
+{
+	auto tokens = normalize(str);
+	return parse_media_query_list(tokens, doc);
+}
 
-	case media_feature_device_aspect_ratio:
-		if(features.device_height && val2)
-		{
-			int ratio_this = round_d( (double) val / (double) val2 * 100 );
-			int ratio_feat = round_d( (double) features.device_width / (double) features.device_height * 100.0 );
-			if(ratio_feat == ratio_this)
-			{
-				return true;
-			}
-		}
-		break;
-	case media_feature_min_device_aspect_ratio:
-		if(features.device_height && val2)
-		{
-			int ratio_this = round_d( (double) val / (double) val2 * 100 );
-			int ratio_feat = round_d( (double) features.device_width / (double) features.device_height * 100.0 );
-			if(ratio_feat >= ratio_this)
-			{
-				return true;
-			}
-		}
-		break;
-	case media_feature_max_device_aspect_ratio:
-		if(features.device_height && val2)
-		{
-			int ratio_this = round_d( (double) val / (double) val2 * 100 );
-			int ratio_feat = round_d( (double) features.device_width / (double) features.device_height * 100.0 );
-			if(ratio_feat <= ratio_this)
-			{
-				return true;
-			}
-		}
-		break;
+bool parse_media_condition(const css_token_vector& tokens, int& index, bool or_allowed, media_condition& condition, document::ptr doc);
 
-	case media_feature_color:
-		if(check_as_bool)
-		{
-			return (features.color != 0);
-		} else if(features.color == val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_min_color:
-		if(features.color >= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_max_color:
-		if(features.color <= val)
-		{
-			return true;
-		}
-		break;
+// <media-query> = <media-condition> | [ not | only ]? <media-type> [ and <media-condition-without-or> ]?
+bool parse_media_query(const css_token_vector& tokens, media_query& mquery, document::ptr doc)
+{
+	if (tokens.empty()) return false;
+	int index = 0;
+	auto end = [&]() { return index == tokens.size(); };
 
-	case media_feature_color_index:
-		if(check_as_bool)
-		{
-			return (features.color_index != 0);
-		} else if(features.color_index == val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_min_color_index:
-		if(features.color_index >= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_max_color_index:
-		if(features.color_index <= val)
-		{
-			return true;
-		}
-		break;
+	media_condition condition;
+	if (parse_media_condition(tokens, index, true, condition, doc) && end())
+	{
+		mquery.m_not = false;
+		mquery.m_media_type = media_type_all;
+		mquery.m_conditions = {condition};
+		return true;
+	}
 
-	case media_feature_monochrome:
-		if(check_as_bool)
-		{
-			return (features.monochrome != 0);
-		} else if(features.monochrome == val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_min_monochrome:
-		if(features.monochrome >= val)
-		{
-			return true;
-		}
-		break;
-	case media_feature_max_monochrome:
-		if(features.monochrome <= val)
-		{
-			return true;
-		}
-		break;
+	string ident = tokens[0].ident();
+	bool _not = false;
+	if (ident == "not") index++, _not = true;
+	else if (ident == "only") index++; // ignored  https://drafts.csswg.org/mediaqueries-5/#mq-only
+	
+	int media_type = media_type_all;
+	if (!parse_keyword(at(tokens, index), media_type, media_type_strings))
+		return false;
+	index++;
 
-	case media_feature_resolution:
-		if(features.resolution == val)
+	if (at(tokens, index).ident() == "and")
+	{
+		index++;
+		if (!parse_media_condition(tokens, index, false, condition, doc) || !end())
+			return false;
+		mquery.m_conditions = {condition};
+	}
+	if (!end()) return false;
+	mquery.m_not = _not;
+	mquery.m_media_type = (litehtml::media_type) media_type;
+	return true;
+}
+
+bool parse_media_in_parens(const css_token& token, media_in_parens& media_in_parens, document::ptr doc);
+
+// <media-condition>            = <media-not> | <media-in-parens> [ <media-and>* | <media-or>* ]
+// <media-condition-without-or> = <media-not> | <media-in-parens> <media-and>*
+// <media-not> = not <media-in-parens>
+bool parse_media_condition(const css_token_vector& tokens, int& index, bool _or_allowed, media_condition& condition, document::ptr doc)
+{
+	media_in_parens media_in_parens;
+	if (at(tokens, index).ident() == "not")
+	{
+		if (!parse_media_in_parens(at(tokens, index + 1), media_in_parens, doc)) return false;
+		condition.op = _not_;
+		condition.m_conditions = {media_in_parens};
+		index += 2;
+		return true;
+	}
+
+	if (!parse_media_in_parens(at(tokens, index), media_in_parens, doc)) return false;
+	condition.m_conditions = {media_in_parens};
+	index++;
+
+	bool or_allowed = _or_allowed;
+	bool and_allowed = true;
+	while (1)
+	{
+		string ident = at(tokens, index).ident();
+		if (ident == "and" && and_allowed) condition.op = _and_, or_allowed = false;
+		else if (ident == "or" && or_allowed) condition.op = _or_, and_allowed = false;
+		else return true;
+		index++;
+
+		if (!parse_media_in_parens(at(tokens, index), media_in_parens, doc)) return false;
+		condition.m_conditions.push_back(media_in_parens);
+		index++;
+	}
+}
+
+bool parse_media_feature(const css_token& token, media_feature& media_feature, document::ptr doc);
+
+// https://drafts.csswg.org/mediaqueries-5/#typedef-media-in-parens
+// <media-in-parens> = ( <media-condition> ) | <media-feature> | <general-enclosed>
+// <general-enclosed> = [ <function-token> <any-value>? ) ] | [ ( <any-value>? ) ]
+bool parse_media_in_parens(const css_token& token, media_in_parens& media_in_parens, document::ptr doc)
+{
+	if (token.type == CV_FUNCTION)
+	{
+		if (!token.value.empty() && !is_any_value(token.value))
+			return false;
+		media_in_parens = unknown();
+		return true;
+	}
+	
+	if (token.type != ROUND_BLOCK) return false;
+	const css_token_vector& tokens = token.value;
+
+	int index = 0;
+	media_condition condition;
+	media_feature media_feature;
+	if (parse_media_condition(tokens, index, true, condition, doc) && index == tokens.size())
+		media_in_parens = condition;
+	else if (parse_media_feature(token, media_feature, doc))
+		media_in_parens = media_feature;
+	else if (!tokens.empty() && !is_any_value(tokens))
+		return false;
+	else
+		media_in_parens = unknown();
+	return true;
+}
+
+bool parse_mf_value(const css_token_vector& tokens, int& index, css_token val[2]);
+bool parse_mf_range(const css_token_vector& tokens, media_feature& media_feature, document::ptr doc);
+
+// https://drafts.csswg.org/mediaqueries/#mq-ranges
+// Every media feature defines its “type” as either “range” or “discrete” in its definition table.
+// The only significant difference between the two types is that “range” media features can be evaluated in a range context and accept “min-” and “max-” prefixes on their name.
+
+// https://drafts.csswg.org/mediaqueries/#mq-min-max
+// “Discrete” type properties do not accept “min-” or “max-” prefixes. Adding such a prefix to a “discrete” type media feature simply results in an unknown feature name.
+// For example, (min-grid: 1) is invalid, because grid is a “discrete” media feature, and so doesn’t accept the prefixes. (Even though the grid media feature appears to be numeric, as it accepts the values 0 and 1.)
+
+struct mf_info
+{
+	string_id			type		= empty_id; // range, discrete
+	string_id			value_type	= empty_id; // length, ratio, resolution, integer, keyword
+	vector<string_id>	keywords;
+	
+	operator bool() { return type != empty_id; }
+};
+
+std::map<string, mf_info> supported_media_features =
+{
+	////////////////////////////////////////////////
+	// 4. Viewport/Page Dimensions Media Features
+	////////////////////////////////////////////////
+
+	// https://drafts.csswg.org/mediaqueries/#width
+	// For continuous media, this is the width of the viewport.
+	{"width", {_range_, _length_}},
+	{"height", {_range_, _length_}},
+
+	// https://drafts.csswg.org/mediaqueries/#aspect-ratio
+	// width/height
+	{"aspect-ratio", {_range_, _ratio_}},
+
+	// https://drafts.csswg.org/mediaqueries/#orientation
+	{"orientation", {_discrete_, _keyword_, {_portrait_, _landscape_}}},
+
+	////////////////////////////////////////////////
+	// 5. Display Quality Media Features
+	////////////////////////////////////////////////
+
+	// https://drafts.csswg.org/mediaqueries/#resolution
+	// https://developer.mozilla.org/en-US/docs/Web/CSS/@media/resolution
+	{"resolution", {_range_, _resolution_}},
+
+	////////////////////////////////////////////////
+	// 6. Color Media Features
+	////////////////////////////////////////////////
+
+	// https://drafts.csswg.org/mediaqueries/#color
+	{"color", {_range_, _integer_}},
+
+	// https://drafts.csswg.org/mediaqueries/#color-index
+	{"color-index", {_range_, _integer_}},
+
+	// https://drafts.csswg.org/mediaqueries/#monochrome
+	{"monochrome", {_range_, _integer_}},
+
+
+	////////////////////////////////////////////////
+	// Deprecated Media Features
+	////////////////////////////////////////////////
+
+	// https://drafts.csswg.org/mediaqueries/#device-width
+	{"device-width", {_range_, _length_}},
+	{"device-height", {_range_, _length_}},
+
+	// https://drafts.csswg.org/mediaqueries/#device-aspect-ratio
+	{"device-aspect-ratio", {_range_, _ratio_}},
+};
+
+template<class Map, class Key>
+auto at(const Map& map, Key key)
+{
+	static Map::mapped_type invalid_value; // mapped_type's default constructor must create invalid item
+	auto it = map.find(key);
+	return it != map.end() ? it->second : invalid_value;
+}
+
+bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
+{
+	switch (mfi.value_type)
+	{
+	case _integer_:
+		// nothing to convert, just verify
+		return val[0].type == NUMBER && val[0].n.number_type == css_number_integer && val[1].type == 0;
+	
+	case _length_:
+	{
+		if (val[1].type != 0) return false;
+		css_length length;
+		if (!length.from_token(val[0], f_length)) return false;
+		doc->cvt_units(length, doc->container()->get_default_font_size());
+		val[0].n.number = length.val();
+		return true;
+	}
+	
+	case _resolution_: // https://drafts.csswg.org/css-values-4/#resolution
+		if (val[1].type != 0) return false;
+		if (val[0].type == DIMENSION)
 		{
+			string unit = lowcase(val[0].unit);
+			int idx = value_index(unit, "dpi;dpcm;dppx;x"); // x == dppx
+			// The allowed range of <resolution> values always excludes negative values
+			if (idx < 0 || val[0].n.number < 0) return false;
+			// dppx is the canonical unit, but we convert to dpi instead to match document_container::get_media_features
+			// Note that due to the 1:96 fixed ratio of CSS in to CSS px, 1dppx is equivalent to 96dpi.
+			if (unit == "dppx" || unit == "x")
+				val[0].n.number *= 96;
+			else if (unit == "dpcm")
+				val[0].n.number *= 2.54f; // 1in = 2.54cm
+		}
+		// https://drafts.csswg.org/mediaqueries/#resolution
+		else if (val[0].ident() == "infinite")
+		{
+			val[0] = css_token(NUMBER, INFINITY, css_number_number);
 			return true;
 		}
-		break;
-	case media_feature_min_resolution:
-		if(features.resolution >= val)
+		// Note: <resolution> doesn't allow unitless zero
+		return false;
+	
+	case _ratio_: // https://drafts.csswg.org/css-values-4/#ratio  <ratio> = <number [0,∞]> [ / <number [0,∞]> ]?
+		if (val[0].type == NUMBER && val[0].n.number >= 0 &&
+			(val[1].type == NUMBER && val[1].n.number >= 0 || val[1].type == 0))
 		{
+			if (val[1].type == NUMBER)
+				val[0].n.number /= val[1].n.number; // Note: val[1].n.number may be 0, so result may be inf
 			return true;
 		}
-		break;
-	case media_feature_max_resolution:
-		if(features.resolution <= val)
-		{
-			return true;
-		}
-		break;
+		return false;
+
+	case _keyword_:
+	{
+		if (val[1].type != 0) return false;
+		string_id ident = _id(val[0].ident());
+		if (!contains(mfi.keywords, ident)) return false;
+		val[0] = css_token(NUMBER, (float)ident);
+		return true;
+	}
+	
 	default:
 		return false;
 	}
+}
 
+bool media_feature::verify_and_convert_units(string_id syntax,
+	css_token val[2], css_token val2[2], document::ptr doc)
+{
+	// https://drafts.csswg.org/mediaqueries/#mq-boolean-context
+	if (syntax == _boolean_) // (name)
+	{
+		// Attempting to evaluate a min/max prefixed media feature in a boolean context is invalid and a syntax error.
+		auto mf_info = at(supported_media_features, name);
+		if (!mf_info) return false;
+		value = mf_info.value_type == _keyword_ ? (float)_none_ : 0;
+		op = '!=';
+		return true;
+	}
+	else if (syntax == _plain_) // ({min-,max-,}name: value)
+	{
+		if (is_one_of(name.substr(0, 4), "min-", "max-"))
+		{
+			string real_name = name.substr(4);
+			auto mf_info = at(supported_media_features, real_name);
+			if (!mf_info || mf_info.type == _discrete_)
+				return false;
+			if (!convert_units(mf_info, val, doc))
+				return false;
+			value = val[0].n.number;
+			op = name.substr(0, 4) == "min-" ? '>=' : '<=';
+			name = real_name;
+			return true;
+		}
+		else
+		{
+			auto mf_info = at(supported_media_features, name);
+			if (!mf_info) return false;
+			if (!convert_units(mf_info, val, doc))
+				return false;
+			value = val[0].n.number;
+			op = '=';
+			return true;
+		}
+	}
+	else // range syntax
+	{
+		auto mf_info = at(supported_media_features, name);
+		if (!mf_info || mf_info.type == _discrete_)
+			return false;
+		//if (val)
+		{
+			if (!convert_units(mf_info, val, doc))
+				return false;
+			value = val[0].n.number;
+		}
+		if (val2)
+		{
+			if (!convert_units(mf_info, val2, doc))
+				return false;
+			value2 = val2[0].n.number;
+		}
+		return true;
+	}
+}
+
+// <media-feature> = ( [ <mf-plain> | <mf-boolean> | <mf-range> ] )
+bool parse_media_feature(const css_token& token, media_feature& result, document::ptr doc)
+{
+	if (token.type != ROUND_BLOCK || token.value.empty()) return false;
+	const css_token_vector& tokens = token.value;
+
+	if (tokens.size() == 1)
+	{
+		media_feature mf = {tokens[0].ident()};
+		if (!mf.verify_and_convert_units(_boolean_)) return false;
+		result = mf;
+		return true;
+	}
+
+	if (tokens[0].type == IDENT && tokens[1].ch == ':')
+	{
+		css_token val[2];
+		int index = 2;
+		if (!parse_mf_value(tokens, index, val) || index != tokens.size())
+			return false;
+		
+		media_feature mf = {tokens[0].ident()};
+		if (!mf.verify_and_convert_units(_plain_, val, 0, doc)) return false;
+		result = mf;
+		return true;
+	}
+
+	return parse_mf_range(tokens, result, doc);
+}
+
+// <mf-value> = <number> | <dimension> | <ident> | <ratio>
+// <ratio> = <number [0,∞]> [ / <number [0,∞]> ]?
+bool parse_mf_value(const css_token_vector& tokens, int& index, css_token val[2])
+{
+	const css_token& a = at(tokens, index);
+	const css_token& b = at(tokens, index + 1);
+	const css_token& c = at(tokens, index + 2);
+	
+	if (!is_one_of(a.type, NUMBER, DIMENSION, IDENT)) return false;
+	
+	if (a.type == NUMBER && a.n.number >= 0 && b.ch == '/' &&
+		c.type == NUMBER && c.n.number >= 0)
+	{
+		val[0] = a;
+		val[1] = c;
+		index += 3;
+	}
+	else
+	{
+		val[0] = a;
+		index++;
+	}
+	return true;
+}
+
+short mirror(short op)
+{
+	if (op == '<') return '>';
+	if (op == '<=') return '>=';
+	return op;
+}
+
+// <mf-range> = <mf-name> <mf-comparison> <mf-value>
+//            | <mf-value> <mf-comparison> <mf-name>
+//            | <mf-value> <mf-lt> <mf-name> <mf-lt> <mf-value>
+//            | <mf-value> <mf-gt> <mf-name> <mf-gt> <mf-value>
+// <mf-lt> = '<' '='?
+// <mf-gt> = '>' '='?
+// <mf-eq> = '='
+// <mf-comparison> = <mf-lt> | <mf-gt> | <mf-eq>
+bool parse_mf_range(const css_token_vector& tokens, media_feature& result, document::ptr doc)
+{
+	if (tokens.size() < 3) return false;
+
+	int index;
+	string name;
+	auto mf_name = [&]()
+	{
+		if (at(tokens, index).type != IDENT) return false;
+		name = at(tokens, index).ident();
+		// special case for (infinite = resolution)
+		// resolution is the only range media feature that can accept a keyword
+		if (name == "infinite") return false;
+		index++;
+		return true;
+	};
+	auto mf_value = [&](css_token _val[2])
+	{
+		return parse_mf_value(tokens, index, _val);
+	};
+	auto mf_lt_gt = [&](char lg, short& _op)
+	{
+		const css_token& tok = at(tokens, index);
+		const css_token& tok1 = at(tokens, index + 1);
+
+		if (tok.ch != lg) return false;
+
+		if (tok1.ch == '=')
+			index+=2, _op = (short)(tok.ch << 8 | tok1.ch);
+		else
+			index++,  _op = (short)tok.ch;
+		return true;
+	};
+	auto mf_lt = [&](short& _op) { return mf_lt_gt('<', _op); };
+	auto mf_gt = [&](short& _op) { return mf_lt_gt('>', _op); };
+	auto mf_comparison = [&](short& _op)
+	{
+		const css_token& tok = at(tokens, index);
+
+		if (tok.ch == '=')
+		{
+			index++;
+			_op = (short)tok.ch;
+			return true;
+		}
+
+		return mf_lt(_op) || mf_gt(_op);
+	};
+	auto start = [&]() { index = 0; return true; };
+	auto end = [&]() { return index == tokens.size(); };
+
+	short op;
+	css_token val[2];
+	// using lambda to avoid warning "assignment within conditional expression"
+	auto reverse = [](short& _op) { _op = mirror(_op); return true; };
+	if (start() && mf_name() && mf_comparison(op) && mf_value(val) && end() ||
+		start() && mf_value(val) && mf_comparison(op) && mf_name() && end() && reverse(op))
+	{
+		media_feature mf = {name};
+		mf.op = op;
+		if (!mf.verify_and_convert_units(_range_, val, 0, doc)) return false;
+		result = mf;
+		return true;
+	}
+	short op2;
+	css_token val2[2];
+	if (start() && mf_value(val) && mf_lt(op) && mf_name() && mf_lt(op2) && mf_value(val2) && end() ||
+		start() && mf_value(val) && mf_gt(op) && mf_name() && mf_gt(op2) && mf_value(val2) && end())
+	{
+		media_feature mf = {name};
+		mf.op = op;
+		mf.op2 = op2;
+		if (!mf.verify_and_convert_units(_range_, val, val2, doc)) return false;
+		result = mf;
+		return true;
+	}
 	return false;
 }
+
+} // namespace litehtml

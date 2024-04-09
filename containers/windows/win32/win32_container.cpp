@@ -183,6 +183,7 @@ void win32_container::draw_list_marker(uint_ptr hdc, const litehtml::list_marker
 
 void win32_container::make_url_utf8(const char* url, const char* basepath, std::wstring& out)
 {
+	if (!basepath) basepath = "";
 	make_url(litehtml::utf8_to_wchar(url), litehtml::utf8_to_wchar(basepath), out);
 }
 
@@ -252,28 +253,32 @@ void win32_container::unlock_images_cache()
 	LeaveCriticalSection(&m_img_sync);
 }
 
-void win32_container::draw_background( uint_ptr _hdc, const std::vector<litehtml::background_paint>& bg )
+void win32_container::draw_solid_fill(uint_ptr _hdc, const litehtml::background_layer& layer, const litehtml::web_color& color)
 {
 	HDC hdc = (HDC)_hdc;
 	apply_clip(hdc);
 
-	auto border_box = bg.back().border_box;
-	auto color = bg.back().color;
+	auto border_box = layer.border_box;
 	fill_rect(hdc, border_box.x, border_box.y, border_box.width, border_box.height, color);
 
-	for (int i = (int)bg.size() - 1; i >= 0; i--)
-	{
-		std::wstring url;
-		make_url_utf8(bg[i].image.c_str(), bg[i].baseurl.c_str(), url);
+	release_clip(hdc);
+}
 
-		lock_images_cache();
-		images_map::iterator img = m_images.find(url);
-		if (img != m_images.end() && img->second)
-		{
-			draw_img_bg(hdc, img->second, bg[i]);
-		}
-		unlock_images_cache();
+void win32_container::draw_image(uint_ptr _hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url)
+{
+	HDC hdc = (HDC)_hdc;
+	apply_clip(hdc);
+
+	std::wstring wurl;
+	make_url_utf8(url.c_str(), base_url.c_str(), wurl);
+
+	lock_images_cache();
+	images_map::iterator img = m_images.find(wurl);
+	if (img != m_images.end() && img->second)
+	{
+		draw_img_bg(hdc, img->second, layer);
 	}
+	unlock_images_cache();
 
 	release_clip(hdc);
 }

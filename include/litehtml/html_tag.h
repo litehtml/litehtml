@@ -46,6 +46,8 @@ namespace litehtml
 		const char*			get_tagName() const override;
 		void				set_tagName(const char* tag) override;
 		void				set_data(const char* data) override;
+		const std::vector<string_id>& classes() const { return m_classes; }
+		const string_vector& str_classes() const { return m_str_classes; }
 
 		void				set_attr(const char* name, const char* val) override;
 		const char*			get_attr(const char* name, const char* def = nullptr) const override;
@@ -75,16 +77,18 @@ namespace litehtml
 		int					get_int_property   (string_id name, bool inherited, int           default_value, uint_ptr css_properties_member_offset) const override;
 		css_length			get_length_property(string_id name, bool inherited, css_length    default_value, uint_ptr css_properties_member_offset) const override;
 		web_color			get_color_property (string_id name, bool inherited, web_color     default_value, uint_ptr css_properties_member_offset) const override;
+		std::vector<image> get_images_property (string_id name, bool inherited, const std::vector<image>& default_value, uint_ptr css_properties_member_offset) const override;
 		string				get_string_property(string_id name, bool inherited, const string& default_value, uint_ptr css_properties_member_offset) const override;
 		float				get_number_property(string_id name, bool inherited, float         default_value, uint_ptr css_properties_member_offset) const override;
 		string_vector		get_string_vector_property(string_id name, bool inherited, const string_vector& default_value, uint_ptr css_properties_member_offset) const override;
 		int_vector			get_int_vector_property   (string_id name, bool inherited, const int_vector&    default_value, uint_ptr css_properties_member_offset) const override;
 		length_vector		get_length_vector_property(string_id name, bool inherited, const length_vector& default_value, uint_ptr css_properties_member_offset) const override;
 		size_vector			get_size_vector_property  (string_id name, bool inherited, const size_vector&   default_value, uint_ptr css_properties_member_offset) const override;
-		string				get_custom_property(string_id name, const string& default_value) const override;
+		bool				get_custom_property(string_id name, css_token_vector& result) const override;
 
 		elements_list&	children();
 
+		int					select(const css_selector::vector& selector_list, bool apply_pseudo = true);
 		int					select(const string& selector) override;
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;
 		int					select(const css_element_selector& selector, bool apply_pseudo = true) override;
@@ -114,12 +118,14 @@ namespace litehtml
 		string				dump_get_name() override;
 
 	protected:
-		void				init_background_paint(position pos, std::vector<background_paint>& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri);
-		void				init_one_background_paint(int i, position pos, background_paint& bg_paint, const background* bg, const std::shared_ptr<render_item>& ri);
 		void				draw_list_marker( uint_ptr hdc, const position &pos );
 		string				get_list_marker_text(int index);
 		element::ptr		get_element_before(const style& style, bool create);
 		element::ptr		get_element_after(const style& style, bool create);
+
+		void map_to_pixel_length_property(string_id prop_name, string attr_value);
+		void map_to_pixel_length_property_with_default_value(string_id prop_name, string attr_value, int default_value);
+		void map_to_dimension_property_ignoring_zero(string_id prop_name, string attr_value);
 
 	private:
 		void				handle_counter_properties();

@@ -3,13 +3,14 @@
 #include "document.h"
 #include "iterators.h"
 
+namespace litehtml
+{
 
-litehtml::el_table::el_table(const std::shared_ptr<document>& doc) : html_tag(doc)
+el_table::el_table(const shared_ptr<document>& doc) : html_tag(doc)
 {
 }
 
-
-bool litehtml::el_table::appendChild(const element::ptr& el)
+bool el_table::appendChild(const element::ptr& el)
 {
 	if(!el)	return false;
 	if( el->tag() == _tbody_ ||
@@ -22,29 +23,24 @@ bool litehtml::el_table::appendChild(const element::ptr& el)
 	return false;
 }
 
-void litehtml::el_table::parse_attributes()
+void el_table::parse_attributes()
 {
+	// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-width
 	const char* str = get_attr("width");
-	if(str)
-	{
-		m_style.add_property(_width_, str);
-	}
+	if (str)
+		map_to_dimension_property_ignoring_zero(_width_, str);
 
+	// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-cellspacing
 	str = get_attr("cellspacing");
-	if(str)
-	{
-		string val = str;
-		val += " ";
-		val += str;
-		m_style.add_property(_border_spacing_, val);
-	}
-	
-	str = get_attr("border");
-	if(str)
-	{
-		m_style.add_property(_border_width_, str);
-	}
+	if (str)
+		map_to_pixel_length_property(_border_spacing_, str);
 
+	// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-border
+	str = get_attr("border");
+	if (str)
+		map_to_pixel_length_property_with_default_value(_border_width_, str, 1);
+
+	// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-background
 	str = get_attr("bgcolor");
 	if (str)
 	{
@@ -53,3 +49,5 @@ void litehtml::el_table::parse_attributes()
 
 	html_tag::parse_attributes();
 }
+
+} // namespace litehtml

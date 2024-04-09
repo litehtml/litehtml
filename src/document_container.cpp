@@ -5,10 +5,10 @@ void litehtml::document_container::split_text(const char* text, const std::funct
 {
 	std::wstring str;
 	std::wstring str_in = (const wchar_t*)utf8_to_wchar(text);
-	ucode_t c;
+	wchar_t c;
 	for (size_t i = 0; i < str_in.length(); i++)
 	{
-		c = (ucode_t)str_in[i];
+		c = str_in[i];
 		if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
 		{
 			if (!str.empty())

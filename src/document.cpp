@@ -30,6 +30,9 @@
 #include "render_table.h"
 #include "render_block.h"
 
+namespace litehtml
+{
+
 litehtml::document::document(document_container* objContainer)
 {
 	m_container	= objContainer;
@@ -47,13 +50,15 @@ litehtml::document::~document()
 	}
 }
 
-litehtml::document::ptr litehtml::document::createFromString( const char* str, document_container* objPainter, const char* master_styles, const char* user_styles )
+document::ptr document::createFromString(const string& str, document_container* container, 
+	const string& master_styles, const string& user_styles )
 {
+//ms("doc->parse_html",
 	// parse document into GumboOutput
-	GumboOutput* output = gumbo_parse(str);
+	GumboOutput* output = gumbo_parse(str.c_str());
 
 	// Create litehtml::document
-	document::ptr doc = std::make_shared<document>(objPainter);
+	document::ptr doc = make_shared<document>(container);
 
 	// Create litehtml::elements.
 	elements_list root_elements;
@@ -65,17 +70,17 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
-	if (master_styles && *master_styles)
+	if (master_styles != "")
 	{
-		doc->m_master_css.parse_stylesheet(master_styles, nullptr, doc, nullptr);
+		doc->m_master_css.parse_css_stylesheet(master_styles, "", doc);
 		doc->m_master_css.sort_selectors();
 	}
-	if (user_styles && *user_styles)
+	if (user_styles != "")
 	{
-		doc->m_user_css.parse_stylesheet(user_styles, nullptr, doc, nullptr);
+		doc->m_user_css.parse_css_stylesheet(user_styles, "", doc);
 		doc->m_user_css.sort_selectors();
 	}
-
+//)
 	// Let's process created elements tree
 	if (doc->m_root)
 	{
@@ -88,38 +93,32 @@ litehtml::document::ptr litehtml::document::createFromString( const char* str, d
 
 		// parse elements attributes
 		doc->m_root->parse_attributes();
-
+	//ms("parse_stylesheet",
 		// parse style sheets linked in document
-		media_query_list::ptr media;
 		for (const auto& css : doc->m_css)
 		{
-			if (!css.media.empty())
+			media_query_list_list::ptr media;
+			if (css.media != "")
 			{
-				media = media_query_list::create_from_string(css.media, doc);
+				auto mq_list = parse_media_query_list(css.media, doc);
+				media = make_shared<media_query_list_list>();
+				media->add(mq_list);
 			}
-			else
-			{
-				media = nullptr;
-			}
-			doc->m_styles.parse_stylesheet(css.text.c_str(), css.baseurl.c_str(), doc, media);
+			doc->m_styles.parse_css_stylesheet(css.text, css.baseurl, doc, media);
 		}
 		// Sort css selectors using CSS rules.
 		doc->m_styles.sort_selectors();
-
-		// get current media features
-		if (!doc->m_media_lists.empty())
-		{
-			doc->update_media_lists(doc->m_media);
-		}
-
+	//)
+		doc->update_media_lists(doc->m_media);
+	//ms("apply_stylesheet",
 		// Apply parsed styles.
 		doc->m_root->apply_stylesheet(doc->m_styles);
 
 		// Apply user styles if any
 		doc->m_root->apply_stylesheet(doc->m_user_css);
-
-		// Initialize m_css
-		doc->m_root->compute_styles();
+	//)ms("compute_styles",
+		// Initialize element::m_css
+		doc->m_root->compute_styles();//)
 
 		// Create rendering tree
 		doc->m_root_render = doc->m_root->create_render_item(nullptr);
@@ -178,33 +177,6 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 				break;
 			case litehtml::font_weight_normal:
 				fw = 400;
-				break;
-			case litehtml::font_weight_100:
-				fw = 100;
-				break;
-			case litehtml::font_weight_200:
-				fw = 200;
-				break;
-			case litehtml::font_weight_300:
-				fw = 300;
-				break;
-			case litehtml::font_weight_400:
-				fw = 400;
-				break;
-			case litehtml::font_weight_500:
-				fw = 500;
-				break;
-			case litehtml::font_weight_600:
-				fw = 600;
-				break;
-			case litehtml::font_weight_700:
-				fw = 700;
-				break;
-			case litehtml::font_weight_800:
-				fw = 800;
-				break;
-			case litehtml::font_weight_900:
-				fw = 900;
 				break;
 			}
 		} else
@@ -677,13 +649,13 @@ bool litehtml::document::media_changed()
 	return false;
 }
 
-bool litehtml::document::lang_changed()
+bool document::lang_changed()
 {
-	if(!m_media_lists.empty())
+	if (!m_media_lists.empty())
 	{
 		string culture;
 		container()->get_language(m_lang, culture);
-		if(!culture.empty())
+		if (!culture.empty())
 		{
 			m_culture = m_lang + '-' + culture;
 		}
@@ -698,12 +670,12 @@ bool litehtml::document::lang_changed()
 	return false;
 }
 
-bool litehtml::document::update_media_lists(const media_features& features)
+bool document::update_media_lists(const media_features& features)
 {
 	bool update_styles = false;
-	for(auto & m_media_list : m_media_lists)
+	for (auto& media_list : m_media_lists)
 	{
-		if(m_media_list->apply_media_features(features))
+		if (media_list->apply_media_features(features))
 		{
 			update_styles = true;
 		}
@@ -711,15 +683,10 @@ bool litehtml::document::update_media_lists(const media_features& features)
 	return update_styles;
 }
 
-void litehtml::document::add_media_list( const media_query_list::ptr& list )
+void document::add_media_list(media_query_list_list::ptr list)
 {
-	if(list)
-	{
-		if(std::find(m_media_lists.begin(), m_media_lists.end(), list) == m_media_lists.end())
-		{
-			m_media_lists.push_back(list);
-		}
-	}
+	if (list && !contains(m_media_lists, list))
+		m_media_lists.push_back(list);
 }
 
 void litehtml::document::create_node(void* gnode, elements_list& elements, bool parseTextNode)
@@ -1066,3 +1033,5 @@ void litehtml::document::dump(dumper& cout)
 		m_root_render->dump(cout);
 	}
 }
+
+} // namespace litehtml
