@@ -6,9 +6,6 @@
 #define inout
 #define countof(a) int(sizeof(a)/sizeof(a[0]))
 
-#define is_surrogate(ch) ((ch) >= 0xD800 && (ch) < 0xE000)
-
-
 namespace litehtml
 {
 

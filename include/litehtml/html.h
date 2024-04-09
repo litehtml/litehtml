@@ -22,15 +22,16 @@
 
 namespace litehtml
 {
-	string& trim(string& s, const string& chars_to_trim = " \n\r\t\f");
-	string trim(const string& s, const string& chars_to_trim = " \n\r\t\f");
+	const string whitespace = " \n\r\t\f";
+	string& trim(string& s, const string& chars_to_trim = whitespace);
+	string trim(const string& s, const string& chars_to_trim = whitespace);
 	string& lcase(string& s);
 	int	 value_index(const string& val, const string& strings, int defValue = -1, char delim = ';');
     string index_value(int index, const string& strings, char delim = ';');
 	bool value_in_list(const string& val, const string& strings, char delim = ';');
 	string::size_type find_close_bracket(const string& s, string::size_type off, char open_b = '(', char close_b = ')');
 	void split_string(const string& str, string_vector& tokens, const string& delims, const string& delims_preserve = "", const string& quote = "\"");
-	string_vector split_string(const string& str, const string& delims = " \n\r\t\f", const string& delims_preserve = "", const string& quote = "\"");
+	string_vector split_string(const string& str, const string& delims = whitespace, const string& delims_preserve = "", const string& quote = "\"");
 	void join_string(string& str, const string_vector& tokens, const string& delims);
     double t_strtod(const char* string, char** endPtr = nullptr);
     string get_escaped_string(const string& in_str);
@@ -108,11 +109,6 @@ namespace litehtml
 
 	bool is_number(const string& string, const bool allow_dot = 1);
 
-	//inline bool is_ascii(int c)
-	//{
-	//	return c >= 0 && c <= 0x7F;
-	//}
-
 	// https://infra.spec.whatwg.org/#ascii-whitespace
 	inline bool is_whitespace(int c)
 	{
@@ -123,7 +119,7 @@ namespace litehtml
 	{
 		return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z');
 	}
-#define is_letter t_isalpha
+	const auto is_letter = t_isalpha;
 
 	inline int t_tolower(int c)
 	{
@@ -144,7 +140,7 @@ namespace litehtml
 	{
 		return (c >= '0' && c <= '9');
 	}
-#define is_digit t_isdigit
+	const auto is_digit = t_isdigit;
 	
 	inline bool is_hex_digit(int ch) {
 		return is_digit(ch) || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F');
@@ -154,7 +150,9 @@ namespace litehtml
 		return is_digit(ch) ? ch - '0' : lowcase(ch) - 'a' + 10;
 	}
 
-#define is_surrogate(ch) ((ch) >= 0xD800 && (ch) < 0xE000)
+	inline bool is_surrogate(int ch) {
+		return ch >= 0xD800 && ch < 0xE000;
+	}
 
 	inline int round_f(float val)
 	{
