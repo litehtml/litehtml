@@ -197,9 +197,7 @@ namespace litehtml
 		}
 	};
 
-	//void parse_linear_gradient(const std::string& gradient_str, document_container *container, background_gradient& grad);
-	//void parse_radial_gradient(const std::string& gradient_str, document_container *container, background_gradient& grad);
-	//void parse_conic_gradient(const std::string& gradient_str, document_container *container, background_gradient& grad);
+	bool parse_gradient(const css_token& token, gradient& gradient, document_container* container);
 }
 
 #endif //LITEHTML_GRADIENT_H

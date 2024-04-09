@@ -97,8 +97,6 @@ namespace litehtml
 	bool parse_bg_position_size(const css_token_vector& tokens, int& index, css_length& x, css_length& y, css_size& size);
 	bool parse_bg_size(const css_token_vector& tokens, int& index, css_size& size);
 	bool parse_bg_position(const css_token_vector& tokens, int& index, css_length& x, css_length& y, bool convert_keywords_to_percents);
-	template<typename Enum>
-	bool parse_keyword(const css_token& token, Enum& val, string keywords, int first_keyword_value = 0);
 	bool parse_two_lengths(const css_token_vector& tokens, css_length len[2], int options);
 	template<class T, class... Args>
 	int parse_1234_values(const css_token_vector& tokens, T result[4], bool (*func)(const css_token&, T&, Args...), Args... args);
@@ -107,16 +105,15 @@ namespace litehtml
 	bool parse_length(const css_token& tok, css_length& length, int options, string keywords = "");
 	bool parse_border_width(const css_token& tok, css_length& width);
 
-	bool parse_angle(const css_token& tok, float& angle, bool percents_allowed = false);
-	bool parse_linear_gradient_direction(const css_token_vector& tokens, int& index, float& angle, int& side);
-	bool parse_linear_gradient_direction_and_interpolation(const css_token_vector& tokens, gradient& gradient);
-	bool parse_color_interpolation_method(const css_token_vector& tokens, int& index, color_space_t& color_space, hue_interpolation_t& hue_interpolation);
-	bool parse_gradient_position(const css_token_vector& tokens, int& index, gradient& gradient);
-	bool parse_radial_gradient_shape_size_position_interpolation(const css_token_vector& tokens, gradient& result);
-	bool parse_conic_gradient_angle_position_interpolation(const css_token_vector& tokens, gradient& gradient);
-	template<class T>
-	bool parse_color_stop_list(const vector<css_token_vector>& list, gradient& grad, document_container* container);
-	bool parse_gradient(const css_token& token, gradient& gradient, document_container* container);
+	template<typename Enum>
+	bool parse_keyword(const css_token& tok, Enum& val, string keywords, int first_keyword_value = 0)
+	{
+		int	value_index(const string& val, const string& strings, int defValue = -1, char delim = ';');
+		int idx = value_index(tok.ident(), keywords);
+		if (idx == -1) return false;
+		val = (Enum)(first_keyword_value + idx);
+		return true;
+	}
 
 } // namespace litehtml
 
