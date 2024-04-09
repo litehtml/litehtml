@@ -91,9 +91,10 @@ raw_rule::vector css_parser::parse_stylesheet(const string& input, bool top_leve
 {
 	// 1. If input is a byte stream for stylesheet, decode bytes from input, and set input to the result.
 	// not implemented, utf-8 is always assumed
+	string str = decode(input, encoding::utf_8); // decoding potentially broken UTF-8 into valid UTF-8
 	
 	// 2. Normalize input, and set input to the result.
-	auto tokens = normalize(input);
+	auto tokens = normalize(str);
 	
 	return parse_stylesheet(tokens, top_level);
 }

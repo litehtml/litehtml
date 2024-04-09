@@ -51,22 +51,11 @@ char32_t read_utf8_char(const string& str, int& index)
 	return 0xFFFD;
 }
 
-// Almost no error handling, will work inconsistent with read_utf8_char on invalid UTF-8 string.
+// No error handling, str must be valid UTF-8 (it is ensured by document::parse_html and css_parser::parse_stylesheet).
 // Currently used only in css parser, where actual char value is not needed, so it returns void.
 void prev_utf8_char(const string& str, int& index)
 {
-	if (!index || ((byte)str[--index] >> 7) == 0) return;
-	if (!index || ((byte)str[--index] >> 5) == 0b110) return;
-	if (!index || ((byte)str[--index] >> 4) == 0b1110) return;
-	if (index) index--;
-}
-
-
-utf8_to_utf32::utf8_to_utf32(const string& val)
-{
-	int index = 0;
-	while (char32_t ch = read_utf8_char(val, index))
-		m_str += ch;
+	while (index && ((byte)str[--index] >> 6) == 0b10); // skip continuation bytes
 }
 
 void append_char(string& str, char32_t code)
@@ -97,6 +86,13 @@ void append_char(string& str, char32_t code)
 		str += ((code >> 6) & 63) + 128;
 		str += (code & 63) + 128;
 	}
+}
+
+utf8_to_utf32::utf8_to_utf32(const string& val)
+{
+	int index = 0;
+	while (char32_t ch = read_utf8_char(val, index))
+		m_str += ch;
 }
 
 utf32_to_utf8::utf32_to_utf8(const std::u32string& val)
