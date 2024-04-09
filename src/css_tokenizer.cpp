@@ -652,7 +652,7 @@ css_token css_tokenizer::consume_token()
 
 	case '<':
 		// If the next 3 input code points are !--, consume them and return a <CDO-token>.
-		if (strncmp(str.c_str() + index, "!--", 3) == 0)
+		if (match(str, index, "!--"))
 		{
 			index += 3;
 			token.type = CDO;

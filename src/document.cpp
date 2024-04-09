@@ -21,8 +21,6 @@
 #include "el_div.h"
 #include "el_font.h"
 #include "el_tr.h"
-#include <cmath>
-#include <cstdio>
 #include "gumbo.h"
 #include "render_item.h"
 #include "render_table.h"

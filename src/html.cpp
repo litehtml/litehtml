@@ -4,7 +4,7 @@
 namespace litehtml
 {
 
-string& trim(string &s, const string& chars_to_trim)
+string& trim(string& s, const string& chars_to_trim)
 {
 	string::size_type pos = s.find_first_not_of(chars_to_trim);
 	if(pos != string::npos)
@@ -31,7 +31,7 @@ string trim(const string& s, const string& chars_to_trim)
 	return str;
 }
 
-string& lcase(string &s)
+string& lcase(string& s)
 {
 	for(char & i : s)
 	{
@@ -40,7 +40,7 @@ string& lcase(string &s)
 	return s;
 }
 
-string::size_type find_close_bracket(const string &s, string::size_type off, char open_b, char close_b)
+string::size_type find_close_bracket(const string& s, string::size_type off, char open_b, char close_b)
 {
 	int cnt = 0;
 	for(string::size_type i = off; i < s.length(); i++)
