@@ -2,7 +2,7 @@
 #include "style.h"
 #include "css_parser.h"
 #include "internal.h"
-//#include <iso646.h>
+#include <iso646.h>
 
 // All functions here assume that whitespace have been removed.
 

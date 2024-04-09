@@ -1,10 +1,10 @@
 #include "html.h"
 #include "gradient.h"
+#include "css_parser.h"
 
 namespace litehtml
 {
 
-bool parse_angle(const css_token& tok, float& angle, bool percents_allowed = false);
 bool parse_linear_gradient_direction(const css_token_vector& tokens, int& index, float& angle, int& side);
 bool parse_linear_gradient_direction_and_interpolation(const css_token_vector& tokens, gradient& gradient);
 bool parse_color_interpolation_method(const css_token_vector& tokens, int& index, color_space_t& color_space, hue_interpolation_t& hue_interpolation);

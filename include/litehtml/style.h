@@ -106,6 +106,7 @@ namespace litehtml
 	bool parse_length(const css_token& tok, css_length& length, int options, string keywords = "");
 	bool parse_border_width(const css_token& tok, css_length& width);
 	bool parse_font_weight(const css_token& tok, css_length& weight);
+	bool parse_angle(const css_token& tok, float& angle, bool percents_allowed = false);
 
 	template<typename Enum>
 	bool parse_keyword(const css_token& tok, Enum& val, string keywords, int first_keyword_value = 0)

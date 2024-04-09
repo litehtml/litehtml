@@ -54,6 +54,7 @@ set(SOURCE_LITEHTML
     src/encodings.cpp
     src/html.cpp
     src/html_tag.cpp
+    src/html_microsyntaxes.cpp
     src/iterators.cpp
     src/media_query.cpp
     src/style.cpp
@@ -122,6 +123,7 @@ set(HEADER_LITEHTML
     include/litehtml/encodings.h
     include/litehtml/html.h
     include/litehtml/html_tag.h
+    include/litehtml/html_microsyntaxes.h
     include/litehtml/iterators.h
     include/litehtml/media_query.h
     include/litehtml/os_types.h

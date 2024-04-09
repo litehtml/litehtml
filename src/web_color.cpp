@@ -1,5 +1,6 @@
 #include "html.h"
 #include "web_color.h"
+#include "css_parser.h"
 
 namespace litehtml
 {
