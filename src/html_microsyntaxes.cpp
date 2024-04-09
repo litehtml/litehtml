@@ -18,7 +18,7 @@ bool html_parse_integer(string str, int& val)
 // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-non-negative-integers
 bool html_parse_non_negative_integer(string str, int& val)
 {
-	int n;
+	int n = 0;
 	if (!html_parse_integer(str, n) || n < 0)
 		return false;
 	val = n;
