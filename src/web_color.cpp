@@ -1,19 +1,23 @@
 #include "html.h"
 #include "web_color.h"
-#include "css_parser.h"
-#include <cstring>
 
 namespace litehtml
 {
 
-const litehtml::web_color litehtml::web_color::transparent   = web_color(0, 0, 0, 0);
-const litehtml::web_color litehtml::web_color::black         = web_color(0, 0, 0, 255);
-const litehtml::web_color litehtml::web_color::white         = web_color(255, 255, 255, 255);
-const litehtml::web_color litehtml::web_color::current_color = web_color(true);
+const web_color web_color::transparent   = web_color(0, 0, 0, 0);
+const web_color web_color::black         = web_color(0, 0, 0, 255);
+const web_color web_color::white         = web_color(255, 255, 255, 255);
+const web_color web_color::current_color = web_color(true);
 
-litehtml::gradient litehtml::gradient::transparent;
+gradient gradient::transparent;
 
-litehtml::def_color litehtml::g_def_colors[] = 
+struct def_color
+{
+	const char* name;
+	const char* rgb;
+};
+
+def_color g_def_colors[] = 
 {
 	{"transparent","rgba(0, 0, 0, 0)"},
 	{"AliceBlue","#F0F8FF"},
@@ -161,7 +165,6 @@ litehtml::def_color litehtml::g_def_colors[] =
 	{"WhiteSmoke","#F5F5F5"},
 	{"Yellow","#FFFF00"},
 	{"YellowGreen","#9ACD32"},
-	{nullptr,nullptr}
 };
 
 // <hex-color>  https://drafts.csswg.org/css-color-4/#typedef-hex-color
@@ -191,7 +194,7 @@ bool web_color::parse_hash_token(const css_token& tok)
 		if (len == 8)
 			a = {s[6], s[7]};
 	}
-	auto read_two_hex_digits = [](const string& str)
+	auto read_two_hex_digits = [](auto str)
 	{
 		return byte(16 * digit_value(str[0]) + digit_value(str[1]));
 	};
@@ -373,19 +376,27 @@ bool web_color::parse_hsl_func(const css_token& tok)
 	return true;
 }
 
+string resolve_name(const string& name, document_container* container)
+{
+	for (auto clr : g_def_colors)
+	{
+		if (equal_i(name, clr.name))
+			return clr.rgb;
+	}
+
+	if (container)
+		return container->resolve_color(name);
+
+	return "";
+}
+
 bool web_color::parse_ident_token(const css_token& tok, document_container* container)
 {
 	if (tok.type != IDENT) return false;
 	string color = resolve_name(tok.name, container);
-	if (color == "") return false;
-	*this = from_string(color, container);
-	return true;
-	//css_token_vector tokens;
-	//tokenize(color, tokens);
-	//remove_whitespace(tokens);
-	//componentize(tokens);
-	//if (tokens.size() != 1) return false;
-	//return from_token(tokens[0], container);
+	auto tokens = normalize(color, f_componentize | f_remove_whitespace);
+	if (tokens.size() != 1) return false;
+	return from_token(tokens[0], container);
 }
 
 // https://drafts.csswg.org/css-color-5/#typedef-color
@@ -394,109 +405,19 @@ bool web_color::from_token(const css_token& tok, document_container* container)
 	return parse_hash_token(tok) || parse_function_token(tok) || parse_ident_token(tok, container);
 }
 
-litehtml::web_color litehtml::web_color::from_string(const string& _str, document_container* callback)
+web_color web_color::darken(double fraction) const
 {
-	auto str = _str.c_str();
-	if(!str[0])
-	{
-		return web_color(0, 0, 0);
-	}
-	if(str[0] == '#')
-	{
-		string red;
-		string green;
-		string blue;
-		if(strlen(str + 1) == 3)
-		{
-			red		+= str[1];
-			red		+= str[1];
-			green	+= str[2];
-			green	+= str[2];
-			blue	+= str[3];
-			blue	+= str[3];
-		} else if(strlen(str + 1) == 6)
-		{
-			red		+= str[1];
-			red		+= str[2];
-			green	+= str[3];
-			green	+= str[4];
-			blue	+= str[5];
-			blue	+= str[6];
-		}
-		char* sss = nullptr;
-		web_color clr;
-		clr.red		= (byte) strtol(red.c_str(),	&sss, 16);
-		clr.green	= (byte) strtol(green.c_str(),	&sss, 16);
-		clr.blue	= (byte) strtol(blue.c_str(),	&sss, 16);
-		return clr;
-	} else if(!strncmp(str, "rgb", 3))
-	{
-		string s = str;
-
-		string::size_type pos = s.find_first_of('(');
-		if(pos != string::npos)
-		{
-			s.erase(s.begin(), s.begin() + pos + 1);
-		}
-		pos = s.find_last_of(')');
-		if(pos != string::npos)
-		{
-			s.erase(s.begin() + pos, s.end());
-		}
-
-		std::vector<string> tokens;
-		split_string(s, tokens, ", \t");
-
-		web_color clr;
-
-		if(tokens.size() >= 1)	clr.red		= (byte) atoi(tokens[0].c_str());
-		if(tokens.size() >= 2)	clr.green	= (byte) atoi(tokens[1].c_str());
-		if(tokens.size() >= 3)	clr.blue	= (byte) atoi(tokens[2].c_str());
-		if(tokens.size() >= 4)	clr.alpha	= (byte) (t_strtod(tokens[3].c_str(), nullptr) * 255.0);
-
-		return clr;
-	} else
-	{
-		string rgb = resolve_name(str, callback);
-		if(!rgb.empty())
-		{
-			return from_string(rgb.c_str(), callback);
-		}
-	}
-	return web_color(0, 0, 0);
+	int v_red = (int)red;
+	int v_blue = (int)blue;
+	int v_green = (int)green;
+	v_red = (int)max(v_red - (v_red * fraction), 0.0);
+	v_blue = (int)max(v_blue - (v_blue * fraction), 0.0);
+	v_green = (int)max(v_green - (v_green * fraction), 0.0);
+	return {(byte)v_red, (byte)v_green, (byte)v_blue, alpha};
 }
 
-litehtml::string litehtml::web_color::resolve_name(const string& name, document_container* callback)
-{
-	for(int i=0; g_def_colors[i].name; i++)
-	{
-		if(!t_strcasecmp(name.c_str(), g_def_colors[i].name))
-		{
-            return g_def_colors[i].rgb;
-		}
-	}
-    if (callback)
-    {
-        string clr = callback->resolve_color(name);
-        return clr;
-    }
-	return "";
-}
 
-bool litehtml::web_color::is_color(const string& str, document_container* callback)
-{
-	if (!t_strncasecmp(str.c_str(), "rgb", 3) || str[0] == '#')
-	{
-		return true;
-	}
-    if (t_isalpha(str[0]) && resolve_name(str, callback) != "")
-	{
-		return true;
-	}
-	return false;
-}
-
-litehtml::string litehtml::web_color::to_string() const
+string web_color::to_string() const
 {
     char str[9];
     if(alpha)
