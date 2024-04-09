@@ -1,13 +1,13 @@
 #ifndef LH_STYLE_H
 #define LH_STYLE_H
 #include "css_tokenizer.h"
-#include <variant>
 
 namespace litehtml
 {
 	struct invalid {}; // indicates "not found" condition in style::get_property
 	struct inherit {}; // "inherit" was specified as the value of this property
-	using property_value_base = std::variant<
+
+	struct property_value : variant<
 		invalid,
 		inherit,
 		int,
@@ -21,20 +21,14 @@ namespace litehtml
 		string_vector,
 		size_vector,
 		css_token_vector
-	>;
-
-	struct property_value : property_value_base
+	>
 	{
 		bool m_important = false;
 		bool m_has_var   = false; // css_token_vector, parsing is delayed because of var()
 
 		property_value() {}
 		template<class T> property_value(const T& val, bool important, bool has_var = false) 
-			: property_value_base(val), m_important(important), m_has_var(has_var) {}
-
-		template<class T> bool is() const { return std::holds_alternative<T>(*this); }
-		template<class T> const T& get() const { return std::get<T>(*this); }
-		template<class T> T& get() { return std::get<T>(*this); }
+			: base(val), m_important(important), m_has_var(has_var) {}
 	};
 
 	class html_tag;

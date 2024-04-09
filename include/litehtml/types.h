@@ -35,6 +35,7 @@ namespace litehtml
 		using std::variant<Types...>::variant; // inherit ctors
 		template<class T> bool is() const { return std::holds_alternative<T>(*this); }
 		template<class T> const T& get() const { return std::get<T>(*this); }
+		template<class T> T& get() { return std::get<T>(*this); }
 	};
 
 	const unsigned int font_decoration_none			= 0x00;
