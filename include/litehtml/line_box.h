@@ -46,6 +46,7 @@ namespace litehtml
 		line_box_item() : m_element(), m_rendered_min_width(0) {};
 		line_box_item(const line_box_item& el) = default;
 		line_box_item(line_box_item&&) = default;
+		virtual ~line_box_item();
 
 		int height() const { return right() - left(); }
 		const std::shared_ptr<render_item>& get_el() const { return m_element; }
@@ -67,6 +68,7 @@ namespace litehtml
 		position m_pos;
 	public:
 		explicit lbi_start(const std::shared_ptr<render_item>& element);
+		virtual ~lbi_start() override;
 
 		void place_to(int x, int y) override;
 		int width() const override;
@@ -83,6 +85,7 @@ namespace litehtml
 	{
 	public:
 		explicit lbi_end(const std::shared_ptr<render_item>& element);
+		virtual ~lbi_end() override;
 
 		void place_to(int x, int y) override;
 		int right() const override;
@@ -94,6 +97,7 @@ namespace litehtml
 	{
 	public:
 		explicit lbi_continue(const std::shared_ptr<render_item>& element);
+		virtual ~lbi_continue() override;
 
 		void place_to(int x, int y) override;
 		int right() const override;
