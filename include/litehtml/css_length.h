@@ -41,12 +41,10 @@ namespace litehtml
 		css_units	units() const;
 		int			calc_percent(int width) const;
 		bool		from_token(const css_token& token, int options, const string& predefined_keywords = "");
-		void		fromString(const string& str, const string& predefs = "", int defValue = 0);
-		static css_length from_string(const string& str, const string& predefs = "", int defValue = 0);
 		string		to_string() const;
 	};
 
-	using length_vector = std::vector<css_length>;
+	using length_vector = vector<css_length>;
 
 	// css_length inlines
 

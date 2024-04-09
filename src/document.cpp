@@ -597,19 +597,6 @@ void document::draw( uint_ptr hdc, int x, int y, const position* clip )
 	}
 }
 
-int document::to_pixels( const char* str, int fontSize, bool* is_percent/*= 0*/ ) const
-{
-	if(!str)	return 0;
-	
-	css_length val;
-	val.fromString(str);
-	if(is_percent && val.units() == css_units_percentage && !val.is_predefined())
-	{
-		*is_percent = true;
-	}
-	return to_pixels(val, fontSize);
-}
-
 int document::to_pixels( const css_length& val, int fontSize, int size ) const
 {
 	if(val.is_predefined())
