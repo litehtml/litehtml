@@ -6,6 +6,8 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
+litehtml::line_box_item::~line_box_item() {}
+
 void litehtml::line_box_item::place_to(int x, int y)
 {
 	m_element->pos().x = x + m_element->content_offset_left();
@@ -51,6 +53,8 @@ litehtml::lbi_start::lbi_start(const std::shared_ptr<render_item>& element) : li
 	m_pos.width = m_element->content_offset_left();
 }
 
+litehtml::lbi_start::~lbi_start() {}
+
 void litehtml::lbi_start::place_to(int x, int y)
 {
 	m_pos.x = x + m_element->content_offset_left();
@@ -90,6 +94,8 @@ litehtml::lbi_end::lbi_end(const std::shared_ptr<render_item>& element) : lbi_st
 	m_pos.width = m_element->content_offset_right();
 }
 
+litehtml::lbi_end::~lbi_end() {}
+
 void litehtml::lbi_end::place_to(int x, int y)
 {
 	m_pos.x = x;
@@ -113,6 +119,8 @@ litehtml::lbi_continue::lbi_continue(const std::shared_ptr<render_item>& element
 	m_pos.height = m_element->src_el()->css().get_font_metrics().height;
 	m_pos.width = 0;
 }
+
+litehtml::lbi_continue::~lbi_continue() {}
 
 void litehtml::lbi_continue::place_to(int x, int y)
 {
