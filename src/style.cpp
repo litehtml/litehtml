@@ -168,7 +168,6 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 
 	case _font_style_:
 	case _font_variant_:
-	case _font_weight_:
 
 	case _list_style_type_:
 	case _list_style_position_:
@@ -374,6 +373,11 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 
 	case _font_:
 		parse_font(value, important);
+		break;
+
+	case _font_weight_:
+		if (parse_font_weight(val, *len))
+			add_parsed_property(name, property_value(*len, important));
 		break;
 
 	//  =============================  FLEX  =============================

@@ -1,5 +1,6 @@
 #ifndef LH_STYLE_H
 #define LH_STYLE_H
+
 #include "css_tokenizer.h"
 
 namespace litehtml
@@ -104,6 +105,7 @@ namespace litehtml
 	bool parse_color(const css_token& tok, web_color& color, document_container* container);
 	bool parse_length(const css_token& tok, css_length& length, int options, string keywords = "");
 	bool parse_border_width(const css_token& tok, css_length& width);
+	bool parse_font_weight(const css_token& tok, css_length& weight);
 
 	template<typename Enum>
 	bool parse_keyword(const css_token& tok, Enum& val, string keywords, int first_keyword_value = 0)
