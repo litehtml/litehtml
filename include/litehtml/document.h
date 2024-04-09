@@ -4,6 +4,8 @@
 #include "style.h"
 #include "types.h"
 #include "master_css.h"
+#include "encodings.h"
+typedef struct GumboInternalOutput GumboOutput;
 
 namespace litehtml
 {
@@ -29,11 +31,11 @@ namespace litehtml
     {
     public:
         virtual ~dumper() {}
-        virtual void begin_node(const litehtml::string& descr) = 0;
+        virtual void begin_node(const string& descr) = 0;
         virtual void end_node() = 0;
-        virtual void begin_attrs_group(const litehtml::string& descr) = 0;
+        virtual void begin_attrs_group(const string& descr) = 0;
         virtual void end_attrs_group() = 0;
-        virtual void add_attr(const litehtml::string& name, const litehtml::string& value) = 0;
+        virtual void add_attr(const string& name, const string& value) = 0;
     };
 
 	class html_tag;
@@ -70,13 +72,12 @@ namespace litehtml
 		media_features						m_media;
 		string								m_lang;
 		string								m_culture;
-		mode								m_mode;
+		string								m_text;
 	public:
 		document(document_container* objContainer);
 		virtual ~document();
 
 		document_container*				container()	{ return m_container; }
-		mode							mode() { return m_mode; }
 		uint_ptr						get_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);
 		int								render(int max_width, render_type rt = render_all);
 		void							draw(uint_ptr hdc, int x, int y, const position* clip);
@@ -107,12 +108,17 @@ namespace litehtml
 		void							append_children_from_string(element& parent, const char* str);
 		void							dump(dumper& cout);
 
-		static document::ptr  createFromString(const string& str, litehtml::document_container* objPainter,
-			const string& master_styles = litehtml::master_css, const string& user_styles = "");
+		// see doc/document_createFromString.txt
+		static document::ptr  createFromString(
+			const estring&       str,
+			document_container*  container,
+			const string&        master_styles = litehtml::master_css,
+			const string&        user_styles = "");
 	
 	private:
 		uint_ptr	add_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);
 
+		GumboOutput* parse_html(estring str);
 		void create_node(void* gnode, elements_list& elements, bool parseTextNode);
 		bool update_media_lists(const media_features& features);
 		void fix_tables_layout();

@@ -11,6 +11,8 @@ const litehtml::web_color litehtml::web_color::black         = web_color(0, 0, 0
 const litehtml::web_color litehtml::web_color::white         = web_color(255, 255, 255, 255);
 const litehtml::web_color litehtml::web_color::current_color = web_color(true);
 
+litehtml::gradient litehtml::gradient::transparent;
+
 litehtml::def_color litehtml::g_def_colors[] = 
 {
 	{"transparent","rgba(0, 0, 0, 0)"},

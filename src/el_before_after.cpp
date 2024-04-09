@@ -18,53 +18,54 @@ void litehtml::el_before_after_base::add_style(const style& style)
 	m_children.clear();
 
 	const auto& content_property = style.get_property(_content_);
-	if(content_property.m_type == prop_type_string && !content_property.m_string.empty())
+	if(content_property.is<string>() && !content_property.get<string>().empty())
 	{
-		int idx = value_index(content_property.m_string, content_property_string);
+		const string& str = content_property.get<string>();
+		int idx = value_index(str, content_property_string);
 		if(idx < 0)
 		{
 			string fnc;
 			string::size_type i = 0;
-			while(i < content_property.m_string.length() && i != string::npos)
+			while(i < str.length() && i != string::npos)
 			{
-				if(content_property.m_string.at(i) == '"' || content_property.m_string.at(i) == '\'')
+				if(str.at(i) == '"' || str.at(i) == '\'')
 				{
-                    auto chr = content_property.m_string.at(i);
+                    auto chr = str.at(i);
 					fnc.clear();
 					i++;
-					string::size_type pos = content_property.m_string.find(chr, i);
+					string::size_type pos = str.find(chr, i);
 					string txt;
 					if(pos == string::npos)
 					{
-						txt = content_property.m_string.substr(i);
+						txt = str.substr(i);
 						i = string::npos;
 					} else
 					{
-						txt = content_property.m_string.substr(i, pos - i);
+						txt = str.substr(i, pos - i);
 						i = pos + 1;
 					}
 					add_text(txt);
-				} else if(content_property.m_string.at(i) == '(')
+				} else if(str.at(i) == '(')
 				{
 					i++;
 					litehtml::trim(fnc);
 					litehtml::lcase(fnc);
-					string::size_type pos = content_property.m_string.find(')', i);
+					string::size_type pos = str.find(')', i);
 					string params;
 					if(pos == string::npos)
 					{
-						params = content_property.m_string.substr(i);
+						params = str.substr(i);
 						i = string::npos;
 					} else
 					{
-						params = content_property.m_string.substr(i, pos - i);
+						params = str.substr(i, pos - i);
 						i = pos + 1;
 					}
 					add_function(fnc, params);
 					fnc.clear();
 				} else
 				{
-					fnc += content_property.m_string.at(i);
+					fnc += str.at(i);
 					i++;
 				}
 			}
@@ -106,7 +107,7 @@ void litehtml::el_before_after_base::add_text( const string& txt )
 				word += convert_escape(esc.c_str() + 1);
 				esc.clear();
 			}
-			if(isspace(chr))
+			if(isspace((unsigned char) chr))
 			{
 				if(!word.empty())
 				{
@@ -208,8 +209,8 @@ void litehtml::el_before_after_base::add_function( const string& fnc, const stri
 litehtml::string litehtml::el_before_after_base::convert_escape( const char* txt )
 {
     char* str_end;
-	wchar_t u_str[2];
-    u_str[0] = (wchar_t) strtol(txt, &str_end, 16);
+	char32_t u_str[2];
+    u_str[0] = (char32_t) strtol(txt, &str_end, 16);
     u_str[1] = 0;
-	return litehtml::string(litehtml_from_wchar(u_str));
+	return litehtml::string(litehtml_from_utf32(u_str));
 }

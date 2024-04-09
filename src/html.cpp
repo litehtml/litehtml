@@ -1,6 +1,5 @@
 #include "html.h"
 #include "types.h"
-#include "utf8_strings.h"
 
 namespace litehtml
 {
@@ -25,14 +24,14 @@ string& trim(string &s, const string& chars_to_trim)
 	return s;
 }
 
-litehtml::string litehtml::trim(const string& s, const string& chars_to_trim)
+string trim(const string& s, const string& chars_to_trim)
 {
 	string str = s;
 	trim(str, chars_to_trim);
 	return str;
 }
 
-litehtml::string& litehtml::lcase(string &s)
+string& lcase(string &s)
 {
 	for(char & i : s)
 	{
@@ -41,7 +40,7 @@ litehtml::string& litehtml::lcase(string &s)
 	return s;
 }
 
-litehtml::string::size_type litehtml::find_close_bracket(const string &s, string::size_type off, char open_b, char close_b)
+string::size_type find_close_bracket(const string &s, string::size_type off, char open_b, char close_b)
 {
 	int cnt = 0;
 	for(string::size_type i = off; i < s.length(); i++)
@@ -61,7 +60,7 @@ litehtml::string::size_type litehtml::find_close_bracket(const string &s, string
 	return string::npos;
 }
 
-litehtml::string litehtml::index_value(int index, const string& strings, char delim)
+string index_value(int index, const string& strings, char delim)
 {
 	std::vector<string> vals;
 	string delims;
@@ -74,7 +73,7 @@ litehtml::string litehtml::index_value(int index, const string& strings, char de
 	return std::to_string(index);
 }
 
-int litehtml::value_index( const string& val, const string& strings, int defValue, char delim )
+int value_index( const string& val, const string& strings, int defValue, char delim )
 {
 	if(val.empty() || strings.empty() || !delim)
 	{
@@ -111,7 +110,7 @@ int litehtml::value_index( const string& val, const string& strings, int defValu
 	return defValue;
 }
 
-bool litehtml::value_in_list( const string& val, const string& strings, char delim )
+bool value_in_list( const string& val, const string& strings, char delim )
 {
 	int idx = value_index(val, strings, -1, delim);
 	if(idx >= 0)
@@ -190,7 +189,7 @@ void split_string(const string& str, string_vector& tokens, const string& delims
 	}
 }
 
-void litehtml::join_string(string& str, const string_vector& tokens, const string& delims)
+void join_string(string& str, const string_vector& tokens, const string& delims)
 {
 	str = "";
 	for (size_t i = 0; i < tokens.size(); i++)
@@ -203,7 +202,7 @@ void litehtml::join_string(string& str, const string_vector& tokens, const strin
 	}
 }
 
-int litehtml::t_strcasecmp(const char *s1, const char *s2)
+int t_strcasecmp(const char *s1, const char *s2)
 {
 	int i, d, c;
 
@@ -220,7 +219,7 @@ int litehtml::t_strcasecmp(const char *s1, const char *s2)
 	}
 }
 
-int litehtml::t_strncasecmp(const char *s1, const char *s2, size_t n)
+int t_strncasecmp(const char *s1, const char *s2, size_t n)
 {
 	int i, d, c;
 
@@ -239,7 +238,7 @@ int litehtml::t_strncasecmp(const char *s1, const char *s2, size_t n)
 	return 0;
 }
 
-litehtml::string litehtml::get_escaped_string(const string& in_str)
+string get_escaped_string(const string& in_str)
 {
 	string ret;
 	for (auto ch : in_str)
@@ -297,7 +296,7 @@ litehtml::string litehtml::get_escaped_string(const string& in_str)
 	return ret;
 }
 
-bool litehtml::is_number(const string& string, const bool allow_dot) {
+bool is_number(const string& string, const bool allow_dot) {
 	for (auto ch : string)
 	{
 		if (!(t_isdigit(ch) || (allow_dot && ch == '.')))

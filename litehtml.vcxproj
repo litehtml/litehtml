@@ -98,6 +98,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
       <AdditionalIncludeDirectories>./src/gumbo/visualc/include;./src/gumbo/include/gumbo;./src/gumbo/include;./include/litehtml</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
@@ -118,6 +119,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>./src/gumbo/visualc/include;./src/gumbo/include/gumbo;./src/gumbo/include;./include/litehtml</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
@@ -136,6 +138,7 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>OldStyle</DebugInformationFormat>
       <AdditionalIncludeDirectories>./src/gumbo/visualc/include;./src/gumbo/include/gumbo;./src/gumbo/include;./include/litehtml</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
@@ -157,12 +160,14 @@
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
       <AdditionalIncludeDirectories>./src/gumbo/visualc/include;./src/gumbo/include/gumbo;./src/gumbo/include;./include/litehtml</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Lib>
       <OutputFile>$(OutDir)$(ProjectName).lib</OutputFile>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\background.cpp" />
     <ClCompile Include="src\codepoint.cpp" />
     <ClCompile Include="src\css_borders.cpp" />
     <ClCompile Include="src\css_length.cpp" />
@@ -191,7 +196,11 @@
     <ClCompile Include="src\el_text.cpp" />
     <ClCompile Include="src\el_title.cpp" />
     <ClCompile Include="src\el_tr.cpp" />
+    <ClCompile Include="src\encodings.cpp" />
+    <ClCompile Include="src\flex_item.cpp" />
+    <ClCompile Include="src\flex_line.cpp" />
     <ClCompile Include="src\formatting_context.cpp" />
+    <ClCompile Include="src\gradient.cpp" />
     <ClCompile Include="src\gumbo\attribute.c" />
     <ClCompile Include="src\gumbo\char_ref.c" />
     <ClCompile Include="src\gumbo\error.c" />
@@ -259,6 +268,9 @@
     <ClInclude Include="include\litehtml\el_text.h" />
     <ClInclude Include="include\litehtml\el_title.h" />
     <ClInclude Include="include\litehtml\el_tr.h" />
+    <ClInclude Include="include\litehtml\encodings.h" />
+    <ClInclude Include="include\litehtml\flex_item.h" />
+    <ClInclude Include="include\litehtml\flex_line.h" />
     <ClInclude Include="include\litehtml\master_css.h" />
     <ClInclude Include="include\litehtml\num_cvt.h" />
     <ClInclude Include="include\litehtml\string_id.h" />

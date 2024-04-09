@@ -1,4 +1,41 @@
 #include "win32_container.h"
+using namespace std;
+using namespace litehtml;
+
+wstring utf8_to_utf16(string str)
+{
+	utf8_to_utf32 utf32 = str;
+	wstring wstr;
+	for(const char32_t* ptr = utf32; *ptr; ptr++)
+	{
+		char32_t ch = *ptr;
+		if (ch <= 0xFFFF) wstr += (wchar_t)ch;
+		// high surrogate goes first in UTF-16LE
+		else wstr += {(wchar_t)(((ch - 0x10000) >> 10) + 0xD800), (ch & 0x3FF) + 0xDC00};
+	}
+	return wstr;
+}
+
+string utf16_to_utf8(wstring str)
+{
+	u32string ustr;
+	for (size_t i = 0; i < str.size(); i++)
+	{
+		char16_t ch = str[i];
+		if (ch >= 0xD800 && ch < 0xDC00)
+		{
+			char16_t ch2 = str[i + 1];
+			if (ch2 >= 0xDC00 && ch2 < 0xE000)
+			{
+				ustr += 0x10000 + (ch2 - 0xDC00) + (ch - 0xD800) * 0x400;
+				i++;
+				continue;
+			}
+		}
+		ustr += ch;
+	}
+	return utf32_to_utf8(ustr).c_str();
+}
 
 win32_container::win32_container()
 {
@@ -41,7 +78,7 @@ static LPCWSTR get_exact_font_name(LPCWSTR facename)
 	else											return facename;
 }
 
-static void trim_quotes(litehtml::string& str)
+static void trim_quotes(string& str)
 {
 	if (str.front() == '"' || str.front() == '\'')
 		str.erase(0, 1);
@@ -50,17 +87,17 @@ static void trim_quotes(litehtml::string& str)
 		str.erase(str.length() - 1, 1);
 }
 
-litehtml::uint_ptr win32_container::create_font( const char* font_list, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
+uint_ptr win32_container::create_font( const char* font_list, int size, int weight, font_style italic, unsigned int decoration, font_metrics* fm )
 {
-	std::wstring font_name;
-	litehtml::string_vector fonts;
-	litehtml::split_string(font_list, fonts, ",");
+	wstring font_name;
+	string_vector fonts;
+	split_string(font_list, fonts, ",");
 	bool found = false;
 	for (auto& name : fonts)
 	{
-		litehtml::trim(name);
+		trim(name);
 		trim_quotes(name);
-		std::wstring wname = (const wchar_t*)litehtml_to_wchar(name.c_str());
+		wstring wname = utf8_to_utf16(name);
 		if (m_installed_fonts.count(wname))
 		{
 			font_name = wname;
@@ -68,7 +105,7 @@ litehtml::uint_ptr win32_container::create_font( const char* font_list, int size
 			break;
 		}
 	}
-	if (!found) font_name = litehtml_to_wchar(get_default_font_name());
+	if (!found) font_name = utf8_to_utf16(get_default_font_name());
 	font_name = get_exact_font_name(font_name.c_str());
 
 	LOGFONT lf = {};
@@ -76,13 +113,13 @@ litehtml::uint_ptr win32_container::create_font( const char* font_list, int size
 
 	lf.lfHeight			= -size;
 	lf.lfWeight			= weight;
-	lf.lfItalic			= (italic == litehtml::font_style_italic) ? TRUE : FALSE;
+	lf.lfItalic			= italic == font_style_italic;
 	lf.lfCharSet		= DEFAULT_CHARSET;
 	lf.lfOutPrecision	= OUT_DEFAULT_PRECIS;
 	lf.lfClipPrecision	= CLIP_DEFAULT_PRECIS;
 	lf.lfQuality		= DEFAULT_QUALITY;
-	lf.lfStrikeOut		= (decoration & litehtml::font_decoration_linethrough) ? TRUE : FALSE;
-	lf.lfUnderline		= (decoration & litehtml::font_decoration_underline) ? TRUE : FALSE;
+	lf.lfStrikeOut		= (decoration & font_decoration_linethrough) != 0;
+	lf.lfUnderline		= (decoration & font_decoration_underline) != 0;
 	HFONT hFont = CreateFontIndirect(&lf);
 
 	if (fm)
@@ -119,12 +156,12 @@ int win32_container::text_width( const char* text, uint_ptr hFont )
 {
 	SIZE size = {};
 	SelectObject(m_tmp_hdc, (HFONT)hFont);
-	std::wstring wtext = (const wchar_t*)litehtml_to_wchar(text);
+	wstring wtext = utf8_to_utf16(text);
 	GetTextExtentPoint32(m_tmp_hdc, wtext.c_str(), (int)wtext.size(), &size);
 	return size.cx;
 }
 
-void win32_container::draw_text( uint_ptr hdc, const char* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )
+void win32_container::draw_text( uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos )
 {
 	apply_clip((HDC) hdc);
 
@@ -135,7 +172,7 @@ void win32_container::draw_text( uint_ptr hdc, const char* text, uint_ptr hFont,
 	SetTextColor((HDC) hdc, RGB(color.red, color.green, color.blue));
 
 	RECT rcText = { pos.left(), pos.top(), pos.right(), pos.bottom() };
-	DrawText((HDC) hdc, litehtml_to_wchar(text), -1, &rcText, DT_SINGLELINE | DT_NOPREFIX | DT_BOTTOM | DT_NOCLIP);
+	DrawText((HDC) hdc, utf8_to_utf16(text).c_str(), -1, &rcText, DT_SINGLELINE | DT_NOPREFIX | DT_BOTTOM | DT_NOCLIP);
 
 	SelectObject((HDC) hdc, oldFont);
 
@@ -147,7 +184,7 @@ int win32_container::pt_to_px( int pt ) const
 	return MulDiv(pt, GetDeviceCaps(m_tmp_hdc, LOGPIXELSY), 72);
 }
 
-void win32_container::draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker)
+void win32_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
 {
 	apply_clip((HDC)hdc);
 
@@ -162,17 +199,17 @@ void win32_container::draw_list_marker(uint_ptr hdc, const litehtml::list_marker
 
 	switch (marker.marker_type)
 	{
-	case litehtml::list_style_type_circle:
+	case list_style_type_circle:
 		{
 			draw_ellipse((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color, 1);
 		}
 		break;
-	case litehtml::list_style_type_disc:
+	case list_style_type_disc:
 		{
 			fill_ellipse((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color);
 		}
 		break;
-	case litehtml::list_style_type_square:
+	case list_style_type_square:
 		{
 			fill_rect((HDC)hdc, draw_x, draw_y, draw_width, draw_height, marker.color);
 		}
@@ -181,15 +218,15 @@ void win32_container::draw_list_marker(uint_ptr hdc, const litehtml::list_marker
 	release_clip((HDC)hdc);
 }
 
-void win32_container::make_url_utf8(const char* url, const char* basepath, std::wstring& out)
+void win32_container::make_url_utf8(const char* url, const char* basepath, wstring& out)
 {
 	if (!basepath) basepath = "";
-	make_url(litehtml::utf8_to_wchar(url), litehtml::utf8_to_wchar(basepath), out);
+	make_url(utf8_to_utf16(url).c_str(), utf8_to_utf16(basepath).c_str(), out);
 }
 
 void win32_container::load_image( const char* src, const char* baseurl, bool redraw_on_ready )
 {
-	std::wstring url;
+	wstring url;
 	make_url_utf8(src, baseurl, url);
 	
 	lock_images_cache();
@@ -214,7 +251,7 @@ void win32_container::add_image(LPCWSTR url, uint_ptr img)
 
 void win32_container::get_image_size( const char* src, const char* baseurl, litehtml::size& sz )
 {
-	std::wstring url;
+	wstring url;
 	make_url_utf8(src, baseurl, url);
 
 	sz.width  = 0;
@@ -253,7 +290,7 @@ void win32_container::unlock_images_cache()
 	LeaveCriticalSection(&m_img_sync);
 }
 
-void win32_container::draw_solid_fill(uint_ptr _hdc, const litehtml::background_layer& layer, const litehtml::web_color& color)
+void win32_container::draw_solid_fill(uint_ptr _hdc, const background_layer& layer, const web_color& color)
 {
 	HDC hdc = (HDC)_hdc;
 	apply_clip(hdc);
@@ -264,12 +301,12 @@ void win32_container::draw_solid_fill(uint_ptr _hdc, const litehtml::background_
 	release_clip(hdc);
 }
 
-void win32_container::draw_image(uint_ptr _hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url)
+void win32_container::draw_image(uint_ptr _hdc, const background_layer& layer, const string& url, const string& base_url)
 {
 	HDC hdc = (HDC)_hdc;
 	apply_clip(hdc);
 
-	std::wstring wurl;
+	wstring wurl;
 	make_url_utf8(url.c_str(), base_url.c_str(), wurl);
 
 	lock_images_cache();
@@ -283,7 +320,7 @@ void win32_container::draw_image(uint_ptr _hdc, const litehtml::background_layer
 	release_clip(hdc);
 }
 
-void win32_container::set_clip( const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius )
+void win32_container::set_clip( const position& pos, const border_radiuses& bdr_radius )
 {
 	m_clips.push_back(pos);
 }
@@ -309,7 +346,7 @@ void win32_container::apply_clip(HDC hdc)
 		POINT ptView = {0, 0};
 		GetWindowOrgEx(hdc, &ptView);
 
-		litehtml::position clip_pos = m_clips.back();
+		position clip_pos = m_clips.back();
 		m_hClipRgn = CreateRectRgn(clip_pos.left() - ptView.x, clip_pos.top() - ptView.y, clip_pos.right() - ptView.x, clip_pos.bottom() - ptView.y);
 		SelectClipRgn(hdc, m_hClipRgn);
 	}
@@ -326,17 +363,17 @@ void win32_container::release_clip(HDC hdc)
 	}
 }
 
-litehtml::element::ptr win32_container::create_element(const char* tag_name, const litehtml::string_map& attributes, const litehtml::document::ptr& doc)
+element::ptr win32_container::create_element(const char* tag_name, const string_map& attributes, const document::ptr& doc)
 {
 	return 0;
 }
 
-void win32_container::get_media_features(litehtml::media_features& media)  const
+void win32_container::get_media_features(media_features& media)  const
 {
-	litehtml::position client;
+	position client;
 	get_client_rect(client);
 
-	media.type = litehtml::media_type_screen;
+	media.type = media_type_screen;
 	media.width = client.width;
 	media.height = client.height;
 	media.color = 8;
@@ -347,43 +384,43 @@ void win32_container::get_media_features(litehtml::media_features& media)  const
 	media.device_height = GetDeviceCaps(m_tmp_hdc, VERTRES);
 }
 
-void win32_container::get_language(litehtml::string& language, litehtml::string& culture) const
+void win32_container::get_language(string& language, string& culture) const
 {
 	language = "en";
 	culture = "";
 }
 
-void win32_container::transform_text(litehtml::string& text, litehtml::text_transform tt)
+void win32_container::transform_text(string& text, text_transform tt)
 {
 	if (text.empty()) return;
 
-	LPWSTR txt = _wcsdup(litehtml_to_wchar(text.c_str()));
+	LPWSTR txt = _wcsdup(utf8_to_utf16(text).c_str());
 	switch (tt)
 	{
-	case litehtml::text_transform_capitalize:
+	case text_transform_capitalize:
 		CharUpperBuff(txt, 1);
 		break;
-	case litehtml::text_transform_uppercase:
+	case text_transform_uppercase:
 		CharUpperBuff(txt, lstrlen(txt));
 		break;
-	case litehtml::text_transform_lowercase:
+	case text_transform_lowercase:
 		CharLowerBuff(txt, lstrlen(txt));
 		break;
 	}
-	text = litehtml_from_wchar(txt);
+	text = utf16_to_utf8(txt);
 	free(txt);
 }
 
-void win32_container::link(const litehtml::document::ptr& doc, const litehtml::element::ptr& el)
+void win32_container::link(const document::ptr& doc, const element::ptr& el)
 {
 }
 
-litehtml::string win32_container::resolve_color(const litehtml::string& color) const
+string win32_container::resolve_color(const string& color) const
 {
 	struct custom_color
 	{
 		const char*	name;
-		int					color_index;
+		int			color_index;
 	};
 
 	static custom_color colors[] = {
@@ -419,13 +456,13 @@ litehtml::string win32_container::resolve_color(const litehtml::string& color) c
 
 	for (auto& clr : colors)
 	{
-		if (!litehtml::t_strcasecmp(color.c_str(), clr.name))
+		if (!t_strcasecmp(color.c_str(), clr.name))
 		{
 			char  str_clr[20];
 			DWORD rgb_color = GetSysColor(clr.color_index);
 			t_snprintf(str_clr, 20, "#%02X%02X%02X", GetRValue(rgb_color), GetGValue(rgb_color), GetBValue(rgb_color));
-			return std::move(litehtml::string(str_clr));
+			return std::move(string(str_clr));
 		}
 	}
-	return std::move(litehtml::string());
+	return std::move(string());
 }

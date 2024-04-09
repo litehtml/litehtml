@@ -23,9 +23,7 @@
 #include "el_tr.h"
 #include <cmath>
 #include <cstdio>
-#include <algorithm>
 #include "gumbo.h"
-#include "utf8_strings.h"
 #include "render_item.h"
 #include "render_table.h"
 #include "render_block.h"
@@ -33,12 +31,12 @@
 namespace litehtml
 {
 
-litehtml::document::document(document_container* objContainer)
+document::document(document_container* container)
 {
-	m_container	= objContainer;
+	m_container	= container;
 }
 
-litehtml::document::~document()
+document::~document()
 {
 	m_over_element = nullptr;
 	if(m_container)
@@ -50,15 +48,17 @@ litehtml::document::~document()
 	}
 }
 
-document::ptr document::createFromString(const string& str, document_container* container, 
-	const string& master_styles, const string& user_styles )
+document::ptr document::createFromString(
+	const estring& str, 
+	document_container* container, 
+	const string& master_styles, 
+	const string& user_styles )
 {
-//ms("doc->parse_html",
-	// parse document into GumboOutput
-	GumboOutput* output = gumbo_parse(str.c_str());
-
 	// Create litehtml::document
 	document::ptr doc = make_shared<document>(container);
+
+	// Parse document into GumboOutput
+	GumboOutput* output = doc->parse_html(str);
 
 	// Create litehtml::elements.
 	elements_list root_elements;
@@ -80,7 +80,7 @@ document::ptr document::createFromString(const string& str, document_container* 
 		doc->m_user_css.parse_css_stylesheet(user_styles, "", doc);
 		doc->m_user_css.sort_selectors();
 	}
-//)
+
 	// Let's process created elements tree
 	if (doc->m_root)
 	{
@@ -93,7 +93,7 @@ document::ptr document::createFromString(const string& str, document_container* 
 
 		// parse elements attributes
 		doc->m_root->parse_attributes();
-	//ms("parse_stylesheet",
+
 		// parse style sheets linked in document
 		for (const auto& css : doc->m_css)
 		{
@@ -108,17 +108,17 @@ document::ptr document::createFromString(const string& str, document_container* 
 		}
 		// Sort css selectors using CSS rules.
 		doc->m_styles.sort_selectors();
-	//)
+
 		doc->update_media_lists(doc->m_media);
-	//ms("apply_stylesheet",
+
 		// Apply parsed styles.
 		doc->m_root->apply_stylesheet(doc->m_styles);
 
 		// Apply user styles if any
 		doc->m_root->apply_stylesheet(doc->m_user_css);
-	//)ms("compute_styles",
+
 		// Initialize element::m_css
-		doc->m_root->compute_styles();//)
+		doc->m_root->compute_styles();
 
 		// Create rendering tree
 		doc->m_root_render = doc->m_root->create_render_item(nullptr);
@@ -129,14 +129,308 @@ document::ptr document::createFromString(const string& str, document_container* 
 		doc->fix_tables_layout();
 
 		// Finally initialize elements
-		// init() return pointer to the render_init element because it can change its type
+		// init() returns pointer to the render_init element because it can change its type
 		doc->m_root_render = doc->m_root_render->init();
 	}
 
 	return doc;
 }
 
-litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
+// https://html.spec.whatwg.org/multipage/parsing.html#change-the-encoding
+encoding adjust_meta_encoding(encoding meta_encoding, encoding current_encoding)
+{
+	// 1.
+	if (current_encoding == encoding::utf_16le || current_encoding == encoding::utf_16be)
+		return current_encoding;
+
+	// 2.
+	if (meta_encoding == encoding::utf_16le || meta_encoding == encoding::utf_16be)
+		return encoding::utf_8;
+
+	// 3.
+	if (meta_encoding == encoding::x_user_defined)
+		return encoding::windows_1252;
+
+	// 4,5,6.
+	return meta_encoding;
+}
+
+// https://html.spec.whatwg.org/multipage/parsing.html#parsing-main-inhead:change-the-encoding
+encoding get_meta_encoding(GumboNode* root)
+{
+	// find <head>
+	GumboNode* head = 0;
+	for (size_t i = 0; i < root->v.element.children.length; i++)
+	{
+		GumboNode* node = (GumboNode*)root->v.element.children.data[i];
+		if (node->type == GUMBO_NODE_ELEMENT && node->v.element.tag == GUMBO_TAG_HEAD)
+		{
+			head = node;
+			break;
+		}
+	}
+	if (!head) return encoding::null;
+
+	// go through <meta> tags in <head>
+	for (size_t i = 0; i < head->v.element.children.length; i++)
+	{
+		GumboNode* node = (GumboNode*)head->v.element.children.data[i];
+		if (node->type != GUMBO_NODE_ELEMENT || node->v.element.tag != GUMBO_TAG_META)
+			continue;
+
+		auto charset    = gumbo_get_attribute(&node->v.element.attributes, "charset");
+		auto http_equiv = gumbo_get_attribute(&node->v.element.attributes, "http-equiv");
+		auto content    = gumbo_get_attribute(&node->v.element.attributes, "content");
+		// 1. If the element has a charset attribute...
+		if (charset)
+		{
+			auto encoding = get_encoding(charset->value);
+			if (encoding != encoding::null)
+				return encoding;
+		}
+		// 2. Otherwise, if the element has an http-equiv attribute...
+		else if (http_equiv && t_strcasecmp(http_equiv->value, "content-type") == 0 && content)
+		{
+			auto encoding = extract_encoding_from_meta_element(content->value);
+			if (encoding != encoding::null)
+				return encoding;
+		}
+	}
+
+	return encoding::null;
+}
+
+// substitute for gumbo_parse that handles encodings
+GumboOutput* document::parse_html(estring str)
+{
+	// https://html.spec.whatwg.org/multipage/parsing.html#the-input-byte-stream
+	encoding_sniffing_algorithm(str);
+	// cannot store output in local variable because gumbo keeps pointers into it, 
+	// which will be accessed later in gumbo_tag_from_original_text
+	if (str.encoding == encoding::utf_8)
+		m_text = str;
+	else
+		decode(str, str.encoding, m_text);
+
+	// Gumbo does not support callbacks on node creation, so we cannot change encoding while parsing.
+	// Instead, we parse entire file and then handle <meta> tags.
+
+	// Using gumbo_parse_with_options to pass string length (m_text may contain NUL chars).
+	GumboOutput* output = gumbo_parse_with_options(&kGumboDefaultOptions, m_text.data(), m_text.size());
+
+	if (str.confidence == confidence::certain)
+		return output;
+
+	// Otherwise: confidence is tentative.
+
+	// If valid HTML encoding is specified in <meta> tag...
+	encoding meta_encoding = get_meta_encoding(output->root);
+	if (meta_encoding != encoding::null)
+	{
+		// ...and it is different from currently used encoding...
+		encoding new_encoding = adjust_meta_encoding(meta_encoding, str.encoding);
+		if (new_encoding != str.encoding)
+		{
+			// ...reparse with the new encoding.
+			gumbo_destroy_output(&kGumboDefaultOptions, output);
+			m_text.clear();
+
+			if (new_encoding == encoding::utf_8)
+				m_text = str;
+			else
+				decode(str, new_encoding, m_text);
+			output = gumbo_parse_with_options(&kGumboDefaultOptions, m_text.data(), m_text.size());
+		}
+	}
+
+	return output;
+}
+
+void document::create_node(void* gnode, elements_list& elements, bool parseTextNode)
+{
+	auto* node = (GumboNode*)gnode;
+	switch (node->type)
+	{
+	case GUMBO_NODE_ELEMENT:
+	{
+		string_map attrs;
+		GumboAttribute* attr;
+		for (unsigned int i = 0; i < node->v.element.attributes.length; i++)
+		{
+			attr = (GumboAttribute*)node->v.element.attributes.data[i];
+			attrs[attr->name] = attr->value;
+		}
+
+
+		element::ptr ret;
+		const char* tag = gumbo_normalized_tagname(node->v.element.tag);
+		if (tag[0])
+		{
+			ret = create_element(tag, attrs);
+		}
+		else
+		{
+			if (node->v.element.original_tag.data && node->v.element.original_tag.length)
+			{
+				string str;
+				gumbo_tag_from_original_text(&node->v.element.original_tag);
+				str.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
+				ret = create_element(str.c_str(), attrs);
+			}
+		}
+		if (!strcmp(tag, "script"))
+		{
+			parseTextNode = false;
+		}
+		if (ret)
+		{
+			elements_list child;
+			for (unsigned int i = 0; i < node->v.element.children.length; i++)
+			{
+				child.clear();
+				create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child, parseTextNode);
+				std::for_each(child.begin(), child.end(),
+					[&ret](element::ptr& el)
+					{
+						ret->appendChild(el);
+					}
+				);
+			}
+			elements.push_back(ret);
+		}
+	}
+	break;
+	case GUMBO_NODE_TEXT:
+	{
+		if (!parseTextNode)
+		{
+			elements.push_back(std::make_shared<el_text>(node->v.text.text, shared_from_this()));
+		}
+		else
+		{
+			m_container->split_text(node->v.text.text,
+				[this, &elements](const char* text) { elements.push_back(std::make_shared<el_text>(text, shared_from_this())); },
+				[this, &elements](const char* text) { elements.push_back(std::make_shared<el_space>(text, shared_from_this())); });
+		}
+	}
+	break;
+	case GUMBO_NODE_CDATA:
+	{
+		element::ptr ret = std::make_shared<el_cdata>(shared_from_this());
+		ret->set_data(node->v.text.text);
+		elements.push_back(ret);
+	}
+	break;
+	case GUMBO_NODE_COMMENT:
+	{
+		element::ptr ret = std::make_shared<el_comment>(shared_from_this());
+		ret->set_data(node->v.text.text);
+		elements.push_back(ret);
+	}
+	break;
+	case GUMBO_NODE_WHITESPACE:
+	{
+		string str = node->v.text.text;
+		for (size_t i = 0; i < str.length(); i++)
+		{
+			elements.push_back(std::make_shared<el_space>(str.substr(i, 1).c_str(), shared_from_this()));
+		}
+	}
+	break;
+	default:
+		break;
+	}
+}
+
+element::ptr document::create_element(const char* tag_name, const string_map& attributes)
+{
+	element::ptr newTag;
+	document::ptr this_doc = shared_from_this();
+	if (m_container)
+	{
+		newTag = m_container->create_element(tag_name, attributes, this_doc);
+	}
+	if (!newTag)
+	{
+		if (!strcmp(tag_name, "br"))
+		{
+			newTag = std::make_shared<el_break>(this_doc);
+		}
+		else if (!strcmp(tag_name, "p"))
+		{
+			newTag = std::make_shared<el_para>(this_doc);
+		}
+		else if (!strcmp(tag_name, "img"))
+		{
+			newTag = std::make_shared<el_image>(this_doc);
+		}
+		else if (!strcmp(tag_name, "table"))
+		{
+			newTag = std::make_shared<el_table>(this_doc);
+		}
+		else if (!strcmp(tag_name, "td") || !strcmp(tag_name, "th"))
+		{
+			newTag = std::make_shared<el_td>(this_doc);
+		}
+		else if (!strcmp(tag_name, "link"))
+		{
+			newTag = std::make_shared<el_link>(this_doc);
+		}
+		else if (!strcmp(tag_name, "title"))
+		{
+			newTag = std::make_shared<el_title>(this_doc);
+		}
+		else if (!strcmp(tag_name, "a"))
+		{
+			newTag = std::make_shared<el_anchor>(this_doc);
+		}
+		else if (!strcmp(tag_name, "tr"))
+		{
+			newTag = std::make_shared<el_tr>(this_doc);
+		}
+		else if (!strcmp(tag_name, "style"))
+		{
+			newTag = std::make_shared<el_style>(this_doc);
+		}
+		else if (!strcmp(tag_name, "base"))
+		{
+			newTag = std::make_shared<el_base>(this_doc);
+		}
+		else if (!strcmp(tag_name, "body"))
+		{
+			newTag = std::make_shared<el_body>(this_doc);
+		}
+		else if (!strcmp(tag_name, "div"))
+		{
+			newTag = std::make_shared<el_div>(this_doc);
+		}
+		else if (!strcmp(tag_name, "script"))
+		{
+			newTag = std::make_shared<el_script>(this_doc);
+		}
+		else if (!strcmp(tag_name, "font"))
+		{
+			newTag = std::make_shared<el_font>(this_doc);
+		}
+		else
+		{
+			newTag = std::make_shared<html_tag>(this_doc);
+		}
+	}
+
+	if (newTag)
+	{
+		newTag->set_tagName(tag_name);
+		for (const auto& attribute : attributes)
+		{
+			newTag->set_attr(attribute.first.c_str(), attribute.second.c_str());
+		}
+	}
+
+	return newTag;
+}
+
+uint_ptr document::add_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
 {
 	uint_ptr ret = 0;
 
@@ -166,16 +460,16 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 		{
 			switch(fw)
 			{
-			case litehtml::font_weight_bold:
+			case font_weight_bold:
 				fw = 700;
 				break;
-			case litehtml::font_weight_bolder:
+			case font_weight_bolder:
 				fw = 600;
 				break;
-			case litehtml::font_weight_lighter:
+			case font_weight_lighter:
 				fw = 300;
 				break;
-			case litehtml::font_weight_normal:
+			case font_weight_normal:
 				fw = 400;
 				break;
 			}
@@ -222,7 +516,7 @@ litehtml::uint_ptr litehtml::document::add_font( const char* name, int size, con
 	return ret;
 }
 
-litehtml::uint_ptr litehtml::document::get_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
+uint_ptr document::get_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
 {
 	if(!size)
 	{
@@ -259,7 +553,7 @@ litehtml::uint_ptr litehtml::document::get_font( const char* name, int size, con
 	return add_font(name, size, weight, style, decoration, fm);
 }
 
-int litehtml::document::render( int max_width, render_type rt )
+int document::render( int max_width, render_type rt )
 {
 	int ret = 0;
 	if(m_root)
@@ -294,7 +588,7 @@ int litehtml::document::render( int max_width, render_type rt )
 	return ret;
 }
 
-void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip )
+void document::draw( uint_ptr hdc, int x, int y, const position* clip )
 {
 	if(m_root && m_root_render)
 	{
@@ -303,7 +597,7 @@ void litehtml::document::draw( uint_ptr hdc, int x, int y, const position* clip 
 	}
 }
 
-int litehtml::document::to_pixels( const char* str, int fontSize, bool* is_percent/*= 0*/ ) const
+int document::to_pixels( const char* str, int fontSize, bool* is_percent/*= 0*/ ) const
 {
 	if(!str)	return 0;
 	
@@ -316,7 +610,7 @@ int litehtml::document::to_pixels( const char* str, int fontSize, bool* is_perce
 	return to_pixels(val, fontSize);
 }
 
-int litehtml::document::to_pixels( const css_length& val, int fontSize, int size ) const
+int document::to_pixels( const css_length& val, int fontSize, int size ) const
 {
 	if(val.is_predefined())
 	{
@@ -365,7 +659,7 @@ int litehtml::document::to_pixels( const css_length& val, int fontSize, int size
 	return ret;
 }
 
-void litehtml::document::cvt_units( css_length& val, int fontSize, int /*size*/ ) const
+void document::cvt_units( css_length& val, int fontSize, int /*size*/ ) const
 {
 	if(val.is_predefined())
 	{
@@ -399,28 +693,28 @@ void litehtml::document::cvt_units( css_length& val, int fontSize, int /*size*/ 
 	}
 }
 
-int litehtml::document::width() const
+int document::width() const
 {
 	return m_size.width;
 }
 
-int litehtml::document::height() const
+int document::height() const
 {
 	return m_size.height;
 }
 
-int litehtml::document::content_width() const
+int document::content_width() const
 {
 	return m_content_size.width;
 }
 
-int litehtml::document::content_height() const
+int document::content_height() const
 {
 	return m_content_size.height;
 }
 
 
-void litehtml::document::add_stylesheet( const char* str, const char* baseurl, const char* media )
+void document::add_stylesheet( const char* str, const char* baseurl, const char* media )
 {
 	if(str && str[0])
 	{
@@ -428,7 +722,7 @@ void litehtml::document::add_stylesheet( const char* str, const char* baseurl, c
 	}
 }
 
-bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
+bool document::on_mouse_over( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
 	{
@@ -471,7 +765,7 @@ bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y
 	return false;
 }
 
-bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
+bool document::on_mouse_leave( position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
 	{
@@ -487,7 +781,7 @@ bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes )
 	return false;
 }
 
-bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
+bool document::on_lbutton_down( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
 	{
@@ -538,7 +832,7 @@ bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client
 	return false;
 }
 
-bool litehtml::document::on_lbutton_up( int /*x*/, int /*y*/, int /*client_x*/, int /*client_y*/, position::vector& redraw_boxes )
+bool document::on_lbutton_up( int /*x*/, int /*y*/, int /*client_x*/, int /*client_y*/, position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
 	{
@@ -554,90 +848,17 @@ bool litehtml::document::on_lbutton_up( int /*x*/, int /*y*/, int /*client_x*/, 
 	return false;
 }
 
-litehtml::element::ptr litehtml::document::create_element(const char* tag_name, const string_map& attributes)
-{
-	element::ptr newTag;
-	document::ptr this_doc = shared_from_this();
-	if(m_container)
-	{
-		newTag = m_container->create_element(tag_name, attributes, this_doc);
-	}
-	if(!newTag)
-	{
-		if(!strcmp(tag_name, "br"))
-		{
-			newTag = std::make_shared<litehtml::el_break>(this_doc);
-		} else if(!strcmp(tag_name, "p"))
-		{
-			newTag = std::make_shared<litehtml::el_para>(this_doc);
-		} else if(!strcmp(tag_name, "img"))
-		{
-			newTag = std::make_shared<litehtml::el_image>(this_doc);
-		} else if(!strcmp(tag_name, "table"))
-		{
-			newTag = std::make_shared<litehtml::el_table>(this_doc);
-		} else if(!strcmp(tag_name, "td") || !strcmp(tag_name, "th"))
-		{
-			newTag = std::make_shared<litehtml::el_td>(this_doc);
-		} else if(!strcmp(tag_name, "link"))
-		{
-			newTag = std::make_shared<litehtml::el_link>(this_doc);
-		} else if(!strcmp(tag_name, "title"))
-		{
-			newTag = std::make_shared<litehtml::el_title>(this_doc);
-		} else if(!strcmp(tag_name, "a"))
-		{
-			newTag = std::make_shared<litehtml::el_anchor>(this_doc);
-		} else if(!strcmp(tag_name, "tr"))
-		{
-			newTag = std::make_shared<litehtml::el_tr>(this_doc);
-		} else if(!strcmp(tag_name, "style"))
-		{
-			newTag = std::make_shared<litehtml::el_style>(this_doc);
-		} else if(!strcmp(tag_name, "base"))
-		{
-			newTag = std::make_shared<litehtml::el_base>(this_doc);
-		} else if(!strcmp(tag_name, "body"))
-		{
-			newTag = std::make_shared<litehtml::el_body>(this_doc);
-		} else if(!strcmp(tag_name, "div"))
-		{
-			newTag = std::make_shared<litehtml::el_div>(this_doc);
-		} else if(!strcmp(tag_name, "script"))
-		{
-			newTag = std::make_shared<litehtml::el_script>(this_doc);
-		} else if(!strcmp(tag_name, "font"))
-		{
-			newTag = std::make_shared<litehtml::el_font>(this_doc);
-		} else
-		{
-			newTag = std::make_shared<litehtml::html_tag>(this_doc);
-		}
-	}
-
-	if(newTag)
-	{
-		newTag->set_tagName(tag_name);
-		for (const auto & attribute : attributes)
-		{
-			newTag->set_attr(attribute.first.c_str(), attribute.second.c_str());
-		}
-	}
-
-	return newTag;
-}
-
-void litehtml::document::get_fixed_boxes( position::vector& fixed_boxes )
+void document::get_fixed_boxes( position::vector& fixed_boxes )
 {
 	fixed_boxes = m_fixed_boxes;
 }
 
-void litehtml::document::add_fixed_box( const position& pos )
+void document::add_fixed_box( const position& pos )
 {
 	m_fixed_boxes.push_back(pos);
 }
 
-bool litehtml::document::media_changed()
+bool document::media_changed()
 {
 	container()->get_media_features(m_media);
 	if (update_media_lists(m_media))
@@ -689,103 +910,7 @@ void document::add_media_list(media_query_list_list::ptr list)
 		m_media_lists.push_back(list);
 }
 
-void litehtml::document::create_node(void* gnode, elements_list& elements, bool parseTextNode)
-{
-	auto* node = (GumboNode*)gnode;
-	switch (node->type)
-	{
-	case GUMBO_NODE_ELEMENT:
-		{
-			string_map attrs;
-			GumboAttribute* attr;
-			for (unsigned int i = 0; i < node->v.element.attributes.length; i++)
-			{
-				attr = (GumboAttribute*)node->v.element.attributes.data[i];
-				attrs[attr->name] = attr->value;
-			}
-
-
-			element::ptr ret;
-			const char* tag = gumbo_normalized_tagname(node->v.element.tag);
-			if (tag[0])
-			{
-				ret = create_element(tag, attrs);
-			}
-			else
-			{
-				if (node->v.element.original_tag.data && node->v.element.original_tag.length)
-				{
-					std::string strA;
-					gumbo_tag_from_original_text(&node->v.element.original_tag);
-					strA.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
-					ret = create_element(strA.c_str(), attrs);
-				}
-			}
-			if (!strcmp(tag, "script"))
-			{
-				parseTextNode = false;
-			}
-			if (ret)
-			{
-				elements_list child;
-				for (unsigned int i = 0; i < node->v.element.children.length; i++)
-				{
-					child.clear();
-					create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child, parseTextNode);
-					std::for_each(child.begin(), child.end(), 
-						[&ret](element::ptr& el)
-						{
-							ret->appendChild(el);
-						}
-					);
-				}
-				elements.push_back(ret);
-			}
-		}
-		break;
-	case GUMBO_NODE_TEXT:
-		{
-			if (!parseTextNode)
-			{
-				elements.push_back(std::make_shared<el_text>(node->v.text.text, shared_from_this()));
-			}
-			else
-			{
-				m_container->split_text(node->v.text.text,
-					[this, &elements](const char* text) { elements.push_back(std::make_shared<el_text>(text, shared_from_this())); },
-					[this, &elements](const char* text) { elements.push_back(std::make_shared<el_space>(text, shared_from_this())); });
-			}
-		}
-		break;
-	case GUMBO_NODE_CDATA:
-		{
-			element::ptr ret = std::make_shared<el_cdata>(shared_from_this());
-			ret->set_data(node->v.text.text);
-			elements.push_back(ret);
-		}
-		break;
-	case GUMBO_NODE_COMMENT:
-		{
-			element::ptr ret = std::make_shared<el_comment>(shared_from_this());
-			ret->set_data(node->v.text.text);
-			elements.push_back(ret);
-		}
-		break;
-	case GUMBO_NODE_WHITESPACE:
-		{
-			string str = node->v.text.text;
-			for (size_t i = 0; i < str.length(); i++)
-			{
-				elements.push_back(std::make_shared<el_space>(str.substr(i, 1).c_str(), shared_from_this()));
-			}
-		}
-		break;
-	default:
-		break;
-	}
-}
-
-void litehtml::document::fix_tables_layout()
+void document::fix_tables_layout()
 {
 	for (const auto& el_ptr : m_tabular_elements)
 	{
@@ -825,7 +950,7 @@ void litehtml::document::fix_tables_layout()
 	}
 }
 
-void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str)
+void document::fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str)
 {
 	std::list<std::shared_ptr<render_item>> tmp;
 	auto first_iter = el_ptr->children().begin();
@@ -895,7 +1020,7 @@ void litehtml::document::fix_table_children(const std::shared_ptr<render_item>& 
 	}
 }
 
-void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str)
+void document::fix_table_parent(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str)
 {
 	auto parent = el_ptr->parent();
 
@@ -977,7 +1102,7 @@ void litehtml::document::fix_table_parent(const std::shared_ptr<render_item>& el
 	}
 }
 
-void litehtml::document::append_children_from_string(element& parent, const char* str)
+void document::append_children_from_string(element& parent, const char* str)
 {
 	// parent must belong to this document
 	if (parent.get_document().get() != this)
@@ -1026,7 +1151,7 @@ void litehtml::document::append_children_from_string(element& parent, const char
 	}
 }
 
-void litehtml::document::dump(dumper& cout)
+void document::dump(dumper& cout)
 {
 	if(m_root_render)
 	{

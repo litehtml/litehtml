@@ -92,14 +92,32 @@ bool has_var(const css_token_vector& tokens)
 	return false;
 }
 
-bool is_shorthand_property(string_id /*name*/)
+void style::inherit_property(string_id name, bool important)
 {
-	return false;
-}
-
-vector<string_id> get_atomic_properties(string_id /*name*/)
-{
-	return {};
+	switch (name)
+	{
+		case _font_:
+			add_parsed_property(_font_style_,   property_value(inherit(), important));
+			add_parsed_property(_font_variant_, property_value(inherit(), important));
+			add_parsed_property(_font_weight_,  property_value(inherit(), important));
+			add_parsed_property(_font_size_,    property_value(inherit(), important));
+			add_parsed_property(_line_height_,  property_value(inherit(), important));
+			break;
+		case _background_:
+			add_parsed_property(_background_color_,         property_value(inherit(), important));
+			add_parsed_property(_background_position_x_,    property_value(inherit(), important));
+			add_parsed_property(_background_position_y_,    property_value(inherit(), important));
+			add_parsed_property(_background_repeat_,        property_value(inherit(), important));
+			add_parsed_property(_background_attachment_,    property_value(inherit(), important));
+			add_parsed_property(_background_image_,         property_value(inherit(), important));
+			add_parsed_property(_background_image_baseurl_, property_value(inherit(), important));
+			add_parsed_property(_background_size_,          property_value(inherit(), important));
+			add_parsed_property(_background_origin_,        property_value(inherit(), important));
+			add_parsed_property(_background_clip_,          property_value(inherit(), important));
+			break;
+		default:
+			add_parsed_property(name, property_value(inherit(), important));
+	}
 }
 
 void style::add_length_property(string_id name, css_token val, string keywords, int options, bool important)
@@ -109,13 +127,6 @@ void style::add_length_property(string_id name, css_token val, string keywords, 
 		add_parsed_property(name, property_value(length, important));
 }
 
-//string parse_ident(const css_token_vector& tokens)
-//{
-//	if (tokens.size() == 1 && tokens[0].type == IDENT)
-//		return lowcase(tokens[0].name);
-//	return "";
-//}
-
 // `value` is a list of component values with all whitespace tokens removed, including those inside component values
 void style::add_property(string_id name, const css_token_vector& value, const string& baseurl, bool important, document_container* container)
 {
@@ -124,7 +135,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		return;
 	
 	if (has_var(value))
-		return add_parsed_property(name, property_value(value, important, prop_type_var));
+		return add_parsed_property(name, property_value(value, important, true));
 	
 	// valid only if value contains a single token
 	css_token val = value.size() == 1 ? value[0] : css_token();
@@ -132,16 +143,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	string ident = val.ident();
 
 	if (ident == "inherit")
-	{
-		if (is_shorthand_property(name))
-		{
-			for (auto atomic : get_atomic_properties(name))
-				add_parsed_property(atomic, property_value(important, prop_type_inherit));
-		}
-		else
-			add_parsed_property(name, property_value(important, prop_type_inherit));
-		return;
-	}
+		return inherit_property(name, important);
 
 	int idx[4];
 	web_color clr[4];
@@ -430,7 +432,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	default:
 		if (_s(name).substr(0, 2) == "--" && _s(name).size() >= 3 && 
 			(value.empty() || is_declaration_value(value)))
-			add_parsed_property(name, property_value(value, important, prop_type_custom));
+			add_parsed_property(name, property_value(value, important));
 	}
 }
 
@@ -1940,7 +1942,7 @@ bool check_var_syntax(const css_token_vector& args)
 // var( <custom-property-name> , <declaration-value>? )
 // returns true if one var() was substituted
 // returns true if there was error or var() was not found
-bool subst_var(css_token_vector& tokens, const element* el, std::set<string_id>& used_vars)
+bool subst_var(css_token_vector& tokens, const html_tag* el, std::set<string_id>& used_vars)
 {
 	for (int i = 0; i < tokens.size(); i++)
 	{
@@ -1975,23 +1977,24 @@ bool subst_var(css_token_vector& tokens, const element* el, std::set<string_id>&
 	return false;
 }
 
-void subst_vars_(string_id name, css_token_vector& tokens, const element* el)
+void subst_vars_(string_id name, css_token_vector& tokens, const html_tag* el)
 {
 	std::set<string_id> used_vars = {name};
 	while (subst_var(tokens, el, used_vars));
 }
 
-void style::subst_vars(const element* el)
+void style::subst_vars(const html_tag* el)
 {
 	for (auto& prop : m_properties)
 	{
-		if (prop.second.m_type == prop_type_var)
+		if (prop.second.m_has_var)
 		{
-			subst_vars_(prop.first, prop.second.m_token_vector, el);
+			auto& value = prop.second.get<css_token_vector>();
+			subst_vars_(prop.first, value, el);
 			// re-adding the same property
 			// if it is a custom property it will be readded as a css_token_vector
 			// if it is a standard css property it will be parsed and properly added as typed property
-			add_property(prop.first, prop.second.m_token_vector, "", prop.second.m_important, el->get_document()->container());
+			add_property(prop.first, value, "", prop.second.m_important, el->get_document()->container());
 		}
 	}
 }

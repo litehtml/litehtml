@@ -3,21 +3,19 @@
 
 void litehtml::document_container::split_text(const char* text, const std::function<void(const char*)>& on_word, const std::function<void(const char*)>& on_space)
 {
-	std::wstring str;
-	std::wstring str_in = (const wchar_t*)utf8_to_wchar(text);
-	wchar_t c;
-	for (size_t i = 0; i < str_in.length(); i++)
+	std::u32string str;
+	std::u32string str_in = (const char32_t*)utf8_to_utf32(text);
+	for (auto c : str_in)
 	{
-		c = str_in[i];
 		if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
 		{
 			if (!str.empty())
 			{
-				on_word(wchar_to_utf8(str.c_str()));
+				on_word(utf32_to_utf8(str));
 				str.clear();
 			}
 			str += c;
-			on_space(wchar_to_utf8(str.c_str()));
+			on_space(utf32_to_utf8(str));
 			str.clear();
 		}
 		// CJK character range
@@ -25,11 +23,11 @@ void litehtml::document_container::split_text(const char* text, const std::funct
 		{
 			if (!str.empty())
 			{
-				on_word(wchar_to_utf8(str.c_str()));
+				on_word(utf32_to_utf8(str));
 				str.clear();
 			}
 			str += c;
-			on_word(wchar_to_utf8(str.c_str()));
+			on_word(utf32_to_utf8(str));
 			str.clear();
 		}
 		else
@@ -39,6 +37,6 @@ void litehtml::document_container::split_text(const char* text, const std::funct
 	}
 	if (!str.empty())
 	{
-		on_word(wchar_to_utf8(str.c_str()));
+		on_word(utf32_to_utf8(str));
 	}
 }

@@ -170,7 +170,7 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 		{
 			case flex_basis_auto:
 				base_size = el->css().get_width().calc_percent(self_size.render_width) +
-							el->content_offset_width();
+							el->render_offset_width();
 				break;
 			case flex_basis_fit_content:
 			case flex_basis_content:

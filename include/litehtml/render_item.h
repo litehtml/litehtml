@@ -222,6 +222,52 @@ namespace litehtml
             return content_offset_top() + content_offset_bottom();
         }
 
+		int render_offset_left() const
+		{
+			if(css().get_box_sizing() == box_sizing_content_box)
+			{
+				return m_margins.left + m_borders.left + m_padding.left;
+			}
+			return m_margins.left;
+		}
+
+		int render_offset_right() const
+		{
+			if(css().get_box_sizing() == box_sizing_content_box)
+			{
+				return m_margins.right + m_borders.right + m_padding.right;
+			}
+			return m_margins.right;
+		}
+
+		int render_offset_width() const
+		{
+			return render_offset_left() + render_offset_right();
+		}
+
+		int render_offset_top() const
+		{
+			if(css().get_box_sizing() == box_sizing_content_box)
+			{
+				return m_margins.top + m_borders.top + m_padding.top;
+			}
+			return m_margins.top;
+		}
+
+		int render_offset_bottom() const
+		{
+			if(css().get_box_sizing() == box_sizing_content_box)
+			{
+				return m_margins.bottom + m_borders.bottom + m_padding.bottom;
+			}
+			return m_margins.bottom;
+		}
+
+		int render_offset_height() const
+		{
+			return render_offset_top() + render_offset_bottom();
+		}
+
 		int box_sizing_left() const
 		{
 			if(css().get_box_sizing() == box_sizing_border_box)

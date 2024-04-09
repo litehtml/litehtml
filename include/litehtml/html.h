@@ -99,10 +99,12 @@ namespace litehtml
 		if (index < 0) return false;
 		return str.substr(index, substr.size()) == substr;
 	}
-	//inline bool match_i(const string& str, int index /*may be negative*/, const string& substr)
-	//{
-	//	return equal_i(str.substr(index, substr.size()), substr);
-	//}
+	inline bool match_i(const string& str, int index /*may be negative*/, const string& substr)
+	{
+		if (index < 0) index += (int)str.size();
+		if (index < 0) return false;
+		return equal_i(str.substr(index, substr.size()), substr);
+	}
 
 	bool is_number(const string& string, const bool allow_dot = 1);
 

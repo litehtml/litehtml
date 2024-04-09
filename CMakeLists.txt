@@ -51,6 +51,7 @@ set(SOURCE_LITEHTML
     src/el_text.cpp
     src/el_title.cpp
     src/el_tr.cpp
+    src/encodings.cpp
     src/html.cpp
     src/html_tag.cpp
     src/iterators.cpp
@@ -118,6 +119,7 @@ set(HEADER_LITEHTML
     include/litehtml/el_title.h
     include/litehtml/el_tr.h
     include/litehtml/element.h
+    include/litehtml/encodings.h
     include/litehtml/html.h
     include/litehtml/html_tag.h
     include/litehtml/iterators.h
@@ -148,9 +150,11 @@ set(HEADER_LITEHTML
     include/litehtml/formatting_context.h
     include/litehtml/flex_item.h
     include/litehtml/flex_line.h
+    include/litehtml/gradient.h
 )
 
 set(TEST_LITEHTML
+    test/encodings_test.cpp
 #    test/cssTest.cpp
 #    test/mediaQueryTest.cpp
     test/codepoint_test.cpp

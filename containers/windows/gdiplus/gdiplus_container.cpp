@@ -1,4 +1,6 @@
+#ifndef NOMINMAX
 #define NOMINMAX
+#endif
 #include <windows.h>
 #include <gdiplus.h>
 #include "gdiplus_container.h"
@@ -101,8 +103,8 @@ void gdiplus_container::draw_img_bg(HDC hdc, uint_ptr img, const litehtml::backg
 		{
 			CachedBitmap bmp(bgbmp, &graphics);
 			int x = bg.origin_box.x;
-			while(x > bg.clip_box.left()) x -= bgbmp->GetWidth();
-			for(; x < bg.clip_box.right(); x += bgbmp->GetWidth())
+			while (x > bg.clip_box.left()) x -= bgbmp->GetWidth();
+			for (; x < bg.clip_box.right(); x += bgbmp->GetWidth())
 			{
 				graphics.DrawCachedBitmap(&bmp, x, bg.origin_box.y);
 			}
@@ -112,8 +114,8 @@ void gdiplus_container::draw_img_bg(HDC hdc, uint_ptr img, const litehtml::backg
 		{
 			CachedBitmap bmp(bgbmp, &graphics);
 			int y = bg.origin_box.y;
-			while(y > bg.clip_box.top()) y -= bgbmp->GetHeight();
-			for(; y < bg.clip_box.bottom(); y += bgbmp->GetHeight())
+			while (y > bg.clip_box.top()) y -= bgbmp->GetHeight();
+			for (; y < bg.clip_box.bottom(); y += bgbmp->GetHeight())
 			{
 				graphics.DrawCachedBitmap(&bmp, bg.origin_box.x, y);
 			}
@@ -123,9 +125,9 @@ void gdiplus_container::draw_img_bg(HDC hdc, uint_ptr img, const litehtml::backg
 		{
 			CachedBitmap bmp(bgbmp, &graphics);
 			int x = bg.origin_box.x;
-			while(x > bg.clip_box.left()) x -= bgbmp->GetWidth();
+			while (x > bg.clip_box.left()) x -= bgbmp->GetWidth();
 			int y0 = bg.origin_box.y;
-			while(y0 > bg.clip_box.top()) y0 -= bgbmp->GetHeight();
+			while (y0 > bg.clip_box.top()) y0 -= bgbmp->GetHeight();
 
 			for(; x < bg.clip_box.right(); x += bgbmp->GetWidth())
 			{

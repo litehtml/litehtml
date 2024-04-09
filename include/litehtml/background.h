@@ -35,8 +35,8 @@ namespace litehtml
 		class image
 		{
 		public:
-			std::string url;
-			std::string base_url;
+			string url;
+			string base_url;
 		};
 
 		struct color_point
@@ -61,8 +61,8 @@ namespace litehtml
 			hue_interpolation_t  hue_interpolation = hue_interpolation_none;
 
 			void color_points_transparent_fix();
-			bool prepare_color_points(float len, string_id grad_type, const std::vector<gradient::color_stop>& colors);
-			bool prepare_angle_color_points(string_id grad_type, const std::vector<gradient::color_stop>& colors);
+			bool prepare_color_points(float len, string_id grad_type, const vector<gradient::color_stop>& colors);
+			bool prepare_angle_color_points(string_id grad_type, const vector<gradient::color_stop>& colors);
 		};
 
 		class linear_gradient : public gradient_base
@@ -100,7 +100,7 @@ namespace litehtml
 			type_conic_gradient,
 		};
 
-		std::vector<image> m_image;
+		vector<image>			m_image;
 		string					m_baseurl;
 		web_color				m_color;
 		int_vector				m_attachment;

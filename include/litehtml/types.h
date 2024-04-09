@@ -728,6 +728,11 @@ namespace litehtml
 			m_is_default	= true;
 			m_val			= def_val;
 		}
+		def_value(const def_value<T>& val)
+		{
+			m_is_default	= val.m_is_default;
+			m_val			= val.m_val;
+		}
 		void reset(T def_val)
 		{
 			m_is_default	= true;
@@ -742,6 +747,12 @@ namespace litehtml
 			m_val			= new_val;
 			m_is_default	= false;
 			return m_val;
+		}
+		def_value<T>& operator=(const def_value<T>& val)
+		{
+			m_is_default	= val.m_is_default;
+			m_val			= val.m_val;
+			return *this;
 		}
 		operator T() const
 		{
