@@ -200,10 +200,11 @@ bool parse_hash_color(const css_token& tok, web_color& color)
 		return byte(16 * digit_value(str[0]) + digit_value(str[1]));
 	};
 
-	color.red   = read_two_hex_digits(r);
-	color.green = read_two_hex_digits(g);
-	color.blue  = read_two_hex_digits(b);
-	color.alpha = read_two_hex_digits(a);
+	color = web_color(
+		read_two_hex_digits(r),
+		read_two_hex_digits(g),
+		read_two_hex_digits(b),
+		read_two_hex_digits(a));
 	return true;
 }
 
@@ -285,10 +286,11 @@ bool parse_rgb_func(const css_token& tok, web_color& color)
 	// modern syntax:  [ <number> | <percentage> | none ]{3}  [ / [<alpha-value> | none] ]?
 	else if (!parse_modern_syntax(tok.value, false, r, g, b, a)) return false;
 
-	color.red   = calc_percent_and_clamp(r);
-	color.green = calc_percent_and_clamp(g);
-	color.blue  = calc_percent_and_clamp(b);
-	color.alpha = calc_percent_and_clamp(a, 1);
+	color = web_color(
+		calc_percent_and_clamp(r),
+		calc_percent_and_clamp(g),
+		calc_percent_and_clamp(b),
+		calc_percent_and_clamp(a, 1));
 	return true;
 }
 
@@ -364,10 +366,11 @@ bool parse_hsl_func(const css_token& tok, web_color& color)
 	g = clamp(g, 0, 1);
 	b = clamp(b, 0, 1);
 	
-	color.red   = (byte)round(r * 255);
-	color.green = (byte)round(g * 255);
-	color.blue  = (byte)round(b * 255);
-	color.alpha = calc_percent_and_clamp(a, 1);
+	color = web_color(
+		(byte)round(r * 255),
+		(byte)round(g * 255),
+		(byte)round(b * 255),
+		calc_percent_and_clamp(a, 1));
 	return true;
 }
 
@@ -396,7 +399,7 @@ bool parse_name_color(const css_token& tok, web_color& color, document_container
 	if (tok.type != IDENT) return false;
 	if (tok.ident() == "currentcolor")
 	{
-		color.is_current_color = true;
+		color = web_color::current_color;
 		return true;
 	}
 	string str = resolve_name(tok.name, container);
