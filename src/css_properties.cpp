@@ -142,10 +142,10 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	doc->cvt_units(m_css_padding.top,	 font_size);
 	doc->cvt_units(m_css_padding.bottom, font_size);
 
-	m_css_borders.left.color   = el->get_property<web_color>(_border_left_color_,   false, m_color, offset(m_css_borders.left.color));
-	m_css_borders.right.color  = el->get_property<web_color>(_border_right_color_,  false, m_color, offset(m_css_borders.right.color));
-	m_css_borders.top.color    = el->get_property<web_color>(_border_top_color_,    false, m_color, offset(m_css_borders.top.color));
-	m_css_borders.bottom.color = el->get_property<web_color>(_border_bottom_color_, false, m_color, offset(m_css_borders.bottom.color));
+	m_css_borders.left.color   = get_color_property(el, _border_left_color_,   false, m_color, offset(m_css_borders.left.color));
+	m_css_borders.right.color  = get_color_property(el, _border_right_color_,  false, m_color, offset(m_css_borders.right.color));
+	m_css_borders.top.color    = get_color_property(el, _border_top_color_,    false, m_color, offset(m_css_borders.top.color));
+	m_css_borders.bottom.color = get_color_property(el, _border_bottom_color_, false, m_color, offset(m_css_borders.bottom.color));
 
 	m_css_borders.left.style   = (border_style) el->get_property<int>(_border_left_style_,   false, border_style_none, offset(m_css_borders.left.style));
 	m_css_borders.right.style  = (border_style) el->get_property<int>(_border_right_style_,  false, border_style_none, offset(m_css_borders.right.style));
@@ -244,6 +244,14 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 
 	compute_background(el, doc);
 	compute_flex(el, doc);
+}
+
+// used for all color properties except `color` (color:currentcolor is converted to color:inherit during parsing)
+litehtml::web_color litehtml::css_properties::get_color_property(const html_tag* el, string_id name, bool inherited, web_color default_value, uint_ptr member_offset) const
+{
+	web_color color = el->get_property<web_color>(name, inherited, default_value, member_offset);
+	if (color.is_current_color) color = m_color;
+	return color;
 }
 
 static const int font_size_table[8][7] =
@@ -359,7 +367,7 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
 {
 	int font_size = get_font_size();
 
-	m_bg.m_color		= el->get_property<web_color>(_background_color_, false, web_color::transparent, offset(m_bg.m_color));
+	m_bg.m_color		= get_color_property(el, _background_color_, false, web_color::transparent, offset(m_bg.m_color));
 
 	const css_size auto_auto(css_length::predef_value(background_size_auto), css_length::predef_value(background_size_auto));
 	m_bg.m_position_x	= el->get_property<length_vector>(_background_position_x_, false, { css_length(0, css_units_percentage) }, offset(m_bg.m_position_x));

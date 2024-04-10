@@ -78,6 +78,7 @@ namespace litehtml
 		void compute_font(const html_tag* el, const std::shared_ptr<document>& doc);
 		void compute_background(const html_tag* el, const std::shared_ptr<document>& doc);
 		void compute_flex(const html_tag* el, const std::shared_ptr<document>& doc);
+		web_color get_color_property(const html_tag* el, string_id name, bool inherited, web_color default_value, uint_ptr member_offset) const;
 
 	public:
 		css_properties() :

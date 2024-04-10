@@ -394,6 +394,11 @@ string resolve_name(const string& name, document_container* container)
 bool parse_name_color(const css_token& tok, web_color& color, document_container* container)
 {
 	if (tok.type != IDENT) return false;
+	if (tok.ident() == "currentcolor")
+	{
+		color.is_current_color = true;
+		return true;
+	}
 	string str = resolve_name(tok.name, container);
 	auto tokens = normalize(str, f_componentize | f_remove_whitespace);
 	if (tokens.size() != 1) return false;
