@@ -153,7 +153,7 @@ css_attribute_selector parse_attribute_selector(const css_token& block)
 	if (wq_name.name == "") return {};
 
 	skip_whitespace(tokens, index);
-	if (index == tokens.size()) // [name]
+	if (index == (int)tokens.size()) // [name]
 	{
 		selector.type    = select_attr;
 		selector.name    = _id(wq_name.name);
@@ -188,7 +188,7 @@ css_attribute_selector parse_attribute_selector(const css_token& block)
 	}
 
 	skip_whitespace(tokens, index);
-	if (index != tokens.size())
+	if (index != (int)tokens.size())
 		return {}; // junk at the end of attribute selector
 
 	// https://html.spec.whatwg.org/multipage/semantics-other.html#case-sensitivity-of-selectors
@@ -324,7 +324,7 @@ an_b parse_an_b(string s)
 
 int find_of_keyword(const css_token_vector& tokens)
 {
-	for (int i = 0; i < tokens.size(); i++)
+	for (int i = 0; i < (int)tokens.size(); i++)
 	{
 		if (tokens[i].ident() == "of")
 			return i;
@@ -617,7 +617,7 @@ css_selector::ptr parse_complex_selector(const css_token_vector& tokens)
 	while (1)
 	{
 		int combinator = parse_combinator(tokens, index);
-		if (index == tokens.size())
+		if (index == (int)tokens.size())
 			// combinator == 0 means index already was at the end before the call to parse_combinator
 			return !combinator || combinator == ' ' ? selector : nullptr;
 		if (!combinator) // not the end and combinator failed to parse

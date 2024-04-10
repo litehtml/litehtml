@@ -107,8 +107,8 @@ namespace litehtml
 			color_stop(web_color color)                    : color(color)                        {}
 			color_stop(web_color color, css_length length) : color(color), length(length)        {}
 			color_stop(web_color color, float angle)       : color(color), angle(angle)          {}
-			color_stop(css_length length)                  : length(length), is_color_hint(true) {}
-			color_stop(float angle)                        : angle(angle),   is_color_hint(true) {}
+			color_stop(css_length length)                  : is_color_hint(true), length(length) {}
+			color_stop(float angle)                        : is_color_hint(true), angle(angle)   {}
 		};
 
 		string_id m_type;
@@ -178,7 +178,7 @@ namespace litehtml
 		};
 		type type;
 		string url;
-		gradient gradient;
+		gradient m_gradient;
 
 		image() : type(type_none) {}
 		
@@ -191,7 +191,7 @@ namespace litehtml
 			case type_url:
 				return url.empty();
 			case type_gradient:
-				return gradient.is_empty();
+				return m_gradient.is_empty();
 			}
 			return true;
 		}

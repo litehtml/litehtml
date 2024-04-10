@@ -340,7 +340,7 @@ STRING_ID(
 	_device_aspect_ratio_,
 	_color_index_,
 	_monochrome_,
-);
+)
 #undef STRING_ID
 extern const string_id empty_id; // _id("")
 extern const string_id star_id; // _id("*")

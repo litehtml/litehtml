@@ -98,7 +98,7 @@ namespace litehtml
 	{
 	public:
 		using ptr    = shared_ptr<media_query_list_list>;
-		using vector = vector<ptr>;
+		using vector = std::vector<ptr>;
 	private:
 		std::vector<media_query_list>	m_media_query_lists;
 		bool							m_is_used = false;

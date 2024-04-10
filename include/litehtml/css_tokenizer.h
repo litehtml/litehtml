@@ -96,6 +96,8 @@ struct css_token
 		case SQUARE_BLOCK:
 			new(&value) vector(token.value);
 			break;
+
+		default:;
 		}
 	}
 	

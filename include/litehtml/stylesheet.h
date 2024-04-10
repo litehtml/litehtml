@@ -11,10 +11,10 @@ namespace litehtml
 // https://www.w3.org/TR/cssom-1/#css-declarations
 struct raw_declaration
 {
-	using vector = vector<raw_declaration>;
+	using vector = std::vector<raw_declaration>;
 
 	string name; // property name
-	css_token_vector value;
+	css_token_vector value = {}; // default value is specified here to get rid of gcc warning "missing initializer for member"
 	bool important = false;
 
 	operator bool() const { return name != ""; }
@@ -25,7 +25,7 @@ class raw_rule
 {
 public:
 	using ptr = shared_ptr<raw_rule>;
-	using vector = vector<ptr>;
+	using vector = std::vector<ptr>;
 
 	enum rule_type { qualified, at };
 	

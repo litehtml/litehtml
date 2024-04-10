@@ -13,13 +13,13 @@ void filter_code_points(string& input)
 
 	string result(input.size() + 2 * null_count, 0);
 
-	for (int i = 0, j = 0; i < input.size(); i++)
+	for (int i = 0, j = 0; i < (int)input.size(); i++)
 	{
 		switch (input[i])
 		{
 		case '\r':
 			result[j++] = '\n';
-			if (i + 1 < input.size() && input[i + 1] == '\n') i++; // skip \n after \r
+			if (i + 1 < (int)input.size() && input[i + 1] == '\n') i++; // skip \n after \r
 			break;
 		case '\f':
 			result[j++] = '\n';
@@ -40,7 +40,7 @@ void filter_code_points(string& input)
 
 void remove_whitespace(css_token_vector& tokens, keep_whitespace_fn keep_whitespace)
 {
-	for (int i = 0; i < tokens.size(); i++)
+	for (int i = 0; i < (int)tokens.size(); i++)
 	{
 		auto& tok = tokens[i];
 		if (tok.type == ' ')
@@ -109,7 +109,7 @@ raw_rule::vector css_parser::parse_stylesheet(const css_token_vector& input, boo
 // https://www.w3.org/TR/css-syntax-3/#consume-the-next-input-token
 css_token css_parser::next_token()
 {
-	if (m_index == m_tokens.size())
+	if (m_index == (int)m_tokens.size())
 		return css_token_type(EOF);
 	else
 		return m_tokens[m_index++];
@@ -117,7 +117,7 @@ css_token css_parser::next_token()
 
 css_token css_parser::peek_token()
 {
-	if (m_index == m_tokens.size())
+	if (m_index == (int)m_tokens.size())
 		return css_token_type(EOF);
 	else
 		return m_tokens[m_index];
@@ -347,7 +347,7 @@ raw_declaration css_parser::consume_declaration()
 	// Consume the next input token. Create a new declaration with its name set to the value of 
 	// the current input token and its value initially set to an empty list.
 	css_token token = next_token();
-	raw_declaration decl = { token.name };
+	raw_declaration decl = {token.name};
 	auto& value = decl.value;
 
 	// 1. While the next input token is a <whitespace-token>, consume the next input token.
@@ -491,8 +491,8 @@ bool is_any_value(const css_token_vector& tokens)
 // assumes that tokens have been componentized
 bool is_declaration_value(const css_token_vector& tokens, int index)
 {
-	if (index >= tokens.size()) return false;
-	for (int i = index; i < tokens.size(); i++)
+	if (index >= (int)tokens.size()) return false;
+	for (int i = index; i < (int)tokens.size(); i++)
 	{
 		auto& tok = tokens[i];
 		if (is_one_of(tok.type, BAD_STRING, BAD_URL, ')', ']', '}', ';', '!'))

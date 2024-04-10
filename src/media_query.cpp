@@ -1,4 +1,4 @@
-#include "html.h"
+﻿#include "html.h"
 #include "media_query.h"
 #include "css_parser.h"
 #include <assert.h>
@@ -9,21 +9,21 @@ namespace litehtml
 
 bool eval_op(float x, short op, float value)
 {
-	const float ε = 0.00001f;
-	if (abs(x - value) < ε)
+	const float epsilon = 0.00001f;
+	if (abs(x - value) < epsilon)
 	{
-		if (is_one_of(op, '=', '>=', '<=')) return true;
-		if (op == '!=') return false;
+		if (is_one_of(op, '=', u'⩾', u'⩽')) return true;
+		if (op == u'≠') return false;
 	}
 
 	switch (op)
 	{
-	case '<':  return x < value;
-	case '<=': return x <= value;
-	case '>':  return x > value;
-	case '>=': return x >= value;
-	case '=':  return x == value;
-	case '!=': return x != value;
+	case  '<': return x < value;
+	case u'⩽': return x <= value;
+	case  '>': return x > value;
+	case u'⩾': return x >= value;
+	case  '=': return x == value;
+	case u'≠': return x != value;
 	default:   return false;
 	}
 }
@@ -211,7 +211,7 @@ bool parse_media_query(const css_token_vector& tokens, media_query& mquery, docu
 {
 	if (tokens.empty()) return false;
 	int index = 0;
-	auto end = [&]() { return index == tokens.size(); };
+	auto end = [&]() { return index == (int)tokens.size(); };
 
 	media_condition condition;
 	if (parse_media_condition(tokens, index, true, condition, doc) && end())
@@ -303,7 +303,7 @@ bool parse_media_in_parens(const css_token& token, media_in_parens& media_in_par
 	int index = 0;
 	media_condition condition;
 	media_feature media_feature;
-	if (parse_media_condition(tokens, index, true, condition, doc) && index == tokens.size())
+	if (parse_media_condition(tokens, index, true, condition, doc) && index == (int)tokens.size())
 		media_in_parens = condition;
 	else if (parse_media_feature(token, media_feature, doc))
 		media_in_parens = media_feature;
@@ -329,7 +329,7 @@ struct mf_info
 {
 	string_id			type		= empty_id; // range, discrete
 	string_id			value_type	= empty_id; // length, ratio, resolution, integer, keyword
-	vector<string_id>	keywords;
+	vector<string_id>	keywords    = {};       // default value is specified here to get rid of gcc warning "missing initializer for member"
 	
 	operator bool() { return type != empty_id; }
 };
@@ -389,7 +389,7 @@ std::map<string, mf_info> supported_media_features =
 template<class Map, class Key>
 auto at(const Map& map, Key key)
 {
-	static Map::mapped_type invalid_value; // mapped_type's default constructor must create invalid item
+	static typename Map::mapped_type invalid_value; // mapped_type's default constructor must create invalid item
 	auto it = map.find(key);
 	return it != map.end() ? it->second : invalid_value;
 }
@@ -438,7 +438,7 @@ bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 	
 	case _ratio_: // https://drafts.csswg.org/css-values-4/#ratio  <ratio> = <number [0,∞]> [ / <number [0,∞]> ]?
 		if (val[0].type == NUMBER && val[0].n.number >= 0 &&
-			(val[1].type == NUMBER && val[1].n.number >= 0 || val[1].type == 0))
+			((val[1].type == NUMBER && val[1].n.number >= 0) || val[1].type == 0))
 		{
 			if (val[1].type == NUMBER)
 				val[0].n.number /= val[1].n.number; // Note: val[1].n.number may be 0, so result may be inf
@@ -470,7 +470,7 @@ bool media_feature::verify_and_convert_units(string_id syntax,
 		auto mf_info = at(supported_media_features, name);
 		if (!mf_info) return false;
 		value = mf_info.value_type == _keyword_ ? (float)_none_ : 0;
-		op = '!=';
+		op = u'≠';
 		return true;
 	}
 	else if (syntax == _plain_) // ({min-,max-,}name: value)
@@ -484,7 +484,7 @@ bool media_feature::verify_and_convert_units(string_id syntax,
 			if (!convert_units(mf_info, val, doc))
 				return false;
 			value = val[0].n.number;
-			op = name.substr(0, 4) == "min-" ? '>=' : '<=';
+			op = name.substr(0, 4) == "min-" ? u'⩾' : u'⩽';
 			name = real_name;
 			return true;
 		}
@@ -538,7 +538,7 @@ bool parse_media_feature(const css_token& token, media_feature& result, document
 	{
 		css_token val[2];
 		int index = 2;
-		if (!parse_mf_value(tokens, index, val) || index != tokens.size())
+		if (!parse_mf_value(tokens, index, val) || index != (int)tokens.size())
 			return false;
 		
 		media_feature mf = {tokens[0].ident()};
@@ -577,8 +577,10 @@ bool parse_mf_value(const css_token_vector& tokens, int& index, css_token val[2]
 
 short mirror(short op)
 {
-	if (op == '<') return '>';
-	if (op == '<=') return '>=';
+	if (op ==  '<') return  '>';
+	if (op ==  '>') return  '<';
+	if (op == u'⩽') return u'⩾';
+	if (op == u'⩾') return u'⩽';
 	return op;
 }
 
@@ -618,9 +620,9 @@ bool parse_mf_range(const css_token_vector& tokens, media_feature& result, docum
 		if (tok.ch != lg) return false;
 
 		if (tok1.ch == '=')
-			index+=2, _op = (short)(tok.ch << 8 | tok1.ch);
+			index+=2, _op = lg == '<' ? u'⩽' : u'⩾';
 		else
-			index++,  _op = (short)tok.ch;
+			index++,  _op = lg;
 		return true;
 	};
 	auto mf_lt = [&](short& _op) { return mf_lt_gt('<', _op); };
@@ -639,14 +641,14 @@ bool parse_mf_range(const css_token_vector& tokens, media_feature& result, docum
 		return mf_lt(_op) || mf_gt(_op);
 	};
 	auto start = [&]() { index = 0; return true; };
-	auto end = [&]() { return index == tokens.size(); };
+	auto end = [&]() { return index == (int)tokens.size(); };
 
 	short op;
 	css_token val[2];
 	// using lambda to avoid warning "assignment within conditional expression"
 	auto reverse = [](short& _op) { _op = mirror(_op); return true; };
-	if (start() && mf_name() && mf_comparison(op) && mf_value(val) && end() ||
-		start() && mf_value(val) && mf_comparison(op) && mf_name() && end() && reverse(op))
+	if ((start() && mf_name() && mf_comparison(op) && mf_value(val) && end()) ||
+		(start() && mf_value(val) && mf_comparison(op) && mf_name() && end() && reverse(op)))
 	{
 		media_feature mf = {name};
 		mf.op = op;
@@ -656,8 +658,8 @@ bool parse_mf_range(const css_token_vector& tokens, media_feature& result, docum
 	}
 	short op2;
 	css_token val2[2];
-	if (start() && mf_value(val) && mf_lt(op) && mf_name() && mf_lt(op2) && mf_value(val2) && end() ||
-		start() && mf_value(val) && mf_gt(op) && mf_name() && mf_gt(op2) && mf_value(val2) && end())
+	if ((start() && mf_value(val) && mf_lt(op) && mf_name() && mf_lt(op2) && mf_value(val2) && end()) ||
+		(start() && mf_value(val) && mf_gt(op) && mf_name() && mf_gt(op2) && mf_value(val2) && end()))
 	{
 		media_feature mf = {name};
 		mf.op = op;

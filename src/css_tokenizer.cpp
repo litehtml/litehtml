@@ -6,7 +6,7 @@ namespace litehtml
 
 const size_t eol = string::npos;
 
-void css_parse_error(string msg)
+void css_parse_error(string /*msg*/)
 {
 	//printf("%s\n", msg.c_str());
 }

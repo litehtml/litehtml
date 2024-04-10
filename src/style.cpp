@@ -494,9 +494,9 @@ void style::parse_list_style(const css_token_vector& tokens, string baseurl, boo
 void style::parse_border_radius(const css_token_vector& tokens, bool important)
 {
 	int i;
-	for (i = 0; i < tokens.size() && tokens[i].ch != '/'; i++) {}
+	for (i = 0; i < (int)tokens.size() && tokens[i].ch != '/'; i++) {}
 		
-	if (i == tokens.size()) // no '/'
+	if (i == (int)tokens.size()) // no '/'
 	{
 		css_length len[4];
 		if (int n = parse_1234_lengths(tokens, len, f_length_percentage | f_positive))
@@ -738,7 +738,7 @@ bool style::parse_bg_layer(const css_token_vector& tokens, document_container* c
 	bool origin_found = false;
 	bool clip_found = false;
 
-	for (int i = 0; i < tokens.size(); i++)
+	for (int i = 0; i < (int)tokens.size(); i++)
 	{
 		if (!color_found && final_layer && bg.m_color.from_token(tokens[i], container))
 			color_found = true;
@@ -913,7 +913,7 @@ bool parse_bg_image(const css_token& tok, image& bg_image, document_container* c
 		return true;
 	}
 
-	if (parse_gradient(tok, bg_image.gradient, container))
+	if (parse_gradient(tok, bg_image.m_gradient, container))
 	{
 		bg_image.type = image::type_gradient;
 		return true;
@@ -971,7 +971,7 @@ void style::parse_background_position(const css_token_vector& tokens, bool impor
 	{
 		css_length x, y;
 		int index = 0;
-		if (!parse_bg_position(layer, index, x, y, true) || index != layer.size())
+		if (!parse_bg_position(layer, index, x, y, true) || index != (int)layer.size())
 			return;
 
 		x_positions.push_back(x);
@@ -993,7 +993,7 @@ void style::parse_background_size(const css_token_vector& tokens, bool important
 	{
 		css_size size;
 		int index = 0;
-		if (!parse_bg_size(layer, index, size) || index != layer.size())
+		if (!parse_bg_size(layer, index, size) || index != (int)layer.size())
 			return;
 
 		sizes.push_back(size);
@@ -1033,7 +1033,7 @@ bool parse_font_style_variant_weight(const css_token_vector& tokens, int& index,
 	bool weight_found = false;
 
 	int i = index, count = 0;
-	while (i < tokens.size() && count++ < 3)
+	while (i < (int)tokens.size() && count++ < 3)
 	{
 		const auto& tok = tokens[i++];
 		// All three properties can have value "normal", and it changes nothing because initial
@@ -1195,6 +1195,7 @@ void style::parse_flex(const css_token_vector& tokens, bool important)
 			case _initial_: flex = {0, 1, _auto}; break;
 			case _auto_:    flex = {1, 1, _auto}; break; // can be handled by else
 			case _none_:    flex = {0, 0, _auto}; break;
+			default:;
 			}
 		}
 		else
@@ -1209,8 +1210,8 @@ void style::parse_flex(const css_token_vector& tokens, bool important)
 		// <number> <basis>
 		// <basis> <number>
 		bool ok =
-			flex.grow(a) && (flex.shrink(b) || flex.basis(b)) ||
-			flex.basis(a) && flex.grow(b);
+			(flex.grow(a) && (flex.shrink(b) || flex.basis(b))) ||
+			(flex.basis(a) && flex.grow(b));
 
 		if (!ok) return;
 	}
@@ -1219,8 +1220,8 @@ void style::parse_flex(const css_token_vector& tokens, bool important)
 		// <number> <number> <basis>
 		// <basis> <number> <number>
 		bool ok =
-			flex.grow(a) && flex.shrink(b) && flex.basis(c, true) ||
-			flex.basis(a) && flex.grow(b) && flex.shrink(c);
+			(flex.grow(a) && flex.shrink(b) && flex.basis(c, true)) ||
+			(flex.basis(a) && flex.grow(b) && flex.shrink(c));
 
 		if (!ok) return;
 	}
@@ -1371,7 +1372,7 @@ bool check_var_syntax(const css_token_vector& args)
 // returns true if there was error or var() was not found
 bool subst_var(css_token_vector& tokens, const html_tag* el, std::set<string_id>& used_vars)
 {
-	for (int i = 0; i < tokens.size(); i++)
+	for (int i = 0; i < (int)tokens.size(); i++)
 	{
 		auto& tok = tokens[i];
 		if (tok.type == CV_FUNCTION && lowcase(tok.name) == "var")

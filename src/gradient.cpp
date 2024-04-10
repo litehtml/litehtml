@@ -78,7 +78,7 @@ parse_fn operator""_x(const char* str, size_t len)
 
 bool end(const css_token_vector& tokens, int index)
 {
-	return index == tokens.size();
+	return index == (int)tokens.size();
 }
 
 ////////////////////////////////////////////////////////////////////////////////////////////
@@ -247,7 +247,7 @@ bool parse_linear_gradient_direction_and_interpolation(const css_token_vector& t
 	else
 		return false;
 	
-	if (index != tokens.size()) return false;
+	if (index != (int)tokens.size()) return false;
 
 	gradient.angle = angle;
 	gradient.m_side = side;
@@ -341,14 +341,14 @@ bool parse_conic_gradient_angle_position_interpolation(const css_token_vector& t
 	else
 		return false;
 
-	if (index != tokens.size()) return false;
+	if (index != (int)tokens.size()) return false;
 
 	gradient.color_space = color_space;
 	gradient.hue_interpolation = hue_interpolation;
 	return true;
 }
 
-const float π = 3.14159265f;
+const float pi = 3.14159265f;
 
 // https://drafts.csswg.org/css-values-4/#angles
 bool parse_angle(const css_token& tok, float& angle, bool percents_allowed)
@@ -373,7 +373,7 @@ bool parse_angle(const css_token& tok, float& angle, bool percents_allowed)
 		{
 		case _deg_:  angle = tok.n.number; break;
 		case _grad_: angle = (tok.n.number / 400) * 360; break;
-		case _rad_:  angle = (tok.n.number / (2 * π)) * 360; break;
+		case _rad_:  angle = (tok.n.number / (2 * pi)) * 360; break;
 		case _turn_: angle = tok.n.number * 360; break;
 		default:     return false;
 		}

@@ -51,7 +51,7 @@ namespace litehtml
 	{
 		static T invalid_item; // T's default constructor must create invalid item
 		if (index < 0) index += (int)vec.size();
-		return index >= 0 && index < vec.size() ? vec[index] : invalid_item;
+		return index >= 0 && index < (int)vec.size() ? vec[index] : invalid_item;
 	}
 	template<typename T>
 	vector<T> slice(const vector<T>& vec, int index, int count = -1)
@@ -64,7 +64,7 @@ namespace litehtml
 	{
 		if (index < 0) index += (int)vec.size();
 
-		if (!(index >= 0 && index < vec.size()))
+		if (!(index >= 0 && index < (int)vec.size()))
 			return;
 
 		count = min(count, (int)vec.size() - index);

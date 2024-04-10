@@ -174,7 +174,7 @@ bool web_color::parse_hash_token(const css_token& tok)
 	if (tok.type != HASH) return false;
 
 	string s = tok.str;
-	auto len = s.size();
+	int len = (int)s.size();
 	if (!is_one_of(len, 3, 4, 6, 8)) return false;
 	for (auto ch : s) if (!is_hex_digit(ch)) return false;
 
@@ -270,7 +270,7 @@ bool web_color::parse_rgb_func(const css_token& tok)
 		return false;
 
 	auto list = parse_comma_separated_list(tok.value);
-	auto n = list.size();
+	int n = (int)list.size();
 	if (!is_one_of(n, 1, 3, 4))
 		return false;
 	
@@ -328,7 +328,7 @@ bool web_color::parse_hsl_func(const css_token& tok)
 		return false;
 
 	auto list = parse_comma_separated_list(tok.value);
-	auto n = list.size();
+	int n = (int)list.size();
 	if (!is_one_of(n, 1, 3, 4))
 		return false;
 

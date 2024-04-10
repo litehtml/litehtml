@@ -1700,7 +1700,7 @@ bool end_condition(int index)
 void increment(int& index, const string& str)
 {
 	index++;
-	if (index >= str.size() || end_condition(index))
+	if (index >= (int)str.size() || end_condition(index))
 		throw 0; // abort prescan
 }
 
@@ -1929,7 +1929,7 @@ encoding get_xml_encoding(const string& str)
 	index += (int)strlen("encoding");
 
 	// 6.
-	while ((byte)str[index] <= 0x20 && index < str.size()) index++;
+	while ((byte)str[index] <= 0x20 && index < (int)str.size()) index++;
 
 	// 7.
 	if (str[index] != '=') return encoding::null;
@@ -1938,7 +1938,7 @@ encoding get_xml_encoding(const string& str)
 	index++; // skip '='
 
 	// 9.
-	while ((byte)str[index] <= 0x20 && index < str.size()) index++;
+	while ((byte)str[index] <= 0x20 && index < (int)str.size()) index++;
 
 	// 10. Let quoteMark be the byte at encodingPosition.
 	char q = str[index];
