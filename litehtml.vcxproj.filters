@@ -227,6 +227,15 @@
     <ClCompile Include="src\gradient.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="src\css_parser.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\css_tokenizer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="src\html_microsyntaxes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\litehtml\background.h">
@@ -428,6 +437,15 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="include\litehtml\encodings.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\litehtml\css_parser.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\litehtml\css_tokenizer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="include\litehtml\html_microsyntaxes.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
