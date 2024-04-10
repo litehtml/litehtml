@@ -169,7 +169,7 @@ def_color g_def_colors[] =
 };
 
 // <hex-color>  https://drafts.csswg.org/css-color-4/#typedef-hex-color
-bool web_color::parse_hash_token(const css_token& tok)
+bool parse_hash_color(const css_token& tok, web_color& color)
 {
 	if (tok.type != HASH) return false;
 
@@ -200,10 +200,10 @@ bool web_color::parse_hash_token(const css_token& tok)
 		return byte(16 * digit_value(str[0]) + digit_value(str[1]));
 	};
 
-	red   = read_two_hex_digits(r);
-	green = read_two_hex_digits(g);
-	blue  = read_two_hex_digits(b);
-	alpha = read_two_hex_digits(a);
+	color.red   = read_two_hex_digits(r);
+	color.green = read_two_hex_digits(g);
+	color.blue  = read_two_hex_digits(b);
+	color.alpha = read_two_hex_digits(a);
 	return true;
 }
 
@@ -212,12 +212,6 @@ float clamp(float x, float min, float max)
 	if (x < min) return min;
 	if (x > max) return max;
 	return x;
-}
-
-// https://drafts.csswg.org/css-color-5/#typedef-color-function
-bool web_color::parse_function_token(const css_token& tok)
-{
-	return parse_rgb_func(tok) || parse_hsl_func(tok);
 }
 
 // [ <number> | <percentage> | none ]{3}  [ / [<alpha-value> | none] ]?
@@ -264,7 +258,7 @@ byte calc_percent_and_clamp(const css_length& val, float max = 255)
 }
 
 // https://drafts.csswg.org/css-color-4/#rgb-functions
-bool web_color::parse_rgb_func(const css_token& tok)
+bool parse_rgb_func(const css_token& tok, web_color& color)
 {
 	if (tok.type != CV_FUNCTION || !is_one_of(lowcase(tok.name), "rgb", "rgba"))
 		return false;
@@ -291,10 +285,10 @@ bool web_color::parse_rgb_func(const css_token& tok)
 	// modern syntax:  [ <number> | <percentage> | none ]{3}  [ / [<alpha-value> | none] ]?
 	else if (!parse_modern_syntax(tok.value, false, r, g, b, a)) return false;
 
-	red   = calc_percent_and_clamp(r);
-	green = calc_percent_and_clamp(g);
-	blue  = calc_percent_and_clamp(b);
-	alpha = calc_percent_and_clamp(a, 1);
+	color.red   = calc_percent_and_clamp(r);
+	color.green = calc_percent_and_clamp(g);
+	color.blue  = calc_percent_and_clamp(b);
+	color.alpha = calc_percent_and_clamp(a, 1);
 	return true;
 }
 
@@ -322,7 +316,7 @@ void hsl_to_rgb(float hue, float sat, float light, float& r, float& g, float& b)
 }
 
 // https://drafts.csswg.org/css-color-4/#the-hsl-notation
-bool web_color::parse_hsl_func(const css_token& tok)
+bool parse_hsl_func(const css_token& tok, web_color& color)
 {
 	if (tok.type != CV_FUNCTION || !is_one_of(lowcase(tok.name), "hsl", "hsla"))
 		return false;
@@ -370,11 +364,17 @@ bool web_color::parse_hsl_func(const css_token& tok)
 	g = clamp(g, 0, 1);
 	b = clamp(b, 0, 1);
 	
-	red   = (byte)round(r * 255);
-	green = (byte)round(g * 255);
-	blue  = (byte)round(b * 255);
-	alpha = calc_percent_and_clamp(a, 1);
+	color.red   = (byte)round(r * 255);
+	color.green = (byte)round(g * 255);
+	color.blue  = (byte)round(b * 255);
+	color.alpha = calc_percent_and_clamp(a, 1);
 	return true;
+}
+
+// https://drafts.csswg.org/css-color-5/#typedef-color-function
+bool parse_func_color(const css_token& tok, web_color& color)
+{
+	return parse_rgb_func(tok, color) || parse_hsl_func(tok, color);
 }
 
 string resolve_name(const string& name, document_container* container)
@@ -391,19 +391,22 @@ string resolve_name(const string& name, document_container* container)
 	return "";
 }
 
-bool web_color::parse_ident_token(const css_token& tok, document_container* container)
+bool parse_name_color(const css_token& tok, web_color& color, document_container* container)
 {
 	if (tok.type != IDENT) return false;
-	string color = resolve_name(tok.name, container);
-	auto tokens = normalize(color, f_componentize | f_remove_whitespace);
+	string str = resolve_name(tok.name, container);
+	auto tokens = normalize(str, f_componentize | f_remove_whitespace);
 	if (tokens.size() != 1) return false;
-	return from_token(tokens[0], container);
+	return parse_color(tokens[0], color, container);
 }
 
 // https://drafts.csswg.org/css-color-5/#typedef-color
-bool web_color::from_token(const css_token& tok, document_container* container)
+bool parse_color(const css_token& tok, web_color& color, document_container* container)
 {
-	return parse_hash_token(tok) || parse_function_token(tok) || parse_ident_token(tok, container);
+	return 
+		parse_hash_color(tok, color) || 
+		parse_func_color(tok, color) || 
+		parse_name_color(tok, color, container);
 }
 
 web_color web_color::darken(double fraction) const

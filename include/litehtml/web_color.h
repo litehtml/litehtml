@@ -25,17 +25,11 @@ namespace litehtml
 		bool operator==(web_color color) const { return red == color.red && green == color.green && blue == color.blue && alpha == color.alpha; }
 		bool operator!=(web_color color) const { return !(*this == color); }
 
-		bool from_token(const css_token& token, document_container* container);
 		web_color darken(double fraction) const;
 		string to_string() const;
-
-	private:
-		bool parse_hash_token(const css_token& token);
-		bool parse_function_token(const css_token& token);
-		bool parse_rgb_func(const css_token& token);
-		bool parse_hsl_func(const css_token& token);
-		bool parse_ident_token(const css_token& token, document_container* container);
 	};
+
+	bool parse_color(const css_token& token, web_color& color, document_container* container);
 }
 
 #endif  // LH_WEB_COLOR_H

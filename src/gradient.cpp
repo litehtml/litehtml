@@ -171,7 +171,7 @@ bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_sto
 		return false;
 
 	web_color color;
-	if (!color.from_token(tokens[0], container))
+	if (!parse_color(tokens[0], color, container))
 		return false;
 
 	if (tokens.size() == 1) // <color>

@@ -9,6 +9,16 @@
 namespace litehtml
 {
 
+bool parse_bg_image(const css_token& token, image& bg_image, document_container* container);
+bool parse_bg_position_size(const css_token_vector& tokens, int& index, css_length& x, css_length& y, css_size& size);
+bool parse_bg_size(const css_token_vector& tokens, int& index, css_size& size);
+bool parse_two_lengths(const css_token_vector& tokens, css_length len[2], int options);
+template<class T, class... Args>
+int parse_1234_values(const css_token_vector& tokens, T result[4], bool (*func)(const css_token&, T&, Args...), Args... args);
+int parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, string keywords = "");
+bool parse_border_width(const css_token& tok, css_length& width);
+bool parse_font_weight(const css_token& tok, css_length& weight);
+
 std::map<string_id, string> style::m_valid_values =
 {
 	{ _display_, style_display_strings },
@@ -255,7 +265,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	case _border_bottom_color_:
 	case _border_left_color_:
 	case _border_right_color_:
-		if (clr->from_token(val, container))
+		if (parse_color(val, *clr, container))
 			add_parsed_property(name, property_value(*clr, important));
 		break;
 
@@ -555,9 +565,9 @@ bool parse_border_helper(const css_token_vector& tokens, document_container* con
 	{
 		if (!width_found && parse_border_width(token, _width))
 			width_found = true;
-		else if (!style_found && parse_keyword(token, (int&)_style, border_style_strings))
+		else if (!style_found && parse_keyword(token, _style, border_style_strings))
 			style_found = true;
-		else if (!color_found && _color.from_token(token, container))
+		else if (!color_found && parse_color(token, _color, container))
 			color_found = true;
 		else
 			return false;
@@ -602,12 +612,6 @@ void style::parse_border_side(string_id name, const css_token_vector& tokens, bo
 	add_parsed_property(_id(_s(name) + "-width"), property_value(width, important));
 	add_parsed_property(_id(_s(name) + "-style"), property_value(style, important));
 	add_parsed_property(_id(_s(name) + "-color"), property_value(color, important));
-}
-
-
-bool parse_color(const css_token& tok, web_color& color, document_container* container)
-{
-	return color.from_token(tok, container);
 }
 
 bool parse_length(const css_token& tok, css_length& length, int options, string keywords)
@@ -740,7 +744,7 @@ bool style::parse_bg_layer(const css_token_vector& tokens, document_container* c
 
 	for (int i = 0; i < (int)tokens.size(); i++)
 	{
-		if (!color_found && final_layer && bg.m_color.from_token(tokens[i], container))
+		if (!color_found && final_layer && parse_color(tokens[i], bg.m_color, container))
 			color_found = true;
 		else if (!image_found && parse_bg_image(tokens[i], bg.m_image[0], container))
 			image_found = true;
