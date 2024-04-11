@@ -58,8 +58,8 @@ namespace litehtml
 			left = right = top = bottom = 0;
 		}
 
-		int width()		const	{ return left + right; } 
-		int height()	const	{ return top + bottom; } 
+		int width()		const	{ return left + right; }
+		int height()	const	{ return top + bottom; }
 	};
 
 	struct pointF
@@ -151,14 +151,14 @@ namespace litehtml
 			if(!val) return true;
 
 			return (
-				left()			<= val->right()		&& 
-				right()			>= val->left()		&& 
-				bottom()		>= val->top()		&& 
+				left()			<= val->right()		&&
+				right()			>= val->left()		&&
+				bottom()		>= val->top()		&&
 				top()			<= val->bottom()	)
 				|| (
-				val->left()		<= right()			&& 
-				val->right()	>= left()			&& 
-				val->bottom()	>= top()			&& 
+				val->left()		<= right()			&&
+				val->right()	>= left()			&&
+				val->bottom()	>= top()			&&
 				val->top()		<= bottom()			);
 		}
 
@@ -240,6 +240,8 @@ namespace litehtml
 			int 			value;
 			cbc_value_type	type;
 
+			typed_int(const typed_int& v) = default;
+
 			typed_int(int val, cbc_value_type tp)
 			{
 				value = val;
@@ -257,12 +259,7 @@ namespace litehtml
 				return *this;
 			}
 
-			typed_int& operator=(const typed_int& v)
-			{
-				value = v.value;
-				type = v.type;
-				return *this;
-			}
+			typed_int& operator=(const typed_int& v) = default;
 		};
 
 		typed_int width;						// width of the containing block

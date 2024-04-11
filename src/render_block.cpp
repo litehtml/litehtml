@@ -52,15 +52,6 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
 {
-    {
-        css_selector sel;
-        sel.parse(".inline_rating");
-        if(src_el()->select(sel))
-        {
-            int i = 0;
-            i++;
-        }
-    }
     std::shared_ptr<render_item> ret;
 
     // Initialize indexes for list items

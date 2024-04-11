@@ -49,7 +49,6 @@ void litehtml::flex_line::distribute_free_space(int container_main_size)
 		while (processed)
 		{
 			int sum_scaled_flex_shrink_factor = 0;
-			int sum_flex_factors = 0;
 			int remaining_free_space = container_main_size;
 			int total_not_frozen = 0;
 			for (auto &item: items)
@@ -57,13 +56,6 @@ void litehtml::flex_line::distribute_free_space(int container_main_size)
 				if (!item->frozen)
 				{
 					sum_scaled_flex_shrink_factor += item->scaled_flex_shrink_factor;
-					if(grow)
-					{
-						sum_flex_factors += item->grow;
-					} else
-					{
-						sum_flex_factors += item->shrink;
-					}
 					remaining_free_space -= item->base_size;
 					total_not_frozen++;
 				} else
