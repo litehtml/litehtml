@@ -122,5 +122,5 @@ void Font::load(string filename)
 		parse_glyph(ch);
 	}
 
-	x_height = glyphs['x'].find_picture(transparent).height;
+	x_height = glyphs[(int)'x'].find_picture(transparent).height;
 }

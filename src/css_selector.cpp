@@ -570,7 +570,7 @@ css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens
 		if (!sel) break;
 		selector->m_attrs.push_back(sel);
 
-		while (sel = parse_pseudo_class(tokens, index))
+		while ((sel = parse_pseudo_class(tokens, index)))
 			selector->m_attrs.push_back(sel);
 	}
 
