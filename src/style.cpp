@@ -260,7 +260,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	//  =============================  COLOR  =============================
 
 	case _color_:
-		if (val.ident() == "currentcolor") return inherit_property(name, important);
+		if (ident == "currentcolor") return inherit_property(name, important);
 		// fallthrough
 	case _background_color_:
 	case _border_top_color_:

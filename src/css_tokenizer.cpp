@@ -4,8 +4,6 @@
 namespace litehtml
 {
 
-const size_t eol = string::npos;
-
 void css_parse_error(string /*msg*/)
 {
 	//printf("%s\n", msg.c_str());
@@ -15,13 +13,6 @@ string css_token::ident() const
 {
 	if (type != IDENT) return "";
 	return name.substr(0, 2) == "--" ? name : lowcase(name);
-}
-
-string css_token::custom_ident() const
-{
-	if (type == IDENT && name.substr(0, 2) == "--" && name.size() > 2)
-		return name;
-	return "";
 }
 
 
@@ -126,10 +117,10 @@ void css_tokenizer::consume_comments()
 	{
 		if (str[index] == '/' && str[index + 1] == '*')
 		{
-			size_t i = str.find("*/", index + 2);
+			int i = (int)str.find("*/", index + 2);
 			
-			if (i != eol)
-				index = (int)i + 2;
+			if (i != -1)
+				index = i + 2;
 			else
 			{
 				index = (int)str.size();

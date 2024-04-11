@@ -1,4 +1,5 @@
-#pragma once
+#ifndef LH_CSS_TOKENIZER_H
+#define LH_CSS_TOKENIZER_H
 
 namespace litehtml
 {
@@ -60,7 +61,10 @@ enum css_hash_type
 	css_hash_id
 };
 
-// token or component value
+// css_token: CSS token or component value ("fat" token)
+// Tokens exist in uncomponentized form only a short time after tokenization, most of the time they are "fat". 
+// All functions in css_parser work regardless of whether tokens are fat or not, as per standard.
+// All functions outside of css_parser that parse media queries, selectors, property values assume tokens are componentized.
 struct css_token
 {
 	css_token(css_token_type type = css_token_type(), 
@@ -120,7 +124,6 @@ struct css_token
 	}
 
 	string ident() const;
-	string custom_ident() const;
 	string get_repr(bool insert_spaces = false) const;
 
 	union {
@@ -199,7 +202,6 @@ private:
 
 	css_token	consume_ident_like_token();
 	css_token	consume_token();
-
 };
 
 void css_parse_error(string msg);
@@ -209,3 +211,5 @@ inline css_token_vector tokenize(const string& str)
 }
 
 } // namespace litehtml
+
+#endif // LH_CSS_TOKENIZER_H

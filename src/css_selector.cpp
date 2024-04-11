@@ -657,11 +657,11 @@ bool has_selector(const css_selector& selector, attr_select_type type, const str
 // https://www.w3.org/TR/selectors-4/#selector-list
 // https://www.w3.org/TR/selectors-4/#forgiving-selector
 // Parse comma-separated list of complex selectors.
-css_selector::vector parse_selector_list(const css_token_vector& compvals, int options)
+css_selector::vector parse_selector_list(const css_token_vector& tokens, int options)
 {
 	// NOTE: this is unnecessary: "If input contains only <whitespace-token>s, return an empty list."
 
-	vector<css_token_vector> list_of_lists = parse_comma_separated_list(compvals);
+	vector<css_token_vector> list_of_lists = parse_comma_separated_list(tokens);
 	css_selector::vector result;
 
 	for (const auto& list: list_of_lists)

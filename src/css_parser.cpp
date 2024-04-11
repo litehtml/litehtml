@@ -331,8 +331,7 @@ css_token css_parser::consume_function(const string& name)
 
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////   Stage 3   ///////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 
 void trim_whitespace(css_token_vector& tokens)
 {
@@ -452,20 +451,20 @@ void css_parser::consume_style_block_contents(/*out*/ raw_declaration::vector& d
 
 // https://www.w3.org/TR/css-syntax-3/#parse-comma-separated-list-of-component-values
 // Note: result is never empty. If input is empty result is {{}}.
-vector<css_token_vector> parse_comma_separated_list(const css_token_vector& compvals)
+vector<css_token_vector> parse_comma_separated_list(const css_token_vector& tokens)
 {
 	vector<css_token_vector> result;
 
 	css_token_vector list;
-	for (auto& val : compvals)
+	for (auto& tok : tokens)
 	{
-		if (val.type == ',')  // Note: EOF token is not stored in arrays
+		if (tok.type == ',')  // Note: EOF token is not stored in arrays
 		{
 			result.push_back(list);
 			list.clear();
 			continue;
 		}
-		list.push_back(val);
+		list.push_back(tok);
 	}
 	result.push_back(list);
 
@@ -477,7 +476,7 @@ vector<css_token_vector> parse_comma_separated_list(const css_token_vector& comp
 bool is_any_value(const css_token_vector& tokens)
 {
 	if (tokens.empty()) return false;
-	for (const auto& tok : tokens)
+	for (auto& tok : tokens)
 	{
 		if (is_one_of(tok.type, BAD_STRING, BAD_URL, ')', ']', '}'))
 			return false;
