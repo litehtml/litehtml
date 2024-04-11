@@ -1,6 +1,5 @@
 #ifndef LH_MEDIA_QUERY_H
 #define LH_MEDIA_QUERY_H
-#include <variant>
 
 namespace litehtml
 {
