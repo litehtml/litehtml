@@ -140,7 +140,7 @@ void style::add_length_property(string_id name, css_token val, string keywords, 
 // `value` is a list of component values with all whitespace tokens removed, including those inside component values
 void style::add_property(string_id name, const css_token_vector& value, const string& baseurl, bool important, document_container* container)
 {
-	// Note: empty value is a valid value of a custom property.
+	// Note: empty value is a valid value for a custom property.
 	if (value.empty() && _s(name).substr(0, 2) != "--")
 		return;
 	
@@ -158,6 +158,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	int idx[4];
 	web_color clr[4];
 	css_length len[4];
+	string str;
 
 	switch (name)
 	{
@@ -392,6 +393,11 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 			add_parsed_property(name, property_value(*len, important));
 		break;
 
+	case _text_decoration_:
+		str = get_repr(value, 0, -1, true);
+		add_parsed_property(name, property_value(str, important));
+		break;
+
 	//  =============================  FLEX  =============================
 
 	case _flex_:
@@ -435,12 +441,17 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	}
 
 	case _content_:
-	{
 		// TODO: parse it properly here
-		string str = get_repr(value, 0, -1, true);
+		str = get_repr(value, 0, -1, true);
 		add_parsed_property(name, property_value(str, important));
 		break;
-	}
+
+	//  ==================================  OTHER  ==================================
+
+	case _cursor_:
+		str = get_repr(value, 0, -1, true);
+		add_parsed_property(name, property_value(str, important));
+		break;
 
 	//  =============================  CUSTOM PROPERTY  =============================
 	
