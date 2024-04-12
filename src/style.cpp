@@ -17,6 +17,7 @@ template<class T, class... Args>
 int parse_1234_values(const css_token_vector& tokens, T result[4], bool (*func)(const css_token&, T&, Args...), Args... args);
 int parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, string keywords = "");
 bool parse_border_width(const css_token& tok, css_length& width);
+bool parse_font_family(const css_token_vector& tokens, string& font_family);
 bool parse_font_weight(const css_token& tok, css_length& weight);
 
 std::map<string_id, string> style::m_valid_values =
@@ -112,6 +113,7 @@ void style::inherit_property(string_id name, bool important)
 			add_parsed_property(_font_weight_,  property_value(inherit(), important));
 			add_parsed_property(_font_size_,    property_value(inherit(), important));
 			add_parsed_property(_line_height_,  property_value(inherit(), important));
+			add_parsed_property(_font_family_,  property_value(inherit(), important));
 			break;
 		case _background_:
 			add_parsed_property(_background_color_,         property_value(inherit(), important));
@@ -386,6 +388,11 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 
 	case _font_:
 		parse_font(value, important);
+		break;
+
+	case _font_family_:
+		if (parse_font_family(value, str))
+			add_parsed_property(name, property_value(str, important));
 		break;
 
 	case _font_weight_:
