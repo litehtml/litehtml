@@ -107,6 +107,7 @@ document::ptr document::createFromString(
 		// Sort css selectors using CSS rules.
 		doc->m_styles.sort_selectors();
 
+		// Apply media features.
 		doc->update_media_lists(doc->m_media);
 
 		// Apply parsed styles.
@@ -876,6 +877,7 @@ bool document::lang_changed()
 	return false;
 }
 
+// Apply media features (determine which selectors are active).
 bool document::update_media_lists(const media_features& features)
 {
 	bool update_styles = false;
