@@ -41,13 +41,6 @@ namespace litehtml
 	class html_tag;
     class render_item;
 
-	enum mode
-	{
-		no_quirks_mode,
-		quirks_mode,
-		limited_quirks_mode,
-	};
-
 	class document : public std::enable_shared_from_this<document>
 	{
 	public:
