@@ -3,46 +3,72 @@
 
 #include "style.h"
 #include "css_selector.h"
+#include "css_tokenizer.h"
 
 namespace litehtml
 {
-	class document_container;
 
-	class css
+// https://www.w3.org/TR/cssom-1/#css-declarations
+struct raw_declaration
+{
+	using vector = std::vector<raw_declaration>;
+
+	string name; // property name
+	css_token_vector value = {}; // default value is specified here to get rid of gcc warning "missing initializer for member"
+	bool important = false;
+
+	operator bool() const { return name != ""; }
+};
+
+// intermediate half-parsed rule that is used internally by the parser
+class raw_rule
+{
+public:
+	using ptr = shared_ptr<raw_rule>;
+	using vector = std::vector<ptr>;
+
+	enum rule_type { qualified, at };
+	
+	raw_rule(rule_type type, string name = "") : type(type), name(name) {}
+
+	rule_type type;
+	// An at-rule has a name, a prelude consisting of a list of component values, and an optional block consisting of a simple {} block.
+	string name;
+	// https://www.w3.org/TR/css-syntax-3/#qualified-rule
+	// A qualified rule has a prelude consisting of a list of component values, and a block consisting of a simple {} block.
+	// Note: Most qualified rules will be style rules, where the prelude is a selector and the block a list of declarations.
+	css_token_vector prelude;
+	css_token block;
+};
+
+class css
+{
+	css_selector::vector	m_selectors;
+public:
+
+	const css_selector::vector& selectors() const
 	{
-		css_selector::vector	m_selectors;
-	public:
-		css() = default;
-		~css() = default;
-
-		const css_selector::vector& selectors() const
-		{
-			return m_selectors;
-		}
-
-		void clear()
-		{
-			m_selectors.clear();
-		}
-
-		void	parse_stylesheet(const char* str, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media);
-		void	sort_selectors();
-		static void	parse_css_url(const string& str, string& url);
-		static void parse_gradient(const string &token, document_container *container, background_gradient& grad);
-
-	private:
-		void	parse_atrule(const string& text, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media);
-		void	add_selector(const css_selector::ptr& selector);
-		bool	parse_selectors(const string& txt, const style::ptr& styles, const media_query_list::ptr& media);
-
-	};
-
-	inline void litehtml::css::add_selector( const css_selector::ptr& selector )
-	{
-		selector->m_order = (int) m_selectors.size();
-		m_selectors.push_back(selector);
+		return m_selectors;
 	}
 
+	template<class Input>
+	void	parse_css_stylesheet(const Input& input, string baseurl, shared_ptr<document> doc, media_query_list_list::ptr media = nullptr, bool top_level = true);
+
+	void	sort_selectors();
+
+private:
+	void	parse_style_rule(raw_rule::ptr rule, string baseurl, shared_ptr<document> doc, media_query_list_list::ptr media);
+	void	parse_import_rule(raw_rule::ptr rule, string baseurl, shared_ptr<document> doc, media_query_list_list::ptr media);
+	void	add_selector(const css_selector::ptr& selector);
+};
+
+inline void css::add_selector(const css_selector::ptr& selector)
+{
+	selector->m_order = (int)m_selectors.size();
+	m_selectors.push_back(selector);
 }
+
+
+} // namespace litehtml
 
 #endif  // LH_STYLESHEET_H

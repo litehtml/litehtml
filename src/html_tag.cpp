@@ -11,6 +11,10 @@
 #include "line_box.h"
 #include <stack>
 #include "render_item.h"
+#include "internal.h"
+
+namespace litehtml
+{
 
 litehtml::html_tag::html_tag(const std::shared_ptr<document>& doc) : element(doc)
 {
@@ -189,8 +193,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 			if (!r.m_attrs.empty())
 			{
 				const auto& attr = r.m_attrs[0];
-				if (attr.type == select_class &&
-					std::find(m_classes.begin(), m_classes.end(), attr.name) == m_classes.end())
+				if (attr.type == select_class && !(attr.name in m_classes))
 					continue;
 			}
 		}
@@ -320,19 +323,20 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 	}
 }
 
-litehtml::string litehtml::html_tag::get_custom_property(string_id name, const string& default_value) const
+bool html_tag::get_custom_property(string_id name, css_token_vector& result) const
 {
 	const property_value& value = m_style.get_property(name);
 
-	if (value.is<string>())
+	if (value.is<css_token_vector>())
 	{
-		return value.get<string>();
+		result = value.get<css_token_vector>();
+		return true;
 	}
 	else if (auto _parent = dynamic_cast<html_tag*>(parent().get()))
 	{
-		return _parent->get_custom_property(name, default_value);
+		return _parent->get_custom_property(name, result);
 	}
-	return default_value;
+	return false;
 }
 
 void litehtml::html_tag::compute_styles(bool recursive)
@@ -361,6 +365,16 @@ void litehtml::html_tag::compute_styles(bool recursive)
 bool litehtml::html_tag::is_white_space() const
 {
 	return false;
+}
+
+int	html_tag::select(const css_selector::vector& selector_list, bool apply_pseudo)
+{
+	for (auto sel : selector_list)
+	{
+		if (int result = select(*sel, apply_pseudo))
+			return result;
+	}
+	return select_no_match;
 }
 
 int litehtml::html_tag::select(const string& selector)
@@ -470,7 +484,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 		switch(attr.type)
 		{
 		case select_class:
-			if (std::find(m_classes.begin(), m_classes.end(), attr.name) == m_classes.end())
+			if (!(attr.name in m_classes))
 			{
 				return select_no_match;
 			}
@@ -523,7 +537,7 @@ int litehtml::html_tag::select(const css_element_selector& selector, bool apply_
 	return res;
 }
 
-int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& sel)
+int html_tag::select_pseudoclass(const css_attribute_selector& sel)
 {
 	element::ptr el_parent = parent();
 
@@ -609,19 +623,19 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& sel)
 	}
 	break;
 	case _not_:
-		if (select(*sel.sel, true))
+		if (select(sel.selector_list, true))
 		{
 			return select_no_match;
 		}
 		break;
 	case _lang_:
-		if (!get_document()->match_lang(sel.val))
+		if (!get_document()->match_lang(sel.value))
 		{
 			return select_no_match;
 		}
 		break;
 	default:
-		if (std::find(m_pseudo_classes.begin(), m_pseudo_classes.end(), sel.name) == m_pseudo_classes.end())
+		if (!(sel.name in m_pseudo_classes))
 		{
 			return select_no_match;
 		}
@@ -630,61 +644,69 @@ int litehtml::html_tag::select_pseudoclass(const css_attribute_selector& sel)
 	return select_match;
 }
 
-int litehtml::html_tag::select_attribute(const css_attribute_selector& sel)
+// https://www.w3.org/TR/selectors-4/#attribute-selectors
+int html_tag::select_attribute(const css_attribute_selector& sel)
 {
-	const char* attr_value = get_attr(_s(sel.name).c_str());
+	const char* sz_attr_value = get_attr(_s(sel.name).c_str());
 
-	switch (sel.type)
+	if (!sz_attr_value) return select_no_match;
+
+	string attr_value = sel.caseless_match ? lowcase(sz_attr_value) : sz_attr_value;
+
+	switch (sel.matcher)
 	{
-	case select_exists:
-		if (!attr_value)
+	case attribute_exists:
+		return select_match;
+
+	case attribute_equals:
+		if (attr_value == sel.value)
 		{
-			return select_no_match;
+			return select_match;
 		}
 		break;
-	case select_equal:
-		if (!attr_value || strcmp(attr_value, sel.val.c_str()))
+
+	case attribute_contains_string: // *=
+		if (sel.value != "" && contains(attr_value, sel.value))
 		{
-			return select_no_match;
+			return select_match;
 		}
 		break;
-	case select_contain_str:
-		if (!attr_value || !strstr(attr_value, sel.val.c_str()))
+
+	// Attribute value is a whitespace-separated list of words, one of which is exactly sel.value
+	case attribute_contains_word: // ~=
+		if (sel.value != "" && contains(split_string(attr_value), sel.value))
 		{
-			return select_no_match;
+			return select_match;
 		}
 		break;
-	case select_start_str:
-		if (!attr_value || strncmp(attr_value, sel.val.c_str(), sel.val.length()))
+
+	case attribute_starts_with_string: // ^=
+		if (sel.value != "" && match(attr_value, 0, sel.value))
 		{
-			return select_no_match;
+			return select_match;
 		}
 		break;
-	case select_end_str:
-		if (!attr_value)
+
+	// Attribute value is either equals sel.value or begins with sel.value immediately followed by "-".
+	case attribute_starts_with_string_hyphen: // |=
+		// Note: no special treatment for sel.value == ""
+		if (attr_value == sel.value || match(attr_value, 0, sel.value + '-'))
 		{
-			return select_no_match;
-		}
-		else if (strncmp(attr_value, sel.val.c_str(), sel.val.length()))
-		{
-			const char* s = attr_value + strlen(attr_value) - sel.val.length() - 1;
-			if (s < attr_value)
-			{
-				return select_no_match;
-			}
-			if (sel.val != s)
-			{
-				return select_no_match;
-			}
+			return select_match;
 		}
 		break;
-	default:
+
+	case attribute_ends_with_string: // $=
+		if (sel.value != "" && match(attr_value, -(int)sel.value.size(), sel.value))
+		{
+			return select_match;
+		}
 		break;
 	}
-	return select_match;
+	return select_no_match;
 }
 
-litehtml::element::ptr litehtml::html_tag::find_ancestor(const css_selector& selector, bool apply_pseudo, bool* is_pseudo)
+element::ptr html_tag::find_ancestor(const css_selector& selector, bool apply_pseudo, bool* is_pseudo)
 {
 	element::ptr el_parent = parent();
 	if (!el_parent)
@@ -1494,7 +1516,7 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 	return &m_css.get_bg();
 }
 
-litehtml::string litehtml::html_tag::dump_get_name()
+string html_tag::dump_get_name()
 {
 	if(m_tag == empty_id)
 	{
@@ -1502,3 +1524,42 @@ litehtml::string litehtml::html_tag::dump_get_name()
 	}
 	return _s(m_tag) + " [html_tag]";
 }
+
+// https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-pixel-length-property
+void html_tag::map_to_pixel_length_property(string_id prop_name, string attr_value)
+{
+	int n;
+	if (html_parse_non_negative_integer(attr_value, n))
+	{
+		css_token tok(DIMENSION, (float)n, css_number_integer, "px");
+		m_style.add_property(prop_name, {tok});
+	}
+}
+
+// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-border
+void html_tag::map_to_pixel_length_property_with_default_value(string_id prop_name, string attr_value, int default_value)
+{
+	int n = default_value;
+	html_parse_non_negative_integer(attr_value, n);
+	css_token tok(DIMENSION, (float)n, css_number_integer, "px");
+	m_style.add_property(prop_name, {tok});
+}
+
+// https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-dimension-property-(ignoring-zero)
+void html_tag::map_to_dimension_property_ignoring_zero(string_id prop_name, string attr_value)
+{
+	float x = 0;
+	html_dimension_type type = html_length;
+	if (!html_parse_nonzero_dimension_value(attr_value, x, type))
+		return;
+
+	css_token tok;
+	if (type == html_length)
+		tok = {DIMENSION,  x, css_number_number, "px"};
+	else
+		tok = {PERCENTAGE, x, css_number_number};
+		
+	m_style.add_property(prop_name, {tok});
+}
+
+} // namespace litehtml

@@ -175,7 +175,7 @@ std::unique_ptr<litehtml::background_layer::image> litehtml::background::get_ima
 {
 	if(idx >= 0 && idx < (int) m_image.size())
 	{
-		if(m_image[idx].type == background_image::bg_image_type_url)
+		if(m_image[idx].type == image::type_url)
 		{
 			auto ret = std::unique_ptr<background_layer::image>(new background_layer::image());
 			ret->url = m_image[idx].url;
@@ -280,24 +280,24 @@ static float distance(const litehtml::pointF& p1, const litehtml::pointF& p2)
 std::unique_ptr<litehtml::background_layer::linear_gradient> litehtml::background::get_linear_gradient_layer(int idx, const background_layer& layer) const
 {
 	if(idx < 0 || idx >= (int) m_image.size()) return {};
-	if(m_image[idx].type != background_image::bg_image_type_gradient) return {};
-	if(m_image[idx].gradient.m_type != background_gradient::linear_gradient &&
-		m_image[idx].gradient.m_type != background_gradient::repeating_linear_gradient) return {};
+	if(m_image[idx].type != image::type_gradient) return {};
+	if(m_image[idx].m_gradient.m_type != _linear_gradient_ &&
+		m_image[idx].m_gradient.m_type != _repeating_linear_gradient_) return {};
 
 	auto ret = std::unique_ptr<background_layer::linear_gradient>(new background_layer::linear_gradient());
 	float angle;
-	if(m_image[idx].gradient.m_side == 0)
+	if(m_image[idx].m_gradient.m_side == 0)
 	{
-		angle = m_image[idx].gradient.angle;
+		angle = m_image[idx].m_gradient.angle;
 	} else
 	{
 		auto rise = (float) layer.origin_box.width;
 		auto run = (float) layer.origin_box.height;
-		if(m_image[idx].gradient.m_side & background_gradient::gradient_side_left)
+		if(m_image[idx].m_gradient.m_side & gradient_side_left)
 		{
 			run *= -1;
 		}
-		if(m_image[idx].gradient.m_side & background_gradient::gradient_side_bottom)
+		if(m_image[idx].m_gradient.m_side & gradient_side_bottom)
 		{
 			rise *= -1;
 		}
@@ -312,7 +312,7 @@ std::unique_ptr<litehtml::background_layer::linear_gradient> litehtml::backgroun
 
 	auto line_len = distance(ret->start, ret->end);
 
-	if(!ret->prepare_color_points(line_len, m_image[idx].gradient.m_type, m_image[idx].gradient.m_colors))
+	if(!ret->prepare_color_points(line_len, m_image[idx].m_gradient.m_type, m_image[idx].m_gradient.m_colors))
 	{
 		return {};
 	}
@@ -392,51 +392,51 @@ static inline litehtml::pointF find_corner(const litehtml::pointF& center, const
 std::unique_ptr<litehtml::background_layer::radial_gradient> litehtml::background::get_radial_gradient_layer(int idx, const background_layer& layer) const
 {
 	if(idx < 0 || idx >= (int) m_image.size()) return {};
-	if(m_image[idx].type != background_image::bg_image_type_gradient) return {};
-	if(m_image[idx].gradient.m_type != background_gradient::radial_gradient &&
-		m_image[idx].gradient.m_type != background_gradient::repeating_radial_gradient) return {};
+	if(m_image[idx].type != image::type_gradient) return {};
+	if(m_image[idx].m_gradient.m_type != _radial_gradient_ &&
+		m_image[idx].m_gradient.m_type != _repeating_radial_gradient_) return {};
 
 	auto ret = std::unique_ptr<background_layer::radial_gradient>(new background_layer::radial_gradient());
 
 	ret->position.x = (float) layer.origin_box.x + (float) layer.origin_box.width / 2.0f;
 	ret->position.y = (float) layer.origin_box.y + (float) layer.origin_box.height / 2.0f;
 
-	if(m_image[idx].gradient.m_side & background_gradient::gradient_side_left)
+	if(m_image[idx].m_gradient.m_side & gradient_side_left)
 	{
 		ret->position.x = (float) layer.origin_box.left();
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_right)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_right)
 	{
 		ret->position.x = (float) layer.origin_box.right();
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_x_center)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_x_center)
 	{
 		ret->position.x = (float) layer.origin_box.left() + (float) layer.origin_box.width / 2.0f;
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_x_length)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_x_length)
 	{
-		ret->position.x = (float) layer.origin_box.left() + (float) m_image[idx].gradient.radial_position_x.calc_percent(layer.origin_box.width);
+		ret->position.x = (float) layer.origin_box.left() + (float) m_image[idx].m_gradient.position_x.calc_percent(layer.origin_box.width);
 	}
 
-	if(m_image[idx].gradient.m_side & background_gradient::gradient_side_top)
+	if(m_image[idx].m_gradient.m_side & gradient_side_top)
 	{
 		ret->position.y = (float) layer.origin_box.top();
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_bottom)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_bottom)
 	{
 		ret->position.y = (float) layer.origin_box.bottom();
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_y_center)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_y_center)
 	{
 		ret->position.y = (float) layer.origin_box.top() + (float) layer.origin_box.height / 2.0f;
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_y_length)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_y_length)
 	{
-		ret->position.y = (float) layer.origin_box.top() + (float) m_image[idx].gradient.radial_position_y.calc_percent(layer.origin_box.height);
+		ret->position.y = (float) layer.origin_box.top() + (float) m_image[idx].m_gradient.position_y.calc_percent(layer.origin_box.height);
 	}
 
-	if(m_image[idx].gradient.radial_extent)
+	if(m_image[idx].m_gradient.radial_extent)
 	{
-		switch (m_image[idx].gradient.radial_extent)
+		switch (m_image[idx].m_gradient.radial_extent)
 		{
 
-			case background_gradient::radial_extent_closest_corner:
+			case radial_extent_closest_corner:
 				{
-					if (m_image[idx].gradient.radial_shape == background_gradient::radial_shape_circle)
+					if (m_image[idx].m_gradient.radial_shape == radial_shape_circle)
 					{
 						float corner1 = distance(ret->position, {(float) layer.origin_box.left(), (float) layer.origin_box.top()});
 						float corner2 = distance(ret->position, {(float) layer.origin_box.right(), (float) layer.origin_box.top()});
@@ -461,8 +461,8 @@ std::unique_ptr<litehtml::background_layer::radial_gradient> litehtml::backgroun
 					}
 				}
 				break;
-			case background_gradient::radial_extent_closest_side:
-				if (m_image[idx].gradient.radial_shape == background_gradient::radial_shape_circle)
+			case radial_extent_closest_side:
+				if (m_image[idx].m_gradient.radial_shape == radial_shape_circle)
 				{
 					ret->radius.x = ret->radius.y = std::min(
 							{
@@ -483,9 +483,9 @@ std::unique_ptr<litehtml::background_layer::radial_gradient> litehtml::backgroun
 									);
 				}
 				break;
-			case background_gradient::radial_extent_farthest_corner:
+			case radial_extent_farthest_corner:
 				{
-					if (m_image[idx].gradient.radial_shape == background_gradient::radial_shape_circle)
+					if (m_image[idx].m_gradient.radial_shape == radial_shape_circle)
 					{
 						float corner1 = distance(ret->position, {(float) layer.origin_box.left(), (float) layer.origin_box.top()});
 						float corner2 = distance(ret->position, {(float) layer.origin_box.right(), (float) layer.origin_box.top()});
@@ -510,8 +510,8 @@ std::unique_ptr<litehtml::background_layer::radial_gradient> litehtml::backgroun
 					}
 				}
 				break;
-			case background_gradient::radial_extent_farthest_side:
-				if (m_image[idx].gradient.radial_shape == background_gradient::radial_shape_circle)
+			case radial_extent_farthest_side:
+				if (m_image[idx].m_gradient.radial_shape == radial_shape_circle)
 				{
 					ret->radius.x = ret->radius.y = std::max(
 							{
@@ -536,16 +536,16 @@ std::unique_ptr<litehtml::background_layer::radial_gradient> litehtml::backgroun
 				break;
 		}
 	}
-	if(!m_image[idx].gradient.radial_length_x.is_predefined())
+	if(!m_image[idx].m_gradient.radial_radius_x.is_predefined())
 	{
-		ret->radius.x = (float) m_image[idx].gradient.radial_length_x.calc_percent(layer.origin_box.width);
+		ret->radius.x = (float) m_image[idx].m_gradient.radial_radius_x.calc_percent(layer.origin_box.width);
 	}
-	if(!m_image[idx].gradient.radial_length_y.is_predefined())
+	if(!m_image[idx].m_gradient.radial_radius_y.is_predefined())
 	{
-		ret->radius.y = (float) m_image[idx].gradient.radial_length_y.calc_percent(layer.origin_box.height);
+		ret->radius.y = (float) m_image[idx].m_gradient.radial_radius_y.calc_percent(layer.origin_box.height);
 	}
 
-	if(ret->prepare_color_points(ret->radius.x, m_image[idx].gradient.m_type, m_image[idx].gradient.m_colors))
+	if(ret->prepare_color_points(ret->radius.x, m_image[idx].m_gradient.m_type, m_image[idx].m_gradient.m_colors))
 	{
 		return ret;
 	}
@@ -556,47 +556,47 @@ std::unique_ptr<litehtml::background_layer::radial_gradient> litehtml::backgroun
 std::unique_ptr<litehtml::background_layer::conic_gradient> litehtml::background::get_conic_gradient_layer(int idx, const background_layer& layer) const
 {
 	if(idx < 0 || idx >= (int) m_image.size()) return {};
-	if(m_image[idx].type != background_image::bg_image_type_gradient) return {};
-	if(m_image[idx].gradient.m_type != background_gradient::conic_gradient) return {};
+	if(m_image[idx].type != image::type_gradient) return {};
+	if(m_image[idx].m_gradient.m_type != _conic_gradient_) return {};
 
 	auto ret = std::unique_ptr<background_layer::conic_gradient>(new background_layer::conic_gradient());
 
 	ret->position.x = (float) layer.origin_box.x + (float) layer.origin_box.width / 2.0f;
 	ret->position.y = (float) layer.origin_box.y + (float) layer.origin_box.height / 2.0f;
 
-	if(m_image[idx].gradient.m_side & background_gradient::gradient_side_left)
+	if(m_image[idx].m_gradient.m_side & gradient_side_left)
 	{
 		ret->position.x = (float) layer.origin_box.left();
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_right)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_right)
 	{
 		ret->position.x = (float) layer.origin_box.right();
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_x_center)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_x_center)
 	{
 		ret->position.x = (float) layer.origin_box.left() + (float) layer.origin_box.width / 2.0f;
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_x_length)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_x_length)
 	{
-		ret->position.x = (float) layer.origin_box.left() + (float) m_image[idx].gradient.radial_position_x.calc_percent(layer.origin_box.width);
+		ret->position.x = (float) layer.origin_box.left() + (float) m_image[idx].m_gradient.position_x.calc_percent(layer.origin_box.width);
 	}
 
-	if(m_image[idx].gradient.m_side & background_gradient::gradient_side_top)
+	if(m_image[idx].m_gradient.m_side & gradient_side_top)
 	{
 		ret->position.y = (float) layer.origin_box.top();
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_bottom)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_bottom)
 	{
 		ret->position.y = (float) layer.origin_box.bottom();
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_y_center)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_y_center)
 	{
 		ret->position.y = (float) layer.origin_box.top() + (float) layer.origin_box.height / 2.0f;
-	} else if(m_image[idx].gradient.m_side & background_gradient::gradient_side_y_length)
+	} else if(m_image[idx].m_gradient.m_side & gradient_side_y_length)
 	{
-		ret->position.y = (float) layer.origin_box.top() + (float) m_image[idx].gradient.radial_position_y.calc_percent(layer.origin_box.height);
+		ret->position.y = (float) layer.origin_box.top() + (float) m_image[idx].m_gradient.position_y.calc_percent(layer.origin_box.height);
 	}
 
-	ret->angle = m_image[idx].gradient.conic_from_angle;
-	ret->color_space = m_image[idx].gradient.conic_color_space;
-	ret->interpolation = m_image[idx].gradient.conic_interpolation;
+	ret->angle = m_image[idx].m_gradient.conic_from_angle;
+	ret->color_space = m_image[idx].m_gradient.color_space;
+	ret->hue_interpolation = m_image[idx].m_gradient.hue_interpolation;
 
-	if(ret->prepare_angle_color_points(m_image[idx].gradient.m_type, m_image[idx].gradient.m_colors))
+	if(ret->prepare_angle_color_points(m_image[idx].m_gradient.m_type, m_image[idx].m_gradient.m_colors))
 	{
 		return ret;
 	}
@@ -611,19 +611,19 @@ litehtml::background::layer_type litehtml::background::get_layer_type(int idx) c
 		switch (m_image[idx].type)
 		{
 
-			case background_image::bg_image_type_url:
+			case image::type_url:
 				return type_image;
-			case background_image::bg_image_type_gradient:
-				switch (m_image[idx].gradient.m_type)
+			case image::type_gradient:
+				switch (m_image[idx].m_gradient.m_type)
 				{
-					case background_gradient::linear_gradient:
-					case background_gradient::repeating_linear_gradient:
+					case _linear_gradient_:
+					case _repeating_linear_gradient_:
 						return type_linear_gradient;
-					case background_gradient::radial_gradient:
-					case background_gradient::repeating_radial_gradient:
+					case _radial_gradient_:
+					case _repeating_radial_gradient_:
 						return type_radial_gradient;
-					case background_gradient::conic_gradient:
-					case background_gradient::repeating_conic_gradient:
+					case _conic_gradient_:
+					case _repeating_conic_gradient_:
 						return type_conic_gradient;
 					default:
 						break;
@@ -767,13 +767,13 @@ void litehtml::background_layer::gradient_base::color_points_transparent_fix()
 	}
 }
 
-bool litehtml::background_layer::gradient_base::prepare_color_points(float line_len, background_gradient::gradient_type g_type, const std::vector<background_gradient::gradient_color> &colors)
+bool litehtml::background_layer::gradient_base::prepare_color_points(float line_len, string_id g_type, const std::vector<gradient::color_stop> &colors)
 {
 	bool repeating;
-	if(g_type == background_gradient::linear_gradient || g_type == background_gradient::radial_gradient)
+	if(g_type == _linear_gradient_ || g_type == _radial_gradient_)
 	{
 		repeating = false;
-	} else if(g_type == background_gradient::repeating_linear_gradient || g_type == background_gradient::repeating_radial_gradient)
+	} else if(g_type == _repeating_linear_gradient_ || g_type == _repeating_radial_gradient_)
 	{
 		repeating = true;
 	} else
@@ -878,13 +878,13 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 	return true;
 }
 
-bool litehtml::background_layer::gradient_base::prepare_angle_color_points(background_gradient::gradient_type g_type, const std::vector<background_gradient::gradient_color> &colors)
+bool litehtml::background_layer::gradient_base::prepare_angle_color_points(string_id g_type, const std::vector<gradient::color_stop> &colors)
 {
 	bool repeating;
-	if(g_type != background_gradient::conic_gradient)
+	if(g_type != _conic_gradient_)
 	{
 		repeating = false;
-	} else if(g_type != background_gradient::repeating_conic_gradient)
+	} else if(g_type != _repeating_conic_gradient_)
 	{
 		repeating = true;
 	} else

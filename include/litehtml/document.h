@@ -25,13 +25,6 @@ namespace litehtml
 			baseurl	= url ? url : "";
 			media	= media_str ? media_str : "";
 		}
-
-		css_text(const css_text& val)
-		{
-			text	= val.text;
-			baseurl	= val.baseurl;
-			media	= val.media;
-		}
 	};
 
     class dumper
@@ -66,9 +59,9 @@ namespace litehtml
 		litehtml::size						m_size;
 		litehtml::size						m_content_size;
 		position::vector					m_fixed_boxes;
-		media_query_list::vector			m_media_lists;
 		element::ptr						m_over_element;
-		std::list<std::shared_ptr<render_item>>		m_tabular_elements;
+		std::list<shared_ptr<render_item>>	m_tabular_elements;
+		media_query_list_list::vector		m_media_lists;
 		media_features						m_media;
 		string								m_lang;
 		string								m_culture;
@@ -82,7 +75,6 @@ namespace litehtml
 		int								render(int max_width, render_type rt = render_all);
 		void							draw(uint_ptr hdc, int x, int y, const position* clip);
 		web_color						get_def_color()	{ return m_def_color; }
-		int								to_pixels(const char* str, int fontSize, bool* is_percent = nullptr) const;
 		void 							cvt_units(css_length& val, int fontSize, int size = 0) const;
 		int								to_pixels(const css_length& val, int fontSize, int size = 0) const;
 		int								width() const;
@@ -98,7 +90,7 @@ namespace litehtml
 		element::ptr					root();
 		void							get_fixed_boxes(position::vector& fixed_boxes);
 		void							add_fixed_box(const position& pos);
-		void							add_media_list(const media_query_list::ptr& list);
+		void							add_media_list(media_query_list_list::ptr list);
 		bool							media_changed();
 		bool							lang_changed();
 		bool							match_lang(const string& lang);

@@ -21,8 +21,6 @@
 #include "el_div.h"
 #include "el_font.h"
 #include "el_tr.h"
-#include <cmath>
-#include <cstdio>
 #include "gumbo.h"
 #include "render_item.h"
 #include "render_table.h"
@@ -72,12 +70,12 @@ document::ptr document::createFromString(
 
 	if (master_styles != "")
 	{
-		doc->m_master_css.parse_stylesheet(master_styles.c_str(), nullptr, doc, nullptr);
+		doc->m_master_css.parse_css_stylesheet(master_styles, "", doc);
 		doc->m_master_css.sort_selectors();
 	}
 	if (user_styles != "")
 	{
-		doc->m_user_css.parse_stylesheet(user_styles.c_str(), nullptr, doc, nullptr);
+		doc->m_user_css.parse_css_stylesheet(user_styles, "", doc);
 		doc->m_user_css.sort_selectors();
 	}
 
@@ -95,27 +93,22 @@ document::ptr document::createFromString(
 		doc->m_root->parse_attributes();
 
 		// parse style sheets linked in document
-		media_query_list::ptr media;
 		for (const auto& css : doc->m_css)
 		{
-			if (!css.media.empty())
+			media_query_list_list::ptr media;
+			if (css.media != "")
 			{
-				media = media_query_list::create_from_string(css.media, doc);
+				auto mq_list = parse_media_query_list(css.media, doc);
+				media = make_shared<media_query_list_list>();
+				media->add(mq_list);
 			}
-			else
-			{
-				media = nullptr;
-			}
-			doc->m_styles.parse_stylesheet(css.text.c_str(), css.baseurl.c_str(), doc, media);
+			doc->m_styles.parse_css_stylesheet(css.text, css.baseurl, doc, media);
 		}
 		// Sort css selectors using CSS rules.
 		doc->m_styles.sort_selectors();
 
-		// get current media features
-		if (!doc->m_media_lists.empty())
-		{
-			doc->update_media_lists(doc->m_media);
-		}
+		// Apply media features.
+		doc->update_media_lists(doc->m_media);
 
 		// Apply parsed styles.
 		doc->m_root->apply_stylesheet(doc->m_styles);
@@ -123,7 +116,7 @@ document::ptr document::createFromString(
 		// Apply user styles if any
 		doc->m_root->apply_stylesheet(doc->m_user_css);
 
-		// Initialize m_css
+		// Initialize element::m_css
 		doc->m_root->compute_styles();
 
 		// Create rendering tree
@@ -478,33 +471,6 @@ uint_ptr document::add_font( const char* name, int size, const char* weight, con
 			case font_weight_normal:
 				fw = 400;
 				break;
-			case font_weight_100:
-				fw = 100;
-				break;
-			case font_weight_200:
-				fw = 200;
-				break;
-			case font_weight_300:
-				fw = 300;
-				break;
-			case font_weight_400:
-				fw = 400;
-				break;
-			case font_weight_500:
-				fw = 500;
-				break;
-			case font_weight_600:
-				fw = 600;
-				break;
-			case font_weight_700:
-				fw = 700;
-				break;
-			case font_weight_800:
-				fw = 800;
-				break;
-			case font_weight_900:
-				fw = 900;
-				break;
 			}
 		} else
 		{
@@ -628,19 +594,6 @@ void document::draw( uint_ptr hdc, int x, int y, const position* clip )
 		m_root->draw(hdc, x, y, clip, m_root_render);
 		m_root_render->draw_stacking_context(hdc, x, y, clip, true);
 	}
-}
-
-int document::to_pixels( const char* str, int fontSize, bool* is_percent/*= 0*/ ) const
-{
-	if(!str)	return 0;
-	
-	css_length val;
-	val.fromString(str);
-	if(is_percent && val.units() == css_units_percentage && !val.is_predefined())
-	{
-		*is_percent = true;
-	}
-	return to_pixels(val, fontSize);
 }
 
 int document::to_pixels( const css_length& val, int fontSize, int size ) const
@@ -905,11 +858,11 @@ bool document::media_changed()
 
 bool document::lang_changed()
 {
-	if(!m_media_lists.empty())
+	if (!m_media_lists.empty())
 	{
 		string culture;
 		container()->get_language(m_lang, culture);
-		if(!culture.empty())
+		if (!culture.empty())
 		{
 			m_culture = m_lang + '-' + culture;
 		}
@@ -924,12 +877,13 @@ bool document::lang_changed()
 	return false;
 }
 
+// Apply media features (determine which selectors are active).
 bool document::update_media_lists(const media_features& features)
 {
 	bool update_styles = false;
-	for(auto & m_media_list : m_media_lists)
+	for (auto& media_list : m_media_lists)
 	{
-		if(m_media_list->apply_media_features(features))
+		if (media_list->apply_media_features(features))
 		{
 			update_styles = true;
 		}
@@ -937,15 +891,10 @@ bool document::update_media_lists(const media_features& features)
 	return update_styles;
 }
 
-void document::add_media_list( const media_query_list::ptr& list )
+void document::add_media_list(media_query_list_list::ptr list)
 {
-	if(list)
-	{
-		if(std::find(m_media_lists.begin(), m_media_lists.end(), list) == m_media_lists.end())
-		{
-			m_media_lists.push_back(list);
-		}
-	}
+	if (list && !contains(m_media_lists, list))
+		m_media_lists.push_back(list);
 }
 
 void document::fix_tables_layout()

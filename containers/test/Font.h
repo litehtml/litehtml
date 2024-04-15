@@ -14,6 +14,6 @@ public:
 	static struct size_name { int size; string name; } installed_fonts[];
 	
 	Font(int size);
-	Bitmap get_glyph(int ch, web_color color);
+	Bitmap get_glyph(int ch, color color);
 	void load(string filename);
 };

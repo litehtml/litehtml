@@ -48,7 +48,7 @@ namespace litehtml
 		uint_ptr				m_font;
 		css_length				m_font_size;
 		string					m_font_family;
-		font_weight				m_font_weight;
+		css_length				m_font_weight;
 		font_style				m_font_style;
 		string					m_text_decoration;
 		font_metrics			m_font_metrics;
@@ -78,6 +78,7 @@ namespace litehtml
 		void compute_font(const html_tag* el, const std::shared_ptr<document>& doc);
 		void compute_background(const html_tag* el, const std::shared_ptr<document>& doc);
 		void compute_flex(const html_tag* el, const std::shared_ptr<document>& doc);
+		web_color get_color_property(const html_tag* el, string_id name, bool inherited, web_color default_value, uint_ptr member_offset) const;
 
 	public:
 		css_properties() :

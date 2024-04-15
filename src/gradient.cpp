@@ -1,553 +1,566 @@
 #include "html.h"
 #include "gradient.h"
-
-#ifndef M_PI
-#       define M_PI    3.14159265358979323846
-#endif
+#include "css_parser.h"
 
 namespace litehtml
 {
-	/**
-	 * Parse CSS angle
-	 * @param str css text of angle
-	 * @param with_percent true to pare percent as angle (for conic gradient)
-	 * @param angle output angle value in degrees
-	 * @return
-	 */
-	static bool parse_css_angle(const string& str, bool with_percent, float& angle)
+
+bool parse_linear_gradient_direction(const css_token_vector& tokens, int& index, float& angle, int& side);
+bool parse_linear_gradient_direction_and_interpolation(const css_token_vector& tokens, gradient& gradient);
+bool parse_color_interpolation_method(const css_token_vector& tokens, int& index, color_space_t& color_space, hue_interpolation_t& hue_interpolation);
+bool parse_gradient_position(const css_token_vector& tokens, int& index, gradient& gradient);
+bool parse_radial_gradient_shape_size_position_interpolation(const css_token_vector& tokens, gradient& result);
+bool parse_conic_gradient_angle_position_interpolation(const css_token_vector& tokens, gradient& gradient);
+template<class T>
+bool parse_color_stop_list(const vector<css_token_vector>& list, gradient& grad, document_container* container);
+bool parse_gradient(const css_token& token, gradient& gradient, document_container* container);
+
+////////////////////////////////////////////////////////////////////////////////////////////
+// These combinators are currently used only in one place because the code is usually shorter without them.
+
+using parse_fn = std::function<bool(const css_token_vector& tokens, int& index)>;
+
+// a?
+parse_fn opt(parse_fn a)
+{
+	return [=](auto&... x)
 	{
-		const char* start = str.c_str();
-		for(;start[0]; start++)
+		a(x...);
+		return true;
+	};
+}
+
+// a b
+parse_fn seq(parse_fn a, parse_fn b)
+{
+	return [=](auto& t, auto& i)
+	{
+		auto save = i;
+		bool result = a(t, i) && b(t, i);
+		if (!result) i = save; // backtrack
+		return result;
+	};
+}
+
+// Not overloading operator|| because it is easier to get a bug: a || b || c does the wrong thing, 
+// see the note at https://www.w3.org/TR/css-values-4/#component-combinators.
+// a || b
+parse_fn oror(parse_fn a, parse_fn b)
+{
+	return [=](auto&... x)
+	{
+		if (a(x...))
 		{
-			if(!isspace(start[0])) break;
+			b(x...);
+			return true;
 		}
-		if(start[0] == 0) return false;
-		char* end = nullptr;
-		auto a = (float) t_strtod(start, &end);
-		if(end && end[0] == 0) return false;
-		if(!strcmp(end, "rad"))
+		else if (b(x...))
 		{
-			a = (float) (a * 180.0 / M_PI);
-		} else if(!strcmp(end, "grad"))
-		{
-			a = a * 180.0f / 200.0f;
-		} else if(!strcmp(end, "turn"))
-		{
-			a = a * 360.0f;
-		} else if(strcmp(end, "deg"))
-		{
-			if(with_percent && strcmp(end, "%"))
-			{
-				a = a * 360.0f / 100.0f;
-			} else
-			{
-				return false;
-			}
+			a(x...);
+			return true;
 		}
-		angle = a;
+		return false;
+	};
+}
+
+parse_fn operator""_x(const char* str, size_t len)
+{
+	return [=](const css_token_vector& tokens, int& index)
+	{
+		if (at(tokens, index).ident() == string(str, len))
+		{
+			index++;
+			return true;
+		}
+		return false;
+	};
+}
+
+bool end(const css_token_vector& tokens, int index)
+{
+	return index == (int)tokens.size();
+}
+
+////////////////////////////////////////////////////////////////////////////////////////////
+
+// https://drafts.csswg.org/css-images-4/#gradients
+// 
+// <gradient> =
+//   <linear-gradient()> | <repeating-linear-gradient()> |
+//   <radial-gradient()> | <repeating-radial-gradient()> |
+//   <conic-gradient()>  | <repeating-conic-gradient()>
+// 
+bool parse_gradient(const css_token& token, gradient& result, document_container* container)
+{
+	if (token.type != CV_FUNCTION)
+		return false;
+
+	auto type = _id(lowcase(token.name));
+
+	if (!is_one_of(type,
+		_linear_gradient_, _repeating_linear_gradient_,
+		_radial_gradient_, _repeating_radial_gradient_,
+		_conic_gradient_, _repeating_conic_gradient_))
+		return false;
+
+	gradient grad(type);
+
+	if (!grad.is_linear()) {
+		// radial and conic position defaults to 'center'  
+		// https://drafts.csswg.org/css-images-3/#valdef-radial-gradient-position
+		// https://drafts.csswg.org/css-images-4/#valdef-conic-gradient-position
+		grad.m_side = gradient_side_x_center | gradient_side_y_center;
+	}
+	
+	auto list = parse_comma_separated_list(token.value);
+	if (list.empty()) return false;
+
+	bool ok;
+	
+	if (grad.is_linear())
+		ok = parse_linear_gradient_direction_and_interpolation(list[0], grad);
+	else if (grad.is_radial())
+		ok = parse_radial_gradient_shape_size_position_interpolation(list[0], grad);
+	else
+		ok = parse_conic_gradient_angle_position_interpolation(list[0], grad);
+
+	if (ok) remove(list, 0);
+
+	
+	if (grad.is_conic())
+		ok = parse_color_stop_list<float>(list, grad, container);
+	else
+		ok = parse_color_stop_list<css_length>(list, grad, container);
+
+	if (!ok) return false;
+	
+
+	result = grad;
+	return true;
+}
+
+// parse <length-percentage> or <angle-percentage>
+bool parse_lenang(const css_token& tok, css_length& length)
+{
+	return parse_length(tok, length, f_length_percentage);
+}
+bool parse_lenang(const css_token& tok, float& angle)
+{
+	return parse_angle(tok, angle, true);
+}
+
+// <color-hint> = <length-percentage> | <angle-percentage>
+template<class T> // T == css_length or float
+bool parse_color_hint(const css_token_vector& tokens, vector<gradient::color_stop>& color_stops)
+{
+	T lenang;
+	if (tokens.size() == 1 && parse_lenang(tokens[0], lenang))
+	{
+		color_stops.push_back(lenang);
+		return true;
+	}
+	return false;
+}
+
+// <linear-color-stop> = <color> <length-percentage>{1,2}?
+// <angular-color-stop> = <color> <angle-percentage>{1,2}?
+template<class T> // T == css_length or float
+bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_stop>& color_stops, document_container* container)
+{
+	if (tokens.empty() || tokens.size() > 3)
+		return false;
+
+	web_color color;
+	if (!parse_color(tokens[0], color, container))
+		return false;
+
+	if (tokens.size() == 1) // <color>
+	{
+		color_stops.push_back(color);
+		return true;
+	}
+	else if (tokens.size() == 2) // <color> <length-angle-percentage>
+	{
+		T lenang;
+		if (parse_lenang(tokens[1], lenang))
+		{
+			color_stops.push_back({color, lenang});
+			return true;
+		}
+	}
+	else if (tokens.size() == 3) // <color> <length-angle-percentage> <length-angle-percentage>
+	{
+		T lenang1, lenang2;
+		if (parse_lenang(tokens[1], lenang1) &&
+			parse_lenang(tokens[2], lenang2))
+		{
+			color_stops.push_back({color, lenang1});
+			color_stops.push_back({color, lenang2});
+			return true;
+		}
+	}
+	return false;
+}
+
+// <color-stop-list> = <color-stop> , [ <color-hint>? , <color-stop> ]#
+template<class T> // T == css_length or float
+bool parse_color_stop_list(const vector<css_token_vector>& list, gradient& grad, document_container* container)
+{
+	if (list.size() < 2) // at least two color-stops must be present
+		return false;
+
+	if (!parse_color_stop<T>(list[0], grad.m_colors, container))
+		return false;
+	
+	// [ <color-hint>? , <color-stop> ]#
+	for (size_t i = 1; i < list.size(); i++)
+	{
+		if (parse_color_hint<T>(list[i], grad.m_colors))
+		{
+			i++;
+			if (i == list.size()) return false; // color-hint not followed by color-stop
+		}
+		if (!parse_color_stop<T>(list[i], grad.m_colors, container))
+			return false;
+	}
+	return true;
+}
+
+// https://drafts.csswg.org/css-images-4/#linear-gradients
+// [ <angle> | to <side-or-corner> ] || <color-interpolation-method>
+bool parse_linear_gradient_direction_and_interpolation(const css_token_vector& tokens, gradient& gradient)
+{
+	float angle = 180;
+	int side = gradient_side_none;
+	auto color_space = color_space_oklab;
+	auto hue_interpolation = hue_interpolation_shorter;
+
+	int index = 0;
+	if (parse_linear_gradient_direction(tokens, index, angle, side))
+	{
+		parse_color_interpolation_method(tokens, index, color_space, hue_interpolation);
+	}
+	else if (parse_color_interpolation_method(tokens, index, color_space, hue_interpolation))
+	{
+		parse_linear_gradient_direction(tokens, index, angle, side);
+	}
+	else
+		return false;
+	
+	if (index != (int)tokens.size()) return false;
+
+	gradient.angle = angle;
+	gradient.m_side = side;
+	gradient.color_space = color_space;
+	gradient.hue_interpolation = hue_interpolation;
+	return true;
+}
+
+// https://drafts.csswg.org/css-images-4/#linear-gradients
+// <angle> | to <side-or-corner>
+// <side-or-corner> = [left | right] || [top | bottom]
+bool parse_linear_gradient_direction(const css_token_vector& tokens, int& index, float& angle, int& side)
+{
+	if (parse_angle(at(tokens, index), angle))
+	{
+		index++;
 		return true;
 	}
 
-	/**
-	 * Parse colors stop list for radial and linear gradients.
-	 * Formal syntax:
-	 * \code
-	 * <linear-color-stop> =
-	 *   <color> <length-percentage>?
-	 *
-	 * <linear-color-hint> =
-	 *   <length-percentage>
-	 *
-	 * <length-percentage> =
-	 *   <length>      |
-	 *   <percentage>
-	 * \endcode
-	 * @param parts
-	 * @param container
-	 * @param grad
-	 */
-	static void parse_color_stop_list(const string_vector& parts, document_container *container, std::vector<background_gradient::gradient_color>& colors)
+	if (at(tokens, index).ident() != "to")
+		return false;
+
+	string a = at(tokens, index + 1).ident();
+	string b = at(tokens, index + 2).ident();
+
+	if (is_one_of(a, "left", "right", "top", "bottom"))
 	{
-		auto color = web_color::from_string(parts[0], container);
-		css_length length;
-		if(parts.size() > 1)
+		if (!is_one_of(b, "left", "right", "top", "bottom"))
 		{
-			length.fromString(parts[1]);
-			if(!length.is_predefined())
+			switch (_id(a))
 			{
-				background_gradient::gradient_color gc;
-				gc.color = color;
-				gc.length = length;
-				colors.push_back(gc);
+			case _top_:    angle = 0; break;
+			case _bottom_: angle = 180; break;
+			case _left_:   angle = 270; break;
+			case _right_:  angle = 90; break;
+			default:       return false;
 			}
-			if(parts.size() > 2)
-			{
-				length.fromString(parts[2]);
-				if(!length.is_predefined())
-				{
-					background_gradient::gradient_color gc;
-					gc.color = color;
-					gc.length = length;
-					colors.push_back(gc);
-				}
-			}
-		} else
+			index += 2;
+			return true;
+		}
+		else
 		{
-			background_gradient::gradient_color gc;
-			gc.color = color;
-			colors.push_back(gc);
+			// fix order
+			if (is_one_of(a, "top", "bottom"))
+				swap(a, b);
+
+			// check order
+			if (!is_one_of(a, "left", "right") || !is_one_of(b, "top", "bottom"))
+				return false;
+
+			side  =  a == "left" ? gradient_side_left : gradient_side_right;
+			side |=  b == "top" ? gradient_side_top : gradient_side_bottom;
+			index += 3;
+			return true;
 		}
 	}
+	return false;
+}
 
-	static void parse_color_stop_angle_list(const string_vector& parts, document_container *container, background_gradient& grad)
+// https://drafts.csswg.org/css-images-4/#typedef-conic-gradient-syntax
+// [ from <angle> ]? [ at <position> ]?
+bool parse_conic_angle_position(const css_token_vector& tokens, int& index, gradient& gradient)
+{
+	if (at(tokens, index).ident() == "from" && parse_angle(at(tokens, index + 1), gradient.conic_from_angle))
+		index += 2;
+
+	int i = index;
+	if (at(tokens, i).ident() == "at" && parse_gradient_position(tokens, ++i, gradient))
+		index = i;
+
+	return true;
+}
+// [ [ from <angle> ]? [ at <position> ]? ] || <color-interpolation-method>
+bool parse_conic_gradient_angle_position_interpolation(const css_token_vector& tokens, gradient& gradient)
+{
+	if (tokens.empty()) return false;
+
+	auto color_space = color_space_oklab;
+	auto hue_interpolation = hue_interpolation_shorter;
+
+	int index = 0;
+	// checking color interpolation first because parse_conic_angle_position always succeeds
+	if (parse_color_interpolation_method(tokens, index, color_space, hue_interpolation))
 	{
-		auto color = web_color::from_string(parts[0], container);
-		if(parts.size() > 1)
-		{
-			float angle = 0;
-			if(parse_css_angle(parts[1], true, angle))
-			{
-				background_gradient::gradient_color gc;
-				gc.angle = angle;
-				gc.color = color;
-				grad.m_colors.push_back(gc);
-			}
-			if(parts.size() > 2)
-			{
-				if(parse_css_angle(parts[1], true, angle))
-				{
-					background_gradient::gradient_color gc;
-					gc.color = color;
-					gc.angle = angle;
-					grad.m_colors.push_back(gc);
-				}
-			}
-		} else
-		{
-			background_gradient::gradient_color gc;
-			gc.color = color;
-			grad.m_colors.push_back(gc);
-		}
+		parse_conic_angle_position(tokens, index, gradient);
+	}
+	else if (parse_conic_angle_position(tokens, index, gradient))
+	{
+		parse_color_interpolation_method(tokens, index, color_space, hue_interpolation);
+	}
+	else
+		return false;
+
+	if (index != (int)tokens.size()) return false;
+
+	gradient.color_space = color_space;
+	gradient.hue_interpolation = hue_interpolation;
+	return true;
+}
+
+const float pi = 3.14159265f;
+
+// https://drafts.csswg.org/css-values-4/#angles
+bool parse_angle(const css_token& tok, float& angle, bool percents_allowed)
+{
+	// The unit identifier may be omitted if the <angle> is zero.  https://drafts.csswg.org/css-images-3/#linear-gradient-syntax
+	if (tok.type == NUMBER && tok.n.number == 0)
+	{
+		angle = 0;
+		return true;
 	}
 
-	/**
-	 * Parse linear gradient definition.
-	 * Formal syntax:
-	 * \code{plain}
-	 * <linear-gradient()> =
-	 *   linear-gradient( [ <linear-gradient-syntax> ] )
-	 *
-	 * <linear-gradient-syntax> =
-	 *   [ <angle> | to <side-or-corner> ]? , <color-stop-list>
-	 *
-	 * <side-or-corner> =
-	 *   [ left | right ]  ||
-	 *   [ top | bottom ]
-	 *
-	 * <color-stop-list> =
-	 *   <linear-color-stop> , [ <linear-color-hint>? , <linear-color-stop> ]#
-	 *
-	 * <linear-color-stop> =
-	 *   <color> <length-percentage>?
-	 *
-	 * <linear-color-hint> =
-	 *   <length-percentage>
-	 *
-	 * <length-percentage> =
-	 *   <length>      |
-	 *   <percentage>
-	 * \endcode
-	 * @param gradient_str
-	 * @param container
-	 * @param grad
-	 */
-	void parse_linear_gradient(const std::string& gradient_str, document_container *container, background_gradient& grad)
+	// <angle-percentage> in conic gradient
+	if (tok.type == PERCENTAGE && percents_allowed)
 	{
-		string_vector items;
-		split_string(gradient_str, items, ",", "", "()");
-
-		for (auto &item: items)
-		{
-			trim(item);
-			string_vector parts;
-			split_string(item, parts, split_delims_spaces, "", "()");
-			if (parts.empty()) continue;
-
-			if (parts[0] == "to")
-			{
-				uint32_t grad_side = 0;
-				for (size_t part_idx = 1; part_idx < parts.size(); part_idx++)
-				{
-					int side = value_index(parts[part_idx], "left;right;top;bottom");
-					if (side >= 0)
-					{
-						grad_side |= 1 << side;
-					}
-				}
-				switch(grad_side)
-				{
-					case background_gradient::gradient_side_top:
-						grad.angle = 0;
-						break;
-					case background_gradient::gradient_side_bottom:
-						grad.angle = 180;
-						break;
-					case background_gradient::gradient_side_left:
-						grad.angle = 270;
-						break;
-					case background_gradient::gradient_side_right:
-						grad.angle = 90;
-						break;
-					case background_gradient::gradient_side_top | background_gradient::gradient_side_left:
-					case background_gradient::gradient_side_top | background_gradient::gradient_side_right:
-					case background_gradient::gradient_side_bottom | background_gradient::gradient_side_left:
-					case background_gradient::gradient_side_bottom | background_gradient::gradient_side_right:
-						grad.m_side = grad_side;
-						break;
-					default:
-						break;
-				}
-			} else if (parts.size() == 1 && parse_css_angle(parts[0], false, grad.angle))
-			{
-				continue;
-			} else if (web_color::is_color(parts[0], container))
-			{
-				parse_color_stop_list(parts, container, grad.m_colors);
-			} else
-			{
-				css_length length;
-				length.fromString(parts[0]);
-				if (!length.is_predefined())
-				{
-					background_gradient::gradient_color gc;
-					gc.length = length;
-					gc.is_color_hint = true;
-					grad.m_colors.push_back(gc);
-				}
-			}
-		}
+		angle = tok.n.number * 360 / 100;
+		return true;
 	}
 
-	/**
-	 * Parse position part for radial gradient.
-	 * Formal syntax:
-	 * \code
-	 * <position> =
-	 *   [ left | center | right | top | bottom | <length-percentage> ]  |
-	 *   [ left | center | right ] && [ top | center | bottom ]  |
-	 *   [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
-	 *   [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
-	 * \endcode
-	 * @param grad
-	 * @param parts
-	 * @param i
-	 */
-	static inline void parse_radial_position(litehtml::background_gradient &grad, const litehtml::string_vector &parts, size_t i)
+	if (tok.type == DIMENSION)
 	{
-		grad.m_side = 0;
-		while (i < parts.size())
+		switch (_id(lowcase(tok.unit)))
 		{
-			int side = litehtml::value_index(parts[i], "left;right;top;bottom;center");
-			if (side >= 0)
-			{
-				if(side == 4)
-				{
-					if(grad.m_side & litehtml::background_gradient::gradient_side_x_center)
-					{
-						grad.m_side |= litehtml::background_gradient::gradient_side_y_center;
-					} else
-					{
-						grad.m_side |= litehtml::background_gradient::gradient_side_x_center;
-					}
-				} else
-				{
-					grad.m_side |= 1 << side;
-				}
-			} else
-			{
-				litehtml::css_length length;
-				length.fromString(parts[i]);
-				if (!length.is_predefined())
-				{
-					if(grad.m_side & litehtml::background_gradient::gradient_side_x_length)
-					{
-						grad.m_side |= litehtml::background_gradient::gradient_side_y_length;
-						grad.radial_position_y = length;
-					} else
-					{
-						grad.m_side |= litehtml::background_gradient::gradient_side_x_length;
-						grad.radial_position_x = length;
-					}
-				}
-			}
-			i++;
+		case _deg_:  angle = tok.n.number; break;
+		case _grad_: angle = (tok.n.number / 400) * 360; break;
+		case _rad_:  angle = (tok.n.number / (2 * pi)) * 360; break;
+		case _turn_: angle = tok.n.number * 360; break;
+		default:     return false;
 		}
+		return true;
 	}
 
-	/**
-	 * Parse radial gradient definition
-	 * Formal syntax:
-	 * \code
-	 * <radial-gradient()> =
-	 *   radial-gradient( [ <radial-gradient-syntax> ] )
-	 *
-	 * <radial-gradient-syntax> =
-	 *   [ <radial-shape> || <radial-size> ]? [ at <position> ]? , <color-stop-list>
-	 *
-	 * <radial-shape> =
-	 *   circle   |
-	 *   ellipse
-	 *
-	 * <radial-size> =
-	 *   <radial-extent>               |
-	 *   <length [0,∞]>                |
-	 *   <length-percentage [0,∞]>{2}
-	 *
-	 * <position> =
-	 *   [ left | center | right | top | bottom | <length-percentage> ]  |
-	 *   [ left | center | right ] && [ top | center | bottom ]  |
-	 *   [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
-	 *   [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
-	 *
-	 * <color-stop-list> =
-	 *   <linear-color-stop> , [ <linear-color-hint>? , <linear-color-stop> ]#
-	 *
-	 * <radial-extent> =
-	 *   closest-corner   |
-	 *   closest-side     |
-	 *   farthest-corner  |
-	 *   farthest-side
-	 *
-	 * <length-percentage> =
-	 *   <length>      |
-	 *   <percentage>
+	return false;
+}
 
-	 * <linear-color-stop> =
-	 *   <color> <length-percentage>?
-	 *
-	 * <linear-color-hint> =
-	 *   <length-percentage>
-	 * \endcode
-	 * @param gradient_str
-	 * @param container
-	 * @param grad
-	 */
-	void parse_radial_gradient(const std::string& gradient_str, document_container *container, background_gradient& grad)
+// https://www.w3.org/TR/css-color-4/#color-interpolation-method
+// <rectangular-color-space> = srgb | srgb-linear | display-p3 | a98-rgb | prophoto-rgb | rec2020 | lab | oklab | xyz | xyz-d50 | xyz-d65
+// <polar-color-space> = hsl | hwb | lch | oklch
+// <hue-interpolation-method> = [ shorter | longer | increasing | decreasing ] hue
+// <color-interpolation-method> = in [ <rectangular-color-space> | <polar-color-space> <hue-interpolation-method>? ]
+bool parse_color_interpolation_method(const css_token_vector& tokens, int& index,
+	color_space_t& color_space, hue_interpolation_t& hue_interpolation)
+{
+	if (at(tokens, index).ident() == "in" &&
+		parse_keyword(at(tokens, index + 1), color_space, color_space_strings, 1))
 	{
-		string_vector items;
-		split_string(gradient_str, items, ",", "", "()");
+		index += 2;
+	}
+	else
+		return false;
 
-		for (auto &item: items)
-		{
-			trim(item);
-			string_vector parts;
-			split_string(item, parts, split_delims_spaces, "", "()");
-			if (parts.empty()) continue;
+	if (color_space >= color_space_polar_start &&
+		at(tokens, index + 1).ident() == "hue" && // must be checked before parse_keyword, otherwise hue_interpolation may be assigned a value when there is no "hue" keyword
+		parse_keyword(at(tokens, index), hue_interpolation, hue_interpolation_strings, 1))
+	{
+		index += 2;
+	}
+	return true;
+}
 
-			if (web_color::is_color(parts[0], container))
-			{
-				parse_color_stop_list(parts, container, grad.m_colors);
-			} else
-			{
-				size_t i = 0;
-				while(i < parts.size())
-				{
-					if(parts[i] == "at")
-					{
-						parse_radial_position(grad, parts, i + 1);
-						break;
-					} else // parts[i] == "at"
-					{
-						int val = value_index(parts[i], "closest-corner;closest-side;farthest-corner;farthest-side");
-						if(val >= 0)
-						{
-							grad.radial_extent = (background_gradient::radial_extent_t) (val + 1);
-						} else
-						{
-							val = value_index(parts[i], "circle;ellipse");
-							if(val >= 0)
-							{
-								grad.radial_shape = (background_gradient::radial_shape_t)  (val + 1);
-							} else
-							{
-								css_length length;
-								length.fromString(parts[i]);
-								if (!length.is_predefined())
-								{
-									if(!grad.radial_length_x.is_predefined())
-									{
-										grad.radial_length_y = length;
-									} else
-									{
-										grad.radial_length_x = length;
-									}
-								}
-							}
-						}
-					} // else parts[i] == "at"
-					i++;
-				} // while(i < parts.size())
-			} // else web_color::is_color(parts[0], container)
-		} // for
-		if(grad.radial_extent == background_gradient::radial_extent_none)
-		{
-			if(grad.radial_length_x.is_predefined())
-			{
-				grad.radial_extent = background_gradient::radial_extent_farthest_corner;
-			} else if(grad.radial_length_y.is_predefined())
-			{
-				grad.radial_length_y = grad.radial_length_x.val();
-				grad.radial_shape = background_gradient::radial_shape_circle;
-			}
-		}
-		if(grad.radial_shape == background_gradient::radial_shape_none)
-		{
-			grad.radial_shape = background_gradient::radial_shape_ellipse;
-		}
+// https://www.w3.org/TR/css-images-3/#typedef-radial-size
+// <radial-size> = <radial-extent> | <length [0,∞]> | <length-percentage [0,∞]>{2}
+// <radial-extent> = closest-corner | closest-side | farthest-corner | farthest-side
+// Permitted values also depend on <radial-shape>, see parse_radial_gradient_shape_size_position_interpolation.
+// TODO: <radial-size> syntax was extended in https://drafts.csswg.org/css-images-4/#radial-size
+bool parse_radial_size(const css_token_vector& tokens, int& index, gradient& gradient)
+{
+	auto& tok0 = at(tokens, index);
+	auto& tok1 = at(tokens, index + 1);
+
+	if (parse_keyword(tok0, gradient.radial_extent, radial_extent_strings, 1))
+	{
+		index++;
+		return true;
 	}
 
-	/**
-	 * Parse conic gradient definition.
-	 * Formal syntax:
-	 * \code
-	 * conic-gradient-syntax =
-	 *   [ [ [ from <angle> ]? [ at position ]? ] || <color-interpolation-method> ]? , <angular-color-stop-list>
-	 *
-	 * <position> =
-	 *   [ left | center | right | top | bottom | <length-percentage> ]  |
-	 *   [ left | center | right ] && [ top | center | bottom ]  |
-	 *   [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]  |
-	 *   [ [ left | right ] <length-percentage> ] && [ [ top | bottom ] <length-percentage> ]
-	 *
-	 * <color-interpolation-method> =
-	 *   in [ <rectangular-color-space> | <polar-color-space> <hue-interpolation-method>? ]
-	 *
-	 * <angular-color-stop-list> =
-	 *   <angular-color-stop> , [ <angular-color-hint>? , <angular-color-stop> ]#
-	 *
-	 * <length-percentage> =
-  	 *   <length>      |
-	 *   <percentage>
-	 *
-	 * <rectangular-color-space> =
-	 *   srgb          |
-	 *   srgb-linear   |
-	 *   display-p3    |
-	 *   a98-rgb       |
-	 *   prophoto-rgb  |
-	 *   rec2020       |
-	 *   lab           |
-	 *   oklab         |
-	 *   xyz           |
-	 *   xyz-d50       |
-	 *   xyz-d65
-	 *
-	 * <polar-color-space> =
-	 *   hsl    |
-	 *   hwb    |
-	 *   lch    |
-	 *   oklch
-	 *
-	 * <hue-interpolation-method> =
-	 *   [ shorter | longer | increasing | decreasing ] hue
-	 *
-	 * <angular-color-stop> =
-	 *   <color> <color-stop-angle>?
-	 *
-	 * <angular-color-hint> =
-	 *   <angle-percentage>
-	 *
-	 * <color-stop-angle> =
-	 *   <angle-percentage>{1,2}
-	 *
-	 * <angle-percentage> =
-	 *   <angle>       |
-	 *   <percentage>
-	 * \endcode
-	 * @param gradient_str
-	 * @param container
-	 * @param grad
-	 */
-	void parse_conic_gradient(const std::string& gradient_str, document_container *container, background_gradient& grad)
+	css_length length[2];
+	if (length[0].from_token(tok0, f_length_percentage | f_positive) &&
+		length[1].from_token(tok1, f_length_percentage | f_positive))
 	{
-		string_vector items;
-		split_string(gradient_str, items, ",", "", "()");
-
-		for (auto &item: items)
-		{
-			trim(item);
-			string_vector parts;
-			split_string(item, parts, split_delims_spaces, "", "()");
-			if (parts.empty()) continue;
-
-			// Parse colors stop list
-			if (web_color::is_color(parts[0], container))
-			{
-				parse_color_stop_angle_list(parts, container, grad);
-				continue;
-			}
-
-			size_t i = 0;
-			while(i < parts.size())
-			{
-				// parse position
-				if(parts[i] == "at")
-				{
-					parse_radial_position(grad, parts, i + 1);
-					break;
-				}
-				// parse "from angle"
-				if(parts[i] == "from")
-				{
-					i++;
-					if(i >= parts.size()) continue;
-					parse_css_angle(parts[i], false, grad.conic_from_angle);
-					continue;
-				}
-				if(parts[i] == "in")
-				{
-					i++;
-					if(i >= parts.size()) continue;
-					int val = value_index(parts[i], "srgb;"
-													"srgb-linear;"
-													"display-p3;"
-													"a98-rgb;"
-													"prophoto-rgb;"
-													"rec2020;"
-													"lab;"
-													"oklab;"
-													"xyz;"
-													"xyz-d50;"
-													"xyz-d65");
-					if(val >= 0)
-					{
-						grad.conic_color_space = (decltype(grad.conic_color_space)) (val + 1);
-						continue;
-					}
-					val = value_index(parts[i], "hsl;"
-												"hwb;"
-												"lch;"
-												"oklch");
-					if(val < 0) continue;
-
-					grad.conic_color_space = (decltype(grad.conic_color_space)) (background_gradient::conic_color_space_polar_start + 1 + val);
-					int interpol = value_index(parts[i], "hue;shorter;longer;increasing;decreasing");
-					if(interpol == 0)
-					{
-						grad.conic_interpolation = background_gradient::interpolation_method_hue;
-						continue;
-					}
-					if(interpol > 0)
-					{
-						i++;
-						if(i >= parts.size()) continue;
-						if(parts[i] != "hue") continue;
-						grad.conic_interpolation = (decltype(grad.conic_interpolation)) (val + 1);
-						continue;
-					}
-				}
-				i++;
-			}
-		}
+		gradient.radial_extent = radial_extent_none;
+		gradient.radial_radius_x = length[0];
+		gradient.radial_radius_y = length[1];
+		index += 2;
+		return true;
 	}
+
+	if (length[0].from_token(tok0, f_length | f_positive))
+	{
+		gradient.radial_extent = radial_extent_none;
+		gradient.radial_radius_x = length[0];
+		index++;
+		return true;
+	}
+
+	return false;
+}
+
+bool parse_gradient_position(const css_token_vector& tokens, int& index, gradient& gradient)
+{
+	css_length x, y;
+	if (!parse_bg_position(tokens, index, x, y, false))
+		return false;
+
+	gradient.m_side = 0;
+	if (x.is_predefined())
+	{
+		if (x.predef() == background_position_center)
+			gradient.m_side |= gradient_side_x_center;
+		else
+			gradient.m_side |= 1 << x.predef();
+	}
+	else
+	{
+		gradient.m_side |= gradient_side_x_length;
+		gradient.position_x = x;
+	}
+
+	if (y.is_predefined())
+	{
+		if (y.predef() == background_position_center)
+			gradient.m_side |= gradient_side_y_center;
+		else
+			gradient.m_side |= 1 << y.predef();
+	}
+	else
+	{
+		gradient.m_side |= gradient_side_y_length;
+		gradient.position_y = y;
+	}
+	return true;
+}
+
+// https://drafts.csswg.org/css-images-4/#radial-gradients
+// [ [ <radial-shape> || <radial-size> ]? [ at <position> ]? ] || <color-interpolation-method>
+bool parse_radial_gradient_shape_size_position_interpolation(const css_token_vector& tokens, gradient& result)
+{
+	// this check is needed because parse may succeed without consuming any input
+	if (tokens.empty()) return false;
+
+	auto shape = radial_shape_none;
+	auto radial_shape = [&](const css_token_vector& tokens, int& index)
+	{
+		if (!parse_keyword(at(tokens, index), shape, "circle;ellipse", 1))
+			return false;
+		index++;
+		return true;
+	};
+	
+	using namespace std::placeholders;
+	gradient grad;
+	// sets grad.radial_extent or grad.radial_radius_{x,y}
+	parse_fn radial_size     = std::bind( parse_radial_size,       _1, _2, std::ref(grad) );
+	// sets grad.m_side and grad.radial_position_{x,y}
+	parse_fn radial_position = std::bind( parse_gradient_position, _1, _2, std::ref(grad) );
+
+	auto color_space = color_space_oklab;
+	auto hue_interpolation = hue_interpolation_shorter;
+	auto color_interpolation_method = [&](const css_token_vector& tokens, int& index)
+	{
+		return parse_color_interpolation_method(tokens, index, color_space, hue_interpolation);
+	};
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+
+	auto parse = oror(
+		color_interpolation_method, // first trying this because seq(opt,opt) always succeeds
+		seq(opt(oror(radial_shape, radial_size)), opt(seq("at"_x, radial_position)))
+	);
+
+	int index = 0;
+	bool ok = parse(tokens, index) && end(tokens, index);
+	if (!ok) return false;
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+
+	// If <radial-shape> is specified as circle or is omitted, the <radial-size> may be given explicitly as <length [0,∞]>
+	if (shape == radial_shape_ellipse && 
+		// radius_x is specified, but radius_y is not
+		!grad.radial_radius_x.is_predefined() && grad.radial_radius_y.is_predefined())
+		return false;
+	
+	// If <radial-shape> is specified as ellipse or is omitted, <radial-size> may instead be given explicitly as <length-percentage [0,∞]>{2}
+	if (shape == radial_shape_circle && 
+		// both radius_x and radius_y are specified
+		!grad.radial_radius_y.is_predefined())
+		return false;
+
+	// If <radial-shape> is omitted, the ending shape defaults to a circle if the <radial-size> is a single <length>, and to an ellipse otherwise.
+	if (shape == radial_shape_none)
+	{
+		if (!grad.radial_radius_x.is_predefined() && grad.radial_radius_y.is_predefined())
+			shape = radial_shape_circle;
+		else
+			shape = radial_shape_ellipse;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////
+
+	result.radial_shape = shape;
+	
+	result.radial_extent = grad.radial_extent;
+	result.radial_radius_x = grad.radial_radius_x;
+	result.radial_radius_y = grad.radial_radius_y;
+	
+	result.m_side = grad.m_side;
+	result.position_x = grad.position_x;
+	result.position_y = grad.position_y;
+	
+	result.color_space = color_space;
+	result.hue_interpolation = hue_interpolation;
+	
+	return true;
+}
+
 }

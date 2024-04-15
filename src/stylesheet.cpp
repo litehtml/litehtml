@@ -1,178 +1,132 @@
 #include "html.h"
 #include "stylesheet.h"
-#include <algorithm>
-#include "document.h"
-#include "gradient.h"
+#include "css_parser.h"
 
-#ifndef M_PI
-#       define M_PI    3.14159265358979323846
-#endif
-
-void litehtml::css::parse_stylesheet(const char* str, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
+namespace litehtml
 {
-	string text = str;
 
-	// remove comments
-	string::size_type c_start = text.find("/*");
-	while(c_start != string::npos)
+// https://www.w3.org/TR/css-syntax-3/#parse-a-css-stylesheet
+template<class Input> // Input == string or css_token_vector
+void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr doc, media_query_list_list::ptr media, bool top_level)
+{
+	if (doc && media)
+		doc->add_media_list(media);
+
+	// To parse a CSS stylesheet, first parse a stylesheet. 
+	auto rules = css_parser::parse_stylesheet(input, top_level);
+	bool import_allowed = top_level;
+
+	// Interpret all of the resulting top-level qualified rules as style rules, defined below.
+	// If any style rule is invalid, or any at-rule is not recognized or is invalid according 
+	// to its grammar or context, it’s a parse error. Discard that rule.
+	for (auto rule : rules)
 	{
-		string::size_type c_end = text.find("*/", c_start + 2);
-		if(c_end == string::npos)
+		if (rule->type == raw_rule::qualified)
 		{
-			text.erase(c_start);
+			parse_style_rule(rule, baseurl, doc, media);
+			import_allowed = false;
+			continue;
+		}
+
+		// Otherwise: at-rule
+		switch (_id(lowcase(rule->name)))
+		{
+		case _charset_: // ignored  https://www.w3.org/TR/css-syntax-3/#charset-rule
+			break;
+
+		case _import_:
+			if (import_allowed)
+				parse_import_rule(rule, baseurl, doc, media);
+			else
+				css_parse_error("incorrect placement of @import rule");
+			break;
+		
+		// https://www.w3.org/TR/css-conditional-3/#at-media
+		// @media <media-query-list> { <stylesheet> }
+		case _media_:
+		{
+			auto new_media = media;
+			auto mq_list = parse_media_query_list(rule->prelude, doc);
+			// An empty media query list evaluates to true.  https://drafts.csswg.org/mediaqueries-5/#example-6f06ee45
+			if (!mq_list.empty())
+			{
+				new_media = make_shared<media_query_list_list>(media ? *media : media_query_list_list());
+				new_media->add(mq_list);
+			}
+			parse_css_stylesheet(rule->block.value, baseurl, doc, new_media, false);
+			import_allowed = false;
 			break;
 		}
-		text.erase(c_start, c_end - c_start + 2);
-		c_start = text.find("/*");
-	}
-
-	string::size_type pos = text.find_first_not_of(" \n\r\t");
-	while(pos != string::npos)
-	{
-		while(pos != string::npos && text[pos] == '@')
-		{
-			string::size_type sPos = pos;
-			pos = text.find_first_of("{;", pos);
-			if(pos != string::npos && text[pos] == '{')
-			{
-				pos = find_close_bracket(text, pos, '{', '}');
-			}
-			if(pos != string::npos)
-			{
-				parse_atrule(text.substr(sPos, pos - sPos + 1), baseurl, doc, media);
-			} else
-			{
-				parse_atrule(text.substr(sPos), baseurl, doc, media);
-			}
-
-			if(pos != string::npos)
-			{
-				pos = text.find_first_not_of(" \n\r\t", pos + 1);
-			}
-		}
-
-		if(pos == string::npos)
-		{
-			break;
-		}
-
-		string::size_type style_start	= text.find('{', pos);
-		string::size_type style_end	= text.find('}', pos);
-		if(style_start != string::npos && style_end != string::npos)
-		{
-			auto str_style = text.substr(style_start + 1, style_end - style_start - 1);
-			style::ptr style = std::make_shared<litehtml::style>();
-			style->add(str_style, baseurl ? baseurl : "", doc->container());
-
-			parse_selectors(text.substr(pos, style_start - pos), style, media);
-
-			if(media && doc)
-			{
-				doc->add_media_list(media);
-			}
-
-			pos = style_end + 1;
-		} else
-		{
-			pos = string::npos;
-		}
-
-		if(pos != string::npos)
-		{
-			pos = text.find_first_not_of(" \n\r\t", pos);
+		
+		default:
+			css_parse_error("unrecognized rule @" + rule->name);
+			import_allowed = false;
 		}
 	}
 }
 
-void litehtml::css::parse_gradient(const string &token, document_container *container, background_gradient& grad)
+// https://drafts.csswg.org/css-cascade-5/#at-import
+// `layer` and `supports` are not supported
+// @import [ <url> | <string> ] <media-query-list>?
+void css::parse_import_rule(raw_rule::ptr rule, string baseurl, document::ptr doc, media_query_list_list::ptr media)
 {
-	size_t pos1 = token.find('(');
-	size_t pos2 = token.find_last_of(')');
-	std::string grad_str;
-	if(pos1 != std::string::npos)
+	const auto& tok = at(rule->prelude, 0);
+	string url;
+	auto parse_string = [](const css_token& tok, string& str)
 	{
-		auto gradient_type_str = token.substr(0, pos1);
-		trim(gradient_type_str);
-		background_gradient::gradient_type gradient_type = (background_gradient::gradient_type) (value_index(
-				gradient_type_str,
-				"linear-gradient;repeating-linear-gradient;radial-gradient;repeating-radial-gradient;conic-gradient;repeating-conic-gradient", -2) + 1);
+		if (tok.type != STRING) return false;
+		str = tok.str;
+		return true;
+	};
+	bool ok = parse_url(tok, url) || parse_string(tok, url);
+	if (!ok) {
+		css_parse_error("invalid @import rule");
+		return;
+	}
+	document_container* container = doc->container();
+	string css_text;
+	string css_baseurl = baseurl;
+	container->import_css(css_text, url, css_baseurl);
 
-		if(pos2 != std::string::npos)
+	auto new_media = media;
+	if (rule->prelude.size() != 1)
+	{
+		auto tokens = slice(rule->prelude, 1);
+		media_query_list mq_list = parse_media_query_list(tokens, doc);
+		if (!mq_list.empty())
 		{
-			grad_str = token.substr(pos1 + 1, pos2 - pos1 - 1);
-		} else
-		{
-			grad_str = token.substr(pos1);
-		}
-
-		if(gradient_type == background_gradient::linear_gradient || gradient_type == background_gradient::repeating_linear_gradient)
-		{
-			parse_linear_gradient(grad_str, container, grad);
-		} else if(gradient_type == background_gradient::radial_gradient || gradient_type == background_gradient::repeating_radial_gradient)
-		{
-			parse_radial_gradient(grad_str, container, grad);
-		} else if(gradient_type == background_gradient::conic_gradient || gradient_type == background_gradient::repeating_conic_gradient)
-		{
-			parse_conic_gradient(grad_str, container, grad);
-		}
-		if(grad.m_colors.size() >= 2)
-		{
-			grad.m_type = gradient_type;
+			new_media = make_shared<media_query_list_list>(media ? *media : media_query_list_list());
+			new_media->add(mq_list);
 		}
 	}
+	parse_css_stylesheet(css_text, css_baseurl, doc, new_media, true);
 }
 
-void litehtml::css::parse_css_url( const string& str, string& url )
+// https://www.w3.org/TR/css-syntax-3/#style-rules
+void css::parse_style_rule(raw_rule::ptr rule, string baseurl, document::ptr doc, media_query_list_list::ptr media)
 {
-	url = "";
-	size_t pos1 = str.find('(');
-	size_t pos2 = str.find(')');
-	if(pos1 != string::npos && pos2 != string::npos)
+	// The prelude of the qualified rule is parsed as a <selector-list>. If this returns failure, the entire style rule is invalid.
+	auto list = parse_selector_list(rule->prelude, strict_mode);
+	if (list.empty())
 	{
-		url = str.substr(pos1 + 1, pos2 - pos1 - 1);
-		if(url.length())
-		{
-			if(url[0] == '\'' || url[0] == '"')
-			{
-				url.erase(0, 1);
-			}
-		}
-		if(url.length())
-		{
-			if(url[url.length() - 1] == '\'' || url[url.length() - 1] == '"')
-			{
-				url.erase(url.length() - 1, 1);
-			}
-		}
+		css_parse_error("invalid selector");
+		return;
+	}
+
+	style::ptr style = make_shared<litehtml::style>(); // style block
+	// The content of the qualified rule’s block is parsed as a style block’s contents. 
+	style->add(rule->block.value, baseurl, doc->container());
+
+	for (auto sel : list)
+	{
+		sel->m_style = style;
+		sel->m_media_query = media;
+		sel->calc_specificity();
+		add_selector(sel);
 	}
 }
 
-bool litehtml::css::parse_selectors( const string& txt, const style::ptr& styles, const media_query_list::ptr& media )
-{
-	string selector = txt;
-	trim(selector);
-	string_vector tokens;
-	split_string(selector, tokens, ",");
-
-	bool added_something = false;
-
-	for(auto & token : tokens)
-	{
-		css_selector::ptr new_selector = std::make_shared<css_selector>(media);
-        new_selector->m_style = styles;
-		trim(token);
-		if(new_selector->parse(token))
-		{
-			new_selector->calc_specificity();
-			add_selector(new_selector);
-			added_something = true;
-		}
-	}
-
-	return added_something;
-}
-
-void litehtml::css::sort_selectors()
+void css::sort_selectors()
 {
 	std::sort(m_selectors.begin(), m_selectors.end(),
 		 [](const css_selector::ptr& v1, const css_selector::ptr& v2)
@@ -182,87 +136,4 @@ void litehtml::css::sort_selectors()
 	);
 }
 
-void litehtml::css::parse_atrule(const string& text, const char* baseurl, const std::shared_ptr<document>& doc, const media_query_list::ptr& media)
-{
-	if(text.substr(0, 7) == "@import")
-	{
-		int sPos = 7;
-		string iStr;
-		iStr = text.substr(sPos);
-		if(iStr[iStr.length() - 1] == ';')
-		{
-			iStr.erase(iStr.length() - 1);
-		}
-		trim(iStr);
-		string_vector tokens;
-		split_string(iStr, tokens, " ", "", "(\"");
-		if(!tokens.empty())
-		{
-			string url;
-			parse_css_url(tokens.front(), url);
-			if(url.empty())
-			{
-				url = tokens.front();
-				trim(url, "\"");
-			}
-			tokens.erase(tokens.begin());
-			if(doc)
-			{
-				document_container* doc_cont = doc->container();
-				if(doc_cont)
-				{
-					string css_text;
-					string css_baseurl;
-					if(baseurl)
-					{
-						css_baseurl = baseurl;
-					}
-					doc_cont->import_css(css_text, url, css_baseurl);
-					if(!css_text.empty())
-					{
-						media_query_list::ptr new_media = media;
-						if(!tokens.empty())
-						{
-							string media_str;
-							for(auto iter = tokens.begin(); iter != tokens.end(); iter++)
-							{
-								if(iter != tokens.begin())
-								{
-									media_str += " ";
-								}
-								media_str += (*iter);
-							}
-							new_media = media_query_list::create_from_string(media_str, doc);
-							if(!new_media)
-							{
-								new_media = media;
-							}
-						}
-						parse_stylesheet(css_text.c_str(), css_baseurl.c_str(), doc, new_media);
-					}
-				}
-			}
-		}
-	} else if(text.substr(0, 6) == "@media")
-	{
-		string::size_type b1 = text.find_first_of('{');
-		string::size_type b2 = text.find_last_of('}');
-		if(b1 != string::npos)
-		{
-			string media_type = text.substr(6, b1 - 6);
-			trim(media_type);
-			media_query_list::ptr new_media = media_query_list::create_from_string(media_type, doc);
-
-			string media_style;
-			if(b2 != string::npos)
-			{
-				media_style = text.substr(b1 + 1, b2 - b1 - 1);
-			} else
-			{
-				media_style = text.substr(b1 + 1);
-			}
-
-			parse_stylesheet(media_style.c_str(), baseurl, doc, new_media);
-		}
-	}
-}
+} // namespace litehtml

@@ -36,18 +36,18 @@ Font::Font(int size)
 	load(font_dir + installed_fonts[n].name);
 }
 
-Bitmap Font::get_glyph(int ch, web_color color)
+Bitmap Font::get_glyph(int ch, color color)
 {
 	if (ch < 0 || ch >= 128 || glyphs[ch].width == 0)
 	{
-		Bitmap bmp(width, height, web_color::transparent);
+		Bitmap bmp(width, height, transparent);
 		bmp.draw_rect(1, 1, width - 2, height - 2, color);
 		return bmp;
 	}
-	else if (color != web_color::black)
+	else if (color != black)
 	{
 		Bitmap bmp = glyphs[ch];
-		bmp.replace_color(web_color::black, color);
+		bmp.replace_color(black, color);
 		return bmp;
 	}
 	else
@@ -102,7 +102,7 @@ void Font::load(string filename)
 	};
 	
 	auto parse_glyph = [&](int ch) {
-		Bitmap& glyph = glyphs[ch] = Bitmap(width, height, web_color::transparent);
+		Bitmap& glyph = glyphs[ch] = Bitmap(width, height, transparent);
 		for (int y = 0; i < (int) lines.size() && y < height; i++, y++)
 		{
 			string line = lines[i];
@@ -110,7 +110,7 @@ void Font::load(string filename)
 			for (int x = 0; x < min((int)line.size(), width); x++)
 			{
 				if (line[x] == '@')
-					glyph.set_pixel(x, y, web_color::black);
+					glyph.set_pixel(x, y, black);
 			}
 		}
 	};
@@ -122,5 +122,5 @@ void Font::load(string filename)
 		parse_glyph(ch);
 	}
 
-	x_height = glyphs['x'].find_picture(web_color::transparent).height;
+	x_height = glyphs[(int)'x'].find_picture(transparent).height;
 }

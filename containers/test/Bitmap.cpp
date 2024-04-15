@@ -2,23 +2,23 @@
 #include "lodepng.h"
 using namespace std;
 
-web_color Bitmap::get_pixel(int x, int y) const
+color Bitmap::get_pixel(int x, int y) const
 {
 	if (x < 0 || x >= width || y < 0 || y >= height)
-		return web_color::black;
+		return black;
 	else
 		return data[x + y * width];
 }
 
-void Bitmap::set_pixel(int x, int y, web_color color)
+void Bitmap::set_pixel(int x, int y, color color)
 {
 	if (x < 0 || x >= width || y < 0 || y >= height) return;
-	if (color.alpha == 0) return;
+	if (color.a == 0) return;
 	data[x + y * width] = color;
 }
 
 // endpoint is not drawn, like in GDI
-void Bitmap::draw_line(int x0, int y0, int x1, int y1, web_color color)
+void Bitmap::draw_line(int x0, int y0, int x1, int y1, color color)
 {
 	if (x0 != x1 && y0 != y1) return; // only horz and vert lines supported
 
@@ -36,7 +36,7 @@ void Bitmap::draw_line(int x0, int y0, int x1, int y1, web_color color)
 	}
 }
 
-void Bitmap::draw_rect(int x, int y, int _width, int _height, web_color color)
+void Bitmap::draw_rect(int x, int y, int _width, int _height, color color)
 {
 	draw_line(x, y,               x + _width, y,               color); // top
 	draw_line(x, y + _height - 1, x + _width, y + _height - 1, color); // bottom
@@ -44,7 +44,7 @@ void Bitmap::draw_rect(int x, int y, int _width, int _height, web_color color)
 	draw_line(x + _width - 1, y, x + _width - 1, y + _height, color); // right
 }
 
-void Bitmap::fill_rect(position rect, web_color color)
+void Bitmap::fill_rect(position rect, color color)
 {
 	for (int y = rect.top(); y < rect.bottom(); y++)
 		for (int x = rect.left(); x < rect.right(); x++)
@@ -58,7 +58,7 @@ void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp)
 			set_pixel(x0 + x, y0 + y, bmp.get_pixel(x, y));
 }
 
-void Bitmap::replace_color(web_color original, web_color replacement)
+void Bitmap::replace_color(color original, color replacement)
 {
 	for (auto& pixel : data)
 	{
@@ -68,7 +68,7 @@ void Bitmap::replace_color(web_color original, web_color replacement)
 }
 
 // find minimal rectangle containing pixels different from bgcolor
-position Bitmap::find_picture(web_color bgcolor)
+position Bitmap::find_picture(color bgcolor)
 {
 	auto horz_line_empty = [&](int y) {
 		for (int x = 0; x < width; x++)
@@ -100,7 +100,7 @@ position Bitmap::find_picture(web_color bgcolor)
 
 void Bitmap::resize(int new_width, int new_height)
 {
-	vector<web_color> new_data(new_width * new_height, web_color::white);
+	vector<color> new_data(new_width * new_height, white);
 	for (int y = 0; y < min(new_height, height); y++)
 		for (int x = 0; x < min(new_width, width); x++)
 			new_data[x + y * new_width] = data[x + y * width];

@@ -142,10 +142,10 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	doc->cvt_units(m_css_padding.top,	 font_size);
 	doc->cvt_units(m_css_padding.bottom, font_size);
 
-	m_css_borders.left.color   = el->get_property<web_color>(_border_left_color_,   false, m_color, offset(m_css_borders.left.color));
-	m_css_borders.right.color  = el->get_property<web_color>(_border_right_color_,  false, m_color, offset(m_css_borders.right.color));
-	m_css_borders.top.color    = el->get_property<web_color>(_border_top_color_,    false, m_color, offset(m_css_borders.top.color));
-	m_css_borders.bottom.color = el->get_property<web_color>(_border_bottom_color_, false, m_color, offset(m_css_borders.bottom.color));
+	m_css_borders.left.color   = get_color_property(el, _border_left_color_,   false, m_color, offset(m_css_borders.left.color));
+	m_css_borders.right.color  = get_color_property(el, _border_right_color_,  false, m_color, offset(m_css_borders.right.color));
+	m_css_borders.top.color    = get_color_property(el, _border_top_color_,    false, m_color, offset(m_css_borders.top.color));
+	m_css_borders.bottom.color = get_color_property(el, _border_bottom_color_, false, m_color, offset(m_css_borders.bottom.color));
 
 	m_css_borders.left.style   = (border_style) el->get_property<int>(_border_left_style_,   false, border_style_none, offset(m_css_borders.left.style));
 	m_css_borders.right.style  = (border_style) el->get_property<int>(_border_right_style_,  false, border_style_none, offset(m_css_borders.right.style));
@@ -246,6 +246,14 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	compute_flex(el, doc);
 }
 
+// used for all color properties except `color` (color:currentcolor is converted to color:inherit during parsing)
+litehtml::web_color litehtml::css_properties::get_color_property(const html_tag* el, string_id name, bool inherited, web_color default_value, uint_ptr member_offset) const
+{
+	web_color color = el->get_property<web_color>(name, inherited, default_value, member_offset);
+	if (color.is_current_color) color = m_color;
+	return color;
+}
+
 static const int font_size_table[8][7] =
 {
 		{ 9,    9,     9,     9,    11,    14,    18},
@@ -341,15 +349,15 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	m_font_size = (float)font_size;
 
 	// initialize font
-	m_font_family		=               el->get_property<string>(_font_family_,		true, doc->container()->get_default_font_name(),	offset(m_font_family));
-	m_font_weight		= (font_weight) el->get_property<int>(   _font_weight_,		true, font_weight_normal,							offset(m_font_weight));
-	m_font_style		= (font_style)  el->get_property<int>(   _font_style_,		true, font_style_normal,							offset(m_font_style));
-	m_text_decoration	=               el->get_property<string>(_text_decoration_,	true, "none",										offset(m_text_decoration));
+	m_font_family		=              el->get_property<string>(    _font_family_,		true, doc->container()->get_default_font_name(),	offset(m_font_family));
+	m_font_weight		=              el->get_property<css_length>(_font_weight_,		true, css_length::predef_value(font_weight_normal), offset(m_font_weight));
+	m_font_style		= (font_style) el->get_property<int>(       _font_style_,		true, font_style_normal,							offset(m_font_style));
+	m_text_decoration	=              el->get_property<string>(    _text_decoration_,	true, "none",										offset(m_text_decoration));
 
 	m_font = doc->get_font(
 		m_font_family.c_str(), 
 		font_size, 
-		index_value(m_font_weight, font_weight_strings).c_str(), 
+		m_font_weight.is_predefined() ? index_value(m_font_weight.predef(), font_weight_strings).c_str() : std::to_string(m_font_weight.val()).c_str(),
 		index_value(m_font_style, font_style_strings).c_str(),
 		m_text_decoration.c_str(), 
 		&m_font_metrics);
@@ -359,7 +367,7 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
 {
 	int font_size = get_font_size();
 
-	m_bg.m_color		= el->get_property<web_color>(_background_color_, false, web_color::transparent, offset(m_bg.m_color));
+	m_bg.m_color		= get_color_property(el, _background_color_, false, web_color::transparent, offset(m_bg.m_color));
 
 	const css_size auto_auto(css_length::predef_value(background_size_auto), css_length::predef_value(background_size_auto));
 	m_bg.m_position_x	= el->get_property<length_vector>(_background_position_x_, false, { css_length(0, css_units_percentage) }, offset(m_bg.m_position_x));
@@ -379,7 +387,7 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
 	m_bg.m_clip       = el->get_property<int_vector>(_background_clip_,       false, { background_box_border },        offset(m_bg.m_clip));
 	m_bg.m_origin     = el->get_property<int_vector>(_background_origin_,     false, { background_box_padding },       offset(m_bg.m_origin));
 
-	m_bg.m_image   = el->get_property<std::vector<background_image>>(_background_image_,  false, {{}}, offset(m_bg.m_image));
+	m_bg.m_image   = el->get_property<vector<image>>(_background_image_,  false, {{}}, offset(m_bg.m_image));
 	m_bg.m_baseurl = el->get_property<string>(_background_image_baseurl_, false, "",   offset(m_bg.m_baseurl));
 
 	for (auto& image : m_bg.m_image)
@@ -387,16 +395,16 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
 		switch (image.type)
 		{
 
-			case background_image::bg_image_type_none:
+			case image::type_none:
 				break;
-			case background_image::bg_image_type_url:
+			case image::type_url:
 				if (!image.url.empty())
 				{
 					doc->container()->load_image(image.url.c_str(), m_bg.m_baseurl.c_str(), true);
 				}
 				break;
-			case background_image::bg_image_type_gradient:
-				for(auto& item : image.gradient.m_colors)
+			case image::type_gradient:
+				for(auto& item : image.m_gradient.m_colors)
 				{
 					doc->cvt_units(item.length,  font_size);
 				}
@@ -413,7 +421,7 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
 		m_flex_wrap = (flex_wrap) el->get_property<int>(_flex_wrap_, false, flex_wrap_nowrap, offset(m_flex_wrap));
 
 		m_flex_justify_content = (flex_justify_content) el->get_property<int>(_justify_content_, false, flex_justify_content_flex_start, offset(m_flex_justify_content));
-		m_flex_align_items = (flex_align_items) el->get_property<int>(_align_items_, false, flex_align_items_flex_normal, offset(m_flex_align_items));
+		m_flex_align_items = (flex_align_items) el->get_property<int>(_align_items_, false, flex_align_items_normal, offset(m_flex_align_items));
 		m_flex_align_content = (flex_align_content) el->get_property<int>(_align_content_, false, flex_align_content_stretch, offset(m_flex_align_content));
 	}
 	m_flex_align_self = (flex_align_items) el->get_property<int>(_align_self_, false, flex_align_items_auto, offset(m_flex_align_self));

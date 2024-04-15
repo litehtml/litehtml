@@ -33,7 +33,7 @@
 #include <cstddef>
 #include <ostream>
 
-#include "os_types.h"
+#include "types.h"
 
 namespace litehtml {
 

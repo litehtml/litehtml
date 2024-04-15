@@ -6,9 +6,6 @@
 #define inout
 #define countof(a) int(sizeof(a)/sizeof(a[0]))
 
-#define is_surrogate(ch) ((ch) >= 0xD800 && (ch) < 0xE000)
-
-
 namespace litehtml
 {
 
@@ -159,6 +156,13 @@ void decode(string input, encoding _encoding, string& output)
 	// 3.
 	auto decoder = get_decoder(_encoding);
 	decoder->process_a_queue(input, output, error_mode::replacement);
+}
+
+string decode(string input, encoding encoding)
+{
+	string output;
+	decode(input, encoding, output);
+	return output;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1688,20 +1692,20 @@ loop:
 }
 
 // see step 5 of https://html.spec.whatwg.org/multipage/parsing.html#encoding-sniffing-algorithm
-bool end_condition(size_t index)
+bool end_condition(int index)
 {
 	return index >= 1024;
 }
 
-void increment(size_t& index, const string& str)
+void increment(int& index, const string& str)
 {
 	index++;
-	if (index >= str.size() || end_condition(index))
+	if (index >= (int)str.size() || end_condition(index))
 		throw 0; // abort prescan
 }
 
 // https://html.spec.whatwg.org/multipage/parsing.html#concept-get-attributes-when-sniffing
-bool prescan_get_attribute(const string& str, inout size_t& index, out string& name, out string& value)
+bool prescan_get_attribute(const string& str, inout int& index, out string& name, out string& value)
 {
 	// 1.
 	while (is_whitespace(str[index]) || str[index] == '/') increment(index, str);
@@ -1786,40 +1790,12 @@ step_11:
 	goto step_11;
 }
 
-template<class T>
-bool contains(const std::vector<T>& vector, const T& item)
-{
-	return std::find(vector.begin(), vector.end(), item) != vector.end();
-}
-bool is_one_of(int x, int a, int b, int c)
-{
-	return x == a || x == b || x == c;
-}
-bool equal_i(const string& s1, const string& s2)
-{
-	if (s1.size() != s2.size()) return false;
-	return t_strncasecmp(s1.c_str(), s2.c_str(), s1.size()) == 0;
-}
-bool match(const string& str, size_t index, const string& substr)
-{
-	return str.substr(index, substr.size()) == substr;
-}
-bool match_i(const string& str, size_t index, const string& substr)
-{
-	return equal_i(str.substr(index, substr.size()), substr);
-}
-int is_letter(int c)
-{
-	return t_isalpha(c);
-}
-
-
 // https://html.spec.whatwg.org/multipage/parsing.html#prescan-a-byte-stream-to-determine-its-encoding
 encoding prescan_a_byte_stream_to_determine_its_encoding(const string& str)
 {
 	// 1. Let fallback encoding be null. - bogus, never used
 	// 2. Let position be a pointer to a byte in the input byte stream, initially pointing at the first byte.
-	size_t index = 0;
+	int index = 0;
 
 	// 3. Prescan for UTF-16 XML declarations:
 	if (match(str, index, {"<\0?\0x\0", 6})) return encoding::utf_16le;
@@ -1829,8 +1805,8 @@ encoding prescan_a_byte_stream_to_determine_its_encoding(const string& str)
 loop:
 	if (match(str, index, "<!--"))
 	{
-		index = str.find("-->", index);
-		if (index == EOL || end_condition(index)) throw 0; // abort prescan
+		index = (int)str.find("-->", index);
+		if (index == -1 || end_condition(index)) throw 0; // abort prescan
 		index += 2; // not 3 because it will be incremented one more time in step 5 (next_byte)
 	}
 	else if (match_i(str, index, "<meta") && (is_whitespace(str[index + 5]) || str[index + 5] == '/'))
@@ -1910,9 +1886,9 @@ loop:
 		(str[index] == '<' && is_letter(str[index + 1])))
 	{
 		// 1.
-		index = str.find_first_of(" \t\r\n\f>", index);
-		if (index == EOL || end_condition(index)) throw 0; // abort prescan
-
+		index = (int)str.find_first_of(" \t\r\n\f>", index);
+		if (index == -1 || end_condition(index)) throw 0; // abort prescan
+			
 		// 2.
 		string tmp;
 		while (prescan_get_attribute(str, index, tmp, tmp)) {}
@@ -1920,8 +1896,8 @@ loop:
 	}
 	else if (str[index] == '<' && is_one_of(str[index + 1], '!', '/', '?'))
 	{
-		index = str.find('>', index);
-		if (index == EOL || end_condition(index)) throw 0; // abort prescan
+		index = (int)str.find('>', index);
+		if (index == -1 || end_condition(index)) throw 0; // abort prescan
 	}
 
 	// 5.
@@ -1934,7 +1910,7 @@ next_byte:
 encoding get_xml_encoding(const string& str)
 {
 	// 1. Let encodingPosition be a pointer to the start of the stream.
-	size_t index = 0;
+	int index = 0;
 
 	// 2.
 	if (!match(str, index, "<?xml"))
@@ -1942,18 +1918,18 @@ encoding get_xml_encoding(const string& str)
 
 	// 3.
 	// NOTE: xmlDeclarationEnd is unused
-	index = str.find('>', index);
-	if (index == EOL) return encoding::null;
+	index = (int)str.find('>', index);
+	if (index == -1) return encoding::null;
 
 	// 4.
-	index = str.find("encoding", index);
-	if (index == EOL) return encoding::null;
+	index = (int)str.find("encoding", index);
+	if (index == -1) return encoding::null;
 
 	// 5.
-	index += strlen("encoding");
+	index += (int)strlen("encoding");
 
 	// 6.
-	while ((byte)str[index] <= 0x20 && index < str.size()) index++;
+	while ((byte)str[index] <= 0x20 && index < (int)str.size()) index++;
 
 	// 7.
 	if (str[index] != '=') return encoding::null;
@@ -1962,7 +1938,7 @@ encoding get_xml_encoding(const string& str)
 	index++; // skip '='
 
 	// 9.
-	while ((byte)str[index] <= 0x20 && index < str.size()) index++;
+	while ((byte)str[index] <= 0x20 && index < (int)str.size()) index++;
 
 	// 10. Let quoteMark be the byte at encodingPosition.
 	char q = str[index];
@@ -1975,7 +1951,7 @@ encoding get_xml_encoding(const string& str)
 
 	// 13. Let encodingEndPosition be the position of the next occurrence of quoteMark
 	size_t end = str.find(q, index);
-	if (index == EOL) return encoding::null;
+	if (index == -1) return encoding::null;
 
 	// 14.
 	string potentialEncoding = str.substr(index, end - index);

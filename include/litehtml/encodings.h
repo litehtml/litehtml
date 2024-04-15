@@ -84,6 +84,7 @@ encoding get_encoding(string label);
 encoding extract_encoding_from_meta_element(string str);
 
 void decode(string input, encoding coding, string& output);
+string decode(string input, encoding coding);
 
 } // namespace litehtml
 

@@ -4,7 +4,7 @@
 namespace litehtml
 {
 
-string& trim(string &s, const string& chars_to_trim)
+string& trim(string& s, const string& chars_to_trim)
 {
 	string::size_type pos = s.find_first_not_of(chars_to_trim);
 	if(pos != string::npos)
@@ -24,15 +24,23 @@ string& trim(string &s, const string& chars_to_trim)
 	return s;
 }
 
-void lcase(string &s) 
+string trim(const string& s, const string& chars_to_trim)
+{
+	string str = s;
+	trim(str, chars_to_trim);
+	return str;
+}
+
+string& lcase(string& s)
 {
 	for(char & i : s)
 	{
 		i = (char)t_tolower(i);
 	}
+	return s;
 }
 
-string::size_type find_close_bracket(const string &s, string::size_type off, char open_b, char close_b)
+string::size_type find_close_bracket(const string& s, string::size_type off, char open_b, char close_b)
 {
 	int cnt = 0;
 	for(string::size_type i = off; i < s.length(); i++)
@@ -110,6 +118,13 @@ bool value_in_list( const string& val, const string& strings, char delim )
 		return true;
 	}
 	return false;
+}
+
+string_vector split_string(const string& str, const string& delims, const string& delims_preserve, const string& quote)
+{
+	string_vector result;
+	split_string(str, result, delims, delims_preserve, quote);
+	return result;
 }
 
 void split_string(const string& str, string_vector& tokens, const string& delims, const string& delims_preserve, const string& quote)

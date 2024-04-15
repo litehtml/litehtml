@@ -10,7 +10,6 @@
 #include "stylesheet.h"
 #include "line_box.h"
 #include "table.h"
-#include <assert.h>
 
 namespace litehtml
 {
@@ -22,31 +21,33 @@ namespace litehtml
 		friend class table_grid;
 		friend class line_box;
 	public:
-		typedef std::shared_ptr<html_tag>	ptr;
+		typedef shared_ptr<html_tag>	ptr;
 	protected:
 		string_id				m_tag;
 		string_id				m_id;
 		string_vector			m_str_classes;
-		std::vector<string_id>	m_classes;
-		litehtml::style			m_style;
+		vector<string_id>		m_classes;
+		style					m_style;
 		string_map				m_attrs;
-		std::vector<string_id>	m_pseudo_classes;
+		vector<string_id>		m_pseudo_classes;
 
 		void			select_all(const css_selector& selector, elements_list& res) override;
 
 	public:
-		explicit html_tag(const std::shared_ptr<document>& doc);
+		explicit html_tag(const shared_ptr<document>& doc);
 		// constructor for anonymous wrapper boxes
 		explicit html_tag(const element::ptr& parent, const string& style = "display: block");
 
-		bool				appendChild(const element::ptr &el) override;
-		bool				removeChild(const element::ptr &el) override;
+		bool				appendChild(const element::ptr& el) override;
+		bool				removeChild(const element::ptr& el) override;
 		void				clearRecursive() override;
 		string_id			tag() const override;
 		string_id			id() const override;
 		const char*			get_tagName() const override;
 		void				set_tagName(const char* tag) override;
 		void				set_data(const char* data) override;
+		const vector<string_id>& classes() const { return m_classes; }
+		const string_vector& str_classes() const { return m_str_classes; }
 
 		void				set_attr(const char* name, const char* val) override;
 		const char*			get_attr(const char* name, const char* def = nullptr) const override;
@@ -72,10 +73,11 @@ namespace litehtml
 
 		template<class Type>
 		const Type&			get_property(string_id name, bool inherited, const Type& default_value, uint_ptr css_properties_member_offset) const;
-		string				get_custom_property(string_id name, const string& default_value) const;
+		bool				get_custom_property(string_id name, css_token_vector& result) const;
 
 		elements_list&	children();
 
+		int					select(const css_selector::vector& selector_list, bool apply_pseudo = true);
 		int					select(const string& selector) override;
 		int					select(const css_selector& selector, bool apply_pseudo = true) override;
 		int					select(const css_element_selector& selector, bool apply_pseudo = true) override;
@@ -110,6 +112,10 @@ namespace litehtml
 		element::ptr		get_element_before(const style& style, bool create);
 		element::ptr		get_element_after(const style& style, bool create);
 
+		void map_to_pixel_length_property(string_id prop_name, string attr_value);
+		void map_to_pixel_length_property_with_default_value(string_id prop_name, string attr_value, int default_value);
+		void map_to_dimension_property_ignoring_zero(string_id prop_name, string attr_value);
+
 	private:
 		void				handle_counter_properties();
 
@@ -119,7 +125,7 @@ namespace litehtml
 	/*                        Inline Functions                              */
 	/************************************************************************/
 
-	inline elements_list& litehtml::html_tag::children()
+	inline elements_list& html_tag::children()
 	{
 		return m_children;
 	}

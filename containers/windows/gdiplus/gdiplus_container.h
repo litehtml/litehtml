@@ -17,7 +17,7 @@ protected:
 	void	fill_rect(HDC hdc, int x, int y, int width, int height, litehtml::web_color color) override;
 	void	get_img_size(uint_ptr img, litehtml::size& sz) override;
 	void	free_image(uint_ptr img) override;
-	void	draw_img_bg(HDC hdc, uint_ptr img, const litehtml::background_paint& bg) override;
+	void	draw_img_bg(HDC hdc, uint_ptr img, const litehtml::background_layer& layer) override;
 	// litehtml::document_container members
 	void	draw_borders(uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) override;
 };

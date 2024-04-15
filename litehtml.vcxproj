@@ -171,8 +171,10 @@
     <ClCompile Include="src\codepoint.cpp" />
     <ClCompile Include="src\css_borders.cpp" />
     <ClCompile Include="src\css_length.cpp" />
+    <ClCompile Include="src\css_parser.cpp" />
     <ClCompile Include="src\css_properties.cpp" />
     <ClCompile Include="src\css_selector.cpp" />
+    <ClCompile Include="src\css_tokenizer.cpp" />
     <ClCompile Include="src\document.cpp" />
     <ClCompile Include="src\document_container.cpp" />
     <ClCompile Include="src\element.cpp" />
@@ -213,6 +215,7 @@
     <ClCompile Include="src\gumbo\util.c" />
     <ClCompile Include="src\gumbo\vector.c" />
     <ClCompile Include="src\html.cpp" />
+    <ClCompile Include="src\html_microsyntaxes.cpp" />
     <ClCompile Include="src\html_tag.cpp" />
     <ClCompile Include="src\iterators.cpp" />
     <ClCompile Include="src\line_box.cpp" />
@@ -243,8 +246,10 @@
     <ClInclude Include="include\litehtml\css_length.h" />
     <ClInclude Include="include\litehtml\css_margins.h" />
     <ClInclude Include="include\litehtml\css_offsets.h" />
+    <ClInclude Include="include\litehtml\css_parser.h" />
     <ClInclude Include="include\litehtml\css_position.h" />
     <ClInclude Include="include\litehtml\css_selector.h" />
+    <ClInclude Include="include\litehtml\css_tokenizer.h" />
     <ClInclude Include="include\litehtml\document.h" />
     <ClInclude Include="include\litehtml\document_container.h" />
     <ClInclude Include="include\litehtml\element.h" />
@@ -271,6 +276,7 @@
     <ClInclude Include="include\litehtml\encodings.h" />
     <ClInclude Include="include\litehtml\flex_item.h" />
     <ClInclude Include="include\litehtml\flex_line.h" />
+    <ClInclude Include="include\litehtml\html_microsyntaxes.h" />
     <ClInclude Include="include\litehtml\master_css.h" />
     <ClInclude Include="include\litehtml\num_cvt.h" />
     <ClInclude Include="include\litehtml\string_id.h" />

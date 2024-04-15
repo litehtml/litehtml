@@ -169,6 +169,7 @@ void litehtml::el_before_after_base::add_function( const string& fnc, const stri
 		{
 			string_vector tokens;
 			split_string(params, tokens, ",");
+			for (auto& str : tokens) trim(str);
 			add_text(get_counters_value(tokens));
 		}
 		break;

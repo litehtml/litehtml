@@ -1,14 +1,24 @@
 #include "html.h"
 #include "web_color.h"
-#include <cstring>
+#include "css_parser.h"
 
-const litehtml::web_color litehtml::web_color::transparent = web_color(0, 0, 0, 0);
-const litehtml::web_color litehtml::web_color::black       = web_color(0, 0, 0, 255);
-const litehtml::web_color litehtml::web_color::white       = web_color(255, 255, 255, 255);
+namespace litehtml
+{
 
-litehtml::background_gradient litehtml::background_gradient::transparent;
+const web_color web_color::transparent   = web_color(0, 0, 0, 0);
+const web_color web_color::black         = web_color(0, 0, 0, 255);
+const web_color web_color::white         = web_color(255, 255, 255, 255);
+const web_color web_color::current_color = web_color(true);
 
-litehtml::def_color litehtml::g_def_colors[] = 
+gradient gradient::transparent;
+
+struct def_color
+{
+	const char* name;
+	const char* rgb;
+};
+
+def_color g_def_colors[] = 
 {
 	{"transparent","rgba(0, 0, 0, 0)"},
 	{"AliceBlue","#F0F8FF"},
@@ -156,113 +166,270 @@ litehtml::def_color litehtml::g_def_colors[] =
 	{"WhiteSmoke","#F5F5F5"},
 	{"Yellow","#FFFF00"},
 	{"YellowGreen","#9ACD32"},
-	{nullptr,nullptr}
 };
 
-
-litehtml::web_color litehtml::web_color::from_string(const string& _str, document_container* callback)
+// <hex-color>  https://drafts.csswg.org/css-color-4/#typedef-hex-color
+bool parse_hash_color(const css_token& tok, web_color& color)
 {
-	auto str = _str.c_str();
-	if(!str[0])
+	if (tok.type != HASH) return false;
+
+	string s = tok.str;
+	int len = (int)s.size();
+	if (!is_one_of(len, 3, 4, 6, 8)) return false;
+	for (auto ch : s) if (!is_hex_digit(ch)) return false;
+
+	string r, g, b, a = "ff";
+	if (len == 3 || len == 4)
 	{
-		return web_color(0, 0, 0);
+		r = {s[0], s[0]};
+		g = {s[1], s[1]};
+		b = {s[2], s[2]};
+		if (len == 4)
+			a = {s[3], s[3]};
 	}
-	if(str[0] == '#')
+	else // 6 or 8
 	{
-		string red;
-		string green;
-		string blue;
-		if(strlen(str + 1) == 3)
-		{
-			red		+= str[1];
-			red		+= str[1];
-			green	+= str[2];
-			green	+= str[2];
-			blue	+= str[3];
-			blue	+= str[3];
-		} else if(strlen(str + 1) == 6)
-		{
-			red		+= str[1];
-			red		+= str[2];
-			green	+= str[3];
-			green	+= str[4];
-			blue	+= str[5];
-			blue	+= str[6];
-		}
-		char* sss = nullptr;
-		web_color clr;
-		clr.red		= (byte) strtol(red.c_str(),	&sss, 16);
-		clr.green	= (byte) strtol(green.c_str(),	&sss, 16);
-		clr.blue	= (byte) strtol(blue.c_str(),	&sss, 16);
-		return clr;
-	} else if(!strncmp(str, "rgb", 3))
-	{
-		string s = str;
-
-		string::size_type pos = s.find_first_of('(');
-		if(pos != string::npos)
-		{
-			s.erase(s.begin(), s.begin() + pos + 1);
-		}
-		pos = s.find_last_of(')');
-		if(pos != string::npos)
-		{
-			s.erase(s.begin() + pos, s.end());
-		}
-
-		std::vector<string> tokens;
-		split_string(s, tokens, ", \t");
-
-		web_color clr;
-
-		if(tokens.size() >= 1)	clr.red		= (byte) atoi(tokens[0].c_str());
-		if(tokens.size() >= 2)	clr.green	= (byte) atoi(tokens[1].c_str());
-		if(tokens.size() >= 3)	clr.blue	= (byte) atoi(tokens[2].c_str());
-		if(tokens.size() >= 4)	clr.alpha	= (byte) (t_strtod(tokens[3].c_str(), nullptr) * 255.0);
-
-		return clr;
-	} else
-	{
-		string rgb = resolve_name(str, callback);
-		if(!rgb.empty())
-		{
-			return from_string(rgb.c_str(), callback);
-		}
+		r = {s[0], s[1]};
+		g = {s[2], s[3]};
+		b = {s[4], s[5]};
+		if (len == 8)
+			a = {s[6], s[7]};
 	}
-	return web_color(0, 0, 0);
+	auto read_two_hex_digits = [](auto str)
+	{
+		return byte(16 * digit_value(str[0]) + digit_value(str[1]));
+	};
+
+	color = web_color(
+		read_two_hex_digits(r),
+		read_two_hex_digits(g),
+		read_two_hex_digits(b),
+		read_two_hex_digits(a));
+	return true;
 }
 
-litehtml::string litehtml::web_color::resolve_name(const string& name, document_container* callback)
+float clamp(float x, float min, float max)
 {
-	for(int i=0; g_def_colors[i].name; i++)
+	if (x < min) return min;
+	if (x > max) return max;
+	return x;
+}
+
+// [ <number> | <percentage> | none ]{3}  [ / [<alpha-value> | none] ]?
+bool parse_modern_syntax(const css_token_vector& tokens, bool is_hsl,
+	css_length& x, css_length& y, css_length& z, css_length& a)
+{
+	auto n = tokens.size();
+	if (!(n == 3 || n == 5)) return false;
+	if (is_hsl)
 	{
-		if(!t_strcasecmp(name.c_str(), g_def_colors[i].name))
+		// [<hue> | none] [<number> | <percentage> | none]{2} [ / [<alpha-value> | none] ]?
+		// <hue> = <number> | <angle>
+		if (!x.from_token(tokens[0], f_number, "none"))
 		{
-            return g_def_colors[i].rgb;
+			float hue;
+			if (!parse_angle(tokens[0], hue)) return false;
+			x.set_value(hue, css_units_none);
 		}
 	}
-    if (callback)
-    {
-        string clr = callback->resolve_color(name);
-        return clr;
-    }
+	else if (!x.from_token(tokens[0], f_number | f_percentage, "none")) return false;
+	if (!y.from_token(tokens[1], f_number | f_percentage, "none")) return false;
+	if (!z.from_token(tokens[2], f_number | f_percentage, "none")) return false;
+	if (n == 5)
+	{
+		if (tokens[3].ch != '/') return false;
+		// <alpha-value> = <number> | <percentage>
+		if (!a.from_token(tokens[4], f_number | f_percentage, "none")) return false;
+	}
+	// convert nones to zeros
+	// https://drafts.csswg.org/css-color-4/#missing
+	// For all other purposes, a missing component behaves as a zero value...
+	for (auto t : {&x,&y,&z,&a}) if (t->is_predefined()) t->set_value(0, css_units_none);
+	return true;
+}
+
+// https://drafts.csswg.org/css-color-4/#rgb-functions
+// Values outside these ranges are not invalid, but are clamped to the ranges defined here at parsed-value time.
+byte calc_percent_and_clamp(const css_length& val, float max = 255)
+{
+	float x = val.val();
+	if (val.units() == css_units_percentage) x = (x / 100) * max;
+	x = clamp(x, 0, max);
+	return (byte)round(max == 1 ? x * 255 : x);
+}
+
+// https://drafts.csswg.org/css-color-4/#rgb-functions
+bool parse_rgb_func(const css_token& tok, web_color& color)
+{
+	if (tok.type != CV_FUNCTION || !is_one_of(lowcase(tok.name), "rgb", "rgba"))
+		return false;
+
+	auto list = parse_comma_separated_list(tok.value);
+	int n = (int)list.size();
+	if (!is_one_of(n, 1, 3, 4))
+		return false;
+	
+	css_length r, g, b, a(1, css_units_none);
+	// legacy syntax: <percentage>#{3} , <alpha-value>? | <number>#{3} , <alpha-value>?
+	if (n != 1)
+	{
+		for (const auto& item : list) if (item.size() != 1) return false;
+		auto type = list[0][0].type;
+		if (!is_one_of(type, PERCENTAGE, NUMBER)) return false;
+		int options = type == PERCENTAGE ? f_percentage : f_number;
+		if (!r.from_token(list[0][0], options)) return false;
+		if (!g.from_token(list[1][0], options)) return false;
+		if (!b.from_token(list[2][0], options)) return false;
+		// <alpha-value> = <number> | <percentage>
+		if (n == 4 && !a.from_token(list[3][0], f_number | f_percentage)) return false;
+	}
+	// modern syntax:  [ <number> | <percentage> | none ]{3}  [ / [<alpha-value> | none] ]?
+	else if (!parse_modern_syntax(tok.value, false, r, g, b, a)) return false;
+
+	color = web_color(
+		calc_percent_and_clamp(r),
+		calc_percent_and_clamp(g),
+		calc_percent_and_clamp(b),
+		calc_percent_and_clamp(a, 1));
+	return true;
+}
+
+// https://drafts.csswg.org/css-color-4/#hsl-to-rgb
+void hsl_to_rgb(float hue, float sat, float light, float& r, float& g, float& b)
+{
+	hue = fmod(hue, 360.f);
+
+	if (hue < 0)
+		hue += 360;
+
+	sat /= 100;
+	light /= 100;
+
+	auto f = [=](float n)
+	{
+		float k = fmod(n + hue / 30, 12.f);
+		float a = sat * min(light, 1 - light);
+		return light - a * max(-1.f, min({k - 3, 9 - k, 1.f}));
+	};
+
+	r = f(0);
+	g = f(8);
+	b = f(4);
+}
+
+// https://drafts.csswg.org/css-color-4/#the-hsl-notation
+bool parse_hsl_func(const css_token& tok, web_color& color)
+{
+	if (tok.type != CV_FUNCTION || !is_one_of(lowcase(tok.name), "hsl", "hsla"))
+		return false;
+
+	auto list = parse_comma_separated_list(tok.value);
+	int n = (int)list.size();
+	if (!is_one_of(n, 1, 3, 4))
+		return false;
+
+	css_length h, s, l, a(1, css_units_none);
+	// legacy syntax: <hue>, <percentage>, <percentage>, <alpha-value>?
+	if (n != 1)
+	{
+		for (const auto& item : list) if (item.size() != 1) return false;
+		const auto& tok0 = list[0][0];
+		float hue;
+		// <hue> = <number> | <angle>
+		// number is interpreted as a number of degrees  https://drafts.csswg.org/css-color-4/#typedef-hue
+		if (tok0.type == NUMBER) hue = tok0.n.number;
+		else if (!parse_angle(tok0, hue)) return false;
+		h.set_value(hue, css_units_none);
+
+		if (!s.from_token(list[1][0], f_percentage)) return false;
+		if (!l.from_token(list[2][0], f_percentage)) return false;
+		if (n == 4 && !a.from_token(list[3][0], f_number | f_percentage)) return false;
+	}
+	// modern syntax:  [<hue> | none] [<percentage> | <number> | none]{2} [ / [<alpha-value> | none] ]?
+	else if (!parse_modern_syntax(tok.value, true, h, s, l, a)) return false;
+
+	float hue = h.val();
+	// no percent calculation needed for sat and lit because 0% ~ 0, 100% ~ 100
+	float sat = s.val();
+	float lit = l.val();
+	// For historical reasons, if the saturation is less than 0% it is clamped to 0% at parsed-value time, before being converted to an sRGB color.
+	if (sat < 0) sat = 0;
+	
+	// Note: Chrome and Firefox treat invalid hsl values differently.
+	// 
+	// Note: at this point, sat is not clamped at 100, and lit is not clamped at all. The standard 
+	// mentions only clamping sat at 0. As a result, returning rgb values may not be inside [0,1].
+	float r, g, b;
+	hsl_to_rgb(hue, sat, lit, r, g, b);
+	
+	r = clamp(r, 0, 1);
+	g = clamp(g, 0, 1);
+	b = clamp(b, 0, 1);
+	
+	color = web_color(
+		(byte)round(r * 255),
+		(byte)round(g * 255),
+		(byte)round(b * 255),
+		calc_percent_and_clamp(a, 1));
+	return true;
+}
+
+// https://drafts.csswg.org/css-color-5/#typedef-color-function
+bool parse_func_color(const css_token& tok, web_color& color)
+{
+	return parse_rgb_func(tok, color) || parse_hsl_func(tok, color);
+}
+
+string resolve_name(const string& name, document_container* container)
+{
+	for (auto clr : g_def_colors)
+	{
+		if (equal_i(name, clr.name))
+			return clr.rgb;
+	}
+
+	if (container)
+		return container->resolve_color(name);
+
 	return "";
 }
 
-bool litehtml::web_color::is_color(const string& str, document_container* callback)
+bool parse_name_color(const css_token& tok, web_color& color, document_container* container)
 {
-	if (!t_strncasecmp(str.c_str(), "rgb", 3) || str[0] == '#')
+	if (tok.type != IDENT) return false;
+	if (tok.ident() == "currentcolor")
 	{
+		color = web_color::current_color;
 		return true;
 	}
-    if (t_isalpha(str[0]) && resolve_name(str, callback) != "")
-	{
-		return true;
-	}
-	return false;
+	string str = resolve_name(tok.name, container);
+	auto tokens = normalize(str, f_componentize | f_remove_whitespace);
+	if (tokens.size() != 1) return false;
+	return parse_color(tokens[0], color, container);
 }
 
-litehtml::string litehtml::web_color::to_string() const
+// https://drafts.csswg.org/css-color-5/#typedef-color
+bool parse_color(const css_token& tok, web_color& color, document_container* container)
+{
+	return 
+		parse_hash_color(tok, color) || 
+		parse_func_color(tok, color) || 
+		parse_name_color(tok, color, container);
+}
+
+web_color web_color::darken(double fraction) const
+{
+	int v_red = (int)red;
+	int v_blue = (int)blue;
+	int v_green = (int)green;
+	v_red = (int)max(v_red - (v_red * fraction), 0.0);
+	v_blue = (int)max(v_blue - (v_blue * fraction), 0.0);
+	v_green = (int)max(v_green - (v_green * fraction), 0.0);
+	return {(byte)v_red, (byte)v_green, (byte)v_blue, alpha};
+}
+
+
+string web_color::to_string() const
 {
     char str[9];
     if(alpha)
@@ -274,3 +441,5 @@ litehtml::string litehtml::web_color::to_string() const
     }
     return str;
 }
+
+} // namespace litehtml

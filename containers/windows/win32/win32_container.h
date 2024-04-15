@@ -37,7 +37,11 @@ public:
 	void		draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker) override;
 	void		load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
 	void		get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
-	void		draw_background(uint_ptr hdc, const std::vector<litehtml::background_paint>& bg) override;
+	void		draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url) override;
+	void		draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::web_color& color) override;
+	void		draw_linear_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::background_layer::linear_gradient& gradient) override {}
+	void		draw_radial_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::background_layer::radial_gradient& gradient) override {}
+	void		draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::background_layer::conic_gradient& gradient) override {}
 
 	void		set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
 	void		del_clip() override;
@@ -62,7 +66,7 @@ protected:
 	void				clear_images();
 	virtual void		free_image(uint_ptr img) = 0;
 	virtual void		get_img_size(uint_ptr img, litehtml::size& sz) = 0;
-	virtual void		draw_img_bg(HDC hdc, uint_ptr img, const litehtml::background_paint& bg) = 0;
+	virtual void		draw_img_bg(HDC hdc, uint_ptr img, const litehtml::background_layer& layer) = 0;
 
 	virtual void		draw_ellipse(HDC hdc, int x, int y, int width, int height, litehtml::web_color color, int line_width) = 0;
 	virtual void		fill_ellipse(HDC hdc, int x, int y, int width, int height, litehtml::web_color color) = 0;
