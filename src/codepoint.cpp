@@ -29,7 +29,7 @@
 
 #include "codepoint.h"
 
-#include <iostream>
+#include <cstdint>
 
 namespace {
 

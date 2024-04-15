@@ -8,6 +8,7 @@
 #include <list>
 #include <set>
 #include <variant>
+#include <cstdint>
 
 namespace litehtml
 {
