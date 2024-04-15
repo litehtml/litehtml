@@ -139,6 +139,7 @@ namespace litehtml
 			position_x.predef(0);
 			position_y.predef(0);
 
+			// actual default depends on the number of radii provided, see parse_radial_gradient_shape_size_position_interpolation
 			radial_shape = radial_shape_ellipse;
 
 			// <radial-size>  https://drafts.csswg.org/css-images-3/#valdef-radial-gradient-radial-size
