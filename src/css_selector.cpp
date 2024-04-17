@@ -107,7 +107,8 @@ wq_name parse_type_selector(const css_token_vector& tokens, int& index)
 	{
 		index++;
 		string name = tok.type == IDENT ? tok.name : "*";
-		return { prefix, name };
+		// type selector is always ASCII-case-insensitive for HTML documents, regardless of document mode (quirks/no quirks)
+		return { prefix, lowcase(name) };
 	}
 	// restore index to before <ns-prefix> if failed to parse <ident-token> or '*'
 	index = start;
