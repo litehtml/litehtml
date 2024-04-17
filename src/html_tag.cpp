@@ -875,7 +875,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 				{
 					background_layer layer;
 					if(!bg->get_layer(i, pos, this, ri, layer)) continue;
-					if(is_root())
+					if(is_root() && (clip != nullptr))
 					{
 						layer.clip_box = *clip;
 						layer.border_box = *clip;
