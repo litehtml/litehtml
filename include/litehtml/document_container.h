@@ -64,7 +64,7 @@ namespace litehtml
 		virtual void				split_text(const char* text, const std::function<void(const char*)>& on_word, const std::function<void(const char*)>& on_space);
 
 	protected:
-		~document_container() = default;
+		virtual ~document_container() = default;
 	};
 }
 
