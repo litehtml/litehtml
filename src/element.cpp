@@ -6,6 +6,7 @@
 #include "render_inline.h"
 #include "render_table.h"
 #include "el_before_after.h"
+#include "render_grid.h"
 
 namespace litehtml
 {
@@ -53,7 +54,8 @@ bool element::is_inline() const
 		   css().get_display() == display_inline_table ||
 		   css().get_display() == display_inline_block ||
 		   css().get_display() == display_inline_text ||
-		   css().get_display() == display_inline_flex)
+		   css().get_display() == display_inline_flex ||
+			css().get_display() == display_inline_grid)
 	{
 		return true;
 	}
@@ -64,7 +66,8 @@ bool element::is_inline_box() const
 {
 	if(	css().get_display() == display_inline_table ||
 		   css().get_display() == display_inline_block ||
-		   css().get_display() == display_inline_flex)
+		   css().get_display() == display_inline_flex ||
+			css().get_display() == display_inline_grid)
 	{
 		return true;
 	}
@@ -158,6 +161,9 @@ std::shared_ptr<render_item> element::create_render_item(const std::shared_ptr<r
 	} else if(css().get_display() == display_flex || css().get_display() == display_inline_flex)
 	{
 		ret = std::make_shared<render_item_flex>(shared_from_this());
+	} else if(css().get_display() == display_grid || css().get_display() == display_inline_grid)
+	{
+		ret = std::make_shared<render_item_grid>(shared_from_this());
 	}
 	if(ret)
 	{
@@ -277,7 +283,8 @@ bool element::is_block_formatting_context() const
 	if(m_css.get_display() == display_block)
 	{
 		auto par = parent();
-		if(par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex))
+		if(par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex ||
+				par->css().get_display() == display_inline_grid || par->css().get_display() == display_grid))
 		{
 			return true;
 		}
@@ -286,6 +293,8 @@ bool element::is_block_formatting_context() const
 		   m_css.get_display() == display_table_cell ||
 		   m_css.get_display() == display_inline_flex ||
 		   m_css.get_display() == display_flex ||
+		   m_css.get_display() == display_inline_grid ||
+		   m_css.get_display() == display_grid ||
 		   m_css.get_display() == display_table_caption ||
 		   is_root() ||
 		   m_css.get_float() != float_none ||

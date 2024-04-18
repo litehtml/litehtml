@@ -317,7 +317,7 @@ namespace litehtml
 		}
 	};
 
-#define  style_display_strings		"none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text;flex;inline-flex"
+#define  style_display_strings		"none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text;flex;inline-flex;grid;inline-grid"
 
 	enum style_display
 	{
@@ -339,6 +339,8 @@ namespace litehtml
 		display_inline_text,
 		display_flex,
 		display_inline_flex,
+		display_grid,
+		display_inline_grid,
 	};
 
 #define  font_size_strings		"xx-small;x-small;small;medium;large;x-large;xx-large;smaller;larger"
@@ -487,7 +489,7 @@ namespace litehtml
 		clear_both
 	};
 
-#define  css_units_strings	"none;%;in;cm;mm;em;ex;pt;pc;px;vw;vh;vmin;vmax;rem"
+#define  css_units_strings	"none;%;in;cm;mm;em;ex;pt;pc;px;vw;vh;vmin;vmax;rem;fr"
 
 	enum css_units : byte // see css_length
 	{
@@ -506,6 +508,7 @@ namespace litehtml
 		css_units_vmin,
 		css_units_vmax,
 		css_units_rem,
+		css_units_fr,
 	};
 
 #define  background_attachment_strings	"scroll;fixed"
@@ -878,7 +881,7 @@ namespace litehtml
 		render_fixed_only,
 	};
 
-	const char* const split_delims_spaces = " \t\r\n\f\v";
+#define split_delims_spaces " \t\r\n\f\v"
 
 	// List of the Void Elements (can't have any contents)
 	const char* const void_elements = "area;base;br;col;command;embed;hr;img;input;keygen;link;meta;param;source;track;wbr";

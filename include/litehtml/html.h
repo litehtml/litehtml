@@ -35,6 +35,7 @@ namespace litehtml
 	void join_string(string& str, const string_vector& tokens, const string& delims);
 	double t_strtod(const char* string, char** endPtr = nullptr);
 	string get_escaped_string(const string& in_str);
+	bool starts_width(const std::string &str, const std::string_view &substr);
 
 	template<typename X, typename A>
 	bool is_one_of(X x, A a)

@@ -83,6 +83,10 @@ set(SOURCE_LITEHTML
 	src/flex_line.cpp
 	src/background.cpp
 	src/gradient.cpp
+	include/litehtml/render_grid.h
+	src/render_grid.cpp
+	include/litehtml/grid.h
+	src/grid.cpp
 )
 
 set(HEADER_LITEHTML

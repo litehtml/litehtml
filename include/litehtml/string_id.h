@@ -341,6 +341,17 @@ STRING_ID(
 	_device_aspect_ratio_,
 	_color_index_,
 	_monochrome_,
+
+	_grid_column_,
+	_grid_row_,
+	_grid_column_start_,
+	_grid_column_end_,
+	_grid_row_start_,
+	_grid_row_end_,
+	_grid_area_,
+	_grid_template_areas_,
+	_grid_template_rows_,
+	_grid_template_columns_,
 )
 #undef STRING_ID
 extern const string_id empty_id; // _id("")

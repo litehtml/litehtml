@@ -120,14 +120,14 @@ bool value_in_list( const string& val, const string& strings, char delim )
 	return false;
 }
 
-string_vector split_string(const string& str, const string& delims, const string& delims_preserve, const string& quote)
+string_vector split_string(const string& str, const string& delims, const string& delims_preserve, const string& quote, const string& chars_to_trim)
 {
 	string_vector result;
-	split_string(str, result, delims, delims_preserve, quote);
+	split_string(str, result, delims, delims_preserve, quote, chars_to_trim);
 	return result;
 }
 
-void split_string(const string& str, string_vector& tokens, const string& delims, const string& delims_preserve, const string& quote)
+void split_string(const string& str, string_vector& tokens, const string& delims, const string& delims_preserve, const string& quote, const string& chars_to_trim)
 {
 	if(str.empty() || (delims.empty() && delims_preserve.empty()))
 	{
@@ -174,6 +174,10 @@ void split_string(const string& str, string_vector& tokens, const string& delims
 		token = str.substr(token_start, token_len);
 		if(!token.empty())
 		{
+			if(!chars_to_trim.empty())
+			{
+				trim(token, chars_to_trim);
+			}
 			tokens.push_back( token );
 		}
 		if(token_end != string::npos && !delims_preserve.empty() && delims_preserve.find_first_of(str[token_end]) != string::npos)
@@ -303,6 +307,17 @@ bool is_number(const string& string, const bool allow_dot) {
 		{
 			return false;
 		}
+	}
+	return true;
+}
+
+bool starts_width(const std::string &str, const std::string_view &substr)
+{
+	if(substr.length() > str.length()) return false;
+	if(substr.length() == str.length()) return str == substr;
+	for(size_t i = 0; i < substr.length(); i++)
+	{
+		if(substr[i] != str[i]) return false;
 	}
 	return true;
 }

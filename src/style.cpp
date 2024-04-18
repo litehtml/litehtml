@@ -482,6 +482,49 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		add_parsed_property(name, property_value(str, important));
 		break;
 
+		case _grid_column_start_:
+		case _grid_column_end_:
+		case _grid_row_start_:
+		case _grid_row_end_:
+			{
+				css_grid_line line;
+				if(line.from_tokens(value))
+				{
+					add_parsed_property(name, property_value(line, important));
+				}
+			}
+			break;
+
+		case _grid_row_:
+		case _grid_column_:
+			parse_grid_row_col(name, value, important);
+			break;
+
+		case _grid_area_:
+			parse_grid_area(value, important);
+			break;
+
+		case _grid_template_areas_:
+			{
+				css_grid_template_areas tpl_areas;
+				if(tpl_areas.from_tokens(value))
+				{
+					add_parsed_property(name, property_value(tpl_areas, important));
+				}
+			}
+			break;
+
+		case _grid_template_columns_:
+		case _grid_template_rows_:
+		{
+			css_grid_template tpl;
+			if(tpl.from_tokens(value))
+			{
+				add_parsed_property(name, property_value(tpl, important));
+			}
+		}
+			break;
+
 	//  =============================  CUSTOM PROPERTY  =============================
 	
 	// https://drafts.csswg.org/css-variables-2/#defining-variables
@@ -1494,6 +1537,87 @@ void style::subst_vars(const html_tag* el)
 			add_property(prop.first, value, "", prop.second.m_important, el->get_document()->container());
 		}
 	}
+}
+
+void style::parse_grid_row_col(string_id name, const css_token_vector &tokens, bool important)
+{
+	auto parts = parse_slash_separated_list(tokens);
+	if(parts.size() > 2 || parts.empty()) return;
+
+	string_id id_start = name == _grid_row_ ? _grid_row_start_ : _grid_column_start_;
+	string_id id_end = name == _grid_row_ ? _grid_row_end_ : _grid_column_end_;
+
+	if(parts.size() == 1)
+	{
+		css_grid_line line;
+		if(line.from_tokens(parts[0]))
+		{
+			add_parsed_property(id_start, property_value(line, important));
+			if(line.is<css_grid_line::custom_ident_def>())
+			{
+				add_parsed_property(id_end, property_value(line, important));
+			}
+		} else if(tokens.size() >= 2)
+		{
+			css_grid_line line1;
+			css_grid_line line2;
+			if(line1.from_tokens(parts[0]) && line2.from_tokens(parts[1]))
+			{
+				add_parsed_property(id_start, property_value(line1, important));
+				add_parsed_property(id_end, property_value(line2, important));
+			}
+		}
+	}
+}
+
+void style::parse_grid_area(const css_token_vector &tokens, bool important)
+{
+	auto parts = parse_slash_separated_list(tokens);
+	if(parts.size() > 4) return;
+
+	css_grid_line row_start;
+	css_grid_line column_start;
+	css_grid_line row_end;
+	css_grid_line column_end;
+
+	if(!tokens.empty())
+	{
+		if(row_start.from_tokens(parts[0]))
+		{
+			if (row_start.is<css_grid_line::custom_ident_def>())
+			{
+				column_start = row_start;
+				row_end = row_start;
+				column_end = row_start;
+			}
+		} else return;
+	}
+
+	if(tokens.size() >= 2)
+	{
+		if(column_start.from_tokens(parts[1]))
+		{
+			if (column_start.is<css_grid_line::custom_ident_def>())
+			{
+				column_end = row_start;
+			}
+		} else return;
+	}
+
+	if(tokens.size() >= 3)
+	{
+		row_end.from_tokens(parts[2]);
+	}
+
+	if(tokens.size() >= 4)
+	{
+		column_end.from_tokens(parts[3]);
+	}
+
+	add_parsed_property(_grid_row_start_, property_value(row_start, important));
+	add_parsed_property(_grid_row_end_, property_value(row_end, important));
+	add_parsed_property(_grid_column_start_, property_value(column_start, important));
+	add_parsed_property(_grid_column_end_, property_value(column_end, important));
 }
 
 } // namespace litehtml

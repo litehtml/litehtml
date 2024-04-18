@@ -471,6 +471,26 @@ vector<css_token_vector> parse_comma_separated_list(const css_token_vector& toke
 	return result;
 }
 
+vector<css_token_vector> parse_slash_separated_list(const css_token_vector& tokens)
+{
+	vector<css_token_vector> result;
+
+	css_token_vector list;
+	for (auto& tok : tokens)
+	{
+		if (tok.type == '/')  // Note: EOF token is not stored in arrays
+		{
+			result.push_back(list);
+			list.clear();
+			continue;
+		}
+		list.push_back(tok);
+	}
+	result.push_back(list);
+
+	return result;
+}
+
 // https://drafts.csswg.org/css-syntax-3/#typedef-any-value
 // assumes that tokens have been componentized
 bool is_any_value(const css_token_vector& tokens)

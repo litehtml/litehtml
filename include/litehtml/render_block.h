@@ -24,6 +24,7 @@ namespace litehtml
 		virtual void fix_line_width(element_float /*flt*/,
 									const containing_block_context &/*containing_block_size*/, formatting_context* /*fmt_ctx*/)
 		{}
+		void children_to_blocks();
 
 	public:
 		explicit render_item_block(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))

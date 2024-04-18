@@ -447,6 +447,9 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
 		} else if(m_display == display_inline_flex)
 		{
 			m_display = display_flex;
+		} else if(m_display == display_inline_grid)
+		{
+			m_display = display_grid;
 		}
 	}
 }

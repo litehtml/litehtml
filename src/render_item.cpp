@@ -644,7 +644,7 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
                     if (el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
                     {
                         el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
-                        if (el->src_el()->css().get_display() == display_inline_block || el->src_el()->css().get_display() == display_inline_flex)
+                        if (el->src_el()->css().get_display() == display_inline_block || el->src_el()->css().get_display() == display_inline_flex || el->src_el()->css().get_display() == display_inline_grid)
                         {
                             el->draw_stacking_context(hdc, pos.x, pos.y, clip, false);
                             process = false;
@@ -754,7 +754,8 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                     {
                         if(el->src_el()->css().get_display() == display_inline_block ||
                                 el->src_el()->css().get_display() == display_inline_table ||
-                                el->src_el()->css().get_display() == display_inline_flex)
+                                el->src_el()->css().get_display() == display_inline_flex ||
+								el->src_el()->css().get_display() == display_inline_grid)
                         {
                             ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y);
                             el = nullptr;
@@ -781,7 +782,9 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
                 } else
                 {
                     if(	el->src_el()->css().get_float() == float_none &&
-                           el->src_el()->css().get_display() != display_inline_block && el->src_el()->css().get_display() != display_inline_flex)
+                           el->src_el()->css().get_display() != display_inline_block &&
+						   el->src_el()->css().get_display() != display_inline_flex &&
+						   el->src_el()->css().get_display() != display_inline_grid)
                     {
                         element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex);
                         if(child)

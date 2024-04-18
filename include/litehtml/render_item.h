@@ -376,6 +376,16 @@ namespace litehtml
 			return false;
 		}
 
+		bool is_grid_item() const
+		{
+			auto par = parent();
+			if(par && (par->css().get_display() == display_inline_grid || par->css().get_display() == display_grid))
+			{
+				return true;
+			}
+			return false;
+		}
+
 		int render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false);
         void apply_relative_shift(const containing_block_context &containing_block_size);
         void calc_outlines( int parent_width );

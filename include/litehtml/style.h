@@ -2,6 +2,8 @@
 #define LH_STYLE_H
 
 #include "css_tokenizer.h"
+#include <variant>
+#include "grid.h"
 
 namespace litehtml
 {
@@ -21,7 +23,10 @@ namespace litehtml
 		string,
 		string_vector,
 		size_vector,
-		css_token_vector
+		css_token_vector,
+		css_grid_line,
+		css_grid_template_areas,
+		css_grid_template
 	>
 	{
 		bool m_important = false;
@@ -86,7 +91,10 @@ namespace litehtml
 		void parse_flex_flow(const css_token_vector& tokens, bool important);
 		void parse_flex(const css_token_vector& tokens, bool important);
 		void parse_align_self(string_id name, const css_token_vector& tokens, bool important);
-		
+
+		void parse_grid_row_col(string_id name, const css_token_vector& tokens, bool important);
+		void parse_grid_area(const css_token_vector& tokens, bool important);
+
 		void add_parsed_property(string_id name, const property_value& propval);
 		void add_length_property(string_id name, css_token val, string keywords, int options, bool important);
 		template<class T> void add_four_properties(string_id top_name, T val[4], int n, bool important);
