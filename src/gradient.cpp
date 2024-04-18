@@ -13,7 +13,6 @@ bool parse_radial_gradient_shape_size_position_interpolation(const css_token_vec
 bool parse_conic_gradient_angle_position_interpolation(const css_token_vector& tokens, gradient& gradient);
 template<class T>
 bool parse_color_stop_list(const vector<css_token_vector>& list, gradient& grad, document_container* container);
-bool parse_gradient(const css_token& token, gradient& gradient, document_container* container);
 
 ////////////////////////////////////////////////////////////////////////////////////////////
 // These combinators are currently used only in one place because the code is usually shorter without them.
@@ -176,7 +175,7 @@ bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_sto
 
 	if (tokens.size() == 1) // <color>
 	{
-		color_stops.push_back(color);
+		color_stops.emplace_back(color);
 		return true;
 	}
 	else if (tokens.size() == 2) // <color> <length-angle-percentage>
@@ -184,7 +183,7 @@ bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_sto
 		T lenang;
 		if (parse_lenang(tokens[1], lenang))
 		{
-			color_stops.push_back({color, lenang});
+			color_stops.emplace_back(color, lenang);
 			return true;
 		}
 	}
@@ -194,8 +193,8 @@ bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_sto
 		if (parse_lenang(tokens[1], lenang1) &&
 			parse_lenang(tokens[2], lenang2))
 		{
-			color_stops.push_back({color, lenang1});
-			color_stops.push_back({color, lenang2});
+			color_stops.emplace_back(color, lenang1);
+			color_stops.emplace_back(color, lenang2);
 			return true;
 		}
 	}
