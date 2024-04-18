@@ -704,7 +704,7 @@ void document::add_stylesheet( const char* str, const char* baseurl, const char*
 {
 	if(str && str[0])
 	{
-		m_css.push_back(css_text(str, baseurl, media));
+		m_css.emplace_back(str, baseurl, media);
 	}
 }
 

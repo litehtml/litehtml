@@ -13,7 +13,7 @@ void litehtml::table_grid::add_cell(const std::shared_ptr<render_item>& el)
 
 	while( is_rowspanned( (int) m_cells.size() - 1, (int) m_cells.back().size() ) )
 	{
-		m_cells.back().push_back(table_cell());
+		m_cells.back().emplace_back();
 	}
 
 	m_cells.back().push_back(cell);
@@ -30,7 +30,7 @@ void litehtml::table_grid::begin_row(const std::shared_ptr<render_item>& row)
 	std::vector<table_cell> r;
 	m_cells.push_back(r);
 	
-	m_rows.push_back(table_row(0, row));
+	m_rows.emplace_back(0, row);
 }
 
 
@@ -72,7 +72,7 @@ void litehtml::table_grid::finish()
 	m_columns.clear();
 	for(int i = 0; i < m_cols_count; i++)
 	{
-		m_columns.push_back(table_column(0, 0));
+		m_columns.emplace_back(0, 0);
 	}
 
 	for(int col = 0; col < m_cols_count; col++)

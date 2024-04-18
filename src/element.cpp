@@ -384,7 +384,7 @@ std::vector<element::ptr> litehtml::element::get_siblings_before() const
 void litehtml::element::parse_counter_tokens(const string_vector& tokens, const int default_value, std::function<void(const string_id&, const int)> handler) const {
 	int pos = 0;
 	while (pos < (int) tokens.size()) {
-		string name = tokens[pos];
+		const string& name = tokens[pos];
 		int value = default_value;
 		if (pos < (int) tokens.size() - 1 && litehtml::is_number(tokens[pos + 1], false)) {
 			value = atoi(tokens[pos + 1].c_str());
