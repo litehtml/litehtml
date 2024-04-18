@@ -11,7 +11,7 @@ namespace litehtml
 
 	struct table_row
 	{
-		typedef std::vector<table_row>	vector;
+		using vector = std::vector<table_row>;
 
 		int				height;
 		int				border_top;
@@ -63,7 +63,7 @@ namespace litehtml
 
 	struct table_column
 	{
-		typedef std::vector<table_column>	vector;
+		using vector = std::vector<table_column>;
 		
 		int			min_width;
 		int			max_width;
@@ -196,7 +196,7 @@ namespace litehtml
 	class table_grid
 	{
 	public:
-		typedef std::vector< std::vector<table_cell> >	rows;
+		using rows = std::vector<std::vector<table_cell>>;
 	private:
 		int						m_rows_count;
 		int						m_cols_count;

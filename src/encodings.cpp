@@ -1,6 +1,6 @@
 #include "html.h"
 #include "encodings.h"
-#include <assert.h>
+#include <cassert>
 
 #define out
 #define inout
@@ -62,7 +62,7 @@ struct decoder
 decoder::result decoder::process_a_queue(string& input, string& output, error_mode mode)
 {
 	int index = 0;
-	while (1)
+	while (true)
 	{
 		// NOTE: we read byte from input in decoder handlers, not here (standard prescribes to do it here).
 		auto result = process_an_item(input, index, output, mode);

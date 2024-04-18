@@ -1,9 +1,9 @@
 #ifndef LH_HTML_H
 #define LH_HTML_H
 
-#include <stdlib.h>
-#include <math.h>
-#include <ctype.h>
+#include <cstdlib>
+#include <cmath>
+#include <cctype>
 #include <cstring>
 #include <algorithm>
 #include <functional>
@@ -107,7 +107,7 @@ namespace litehtml
 		return equal_i(str.substr(index, substr.size()), substr);
 	}
 
-	bool is_number(const string& string, const bool allow_dot = 1);
+	bool is_number(const string& string, const bool allow_dot = true);
 
 	// https://infra.spec.whatwg.org/#ascii-whitespace
 	inline bool is_whitespace(int c)

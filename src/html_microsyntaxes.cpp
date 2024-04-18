@@ -61,7 +61,7 @@ bool html_parse_dimension_value(const string& str, float& result, html_dimension
 		// 3. Let divisor have the value 1.
 		float divisor = 1;
 		// 4. While true:
-		while (1)
+		while (true)
 		{
 			// 1. Multiply divisor by ten.
 			divisor *= 10;

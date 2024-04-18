@@ -113,7 +113,7 @@ css_tokenizer::three_chars  css_tokenizer::peek_chars()
 // https://www.w3.org/TR/css-syntax-3/#consume-comments
 void css_tokenizer::consume_comments()
 {
-	while (1)
+	while (true)
 	{
 		if (str[index] == '/' && str[index + 1] == '*')
 		{
@@ -177,7 +177,7 @@ css_token css_tokenizer::consume_string_token(int ending_code_point)
 	// Initially create a <string-token> with its value set to the empty string.
 	css_token token(STRING);
 
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input code point from the stream:
 		int ch = consume_char();
@@ -242,7 +242,7 @@ string css_tokenizer::consume_ident_sequence()
 {
 	string result;
 
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input code point from the stream:
 		int ch = consume_char();
@@ -420,7 +420,7 @@ css_token css_tokenizer::consume_numeric_token()
 // https://www.w3.org/TR/css-syntax-3/#consume-remnants-of-bad-url
 void css_tokenizer::consume_remnants_of_bad_url()
 {
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input code point from the stream:
 		int ch = consume_char();
@@ -446,7 +446,7 @@ css_token css_tokenizer::consume_url_token()
 	while (is_whitespace(str[index]))
 		index++;
 
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input code point from the stream:
 		int ch = consume_char();
@@ -711,7 +711,7 @@ css_token css_tokenizer::consume_token()
 css_token_vector css_tokenizer::tokenize()
 {
 	css_token_vector tokens;
-	while (1)
+	while (true)
 	{
 		css_token token = consume_token();
 		if (token.type == EOF) break;
