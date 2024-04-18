@@ -24,10 +24,10 @@ namespace litehtml
 	class document;
 	class element;
 
-	typedef std::map<string, string>					string_map;
-	typedef std::list< std::shared_ptr<element> >		elements_list;
-	typedef std::vector<int>							int_vector;
-	typedef std::vector<string>							string_vector;
+	using string_map = std::map<string, string>;
+	using elements_list = std::list<std::shared_ptr<element>>;
+	using int_vector = std::vector<int>;
+	using string_vector = std::vector<string>;
 
 	template <class... Types>
 	struct variant : std::variant<Types...>
@@ -44,8 +44,8 @@ namespace litehtml
 	const unsigned int font_decoration_linethrough	= 0x02;
 	const unsigned int font_decoration_overline		= 0x04;
 
-	typedef unsigned char	byte;
-	typedef unsigned int	ucode_t;
+	using byte = unsigned char;
+	using ucode_t = unsigned int;
 
 	struct margins
 	{
@@ -90,7 +90,7 @@ namespace litehtml
 
 	struct position
 	{
-		typedef std::vector<position>	vector;
+		using vector = std::vector<position>;
 
 		int	x;
 		int	y;
@@ -207,7 +207,7 @@ namespace litehtml
 		font_metrics	metrics;
 	};
 
-	typedef std::map<string, font_item> fonts_map;
+	using fonts_map = std::map<string, font_item>;
 
 	enum draw_flag
 	{

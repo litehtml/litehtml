@@ -1,8 +1,8 @@
-﻿#include "html.h"
+#include "html.h"
 #include "media_query.h"
 #include "css_parser.h"
-#include <assert.h>
-#include <iso646.h>
+#include <cassert>
+
 
 namespace litehtml
 {
@@ -268,7 +268,7 @@ bool parse_media_condition(const css_token_vector& tokens, int& index, bool _or_
 
 	bool or_allowed = _or_allowed;
 	bool and_allowed = true;
-	while (1)
+	while (true)
 	{
 		string ident = at(tokens, index).ident();
 		if (ident == "and" && and_allowed) condition.op = _and_, or_allowed = false;
