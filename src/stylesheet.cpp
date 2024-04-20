@@ -18,7 +18,7 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 
 	// Interpret all of the resulting top-level qualified rules as style rules, defined below.
 	// If any style rule is invalid, or any at-rule is not recognized or is invalid according 
-	// to its grammar or context, it’s a parse error. Discard that rule.
+	// to its grammar or context, it's a parse error. Discard that rule.
 	for (auto rule : rules)
 	{
 		if (rule->type == raw_rule::qualified)
@@ -114,7 +114,7 @@ void css::parse_style_rule(raw_rule::ptr rule, string baseurl, document::ptr doc
 	}
 
 	style::ptr style = make_shared<litehtml::style>(); // style block
-	// The content of the qualified rule’s block is parsed as a style block’s contents. 
+	// The content of the qualified rule's block is parsed as a style block's contents. 
 	style->add(rule->block.value, baseurl, doc->container());
 
 	for (auto sel : list)
