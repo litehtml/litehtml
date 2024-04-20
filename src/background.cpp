@@ -1,4 +1,5 @@
 #include <cmath>
+
 #include "html.h"
 #include "background.h"
 #include "render_item.h"
@@ -177,7 +178,7 @@ std::unique_ptr<litehtml::background_layer::image> litehtml::background::get_ima
 	{
 		if(m_image[idx].type == image::type_url)
 		{
-			auto ret = std::unique_ptr<background_layer::image>(new background_layer::image());
+			auto ret = std::make_unique<background_layer::image>();
 			ret->url = m_image[idx].url;
 			ret->base_url = m_baseurl;
 			return ret;
@@ -190,7 +191,7 @@ std::unique_ptr<litehtml::background_layer::color> litehtml::background::get_col
 {
 	if(idx == (int) m_image.size())
 	{
-		auto ret = std::unique_ptr<background_layer::color>(new background_layer::color());
+		auto ret = std::make_unique<background_layer::color>();
 		ret->color = m_color;
 		return ret;
 	}
@@ -284,7 +285,7 @@ std::unique_ptr<litehtml::background_layer::linear_gradient> litehtml::backgroun
 	if(m_image[idx].m_gradient.m_type != _linear_gradient_ &&
 		m_image[idx].m_gradient.m_type != _repeating_linear_gradient_) return {};
 
-	auto ret = std::unique_ptr<background_layer::linear_gradient>(new background_layer::linear_gradient());
+	auto ret = std::make_unique<background_layer::linear_gradient>();
 	float angle;
 	if(m_image[idx].m_gradient.m_side == 0)
 	{
@@ -396,7 +397,7 @@ std::unique_ptr<litehtml::background_layer::radial_gradient> litehtml::backgroun
 	if(m_image[idx].m_gradient.m_type != _radial_gradient_ &&
 		m_image[idx].m_gradient.m_type != _repeating_radial_gradient_) return {};
 
-	auto ret = std::unique_ptr<background_layer::radial_gradient>(new background_layer::radial_gradient());
+	auto ret = std::make_unique<background_layer::radial_gradient>();
 
 	ret->position.x = (float) layer.origin_box.x + (float) layer.origin_box.width / 2.0f;
 	ret->position.y = (float) layer.origin_box.y + (float) layer.origin_box.height / 2.0f;
@@ -559,7 +560,7 @@ std::unique_ptr<litehtml::background_layer::conic_gradient> litehtml::background
 	if(m_image[idx].type != image::type_gradient) return {};
 	if(m_image[idx].m_gradient.m_type != _conic_gradient_) return {};
 
-	auto ret = std::unique_ptr<background_layer::conic_gradient>(new background_layer::conic_gradient());
+	auto ret = std::make_unique<background_layer::conic_gradient>();
 
 	ret->position.x = (float) layer.origin_box.x + (float) layer.origin_box.width / 2.0f;
 	ret->position.y = (float) layer.origin_box.y + (float) layer.origin_box.height / 2.0f;

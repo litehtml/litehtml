@@ -380,7 +380,7 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
 std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 {
     // Initialize Grid
-    m_grid = std::unique_ptr<table_grid>(new table_grid());
+    m_grid = std::make_unique<table_grid>();
 
     go_inside_table 		table_selector;
     table_rows_selector		row_selector;
