@@ -1,15 +1,13 @@
+#include <algorithm>
+
 #include "html.h"
 #include "html_tag.h"
 #include "document.h"
 #include "iterators.h"
 #include "stylesheet.h"
 #include "table.h"
-#include <algorithm>
-#include <locale>
-#include "el_before_after.h"
 #include "num_cvt.h"
 #include "line_box.h"
-#include <stack>
 #include "render_item.h"
 #include "internal.h"
 
@@ -202,7 +200,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 
 		if(apply != select_no_match)
 		{
-			used_selector::ptr us = std::unique_ptr<used_selector>(new used_selector(sel, false));
+			used_selector::ptr us = std::make_unique<used_selector>(sel, false);
 
 			if(sel->is_media_valid())
 			{

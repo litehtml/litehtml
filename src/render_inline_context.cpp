@@ -49,20 +49,20 @@ int litehtml::render_item_inline_context::_render_content(int /*x*/, int /*y*/, 
 							}
 						}
 						// place element into rendering flow
-						place_inline(std::unique_ptr<line_box_item>(new line_box_item(el)), self_size, fmt_ctx);
+						place_inline(std::make_unique<line_box_item>(el), self_size, fmt_ctx);
 					}
 					break;
 
 				case iterator_item_type_start_parent:
 					{
 						el->clear_inline_boxes();
-						place_inline(std::unique_ptr<lbi_start>(new lbi_start(el)), self_size, fmt_ctx);
+						place_inline(std::make_unique<lbi_start>(el), self_size, fmt_ctx);
 					}
 					break;
 
 				case iterator_item_type_end_parent:
 				{
-					place_inline(std::unique_ptr<lbi_end>(new lbi_end(el)), self_size, fmt_ctx);
+					place_inline(std::make_unique<lbi_end>(el), self_size, fmt_ctx);
 				}
 					break;
 			}
@@ -224,12 +224,12 @@ int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box
         }
     }
 
-    m_line_boxes.emplace_back(std::unique_ptr<line_box>(new line_box(
+    m_line_boxes.emplace_back(std::make_unique<line_box>(
 			line_ctx.top,
 			line_ctx.left + first_line_margin + text_indent, line_ctx.right,
 			css().get_line_height(),
 			css().get_font_metrics(),
-			css().get_text_align())));
+			css().get_text_align()));
 
 	// Add items returned by finish_last_box function into the new line
 	for(auto& it : items)
