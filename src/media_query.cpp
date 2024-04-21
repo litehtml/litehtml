@@ -634,7 +634,7 @@ bool parse_mf_range(const css_token_vector& tokens, media_feature& result, docum
 		if (tok.ch == '=')
 		{
 			index++;
-			_op = (short)tok.ch;
+			_op = '=';
 			return true;
 		}
 
