@@ -92,3 +92,16 @@ void test_container::get_client_rect(position& client) const
 {
 	client = position(0, 0, width, height);
 }
+
+void test_container::get_media_features(media_features& media) const
+{
+	position client;
+	get_client_rect(client);
+	media.type        = media_type_screen;
+	media.width       = client.width;
+	media.height      = client.height;
+	media.color       = 8;
+	media.monochrome  = 0;
+	media.color_index = 256;
+	media.resolution  = 96;
+}

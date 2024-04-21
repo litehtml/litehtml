@@ -29,7 +29,7 @@ public:
 	element::ptr	create_element(const char* /*tag_name*/,
 								   const string_map& /*attributes*/,
 								   const document::ptr& /*doc*/) override { return nullptr; }
-	void			get_media_features(media_features& /*media*/) const override {}
+	void			get_media_features(media_features& media) const override;
 	void			get_language(string& /*language*/, string& /*culture*/) const override {}
 	void 			link(const document::ptr& /*doc*/, const element::ptr& /*el*/) override {}
 

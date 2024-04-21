@@ -70,7 +70,10 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 // @import [ <url> | <string> ] <media-query-list>?
 void css::parse_import_rule(raw_rule::ptr rule, string baseurl, document::ptr doc, media_query_list_list::ptr media)
 {
-	const auto& tok = at(rule->prelude, 0);
+	auto tokens = rule->prelude;
+	int index = 0;
+	skip_whitespace(tokens, index);
+	auto tok = at(tokens, index);
 	string url;
 	auto parse_string = [](const css_token& tok, string& str)
 	{
@@ -89,16 +92,14 @@ void css::parse_import_rule(raw_rule::ptr rule, string baseurl, document::ptr do
 	container->import_css(css_text, url, css_baseurl);
 
 	auto new_media = media;
-	if (rule->prelude.size() != 1)
+	tokens = slice(tokens, index + 1);
+	auto mq_list = parse_media_query_list(tokens, doc);
+	if (!mq_list.empty())
 	{
-		auto tokens = slice(rule->prelude, 1);
-		media_query_list mq_list = parse_media_query_list(tokens, doc);
-		if (!mq_list.empty())
-		{
-			new_media = make_shared<media_query_list_list>(media ? *media : media_query_list_list());
-			new_media->add(mq_list);
-		}
+		new_media = make_shared<media_query_list_list>(media ? *media : media_query_list_list());
+		new_media->add(mq_list);
 	}
+
 	parse_css_stylesheet(css_text, css_baseurl, doc, new_media, true);
 }
 

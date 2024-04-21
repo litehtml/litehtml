@@ -38,14 +38,6 @@ void css_selector::add_media_to_doc( document* doc ) const
 	}
 }
 
-// Note: it is possible to have several whitespace tokens in a row: "  /**/  /**/   "
-bool skip_whitespace(const css_token_vector& tokens, int& index)
-{
-	int start = index;
-	while (at(tokens, index).type == ' ') index++;
-	return index != start;
-}
-
 // https://www.w3.org/TR/selectors-4/#type-nmsp
 // <ns-prefix> = [ <ident-token> | '*' ]? '|'     https://www.w3.org/TR/selectors-4/#typedef-ns-prefix
 string parse_ns_prefix(const css_token_vector& tokens, int& index)

@@ -503,4 +503,12 @@ bool is_declaration_value(const css_token_vector& tokens, int index)
 	return true;
 }
 
+// Note: it is possible to have several whitespace tokens in a row: "  /**/  /**/   "
+bool skip_whitespace(const css_token_vector& tokens, int& index)
+{
+	int start = index;
+	while (at(tokens, index).type == ' ') index++;
+	return index != start;
+}
+
 } // namespace litehtml
