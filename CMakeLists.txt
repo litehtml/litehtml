@@ -176,6 +176,7 @@ set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
 if (MSVC)
     # warning level 4
     add_compile_options(/W4)
+    add_compile_options(/permissive- /utf-8)
 else()
     # additional warnings
     add_compile_options(-Wall -Wextra -Wpedantic)
