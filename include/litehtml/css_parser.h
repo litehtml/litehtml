@@ -45,6 +45,7 @@ css_token_vector normalize(Input input, int options = 0, keep_whitespace_fn keep
 vector<css_token_vector> parse_comma_separated_list(const css_token_vector& tokens);
 bool is_declaration_value(const css_token_vector& tokens, int index = 0);
 bool is_any_value(const css_token_vector& tokens);
+bool skip_whitespace(const css_token_vector& tokens, int& index);
 
 } // namespace litehtml
 
