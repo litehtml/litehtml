@@ -61,21 +61,33 @@ bool litehtml::css_grid_line::from_tokens(const css_token_vector& tokens)
 
 bool litehtml::css_grid_template_areas::from_tokens(const css_token_vector& tokens)
 {
+	if(tokens.size() == 1 && tokens[0].type == IDENT && tokens[0].name == "none")
+	{
+		return true;
+	}
+
 	for(auto& line_tok : tokens)
 	{
-		if(line_tok.type == STRING)
-		{
-			trim(line_tok.str, "\"");
-			string_vector cols;
-			split_string(line_tok.str, cols, split_delims_spaces, "", "", split_delims_spaces);
-			if(cols.empty()) return false;
-			areas.emplace_back(cols);
-		} else
+		if(!from_token(line_tok))
 		{
 			return false;
 		}
 	}
 	return true;
+}
+
+bool litehtml::css_grid_template_areas::from_token(const litehtml::css_token &token)
+{
+	if(token.type == STRING)
+	{
+		trim(token.str, "\"'");
+		string_vector cols;
+		split_string(token.str, cols, split_delims_spaces, "", "", split_delims_spaces);
+		if (cols.empty()) return false;
+		areas.emplace_back(cols);
+		return true;
+	}
+	return false;
 }
 
 // grid-template-columns =

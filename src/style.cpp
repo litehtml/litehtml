@@ -482,40 +482,40 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		add_parsed_property(name, property_value(str, important));
 		break;
 
-		case _grid_column_start_:
-		case _grid_column_end_:
-		case _grid_row_start_:
-		case _grid_row_end_:
+	case _grid_column_start_:
+	case _grid_column_end_:
+	case _grid_row_start_:
+	case _grid_row_end_:
+		{
+			css_grid_line line;
+			if(line.from_tokens(value))
 			{
-				css_grid_line line;
-				if(line.from_tokens(value))
-				{
-					add_parsed_property(name, property_value(line, important));
-				}
+				add_parsed_property(name, property_value(line, important));
 			}
-			break;
+		}
+		break;
 
-		case _grid_row_:
-		case _grid_column_:
-			parse_grid_row_col(name, value, important);
-			break;
+	case _grid_row_:
+	case _grid_column_:
+		parse_grid_row_col(name, value, important);
+		break;
 
-		case _grid_area_:
-			parse_grid_area(value, important);
-			break;
+	case _grid_area_:
+		parse_grid_area(value, important);
+		break;
 
-		case _grid_template_areas_:
+	case _grid_template_areas_:
+		{
+			css_grid_template_areas tpl_areas;
+			if(tpl_areas.from_tokens(value))
 			{
-				css_grid_template_areas tpl_areas;
-				if(tpl_areas.from_tokens(value))
-				{
-					add_parsed_property(name, property_value(tpl_areas, important));
-				}
+				add_parsed_property(name, property_value(tpl_areas, important));
 			}
-			break;
+		}
+		break;
 
-		case _grid_template_columns_:
-		case _grid_template_rows_:
+	case _grid_template_columns_:
+	case _grid_template_rows_:
 		{
 			css_grid_template tpl;
 			if(tpl.from_tokens(value))
@@ -523,7 +523,11 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 				add_parsed_property(name, property_value(tpl, important));
 			}
 		}
-			break;
+		break;
+
+	case _grid_template_:
+		parse_grid_template(value, important);
+		break;
 
 	//  =============================  CUSTOM PROPERTY  =============================
 	
@@ -1593,7 +1597,7 @@ void style::parse_grid_area(const css_token_vector &tokens, bool important)
 		} else return;
 	}
 
-	if(tokens.size() >= 2)
+	if(parts.size() >= 2)
 	{
 		if(column_start.from_tokens(parts[1]))
 		{
@@ -1604,12 +1608,12 @@ void style::parse_grid_area(const css_token_vector &tokens, bool important)
 		} else return;
 	}
 
-	if(tokens.size() >= 3)
+	if(parts.size() >= 3)
 	{
 		row_end.from_tokens(parts[2]);
 	}
 
-	if(tokens.size() >= 4)
+	if(parts.size() >= 4)
 	{
 		column_end.from_tokens(parts[3]);
 	}
@@ -1618,6 +1622,97 @@ void style::parse_grid_area(const css_token_vector &tokens, bool important)
 	add_parsed_property(_grid_row_end_, property_value(row_end, important));
 	add_parsed_property(_grid_column_start_, property_value(column_start, important));
 	add_parsed_property(_grid_column_end_, property_value(column_end, important));
+}
+
+// none |
+// [ <'grid-template-rows'> / <'grid-template-columns'> ] |
+// [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?
+void style::parse_grid_template(const css_token_vector &tokens, bool important)
+{
+	if(tokens.size() == 1 && tokens[0].type == IDENT && tokens[0].name == "none")
+	{
+		add_parsed_property(_grid_template_columns_, property_value(css_grid_template(), important));
+		add_parsed_property(_grid_template_rows_, property_value(css_grid_template(), important));
+		add_parsed_property(_grid_template_areas_, property_value(css_grid_template_areas(), important));
+		return;
+	}
+
+	auto parts = parse_slash_separated_list(tokens);
+	if(parts.empty() || parts.size() > 2) return;
+
+	if(parts.size() == 2)
+	{
+		css_grid_template rows;
+		css_grid_template cols;
+		if(rows.from_tokens(parts[0]))
+		{
+			if(cols.from_tokens(parts[0]))
+			{
+				add_parsed_property(_grid_template_columns_, property_value(cols, important));
+				add_parsed_property(_grid_template_rows_, property_value(rows, important));
+				add_parsed_property(_grid_template_areas_, property_value(css_grid_template_areas(), important));
+				return;
+			}
+		}
+	}
+
+	css_grid_template_areas areas;
+	css_grid_template::track_list tl;
+	int sb = 0;
+	for(auto p_iter = parts[0].cbegin(); p_iter != parts[0].cend(); p_iter++)
+	{
+		if((*p_iter).type == SQUARE_BLOCK)
+		{
+			css_grid_template::line_names ln;
+			if(ln.parse((*p_iter)))
+			{
+				if(sb == 1)
+				{
+					// filling in auto for any missing sizes
+					if(!std::holds_alternative<css_grid_template::track_size>(tl.value.back()))
+					{
+						css_token_vector t = {css_token(IDENT, "auto")};
+						css_grid_template::track_size ts;
+						auto iter = t.cbegin();
+						if(ts.parse(iter, t.cend()))
+						{
+							tl.value.emplace_back(ts);
+						}
+					}
+					sb = 0;
+				} else
+				{
+					sb++;
+				}
+				tl.value.emplace_back(ln);
+			} else
+				return;
+		} else if((*p_iter).type == STRING)
+		{
+			if(!areas.from_token((*p_iter))) return;
+		} else
+		{
+			css_grid_template::track_size ts;
+			if(ts.parse(p_iter, parts[0].cend()))
+			{
+				tl.value.emplace_back(ts);
+			} else
+				return;
+		}
+	}
+
+	if(areas.is_none()) return;
+
+	css_grid_template rows;
+	rows.value = tl;
+	css_grid_template cols;
+	if(parts.size() == 2)
+	{
+		if(!cols.from_tokens(parts[1])) return;
+	}
+	add_parsed_property(_grid_template_columns_, property_value(cols, important));
+	add_parsed_property(_grid_template_rows_, property_value(rows, important));
+	add_parsed_property(_grid_template_areas_, property_value(areas, important));
 }
 
 } // namespace litehtml

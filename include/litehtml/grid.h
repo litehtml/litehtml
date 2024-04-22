@@ -54,16 +54,14 @@ namespace litehtml
 
 	struct css_grid_template_areas
 	{
-		int columns;
-		int rows;
 		std::vector<string_vector> areas;
-		css_grid_template_areas() : columns(0), rows(0), areas() {}
+		css_grid_template_areas() : areas() {}
 
 		bool is_none() const { return areas.empty(); }
 		bool from_tokens(const css_token_vector& tokens);
+		bool from_token(const css_token& token);
 		void clear()
 		{
-			columns = rows = 0;
 			areas.clear();
 		}
 	};
