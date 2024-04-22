@@ -441,17 +441,17 @@ LiteHtmlView::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& bord
 	if(borders.top.width != 0 && borders.top.style > litehtml::border_style_hidden)
 	{
 		bdr_top = (int) borders.top.width;
-		std::cout << "	Border top: " << bdr_right << std::endl;
+		std::cout << "	Border top: " << bdr_top << std::endl;
 	}
 	if(borders.bottom.width != 0 && borders.bottom.style > litehtml::border_style_hidden)
 	{
 		bdr_bottom = (int) borders.bottom.width;
-		std::cout << "	Border bottom: " << bdr_right << std::endl;
+		std::cout << "	Border bottom: " << bdr_bottom << std::endl;
 	}
 	if(borders.left.width != 0 && borders.left.style > litehtml::border_style_hidden)
 	{
 		bdr_left = (int) borders.left.width;
-		std::cout << "	Border left: " << bdr_right << std::endl;
+		std::cout << "	Border left: " << bdr_left << std::endl;
 	}
 	if(borders.right.width != 0 && borders.right.style > litehtml::border_style_hidden)
 	{
