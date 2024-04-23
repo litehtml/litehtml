@@ -73,7 +73,7 @@ wq_name parse_wq_name(const css_token_vector& tokens, int& index)
 	int start = index;
 	string prefix = parse_ns_prefix(tokens, index);
 
-	const auto& tok = at(tokens, index);
+	auto tok = at(tokens, index);
 	if (tok.type == IDENT)
 	{
 		index++;
@@ -81,6 +81,15 @@ wq_name parse_wq_name(const css_token_vector& tokens, int& index)
 	}
 	// restore index to before <ns-prefix> if failed to parse <ident-token>
 	index = start;
+
+	// handle situation when a name is erroneously parsed as prefix, eg. [x|=a]
+	tok = at(tokens, index);
+	if (tok.type == IDENT)
+	{
+		index++;
+		return { "", tok.name };
+	}
+
 	return {};
 }
 
