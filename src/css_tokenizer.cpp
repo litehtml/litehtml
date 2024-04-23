@@ -191,7 +191,7 @@ css_token css_tokenizer::consume_string_token(int ending_code_point)
 			// This is a parse error. Reconsume the current input code point, create a <bad-string-token>, and return it.
 			css_parse_error("newline in string");
 			unconsume_char();
-			return css_token(BAD_STRING);
+			return {BAD_STRING};
 		case '\\':
 			// If the next input code point is EOF, do nothing.
 			if (str[index] == 0)
@@ -410,11 +410,11 @@ css_token css_tokenizer::consume_numeric_token()
 	if (str[index] == '%')
 	{
 		index++;
-		return css_token(PERCENTAGE, number); // NOTE: number_type is unused in <percentage-token>
+		return {PERCENTAGE, number}; // NOTE: number_type is unused in <percentage-token>
 	}
 
 	// Otherwise, create a <number-token> with the same value and type flag as number, and return it.
-	return css_token(NUMBER, number, type);
+	return {NUMBER, number, type};
 }
 
 // https://www.w3.org/TR/css-syntax-3/#consume-remnants-of-bad-url
@@ -479,7 +479,7 @@ css_token css_tokenizer::consume_url_token()
 			}
 			// otherwise, consume the remnants of a bad url, create a <bad-url-token>, and return it.
 			consume_remnants_of_bad_url();
-			return css_token(BAD_URL);
+			return {BAD_URL};
 
 		case '"':
 		case '\'':
@@ -488,7 +488,7 @@ css_token css_tokenizer::consume_url_token()
 			// This is a parse error. Consume the remnants of a bad url, create a <bad-url-token>, and return it.
 			css_parse_error("invalid char in unquoted url");
 			consume_remnants_of_bad_url();
-			return css_token(BAD_URL);
+			return {BAD_URL};
 
 		case '\\':
 			// If the stream starts with a valid escape, consume an escaped code point and 
@@ -500,7 +500,7 @@ css_token css_tokenizer::consume_url_token()
 			{
 				css_parse_error("escaped newline in unquoted url");
 				consume_remnants_of_bad_url();
-				return css_token(BAD_URL);
+				return {BAD_URL};
 			}
 			break;
 
@@ -535,7 +535,7 @@ css_token css_tokenizer::consume_ident_like_token()
 		{
 			// This is not exactly what standard says, but equivalent. The purpose is to preserve a whitespace token.
 			if (is_whitespace(str[index-1])) index--;
-			return css_token(FUNCTION, string);
+            return {FUNCTION, string};
 		}
 		else // Otherwise, consume a url token, and return it.
 		{
@@ -548,11 +548,11 @@ css_token css_tokenizer::consume_ident_like_token()
 	else if (str[index] == '(')
 	{
 		index++;
-		return css_token(FUNCTION, string);
+        return {FUNCTION, string};
 	}
 
 	// Otherwise, create an <ident-token> with its value set to string and return it.
-	return css_token(IDENT, string);
+	return {IDENT, string};
 }
 
 // https://www.w3.org/TR/css-syntax-3/#consume-token
