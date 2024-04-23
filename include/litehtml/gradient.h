@@ -188,7 +188,7 @@ namespace litehtml
 			switch (type)
 			{
 			case type_none:
-				return false;
+				return true;
 			case type_url:
 				return url.empty();
 			case type_gradient:
