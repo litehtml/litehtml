@@ -208,7 +208,7 @@ table[border] {
     border-style:solid;
 }
 
-table[border|=0] {
+table[border^="0"] {
     border-style:none;
 }
 
@@ -220,7 +220,7 @@ table[border] td, table[border] th {
     border-right-color:gray;
 }
 
-table[border|=0] td, table[border|=0] th {
+table[border^="0"] td, table[border^="0"] th {
     border-style:none;
 }
 
