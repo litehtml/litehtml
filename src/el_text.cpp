@@ -136,5 +136,5 @@ litehtml::string litehtml::el_text::dump_get_name()
 
 std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::el_text::dump_get_attrs()
 {
-    return std::vector<std::tuple<string, string>>();
+    return {};
 }
