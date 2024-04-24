@@ -22,14 +22,7 @@ namespace litehtml
 			bottom	= val.bottom;
 		}
 
-		css_offsets& operator=(const css_offsets& val)
-		{
-			left	= val.left;
-			top		= val.top;
-			right	= val.right;
-			bottom	= val.bottom;
-			return *this;
-		}
+		css_offsets& operator=(const css_offsets& val) = default;
 
 		string to_string() const
 		{

@@ -650,16 +650,9 @@ namespace litehtml
 			context = val.context;
 			min_width = val.min_width;
 		}
-		floated_box& operator=(const floated_box& val)
-		{
-			pos = val.pos;
-			float_side = val.float_side;
-			clear_floats = val.clear_floats;
-			el = val.el;
-			context = val.context;
-			min_width = val.min_width;
-			return *this;
-		}
+        
+		floated_box& operator=(const floated_box& val) = default;
+        
 		floated_box(floated_box&& val)
 		{
 			pos = val.pos;
