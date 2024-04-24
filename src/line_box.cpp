@@ -6,7 +6,7 @@
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
-litehtml::line_box_item::~line_box_item() {}
+litehtml::line_box_item::~line_box_item() = default;
 
 void litehtml::line_box_item::place_to(int x, int y)
 {
@@ -53,7 +53,7 @@ litehtml::lbi_start::lbi_start(const std::shared_ptr<render_item>& element) : li
 	m_pos.width = m_element->content_offset_left();
 }
 
-litehtml::lbi_start::~lbi_start() {}
+litehtml::lbi_start::~lbi_start() = default;
 
 void litehtml::lbi_start::place_to(int x, int y)
 {
@@ -94,7 +94,7 @@ litehtml::lbi_end::lbi_end(const std::shared_ptr<render_item>& element) : lbi_st
 	m_pos.width = m_element->content_offset_right();
 }
 
-litehtml::lbi_end::~lbi_end() {}
+litehtml::lbi_end::~lbi_end() = default;
 
 void litehtml::lbi_end::place_to(int x, int y)
 {
@@ -120,7 +120,7 @@ litehtml::lbi_continue::lbi_continue(const std::shared_ptr<render_item>& element
 	m_pos.width = 0;
 }
 
-litehtml::lbi_continue::~lbi_continue() {}
+litehtml::lbi_continue::~lbi_continue() = default;
 
 void litehtml::lbi_continue::place_to(int x, int y)
 {
