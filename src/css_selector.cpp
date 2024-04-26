@@ -262,8 +262,6 @@ struct an_b
 	an_b(int a, int b) : a(a), b(b), valid(true) {}
 };
 
-const size_t EOL = string::npos;
-
 // NOTE: "+ 5" is not valid, and strtol correctly fails to parse it
 bool to_int(const string& s, int& number)
 {
@@ -293,8 +291,8 @@ an_b parse_an_b(string s)
 
 	int a, b;
 
-	auto i = s.find('n');
-	if (i == EOL)
+	int i = (int)s.find('n');
+	if (i == -1)
 	{
 		if (!to_int(s, b)) return {};
 		return {0, b};
@@ -343,7 +341,7 @@ int find_of_keyword(const css_token_vector& tokens)
 //
 css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword)
 {
-	css_attribute_selector selector(select_pseudo_class, token.name);
+	css_attribute_selector selector(select_pseudo_class, lowcase(token.name));
 
 	const auto& tokens = token.value;
 
@@ -393,7 +391,7 @@ css_attribute_selector parse_function_pseudo_class(const css_token& token)
 	}
 	else if (name == "is") // https://www.w3.org/TR/selectors-4/#matches
 	{
-		css_attribute_selector selector(select_pseudo_class, token.name);
+		css_attribute_selector selector(select_pseudo_class, name);
 		// "taking a <forgiving-selector-list> as its sole argument"
 		// "Pseudo-elements... are not valid within :is()."
 		selector.selector_list = parse_selector_list(token.value, forgiving_mode + forbid_pseudo_elements);
@@ -401,11 +399,17 @@ css_attribute_selector parse_function_pseudo_class(const css_token& token)
 	}
 	else if (name == "not") // https://www.w3.org/TR/selectors-4/#negation
 	{
-		css_attribute_selector selector(select_pseudo_class, token.name);
+		css_attribute_selector selector(select_pseudo_class, name);
 		// "taking a selector list as an argument"
 		// "Pseudo-elements... are not valid within :not()."
 		selector.selector_list = parse_selector_list(token.value, strict_mode + forbid_pseudo_elements);
 		if (selector.selector_list.empty()) return {};
+		return selector;
+	}
+	else if (name == "lang") // https://www.w3.org/TR/selectors-4/#the-lang-pseudo
+	{
+		css_attribute_selector selector(select_pseudo_class, name);
+		selector.value = get_repr(token.value);
 		return selector;
 	}
 	return {};
