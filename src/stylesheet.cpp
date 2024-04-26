@@ -107,7 +107,7 @@ void css::parse_import_rule(raw_rule::ptr rule, string baseurl, document::ptr do
 void css::parse_style_rule(raw_rule::ptr rule, string baseurl, document::ptr doc, media_query_list_list::ptr media)
 {
 	// The prelude of the qualified rule is parsed as a <selector-list>. If this returns failure, the entire style rule is invalid.
-	auto list = parse_selector_list(rule->prelude, strict_mode);
+	auto list = parse_selector_list(rule->prelude, strict_mode, doc->mode());
 	if (list.empty())
 	{
 		css_parse_error("invalid selector");

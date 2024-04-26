@@ -58,6 +58,14 @@ document::ptr document::createFromString(
 	// Parse document into GumboOutput
 	GumboOutput* output = doc->parse_html(str);
 
+	// mode must be set before doc->create_node because it is used in html_tag::set_attr
+	switch (output->document->v.document.doc_type_quirks_mode)
+	{
+	case GUMBO_DOCTYPE_NO_QUIRKS:      doc->m_mode = no_quirks_mode;      break;
+	case GUMBO_DOCTYPE_QUIRKS:         doc->m_mode = quirks_mode;         break;
+	case GUMBO_DOCTYPE_LIMITED_QUIRKS: doc->m_mode = limited_quirks_mode; break;
+	}
+
 	// Create litehtml::elements.
 	elements_list root_elements;
 	doc->create_node(output->root, root_elements, true);
@@ -65,6 +73,7 @@ document::ptr document::createFromString(
 	{
 		doc->m_root = root_elements.back();
 	}
+
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 

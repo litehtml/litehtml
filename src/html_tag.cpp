@@ -63,57 +63,56 @@ void litehtml::html_tag::clearRecursive()
 	m_children.clear();
 }
 
-litehtml::string_id litehtml::html_tag::id() const
+string_id html_tag::id() const
 {
 	return m_id;
 }
 
-litehtml::string_id litehtml::html_tag::tag() const
+string_id html_tag::tag() const
 {
 	return m_tag;
 }
 
-const char* litehtml::html_tag::get_tagName() const
+const char* html_tag::get_tagName() const
 {
 	return _s(m_tag).c_str();
 }
 
-void litehtml::html_tag::set_tagName( const char* _tag )
+void html_tag::set_tagName( const char* tag )
 {
-	string tag = _tag;
-	lcase(tag);
-	m_tag = _id(tag);
+	m_tag = _id(lowcase(tag));
 }
 
-void litehtml::html_tag::set_attr( const char* _name, const char* _val )
+void html_tag::set_attr( const char* _name, const char* _val )
 {
-	if(_name && _val)
+	if (_name && _val)
 	{
-		string name = _name;
-		lcase(name);
+		// attribute names in attribute selector are matched ASCII case-insensitively regardless of document mode
+		string name = lowcase(_name);
+		// m_attrs has all attribute values, including class and id, in their original case
+		// because in attribute selector values are matched case-sensitively even in quirks mode
 		m_attrs[name] = _val;
 
-		if( name == "class" )
+		if (name == "class")
 		{
 			string val = _val;
-			// class names are matched case-insensitively in quirks mode
-			// we match them case-insensitively in all modes (same for id)
-			lcase(val);
-			m_str_classes.resize( 0 );
-			split_string( val, m_str_classes, " " );
+			// class names in class selector (.xxx) are matched ASCII case-insensitively in quirks mode
+			if (get_document()->mode() == quirks_mode) lcase(val);
+			m_str_classes = split_string(val, whitespace, "", "");
 			m_classes.clear();
-			for (auto& cls : m_str_classes) m_classes.push_back(_id(cls));
+			for (auto cls : m_str_classes) m_classes.push_back(_id(cls));
 		}
 		else if (name == "id")
 		{
 			string val = _val;
-			lcase(val);
+			// ids in id selector (#xxx) are matched ASCII case-insensitively in quirks mode
+			if (get_document()->mode() == quirks_mode) lcase(val);
 			m_id = _id(val);
 		}
 	}
 }
 
-const char* litehtml::html_tag::get_attr( const char* name, const char* def ) const
+const char* html_tag::get_attr( const char* name, const char* def ) const
 {
 	auto attr = m_attrs.find(name);
 	if(attr != m_attrs.end())
@@ -126,7 +125,7 @@ const char* litehtml::html_tag::get_attr( const char* name, const char* def ) co
 litehtml::elements_list litehtml::html_tag::select_all(const string& selector )
 {
 	css_selector sel;
-	sel.parse(selector);
+	sel.parse(selector, get_document()->mode());
 	
 	return select_all(sel);
 }
@@ -155,7 +154,7 @@ void litehtml::html_tag::select_all(const css_selector& selector, elements_list&
 litehtml::element::ptr litehtml::html_tag::select_one( const string& selector )
 {
 	css_selector sel;
-	sel.parse(selector);
+	sel.parse(selector, get_document()->mode());
 
 	return select_one(sel);
 }
@@ -378,7 +377,7 @@ int	html_tag::select(const css_selector::vector& selector_list, bool apply_pseud
 int litehtml::html_tag::select(const string& selector)
 {
 	css_selector sel;
-	sel.parse(selector);
+	sel.parse(selector, get_document()->mode());
 	return select(sel, true);
 }
 

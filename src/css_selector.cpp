@@ -162,8 +162,8 @@ css_attribute_selector parse_attribute_selector(const css_token& block)
 	if (index == (int)tokens.size()) // [name]
 	{
 		selector.type    = select_attr;
-		selector.name    = _id(name);
 		selector.prefix  = _id(prefix);
+		selector.name    = _id(name);
 		selector.matcher = attribute_exists;
 		return selector;
 	}
@@ -250,8 +250,8 @@ css_attribute_selector parse_attribute_selector(const css_token& block)
 	};
 
 	selector.type     = select_attr;
-	selector.name     = _id(name);
 	selector.prefix   = _id(prefix);
+	selector.name     = _id(name);
 	selector.matcher  = matcher;
 	selector.caseless_match = modifier == 'i' || (!modifier && name in special_attributes);
 	selector.value    = selector.caseless_match ? lowcase(value.str) : value.str;
@@ -343,7 +343,7 @@ int find_of_keyword(const css_token_vector& tokens)
 // :nth-of-type(An+B)            https://www.w3.org/TR/selectors-4/#the-nth-of-type-pseudo
 // :nth-last-of-type(An+B)
 //
-css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword)
+css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword, mode mode)
 {
 	css_attribute_selector selector(select_pseudo_class, lowcase(token.name));
 
@@ -360,7 +360,7 @@ css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword)
 		// "The structural pseudo-classes only apply to elements in the document tree; 
 		// they must never match pseudo-elements." https://www.w3.org/TR/selectors-4/#structural-pseudos
 		// So I parse as if they were not allowed.
-		selector.selector_list = parse_selector_list(selector_tokens, forgiving_mode + forbid_pseudo_elements);
+		selector.selector_list = parse_selector_list(selector_tokens, forgiving_mode + forbid_pseudo_elements, mode);
 		// NOTE: selector_list may be empty, this does not invalidate the selector.
 
 		// Chrome/Firefox behavior differs from the standard: they treat S as unforgiving and allow pseudo-elements.
@@ -382,23 +382,23 @@ css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword)
 	return selector;
 }
 
-css_attribute_selector parse_function_pseudo_class(const css_token& token)
+css_attribute_selector parse_function_pseudo_class(const css_token& token, mode mode)
 {
 	string name = lowcase(token.name);
 	if (name == "nth-child" || name == "nth-last-child")
 	{
-		return parse_nth_child(token, true);
+		return parse_nth_child(token, true, mode);
 	}
 	else if (name == "nth-of-type" || name == "nth-last-of-type")
 	{
-		return parse_nth_child(token, false);
+		return parse_nth_child(token, false, mode);
 	}
 	else if (name == "is") // https://www.w3.org/TR/selectors-4/#matches
 	{
 		css_attribute_selector selector(select_pseudo_class, name);
 		// "taking a <forgiving-selector-list> as its sole argument"
 		// "Pseudo-elements... are not valid within :is()."
-		selector.selector_list = parse_selector_list(token.value, forgiving_mode + forbid_pseudo_elements);
+		selector.selector_list = parse_selector_list(token.value, forgiving_mode + forbid_pseudo_elements, mode);
 		return selector;
 	}
 	else if (name == "not") // https://www.w3.org/TR/selectors-4/#negation
@@ -406,7 +406,7 @@ css_attribute_selector parse_function_pseudo_class(const css_token& token)
 		css_attribute_selector selector(select_pseudo_class, name);
 		// "taking a selector list as an argument"
 		// "Pseudo-elements... are not valid within :not()."
-		selector.selector_list = parse_selector_list(token.value, strict_mode + forbid_pseudo_elements);
+		selector.selector_list = parse_selector_list(token.value, strict_mode + forbid_pseudo_elements, mode);
 		if (selector.selector_list.empty()) return {};
 		return selector;
 	}
@@ -438,7 +438,7 @@ bool is_supported_simple_pseudo_class(const string& name)
 // <pseudo-class-selector> = ':' <ident-token> |
 //                           ':' <function-token> <any-value> ')'
 //                           where <ident-token> is not before, after, first-line or first-letter
-css_attribute_selector parse_pseudo_class(const css_token_vector& tokens, int& index)
+css_attribute_selector parse_pseudo_class(const css_token_vector& tokens, int& index, mode mode)
 {
 	const auto& a = at(tokens, index);
 	const auto& b = at(tokens, index + 1);
@@ -457,7 +457,7 @@ css_attribute_selector parse_pseudo_class(const css_token_vector& tokens, int& i
 	}
 	if (b.type == CV_FUNCTION)
 	{
-		css_attribute_selector sel = parse_function_pseudo_class(b);
+		css_attribute_selector sel = parse_function_pseudo_class(b, mode);
 		if (sel) index += 2;
 		return sel;
 	}
@@ -468,7 +468,7 @@ css_attribute_selector parse_pseudo_class(const css_token_vector& tokens, int& i
 // <subclass-selector> = <id-selector> | <class-selector> | <attribute-selector> | <pseudo-class-selector>
 // <id-selector> = <hash-token> with hash_type == ID
 // <class-selector> = '.' <ident-token>
-css_attribute_selector parse_subclass_selector(const css_token_vector& tokens, int& index)
+css_attribute_selector parse_subclass_selector(const css_token_vector& tokens, int& index, mode mode)
 {
 	css_attribute_selector selector;
 
@@ -482,7 +482,10 @@ css_attribute_selector parse_subclass_selector(const css_token_vector& tokens, i
 		{
 			index++;
 			selector.type = select_id;
-			selector.name = _id(lowcase(tok0.name));
+			string name = tok0.name;
+			// ids are matched ASCII case-insensitively in quirks mode
+			if (mode == quirks_mode) lcase(name);
+			selector.name = _id(name);
 			return selector;
 		}
 		return {};
@@ -492,9 +495,10 @@ css_attribute_selector parse_subclass_selector(const css_token_vector& tokens, i
 		{
 			index += 2;
 			selector.type = select_class;
-			// class names are matched case-insensitively in quirks mode
-			// we match them case-insensitively in all modes (same for id)
-			selector.name = _id(lowcase(tok1.name));
+			string name = tok1.name;
+			// class names are matched ASCII case-insensitively in quirks mode
+			if (mode == quirks_mode) lcase(name);
+			selector.name = _id(name);
 			return selector;
 		}
 		return {};
@@ -505,7 +509,7 @@ css_attribute_selector parse_subclass_selector(const css_token_vector& tokens, i
 		return selector;
 
 	default:
-		return parse_pseudo_class(tokens, index);
+		return parse_pseudo_class(tokens, index, mode);
 	}
 }
 
@@ -560,7 +564,7 @@ css_attribute_selector parse_pseudo_element(const css_token_vector& tokens, int&
 // NOTE: This grammar allows pseudo-classes to go before #id and .class and [attr].
 // Whitespace is forbidden:
 // * Between any of the top-level components of a <compound-selector>
-css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens, int& index)
+css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens, int& index, mode mode)
 {
 	auto selector = make_shared<css_element_selector>();
 
@@ -570,7 +574,7 @@ css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens
 	selector->m_tag    = _id(wq_name.name);
 
 	// <subclass-selector>*
-	while (css_attribute_selector sel = parse_subclass_selector(tokens, index))
+	while (css_attribute_selector sel = parse_subclass_selector(tokens, index, mode))
 		selector->m_attrs.push_back(sel);
 	
 	// [ <pseudo-element-selector> <pseudo-class-selector>* ]*
@@ -580,7 +584,7 @@ css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens
 		if (!sel) break;
 		selector->m_attrs.push_back(sel);
 
-		while ((sel = parse_pseudo_class(tokens, index)))
+		while ((sel = parse_pseudo_class(tokens, index, mode)))
 			selector->m_attrs.push_back(sel);
 	}
 
@@ -614,11 +618,11 @@ int parse_combinator(const css_token_vector& tokens, int& index)
 	return ws ? ' ' : 0;
 }
 
-css_selector::ptr parse_complex_selector(const css_token_vector& tokens)
+css_selector::ptr parse_complex_selector(const css_token_vector& tokens, mode mode)
 {
 	int index = 0;
 	skip_whitespace(tokens, index);
-	auto sel = parse_compound_selector(tokens, index);
+	auto sel = parse_compound_selector(tokens, index, mode);
 	if (!sel) return nullptr;
 
 	auto selector = make_shared<css_selector>();
@@ -638,7 +642,7 @@ css_selector::ptr parse_complex_selector(const css_token_vector& tokens)
 
 		// otherwise: index is not at the end, combinator is good and tokens[index] is not whitespace
 		// it means if parse_compound_selector fails it's an error
-		sel = parse_compound_selector(tokens, index);
+		sel = parse_compound_selector(tokens, index, mode);
 		if (!sel)
 			return nullptr;
 
@@ -670,7 +674,7 @@ bool has_selector(const css_selector& selector, attr_select_type type, const str
 // https://www.w3.org/TR/selectors-4/#selector-list
 // https://www.w3.org/TR/selectors-4/#forgiving-selector
 // Parse comma-separated list of complex selectors.
-css_selector::vector parse_selector_list(const css_token_vector& tokens, int options)
+css_selector::vector parse_selector_list(const css_token_vector& tokens, int options, mode mode)
 {
 	// NOTE: this is unnecessary: "If input contains only <whitespace-token>s, return an empty list."
 
@@ -679,7 +683,7 @@ css_selector::vector parse_selector_list(const css_token_vector& tokens, int opt
 
 	for (const auto& list: list_of_lists)
 	{
-		css_selector::ptr selector = parse_complex_selector(list);
+		css_selector::ptr selector = parse_complex_selector(list, mode);
 
 		// if selector is failed to parse or not allowed by the options
 		if (!selector ||
@@ -699,10 +703,10 @@ css_selector::vector parse_selector_list(const css_token_vector& tokens, int opt
 	return result;
 }
 
-bool css_selector::parse(const string& text)
+bool css_selector::parse(const string& text, mode mode)
 {
 	auto tokens = normalize(text, f_componentize);
-	auto ptr = parse_complex_selector(tokens);
+	auto ptr = parse_complex_selector(tokens, mode);
 	if (!ptr) return false;
 	*this = *ptr;
 	return true;
