@@ -4,7 +4,7 @@
 
 #define out
 #define inout
-#define countof(a) int(sizeof(a)/sizeof(a[0]))
+#define countof(a) int(sizeof(a)/sizeof((a)[0]))
 
 namespace litehtml
 {
