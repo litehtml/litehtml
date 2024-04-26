@@ -1632,10 +1632,10 @@ struct {
 encoding get_encoding(string label)
 {
 	lcase(trim(label));
-	for (int i = 0; i < countof(labels); i++)
+	for (const auto& l : labels)
 	{
-		if (label == labels[i].name)
-			return labels[i].coding;
+		if (label == l.name)
+			return l.coding;
 	}
 	return encoding::null;
 }
