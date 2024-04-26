@@ -620,6 +620,12 @@ int html_tag::select_pseudoclass(const css_attribute_selector& sel)
 
 	}
 	break;
+	case _is_:
+		if (!select(sel.selector_list, true))
+		{
+			return select_no_match;
+		}
+		break;
 	case _not_:
 		if (select(sel.selector_list, true))
 		{
