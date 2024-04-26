@@ -154,12 +154,16 @@ css_attribute_selector parse_attribute_selector(const css_token& block)
 	wq_name wq_name = parse_wq_name(tokens, index);
 	if (wq_name.name == "") return {};
 
+	// attribute name in attribute selector is ASCII case-insensitive for HTML documents, regardless of document mode (quirks/no quirks)
+	auto prefix = lowcase(wq_name.prefix);
+	auto name   = lowcase(wq_name.name);
+
 	skip_whitespace(tokens, index);
 	if (index == (int)tokens.size()) // [name]
 	{
 		selector.type    = select_attr;
-		selector.name    = _id(wq_name.name);
-		selector.prefix  = _id(wq_name.prefix);
+		selector.name    = _id(name);
+		selector.prefix  = _id(prefix);
 		selector.matcher = attribute_exists;
 		return selector;
 	}
@@ -246,10 +250,10 @@ css_attribute_selector parse_attribute_selector(const css_token& block)
 	};
 
 	selector.type     = select_attr;
-	selector.name     = _id(wq_name.name);
-	selector.prefix   = _id(wq_name.prefix);
+	selector.name     = _id(name);
+	selector.prefix   = _id(prefix);
 	selector.matcher  = matcher;
-	selector.caseless_match = modifier == 'i' || (!modifier && wq_name.name in special_attributes);
+	selector.caseless_match = modifier == 'i' || (!modifier && name in special_attributes);
 	selector.value    = selector.caseless_match ? lowcase(value.str) : value.str;
 	return selector;
 }
