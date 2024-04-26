@@ -449,11 +449,11 @@ css_attribute_selector parse_pseudo_class(const css_token_vector& tokens, int& i
 	if (b.type == IDENT)
 	{
 		// unsupported pseudo-classes must be treated as invalid:  https://www.w3.org/TR/selectors-4/#w3c-partial
-		if (!is_supported_simple_pseudo_class(b.name))
+		if (!is_supported_simple_pseudo_class(b.ident()))
 			return {};
 
 		index += 2;
-		return { select_pseudo_class, b.name };
+		return { select_pseudo_class, b.ident() };
 	}
 	if (b.type == CV_FUNCTION)
 	{
@@ -535,20 +535,20 @@ css_attribute_selector parse_pseudo_element(const css_token_vector& tokens, int&
 
 	if (b.type == IDENT) // legacy syntax with one ':'  https://www.w3.org/TR/selectors-4/#single-colon-pseudos
 	{
-		if (!is_one_of(lowcase(b.name), "before", "after")) // first-line/letter are not supported
+		if (!is_one_of(b.ident(), "before", "after")) // first-line/letter are not supported
 			return {};
 	
 		index += 2;
-		return {select_pseudo_element, b.name};
+		return {select_pseudo_element, b.ident()};
 	}
 
 	if (c.type == IDENT) // normal syntax with '::'
 	{
-		if (!is_supported_simple_pseudo_element(c.name))
+		if (!is_supported_simple_pseudo_element(c.ident()))
 			return {};
 
 		index += 3;
-		return {select_pseudo_element, c.name};
+		return {select_pseudo_element, c.ident()};
 	}
 
 	return {};
