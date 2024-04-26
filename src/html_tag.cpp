@@ -664,7 +664,7 @@ int html_tag::select_attribute(const css_attribute_selector& sel)
 		break;
 
 	case attribute_contains_string: // *=
-		if (sel.value != "" && contains(attr_value, sel.value))
+		if (!sel.value.empty() && contains(attr_value, sel.value))
 		{
 			return select_match;
 		}
@@ -672,14 +672,14 @@ int html_tag::select_attribute(const css_attribute_selector& sel)
 
 	// Attribute value is a whitespace-separated list of words, one of which is exactly sel.value
 	case attribute_contains_word: // ~=
-		if (sel.value != "" && contains(split_string(attr_value), sel.value))
+		if (!sel.value.empty() && contains(split_string(attr_value), sel.value))
 		{
 			return select_match;
 		}
 		break;
 
 	case attribute_starts_with_string: // ^=
-		if (sel.value != "" && match(attr_value, 0, sel.value))
+		if (!sel.value.empty() && match(attr_value, 0, sel.value))
 		{
 			return select_match;
 		}
@@ -695,7 +695,7 @@ int html_tag::select_attribute(const css_attribute_selector& sel)
 		break;
 
 	case attribute_ends_with_string: // $=
-		if (sel.value != "" && match(attr_value, -(int)sel.value.size(), sel.value))
+		if (!sel.value.empty() && match(attr_value, -(int)sel.value.size(), sel.value))
 		{
 			return select_match;
 		}
@@ -1044,7 +1044,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 	list_marker lm;
 
 	size img_size;
-	if (css().get_list_style_image() != "")
+	if (!css().get_list_style_image().empty())
 	{
 		lm.image   = css().get_list_style_image();
 		lm.baseurl = css().get_list_style_image_baseurl().c_str();

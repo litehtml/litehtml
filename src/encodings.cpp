@@ -1718,7 +1718,7 @@ bool prescan_get_attribute(const string& str, inout int& index, out string& name
 
 	// 4.
 step_4:
-	if (str[index] == '=' && name != "")
+	if (str[index] == '=' && !name.empty())
 	{
 		increment(index, str);
 		goto process_value;

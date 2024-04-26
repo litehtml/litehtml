@@ -152,7 +152,7 @@ css_attribute_selector parse_attribute_selector(const css_token& block)
 	// <wq-name>
 	skip_whitespace(tokens, index);
 	wq_name wq_name = parse_wq_name(tokens, index);
-	if (wq_name.name == "") return {};
+	if (wq_name.name.empty()) return {};
 
 	skip_whitespace(tokens, index);
 	if (index == (int)tokens.size()) // [name]
@@ -311,7 +311,7 @@ an_b parse_an_b(string s)
 	}
 
 	trim(str_b); // spaces after n are allowed: 2n + 3
-	if (str_b != "")
+	if (!str_b.empty())
 	{
 		if (str_b[0] == '+' || str_b[0] == '-')
 			while (is_whitespace(str_b[1])) str_b.erase(1, 1); // spaces after sign are allowed
@@ -559,7 +559,7 @@ css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens
 	// <type-selector>?
 	wq_name wq_name = parse_type_selector(tokens, index);
 	selector->m_prefix = _id(wq_name.prefix);
-	selector->m_tag    = _id(wq_name.name != "" ? wq_name.name : "*");
+	selector->m_tag    = _id(!wq_name.name.empty() ? wq_name.name : "*");
 
 	// <subclass-selector>*
 	while (css_attribute_selector sel = parse_subclass_selector(tokens, index))
@@ -645,7 +645,7 @@ bool has_selector(const css_selector& selector, attr_select_type type, const str
 {
 	for (const auto& sel : selector.m_right.m_attrs)
 	{
-		if (sel.type == type && (name == "" || equal_i(_s(sel.name), name)))
+		if (sel.type == type && (name.empty() || equal_i(_s(sel.name), name)))
 			return true;
 	}
 	

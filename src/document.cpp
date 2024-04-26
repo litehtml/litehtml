@@ -68,12 +68,12 @@ document::ptr document::createFromString(
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
-	if (master_styles != "")
+	if (!master_styles.empty())
 	{
 		doc->m_master_css.parse_css_stylesheet(master_styles, "", doc);
 		doc->m_master_css.sort_selectors();
 	}
-	if (user_styles != "")
+	if (!user_styles.empty())
 	{
 		doc->m_user_css.parse_css_stylesheet(user_styles, "", doc);
 		doc->m_user_css.sort_selectors();
@@ -96,7 +96,7 @@ document::ptr document::createFromString(
 		for (const auto& css : doc->m_css)
 		{
 			media_query_list_list::ptr media;
-			if (css.media != "")
+			if (!css.media.empty())
 			{
 				auto mq_list = parse_media_query_list(css.media, doc);
 				media = make_shared<media_query_list_list>();
