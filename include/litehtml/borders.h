@@ -39,6 +39,7 @@ namespace litehtml
 		border()
 		{
 			width = 0;
+			style = border_style_none;
 		}
 		border(const border& val)
 		{
