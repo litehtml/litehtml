@@ -109,7 +109,7 @@ wq_name parse_type_selector(const css_token_vector& tokens, int& index)
 		index++;
 		string name = tok.type == IDENT ? tok.name : "*";
 		// type selector is always ASCII-case-insensitive for HTML documents, regardless of document mode (quirks/no quirks)
-		return { prefix, lowcase(name) };
+		return { lowcase(prefix), lowcase(name) };
 	}
 	// restore index to before <ns-prefix> if failed to parse <ident-token> or '*'
 	index = start;
@@ -567,7 +567,7 @@ css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens
 	// <type-selector>?
 	wq_name wq_name = parse_type_selector(tokens, index);
 	selector->m_prefix = _id(wq_name.prefix);
-	selector->m_tag    = _id(wq_name.name != "" ? wq_name.name : "*");
+	selector->m_tag    = _id(wq_name.name);
 
 	// <subclass-selector>*
 	while (css_attribute_selector sel = parse_subclass_selector(tokens, index))
@@ -587,6 +587,9 @@ css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens
 	// [..]!  "must produce at least one value"  https://www.w3.org/TR/css-values-4/#mult-req
 	if (selector->m_tag == empty_id && selector->m_attrs.empty())
 		return nullptr;
+
+	if (selector->m_tag == empty_id)
+		selector->m_tag = star_id;
 
 	return selector;
 }
