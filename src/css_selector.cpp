@@ -429,7 +429,7 @@ bool is_supported_simple_pseudo_class(const string& name)
 		// User Action Pseudo-classes  https://www.w3.org/TR/selectors-4/#useraction-pseudos
 		"hover", "active", "focus", "focus-visible", "focus-within",
 		// Tree-Structural pseudo-classes  https://www.w3.org/TR/selectors-4/#structural-pseudos
-		"root", "empty", "first-child", "last-child", "only-child", "fist-of-type", "last-of-type", "only-of-type",
+		"root", "empty", "first-child", "last-child", "only-child", "first-of-type", "last-of-type", "only-of-type",
 	};
 	return supported_simple_pseudo_classes.count(lowcase(name)) == 1;
 }
