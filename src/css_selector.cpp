@@ -267,9 +267,9 @@ struct an_b
 };
 
 // NOTE: "+ 5" is not valid, and strtol correctly fails to parse it
-bool to_int(const string& s, int& number)
+bool to_int(string s, int& number)
 {
-	if (s.empty()) return false;
+	if (s == "") return false;
 
 	const char* ptr = s.c_str();
 	char* end;
