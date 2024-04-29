@@ -153,6 +153,7 @@ STRING_ID(
 	_nth_of_type_,
 	_nth_last_child_,
 	_nth_last_of_type_,
+	_is_,
 	_not_,
 	_lang_,
 

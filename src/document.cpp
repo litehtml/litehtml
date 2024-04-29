@@ -58,6 +58,14 @@ document::ptr document::createFromString(
 	// Parse document into GumboOutput
 	GumboOutput* output = doc->parse_html(str);
 
+	// mode must be set before doc->create_node because it is used in html_tag::set_attr
+	switch (output->document->v.document.doc_type_quirks_mode)
+	{
+	case GUMBO_DOCTYPE_NO_QUIRKS:      doc->m_mode = no_quirks_mode;      break;
+	case GUMBO_DOCTYPE_QUIRKS:         doc->m_mode = quirks_mode;         break;
+	case GUMBO_DOCTYPE_LIMITED_QUIRKS: doc->m_mode = limited_quirks_mode; break;
+	}
+
 	// Create litehtml::elements.
 	elements_list root_elements;
 	doc->create_node(output->root, root_elements, true);
@@ -65,15 +73,16 @@ document::ptr document::createFromString(
 	{
 		doc->m_root = root_elements.back();
 	}
+
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
 
-	if (!master_styles.empty())
+	if (master_styles != "")
 	{
 		doc->m_master_css.parse_css_stylesheet(master_styles, "", doc);
 		doc->m_master_css.sort_selectors();
 	}
-	if (!user_styles.empty())
+	if (user_styles != "")
 	{
 		doc->m_user_css.parse_css_stylesheet(user_styles, "", doc);
 		doc->m_user_css.sort_selectors();
@@ -96,7 +105,7 @@ document::ptr document::createFromString(
 		for (const auto& css : doc->m_css)
 		{
 			media_query_list_list::ptr media;
-			if (!css.media.empty())
+			if (css.media != "")
 			{
 				auto mq_list = parse_media_query_list(css.media, doc);
 				media = make_shared<media_query_list_list>();

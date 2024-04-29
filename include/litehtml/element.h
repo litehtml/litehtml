@@ -105,6 +105,7 @@ namespace litehtml
 
 		virtual void				get_text(string& text);
 		virtual void				parse_attributes();
+		virtual int					select(const css_selector::vector& selector_list, bool apply_pseudo = true);
 		virtual int					select(const string& selector);
 		virtual int					select(const css_selector& selector, bool apply_pseudo = true);
 		virtual int					select(const css_element_selector& selector, bool apply_pseudo = true);
@@ -113,8 +114,8 @@ namespace litehtml
 		virtual element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
 		virtual element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
 		virtual void				get_content_size(size& sz, int max_width);
-		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type) const;
-		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const;
+		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list = {}) const;
+		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list = {}) const;
 		virtual bool				is_only_child(const element::ptr& el, bool of_type) const;
 		virtual void				add_style(const style& style);
 		virtual const background*	get_background(bool own_only = false);

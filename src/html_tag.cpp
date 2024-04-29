@@ -63,57 +63,56 @@ void litehtml::html_tag::clearRecursive()
 	m_children.clear();
 }
 
-litehtml::string_id litehtml::html_tag::id() const
+string_id html_tag::id() const
 {
 	return m_id;
 }
 
-litehtml::string_id litehtml::html_tag::tag() const
+string_id html_tag::tag() const
 {
 	return m_tag;
 }
 
-const char* litehtml::html_tag::get_tagName() const
+const char* html_tag::get_tagName() const
 {
 	return _s(m_tag).c_str();
 }
 
-void litehtml::html_tag::set_tagName( const char* _tag )
+void html_tag::set_tagName( const char* tag )
 {
-	string tag = _tag;
-	lcase(tag);
-	m_tag = _id(tag);
+	m_tag = _id(lowcase(tag));
 }
 
-void litehtml::html_tag::set_attr( const char* _name, const char* _val )
+void html_tag::set_attr( const char* _name, const char* _val )
 {
-	if(_name && _val)
+	if (_name && _val)
 	{
-		string name = _name;
-		lcase(name);
+		// attribute names in attribute selector are matched ASCII case-insensitively regardless of document mode
+		string name = lowcase(_name);
+		// m_attrs has all attribute values, including class and id, in their original case
+		// because in attribute selector values are matched case-sensitively even in quirks mode
 		m_attrs[name] = _val;
 
-		if( name == "class" )
+		if (name == "class")
 		{
 			string val = _val;
-			// class names are matched case-insensitively in quirks mode
-			// we match them case-insensitively in all modes (same for id)
-			lcase(val);
-			m_str_classes.resize( 0 );
-			split_string( val, m_str_classes, " " );
+			// class names in class selector (.xxx) are matched ASCII case-insensitively in quirks mode
+			if (get_document()->mode() == quirks_mode) lcase(val);
+			m_str_classes = split_string(val, whitespace, "", "");
 			m_classes.clear();
-			for (auto& cls : m_str_classes) m_classes.push_back(_id(cls));
+			for (auto cls : m_str_classes) m_classes.push_back(_id(cls));
 		}
 		else if (name == "id")
 		{
 			string val = _val;
-			lcase(val);
+			// ids in id selector (#xxx) are matched ASCII case-insensitively in quirks mode
+			if (get_document()->mode() == quirks_mode) lcase(val);
 			m_id = _id(val);
 		}
 	}
 }
 
-const char* litehtml::html_tag::get_attr( const char* name, const char* def ) const
+const char* html_tag::get_attr( const char* name, const char* def ) const
 {
 	auto attr = m_attrs.find(name);
 	if(attr != m_attrs.end())
@@ -126,7 +125,7 @@ const char* litehtml::html_tag::get_attr( const char* name, const char* def ) co
 litehtml::elements_list litehtml::html_tag::select_all(const string& selector )
 {
 	css_selector sel;
-	sel.parse(selector);
+	sel.parse(selector, get_document()->mode());
 	
 	return select_all(sel);
 }
@@ -155,7 +154,7 @@ void litehtml::html_tag::select_all(const css_selector& selector, elements_list&
 litehtml::element::ptr litehtml::html_tag::select_one( const string& selector )
 {
 	css_selector sel;
-	sel.parse(selector);
+	sel.parse(selector, get_document()->mode());
 
 	return select_one(sel);
 }
@@ -378,7 +377,7 @@ int	html_tag::select(const css_selector::vector& selector_list, bool apply_pseud
 int litehtml::html_tag::select(const string& selector)
 {
 	css_selector sel;
-	sel.parse(selector);
+	sel.parse(selector, get_document()->mode());
 	return select(sel, true);
 }
 
@@ -591,7 +590,7 @@ int html_tag::select_pseudoclass(const css_attribute_selector& sel)
 		switch (sel.name)
 		{
 		case _nth_child_:
-			if (!el_parent->is_nth_child(shared_from_this(), num, off, false))
+			if (!el_parent->is_nth_child(shared_from_this(), num, off, false, sel.selector_list))
 			{
 				return select_no_match;
 			}
@@ -603,7 +602,7 @@ int html_tag::select_pseudoclass(const css_attribute_selector& sel)
 			}
 			break;
 		case _nth_last_child_:
-			if (!el_parent->is_nth_last_child(shared_from_this(), num, off, false))
+			if (!el_parent->is_nth_last_child(shared_from_this(), num, off, false, sel.selector_list))
 			{
 				return select_no_match;
 			}
@@ -620,6 +619,12 @@ int html_tag::select_pseudoclass(const css_attribute_selector& sel)
 
 	}
 	break;
+	case _is_:
+		if (!select(sel.selector_list, true))
+		{
+			return select_no_match;
+		}
+		break;
 	case _not_:
 		if (select(sel.selector_list, true))
 		{
@@ -664,7 +669,7 @@ int html_tag::select_attribute(const css_attribute_selector& sel)
 		break;
 
 	case attribute_contains_string: // *=
-		if (!sel.value.empty() && contains(attr_value, sel.value))
+		if (sel.value != "" && contains(attr_value, sel.value))
 		{
 			return select_match;
 		}
@@ -672,14 +677,14 @@ int html_tag::select_attribute(const css_attribute_selector& sel)
 
 	// Attribute value is a whitespace-separated list of words, one of which is exactly sel.value
 	case attribute_contains_word: // ~=
-		if (!sel.value.empty() && contains(split_string(attr_value), sel.value))
+		if (sel.value != "" && contains(split_string(attr_value), sel.value))
 		{
 			return select_match;
 		}
 		break;
 
 	case attribute_starts_with_string: // ^=
-		if (!sel.value.empty() && match(attr_value, 0, sel.value))
+		if (sel.value != "" && match(attr_value, 0, sel.value))
 		{
 			return select_match;
 		}
@@ -695,7 +700,7 @@ int html_tag::select_attribute(const css_attribute_selector& sel)
 		break;
 
 	case attribute_ends_with_string: // $=
-		if (!sel.value.empty() && match(attr_value, -(int)sel.value.size(), sel.value))
+		if (sel.value != "" && match(attr_value, -(int)sel.value.size(), sel.value))
 		{
 			return select_match;
 		}
@@ -1044,7 +1049,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 	list_marker lm;
 
 	size img_size;
-	if (!css().get_list_style_image().empty())
+	if (css().get_list_style_image() != "")
 	{
 		lm.image   = css().get_list_style_image();
 		lm.baseurl = css().get_list_style_image_baseurl().c_str();
@@ -1182,20 +1187,21 @@ litehtml::string litehtml::html_tag::get_list_marker_text(int index)
 	}
 }
 
-bool litehtml::html_tag::is_nth_child(const element::ptr& el, int num, int off, bool of_type) const
+bool html_tag::is_nth_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list) const
 {
 	int idx = 1;
 	for(const auto& child : m_children)
 	{
 		if(child->css().get_display() != display_inline_text)
 		{
-			if( (!of_type) || (of_type && el->tag() == child->tag()) )
+			if( (!of_type && selector_list.empty()) || 
+				(of_type && child->tag() == el->tag()) || child->select(selector_list) )
 			{
 				if(el == child)
 				{
 					if(num != 0)
 					{
-						if((idx - off) >= 0 && (idx - off) % num == 0)
+						if((idx - off) * num >= 0 && (idx - off) % num == 0)
 						{
 							return true;
 						}
@@ -1214,20 +1220,21 @@ bool litehtml::html_tag::is_nth_child(const element::ptr& el, int num, int off, 
 	return false;
 }
 
-bool litehtml::html_tag::is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const
+bool html_tag::is_nth_last_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list) const
 {
 	int idx = 1;
 	for(auto child = m_children.rbegin(); child != m_children.rend(); child++)
 	{
 		if((*child)->css().get_display() != display_inline_text)
 		{
-			if( !of_type || (of_type && el->tag() == (*child)->tag()) )
+			if( (!of_type && selector_list.empty()) ||
+				(of_type && (*child)->tag() == el->tag()) || (*child)->select(selector_list) )
 			{
 				if(el == (*child))
 				{
 					if(num != 0)
 					{
-						if((idx - off) >= 0 && (idx - off) % num == 0)
+						if((idx - off) * num >= 0 && (idx - off) % num == 0)
 						{
 							return true;
 						}

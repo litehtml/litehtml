@@ -39,6 +39,13 @@ namespace litehtml
 		template<class T> T& get() { return std::get<T>(*this); }
 	};
 
+	enum document_mode
+	{
+		no_quirks_mode,
+		quirks_mode,
+		limited_quirks_mode
+	};
+
 	const unsigned int font_decoration_none			= 0x00;
 	const unsigned int font_decoration_underline	= 0x01;
 	const unsigned int font_decoration_linethrough	= 0x02;
