@@ -30,8 +30,8 @@ namespace litehtml
 	string index_value(int index, const string& strings, char delim = ';');
 	bool value_in_list(const string& val, const string& strings, char delim = ';');
 	string::size_type find_close_bracket(const string& s, string::size_type off, char open_b = '(', char close_b = ')');
-	void split_string(const string& str, string_vector& tokens, const string& delims = whitespace, const string& delims_preserve = "", const string& quote = "\"");
-	string_vector split_string(const string& str, const string& delims = whitespace, const string& delims_preserve = "", const string& quote = "\"");
+	void split_string(const string& str, string_vector& tokens, const string& delims = whitespace, const string& delims_preserve = "", const string& quote = "\"", const string& chars_to_trim = "");
+	string_vector split_string(const string& str, const string& delims = whitespace, const string& delims_preserve = "", const string& quote = "\"", const string& chars_to_trim = "");
 	void join_string(string& str, const string_vector& tokens, const string& delims);
 	double t_strtod(const char* string, char** endPtr = nullptr);
 	string get_escaped_string(const string& in_str);

@@ -7,6 +7,13 @@
 
 namespace litehtml
 {
+	enum grid_auto_flow
+	{
+		grid_auto_flow_row = 0x1,
+		grid_auto_flow_column = 0x2,
+		grid_auto_flow_dense = 0x10
+	};
+
 	// <grid-line> =
 	//   auto                                                |
 	//   <custom-ident>                                      |
@@ -265,6 +272,12 @@ namespace litehtml
 
 		std::variant<none, track_list, auto_track_list, subgrid> value;
 
+		bool from_tokens(const css_token_vector& tokens);
+	};
+
+	struct css_grid_auto_row_columns
+	{
+		std::vector<css_grid_template::track_size> value;
 		bool from_tokens(const css_token_vector& tokens);
 	};
 }

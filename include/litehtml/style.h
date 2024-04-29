@@ -26,7 +26,8 @@ namespace litehtml
 		css_token_vector,
 		css_grid_line,
 		css_grid_template_areas,
-		css_grid_template
+		css_grid_template,
+		css_grid_auto_row_columns
 	>
 	{
 		bool m_important = false;
@@ -94,7 +95,9 @@ namespace litehtml
 
 		void parse_grid_row_col(string_id name, const css_token_vector& tokens, bool important);
 		void parse_grid_area(const css_token_vector& tokens, bool important);
-		void parse_grid_template(const css_token_vector& tokens, bool important);
+		bool parse_grid_template(const css_token_vector& tokens, bool important);
+		void parse_grid(const css_token_vector& tokens, bool important);
+		void parse_grid_auto_flow(const css_token_vector& tokens, bool important);
 
 		void add_parsed_property(string_id name, const property_value& propval);
 		void add_length_property(string_id name, css_token val, string keywords, int options, bool important);

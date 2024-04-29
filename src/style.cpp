@@ -529,6 +529,56 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		parse_grid_template(value, important);
 		break;
 
+	case _grid_auto_flow_:
+		parse_grid_auto_flow(value, important);
+		break;
+
+	case _grid_:
+		parse_grid(value, important);
+		break;
+
+	case _grid_auto_columns_:
+	case _grid_auto_rows_:
+		{
+			css_grid_auto_row_columns auto_rc;
+			if(auto_rc.from_tokens(value))
+			{
+				add_parsed_property(name, property_value(auto_rc, important));
+			}
+		}
+		break;
+
+	case _row_gap_:
+	case _column_gap_:
+		add_length_property(name, val, "normal", f_number|f_length_percentage|f_positive, important);
+		break;
+
+	case _gap_:
+		{
+			if(value.size() == 1)
+			{
+				css_length length;
+				if (length.from_token(value[0], f_number|f_length_percentage|f_positive, "normal"))
+				{
+					add_parsed_property(_row_gap_, property_value(length, important));
+					add_parsed_property(_column_gap_, property_value(length, important));
+				}
+			} else if(value.size() == 2)
+			{
+				css_length row_gap;
+				css_length column_gap;
+				if (row_gap.from_token(value[0], f_number|f_length_percentage|f_positive, "normal"))
+				{
+					if (column_gap.from_token(value[1], f_number|f_length_percentage|f_positive, "normal"))
+					{
+						add_parsed_property(_row_gap_, property_value(row_gap, important));
+						add_parsed_property(_column_gap_, property_value(column_gap, important));
+					}
+				}
+			}
+		}
+		break;
+
 	//  =============================  CUSTOM PROPERTY  =============================
 	
 	// https://drafts.csswg.org/css-variables-2/#defining-variables
@@ -1627,18 +1677,18 @@ void style::parse_grid_area(const css_token_vector &tokens, bool important)
 // none |
 // [ <'grid-template-rows'> / <'grid-template-columns'> ] |
 // [ <line-names>? <string> <track-size>? <line-names>? ]+ [ / <explicit-track-list> ]?
-void style::parse_grid_template(const css_token_vector &tokens, bool important)
+bool style::parse_grid_template(const css_token_vector &tokens, bool important)
 {
 	if(tokens.size() == 1 && tokens[0].type == IDENT && tokens[0].name == "none")
 	{
 		add_parsed_property(_grid_template_columns_, property_value(css_grid_template(), important));
 		add_parsed_property(_grid_template_rows_, property_value(css_grid_template(), important));
 		add_parsed_property(_grid_template_areas_, property_value(css_grid_template_areas(), important));
-		return;
+		return false;
 	}
 
 	auto parts = parse_slash_separated_list(tokens);
-	if(parts.empty() || parts.size() > 2) return;
+	if(parts.empty() || parts.size() > 2) return false;
 
 	if(parts.size() == 2)
 	{
@@ -1651,7 +1701,7 @@ void style::parse_grid_template(const css_token_vector &tokens, bool important)
 				add_parsed_property(_grid_template_columns_, property_value(cols, important));
 				add_parsed_property(_grid_template_rows_, property_value(rows, important));
 				add_parsed_property(_grid_template_areas_, property_value(css_grid_template_areas(), important));
-				return;
+				return false;
 			}
 		}
 	}
@@ -1686,10 +1736,10 @@ void style::parse_grid_template(const css_token_vector &tokens, bool important)
 				}
 				tl.value.emplace_back(ln);
 			} else
-				return;
+				return false;
 		} else if((*p_iter).type == STRING)
 		{
-			if(!areas.from_token((*p_iter))) return;
+			if(!areas.from_token((*p_iter))) return false;
 		} else
 		{
 			css_grid_template::track_size ts;
@@ -1697,22 +1747,112 @@ void style::parse_grid_template(const css_token_vector &tokens, bool important)
 			{
 				tl.value.emplace_back(ts);
 			} else
-				return;
+				return false;
 		}
 	}
 
-	if(areas.is_none()) return;
+	if(areas.is_none()) return false;
 
 	css_grid_template rows;
 	rows.value = tl;
 	css_grid_template cols;
 	if(parts.size() == 2)
 	{
-		if(!cols.from_tokens(parts[1])) return;
+		if(!cols.from_tokens(parts[1])) return false;
 	}
 	add_parsed_property(_grid_template_columns_, property_value(cols, important));
 	add_parsed_property(_grid_template_rows_, property_value(rows, important));
 	add_parsed_property(_grid_template_areas_, property_value(areas, important));
+	return true;
+}
+
+// <'grid-template'> |
+// <'grid-template-rows'> / [ auto-flow && dense? ] <'grid-auto-columns'>? |
+// [ auto-flow && dense? ] <'grid-auto-rows'>? / <'grid-template-columns'>
+void style::parse_grid(const css_token_vector &tokens, bool important)
+{
+	if(parse_grid_template(tokens, important)) return;
+
+	auto parts = parse_slash_separated_list(tokens);
+	if(parts.size() != 2) return;
+
+	// [ auto-flow && dense? ] <'grid-auto-rows'>? / <'grid-template-columns'>
+	if(parts[0][0].type == IDENT && is_one_of(parts[0][0].name, "auto-flow", "dense"))
+	{
+		css_grid_template cols;
+		if(!cols.from_tokens(parts[1])) return;
+		int auto_flow = 0;
+		if(parts[0][0].name == "auto-flow")
+		{
+			parts[0].erase(parts[0].begin());
+			auto_flow = grid_auto_flow_row;
+		}
+		if(parts[0][0].type == IDENT && parts[0][0].name == "dense")
+		{
+			parts[0].erase(parts[0].begin());
+			auto_flow = grid_auto_flow_dense;
+		}
+		if(!(auto_flow & grid_auto_flow_row)) return;
+
+		css_grid_auto_row_columns auto_rows;
+		if(!auto_rows.from_tokens(parts[0])) return;
+
+		add_parsed_property(_grid_auto_flow_, property_value(auto_flow, important));
+		add_parsed_property(_grid_auto_rows_, property_value(auto_rows, important));
+		add_parsed_property(_grid_template_columns_, property_value(cols, important));
+	}
+		// <'grid-template-rows'> / [ auto-flow && dense? ] <'grid-auto-columns'>?
+	else if(parts[1][0].type == IDENT && is_one_of(parts[1][0].name, "auto-flow", "dense"))
+	{
+		css_grid_template rows;
+		if(!rows.from_tokens(parts[0])) return;
+		int auto_flow = 0;
+		if(parts[1][0].name == "auto-flow")
+		{
+			parts[1].erase(parts[0].begin());
+			auto_flow = grid_auto_flow_column;
+		}
+		if(parts[1][0].type == IDENT && parts[1][0].name == "dense")
+		{
+			parts[1].erase(parts[1].begin());
+			auto_flow = grid_auto_flow_dense;
+		}
+		if(!(auto_flow & grid_auto_flow_column)) return;
+
+		css_grid_auto_row_columns auto_cols;
+		if(!auto_cols.from_tokens(parts[1])) return;
+
+		add_parsed_property(_grid_auto_flow_, property_value(auto_flow, important));
+		add_parsed_property(_grid_auto_columns_, property_value(auto_cols, important));
+		add_parsed_property(_grid_template_rows_, property_value(rows, important));
+	}
+}
+
+// [ row | column ] || dense
+void style::parse_grid_auto_flow(const css_token_vector &tokens, bool important)
+{
+	if(tokens.empty() || tokens.size() > 2) return;
+	int auto_flow = 0;
+	for(const auto& item : tokens)
+	{
+		if(item.type == IDENT)
+		{
+			if(item.name == "row")
+			{
+				if(auto_flow & (grid_auto_flow_row | grid_auto_flow_column)) return;
+				auto_flow |= grid_auto_flow_row;
+			} else if(item.name == "column")
+			{
+				if(auto_flow & (grid_auto_flow_row | grid_auto_flow_column)) return;
+				auto_flow |= grid_auto_flow_column;
+			} else if(item.name == "dense")
+			{
+				if(auto_flow & grid_auto_flow_dense) return;
+				auto_flow |= grid_auto_flow_dense;
+			}
+		}
+	}
+	add_parsed_property(_grid_auto_flow_, property_value(auto_flow, important));
 }
 
 } // namespace litehtml

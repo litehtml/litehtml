@@ -522,3 +522,17 @@ bool litehtml::css_grid_template::fit_content::parse(const litehtml::css_token &
 	}
 	return false;
 }
+
+bool litehtml::css_grid_auto_row_columns::from_tokens(const litehtml::css_token_vector &tokens)
+{
+	for(auto iter = tokens.cbegin(); iter != tokens.cend(); ++iter)
+	{
+		css_grid_template::track_size ts;
+		if(ts.parse(iter, tokens.cend()))
+		{
+			value.emplace_back(ts);
+		} else
+			return false;
+	}
+	return true;
+}

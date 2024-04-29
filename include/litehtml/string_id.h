@@ -353,6 +353,13 @@ STRING_ID(
 	_grid_template_rows_,
 	_grid_template_columns_,
 	_grid_template_,
+	_grid_,
+	_grid_auto_flow_,
+	_grid_auto_rows_,
+	_grid_auto_columns_,
+	_gap_,
+	_row_gap_,
+	_column_gap_
 )
 #undef STRING_ID
 extern const string_id empty_id; // _id("")
