@@ -152,7 +152,7 @@ css_attribute_selector parse_attribute_selector(const css_token& block)
 	// <wq-name>
 	skip_whitespace(tokens, index);
 	wq_name wq_name = parse_wq_name(tokens, index);
-	if (wq_name.name.empty()) return {};
+	if (wq_name.name == "") return {};
 
 	// attribute name in attribute selector is ASCII case-insensitive for HTML documents, regardless of document mode (quirks/no quirks)
 	auto prefix = lowcase(wq_name.prefix);
@@ -313,7 +313,7 @@ an_b parse_an_b(string s)
 	}
 
 	trim(str_b); // spaces after n are allowed: 2n + 3
-	if (!str_b.empty())
+	if (str_b != "")
 	{
 		if (str_b[0] == '+' || str_b[0] == '-')
 			while (is_whitespace(str_b[1])) str_b.erase(1, 1); // spaces after sign are allowed
@@ -660,7 +660,7 @@ bool has_selector(const css_selector& selector, attr_select_type type, const str
 {
 	for (const auto& sel : selector.m_right.m_attrs)
 	{
-		if (sel.type == type && (name.empty() || equal_i(_s(sel.name), name)))
+		if (sel.type == type && (name == "" || equal_i(_s(sel.name), name)))
 			return true;
 	}
 	
