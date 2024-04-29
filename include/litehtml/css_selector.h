@@ -207,7 +207,7 @@ namespace litehtml
 		style::ptr					m_style;
 
 	public:
-		bool parse(const string& text, mode mode);
+		bool parse(const string& text, document_mode mode);
 		void calc_specificity();
 		bool is_media_valid() const;
 		void add_media_to_doc(document* doc) const;
@@ -278,7 +278,7 @@ namespace litehtml
 		forbid_pseudo_elements = 1 << 1,
 	};
 
-	css_selector::vector parse_selector_list(const css_token_vector& tokens, int options, mode mode);
+	css_selector::vector parse_selector_list(const css_token_vector& tokens, int options, document_mode mode);
 }
 
 #endif  // LH_CSS_SELECTOR_H

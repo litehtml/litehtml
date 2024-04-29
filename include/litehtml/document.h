@@ -66,13 +66,13 @@ namespace litehtml
 		string								m_lang;
 		string								m_culture;
 		string								m_text;
-		mode								m_mode = no_quirks_mode;
+		document_mode						m_mode = no_quirks_mode;
 	public:
 		document(document_container* objContainer);
 		virtual ~document();
 
 		document_container*				container()	{ return m_container; }
-		mode							mode() const { return m_mode; }
+		document_mode					mode() const { return m_mode; }
 		uint_ptr						get_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);
 		int								render(int max_width, render_type rt = render_all);
 		void							draw(uint_ptr hdc, int x, int y, const position* clip);

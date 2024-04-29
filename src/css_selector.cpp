@@ -343,7 +343,7 @@ int find_of_keyword(const css_token_vector& tokens)
 // :nth-of-type(An+B)            https://www.w3.org/TR/selectors-4/#the-nth-of-type-pseudo
 // :nth-last-of-type(An+B)
 //
-css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword, mode mode)
+css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword, document_mode mode)
 {
 	css_attribute_selector selector(select_pseudo_class, lowcase(token.name));
 
@@ -382,7 +382,7 @@ css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword, 
 	return selector;
 }
 
-css_attribute_selector parse_function_pseudo_class(const css_token& token, mode mode)
+css_attribute_selector parse_function_pseudo_class(const css_token& token, document_mode mode)
 {
 	string name = lowcase(token.name);
 	if (name == "nth-child" || name == "nth-last-child")
@@ -438,7 +438,7 @@ bool is_supported_simple_pseudo_class(const string& name)
 // <pseudo-class-selector> = ':' <ident-token> |
 //                           ':' <function-token> <any-value> ')'
 //                           where <ident-token> is not before, after, first-line or first-letter
-css_attribute_selector parse_pseudo_class(const css_token_vector& tokens, int& index, mode mode)
+css_attribute_selector parse_pseudo_class(const css_token_vector& tokens, int& index, document_mode mode)
 {
 	const auto& a = at(tokens, index);
 	const auto& b = at(tokens, index + 1);
@@ -468,7 +468,7 @@ css_attribute_selector parse_pseudo_class(const css_token_vector& tokens, int& i
 // <subclass-selector> = <id-selector> | <class-selector> | <attribute-selector> | <pseudo-class-selector>
 // <id-selector> = <hash-token> with hash_type == ID
 // <class-selector> = '.' <ident-token>
-css_attribute_selector parse_subclass_selector(const css_token_vector& tokens, int& index, mode mode)
+css_attribute_selector parse_subclass_selector(const css_token_vector& tokens, int& index, document_mode mode)
 {
 	css_attribute_selector selector;
 
@@ -564,7 +564,7 @@ css_attribute_selector parse_pseudo_element(const css_token_vector& tokens, int&
 // NOTE: This grammar allows pseudo-classes to go before #id and .class and [attr].
 // Whitespace is forbidden:
 // * Between any of the top-level components of a <compound-selector>
-css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens, int& index, mode mode)
+css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens, int& index, document_mode mode)
 {
 	auto selector = make_shared<css_element_selector>();
 
@@ -618,7 +618,7 @@ int parse_combinator(const css_token_vector& tokens, int& index)
 	return ws ? ' ' : 0;
 }
 
-css_selector::ptr parse_complex_selector(const css_token_vector& tokens, mode mode)
+css_selector::ptr parse_complex_selector(const css_token_vector& tokens, document_mode mode)
 {
 	int index = 0;
 	skip_whitespace(tokens, index);
@@ -674,7 +674,7 @@ bool has_selector(const css_selector& selector, attr_select_type type, const str
 // https://www.w3.org/TR/selectors-4/#selector-list
 // https://www.w3.org/TR/selectors-4/#forgiving-selector
 // Parse comma-separated list of complex selectors.
-css_selector::vector parse_selector_list(const css_token_vector& tokens, int options, mode mode)
+css_selector::vector parse_selector_list(const css_token_vector& tokens, int options, document_mode mode)
 {
 	// NOTE: this is unnecessary: "If input contains only <whitespace-token>s, return an empty list."
 
@@ -703,7 +703,7 @@ css_selector::vector parse_selector_list(const css_token_vector& tokens, int opt
 	return result;
 }
 
-bool css_selector::parse(const string& text, mode mode)
+bool css_selector::parse(const string& text, document_mode mode)
 {
 	auto tokens = normalize(text, f_componentize);
 	auto ptr = parse_complex_selector(tokens, mode);

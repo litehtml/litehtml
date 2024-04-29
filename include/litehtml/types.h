@@ -39,7 +39,7 @@ namespace litehtml
 		template<class T> T& get() { return std::get<T>(*this); }
 	};
 
-	enum mode
+	enum document_mode
 	{
 		no_quirks_mode,
 		quirks_mode,
