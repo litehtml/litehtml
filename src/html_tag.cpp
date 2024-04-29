@@ -1200,7 +1200,7 @@ bool litehtml::html_tag::is_nth_child(const element::ptr& el, int num, int off, 
 				{
 					if(num != 0)
 					{
-						if((idx - off) >= 0 && (idx - off) % num == 0)
+						if((idx - off) * num >= 0 && (idx - off) % num == 0)
 						{
 							return true;
 						}
@@ -1232,7 +1232,7 @@ bool litehtml::html_tag::is_nth_last_child(const element::ptr& el, int num, int 
 				{
 					if(num != 0)
 					{
-						if((idx - off) >= 0 && (idx - off) % num == 0)
+						if((idx - off) * num >= 0 && (idx - off) % num == 0)
 						{
 							return true;
 						}
