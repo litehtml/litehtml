@@ -4,7 +4,7 @@
 
 #define out
 #define inout
-#define countof(a) int(sizeof(a)/sizeof(a[0]))
+#define countof(a) int(sizeof(a)/sizeof((a)[0]))
 
 namespace litehtml
 {
@@ -1632,10 +1632,10 @@ struct {
 encoding get_encoding(string label)
 {
 	lcase(trim(label));
-	for (int i = 0; i < countof(labels); i++)
+	for (const auto& l : labels)
 	{
-		if (label == labels[i].name)
-			return labels[i].coding;
+		if (label == l.name)
+			return l.coding;
 	}
 	return encoding::null;
 }
@@ -1718,7 +1718,7 @@ bool prescan_get_attribute(const string& str, inout int& index, out string& name
 
 	// 4.
 step_4:
-	if (str[index] == '=' && name != "")
+	if (str[index] == '=' && !name.empty())
 	{
 		increment(index, str);
 		goto process_value;

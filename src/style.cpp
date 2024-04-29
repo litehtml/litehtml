@@ -495,7 +495,7 @@ void style::parse_list_style(const css_token_vector& tokens, string baseurl, boo
 	// initial values:  https://developer.mozilla.org/en-US/docs/Web/CSS/list-style#formal_definition
 	int type     = list_style_type_disc;
 	int position = list_style_position_outside;
-	string image = ""; // none
+	string image; // none
 
 	bool type_found = false;
 	bool position_found = false;
