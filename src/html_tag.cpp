@@ -590,7 +590,7 @@ int html_tag::select_pseudoclass(const css_attribute_selector& sel)
 		switch (sel.name)
 		{
 		case _nth_child_:
-			if (!el_parent->is_nth_child(shared_from_this(), num, off, false))
+			if (!el_parent->is_nth_child(shared_from_this(), num, off, false, sel.selector_list))
 			{
 				return select_no_match;
 			}
@@ -602,7 +602,7 @@ int html_tag::select_pseudoclass(const css_attribute_selector& sel)
 			}
 			break;
 		case _nth_last_child_:
-			if (!el_parent->is_nth_last_child(shared_from_this(), num, off, false))
+			if (!el_parent->is_nth_last_child(shared_from_this(), num, off, false, sel.selector_list))
 			{
 				return select_no_match;
 			}
@@ -1187,14 +1187,15 @@ litehtml::string litehtml::html_tag::get_list_marker_text(int index)
 	}
 }
 
-bool litehtml::html_tag::is_nth_child(const element::ptr& el, int num, int off, bool of_type) const
+bool html_tag::is_nth_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list) const
 {
 	int idx = 1;
 	for(const auto& child : m_children)
 	{
 		if(child->css().get_display() != display_inline_text)
 		{
-			if( (!of_type) || (of_type && el->tag() == child->tag()) )
+			if( (!of_type && selector_list.empty()) || 
+				(of_type && child->tag() == el->tag()) || child->select(selector_list) )
 			{
 				if(el == child)
 				{
@@ -1219,14 +1220,15 @@ bool litehtml::html_tag::is_nth_child(const element::ptr& el, int num, int off, 
 	return false;
 }
 
-bool litehtml::html_tag::is_nth_last_child(const element::ptr& el, int num, int off, bool of_type) const
+bool html_tag::is_nth_last_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list) const
 {
 	int idx = 1;
 	for(auto child = m_children.rbegin(); child != m_children.rend(); child++)
 	{
 		if((*child)->css().get_display() != display_inline_text)
 		{
-			if( !of_type || (of_type && el->tag() == (*child)->tag()) )
+			if( (!of_type && selector_list.empty()) ||
+				(of_type && (*child)->tag() == el->tag()) || (*child)->select(selector_list) )
 			{
 				if(el == (*child))
 				{
