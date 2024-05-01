@@ -75,8 +75,6 @@ Bitmap draw(document::ptr doc, int width, int height)
 
 	doc->draw((uint_ptr)&bmp, 0, 0, &clip);
 
-	bmp.resize(width, height);
-
 	return bmp;
 }
 
