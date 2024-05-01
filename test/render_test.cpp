@@ -8,7 +8,6 @@
 	#include <dirent.h>
 #endif
 #include "../containers/test/test_container.h"
-#include "../containers/test/Bitmap.h"
 using namespace std;
 
 vector<string> find_htm_files();
@@ -94,7 +93,7 @@ void test(string filename)
 	}
 	test_container container(width, height, base_path);
 
-	auto doc = document::createFromString(html.c_str(), &container);
+	auto doc = document::createFromString(html, &container);
 	doc->render(width);
 	Bitmap bmp = draw(doc, doc->content_width(), doc->content_height());
 

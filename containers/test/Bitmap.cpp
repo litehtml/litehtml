@@ -44,7 +44,7 @@ void Bitmap::draw_rect(int x, int y, int _width, int _height, color color)
 	draw_line(x + _width - 1, y, x + _width - 1, y + _height, color); // right
 }
 
-void Bitmap::fill_rect(position rect, color color)
+void Bitmap::fill_rect(rect rect, color color)
 {
 	for (int y = rect.top(); y < rect.bottom(); y++)
 		for (int x = rect.left(); x < rect.right(); x++)
@@ -58,6 +58,14 @@ void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp)
 			set_pixel(x0 + x, y0 + y, bmp.get_pixel(x, y));
 }
 
+void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp, rect clip)
+{
+	for (int y = 0; y < bmp.height; y++)
+		for (int x = 0; x < bmp.width; x++)
+			if (clip.is_point_inside(x0 + x, y0 + y))
+				set_pixel(x0 + x, y0 + y, bmp.get_pixel(x, y));
+}
+
 void Bitmap::replace_color(color original, color replacement)
 {
 	for (auto& pixel : data)
@@ -68,7 +76,7 @@ void Bitmap::replace_color(color original, color replacement)
 }
 
 // find minimal rectangle containing pixels different from bgcolor
-position Bitmap::find_picture(color bgcolor)
+rect Bitmap::find_picture(color bgcolor)
 {
 	auto horz_line_empty = [&](int y) {
 		for (int x = 0; x < width; x++)
@@ -81,21 +89,21 @@ position Bitmap::find_picture(color bgcolor)
 		return true;
 	};
 
-	position pos;
+	rect rect;
 	int y;
 	for (y = 0; y < height && horz_line_empty(y); y++);
-	if (y == height) return pos; // no picture
-	pos.y = y;
+	if (y == height) return rect; // no picture
+	rect.y = y;
 	for (y = height - 1; y >= 0 && horz_line_empty(y); y--);
-	pos.height = y + 1 - pos.y;
+	rect.height = y + 1 - rect.y;
 
 	int x;
 	for (x = 0; x < width && vert_line_empty(x); x++);
-	pos.x = x;
+	rect.x = x;
 	for (x = width - 1; x >= 0 && vert_line_empty(x); x--);
-	pos.width = x + 1 - pos.x;
+	rect.width = x + 1 - rect.x;
 
-	return pos;
+	return rect;
 }
 
 void Bitmap::resize(int new_width, int new_height)
