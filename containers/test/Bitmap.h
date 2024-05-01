@@ -1,5 +1,7 @@
+#pragma once
 #include <litehtml.h>
 using namespace litehtml;
+using rect = position;
 
 // color != web_color because sizeof(web_color) != 4
 struct color
@@ -41,11 +43,12 @@ public:
 	void set_pixel(int x, int y, color color);
 	void draw_line(int x0, int y0, int x1, int y1, color color);
 	void draw_rect(int x, int y, int width, int height, color color);
-	void fill_rect(position rect, color color);
+	void fill_rect(rect rect, color color);
 	void draw_bitmap(int x, int y, const Bitmap& bmp);
+	void draw_bitmap(int x, int y, const Bitmap& bmp, rect clip);
 	void replace_color(color original, color replacement);
 
-	position find_picture(color bgcolor = white);
+	rect find_picture(color bgcolor = white);
 	void resize(int new_width, int new_height);
 	void load(string filename);
 	void save(string filename);
