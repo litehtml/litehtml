@@ -8,7 +8,7 @@ public:
 	int ascent   = 0;
 	int descent  = 0;
 	int x_height = 0;
-	Bitmap glyphs[128];
+	std::map<int, Bitmap> glyphs;
 	
 	static string font_dir;
 	static struct size_name { int size; string name; } installed_fonts[];
