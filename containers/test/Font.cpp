@@ -38,7 +38,7 @@ Font::Font(int size)
 
 Bitmap Font::get_glyph(int ch, color color)
 {
-	if (ch < 0 || ch >= 128 || glyphs[ch].width == 0)
+	if (glyphs[ch].width == 0)
 	{
 		Bitmap bmp(width, height, transparent);
 		bmp.draw_rect(1, 1, width - 2, height - 2, color);
@@ -66,7 +66,7 @@ void Font::load(string filename)
 
 	int i;
 	// parse header
-	for (i = 0; i < (int) lines.size(); i++)
+	for (i = 0; i < (int)lines.size(); i++)
 	{
 		string line = lines[i];
 		trim(line);
@@ -89,7 +89,7 @@ void Font::load(string filename)
 	// only u+NNNN: label is recognized, all others are skipped
 	auto parse_key = [&]() {
 		int ch = -1;
-		for (; i < (int) lines.size(); i++)
+		for (; i < (int)lines.size(); i++)
 		{
 			string line = lines[i];
 			trim(line);
@@ -103,7 +103,7 @@ void Font::load(string filename)
 	
 	auto parse_glyph = [&](int ch) {
 		Bitmap& glyph = glyphs[ch] = Bitmap(width, height, transparent);
-		for (int y = 0; i < (int) lines.size() && y < height; i++, y++)
+		for (int y = 0; i < (int)lines.size() && y < height; i++, y++)
 		{
 			string line = lines[i];
 			trim(line);
@@ -115,10 +115,10 @@ void Font::load(string filename)
 		}
 	};
 
-	while (i < (int) lines.size())
+	while (i < (int)lines.size())
 	{
 		int ch = parse_key();
-		if (ch < 0 || ch >= 128) break;
+		if (ch < 0) break;
 		parse_glyph(ch);
 	}
 

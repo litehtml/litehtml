@@ -27,9 +27,10 @@ void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, w
 {
 	auto bmp = (Bitmap*)hdc;
 	Font* font = (Font*)hFont;
+	utf8_to_utf32 utf32(text);
 
 	int x = pos.x;
-	for (auto p = text; *p; p++)
+	for (const char32_t* p = utf32; *p; p++)
 	{
 		Bitmap glyph = font->get_glyph(*p, color);
 		bmp->draw_bitmap(x, pos.y, glyph);
