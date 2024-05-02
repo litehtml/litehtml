@@ -1,5 +1,7 @@
 #ifndef LH_INTERNAL_H
 #define LH_INTERNAL_H
+// internal.h should not be included in header files
+// internal.h should be included after all other headers in a source file
 
 namespace litehtml
 {
