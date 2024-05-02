@@ -49,6 +49,12 @@ bool media_feature::check(const media_features& feat) const
 	case _orientation_:
 		return compare(feat.height >= feat.width ? _portrait_ : _landscape_);
 	case _aspect_ratio_:
+		// The standard calls 1/0 "a degenerate ratio" https://drafts.csswg.org/css-values-4/#ratio-value,
+		// but it doesn't specify exactly how it behaves in this context: https://drafts.csswg.org/mediaqueries-5/#aspect-ratio. 
+		// Chrome/Firefox work as expected with 1/0, for example when both width and height are nonzero
+		// (aspect-ratio < 1/0) evaluates to true. But they behave the same for 0/0, which is unexpected
+		// (0/0 is NaN, so any comparisons should evaluate to false).
+		// 0/1 is also degenerate according to the standard.
 		return feat.height ? compare(float(feat.width) / feat.height) : false;
 	case _device_aspect_ratio_:
 		return feat.device_height ? compare(float(feat.device_width) / feat.device_height) : false;
@@ -115,6 +121,8 @@ trilean media_query::check(const media_features& features) const
 	// https://drafts.csswg.org/mediaqueries/#media-types
 	// User agents must recognize the following media types as valid, but must make them match nothing.
 	if (m_media_type >= media_type_first_deprecated)
+		result = False;
+	else if (m_media_type == media_type_unknown)
 		result = False;
 	else if (m_media_type == media_type_all)
 		result = True;
@@ -227,9 +235,12 @@ bool parse_media_query(const css_token_vector& tokens, media_query& mquery, docu
 	if (ident == "not") index++, _not = true;
 	else if (ident == "only") index++; // ignored  https://drafts.csswg.org/mediaqueries-5/#mq-only
 	
-	int media_type = media_type_all;
-	if (!parse_keyword(at(tokens, index), media_type, media_type_strings))
+	// <media-type> = <ident> except only, not, and, or, and layer
+	ident = at(tokens, index).ident();
+	if (is_one_of(ident, "", "only", "not", "and", "or", "layer"))
 		return false;
+	int idx = value_index(ident, media_type_strings);
+	int media_type = idx == -1 ? media_type_unknown : idx + 1;
 	index++;
 
 	if (at(tokens, index).ident() == "and")
@@ -421,11 +432,12 @@ bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 			// The allowed range of <resolution> values always excludes negative values
 			if (idx < 0 || val[0].n.number < 0) return false;
 			// dppx is the canonical unit, but we convert to dpi instead to match document_container::get_media_features
-			// Note that due to the 1:96 fixed ratio of CSS in to CSS px, 1dppx is equivalent to 96dpi.
+			// "Note that due to the 1:96 fixed ratio of CSS in to CSS px, 1dppx is equivalent to 96dpi."
 			if (unit == "dppx" || unit == "x")
 				val[0].n.number *= 96;
 			else if (unit == "dpcm")
 				val[0].n.number *= 2.54f; // 1in = 2.54cm
+			return true;
 		}
 		// https://drafts.csswg.org/mediaqueries/#resolution
 		else if (val[0].ident() == "infinite")

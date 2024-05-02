@@ -835,6 +835,7 @@ namespace litehtml
 
 	enum media_type
 	{
+		media_type_unknown,
 		media_type_all,
 		media_type_print,
 		media_type_screen,
@@ -855,8 +856,7 @@ namespace litehtml
 
 		media_features()
 		{
-			// this matches @media all, but not @media print or @media screen, see media_query::check
-			type = media_type_all,
+			type = media_type_unknown;
 			width = 0;
 			height = 0;
 			device_width = 0;

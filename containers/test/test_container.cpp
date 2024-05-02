@@ -112,10 +112,10 @@ void test_container::get_media_features(media_features& media) const
 	media.type        = media_type_screen;
 	media.width       = client.width;
 	media.height      = client.height;
-	media.color       = 8;
-	media.monochrome  = 0;
-	media.color_index = 256;
-	media.resolution  = 96;
+	media.color       = 8; // same as Chrome/Firefox
+	media.monochrome  = 0; // same as Chrome/Firefox
+	media.color_index = 0; // same as Chrome/Firefox
+	media.resolution  = 96; // same as Chrome/Firefox
 }
 
 void test_container::load_image(const char* src, const char* baseurl, bool /*redraw_on_ready*/)
