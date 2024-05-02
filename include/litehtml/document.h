@@ -27,19 +27,19 @@ namespace litehtml
 		}
 	};
 
-    class dumper
-    {
-    public:
-        virtual ~dumper() {}
-        virtual void begin_node(const string& descr) = 0;
-        virtual void end_node() = 0;
-        virtual void begin_attrs_group(const string& descr) = 0;
-        virtual void end_attrs_group() = 0;
-        virtual void add_attr(const string& name, const string& value) = 0;
-    };
+	class dumper
+	{
+	public:
+		virtual ~dumper() {}
+		virtual void begin_node(const string& descr) = 0;
+		virtual void end_node() = 0;
+		virtual void begin_attrs_group(const string& descr) = 0;
+		virtual void end_attrs_group() = 0;
+		virtual void add_attr(const string& name, const string& value) = 0;
+	};
 
 	class html_tag;
-    class render_item;
+	class render_item;
 
 	class document : public std::enable_shared_from_this<document>
 	{
@@ -54,8 +54,8 @@ namespace litehtml
 		css_text::vector					m_css;
 		litehtml::css						m_styles;
 		litehtml::web_color					m_def_color;
-        litehtml::css						m_master_css;
-        litehtml::css						m_user_css;
+		litehtml::css						m_master_css;
+		litehtml::css						m_user_css;
 		litehtml::size						m_size;
 		litehtml::size						m_content_size;
 		position::vector					m_fixed_boxes;

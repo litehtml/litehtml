@@ -362,7 +362,7 @@ double css_tokenizer::consume_number(css_number_type& type)
 	//    optionally followed by U+002D (-) or U+002B (+), followed by a digit, then:
 	bool a = lowcase(str[index]) == 'e' && is_one_of(str[index+1], '+', '-') && is_digit(str[index+2]);
 	bool b = lowcase(str[index]) == 'e' && is_digit(str[index+1]);
-	         
+			 
 	if (a || b)
 	{
 		// 1. Consume them.
@@ -535,7 +535,7 @@ css_token css_tokenizer::consume_ident_like_token()
 		{
 			// This is not exactly what standard says, but equivalent. The purpose is to preserve a whitespace token.
 			if (is_whitespace(str[index-1])) index--;
-            return {FUNCTION, string};
+			return {FUNCTION, string};
 		}
 		else // Otherwise, consume a url token, and return it.
 		{
@@ -548,7 +548,7 @@ css_token css_tokenizer::consume_ident_like_token()
 	else if (str[index] == '(')
 	{
 		index++;
-        return {FUNCTION, string};
+		return {FUNCTION, string};
 	}
 
 	// Otherwise, create an <ident-token> with its value set to string and return it.

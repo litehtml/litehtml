@@ -13,8 +13,8 @@ namespace litehtml
 
 		bool is_white_space() const override;
 		bool is_break() const override;
-        bool is_space() const override;
-        string dump_get_name() override;
+		bool is_space() const override;
+		string dump_get_name() override;
 	};
 }
 

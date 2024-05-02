@@ -35,10 +35,10 @@ bool litehtml::el_space::is_break() const
 
 bool litehtml::el_space::is_space() const
 {
-    return true;
+	return true;
 }
 
 litehtml::string litehtml::el_space::dump_get_name()
 {
-    return "space: \"" + get_escaped_string(m_text) + "\"";
+	return "space: \"" + get_escaped_string(m_text) + "\"";
 }
