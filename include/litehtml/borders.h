@@ -195,7 +195,7 @@ namespace litehtml
 		}
 
 		css_border_radius& operator=(const css_border_radius& val) = default;
-        
+
 		border_radiuses calc_percents(int width, int height) const
 		{
 			border_radiuses ret;

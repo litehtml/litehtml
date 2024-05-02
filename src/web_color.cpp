@@ -431,15 +431,15 @@ web_color web_color::darken(double fraction) const
 
 string web_color::to_string() const
 {
-    char str[9];
-    if(alpha)
-    {
+	char str[9];
+	if(alpha)
+	{
 		t_snprintf(str, 9, "%02X%02X%02X%02X", red, green, blue, alpha);
-    } else
-    {
+	} else
+	{
 		t_snprintf(str, 9, "%02X%02X%02X", red, green, blue);
-    }
-    return str;
+	}
+	return str;
 }
 
 } // namespace litehtml

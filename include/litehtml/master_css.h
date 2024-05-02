@@ -4,32 +4,32 @@ namespace litehtml{ const char* const master_css = R"##(
 
 
 html {
-    display: block;
+	display: block;
 	position: relative;
 }
 
 head {
-    display: none
+	display: none
 }
 
 meta {
-    display: none
+	display: none
 }
 
 title {
-    display: none
+	display: none
 }
 
 link {
-    display: none
+	display: none
 }
 
 style {
-    display: none
+	display: none
 }
 
 script {
-    display: none
+	display: none
 }
 
 body {
@@ -157,29 +157,29 @@ img[align="left"]
 }
 
 hr {
-    display: block;
-    margin-top: 0.5em;
-    margin-bottom: 0.5em;
-    margin-left: auto;
-    margin-right: auto;
-    border-style: inset;
-    border-width: 1px
+	display: block;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	margin-left: auto;
+	margin-right: auto;
+	border-style: inset;
+	border-width: 1px
 }
 
 
 /***************** TABLES ********************/
 
 table {
-    display: table;
-    border-collapse: separate;
-    border-spacing: 2px;
-    border-top-color:gray;
-    border-left-color:gray;
-    border-bottom-color:black;
-    border-right-color:black;
-    font-size: medium;
-    font-weight: normal;
-    font-style: normal;
+	display: table;
+	border-collapse: separate;
+	border-spacing: 2px;
+	border-top-color:gray;
+	border-left-color:gray;
+	border-bottom-color:black;
+	border-right-color:black;
+	font-size: medium;
+	font-weight: normal;
+	font-style: normal;
 }
 
 tbody, tfoot, thead {
@@ -188,16 +188,16 @@ tbody, tfoot, thead {
 }
 
 tr {
-    display: table-row;
-    vertical-align: inherit;
-    border-color: inherit;
+	display: table-row;
+	vertical-align: inherit;
+	border-color: inherit;
 }
 
 td, th {
-    display: table-cell;
-    vertical-align: inherit;
-    border-width:1px;
-    padding:1px;
+	display: table-cell;
+	vertical-align: inherit;
+	border-width:1px;
+	padding:1px;
 }
 
 th {
@@ -205,23 +205,23 @@ th {
 }
 
 table[border] {
-    border-style:solid;
+	border-style:solid;
 }
 
 table[border^="0"] {
-    border-style:none;
+	border-style:none;
 }
 
 table[border] td, table[border] th {
-    border-style:solid;
-    border-top-color:black;
-    border-left-color:black;
-    border-bottom-color:gray;
-    border-right-color:gray;
+	border-style:solid;
+	border-top-color:black;
+	border-left-color:black;
+	border-bottom-color:gray;
+	border-right-color:gray;
 }
 
 table[border^="0"] td, table[border^="0"] th {
-    border-style:none;
+	border-style:none;
 }
 
 table[align=left] {
@@ -246,70 +246,70 @@ td[nowrap], th[nowrap] {
 }
 
 tt, code, kbd, samp {
-    font-family: monospace
+	font-family: monospace
 }
 
 pre, xmp, plaintext, listing {
-    display: block;
-    font-family: monospace;
-    white-space: pre;
-    margin: 1em 0
+	display: block;
+	font-family: monospace;
+	white-space: pre;
+	margin: 1em 0
 }
 
 /***************** LISTS ********************/
 
 ul, menu, dir {
-    display: block;
-    list-style-type: disc;
-    margin-top: 1em;
-    margin-bottom: 1em;
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 40px
+	display: block;
+	list-style-type: disc;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 0;
+	margin-right: 0;
+	padding-left: 40px
 }
 
 ol {
-    display: block;
-    list-style-type: decimal;
-    margin-top: 1em;
-    margin-bottom: 1em;
-    margin-left: 0;
-    margin-right: 0;
-    padding-left: 40px
+	display: block;
+	list-style-type: decimal;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 0;
+	margin-right: 0;
+	padding-left: 40px
 }
 
 li {
-    display: list-item;
+	display: list-item;
 }
 
 ul ul, ol ul {
-    list-style-type: circle;
+	list-style-type: circle;
 }
 
 ol ol ul, ol ul ul, ul ol ul, ul ul ul {
-    list-style-type: square;
+	list-style-type: square;
 }
 
 dd {
-    display: block;
-    margin-left: 40px;
+	display: block;
+	margin-left: 40px;
 }
 
 dl {
-    display: block;
-    margin-top: 1em;
-    margin-bottom: 1em;
-    margin-left: 0;
-    margin-right: 0;
+	display: block;
+	margin-top: 1em;
+	margin-bottom: 1em;
+	margin-left: 0;
+	margin-right: 0;
 }
 
 dt {
-    display: block;
+	display: block;
 }
 
 ol ul, ul ol, ul ul, ol ol {
-    margin-top: 0;
-    margin-bottom: 0
+	margin-top: 0;
+	margin-bottom: 0
 }
 
 blockquote {

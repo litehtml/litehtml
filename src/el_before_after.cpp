@@ -30,7 +30,7 @@ void litehtml::el_before_after_base::add_style(const style& style)
 			{
 				if(str.at(i) == '"' || str.at(i) == '\'')
 				{
-                    auto chr = str.at(i);
+					auto chr = str.at(i);
 					fnc.clear();
 					i++;
 					string::size_type pos = str.find(chr, i);
@@ -208,9 +208,9 @@ void litehtml::el_before_after_base::add_function( const string& fnc, const stri
 
 litehtml::string litehtml::el_before_after_base::convert_escape( const char* txt )
 {
-    char* str_end;
+	char* str_end;
 	char32_t u_str[2];
-    u_str[0] = (char32_t) strtol(txt, &str_end, 16);
-    u_str[1] = 0;
+	u_str[0] = (char32_t) strtol(txt, &str_end, 16);
+	u_str[1] = 0;
 	return string(litehtml_from_utf32(u_str));
 }

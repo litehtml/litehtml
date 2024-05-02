@@ -658,9 +658,9 @@ namespace litehtml
 			context = val.context;
 			min_width = val.min_width;
 		}
-        
+
 		floated_box& operator=(const floated_box& val) = default;
-        
+
 		floated_box(floated_box&& val)
 		{
 			pos = val.pos;

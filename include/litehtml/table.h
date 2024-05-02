@@ -7,7 +7,7 @@
 
 namespace litehtml
 {
-    class render_item;
+	class render_item;
 
 	struct table_row
 	{
@@ -16,7 +16,7 @@ namespace litehtml
 		int				height;
 		int				border_top;
 		int				border_bottom;
-        std::shared_ptr<render_item>	el_row;
+		std::shared_ptr<render_item>	el_row;
 		int				top;
 		int				bottom;
 		css_length		css_height;
@@ -140,7 +140,7 @@ namespace litehtml
 
 	struct table_cell
 	{
-        std::shared_ptr<render_item>	el;
+		std::shared_ptr<render_item>	el;
 		int				colspan;
 		int				rowspan;
 		int				min_width;
@@ -179,7 +179,7 @@ namespace litehtml
 		}
 
 		table_cell(table_cell&& val) noexcept
-        {
+		{
 			el = std::move(val.el);
 			colspan = val.colspan;
 			rowspan = val.rowspan;
@@ -224,7 +224,7 @@ namespace litehtml
 		table_cell*		cell(int t_col, int t_row);
 		table_column&	column(int c)	{ return m_columns[c];	}
 		table_row&		row(int r)		{ return m_rows[r];		}
-        std::vector<std::shared_ptr<render_item>>& captions()		{ return m_captions; }
+		std::vector<std::shared_ptr<render_item>>& captions()		{ return m_captions; }
 
 		int				rows_count() const	{ return m_rows_count;	}
 		int				cols_count() const	{ return m_cols_count; }
