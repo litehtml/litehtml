@@ -20,6 +20,7 @@ namespace litehtml
 	using std::min;
 	using std::max;
 	using std::swap;
+	using std::abs;
 
 	class document;
 	class element;
