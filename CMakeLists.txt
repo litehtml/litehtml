@@ -157,8 +157,6 @@ set(HEADER_LITEHTML
 
 set(TEST_LITEHTML
     test/encodings_test.cpp
-#    test/cssTest.cpp
-#    test/mediaQueryTest.cpp
     test/codepoint_test.cpp
     test/tstring_view_test.cpp
     test/url_test.cpp
