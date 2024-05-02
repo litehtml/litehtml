@@ -81,7 +81,6 @@ void test(string filename)
 {
 	string html = readfile(filename);
 
-	int width = 800, height = 1600; // image will be cropped to content_width/content_height
 	auto last_slash_pos = filename.find_last_of('/');
 	string base_path;
 	if(last_slash_pos != string::npos)
@@ -91,6 +90,9 @@ void test(string filename)
 	{
 		base_path = test_dir;
 	}
+	// image size will be {content_width, content_height} (calculated after layout)
+	// height is nonzero to get finite aspect-ratio media feature
+	int width = 800, height = 1;
 	test_container container(width, height, base_path);
 
 	auto doc = document::createFromString(html, &container);
