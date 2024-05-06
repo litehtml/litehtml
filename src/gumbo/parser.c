@@ -45,7 +45,7 @@ typedef char gumbo_tagset[GUMBO_TAG_LAST];
 #define TAG_MATHML(tag) [GUMBO_TAG_##tag] = (1 << GUMBO_NAMESPACE_MATHML)
 
 #define TAGSET_INCLUDES(tagset, namespace, tag) \
-  (tag < GUMBO_TAG_LAST && tagset[(int) tag] == (1 << (int) namespace))
+  (tag < GUMBO_TAG_LAST && tagset[(int) tag] & (1 << (int) namespace))
 
 // selected forward declarations as it is getting hard to find
 // an appropriate order
@@ -572,6 +572,10 @@ static GumboInsertionMode get_appropriate_insertion_mode(
   }
 
   assert(node->type == GUMBO_NODE_ELEMENT || node->type == GUMBO_NODE_TEMPLATE);
+  if (node->v.element.tag_namespace != GUMBO_NAMESPACE_HTML)
+    return is_last ?
+      GUMBO_INSERTION_MODE_IN_BODY : GUMBO_INSERTION_MODE_INITIAL;
+  
   switch (node->v.element.tag) {
     case GUMBO_TAG_SELECT: {
       if (is_last) {
@@ -812,7 +816,7 @@ InsertionLocation get_appropriate_insertion_location(
   GumboNode* last_table = open_elements->data[last_table_index];
   if (last_table->parent != NULL) {
     retval.target = last_table->parent;
-    retval.index = (int)last_table->index_within_parent;
+    retval.index = last_table->index_within_parent;
     return retval;
   }
 
@@ -2512,8 +2516,8 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
     return success;
   } else if (tag_in(token, kStartTag,
                  (gumbo_tagset){TAG(ADDRESS), TAG(ARTICLE), TAG(ASIDE),
-                     TAG(BLOCKQUOTE), TAG(CENTER), TAG(DETAILS), TAG(DIR),
-                     TAG(DIV), TAG(DL), TAG(FIELDSET), TAG(FIGCAPTION),
+                     TAG(BLOCKQUOTE), TAG(CENTER), TAG(DETAILS), TAG(DIALOG),
+                     TAG(DIR), TAG(DIV), TAG(DL), TAG(FIELDSET), TAG(FIGCAPTION),
                      TAG(FIGURE), TAG(FOOTER), TAG(HEADER), TAG(HGROUP),
                      TAG(MENU), TAG(MAIN), TAG(NAV), TAG(OL), TAG(P),
                      TAG(SECTION), TAG(SUMMARY), TAG(UL)})) {
@@ -2582,7 +2586,7 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
   } else if (tag_in(token, kEndTag,
                  (gumbo_tagset){TAG(ADDRESS), TAG(ARTICLE), TAG(ASIDE),
                      TAG(BLOCKQUOTE), TAG(BUTTON), TAG(CENTER), TAG(DETAILS),
-                     TAG(DIR), TAG(DIV), TAG(DL), TAG(FIELDSET),
+                     TAG(DIALOG), TAG(DIR), TAG(DIV), TAG(DL), TAG(FIELDSET),
                      TAG(FIGCAPTION), TAG(FIGURE), TAG(FOOTER), TAG(HEADER),
                      TAG(HGROUP), TAG(LISTING), TAG(MAIN), TAG(MENU), TAG(NAV),
                      TAG(OL), TAG(PRE), TAG(SECTION), TAG(SUMMARY), TAG(UL)})) {
@@ -2613,7 +2617,7 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
       return success;
     } else {
       bool result = true;
-      const GumboNode* node = state->_form_element;
+      GumboNode* node = state->_form_element;
       assert(!node || node->type == GUMBO_NODE_ELEMENT);
       state->_form_element = NULL;
       if (!node || !has_node_in_scope(parser, node)) {
@@ -2622,10 +2626,15 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
         ignore_token(parser);
         return false;
       }
+      // Since we remove the form node without popping, we need to make sure
+      // that we flush any text nodes at the end of the form.
+      maybe_flush_text_node_buffer(parser);
       // This differs from implicitly_close_tags because we remove *only* the
       // <form> element; other nodes are left in scope.
       generate_implied_end_tags(parser, GUMBO_TAG_LAST);
-      if (get_current_node(parser) != node) {
+      if (get_current_node(parser) == node) {
+        record_end_of_element(token, &node->v.element);
+      } else {
         parser_add_parse_error(parser, token);
         result = false;
       }
@@ -2845,7 +2854,7 @@ static bool handle_in_body(GumboParser* parser, GumboToken* token) {
     text_state->_start_position = token->position;
     text_state->_type = GUMBO_NODE_TEXT;
     if (prompt_attr) {
-      size_t prompt_attr_length = strlen(prompt_attr->value);
+      int prompt_attr_length = strlen(prompt_attr->value);
       gumbo_string_buffer_destroy(parser, &text_state->_buffer);
       text_state->_buffer.data = gumbo_copy_stringz(parser, prompt_attr->value);
       text_state->_buffer.length = prompt_attr_length;

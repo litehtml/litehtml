@@ -41,7 +41,6 @@ void gumbo_tag_from_original_text(GumboStringPiece* text) {
   if (text->data == NULL) {
     return;
   }
-
   assert(text->length >= 2);
   assert(text->data[0] == '<');
   assert(text->data[text->length - 1] == '>');
@@ -54,10 +53,10 @@ void gumbo_tag_from_original_text(GumboStringPiece* text) {
     // Start tag.
     text->data += 1;  // Move past <
     text->length -= 2;
-    // strnchr is apparently not a standard C library function, so I loop
     // explicitly looking for whitespace or other illegal tag characters.
+    // see https://html.spec.whatwg.org/multipage/syntax.html#tag-name-state
     for (const char* c = text->data; c != text->data + text->length; ++c) {
-      if (isspace(*c) || *c == '/') {
+      if (*c == ' ' || *c == '\t' || *c == '\n' || *c == '\f' || *c == '/') {
         text->length = c - text->data;
         break;
       }
@@ -91,5 +90,5 @@ GumboTag gumbo_tagn_enum(const char* tagname, unsigned int length) {
 }
 
 GumboTag gumbo_tag_enum(const char* tagname) {
-  return gumbo_tagn_enum(tagname, (unsigned)strlen(tagname));
+  return gumbo_tagn_enum(tagname, strlen(tagname));
 }
