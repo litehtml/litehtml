@@ -19,9 +19,7 @@
 #ifndef GUMBO_ERROR_H_
 #define GUMBO_ERROR_H_
 #ifdef _MSC_VER
-#ifndef _CRT_SECURE_NO_WARNINGS
 #define _CRT_SECURE_NO_WARNINGS
-#endif
 #endif
 #include <stdint.h>
 
@@ -201,7 +199,7 @@ void gumbo_error_destroy(struct GumboInternalParser* parser, GumboError* error);
 // Prints an error to a string.  This fills an empty GumboStringBuffer with a
 // freshly-allocated buffer containing the error message text.  The caller is
 // responsible for deleting the buffer.  (Note that the buffer is allocated with
-// the allocator specified in the GumboParser ~config and hence should be freed
+// the allocator specified in the GumboParser config and hence should be freed
 // by gumbo_parser_deallocate().)
 void gumbo_error_to_string(struct GumboInternalParser* parser,
     const GumboError* error, GumboStringBuffer* output);
@@ -209,7 +207,7 @@ void gumbo_error_to_string(struct GumboInternalParser* parser,
 // Prints a caret diagnostic to a string.  This fills an empty GumboStringBuffer
 // with a freshly-allocated buffer containing the error message text.  The
 // caller is responsible for deleting the buffer.  (Note that the buffer is
-// allocated with the allocator specified in the GumboParser ~config and hence
+// allocated with the allocator specified in the GumboParser config and hence
 // should be freed by gumbo_parser_deallocate().)
 void gumbo_caret_diagnostic_to_string(struct GumboInternalParser* parser,
     const GumboError* error, const char* source_text,
