@@ -4,7 +4,7 @@ namespace litehtml
 {
 
 // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-integers
-bool html_parse_integer(const string& str, int& val)
+bool html_parse_integer(string str, int& val)
 {
 	const char* ptr = str.c_str();
 	char* end;
@@ -16,7 +16,7 @@ bool html_parse_integer(const string& str, int& val)
 }
 
 // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-non-negative-integers
-bool html_parse_non_negative_integer(const string& str, int& val)
+bool html_parse_non_negative_integer(string str, int& val)
 {
 	int n = 0;
 	if (!html_parse_integer(str, n) || n < 0)
@@ -26,7 +26,7 @@ bool html_parse_non_negative_integer(const string& str, int& val)
 }
 
 // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-dimension-values
-bool html_parse_dimension_value(const string& str, float& result, html_dimension_type& type)
+bool html_parse_dimension_value(string str, float& result, html_dimension_type& type)
 {
 	// 1. Let input be the string being parsed.
 	// 2. Let position be a position variable for input, initially pointing at the start of input.
@@ -61,7 +61,7 @@ bool html_parse_dimension_value(const string& str, float& result, html_dimension
 		// 3. Let divisor have the value 1.
 		float divisor = 1;
 		// 4. While true:
-		while (true)
+		while (1)
 		{
 			// 1. Multiply divisor by ten.
 			divisor *= 10;
@@ -88,7 +88,7 @@ bool html_parse_dimension_value(const string& str, float& result, html_dimension
 }
 
 // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-non-zero-dimension-values
-bool html_parse_nonzero_dimension_value(const string& str, float& val, html_dimension_type& type)
+bool html_parse_nonzero_dimension_value(string str, float& val, html_dimension_type& type)
 {
 	float x;
 	html_dimension_type t;

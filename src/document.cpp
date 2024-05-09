@@ -167,7 +167,7 @@ encoding adjust_meta_encoding(encoding meta_encoding, encoding current_encoding)
 encoding get_meta_encoding(GumboNode* root)
 {
 	// find <head>
-	GumboNode* head = nullptr;
+	GumboNode* head = 0;
 	for (size_t i = 0; i < root->v.element.children.length; i++)
 	{
 		GumboNode* node = (GumboNode*)root->v.element.children.data[i];
