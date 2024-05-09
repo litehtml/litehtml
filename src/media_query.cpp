@@ -1,7 +1,7 @@
 #include "html.h"
 #include "media_query.h"
 #include "css_parser.h"
-#include <cassert>
+#include <assert.h>
 
 
 namespace litehtml
@@ -279,7 +279,7 @@ bool parse_media_condition(const css_token_vector& tokens, int& index, bool _or_
 
 	bool or_allowed = _or_allowed;
 	bool and_allowed = true;
-	while (true)
+	while (1)
 	{
 		string ident = at(tokens, index).ident();
 		if (ident == "and" && and_allowed) condition.op = _and_, or_allowed = false;
@@ -554,7 +554,7 @@ bool parse_media_feature(const css_token& token, media_feature& result, document
 			return false;
 		
 		media_feature mf = {tokens[0].ident()};
-		if (!mf.verify_and_convert_units(_plain_, val, nullptr, doc)) return false;
+		if (!mf.verify_and_convert_units(_plain_, val, 0, doc)) return false;
 		result = mf;
 		return true;
 	}
@@ -664,7 +664,7 @@ bool parse_mf_range(const css_token_vector& tokens, media_feature& result, docum
 	{
 		media_feature mf = {name};
 		mf.op = op;
-		if (!mf.verify_and_convert_units(_range_, val, nullptr, doc)) return false;
+		if (!mf.verify_and_convert_units(_range_, val, 0, doc)) return false;
 		result = mf;
 		return true;
 	}

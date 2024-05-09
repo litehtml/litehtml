@@ -113,7 +113,7 @@ css_tokenizer::three_chars  css_tokenizer::peek_chars()
 // https://www.w3.org/TR/css-syntax-3/#consume-comments
 void css_tokenizer::consume_comments()
 {
-	while (true)
+	while (1)
 	{
 		if (str[index] == '/' && str[index + 1] == '*')
 		{
@@ -177,7 +177,7 @@ css_token css_tokenizer::consume_string_token(int ending_code_point)
 	// Initially create a <string-token> with its value set to the empty string.
 	css_token token(STRING);
 
-	while (true)
+	while (1)
 	{
 		// Repeatedly consume the next input code point from the stream:
 		int ch = consume_char();
@@ -191,7 +191,7 @@ css_token css_tokenizer::consume_string_token(int ending_code_point)
 			// This is a parse error. Reconsume the current input code point, create a <bad-string-token>, and return it.
 			css_parse_error("newline in string");
 			unconsume_char();
-			return {BAD_STRING};
+			return css_token(BAD_STRING);
 		case '\\':
 			// If the next input code point is EOF, do nothing.
 			if (str[index] == 0)
@@ -242,7 +242,7 @@ string css_tokenizer::consume_ident_sequence()
 {
 	string result;
 
-	while (true)
+	while (1)
 	{
 		// Repeatedly consume the next input code point from the stream:
 		int ch = consume_char();
@@ -410,17 +410,17 @@ css_token css_tokenizer::consume_numeric_token()
 	if (str[index] == '%')
 	{
 		index++;
-		return {PERCENTAGE, number}; // NOTE: number_type is unused in <percentage-token>
+		return css_token(PERCENTAGE, number); // NOTE: number_type is unused in <percentage-token>
 	}
 
 	// Otherwise, create a <number-token> with the same value and type flag as number, and return it.
-	return {NUMBER, number, type};
+	return css_token(NUMBER, number, type);
 }
 
 // https://www.w3.org/TR/css-syntax-3/#consume-remnants-of-bad-url
 void css_tokenizer::consume_remnants_of_bad_url()
 {
-	while (true)
+	while (1)
 	{
 		// Repeatedly consume the next input code point from the stream:
 		int ch = consume_char();
@@ -446,7 +446,7 @@ css_token css_tokenizer::consume_url_token()
 	while (is_whitespace(str[index]))
 		index++;
 
-	while (true)
+	while (1)
 	{
 		// Repeatedly consume the next input code point from the stream:
 		int ch = consume_char();
@@ -479,7 +479,7 @@ css_token css_tokenizer::consume_url_token()
 			}
 			// otherwise, consume the remnants of a bad url, create a <bad-url-token>, and return it.
 			consume_remnants_of_bad_url();
-			return {BAD_URL};
+			return css_token(BAD_URL);
 
 		case '"':
 		case '\'':
@@ -488,7 +488,7 @@ css_token css_tokenizer::consume_url_token()
 			// This is a parse error. Consume the remnants of a bad url, create a <bad-url-token>, and return it.
 			css_parse_error("invalid char in unquoted url");
 			consume_remnants_of_bad_url();
-			return {BAD_URL};
+			return css_token(BAD_URL);
 
 		case '\\':
 			// If the stream starts with a valid escape, consume an escaped code point and 
@@ -500,7 +500,7 @@ css_token css_tokenizer::consume_url_token()
 			{
 				css_parse_error("escaped newline in unquoted url");
 				consume_remnants_of_bad_url();
-				return {BAD_URL};
+				return css_token(BAD_URL);
 			}
 			break;
 
@@ -535,7 +535,7 @@ css_token css_tokenizer::consume_ident_like_token()
 		{
 			// This is not exactly what standard says, but equivalent. The purpose is to preserve a whitespace token.
 			if (is_whitespace(str[index-1])) index--;
-			return {FUNCTION, string};
+			return css_token(FUNCTION, string);
 		}
 		else // Otherwise, consume a url token, and return it.
 		{
@@ -548,11 +548,11 @@ css_token css_tokenizer::consume_ident_like_token()
 	else if (str[index] == '(')
 	{
 		index++;
-		return {FUNCTION, string};
+		return css_token(FUNCTION, string);
 	}
 
 	// Otherwise, create an <ident-token> with its value set to string and return it.
-	return {IDENT, string};
+	return css_token(IDENT, string);
 }
 
 // https://www.w3.org/TR/css-syntax-3/#consume-token
@@ -711,7 +711,7 @@ css_token css_tokenizer::consume_token()
 css_token_vector css_tokenizer::tokenize()
 {
 	css_token_vector tokens;
-	while (true)
+	while (1)
 	{
 		css_token token = consume_token();
 		if (token.type == EOF) break;

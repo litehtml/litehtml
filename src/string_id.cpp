@@ -1,6 +1,6 @@
 #include "html.h"
 #include "string_id.h"
-#include <cassert>
+#include <assert.h>
 
 #ifndef LITEHTML_NO_THREADS
 	#include <mutex>
