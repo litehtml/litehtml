@@ -1,6 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS
-#include <fstream>
 #include <sstream>
+#include <fstream>
 #include <sys/stat.h>
 #if STANDALONE
 	#define ASSERT_TRUE(x)
@@ -10,7 +10,6 @@
 #ifdef _WIN32
 	#define NOMINMAX
 	#include "dirent.h"
-	#define getcwd _getcwd
 #else
 	#include <dirent.h>
 #endif
@@ -23,8 +22,7 @@ void error(const char* msg) { puts(msg); exit(1); }
 
 #if STANDALONE
 
-extern "C" char* getcwd(char* buf, int size);
-string test_dir = getcwd(NULL, 0);
+string test_dir = ".";
 
 int main(int argc, char* argv[])
 {
@@ -52,7 +50,7 @@ int main(int argc, char* argv[])
 
 	if (files.empty())
 		error("No html files found");
-	
+
 	for (auto file : files)
 		test(file);
 }
