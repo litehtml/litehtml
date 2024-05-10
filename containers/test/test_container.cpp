@@ -136,6 +136,7 @@ void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const 
 	auto canvas = (Bitmap*)hdc;
 	string url = make_url(src.c_str(), base_url.c_str());
 	auto& img = images[url];
+	if (!img) return;
 	int x = bg.origin_box.x;
 	int y = bg.origin_box.y;
 

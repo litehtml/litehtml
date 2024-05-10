@@ -3,7 +3,6 @@
 string readfile(string filename);
 using namespace std;
 
-string Font::font_dir = "../containers/test/fonts/"; // ctest is run from litehtml/build
 Font::size_name Font::installed_fonts[] =
 {
 	{ 12, "terminus-ascii-bold-12px.yaff" },
@@ -32,7 +31,11 @@ Font::Font(int size)
 			n = i;
 		}
 	}
-	
+
+	string font_cpp = __FILE__;
+	auto i = font_cpp.find_last_of("\\/");
+	string font_dir = font_cpp.substr(0, i) + "/fonts/";
+
 	load(font_dir + installed_fonts[n].name);
 }
 
