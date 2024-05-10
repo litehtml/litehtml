@@ -38,6 +38,7 @@ public:
 
 	bool operator==(const Bitmap& bmp) const { return width == bmp.width && height == bmp.height && data == bmp.data; }
 	bool operator!=(const Bitmap& bmp) const { return !(*this == bmp); }
+	operator bool() const { return width != 0 && height != 0; }
 
 	color get_pixel(int x, int y) const;
 	void set_pixel(int x, int y, color color);

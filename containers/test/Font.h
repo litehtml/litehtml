@@ -10,7 +10,6 @@ public:
 	int x_height = 0;
 	std::map<int, Bitmap> glyphs;
 	
-	static string font_dir;
 	static struct size_name { int size; string name; } installed_fonts[];
 	
 	Font(int size);

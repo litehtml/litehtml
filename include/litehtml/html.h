@@ -77,6 +77,12 @@ namespace litehtml
 	{
 		vec.insert(vec.begin() + index, x.begin(), x.end());
 	}
+	template<class T>
+	vector<T>& operator+=(vector<T>& vec, const vector<T>& x)
+	{
+		vec.insert(vec.end(), x.begin(), x.end());
+		return vec;
+	}
 	template<class C, class T>
 	bool contains(const C& coll, const T& item)
 	{
