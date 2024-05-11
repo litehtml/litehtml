@@ -46,6 +46,10 @@ set(HEADER_GUMBO
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
 set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
 
+if (MSVC)
+	add_compile_options(/wd4244 /wd4267)
+endif()
+
 add_library(${PROJECT_NAME} ${SOURCE_GUMBO})
 set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_LIB_VERSION} SOVERSION ${PROJECT_SO_VERSION})
 
@@ -54,7 +58,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     PUBLIC_HEADER "${HEADER_GUMBO}"
 )
 
-if(MSVC)
+if (MSVC)
     target_include_directories(${PROJECT_NAME} PRIVATE visualc/include)
 endif()
 
