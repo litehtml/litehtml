@@ -175,7 +175,7 @@ bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_sto
 
 	if (tokens.size() == 1) // <color>
 	{
-		color_stops.push_back(color);
+		color_stops.emplace_back(color);
 		return true;
 	}
 	else if (tokens.size() == 2) // <color> <length-angle-percentage>
@@ -183,7 +183,7 @@ bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_sto
 		T lenang;
 		if (parse_lenang(tokens[1], lenang))
 		{
-			color_stops.push_back({color, lenang});
+			color_stops.emplace_back(color, lenang);
 			return true;
 		}
 	}
@@ -193,8 +193,8 @@ bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_sto
 		if (parse_lenang(tokens[1], lenang1) &&
 			parse_lenang(tokens[2], lenang2))
 		{
-			color_stops.push_back({color, lenang1});
-			color_stops.push_back({color, lenang2});
+			color_stops.emplace_back(color, lenang1);
+			color_stops.emplace_back(color, lenang2);
 			return true;
 		}
 	}

@@ -59,7 +59,7 @@ void componentize(css_token_vector& tokens)
 {
 	css_parser parser(tokens);
 	css_token_vector result;
-	while (1)
+	while (true)
 	{
 		css_token tok = parser.consume_component_value();
 		if (tok.type == EOF) break;
@@ -129,7 +129,7 @@ raw_rule::vector css_parser::consume_list_of_rules(bool top_level)
 	raw_rule::vector rules;
 	raw_rule::ptr rule;
 
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input token:
 		css_token token = next_token();
@@ -177,7 +177,7 @@ raw_rule::ptr css_parser::consume_qualified_rule()
 	// Create a new qualified rule with its prelude initially set to an empty list, and its value initially set to nothing.
 	raw_rule::ptr rule = make_shared<raw_rule>(raw_rule::qualified);
 
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input token:
 		css_token token = next_token();
@@ -213,7 +213,7 @@ raw_rule::ptr css_parser::consume_at_rule()
 	css_token token = next_token();
 	raw_rule::ptr rule = make_shared<raw_rule>(raw_rule::at, token.str);
 
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input token:
 		token = next_token();
@@ -254,7 +254,7 @@ css_token css_parser::consume_simple_block(char opening_bracket)
 	
 	char closing_bracket = mirror(opening_bracket);
 
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input token and process it as follows:
 		css_token token = next_token();
@@ -306,7 +306,7 @@ css_token css_parser::consume_function(const string& name)
 	// Create a function with its name equal to the value of the current input token and with its value initially set to an empty list.
 	css_token function(CV_FUNCTION, name);
 
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input token and process it as follows:
 		css_token token = next_token();
@@ -391,7 +391,7 @@ raw_declaration css_parser::consume_declaration()
 // https://www.w3.org/TR/css-syntax-3/#consume-style-block
 void css_parser::consume_style_block_contents(/*out*/ raw_declaration::vector& decls, /*out*/ raw_rule::vector& rules)
 {
-	while (1)
+	while (true)
 	{
 		// Repeatedly consume the next input token:
 		css_token token = next_token();

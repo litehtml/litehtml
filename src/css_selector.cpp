@@ -578,7 +578,7 @@ css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens
 		selector->m_attrs.push_back(sel);
 	
 	// [ <pseudo-element-selector> <pseudo-class-selector>* ]*
-	while (1)
+	while (true)
 	{
 		auto sel = parse_pseudo_element(tokens, index);
 		if (!sel) break;
@@ -631,7 +631,7 @@ css_selector::ptr parse_complex_selector(const css_token_vector& tokens, documen
 	// NOTE: all the whitespace is handled by parse_combinator, that's why skip_whitespace is never called in the loop
 	// NOTE: parse_complex_selector is different from most other parse_xxx functions in that it's required
 	//       to parse all input tokens, it doesn't just parse as much as possible.
-	while (1)
+	while (true)
 	{
 		int combinator = parse_combinator(tokens, index);
 		if (index == (int)tokens.size())
