@@ -23,8 +23,8 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 	{
 		if (rule->type == raw_rule::qualified)
 		{
-			parse_style_rule(rule, baseurl, doc, media);
-			import_allowed = false;
+			if (parse_style_rule(rule, baseurl, doc, media))
+				import_allowed = false;
 			continue;
 		}
 
@@ -45,6 +45,7 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 		// @media <media-query-list> { <stylesheet> }
 		case _media_:
 		{
+			if (rule->block.type != CURLY_BLOCK) break;
 			auto new_media = media;
 			auto mq_list = parse_media_query_list(rule->prelude, doc);
 			// An empty media query list evaluates to true.  https://drafts.csswg.org/mediaqueries-5/#example-6f06ee45
@@ -60,7 +61,6 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 		
 		default:
 			css_parse_error("unrecognized rule @" + rule->name);
-			import_allowed = false;
 		}
 	}
 }
@@ -104,14 +104,14 @@ void css::parse_import_rule(raw_rule::ptr rule, string baseurl, document::ptr do
 }
 
 // https://www.w3.org/TR/css-syntax-3/#style-rules
-void css::parse_style_rule(raw_rule::ptr rule, string baseurl, document::ptr doc, media_query_list_list::ptr media)
+bool css::parse_style_rule(raw_rule::ptr rule, string baseurl, document::ptr doc, media_query_list_list::ptr media)
 {
 	// The prelude of the qualified rule is parsed as a <selector-list>. If this returns failure, the entire style rule is invalid.
 	auto list = parse_selector_list(rule->prelude, strict_mode, doc->mode());
 	if (list.empty())
 	{
 		css_parse_error("invalid selector");
-		return;
+		return false;
 	}
 
 	style::ptr style = make_shared<litehtml::style>(); // style block
@@ -125,6 +125,7 @@ void css::parse_style_rule(raw_rule::ptr rule, string baseurl, document::ptr doc
 		sel->calc_specificity();
 		add_selector(sel);
 	}
+	return true;
 }
 
 void css::sort_selectors()
