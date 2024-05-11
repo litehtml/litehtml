@@ -1550,6 +1550,23 @@ void html_tag::map_to_pixel_length_property_with_default_value(string_id prop_na
 	m_style.add_property(prop_name, {tok});
 }
 
+// https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-dimension-property
+void html_tag::map_to_dimension_property(string_id prop_name, string attr_value)
+{
+	float x = 0;
+	html_dimension_type type = html_length;
+	if (!html_parse_dimension_value(attr_value, x, type))
+		return;
+
+	css_token tok;
+	if (type == html_length)
+		tok = {DIMENSION,  x, css_number_number, "px"};
+	else
+		tok = {PERCENTAGE, x, css_number_number};
+
+	m_style.add_property(prop_name, {tok});
+}
+
 // https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-dimension-property-(ignoring-zero)
 void html_tag::map_to_dimension_property_ignoring_zero(string_id prop_name, string attr_value)
 {

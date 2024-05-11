@@ -30,6 +30,11 @@ void el_table::parse_attributes()
 	if (str)
 		map_to_dimension_property_ignoring_zero(_width_, str);
 
+	// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-height
+	str = get_attr("height");
+	if (str)
+		map_to_dimension_property(_height_, str);
+
 	// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-cellspacing
 	str = get_attr("cellspacing");
 	if (str)

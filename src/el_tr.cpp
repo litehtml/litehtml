@@ -4,12 +4,16 @@
 
 litehtml::el_tr::el_tr(const std::shared_ptr<document>& doc) : html_tag(doc)
 {
-
 }
 
 void litehtml::el_tr::parse_attributes()
 {
-	const char* str = get_attr("align");
+	// https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-tr-height
+	const char* str = get_attr("height");
+	if (str)
+		map_to_dimension_property(_height_, str);
+
+	str = get_attr("align");
 	if(str)
 	{
 		m_style.add_property(_text_align_, str);
