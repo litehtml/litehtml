@@ -36,12 +36,6 @@ void draw_line(canvas& cvs, int x0, int y0, int x1, int y1, color color)
 {
 	if (x0 != x1 && y0 != y1) return; // only horz and vert lines supported
 
-	//cvs.begin_path();
-	//cvs.move_to(x0 + .5f, y0 + .5f);
-	//cvs.line_to(x1 + .5f, y1 + .5f);
-	//set_color(cvs, stroke_style, color);
-	//cvs.stroke();
-
 	if (x0 == x1) // vert line
 	{
 		if (y0 > y1) swap(y0, y1);
