@@ -31,23 +31,6 @@ void draw_image(canvas& cvs, int x, int y, const Bitmap& bmp)
 	cvs.draw_image((byte*)bmp.data.data(), bmp.width, bmp.height, bmp.width * 4, (float)x, (float)y, (float)bmp.width, (float)bmp.height);
 }
 
-// endpoint is not drawn, like in GDI
-void draw_line(canvas& cvs, int x0, int y0, int x1, int y1, color color)
-{
-	if (x0 != x1 && y0 != y1) return; // only horz and vert lines supported
-
-	if (x0 == x1) // vert line
-	{
-		if (y0 > y1) swap(y0, y1);
-		fill_rect(cvs, {x0, y0, 1, y1 - y0}, color);
-	}
-	else if (y0 == y1) // horz line
-	{
-		if (x0 > x1) swap(x0, x1);
-		fill_rect(cvs, {x0, y0, x1 - x0, 1}, color);
-	}
-}
-
 
 //
 //  test_container implementation
@@ -104,28 +87,26 @@ void test_container::draw_borders(uint_ptr hdc, const borders& borders, const po
 	auto& cvs = *(canvas*)hdc;
 
 	// left border
-	for (int x = 0; x < borders.left.width; x++)
-		draw_line(cvs,
-			pos.left() + x, pos.top(), 
-			pos.left() + x, pos.bottom(), borders.left.color);
+	rect rect = pos;
+	rect.width = borders.left.width;
+	fill_rect(cvs, rect, borders.left.color);
 
 	// right border
-	for (int x = 0; x < borders.right.width; x++)
-		draw_line(cvs,
-			pos.right() - x - 1, pos.top(),
-			pos.right() - x - 1, pos.bottom(), borders.right.color);
+	rect = pos;
+	rect.x = rect.right() - borders.right.width;
+	rect.width = borders.right.width;
+	fill_rect(cvs, rect, borders.right.color);
 
 	// top border
-	for (int y = 0; y < borders.top.width; y++)
-		draw_line(cvs,
-			pos.left(),  pos.top() + y,
-			pos.right(), pos.top() + y, borders.top.color);
+	rect = pos;
+	rect.height = borders.top.width;
+	fill_rect(cvs, rect, borders.top.color);
 
 	// bottom border
-	for (int y = 0; y < borders.bottom.width; y++)
-		draw_line(cvs,
-			pos.left(),  pos.bottom() - y - 1,
-			pos.right(), pos.bottom() - y - 1, borders.bottom.color);
+	rect = pos;
+	rect.y = rect.bottom() - borders.bottom.width;
+	rect.height = borders.bottom.width;
+	fill_rect(cvs, rect, borders.bottom.color);
 }
 
 void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
