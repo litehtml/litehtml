@@ -26,9 +26,16 @@ void clip_rect(canvas& cvs, rect r)
 	cvs.clip();
 }
 
+// without scaling
 void draw_image(canvas& cvs, int x, int y, const Bitmap& bmp)
 {
 	cvs.draw_image((byte*)bmp.data.data(), bmp.width, bmp.height, bmp.width * 4, (float)x, (float)y, (float)bmp.width, (float)bmp.height);
+}
+
+// with scaling
+void draw_image(canvas& cvs, rect rc, const Bitmap& bmp)
+{
+	cvs.draw_image((byte*)bmp.data.data(), bmp.width, bmp.height, bmp.width * 4, (float)rc.x, (float)rc.y, (float)rc.width, (float)rc.height);
 }
 
 
@@ -171,33 +178,35 @@ void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const 
 	if (!img) return;
 	int x = bg.origin_box.x;
 	int y = bg.origin_box.y;
+	int w = bg.origin_box.width;
+	int h = bg.origin_box.height;
 	cvs.save();
 	clip_rect(cvs, bg.clip_box);
 
 	switch (bg.repeat)
 	{
 	case background_repeat_no_repeat:
-		::draw_image(cvs, x, y, img);
+		::draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat_x:
-		while (x > bg.clip_box.left()) x -= img.width;
-		for (; x < bg.clip_box.right(); x += img.width)
-			::draw_image(cvs, x, y, img);
+		while (x > bg.clip_box.left()) x -= w;
+		for (; x < bg.clip_box.right(); x += w)
+			::draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat_y:
-		while (y > bg.clip_box.top()) y -= img.height;
-		for (; y < bg.clip_box.bottom(); y += img.height)
-			::draw_image(cvs, x, y, img);
+		while (y > bg.clip_box.top()) y -= h;
+		for (; y < bg.clip_box.bottom(); y += h)
+			::draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat:
-		while (x > bg.clip_box.left()) x -= img.width;
-		while (y > bg.clip_box.top()) y -= img.height;
-		for (; x < bg.clip_box.right(); x += img.width)
-			for (int _y = y; _y < bg.clip_box.bottom(); _y += img.height)
-				::draw_image(cvs, x, _y, img);
+		while (x > bg.clip_box.left()) x -= w;
+		while (y > bg.clip_box.top()) y -= h;
+		for (; x < bg.clip_box.right(); x += w)
+			for (int _y = y; _y < bg.clip_box.bottom(); _y += h)
+				::draw_image(cvs, {x, _y, w, h}, img);
 		break;
 	}
 	cvs.restore();
