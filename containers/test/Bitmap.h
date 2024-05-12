@@ -48,12 +48,9 @@ public:
 	void draw_line(int x0, int y0, int x1, int y1, color color);
 	void draw_rect(int x, int y, int width, int height, color color);
 	void fill_rect(rect rect, color color);
-	void draw_bitmap(int x, int y, const Bitmap& bmp);
-	void draw_bitmap(int x, int y, const Bitmap& bmp, rect clip);
 	void replace_color(color original, color replacement);
 
 	rect find_picture(color bgcolor = white);
-	void resize(int new_width, int new_height);
 	void load(string filename);
 	void save(string filename);
 };

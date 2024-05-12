@@ -57,21 +57,6 @@ void Bitmap::fill_rect(rect rect, color color)
 			set_pixel(x, y, color);
 }
 
-void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp)
-{
-	for (int y = 0; y < bmp.height; y++)
-		for (int x = 0; x < bmp.width; x++)
-			set_pixel(x0 + x, y0 + y, bmp.get_pixel(x, y));
-}
-
-void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp, rect clip)
-{
-	for (int y = 0; y < bmp.height; y++)
-		for (int x = 0; x < bmp.width; x++)
-			if (clip.is_point_inside(x0 + x, y0 + y))
-				set_pixel(x0 + x, y0 + y, bmp.get_pixel(x, y));
-}
-
 void Bitmap::replace_color(color original, color replacement)
 {
 	for (auto& pixel : data)
@@ -110,18 +95,6 @@ rect Bitmap::find_picture(color bgcolor)
 	rect.width = x + 1 - rect.x;
 
 	return rect;
-}
-
-void Bitmap::resize(int new_width, int new_height)
-{
-	vector<color> new_data(new_width * new_height, white);
-	for (int y = 0; y < min(new_height, height); y++)
-		for (int x = 0; x < min(new_width, width); x++)
-			new_data[x + y * new_width] = data[x + y * width];
-	
-	width = new_width;
-	height = new_height;
-	data = new_data;
 }
 
 void Bitmap::load(string filename)

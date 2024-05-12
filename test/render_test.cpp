@@ -103,14 +103,12 @@ string readfile(string filename)
 	return ss.str();
 }
 
-//void draw_line(canvas& cvs, int x0, int y0, int x1, int y1, color color);
 Bitmap draw(document::ptr doc, int width, int height)
 {
 	canvas canvas(width, height);
 	rect rect(0, 0, width, height);
 	fill_rect(canvas, rect, white);
 
-//	draw_line(canvas, 2, 2, 10+2, 2, black);
 	doc->draw((uint_ptr)&canvas, 0, 0, &rect);
 
 	return Bitmap(canvas, rect);
