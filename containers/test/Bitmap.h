@@ -2,6 +2,8 @@
 #include <litehtml.h>
 using namespace litehtml;
 using rect = position;
+namespace canvas_ity { class canvas; }
+using namespace canvas_ity;
 
 // color != web_color because sizeof(web_color) != 4
 struct color
@@ -35,6 +37,7 @@ public:
 	{
 		load(filename);
 	}
+	Bitmap(canvas& canvas, rect rect);
 
 	bool operator==(const Bitmap& bmp) const { return width == bmp.width && height == bmp.height && data == bmp.data; }
 	bool operator!=(const Bitmap& bmp) const { return !(*this == bmp); }
