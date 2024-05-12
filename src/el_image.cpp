@@ -21,16 +21,14 @@ void litehtml::el_image::parse_attributes()
 {
 	m_src = get_attr("src", "");
 
-	const char* attr_height = get_attr("height");
-	if(attr_height)
-	{
-		m_style.add_property(_height_, attr_height);
-	}
-	const char* attr_width = get_attr("width");
-	if(attr_width)
-	{
-		m_style.add_property(_width_, attr_width);
-	}
+	// https://html.spec.whatwg.org/multipage/rendering.html#attributes-for-embedded-content-and-images:the-img-element-5
+	const char* str = get_attr("width");
+	if (str)
+		map_to_dimension_property(_width_, str);
+
+	str = get_attr("height");
+	if (str)
+		map_to_dimension_property(_height_, str);
 }
 
 void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
