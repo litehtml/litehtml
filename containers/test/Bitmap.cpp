@@ -1,6 +1,12 @@
 #include "Bitmap.h"
 #include "lodepng.h"
-using namespace std;
+#include "canvas_ity.hpp"
+using namespace canvas_ity;
+
+Bitmap::Bitmap(canvas& canvas, rect rect) : Bitmap(rect.width, rect.height)
+{
+	canvas.get_image_data((byte*)data.data(), width, height, width * 4, rect.x, rect.y);
+}
 
 color Bitmap::get_pixel(int x, int y) const
 {

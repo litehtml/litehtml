@@ -1,6 +1,9 @@
 #include <litehtml.h>
 #include "Bitmap.h"
+#include "canvas_ity.hpp"
 using namespace litehtml;
+using namespace canvas_ity;
+void fill_rect(canvas& cvs, rect rect, color color);
 
 class test_container : public document_container
 {
