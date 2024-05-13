@@ -26,6 +26,8 @@ string test_dir = ".";
 
 int main(int argc, char* argv[])
 {
+//	auto diff = max_color_diff(Bitmap("red-blue-chrome.png"), Bitmap("red-blue-canvas_ity-linearized.png"));
+
 	vector<string> files;
 	if (argc == 1)
 		files = find_htm_files(test_dir);

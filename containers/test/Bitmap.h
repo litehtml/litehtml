@@ -54,3 +54,5 @@ public:
 	void load(string filename);
 	void save(string filename);
 };
+
+byte max_color_diff(const Bitmap& a, const Bitmap& b);
