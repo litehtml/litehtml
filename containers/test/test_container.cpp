@@ -13,10 +13,15 @@ void set_color(canvas& cvs, brush_type type, color c)
 	cvs.set_color(type, c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f);
 }
 
+void fill_rect(canvas& cvs, rect r)
+{
+	cvs.fill_rectangle((float)r.x, (float)r.y, (float)r.width, (float)r.height);
+}
+
 void fill_rect(canvas& cvs, rect r, color color)
 {
 	set_color(cvs, fill_style, color);
-	cvs.fill_rectangle((float)r.x, (float)r.y, (float)r.width, (float)r.height);
+	fill_rect(cvs, r);
 }
 
 void clip_rect(canvas& cvs, rect r)
@@ -36,6 +41,11 @@ void draw_image(canvas& cvs, int x, int y, const Bitmap& bmp)
 void draw_image(canvas& cvs, rect rc, const Bitmap& bmp)
 {
 	cvs.draw_image((byte*)bmp.data.data(), bmp.width, bmp.height, bmp.width * 4, (float)rc.x, (float)rc.y, (float)rc.width, (float)rc.height);
+}
+
+void add_color_stop(canvas& cvs, brush_type type, float offset, color c)
+{
+	cvs.add_color_stop(type, offset, c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f);
 }
 
 
@@ -210,4 +220,16 @@ void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const 
 		break;
 	}
 	cvs.restore();
+}
+
+void test_container::draw_linear_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient)
+{
+	auto& cvs = *(canvas*)hdc;
+
+	cvs.set_linear_gradient(fill_style, gradient.start.x, gradient.start.y, gradient.end.x, gradient.end.y);
+
+	for (auto cs : gradient.color_points)
+		add_color_stop(cvs, fill_style, cs.offset, cs.color);
+
+	fill_rect(cvs, layer.origin_box);
 }

@@ -28,7 +28,7 @@ public:
 	void			get_image_size(const char* /*src*/, const char* /*baseurl*/, size& /*sz*/) override;
 	void			draw_image(uint_ptr /*hdc*/, const background_layer& /*layer*/, const string& /*url*/, const string& /*base_url*/) override;
 	void			draw_solid_fill(uint_ptr hdc, const background_layer& layer, const web_color& color) override;
-	void			draw_linear_gradient(uint_ptr /*hdc*/, const background_layer& /*layer*/, const background_layer::linear_gradient& /*gradient*/) override {}
+	void			draw_linear_gradient(uint_ptr /*hdc*/, const background_layer& /*layer*/, const background_layer::linear_gradient& /*gradient*/) override;
 	void			draw_radial_gradient(uint_ptr /*hdc*/, const background_layer& /*layer*/, const background_layer::radial_gradient& /*gradient*/) override {}
 	void 			draw_conic_gradient(uint_ptr /*hdc*/, const background_layer& /*layer*/, const background_layer::conic_gradient& /*gradient*/) override {}
 	void			draw_borders(uint_ptr hdc, const borders& borders, const position& draw_pos, bool root) override;
