@@ -1212,6 +1212,7 @@ private:
 //      clipped (render_main).
 
 #ifdef CANVAS_ITY_IMPLEMENTATION
+#define LINEARIZE_RGB 2
 
 #include <algorithm>
 #include <cmath>
@@ -1270,18 +1271,23 @@ static rgba const operator-( rgba left, rgba right ) {
     return left -= right; }
 static rgba const operator*( float left, rgba right ) {
     return right *= left; }
+#if (CANVAS_ITY_IMPLEMENTATION+0) & LINEARIZE_RGB
 static float linearized( float value ) {
     return value < 0.04045f ? value / 12.92f :
         powf( ( value + 0.055f ) / 1.055f, 2.4f ); }
+static float delinearized( float value ) {
+    return value < 0.0031308f ? 12.92f * value :
+        1.055f * powf( value, 1.0f / 2.4f ) - 0.055f; }
+#else
+static float linearized(float value) { return value; }
+static float delinearized(float value) { return value; }
+#endif
 static rgba const linearized( rgba that ) {
     return rgba( linearized( that.r ), linearized( that.g ),
                  linearized( that.b ), that.a ); }
 static rgba const premultiplied( rgba that ) {
     return rgba( that.r * that.a, that.g * that.a,
                  that.b * that.a, that.a ); }
-static float delinearized( float value ) {
-    return value < 0.0031308f ? 12.92f * value :
-        1.055f * powf( value, 1.0f / 2.4f ) - 0.055f; }
 static rgba const delinearized( rgba that ) {
     return rgba( delinearized( that.r ), delinearized( that.g ),
                  delinearized( that.b ), that.a ); }
