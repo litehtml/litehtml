@@ -233,3 +233,15 @@ void test_container::draw_linear_gradient(uint_ptr hdc, const background_layer& 
 
 	fill_rect(cvs, layer.origin_box);
 }
+
+void test_container::draw_radial_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient)
+{
+	auto& cvs = *(canvas*)hdc;
+
+	cvs.set_css_radial_gradient(fill_style, gradient.position.x, gradient.position.y, gradient.radius.x, gradient.radius.y);
+
+	for (auto cs : gradient.color_points)
+		add_color_stop(cvs, fill_style, cs.offset, cs.color);
+
+	fill_rect(cvs, layer.origin_box);
+}

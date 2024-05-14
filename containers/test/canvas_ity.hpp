@@ -159,9 +159,9 @@ enum baseline_style {
 struct xy { float x, y; xy(); xy( float, float ); };
 struct rgba { float r, g, b, a; rgba(); rgba( float, float, float, float ); };
 struct affine_matrix { float a, b, c, d, e, f; };
-struct paint_brush { enum types { color, linear, radial, pattern } type;
+struct paint_brush { enum types { color, linear, radial, css_radial, pattern } type;
                      std::vector< rgba > colors; std::vector< float > stops;
-                     xy start, end; float start_radius, end_radius;
+                     xy start, end; float start_radius, end_radius; xy css_radius;
                      int width, height; repetition_style repetition; };
 struct font_face { std::vector< unsigned char > data;
                    int cmap, glyf, head, hhea, hmtx, loca, maxp, os_2;
@@ -531,6 +531,13 @@ public:
         float end_x,
         float end_y,
         float end_radius );
+
+    void set_css_radial_gradient(
+        brush_type type,
+        float x,
+        float y,
+        float radius_x,
+        float radius_y);
 
     /// @brief  Add a color stop to a linear or radial gradient.
     ///
@@ -2345,7 +2352,7 @@ rgba canvas::paint_pixel(
             return rgba( 0.0f, 0.0f, 0.0f, 0.0f );
         offset = gradient / span;
     }
-    else
+    else if (brush.type == paint_brush::radial)
     {
         float initial = brush.start_radius;
         float change = brush.end_radius - initial;
@@ -2368,6 +2375,11 @@ rgba canvas::paint_pixel(
             offset = offset_1;
         else
             return rgba( 0.0f, 0.0f, 0.0f, 0.0f );
+    }
+    else if (brush.type == paint_brush::css_radial)
+    {
+        xy rel = {relative.x / brush.css_radius.x, relative.y / brush.css_radius.y};
+        offset = length(rel);
     }
     size_t index = static_cast< size_t >(
         std::upper_bound( brush.stops.begin(), brush.stops.end(), offset ) -
@@ -2821,6 +2833,23 @@ void canvas::set_radial_gradient(
     brush.end_radius = end_radius;
 }
 
+void canvas::set_css_radial_gradient(
+    brush_type type,
+    float x,
+    float y,
+    float radius_x,
+    float radius_y)
+{
+    if (radius_x <= 0.0f || radius_y <= 0.0f)
+        return;
+    paint_brush& brush = type == fill_style ? fill_brush : stroke_brush;
+    brush.type = paint_brush::css_radial;
+    brush.colors.clear();
+    brush.stops.clear();
+    brush.start = {x, y};
+    brush.css_radius = {radius_x, radius_y};
+}
+
 void canvas::add_color_stop(
     brush_type type,
     float offset,
@@ -2831,7 +2860,8 @@ void canvas::add_color_stop(
 {
     paint_brush &brush = type == fill_style ? fill_brush : stroke_brush;
     if ( ( brush.type != paint_brush::linear &&
-           brush.type != paint_brush::radial ) ||
+           brush.type != paint_brush::radial &&
+           brush.type != paint_brush::css_radial ) ||
          offset < 0.0f || 1.0f < offset )
         return;
     ptrdiff_t index = std::upper_bound(
