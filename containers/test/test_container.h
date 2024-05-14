@@ -46,7 +46,7 @@ public:
 	void 			set_caption(const char* /*caption*/) override {}
 	void 			set_base_url(const char* /*base_url*/) override {}
 	void			on_anchor_click(const char* /*url*/, const element::ptr& /*el*/) override {}
-	void			on_mouse_event(const litehtml::element::ptr& /*el*/, litehtml::mouse_event /*event*/) override {};
+	void			on_mouse_event(const element::ptr& /*el*/, mouse_event /*event*/) override {};
 	void			set_cursor(const char* /*cursor*/) override {}
 	void			import_css(string& text, const string& url, string& baseurl) override;
 	void			get_client_rect(position& client) const override;
