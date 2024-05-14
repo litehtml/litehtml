@@ -159,9 +159,9 @@ enum baseline_style {
 struct xy { float x, y; xy(); xy( float, float ); };
 struct rgba { float r, g, b, a; rgba(); rgba( float, float, float, float ); };
 struct affine_matrix { float a, b, c, d, e, f; };
-struct paint_brush { enum types { color, linear, radial, css_radial, pattern } type;
+struct paint_brush { enum types { color, pattern, linear, radial, css_radial, conic } type;
                      std::vector< rgba > colors; std::vector< float > stops;
-                     xy start, end; float start_radius, end_radius; xy css_radius;
+                     xy start, end; float start_radius, end_radius; xy css_radius; float angle;
                      int width, height; repetition_style repetition; };
 struct font_face { std::vector< unsigned char > data;
                    int cmap, glyf, head, hhea, hmtx, loca, maxp, os_2;
@@ -538,6 +538,12 @@ public:
         float y,
         float radius_x,
         float radius_y);
+
+    void set_conic_gradient(
+        brush_type type,
+        float x,
+        float y,
+        float angle);
 
     /// @brief  Add a color stop to a linear or radial gradient.
     ///
@@ -1229,6 +1235,7 @@ namespace canvas_ity
 {
 
 // 2D vector math operations
+const float pi = 3.14159265f;
 xy::xy() : x( 0.0f ), y( 0.0f ) {}
 xy::xy( float new_x, float new_y ) : x( new_x ), y( new_y ) {}
 static xy &operator+=( xy &left, xy right ) {
@@ -1258,6 +1265,10 @@ static xy const perpendicular( xy that ) {
     return xy( -that.y, that.x ); }
 static xy const lerp( xy from, xy to, float ratio ) {
     return from + ratio * ( to - from ); }
+// ensure 0 <= angle < 360
+float normalize_angle(float angle) {
+    return fmodf(angle, 360) + (angle < 0 ? 360 : 0);
+}
 
 // RGBA color operations
 rgba::rgba() : r( 0.0f ), g( 0.0f ), b( 0.0f ), a( 0.0f ) {}
@@ -2381,6 +2392,11 @@ rgba canvas::paint_pixel(
         xy rel = {relative.x / brush.css_radius.x, relative.y / brush.css_radius.y};
         offset = length(rel);
     }
+    else if (brush.type == paint_brush::conic)
+    {
+        float angle = 90 + direction(relative) * 180 / pi;
+        offset = normalize_angle(angle - brush.angle) / 360;
+    }
     size_t index = static_cast< size_t >(
         std::upper_bound( brush.stops.begin(), brush.stops.end(), offset ) -
         brush.stops.begin() );
@@ -2850,6 +2866,20 @@ void canvas::set_css_radial_gradient(
     brush.css_radius = {radius_x, radius_y};
 }
 
+void canvas::set_conic_gradient(
+    brush_type type,
+    float x,
+    float y,
+    float angle)
+{
+    paint_brush& brush = type == fill_style ? fill_brush : stroke_brush;
+    brush.type = paint_brush::conic;
+    brush.colors = {};
+    brush.stops = {};
+    brush.start = {x, y};
+    brush.angle = angle;
+}
+
 void canvas::add_color_stop(
     brush_type type,
     float offset,
@@ -2861,7 +2891,8 @@ void canvas::add_color_stop(
     paint_brush &brush = type == fill_style ? fill_brush : stroke_brush;
     if ( ( brush.type != paint_brush::linear &&
            brush.type != paint_brush::radial &&
-           brush.type != paint_brush::css_radial ) ||
+           brush.type != paint_brush::css_radial &&
+           brush.type != paint_brush::conic ) ||
          offset < 0.0f || 1.0f < offset )
         return;
     ptrdiff_t index = std::upper_bound(
@@ -3019,7 +3050,7 @@ void canvas::arc_to(
     float angle_1 = direction( dot( offset, edge_1 ) * edge_1 - offset );
     float angle_2 = direction( dot( offset, edge_2 ) * edge_2 - offset );
     bool reverse = static_cast< int >(
-        floorf( ( angle_2 - angle_1 ) / 3.14159265f ) ) & 1;
+        floorf( ( angle_2 - angle_1 ) / pi ) ) & 1;
     arc( center.x, center.y, radius, angle_1, angle_2, reverse );
 }
 
@@ -3033,7 +3064,7 @@ void canvas::arc(
 {
     if ( radius < 0.0f )
         return;
-    static float const tau = 6.28318531f;
+    static float const tau = 2 * pi;
     float winding = counter_clockwise ? -1.0f : 1.0f;
     float from = fmodf( start_angle, tau );
     float span = fmodf( end_angle, tau ) - from;
