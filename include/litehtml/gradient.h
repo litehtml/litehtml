@@ -101,7 +101,7 @@ namespace litehtml
 			bool is_color_hint = false;
 			web_color  color;
 			css_length length;
-			def_value<float> angle = 0;
+			optional<float> angle;
 
 			color_stop() {}
 			color_stop(web_color color)                    : color(color)                        {}

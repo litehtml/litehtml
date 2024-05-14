@@ -1,6 +1,7 @@
 #ifndef LH_TYPES_H
 #define LH_TYPES_H
 
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -8,7 +9,7 @@
 #include <list>
 #include <set>
 #include <variant>
-#include <cstdint>
+#include <optional>
 
 namespace litehtml
 {
@@ -17,6 +18,7 @@ namespace litehtml
 	using std::vector;
 	using std::shared_ptr;
 	using std::make_shared;
+	using std::optional;
 	using std::min;
 	using std::max;
 	using std::swap;
