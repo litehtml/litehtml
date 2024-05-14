@@ -48,6 +48,8 @@ namespace litehtml
 		virtual	void				set_base_url(const char* base_url) = 0;
 		virtual void				link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el) = 0;
 		virtual void				on_anchor_click(const char* url, const litehtml::element::ptr& el) = 0;
+		virtual void				on_mouse_enter(const litehtml::element::ptr& el) = 0;
+		virtual void				on_mouse_leave(const litehtml::element::ptr& el) = 0;
 		virtual	void				set_cursor(const char* cursor) = 0;
 		virtual	void				transform_text(litehtml::string& text, litehtml::text_transform tt) = 0;
 		virtual void				import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl) = 0;
