@@ -882,10 +882,10 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 bool litehtml::background_layer::gradient_base::prepare_angle_color_points(string_id g_type, const std::vector<gradient::color_stop> &colors)
 {
 	bool repeating;
-	if(g_type != _conic_gradient_)
+	if(g_type == _conic_gradient_)
 	{
 		repeating = false;
-	} else if(g_type != _repeating_conic_gradient_)
+	} else if(g_type == _repeating_conic_gradient_)
 	{
 		repeating = true;
 	} else
@@ -900,7 +900,7 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(strin
 		{
 			has_transparent = true;
 		}
-		if(item.angle.is_default())
+		if(!item.angle)
 		{
 			if(!color_points.empty())
 			{
@@ -909,7 +909,7 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(strin
 			color_points.emplace_back(0.0f, item.color);
 		} else
 		{
-			color_points.emplace_back(item.angle, item.color);
+			color_points.emplace_back(*item.angle, item.color);
 		}
 	}
 	if(color_points.empty())
@@ -977,7 +977,7 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(strin
 
 	if(repeating)
 	{
-		repeat_color_points(color_points, 1.0f);
+		repeat_color_points(color_points, 360);
 	}
 
 	return true;
