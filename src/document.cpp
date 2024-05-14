@@ -727,7 +727,7 @@ bool document::on_mouse_over( int x, int y, int client_x, int client_y, position
 		{
 			if(m_over_element->on_mouse_leave())
 			{
-				m_container->on_mouse_leave( m_over_element );
+				m_container->on_mouse_event(m_over_element, mouse_event_leave);
 				state_was_changed = true;
 			}
 		}
@@ -749,7 +749,7 @@ bool document::on_mouse_over( int x, int y, int client_x, int client_y, position
 	
 	if(state_was_changed)
 	{
-		m_container->on_mouse_enter( m_over_element );
+		m_container->on_mouse_event(m_over_element, mouse_event_enter);
 		return m_root->find_styles_changes(redraw_boxes);
 	}
 	return false;
@@ -765,7 +765,7 @@ bool document::on_mouse_leave( position::vector& redraw_boxes )
 	{
 		if(m_over_element->on_mouse_leave())
 		{
-			m_container->on_mouse_leave( m_over_element );
+			m_container->on_mouse_event(m_over_element, mouse_event_leave);
 			return m_root->find_styles_changes(redraw_boxes);
 		}
 	}
@@ -789,7 +789,7 @@ bool document::on_lbutton_down( int x, int y, int client_x, int client_y, positi
 		{
 			if(m_over_element->on_mouse_leave())
 			{
-				m_container->on_mouse_leave( m_over_element );
+				m_container->on_mouse_event(m_over_element, mouse_event_leave);
 				state_was_changed = true;
 			}
 		}
@@ -818,7 +818,7 @@ bool document::on_lbutton_down( int x, int y, int client_x, int client_y, positi
 
 	if(state_was_changed)
 	{
-		m_container->on_mouse_enter( m_over_element );
+		m_container->on_mouse_event(m_over_element, mouse_event_enter);
 		return m_root->find_styles_changes(redraw_boxes);
 	}
 
