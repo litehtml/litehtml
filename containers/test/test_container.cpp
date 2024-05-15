@@ -229,35 +229,46 @@ void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const 
 	draw_image_pattern(cvs, bg, img);
 }
 
-void set_gradient(canvas& cvs, const background_layer::linear_gradient& gradient)
+void set_gradient(canvas& cvs, const background_layer::linear_gradient& gradient, int origin_x, int origin_y)
 {
-	cvs.set_linear_gradient(fill_style, gradient.start.x, gradient.start.y, gradient.end.x, gradient.end.y);
+	cvs.set_linear_gradient(fill_style,
+		gradient.start.x - origin_x,
+		gradient.start.y - origin_y,
+		gradient.end.x - origin_x,
+		gradient.end.y - origin_y);
 }
-
-void set_gradient(canvas& cvs, const background_layer::radial_gradient& gradient)
+void set_gradient(canvas& cvs, const background_layer::radial_gradient& gradient, int origin_x, int origin_y)
 {
-	cvs.set_css_radial_gradient(fill_style, gradient.position.x, gradient.position.y, gradient.radius.x, gradient.radius.y);
+	cvs.set_css_radial_gradient(fill_style,
+		gradient.position.x - origin_x,
+		gradient.position.y - origin_y,
+		gradient.radius.x,
+		gradient.radius.y);
 }
-
-void set_gradient(canvas& cvs, const background_layer::conic_gradient& gradient)
+void set_gradient(canvas& cvs, const background_layer::conic_gradient& gradient, int origin_x, int origin_y)
 {
-	cvs.set_conic_gradient(fill_style, gradient.position.x, gradient.position.y, gradient.angle);
+	cvs.set_conic_gradient(fill_style,
+		gradient.position.x - origin_x,
+		gradient.position.y - origin_y,
+		gradient.angle);
 }
 
 template<int max_offset, class Gradient>
 void draw_gradient(uint_ptr hdc, const background_layer& bg, const Gradient& gradient)
 {
-	int width  = bg.origin_box.width;
-	int height = bg.origin_box.height;
+	int x = bg.origin_box.x;
+	int y = bg.origin_box.y;
+	int w = bg.origin_box.width;
+	int h = bg.origin_box.height;
 	
-	canvas img(width, height);
+	canvas img(w, h);
 
-	set_gradient(img, gradient);
+	set_gradient(img, gradient, x, y);
 
 	for (auto cs : gradient.color_points)
 		add_color_stop(img, fill_style, cs.offset / max_offset, cs.color);
 
-	fill_rect(img, {0, 0, width, height});
+	fill_rect(img, {0, 0, w, h});
 
 	draw_image_pattern(*(canvas*)hdc, bg, img);
 }
