@@ -180,18 +180,15 @@ void test_container::get_image_size(const char* src, const char* baseurl, size& 
 	sz = {img.width, img.height};
 }
 
-void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const string& src, const string& base_url)
+void draw_image_pattern(canvas& cvs, const background_layer& bg, const Bitmap& img)
 {
-	auto& cvs = *(canvas*)hdc;
-	string url = make_url(src.c_str(), base_url.c_str());
-	auto& img = images[url];
-	if (!img) return;
+	cvs.save();
+	clip_rect(cvs, bg.clip_box);
+
 	int x = bg.origin_box.x;
 	int y = bg.origin_box.y;
 	int w = bg.origin_box.width;
 	int h = bg.origin_box.height;
-	cvs.save();
-	clip_rect(cvs, bg.clip_box);
 
 	switch (bg.repeat)
 	{
@@ -222,38 +219,60 @@ void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const 
 	cvs.restore();
 }
 
-void test_container::draw_linear_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient)
+void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const string& src, const string& base_url)
 {
 	auto& cvs = *(canvas*)hdc;
+	string url = make_url(src.c_str(), base_url.c_str());
+	auto& img = images[url];
+	if (!img) return;
 
+	draw_image_pattern(cvs, bg, img);
+}
+
+void set_gradient(canvas& cvs, const background_layer::linear_gradient& gradient)
+{
 	cvs.set_linear_gradient(fill_style, gradient.start.x, gradient.start.y, gradient.end.x, gradient.end.y);
+}
+
+void set_gradient(canvas& cvs, const background_layer::radial_gradient& gradient)
+{
+	cvs.set_css_radial_gradient(fill_style, gradient.position.x, gradient.position.y, gradient.radius.x, gradient.radius.y);
+}
+
+void set_gradient(canvas& cvs, const background_layer::conic_gradient& gradient)
+{
+	cvs.set_conic_gradient(fill_style, gradient.position.x, gradient.position.y, gradient.angle);
+}
+
+template<int max_offset, class Gradient>
+void draw_gradient(uint_ptr hdc, const background_layer& bg, const Gradient& gradient)
+{
+	int width  = bg.origin_box.width;
+	int height = bg.origin_box.height;
+	
+	canvas img(width, height);
+
+	set_gradient(img, gradient);
 
 	for (auto cs : gradient.color_points)
-		add_color_stop(cvs, fill_style, cs.offset, cs.color);
+		add_color_stop(img, fill_style, cs.offset / max_offset, cs.color);
 
-	fill_rect(cvs, layer.origin_box);
+	fill_rect(img, {0, 0, width, height});
+
+	draw_image_pattern(*(canvas*)hdc, bg, img);
+}
+
+void test_container::draw_linear_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient)
+{
+	draw_gradient<1>(hdc, layer, gradient);
 }
 
 void test_container::draw_radial_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient)
 {
-	auto& cvs = *(canvas*)hdc;
-
-	cvs.set_css_radial_gradient(fill_style, gradient.position.x, gradient.position.y, gradient.radius.x, gradient.radius.y);
-
-	for (auto cs : gradient.color_points)
-		add_color_stop(cvs, fill_style, cs.offset, cs.color);
-
-	fill_rect(cvs, layer.origin_box);
+	draw_gradient<1>(hdc, layer, gradient);
 }
 
 void test_container::draw_conic_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient)
 {
-	auto& cvs = *(canvas*)hdc;
-
-	cvs.set_conic_gradient(fill_style, gradient.position.x, gradient.position.y, gradient.angle);
-
-	for (auto cs : gradient.color_points)
-		add_color_stop(cvs, fill_style, cs.offset / 360, cs.color);
-
-	fill_rect(cvs, layer.origin_box);
+	draw_gradient<360>(hdc, layer, gradient);
 }

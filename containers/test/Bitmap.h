@@ -37,7 +37,7 @@ public:
 	{
 		load(filename);
 	}
-	Bitmap(canvas& canvas, rect rect);
+	Bitmap(canvas& canvas);
 
 	bool operator==(const Bitmap& bmp) const { return width == bmp.width && height == bmp.height && data == bmp.data; }
 	bool operator!=(const Bitmap& bmp) const { return !(*this == bmp); }
