@@ -2397,8 +2397,13 @@ rgba canvas::paint_pixel(
     }
     else if (brush.type == paint_brush::css_radial)
     {
-        xy rel = {relative.x / brush.css_radius.x, relative.y / brush.css_radius.y};
-        offset = length(rel);
+        if (brush.css_radius.x == 0 || brush.css_radius.y == 0)
+            offset = 1;
+        else
+        {
+            xy rel = {relative.x / brush.css_radius.x, relative.y / brush.css_radius.y};
+            offset = length(rel);
+        }
     }
     else if (brush.type == paint_brush::conic)
     {
@@ -2872,7 +2877,7 @@ void canvas::set_css_radial_gradient(
     float radius_x,
     float radius_y)
 {
-    if (radius_x <= 0.0f || radius_y <= 0.0f)
+    if (radius_x < 0.0f || radius_y < 0.0f)
         return;
     paint_brush& brush = type == fill_style ? fill_brush : stroke_brush;
     brush.type = paint_brush::css_radial;
