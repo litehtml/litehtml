@@ -195,6 +195,11 @@ public:
         int width,
         int height );
 
+    canvas(
+        int width,
+        int height,
+        rgba color);
+
     /// @brief  Destroy the canvas and release all associated memory.
     ///
     ~canvas();
@@ -1140,6 +1145,9 @@ public:
         int stride,
         int x,
         int y );
+
+    int width() { return size_x; }
+    int height() { return size_y; }
 
     // ======== CANVAS STATE ========
 
@@ -2675,6 +2683,14 @@ canvas::canvas(
         mask.push_back( piece_1 );
         mask.push_back( piece_2 );
     }
+}
+
+canvas::canvas(int width, int height, rgba c) : canvas(width, height)
+{
+    save();
+    set_color(fill_style, c.r, c.g, c.b, c.a);
+    fill_rectangle(0, 0, (float)width, (float)height);
+    restore();
 }
 
 canvas::~canvas()

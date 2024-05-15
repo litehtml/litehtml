@@ -107,13 +107,12 @@ string readfile(string filename)
 
 Bitmap draw(document::ptr doc, int width, int height)
 {
-	canvas canvas(width, height);
-	rect rect(0, 0, width, height);
-	fill_rect(canvas, rect, white);
+	canvas canvas(width, height, rgba(1,1,1,1));
+	rect clip(0, 0, width, height);
 
-	doc->draw((uint_ptr)&canvas, 0, 0, &rect);
+	doc->draw((uint_ptr)&canvas, 0, 0, &clip);
 
-	return Bitmap(canvas, rect);
+	return Bitmap(canvas);
 }
 
 void test(string filename)
