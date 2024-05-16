@@ -2362,7 +2362,7 @@ rgba canvas::paint_pixel(
         }
         return ( 1.0f / total_weight ) * total_color;
     }
-    float offset;
+    float offset = 0;
     xy relative = point - brush.start;
     xy line = brush.end - brush.start;
     float gradient = dot( relative, line );
