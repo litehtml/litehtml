@@ -99,8 +99,8 @@ namespace litehtml
 		{
 		public:
 			bool is_color_hint = false;
-			web_color  color;
-			css_length length;
+			web_color color;
+			optional<css_length> length;
 			optional<float> angle;
 
 			color_stop() {}

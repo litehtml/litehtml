@@ -786,26 +786,28 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 	bool has_transparent = false;
 	for(const auto& item : colors)
 	{
-		if(item.color.alpha == 0)
+		if (item.color.alpha == 0)
 		{
 			has_transparent = true;
 		}
-		if(item.length.units() == css_units_percentage)
+		if (!item.length)
 		{
-			color_points.emplace_back(item.length.val() / 100.0f, item.color);
-		} else if(item.length.units() != css_units_none)
-		{
-			if(line_len != 0)
-			{
-				color_points.emplace_back(item.length.val() / line_len, item.color);
-			}
-		} else
-		{
-			if(!color_points.empty())
+			if (!color_points.empty())
 			{
 				none_units++;
 			}
 			color_points.emplace_back(0.0f, item.color);
+		}
+		else if (item.length->units() == css_units_percentage)
+		{
+			color_points.emplace_back(item.length->val() / 100.0f, item.color);
+		}
+		else
+		{
+			if (line_len != 0)
+			{
+				color_points.emplace_back(item.length->val() / line_len, item.color);
+			}
 		}
 	}
 	if(color_points.empty())
