@@ -43,9 +43,9 @@ void draw_image(canvas& cvs, rect rc, const Bitmap& bmp)
 	cvs.draw_image((byte*)bmp.data.data(), bmp.width, bmp.height, bmp.width * 4, (float)rc.x, (float)rc.y, (float)rc.width, (float)rc.height);
 }
 
-void add_color_stop(canvas& cvs, brush_type type, float offset, color c)
+void add_color_stop(canvas& cvs, brush_type type, float offset, color c, optional<float> hint)
 {
-	cvs.add_color_stop(type, offset, c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f);
+	cvs.add_color_stop(type, offset, c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f, hint);
 }
 
 
@@ -266,7 +266,7 @@ void draw_gradient(uint_ptr hdc, const background_layer& bg, const Gradient& gra
 	set_gradient(img, gradient, x, y);
 
 	for (auto cs : gradient.color_points)
-		add_color_stop(img, fill_style, cs.offset / max_offset, cs.color);
+		add_color_stop(img, fill_style, cs.offset / max_offset, cs.color, cs.hint ? *cs.hint / max_offset : cs.hint);
 
 	fill_rect(img, {0, 0, w, h});
 

@@ -786,6 +786,21 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 	bool has_transparent = false;
 	for(const auto& item : colors)
 	{
+		if (item.is_color_hint)
+		{
+			if (!color_points.empty())
+			{
+				if (item.length->units() == css_units_percentage)
+				{
+					color_points.back().hint = item.length->val() / 100.0f;
+				}
+				else if (line_len != 0)
+				{
+					color_points.back().hint = item.length->val() / line_len;
+				}
+			}
+			continue;
+		}
 		if (item.color.alpha == 0)
 		{
 			has_transparent = true;
@@ -899,6 +914,12 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(strin
 	bool has_transparent = false;
 	for(const auto& item : colors)
 	{
+		if (item.is_color_hint)
+		{
+			if (!color_points.empty())
+				color_points.back().hint = *item.angle;
+			continue;
+		}
 		if(item.color.alpha == 0)
 		{
 			has_transparent = true;

@@ -138,6 +138,7 @@
 
 #include <cstddef>
 #include <vector>
+#include <optional>
 
 namespace canvas_ity
 {
@@ -160,7 +161,7 @@ struct xy { float x, y; xy(); xy( float, float ); };
 struct rgba { float r, g, b, a; rgba(); rgba( float, float, float, float ); };
 struct affine_matrix { float a, b, c, d, e, f; };
 struct paint_brush { enum types { color, pattern, linear, radial, css_radial, conic } type;
-                     std::vector< rgba > colors; std::vector< float > stops;
+                     std::vector< rgba > colors; std::vector< float > stops; std::vector< std::optional<float> > hints;
                      xy start, end; float start_radius, end_radius; xy css_radius; float angle;
                      int width, height; repetition_style repetition; };
 struct font_face { std::vector< unsigned char > data;
@@ -580,7 +581,8 @@ public:
         float red,
         float green,
         float blue,
-        float alpha );
+        float alpha,
+        std::optional<float> hint = {} );
 
     /// @brief  Set filling or stroking to draw with an image pattern.
     ///
@@ -2417,10 +2419,18 @@ rgba canvas::paint_pixel(
         return premultiplied( brush.colors.front() );
     if ( index == brush.stops.size() )
         return premultiplied( brush.colors.back() );
-    float mix = ( ( offset - brush.stops[ index - 1 ] ) /
-                  ( brush.stops[ index ] - brush.stops[ index - 1 ] ) );
-    rgba delta = brush.colors[ index ] - brush.colors[ index - 1 ];
-    return premultiplied( brush.colors[ index - 1 ] + mix * delta );
+    struct { rgba color; float stop; std::optional<float> hint; }
+        A = {brush.colors[index - 1], brush.stops[index - 1], brush.hints[index - 1]},
+        B = {brush.colors[index], brush.stops[index]};
+    // https://drafts.csswg.org/css-images-4/#coloring-gradient-line
+    // 1. Determine the location of the transition hint as a percentage of the distance between the two color stops, denoted as a number between 0 and 1
+    float H = !A.hint ? .5f : (*A.hint - A.stop) / (B.stop - A.stop);
+    // 2. For any given point between the two color stops, determine the point’s location as a percentage of the distance between the two color stops, in the same way as the previous step.
+    float P = (offset - A.stop) / (B.stop - A.stop);
+    // 3. Let C, the color weighting at that point, be equal to P^logH(.5).
+    float C = pow(P, log(.5f) / log(H));
+    // 4. The color at that point is then a linear blend between the colors of the two color stops, blending (1 - C) of the first stop and C of the second stop.
+    return premultiplied((1 - C) * A.color + C * B.color);
 }
 
 // Render the shadow of the polylines into the pixel buffer if needed.  After
@@ -2845,6 +2855,7 @@ void canvas::set_linear_gradient(
     brush.type = paint_brush::linear;
     brush.colors.clear();
     brush.stops.clear();
+    brush.hints.clear();
     brush.start = xy( start_x, start_y );
     brush.end = xy( end_x, end_y );
 }
@@ -2864,6 +2875,7 @@ void canvas::set_radial_gradient(
     brush.type = paint_brush::radial;
     brush.colors.clear();
     brush.stops.clear();
+    brush.hints.clear();
     brush.start = xy( start_x, start_y );
     brush.end = xy( end_x, end_y );
     brush.start_radius = start_radius;
@@ -2883,6 +2895,7 @@ void canvas::set_css_radial_gradient(
     brush.type = paint_brush::css_radial;
     brush.colors.clear();
     brush.stops.clear();
+    brush.hints.clear();
     brush.start = {x, y};
     brush.css_radius = {radius_x, radius_y};
 }
@@ -2897,6 +2910,7 @@ void canvas::set_conic_gradient(
     brush.type = paint_brush::conic;
     brush.colors = {};
     brush.stops = {};
+    brush.hints = {};
     brush.start = {x, y};
     brush.angle = angle;
 }
@@ -2907,7 +2921,8 @@ void canvas::add_color_stop(
     float red,
     float green,
     float blue,
-    float alpha )
+    float alpha,
+    std::optional<float> hint )
 {
     paint_brush &brush = type == fill_style ? fill_brush : stroke_brush;
     if ( ( brush.type != paint_brush::linear &&
@@ -2922,6 +2937,7 @@ void canvas::add_color_stop(
     rgba color = linearized( clamped( rgba( red, green, blue, alpha ) ) );
     brush.colors.insert( brush.colors.begin() + index, color );
     brush.stops.insert( brush.stops.begin() + index, offset );
+    brush.hints.insert( brush.hints.begin() + index, hint );
 }
 
 void canvas::set_pattern(
