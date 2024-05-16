@@ -406,7 +406,8 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
 			case image::type_gradient:
 				for(auto& item : image.m_gradient.m_colors)
 				{
-					doc->cvt_units(item.length,  font_size);
+					if (item.length)
+						doc->cvt_units(*item.length, font_size);
 				}
 				break;
 		}
