@@ -699,14 +699,14 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 	}
 }
 
-static void repeat_color_points(std::vector<litehtml::background_layer::color_point>& color_points, float max_val)
+static void repeat_color_points(std::vector<litehtml::background_layer::color_point>& color_points)
 {
 	auto old_points = color_points;
-	if(color_points.back().offset < max_val)
+	if(color_points.back().offset < 1)
 	{
 		float gd_size = color_points.back().offset - old_points.front().offset;
 		auto iter = old_points.begin();
-		while (color_points.back().offset < max_val)
+		while (color_points.back().offset < 1)
 		{
 			color_points.emplace_back(iter->offset + gd_size, iter->color);
 			std::advance(iter, 1);
@@ -891,7 +891,7 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 
 	if(repeating)
 	{
-		repeat_color_points(color_points, 1.0f);
+		repeat_color_points(color_points);
 	}
 
 	return true;
@@ -917,7 +917,7 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(strin
 		if (item.is_color_hint)
 		{
 			if (!color_points.empty())
-				color_points.back().hint = *item.angle;
+				color_points.back().hint = *item.angle / 360;
 			continue;
 		}
 		if(item.color.alpha == 0)
@@ -933,7 +933,7 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(strin
 			color_points.emplace_back(0.0f, item.color);
 		} else
 		{
-			color_points.emplace_back(*item.angle, item.color);
+			color_points.emplace_back(*item.angle / 360, item.color);
 		}
 	}
 	if(color_points.empty())
@@ -949,22 +949,22 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(strin
 			color_points.emplace(color_points.begin(), 0.0f, color_points[0].color);
 		}
 		// Add color point with offset 1.0 if not exists
-		if (color_points.back().offset < 360.0f)
+		if (color_points.back().offset < 1)
 		{
 			if (color_points.back().offset == 0)
 			{
-				color_points.back().offset = 360.0f;
+				color_points.back().offset = 1;
 				none_units--;
 			} else
 			{
-				color_points.emplace_back(360.0f, color_points.back().color);
+				color_points.emplace_back(1.f, color_points.back().color);
 			}
 		}
 	} else
 	{
 		if (color_points.back().offset == 0)
 		{
-			color_points.back().offset = 360.0f;
+			color_points.back().offset = 1;
 			none_units--;
 		}
 	}
@@ -1001,7 +1001,7 @@ bool litehtml::background_layer::gradient_base::prepare_angle_color_points(strin
 
 	if(repeating)
 	{
-		repeat_color_points(color_points, 360);
+		repeat_color_points(color_points);
 	}
 
 	return true;
