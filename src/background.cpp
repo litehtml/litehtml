@@ -558,7 +558,8 @@ std::unique_ptr<litehtml::background_layer::conic_gradient> litehtml::background
 {
 	if(idx < 0 || idx >= (int) m_image.size()) return {};
 	if(m_image[idx].type != image::type_gradient) return {};
-	if(m_image[idx].m_gradient.m_type != _conic_gradient_) return {};
+	if (m_image[idx].m_gradient.m_type != _conic_gradient_ &&
+		m_image[idx].m_gradient.m_type != _repeating_conic_gradient_) return {};
 
 	auto ret = std::make_unique<background_layer::conic_gradient>();
 
