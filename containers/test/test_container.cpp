@@ -24,6 +24,28 @@ void fill_rect(canvas& cvs, rect r, color color)
 	fill_rect(cvs, r);
 }
 
+void fill_circle(canvas& cvs, rect rc, color color)
+{
+	float r = min(rc.width, rc.height) / 2.f;
+	float x = rc.x + rc.width / 2.f;
+	float y = rc.y + rc.height / 2.f;
+	set_color(cvs, fill_style, color);
+	cvs.begin_path();
+	cvs.arc(x, y, r, 0, 2*pi);
+	cvs.fill();
+}
+
+void draw_circle(canvas& cvs, rect rc, color color)
+{
+	float r = min(rc.width, rc.height) / 2.f - .5f;
+	float x = rc.x + rc.width / 2.f;
+	float y = rc.y + rc.height / 2.f;
+	set_color(cvs, stroke_style, color);
+	cvs.begin_path();
+	cvs.arc(x, y, r, 0, 2*pi);
+	cvs.stroke();
+}
+
 void clip_rect(canvas& cvs, rect r)
 {
 	cvs.begin_path();
@@ -128,8 +150,26 @@ void test_container::draw_borders(uint_ptr hdc, const borders& borders, const po
 
 void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
 {
-	auto cvs = (canvas*)hdc;
-	fill_rect(*cvs, marker.pos, marker.color);
+	auto& cvs = *(canvas*)hdc;
+
+	switch (marker.marker_type)
+	{
+	case list_style_type_circle:
+		draw_circle(cvs, marker.pos, marker.color);
+		break;
+
+	case list_style_type_disc:
+		fill_circle(cvs, marker.pos, marker.color);
+		break;
+
+	case list_style_type_square:
+		fill_rect(cvs, marker.pos, marker.color);
+		break;
+
+	default:
+		// do nothing
+		break;
+	}
 }
 
 string getdir(string filename)
