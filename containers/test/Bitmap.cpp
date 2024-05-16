@@ -129,5 +129,5 @@ byte max_color_diff(const Bitmap& a, const Bitmap& b)
 			color B = b.get_pixel(x, y);
 			diff = max({diff, abs(A.r - B.r), abs(A.g - B.g), abs(A.b - B.b), abs(A.a - B.a)});
 		}
-	return diff;
+	return (byte)diff;
 }
