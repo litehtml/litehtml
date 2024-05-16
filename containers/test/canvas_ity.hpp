@@ -1287,16 +1287,16 @@ rgba::rgba( float new_r, float new_g, float new_b, float new_a )
 static rgba &operator+=( rgba &left, rgba right ) {
     left.r += right.r; left.g += right.g; left.b += right.b;
     left.a += right.a; return left; }
-static rgba &operator-=( rgba &left, rgba right ) {
-    left.r -= right.r; left.g -= right.g; left.b -= right.b;
-    left.a -= right.a; return left; }
+//static rgba &operator-=( rgba &left, rgba right ) {
+//    left.r -= right.r; left.g -= right.g; left.b -= right.b;
+//    left.a -= right.a; return left; }
 static rgba &operator*=( rgba &left, float right ) {
     left.r *= right; left.g *= right; left.b *= right;
     left.a *= right; return left; }
 static rgba const operator+( rgba left, rgba right ) {
     return left += right; }
-static rgba const operator-( rgba left, rgba right ) {
-    return left -= right; }
+//static rgba const operator-( rgba left, rgba right ) {
+//    return left -= right; }
 static rgba const operator*( float left, rgba right ) {
     return right *= left; }
 #if (CANVAS_ITY_IMPLEMENTATION+0) & LINEARIZE_RGB
@@ -2420,8 +2420,8 @@ rgba canvas::paint_pixel(
     if ( index == brush.stops.size() )
         return premultiplied( brush.colors.back() );
     struct { rgba color; float stop; std::optional<float> hint; }
-        A = {brush.colors[index - 1], brush.stops[index - 1], brush.hints[index - 1]},
-        B = {brush.colors[index], brush.stops[index]};
+        A = { brush.colors[index-1], brush.stops[index-1], brush.hints[index-1] },
+        B = { brush.colors[index],   brush.stops[index],   {}                   };
     // https://drafts.csswg.org/css-images-4/#coloring-gradient-line
     // 1. Determine the location of the transition hint as a percentage of the distance between the two color stops, denoted as a number between 0 and 1
     float H = !A.hint ? .5f : (*A.hint - A.stop) / (B.stop - A.stop);
