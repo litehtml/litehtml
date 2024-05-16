@@ -152,6 +152,17 @@ void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
 {
 	auto& cvs = *(canvas*)hdc;
 
+	if (marker.image != "")
+	{
+		string url = make_url(marker.image.c_str(), marker.baseurl);
+		auto& img = images[url];
+		if (img)
+		{
+			::draw_image(cvs, marker.pos, img);
+			return;
+		}
+	}
+
 	switch (marker.marker_type)
 	{
 	case list_style_type_circle:
@@ -233,19 +244,19 @@ void draw_image_pattern(canvas& cvs, const background_layer& bg, const Bitmap& i
 	switch (bg.repeat)
 	{
 	case background_repeat_no_repeat:
-		::draw_image(cvs, {x, y, w, h}, img);
+		draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat_x:
 		while (x > bg.clip_box.left()) x -= w;
 		for (; x < bg.clip_box.right(); x += w)
-			::draw_image(cvs, {x, y, w, h}, img);
+			draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat_y:
 		while (y > bg.clip_box.top()) y -= h;
 		for (; y < bg.clip_box.bottom(); y += h)
-			::draw_image(cvs, {x, y, w, h}, img);
+			draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat:
@@ -253,7 +264,7 @@ void draw_image_pattern(canvas& cvs, const background_layer& bg, const Bitmap& i
 		while (y > bg.clip_box.top()) y -= h;
 		for (; x < bg.clip_box.right(); x += w)
 			for (int _y = y; _y < bg.clip_box.bottom(); _y += h)
-				::draw_image(cvs, {x, _y, w, h}, img);
+				draw_image(cvs, {x, _y, w, h}, img);
 		break;
 	}
 	cvs.restore();
