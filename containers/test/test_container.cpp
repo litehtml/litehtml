@@ -253,7 +253,7 @@ void set_gradient(canvas& cvs, const background_layer::conic_gradient& gradient,
 		gradient.angle);
 }
 
-template<int max_offset, class Gradient>
+template<class Gradient>
 void draw_gradient(uint_ptr hdc, const background_layer& bg, const Gradient& gradient)
 {
 	int x = bg.origin_box.x;
@@ -266,7 +266,7 @@ void draw_gradient(uint_ptr hdc, const background_layer& bg, const Gradient& gra
 	set_gradient(img, gradient, x, y);
 
 	for (auto cs : gradient.color_points)
-		add_color_stop(img, fill_style, cs.offset / max_offset, cs.color, cs.hint ? *cs.hint / max_offset : cs.hint);
+		add_color_stop(img, fill_style, cs.offset, cs.color, cs.hint);
 
 	fill_rect(img, {0, 0, w, h});
 
@@ -275,15 +275,15 @@ void draw_gradient(uint_ptr hdc, const background_layer& bg, const Gradient& gra
 
 void test_container::draw_linear_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient)
 {
-	draw_gradient<1>(hdc, layer, gradient);
+	draw_gradient(hdc, layer, gradient);
 }
 
 void test_container::draw_radial_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient)
 {
-	draw_gradient<1>(hdc, layer, gradient);
+	draw_gradient(hdc, layer, gradient);
 }
 
 void test_container::draw_conic_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient)
 {
-	draw_gradient<360>(hdc, layer, gradient);
+	draw_gradient(hdc, layer, gradient);
 }
