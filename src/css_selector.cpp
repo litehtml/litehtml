@@ -1,7 +1,6 @@
 #include "html.h"
 #include "css_selector.h"
 #include "css_parser.h"
-#include <set>
 #include "internal.h"
 
 namespace litehtml

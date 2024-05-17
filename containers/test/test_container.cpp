@@ -75,10 +75,10 @@ void add_color_stop(canvas& cvs, brush_type type, float offset, color c, optiona
 //  test_container implementation
 //
 
-// note: font is selected only by size, name and style are not used
-uint_ptr test_container::create_font(const char* /*faceName*/, int size, int /*weight*/, font_style /*italic*/, unsigned int /*decoration*/, font_metrics* fm)
+// note: font is selected only by size and weight, name is not used
+uint_ptr test_container::create_font(const char* /*faceName*/, int size, int weight, font_style /*italic*/, unsigned int /*decoration*/, font_metrics* fm)
 {
-	Font* font = new Font(size);
+	Font* font = new Font(size, weight);
 
 	if (fm)
 	{
