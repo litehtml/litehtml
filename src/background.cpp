@@ -8,6 +8,9 @@
 #       define M_PI    3.14159265358979323846
 #endif
 
+namespace litehtml
+{
+
 bool litehtml::background::get_layer(int idx, position pos, const element* el, const std::shared_ptr<render_item>& ri, background_layer& layer) const
 {
 	if(idx < 0 || idx >= get_layers_number())
@@ -558,7 +561,8 @@ std::unique_ptr<litehtml::background_layer::conic_gradient> litehtml::background
 {
 	if(idx < 0 || idx >= (int) m_image.size()) return {};
 	if(m_image[idx].type != image::type_gradient) return {};
-	if(m_image[idx].m_gradient.m_type != _conic_gradient_) return {};
+	if (m_image[idx].m_gradient.m_type != _conic_gradient_ &&
+		m_image[idx].m_gradient.m_type != _repeating_conic_gradient_) return {};
 
 	auto ret = std::make_unique<background_layer::conic_gradient>();
 
@@ -597,7 +601,7 @@ std::unique_ptr<litehtml::background_layer::conic_gradient> litehtml::background
 	ret->color_space = m_image[idx].m_gradient.color_space;
 	ret->hue_interpolation = m_image[idx].m_gradient.hue_interpolation;
 
-	if(ret->prepare_angle_color_points(m_image[idx].m_gradient.m_type, m_image[idx].m_gradient.m_colors))
+	if(ret->prepare_color_points(0, m_image[idx].m_gradient.m_type, m_image[idx].m_gradient.m_colors))
 	{
 		return ret;
 	}
@@ -698,14 +702,14 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 	}
 }
 
-static void repeat_color_points(std::vector<litehtml::background_layer::color_point>& color_points, float max_val)
+static void repeat_color_points(std::vector<litehtml::background_layer::color_point>& color_points)
 {
 	auto old_points = color_points;
-	if(color_points.back().offset < max_val)
+	if(color_points.back().offset < 1)
 	{
 		float gd_size = color_points.back().offset - old_points.front().offset;
 		auto iter = old_points.begin();
-		while (color_points.back().offset < max_val)
+		while (color_points.back().offset < 1)
 		{
 			color_points.emplace_back(iter->offset + gd_size, iter->color);
 			std::advance(iter, 1);
@@ -768,13 +772,27 @@ void litehtml::background_layer::gradient_base::color_points_transparent_fix()
 	}
 }
 
+// normalize length into value between 0 and 1
+float normalize_length(css_length length, float line_len)
+{
+	if (length.units() == css_units_percentage)
+	{
+		return length.val() / 100.0f;
+	}
+	else if (line_len != 0)
+	{
+		return length.val() / line_len;
+	}
+	return length.val();
+}
+
 bool litehtml::background_layer::gradient_base::prepare_color_points(float line_len, string_id g_type, const std::vector<gradient::color_stop> &colors)
 {
 	bool repeating;
-	if(g_type == _linear_gradient_ || g_type == _radial_gradient_)
+	if(g_type == _linear_gradient_ || g_type == _radial_gradient_ || g_type == _conic_gradient_)
 	{
 		repeating = false;
-	} else if(g_type == _repeating_linear_gradient_ || g_type == _repeating_radial_gradient_)
+	} else if(g_type == _repeating_linear_gradient_ || g_type == _repeating_radial_gradient_ || g_type == _repeating_conic_gradient_)
 	{
 		repeating = true;
 	} else
@@ -785,22 +803,31 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 	bool has_transparent = false;
 	for(const auto& item : colors)
 	{
-		if(item.color.alpha == 0)
+		if (item.is_color_hint)
+		{
+			if (!color_points.empty())
+			{
+				color_points.back().hint = item.length ? 
+					normalize_length(*item.length, line_len) :
+					*item.angle / 360;
+			}
+			continue;
+		}
+		if (item.color.alpha == 0)
 		{
 			has_transparent = true;
 		}
-		if(item.length.units() == css_units_percentage)
+		if (item.length)
 		{
-			color_points.emplace_back(item.length.val() / 100.0f, item.color);
-		} else if(item.length.units() != css_units_none)
+			color_points.emplace_back(normalize_length(*item.length, line_len), item.color);
+		}
+		else if (item.angle)
 		{
-			if(line_len != 0)
-			{
-				color_points.emplace_back(item.length.val() / line_len, item.color);
-			}
-		} else
+			color_points.emplace_back(*item.angle / 360, item.color);
+		}
+		else
 		{
-			if(!color_points.empty())
+			if (!color_points.empty())
 			{
 				none_units++;
 			}
@@ -873,112 +900,10 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 
 	if(repeating)
 	{
-		repeat_color_points(color_points, 1.0f);
+		repeat_color_points(color_points);
 	}
 
 	return true;
 }
 
-bool litehtml::background_layer::gradient_base::prepare_angle_color_points(string_id g_type, const std::vector<gradient::color_stop> &colors)
-{
-	bool repeating;
-	if(g_type != _conic_gradient_)
-	{
-		repeating = false;
-	} else if(g_type != _repeating_conic_gradient_)
-	{
-		repeating = true;
-	} else
-	{
-		return false;
-	}
-	int none_units = 0;
-	bool has_transparent = false;
-	for(const auto& item : colors)
-	{
-		if(item.color.alpha == 0)
-		{
-			has_transparent = true;
-		}
-		if(item.angle.is_default())
-		{
-			if(!color_points.empty())
-			{
-				none_units++;
-			}
-			color_points.emplace_back(0.0f, item.color);
-		} else
-		{
-			color_points.emplace_back(item.angle, item.color);
-		}
-	}
-	if(color_points.empty())
-	{
-		return false;
-	}
-
-	if(!repeating)
-	{
-		// Add color point with offset 0 if not exists
-		if (color_points[0].offset != 0)
-		{
-			color_points.emplace(color_points.begin(), 0.0f, color_points[0].color);
-		}
-		// Add color point with offset 1.0 if not exists
-		if (color_points.back().offset < 360.0f)
-		{
-			if (color_points.back().offset == 0)
-			{
-				color_points.back().offset = 360.0f;
-				none_units--;
-			} else
-			{
-				color_points.emplace_back(360.0f, color_points.back().color);
-			}
-		}
-	} else
-	{
-		if (color_points.back().offset == 0)
-		{
-			color_points.back().offset = 360.0f;
-			none_units--;
-		}
-	}
-
-	if(none_units > 0)
-	{
-		size_t i = 1;
-		while(i < color_points.size())
-		{
-			if(color_points[i].offset != 0)
-			{
-				i++;
-				continue;
-			}
-			// Find next defined offset
-			size_t j = i + 1;
-			while (color_points[j].offset == 0) j++;
-			size_t num = j - i;
-			float sum = color_points[i - 1].offset + color_points[j].offset;
-			float offset = sum / (float) (num + 1);
-			while(i < j)
-			{
-				color_points[i].offset = color_points[i - 1].offset + offset;
-				i++;
-			}
-		}
-	}
-
-	// process transparent
-	if(has_transparent)
-	{
-		color_points_transparent_fix();
-	}
-
-	if(repeating)
-	{
-		repeat_color_points(color_points, 1.0f);
-	}
-
-	return true;
-}
+} // namespace litehtml

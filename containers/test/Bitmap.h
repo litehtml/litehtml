@@ -2,6 +2,8 @@
 #include <litehtml.h>
 using namespace litehtml;
 using rect = position;
+namespace canvas_ity { class canvas; }
+using namespace canvas_ity;
 
 // color != web_color because sizeof(web_color) != 4
 struct color
@@ -35,6 +37,7 @@ public:
 	{
 		load(filename);
 	}
+	Bitmap(canvas& canvas);
 
 	bool operator==(const Bitmap& bmp) const { return width == bmp.width && height == bmp.height && data == bmp.data; }
 	bool operator!=(const Bitmap& bmp) const { return !(*this == bmp); }
@@ -45,12 +48,11 @@ public:
 	void draw_line(int x0, int y0, int x1, int y1, color color);
 	void draw_rect(int x, int y, int width, int height, color color);
 	void fill_rect(rect rect, color color);
-	void draw_bitmap(int x, int y, const Bitmap& bmp);
-	void draw_bitmap(int x, int y, const Bitmap& bmp, rect clip);
 	void replace_color(color original, color replacement);
 
 	rect find_picture(color bgcolor = white);
-	void resize(int new_width, int new_height);
 	void load(string filename);
 	void save(string filename);
 };
+
+byte max_color_diff(const Bitmap& a, const Bitmap& b);

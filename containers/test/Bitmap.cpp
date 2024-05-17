@@ -1,6 +1,12 @@
 #include "Bitmap.h"
 #include "lodepng.h"
-using namespace std;
+#include "canvas_ity.hpp"
+using namespace canvas_ity;
+
+Bitmap::Bitmap(canvas& canvas) : Bitmap(canvas.width(), canvas.height())
+{
+	canvas.get_image_data((byte*)data.data(), width, height, width * 4, 0, 0);
+}
 
 color Bitmap::get_pixel(int x, int y) const
 {
@@ -51,21 +57,6 @@ void Bitmap::fill_rect(rect rect, color color)
 			set_pixel(x, y, color);
 }
 
-void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp)
-{
-	for (int y = 0; y < bmp.height; y++)
-		for (int x = 0; x < bmp.width; x++)
-			set_pixel(x0 + x, y0 + y, bmp.get_pixel(x, y));
-}
-
-void Bitmap::draw_bitmap(int x0, int y0, const Bitmap& bmp, rect clip)
-{
-	for (int y = 0; y < bmp.height; y++)
-		for (int x = 0; x < bmp.width; x++)
-			if (clip.is_point_inside(x0 + x, y0 + y))
-				set_pixel(x0 + x, y0 + y, bmp.get_pixel(x, y));
-}
-
 void Bitmap::replace_color(color original, color replacement)
 {
 	for (auto& pixel : data)
@@ -106,21 +97,9 @@ rect Bitmap::find_picture(color bgcolor)
 	return rect;
 }
 
-void Bitmap::resize(int new_width, int new_height)
-{
-	vector<color> new_data(new_width * new_height, white);
-	for (int y = 0; y < min(new_height, height); y++)
-		for (int x = 0; x < min(new_width, width); x++)
-			new_data[x + y * new_width] = data[x + y * width];
-	
-	width = new_width;
-	height = new_height;
-	data = new_data;
-}
-
 void Bitmap::load(string filename)
 {
-	vector<unsigned char> image;
+	vector<byte> image;
 	unsigned w, h;
 	lodepng::decode(image, w, h, filename);
 	if (w * h == 0) return;
@@ -133,5 +112,22 @@ void Bitmap::load(string filename)
 
 void Bitmap::save(string filename)
 {
-	lodepng::encode(filename, (unsigned char*)data.data(), width, height);
+	lodepng::encode(filename, (byte*)data.data(), width, height);
+}
+
+// This function can be used to compare gradient rendering between different browsers.
+byte max_color_diff(const Bitmap& a, const Bitmap& b)
+{
+	if (a.width != b.width || a.height != b.height)
+		return 255;
+
+	int diff = 0;
+	for (int y = 0; y < a.height; y++)
+		for (int x = 0; x < a.width; x++)
+		{
+			color A = a.get_pixel(x, y);
+			color B = b.get_pixel(x, y);
+			diff = max({diff, abs(A.r - B.r), abs(A.g - B.g), abs(A.b - B.b), abs(A.a - B.a)});
+		}
+	return (byte)diff;
 }

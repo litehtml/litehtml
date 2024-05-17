@@ -43,6 +43,7 @@ namespace litehtml
 		{
 			float offset;
 			web_color color;
+			optional<float> hint;
 			color_point() { offset = 0.0; }
 			color_point(float _offset, web_color _color) : offset(_offset), color(_color) {}
 		};
@@ -62,7 +63,6 @@ namespace litehtml
 
 			void color_points_transparent_fix();
 			bool prepare_color_points(float len, string_id grad_type, const vector<gradient::color_stop>& colors);
-			bool prepare_angle_color_points(string_id grad_type, const vector<gradient::color_stop>& colors);
 		};
 
 		class linear_gradient : public gradient_base

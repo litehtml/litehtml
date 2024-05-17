@@ -1,6 +1,79 @@
 #include "test_container.h"
 #include "Font.h"
+#define CANVAS_ITY_IMPLEMENTATION
+#include "canvas_ity.hpp"
 string readfile(string filename);
+
+//
+//  canvas_ity adapters
+//
+
+void set_color(canvas& cvs, brush_type type, color c)
+{
+	cvs.set_color(type, c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f);
+}
+
+void fill_rect(canvas& cvs, rect r)
+{
+	cvs.fill_rectangle((float)r.x, (float)r.y, (float)r.width, (float)r.height);
+}
+
+void fill_rect(canvas& cvs, rect r, color color)
+{
+	set_color(cvs, fill_style, color);
+	fill_rect(cvs, r);
+}
+
+void fill_circle(canvas& cvs, rect rc, color color)
+{
+	float r = min(rc.width, rc.height) / 2.f;
+	float x = rc.x + rc.width / 2.f;
+	float y = rc.y + rc.height / 2.f;
+	set_color(cvs, fill_style, color);
+	cvs.begin_path();
+	cvs.arc(x, y, r, 0, 2*pi);
+	cvs.fill();
+}
+
+void draw_circle(canvas& cvs, rect rc, color color)
+{
+	float r = min(rc.width, rc.height) / 2.f - .5f;
+	float x = rc.x + rc.width / 2.f;
+	float y = rc.y + rc.height / 2.f;
+	set_color(cvs, stroke_style, color);
+	cvs.begin_path();
+	cvs.arc(x, y, r, 0, 2*pi);
+	cvs.stroke();
+}
+
+void clip_rect(canvas& cvs, rect r)
+{
+	cvs.begin_path();
+	cvs.rectangle((float)r.x, (float)r.y, (float)r.width, (float)r.height);
+	cvs.clip();
+}
+
+// without scaling
+void draw_image(canvas& cvs, int x, int y, const Bitmap& bmp)
+{
+	cvs.draw_image((byte*)bmp.data.data(), bmp.width, bmp.height, bmp.width * 4, (float)x, (float)y, (float)bmp.width, (float)bmp.height);
+}
+
+// with scaling
+void draw_image(canvas& cvs, rect rc, const Bitmap& bmp)
+{
+	cvs.draw_image((byte*)bmp.data.data(), bmp.width, bmp.height, bmp.width * 4, (float)rc.x, (float)rc.y, (float)rc.width, (float)rc.height);
+}
+
+void add_color_stop(canvas& cvs, brush_type type, float offset, color c, optional<float> hint)
+{
+	cvs.add_color_stop(type, offset, c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f, hint);
+}
+
+
+//
+//  test_container implementation
+//
 
 // note: font is selected only by size, name and style are not used
 uint_ptr test_container::create_font(const char* /*faceName*/, int size, int /*weight*/, font_style /*italic*/, unsigned int /*decoration*/, font_metrics* fm)
@@ -25,7 +98,7 @@ int test_container::text_width(const char* text, uint_ptr hFont)
 
 void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos)
 {
-	auto bmp = (Bitmap*)hdc;
+	auto cvs = (canvas*)hdc;
 	Font* font = (Font*)hFont;
 	utf8_to_utf32 utf32(text);
 
@@ -33,7 +106,7 @@ void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, w
 	for (const char32_t* p = utf32; *p; p++)
 	{
 		Bitmap glyph = font->get_glyph(*p, color);
-		bmp->draw_bitmap(x, pos.y, glyph);
+		::draw_image(*cvs, x, pos.y, glyph);
 		x += glyph.width;
 	}
 }
@@ -44,43 +117,70 @@ const char* test_container::get_default_font_name() const { return ""; }
 
 void test_container::draw_solid_fill(uint_ptr hdc, const background_layer& layer, const web_color& color)
 {
-	auto bmp = (Bitmap*)hdc;
-	bmp->fill_rect(layer.border_box, color);
+	auto cvs = (canvas*)hdc;
+	fill_rect(*cvs, layer.border_box, color);
 }
 
 void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool /*root*/)
 {
-	auto bmp = (Bitmap*)hdc;
+	auto& cvs = *(canvas*)hdc;
 
 	// left border
-	for (int x = 0; x < borders.left.width; x++)
-		bmp->draw_line(
-			pos.left() + x, pos.top(), 
-			pos.left() + x, pos.bottom(), borders.left.color);
+	rect rect = pos;
+	rect.width = borders.left.width;
+	fill_rect(cvs, rect, borders.left.color);
 
 	// right border
-	for (int x = 0; x < borders.right.width; x++)
-		bmp->draw_line(
-			pos.right() - x - 1, pos.top(),
-			pos.right() - x - 1, pos.bottom(), borders.right.color);
+	rect = pos;
+	rect.x = rect.right() - borders.right.width;
+	rect.width = borders.right.width;
+	fill_rect(cvs, rect, borders.right.color);
 
 	// top border
-	for (int y = 0; y < borders.top.width; y++)
-		bmp->draw_line(
-			pos.left(),  pos.top() + y,
-			pos.right(), pos.top() + y, borders.top.color);
+	rect = pos;
+	rect.height = borders.top.width;
+	fill_rect(cvs, rect, borders.top.color);
 
 	// bottom border
-	for (int y = 0; y < borders.bottom.width; y++)
-		bmp->draw_line(
-			pos.left(),  pos.bottom() - y - 1,
-			pos.right(), pos.bottom() - y - 1, borders.bottom.color);
+	rect = pos;
+	rect.y = rect.bottom() - borders.bottom.width;
+	rect.height = borders.bottom.width;
+	fill_rect(cvs, rect, borders.bottom.color);
 }
 
 void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
 {
-	auto bmp = (Bitmap*)hdc;
-	bmp->fill_rect(marker.pos, marker.color);
+	auto& cvs = *(canvas*)hdc;
+
+	if (marker.image != "")
+	{
+		string url = make_url(marker.image.c_str(), marker.baseurl);
+		auto& img = images[url];
+		if (img)
+		{
+			::draw_image(cvs, marker.pos, img);
+			return;
+		}
+	}
+
+	switch (marker.marker_type)
+	{
+	case list_style_type_circle:
+		draw_circle(cvs, marker.pos, marker.color);
+		break;
+
+	case list_style_type_disc:
+		fill_circle(cvs, marker.pos, marker.color);
+		break;
+
+	case list_style_type_square:
+		fill_rect(cvs, marker.pos, marker.color);
+		break;
+
+	default:
+		// do nothing
+		break;
+	}
 }
 
 string getdir(string filename)
@@ -102,7 +202,7 @@ void test_container::import_css(string& text, const string& url, string& baseurl
 
 void test_container::get_client_rect(position& client) const
 {
-	client = position(0, 0, width, height);
+	client = {0, 0, width, height};
 }
 
 void test_container::get_media_features(media_features& media) const
@@ -131,39 +231,110 @@ void test_container::get_image_size(const char* src, const char* baseurl, size& 
 	sz = {img.width, img.height};
 }
 
-void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const string& src, const string& base_url)
+void draw_image_pattern(canvas& cvs, const background_layer& bg, const Bitmap& img)
 {
-	auto canvas = (Bitmap*)hdc;
-	string url = make_url(src.c_str(), base_url.c_str());
-	auto& img = images[url];
-	if (!img) return;
+	cvs.save();
+	clip_rect(cvs, bg.clip_box);
+
 	int x = bg.origin_box.x;
 	int y = bg.origin_box.y;
+	int w = bg.origin_box.width;
+	int h = bg.origin_box.height;
 
 	switch (bg.repeat)
 	{
 	case background_repeat_no_repeat:
-		canvas->draw_bitmap(x, y, img, bg.clip_box);
+		draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat_x:
-		while (x > bg.clip_box.left()) x -= img.width;
-		for (; x < bg.clip_box.right(); x += img.width)
-			canvas->draw_bitmap(x, y, img, bg.clip_box);
+		while (x > bg.clip_box.left()) x -= w;
+		for (; x < bg.clip_box.right(); x += w)
+			draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat_y:
-		while (y > bg.clip_box.top()) y -= img.height;
-		for (; y < bg.clip_box.bottom(); y += img.height)
-			canvas->draw_bitmap(x, y, img, bg.clip_box);
+		while (y > bg.clip_box.top()) y -= h;
+		for (; y < bg.clip_box.bottom(); y += h)
+			draw_image(cvs, {x, y, w, h}, img);
 		break;
 
 	case background_repeat_repeat:
-		while (x > bg.clip_box.left()) x -= img.width;
-		while (y > bg.clip_box.top()) y -= img.height;
-		for (; x < bg.clip_box.right(); x += img.width)
-			for (int _y = y; _y < bg.clip_box.bottom(); _y += img.height)
-				canvas->draw_bitmap(x, _y, img, bg.clip_box);
+		while (x > bg.clip_box.left()) x -= w;
+		while (y > bg.clip_box.top()) y -= h;
+		for (; x < bg.clip_box.right(); x += w)
+			for (int _y = y; _y < bg.clip_box.bottom(); _y += h)
+				draw_image(cvs, {x, _y, w, h}, img);
 		break;
 	}
+	cvs.restore();
+}
+
+void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const string& src, const string& base_url)
+{
+	auto& cvs = *(canvas*)hdc;
+	string url = make_url(src.c_str(), base_url.c_str());
+	auto& img = images[url];
+	if (!img) return;
+
+	draw_image_pattern(cvs, bg, img);
+}
+
+void set_gradient(canvas& cvs, const background_layer::linear_gradient& gradient, int origin_x, int origin_y)
+{
+	cvs.set_linear_gradient(fill_style,
+		gradient.start.x - origin_x,
+		gradient.start.y - origin_y,
+		gradient.end.x - origin_x,
+		gradient.end.y - origin_y);
+}
+void set_gradient(canvas& cvs, const background_layer::radial_gradient& gradient, int origin_x, int origin_y)
+{
+	cvs.set_css_radial_gradient(fill_style,
+		gradient.position.x - origin_x,
+		gradient.position.y - origin_y,
+		gradient.radius.x,
+		gradient.radius.y);
+}
+void set_gradient(canvas& cvs, const background_layer::conic_gradient& gradient, int origin_x, int origin_y)
+{
+	cvs.set_conic_gradient(fill_style,
+		gradient.position.x - origin_x,
+		gradient.position.y - origin_y,
+		gradient.angle);
+}
+
+template<class Gradient>
+void draw_gradient(uint_ptr hdc, const background_layer& bg, const Gradient& gradient)
+{
+	int x = bg.origin_box.x;
+	int y = bg.origin_box.y;
+	int w = bg.origin_box.width;
+	int h = bg.origin_box.height;
+	
+	canvas img(w, h);
+
+	set_gradient(img, gradient, x, y);
+
+	for (auto cs : gradient.color_points)
+		add_color_stop(img, fill_style, cs.offset, cs.color, cs.hint);
+
+	fill_rect(img, {0, 0, w, h});
+
+	draw_image_pattern(*(canvas*)hdc, bg, img);
+}
+
+void test_container::draw_linear_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient)
+{
+	draw_gradient(hdc, layer, gradient);
+}
+
+void test_container::draw_radial_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient)
+{
+	draw_gradient(hdc, layer, gradient);
+}
+
+void test_container::draw_conic_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient)
+{
+	draw_gradient(hdc, layer, gradient);
 }
