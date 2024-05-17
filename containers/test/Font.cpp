@@ -5,38 +5,45 @@ using namespace std;
 
 Font::size_name Font::installed_fonts[] =
 {
-	{ 12, "terminus-ascii-bold-12px.yaff" },
-	{ 14, "terminus-ascii-bold-14px.yaff" },
-	{ 16, "terminus-ascii-bold-16px.yaff" },
-	{ 18, "terminus-ascii-bold-18px.yaff" },
-	{ 20, "terminus-ascii-bold-20px.yaff" },
-	{ 22, "terminus-ascii-bold-22px.yaff" },
-	{ 24, "terminus-ascii-bold-24px.yaff" },
-	{ 28, "terminus-ascii-bold-28px.yaff" },
-	{ 32, "terminus-ascii-bold-32px.yaff" },
+	{ 12, "terminus-12px.yaff" },
+	{ 14, "terminus-14px.yaff" },
+	{ 16, "terminus-16px.yaff" },
+	{ 18, "terminus-18px.yaff" },
+	{ 20, "terminus-20px.yaff" },
+	{ 22, "terminus-22px.yaff" },
+	{ 24, "terminus-24px.yaff" },
+	{ 28, "terminus-28px.yaff" },
+	{ 32, "terminus-32px.yaff" },
 	{ 0, "" }
 };
 
-Font::Font(int size)
+Font::Font(int size, int weight)
 {
 	// find most suitable font
-	int min_diff = 1000;
-	int n = 0;
-	for (int i = 0; installed_fonts[i].size; i++)
+	string name;
+	if (size == 16 && weight == 700)
+		name = "terminus-16px-bold.yaff";
+	else
 	{
-		int diff = abs(installed_fonts[i].size - size);
-		if (diff < min_diff)
+		int min_diff = 1000;
+		int n = 0;
+		for (int i = 0; installed_fonts[i].size; i++)
 		{
-			min_diff = diff;
-			n = i;
+			int diff = abs(installed_fonts[i].size - size);
+			if (diff < min_diff)
+			{
+				min_diff = diff;
+				n = i;
+			}
 		}
+		name = installed_fonts[n].name;
 	}
 
 	string font_cpp = __FILE__;
 	auto i = font_cpp.find_last_of("\\/");
 	string font_dir = font_cpp.substr(0, i) + "/fonts/";
 
-	load(font_dir + installed_fonts[n].name);
+	load(font_dir + name);
 }
 
 Bitmap Font::get_glyph(int ch, color color)

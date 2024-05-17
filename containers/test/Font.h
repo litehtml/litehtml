@@ -12,7 +12,7 @@ public:
 	
 	static struct size_name { int size; string name; } installed_fonts[];
 	
-	Font(int size);
+	Font(int size, int weight);
 	Bitmap get_glyph(int ch, color color);
 	void load(string filename);
 };
