@@ -93,7 +93,14 @@ uint_ptr test_container::create_font(const char* /*faceName*/, int size, int wei
 int test_container::text_width(const char* text, uint_ptr hFont)
 {
 	Font* font = (Font*)hFont;
-	return (int)strlen(text) * font->width;
+	utf8_to_utf32 utf32(text);
+	int width = 0;
+	for (const char32_t* p = utf32; *p; p++)
+	{
+		Bitmap glyph = font->get_glyph(*p, black);
+		width += glyph.width;
+	}
+	return width;
 }
 
 void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos)

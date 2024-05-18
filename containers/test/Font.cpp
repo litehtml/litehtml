@@ -112,12 +112,12 @@ void Font::load(string filename)
 	};
 	
 	auto parse_glyph = [&](int ch) {
-		Bitmap& glyph = glyphs[ch] = Bitmap(width, height, transparent);
+		int glyph_width = (int)trim(lines[i]).size();
+		Bitmap& glyph = glyphs[ch] = Bitmap(glyph_width, height, transparent);
 		for (int y = 0; i < (int)lines.size() && y < height; i++, y++)
 		{
-			string line = lines[i];
-			trim(line);
-			for (int x = 0; x < min((int)line.size(), width); x++)
+			string line = trim(lines[i]);
+			for (int x = 0; x < min((int)line.size(), glyph_width); x++)
 			{
 				if (line[x] == '@')
 					glyph.set_pixel(x, y, black);
