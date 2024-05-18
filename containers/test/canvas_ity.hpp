@@ -1851,13 +1851,12 @@ void canvas::text_to_lines(
         signed_16( face.data, face.os_2 + 68 ) );
     float descender = static_cast< float >(
         signed_16( face.data, face.os_2 + 70 ) );
-    float normalize = face.scale * units_per_em / ( ascender - descender );
     if ( text_baseline == top )
-        position.y += ascender * normalize;
+        position.y += ascender * face.scale;
     else if ( text_baseline == middle )
-        position.y += ( ascender + descender ) * 0.5f * normalize;
+        position.y += ( ascender - descender ) * 0.5f * face.scale;
     else if ( text_baseline == bottom )
-        position.y += descender * normalize;
+        position.y += descender * face.scale;
     else if ( text_baseline == hanging )
         position.y += 0.6f * face.scale * units_per_em;
     affine_matrix saved_forward = forward;
