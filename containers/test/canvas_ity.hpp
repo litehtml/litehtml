@@ -977,6 +977,8 @@ public:
         int bytes,
         float size );
 
+    void get_font_metrics(int& ascent, int& descent, int& height, int& x_height);
+
     /// @brief  Draw a line of text by filling its outline.
     ///
     /// This behaves as though the current path were reset to the outline
@@ -1815,6 +1817,32 @@ int canvas::character_to_glyph(
     else if ( format_0 && 0 <= codepoint && codepoint < 256 )
         return unsigned_8( face.data, format_0 + 6 + codepoint );
     return 0;
+}
+
+void canvas::get_font_metrics(int& ascent, int& descent, int& height, int& x_height)
+{
+    if (face.data.empty()) return;
+
+    // https://www.w3.org/TR/css-inline/#ascent-descent
+    // "It is recommended that implementations that use OpenType or TrueType fonts use the metrics sTypoAscender and sTypoDescender from the font’s OS/2 table"
+    float sTypoAscender = (float)signed_16(face.data, face.os_2 + 68);
+    float sTypoDescender = (float)signed_16(face.data, face.os_2 + 70);
+    // Some fonts, eg. Inconsolata, don't have the sxHeight field (it is defined in the second version of OS/2 table).
+    // If it is absent (yMax - yMin) for 'x' from glyf table can be used.
+    int os2ver = unsigned_16(face.data, face.os_2);
+    float sxHeight = os2ver >= 2 ? (float)signed_16(face.data, face.os_2 + 86) : 0;
+
+    ascent = (int)ceil(sTypoAscender * face.scale);
+    descent = (int)ceil(-sTypoDescender * face.scale);
+
+    // https://www.w3.org/TR/css-inline/#font-line-gap
+    // https://www.w3.org/TR/css-inline/#inline-height
+    // In several fonts I examined, including Inconsolata and csstest-ascii.ttf from w3.org,
+    // both OS/2 sTypoLineGap and hhea lineGap are either 0 or very small (I used https://fontdrop.info/ viewer).
+    // cairo container sets height to ascent + descent, litehtml uses this value as a normal line height and for baseline calculations.
+    height = (int)ceil((sTypoAscender - sTypoDescender) * face.scale);
+
+    x_height = (int)ceil(sxHeight * face.scale);
 }
 
 // Convert a text string to a set of polylines.  This works out the placement
