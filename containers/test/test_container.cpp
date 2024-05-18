@@ -80,7 +80,6 @@ bool set_font(canvas& cvs, const string& raw_font_data, int pixel_size)
 //  test_container implementation
 //
 
-// note: font is selected only by size and weight, name is not used
 uint_ptr test_container::create_font(const char* font_families, int size, int weight, font_style /*italic*/, unsigned int /*decoration*/, font_metrics* fm)
 {
 	Font* font = 0;
