@@ -397,14 +397,6 @@ std::map<string, mf_info> supported_media_features =
 	{"device-aspect-ratio", {_range_, _ratio_}},
 };
 
-template<class Map, class Key>
-auto at(const Map& map, Key key)
-{
-	static typename Map::mapped_type invalid_value; // mapped_type's default constructor must create invalid item
-	auto it = map.find(key);
-	return it != map.end() ? it->second : invalid_value;
-}
-
 bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 {
 	switch (mfi.value_type)

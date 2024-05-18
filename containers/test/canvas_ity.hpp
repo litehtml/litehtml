@@ -201,6 +201,8 @@ public:
         int height,
         rgba color);
 
+    canvas() : canvas(0, 0) {}
+
     /// @brief  Destroy the canvas and release all associated memory.
     ///
     ~canvas();

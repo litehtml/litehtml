@@ -53,6 +53,13 @@ namespace litehtml
 		if (index < 0) index += (int)vec.size();
 		return index >= 0 && index < (int)vec.size() ? vec[index] : invalid_item;
 	}
+	template<class Map, class Key>
+	auto at(const Map& map, Key key)
+	{
+		static typename Map::mapped_type invalid_value; // mapped_type's default constructor must create invalid item
+		auto it = map.find(key);
+		return it != map.end() ? it->second : invalid_value;
+	}
 	template<typename T>
 	vector<T> slice(const vector<T>& vec, int index, int count = -1)
 	{

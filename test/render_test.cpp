@@ -99,7 +99,7 @@ vector<string> find_htm_files(string dir)
 string readfile(string filename)
 {
 	stringstream ss;
-	ifstream(filename) >> ss.rdbuf();
+	ifstream(filename, ios::binary) >> ss.rdbuf();
 	return ss.str();
 }
 

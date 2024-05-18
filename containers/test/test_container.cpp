@@ -70,57 +70,49 @@ void add_color_stop(canvas& cvs, brush_type type, float offset, color c, optiona
 	cvs.add_color_stop(type, offset, c.r / 255.f, c.g / 255.f, c.b / 255.f, c.a / 255.f, hint);
 }
 
+bool set_font(canvas& cvs, const string& raw_font_data, int pixel_size)
+{
+	return cvs.set_font((byte*)raw_font_data.data(), (int)raw_font_data.size(), (float)pixel_size);
+}
+
 
 //
 //  test_container implementation
 //
 
 // note: font is selected only by size and weight, name is not used
-uint_ptr test_container::create_font(const char* /*faceName*/, int size, int weight, font_style /*italic*/, unsigned int /*decoration*/, font_metrics* fm)
+uint_ptr test_container::create_font(const char* font_families, int size, int weight, font_style /*italic*/, unsigned int /*decoration*/, font_metrics* fm)
 {
-	Font* font = new Font(size, weight);
-
-	if (fm)
+	Font* font = 0;
+	string_vector fonts = split_string(font_families, ",", "", "");
+	for (auto name : fonts)
 	{
-		fm->ascent   = font->ascent;
-		fm->descent  = font->descent;
-		fm->height   = font->height;
-		fm->x_height = font->x_height;
+		font = Font::create(name, size, weight);
+		if (font) break;
 	}
+	if (!font)
+		font = Font::create(get_default_font_name(), size, weight);
+
+	if (fm) *fm = *font;
+
 	return (uint_ptr)font;
 }
 
 int test_container::text_width(const char* text, uint_ptr hFont)
 {
 	Font* font = (Font*)hFont;
-	utf8_to_utf32 utf32(text);
-	int width = 0;
-	for (const char32_t* p = utf32; *p; p++)
-	{
-		Bitmap glyph = font->get_glyph(*p, black);
-		width += glyph.width;
-	}
-	return width;
+	return font->text_width(text);
 }
 
 void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos)
 {
-	auto cvs = (canvas*)hdc;
 	Font* font = (Font*)hFont;
-	utf8_to_utf32 utf32(text);
-
-	int x = pos.x;
-	for (const char32_t* p = utf32; *p; p++)
-	{
-		Bitmap glyph = font->get_glyph(*p, color);
-		::draw_image(*cvs, x, pos.y, glyph);
-		x += glyph.width;
-	}
+	font->draw_text(*(canvas*)hdc, text, color, pos.x, pos.y);
 }
 
 int test_container::pt_to_px(int pt) const { return pt * 96 / 72; }
 int test_container::get_default_font_size() const { return 16; }
-const char* test_container::get_default_font_name() const { return ""; }
+const char* test_container::get_default_font_name() const { return "Terminus"; }
 
 void test_container::draw_solid_fill(uint_ptr hdc, const background_layer& layer, const web_color& color)
 {
