@@ -1,9 +1,13 @@
 #define _CRT_SECURE_NO_WARNINGS
 #include "Font.h"
+#include "canvas_ity.hpp"
+using namespace canvas_ity;
 string readfile(string filename);
-using namespace std;
+void draw_image(canvas& cvs, int x, int y, const Bitmap& bmp);
+bool set_font(canvas& cvs, const string& raw_font_data, int pixel_size);
+void set_color(canvas& cvs, brush_type type, color c);
 
-Font::size_name Font::installed_fonts[] =
+RasterFont::size_name RasterFont::installed_fonts[] =
 {
 	{ 12, "terminus-12px.yaff" },
 	{ 14, "terminus-14px.yaff" },
@@ -17,7 +21,14 @@ Font::size_name Font::installed_fonts[] =
 	{ 0, "" }
 };
 
-Font::Font(int size, int weight)
+string get_font_dir()
+{
+	string font_cpp = __FILE__;
+	auto i = font_cpp.find_last_of("\\/");
+	return font_cpp.substr(0, i) + "/fonts/";
+}
+
+RasterFont::RasterFont(int size, int weight)
 {
 	// find most suitable font
 	string name;
@@ -39,14 +50,18 @@ Font::Font(int size, int weight)
 		name = installed_fonts[n].name;
 	}
 
-	string font_cpp = __FILE__;
-	auto i = font_cpp.find_last_of("\\/");
-	string font_dir = font_cpp.substr(0, i) + "/fonts/";
-
-	load(font_dir + name);
+	load(get_font_dir() + name);
 }
 
-Bitmap Font::get_glyph(int ch, color color)
+RasterFont* RasterFont::create(string name, int size, int weight)
+{
+	if (lowcase(name) == "terminus")
+		return new RasterFont(size, weight);
+
+	return nullptr;
+}
+
+Bitmap RasterFont::get_glyph(int ch, color color)
 {
 	if (glyphs[ch].width == 0)
 	{
@@ -67,12 +82,10 @@ Bitmap Font::get_glyph(int ch, color color)
 }
 
 // load .yaff font file in an ad hoc manner (can't parse arbitrary yaff files)
-void Font::load(string filename)
+void RasterFont::load(string filename)
 {
 	string text = readfile(filename);
-	
-	string_vector lines;
-	split_string(text, lines, "\n");
+	string_vector lines = split_string(text, "\n", "", "");
 
 	int i;
 	// parse header
@@ -133,4 +146,73 @@ void Font::load(string filename)
 	}
 
 	x_height = glyphs[(int)'x'].find_picture(transparent).height;
+}
+
+int RasterFont::text_width(string text)
+{
+	utf8_to_utf32 utf32(text);
+	int width = 0;
+	for (const char32_t* p = utf32; *p; p++)
+		width += get_glyph(*p, black).width;
+	return width;
+}
+
+void RasterFont::draw_text(canvas& cvs, string text, color color, int x, int y)
+{
+	utf8_to_utf32 utf32(text);
+	for (const char32_t* p = utf32; *p; p++)
+	{
+		Bitmap glyph = get_glyph(*p, color);
+		draw_image(cvs, x, y, glyph);
+		x += glyph.width;
+	}
+}
+
+// keys must be in lowcase
+string_map OutlineFont::installed_fonts =
+{
+	{ "ahem", "ahem.ttf" }
+};
+
+OutlineFont* OutlineFont::create(string name, int size)
+{
+	lcase(name);
+
+	if (installed_fonts.count(name))
+		return new OutlineFont(name, size);
+
+	return nullptr;
+}
+
+OutlineFont::OutlineFont(string name, int size) : name(name), size(size)
+{
+	string filename = at(installed_fonts, name);
+	data = readfile(get_font_dir() + filename);
+
+	canvas cvs;
+	set_font(cvs, data, size);
+	cvs.get_font_metrics(ascent, descent, height, x_height);
+}
+
+int OutlineFont::text_width(string text)
+{
+	canvas cvs;
+	set_font(cvs, data, size);
+	return (int)ceil(cvs.measure_text(text.c_str()));
+}
+
+void OutlineFont::draw_text(canvas& cvs, string text, color color, int x, int y)
+{
+	set_font(cvs, data, size);
+	cvs.text_baseline = top;
+	set_color(cvs, fill_style, color);
+	cvs.fill_text(text.c_str(), (float)x, (float)y);
+}
+
+Font* Font::create(string name, int size, int weight)
+{
+	if (RasterFont* font = RasterFont::create(name, size, weight))
+		return font;
+
+	return OutlineFont::create(name, size);
 }
