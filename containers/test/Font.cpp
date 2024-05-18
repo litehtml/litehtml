@@ -151,10 +151,10 @@ void RasterFont::load(string filename)
 int RasterFont::text_width(string text)
 {
 	utf8_to_utf32 utf32(text);
-	int width = 0;
+	int width_ = 0;
 	for (const char32_t* p = utf32; *p; p++)
-		width += get_glyph(*p, black).width;
-	return width;
+		width_ += get_glyph(*p, black).width;
+	return width_;
 }
 
 void RasterFont::draw_text(canvas& cvs, string text, color color, int x, int y)
