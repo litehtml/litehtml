@@ -18,7 +18,7 @@ using namespace std;
 
 vector<string> find_htm_files(string dir);
 void test(string filename);
-void error(const char* msg) { puts(msg); exit(1); }
+void error(string msg) { puts(msg.c_str()); exit(1); }
 
 #if STANDALONE
 
@@ -26,16 +26,27 @@ void error(const char* msg) { puts(msg); exit(1); }
 using namespace chrono;
 string test_dir = ".";
 vector<string> failed_tests;
+auto usage =
+	"Usage: \n"
+	"render_test [folder | html-file]+ \n"
+	"render_test -d png-file png-file ";
 
 int main(int argc, char* argv[])
 {
 	auto start = steady_clock::now();
 
 	vector<string> files;
-	if (argc == 1)
-		files = find_htm_files(test_dir);
-	else if (argc == 2 && string(argv[1]) == "-h")
-		error("Usage: render_test [folder | html-file]*");
+	if (argc == 1) error(usage);
+	else if (string(argv[1]) == "-d")
+	{
+		if (argc != 4) error(usage);
+		string pngfile1 = argv[2];
+		string pngfile2 = argv[3];
+		if (!ifstream(pngfile1).good()) error(pngfile1 + " not found");
+		if (!ifstream(pngfile2).good()) error(pngfile2 + " not found");
+		printf("max_color_diff = %d", max_color_diff(pngfile1, pngfile2));
+		return 0;
+	}
 	else
 	{
 		for (int i = 1; i < argc; i++)
@@ -92,7 +103,7 @@ vector<string> find_htm_files(string dir)
 {
 	vector<string> files;
 	DIR* _dir = opendir(dir.c_str());
-	if (!_dir) error(dir.c_str());
+	if (!_dir) error(dir);
 	while (dirent* ent = readdir(_dir))
 	{
 		string name = ent->d_name;
