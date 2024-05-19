@@ -75,6 +75,13 @@ bool set_font(canvas& cvs, const string& raw_font_data, int pixel_size)
 	return cvs.set_font((byte*)raw_font_data.data(), (int)raw_font_data.size(), (float)pixel_size);
 }
 
+void fill_polygon(canvas& cvs, vector<xy> points, color color)
+{
+	cvs.begin_path();
+	cvs.polygon(points);
+	set_color(cvs, fill_style, color);
+	cvs.fill();
+}
 
 //
 //  test_container implementation
@@ -121,29 +128,47 @@ void test_container::draw_solid_fill(uint_ptr hdc, const background_layer& layer
 
 void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool /*root*/)
 {
-	auto& cvs = *(canvas*)hdc;
+	canvas img(pos.width, pos.height);
+	img.global_composite_operation = lighter;
 
-	// left border
-	rect rect = pos;
-	rect.width = borders.left.width;
-	fill_rect(cvs, rect, borders.left.color);
+/*
+	A_________________B
+	 |\             /|
+	 | \           / |
+	 |  \_________/  |
+	 |  |a       b|  |
+	 |  |         |  |
+	 |  |         |  |
+	 |  |d_______c|  |
+	 |  /         \  |
+	 | /           \ |
+	 |/_____________\|
+	D                 C
+*/
+	float width_  = (float)pos.width;
+	float height_ = (float)pos.height;
 
-	// right border
-	rect = pos;
-	rect.x = rect.right() - borders.right.width;
-	rect.width = borders.right.width;
-	fill_rect(cvs, rect, borders.right.color);
+	float left_width   = (float)borders.left.width;
+	float right_width  = (float)borders.right.width;
+	float top_width    = (float)borders.top.width;
+	float bottom_width = (float)borders.bottom.width;
 
-	// top border
-	rect = pos;
-	rect.height = borders.top.width;
-	fill_rect(cvs, rect, borders.top.color);
+	xy A = {0, 0};
+	xy B = {width_, 0};
+	xy C = {width_, height_};
+	xy D = {0, height_};
 
-	// bottom border
-	rect = pos;
-	rect.y = rect.bottom() - borders.bottom.width;
-	rect.height = borders.bottom.width;
-	fill_rect(cvs, rect, borders.bottom.color);
+	xy a = A + xy(left_width, top_width);
+	xy b = B + xy(-right_width, top_width);
+	xy c = C + xy(-right_width, -bottom_width);
+	xy d = D + xy(left_width, -bottom_width);
+
+	fill_polygon(img, {A, B, b, a}, borders.top.color);
+	fill_polygon(img, {B, C, c, b}, borders.right.color);
+	fill_polygon(img, {C, D, d, c}, borders.bottom.color);
+	fill_polygon(img, {D, A, a, d}, borders.left.color);
+
+	::draw_image(*(canvas*)hdc, pos.x, pos.y, img);
 }
 
 void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
