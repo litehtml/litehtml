@@ -146,7 +146,15 @@ namespace canvas_ity
 // Public API enums
 enum composite_operation {
     source_in = 1, source_copy, source_out, destination_in,
-    destination_atop = 7, lighter = 10, destination_over, destination_out,
+    destination_atop = 7,
+    // confusing name, 'lighter' should be called 'plus'
+    // https://www.w3.org/TR/compositing-1/#porterduffcompositingoperators_plus
+    // RED_out = ALPHA_src * RED_src + ALPHA_dst * RED_dst
+    // ALPHA_out = ALPHA_src + ALPHA_dst
+    // https://developer.mozilla.org/en-US/docs/Web/API/CanvasRenderingContext2D/globalCompositeOperation
+    // "Where both shapes overlap, the color is determined by adding color values."
+    lighter = 10,
+    destination_over, destination_out,
     source_atop, source_over, exclusive_or };
 enum cap_style { butt, square, circle };
 enum join_style { miter, bevel, rounded };
@@ -490,6 +498,13 @@ public:
         float blue,
         float alpha );
 
+    void set_color(
+        brush_type type,
+        rgba c)
+    {
+        set_color(type, c.r, c.g, c.b, c.a);
+    }
+
     /// @brief  Set filling or stroking to use a linear gradient.
     ///
     /// Positions the start and end points of the gradient and clears all
@@ -795,6 +810,8 @@ public:
         float y,
         float width,
         float height );
+
+    void polygon(std::vector<xy> points);
 
     // ======== DRAWING PATHS ========
 
@@ -3171,6 +3188,14 @@ void canvas::rectangle(
     line_to( x + width, y );
     line_to( x + width, y + height );
     line_to( x, y + height );
+    close_path();
+}
+
+void canvas::polygon(std::vector<xy> points)
+{
+    move_to(points[0].x, points[0].y);
+    for (auto pt : points)
+        line_to(pt.x, pt.y);
     close_path();
 }
 
