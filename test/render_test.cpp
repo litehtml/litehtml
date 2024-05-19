@@ -22,10 +22,15 @@ void error(const char* msg) { puts(msg); exit(1); }
 
 #if STANDALONE
 
+#include <chrono>
+using namespace chrono;
 string test_dir = ".";
+vector<string> failed_tests;
 
 int main(int argc, char* argv[])
 {
+	auto start = steady_clock::now();
+
 	vector<string> files;
 	if (argc == 1)
 		files = find_htm_files(test_dir);
@@ -53,6 +58,19 @@ int main(int argc, char* argv[])
 
 	for (auto file : files)
 		test(file);
+
+	if (failed_tests.empty())
+		puts("\nAll tests passed");
+	else
+	{
+		auto count = failed_tests.size();
+		printf("\n%Id %s FAILED:\n", count, count == 1 ? "test" : "tests");
+		for (auto file : failed_tests)
+			puts(file.c_str());
+	}
+
+	auto stop = steady_clock::now();
+	printf("\nTime: %Id sec", (stop - start).count() / 1'000'000'000);
 }
 
 #else
@@ -136,13 +154,19 @@ void test(string filename)
 	Bitmap bmp = draw(doc, doc->content_width(), doc->content_height());
 
 	Bitmap good(filename + ".png");
-	if (bmp != good)
+	bool failed = bmp != good;
+	if (failed)
 	{
 		bmp.save(filename + "-FAILED.png");
 		ASSERT_TRUE(false);
 	}
 #if STANDALONE
-	auto result = bmp == good ? "pass" : "FAILURE";
+	auto result = "pass";
+	if (failed)
+	{
+		result = "FAILURE";
+		failed_tests.push_back(filename);
+	}
 	printf("%s %s\n", result, filename.c_str());
 #endif
 }
