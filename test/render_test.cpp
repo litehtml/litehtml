@@ -1,20 +1,14 @@
-#define _CRT_SECURE_NO_WARNINGS
-#include <sstream>
+#include <filesystem>
 #include <fstream>
-#include <sys/stat.h>
+#include <sstream>
 #if STANDALONE
 	#define ASSERT_TRUE(x)
 #else
 	#include <gtest/gtest.h>
 #endif
-#ifdef _WIN32
-	#define NOMINMAX
-	#include "dirent.h"
-#else
-	#include <dirent.h>
-#endif
 #include "../containers/test/test_container.h"
 using namespace std;
+using namespace filesystem;
 
 vector<string> find_htm_files(string dir);
 void test(string filename);
@@ -42,8 +36,8 @@ int main(int argc, char* argv[])
 		if (argc != 4) error(usage);
 		string pngfile1 = argv[2];
 		string pngfile2 = argv[3];
-		if (!ifstream(pngfile1).good()) error(pngfile1 + " not found");
-		if (!ifstream(pngfile2).good()) error(pngfile2 + " not found");
+		if (!exists(pngfile1)) error(pngfile1 + " not found");
+		if (!exists(pngfile2)) error(pngfile2 + " not found");
 		printf("max_color_diff = %d", max_color_diff(pngfile1, pngfile2));
 		return 0;
 	}
@@ -51,16 +45,12 @@ int main(int argc, char* argv[])
 	{
 		for (int i = 1; i < argc; i++)
 		{
-			struct stat st;
-			if (stat(argv[i], &st) != 0)
-			{
-				printf("%s not found\n", argv[i]);
-				continue;
-			}
-			if (S_ISDIR(st.st_mode))
+			if (is_directory(argv[i]))
 				files += find_htm_files(argv[i]);
-			else
+			else if (exists(argv[i]))
 				files.push_back(argv[i]);
+			else
+				printf("%s not found\n", argv[i]);
 		}
 	}
 
@@ -102,26 +92,22 @@ INSTANTIATE_TEST_SUITE_P(, render_test, testing::ValuesIn(find_htm_files(test_di
 vector<string> find_htm_files(string dir)
 {
 	vector<string> files;
-	DIR* _dir = opendir(dir.c_str());
-	if (!_dir) error(dir);
-	while (dirent* ent = readdir(_dir))
+	for (auto entry : directory_iterator(dir))
 	{
-		string name = ent->d_name;
-		if (ent->d_type == DT_DIR)
+		string name = entry.path().filename().string();
+		if (entry.is_directory())
 		{
-			if (name != "." && name != ".." && name[0] != '-')
+			if (name[0] != '-')
 			{
 				files += find_htm_files(dir + "/" + name);
 			}
-		} else if (ent->d_type == DT_REG)
+		} else
 		{
-			if (name[0] != '-' && name.size() > 4 &&
-				(name.substr(name.size() - 4) == ".htm" || name.substr(name.size() - 5) == ".html"))
+			if (name[0] != '-' && is_one_of(path(name).extension(), ".htm", ".html"))
 				files.push_back(dir + "/" + name);
 		}
 	}
-	closedir(_dir);
-	sort(files.begin(), files.end());
+	sort(files);
 	return files;
 }
 
@@ -146,15 +132,9 @@ void test(string filename)
 {
 	string html = readfile(filename);
 
-	auto last_slash_pos = filename.find_last_of("\\/");
-	string base_path;
-	if(last_slash_pos != string::npos)
-	{
-		base_path = filename.substr(0, last_slash_pos);
-	} else
-	{
-		base_path = test_dir;
-	}
+	string base_path = path(filename).parent_path().string();
+	if (base_path == "") base_path = test_dir;
+
 	// image size will be {content_width, content_height} (calculated after layout)
 	// height is nonzero to get finite aspect-ratio media feature
 	int width = 800, height = 1;
