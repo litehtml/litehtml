@@ -7,12 +7,17 @@
 	#include <gtest/gtest.h>
 #endif
 #include "../containers/test/test_container.h"
+
+#define RED(str)   "\33[91m" str "\33[0m"
+#define GREEN(str) "\33[92m" str "\33[0m"
+
 using namespace std;
 using namespace filesystem;
 
 vector<string> find_htm_files(string dir);
 void test(string filename);
-void error(string msg) { puts(msg.c_str()); exit(1); }
+void error(string msg) { printf(RED("%s\n"), msg.c_str()); exit(1); }
+
 
 #if STANDALONE
 
@@ -28,6 +33,10 @@ auto usage =
 int main(int argc, char* argv[])
 {
 	auto start = steady_clock::now();
+
+	// Using a hack to enable ANSI escape sequences in a Windows console.
+	// Whenif it stops working ENABLE_VIRTUAL_TERMINAL_PROCESSING can be used instead.
+	system(" ");
 
 	vector<string> files;
 	if (argc == 1) error(usage);
@@ -50,7 +59,7 @@ int main(int argc, char* argv[])
 			else if (exists(argv[i]))
 				files.push_back(argv[i]);
 			else
-				printf("%s not found\n", argv[i]);
+				printf(RED("%s not found\n"), argv[i]);
 		}
 	}
 
@@ -61,17 +70,17 @@ int main(int argc, char* argv[])
 		test(file);
 
 	if (failed_tests.empty())
-		puts("\nAll tests passed");
+		printf(GREEN("\nAll tests passed\n"));
 	else
 	{
-		auto count = failed_tests.size();
-		printf("\n%Id %s FAILED:\n", count, count == 1 ? "test" : "tests");
+		int count = (int)failed_tests.size();
+		printf(RED("\n%d %s FAILED:\n"), count, count == 1 ? "test" : "tests");
 		for (auto file : failed_tests)
-			puts(file.c_str());
+			printf(RED("%s\n"), file.c_str());
 	}
 
 	auto stop = steady_clock::now();
-	printf("\nTime: %Id sec", (stop - start).count() / 1'000'000'000);
+	printf("\nTime: %d sec\n", (int)((stop - start).count() / 1'000'000'000));
 }
 
 #else
@@ -152,12 +161,10 @@ void test(string filename)
 		ASSERT_TRUE(false);
 	}
 #if STANDALONE
-	auto result = "pass";
 	if (failed)
-	{
-		result = "FAILURE";
+		printf(RED("FAILURE %s\n"), filename.c_str()),
 		failed_tests.push_back(filename);
-	}
-	printf("%s %s\n", result, filename.c_str());
+	else
+		printf(GREEN("pass")" %s\n", filename.c_str());
 #endif
 }
