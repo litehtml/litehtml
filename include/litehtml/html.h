@@ -99,6 +99,7 @@ namespace litehtml
 	{
 		return str.find(substr) != string::npos;
 	}
+	template<class C> void sort(C& coll) { std::sort(coll.begin(), coll.end()); }
 
 	int t_strcasecmp(const char *s1, const char *s2);
 	int t_strncasecmp(const char *s1, const char *s2, size_t n);
