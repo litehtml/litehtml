@@ -295,7 +295,8 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 
 	draw_background(hdc, x, y, clip, ri);
 
-	if(m_css.get_display() == display_list_item && m_css.get_list_style_type() != list_style_type_none)
+	if(m_css.get_display() == display_list_item && 
+		(m_css.get_list_style_type() != list_style_type_none || m_css.get_list_style_image() != ""))
 	{
 		if(m_css.get_overflow() > overflow_visible)
 		{

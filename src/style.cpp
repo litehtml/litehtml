@@ -500,9 +500,16 @@ void style::parse_list_style(const css_token_vector& tokens, string baseurl, boo
 	bool type_found = false;
 	bool position_found = false;
 	bool image_found = false;
+	int none_count = 0;
 
 	for (const auto& token : tokens)
 	{
+		// "...none is a valid value for both list-style-image and list-style-type. To resolve this ambiguity, 
+		// a value of none ... must be applied to whichever of the two properties aren’t otherwise set by the shorthand."
+		if (token.ident() == "none") {
+			none_count++;
+			continue;
+		}
 		if (!type_found && parse_keyword(token, type, list_style_type_strings))
 			type_found = true;
 		else if (!position_found && parse_keyword(token, position, list_style_position_strings))
@@ -510,7 +517,23 @@ void style::parse_list_style(const css_token_vector& tokens, string baseurl, boo
 		else if (!image_found && parse_list_style_image(token, image))
 			image_found = true;
 		else
-			return;
+			return; // syntax error
+	}
+
+	switch (none_count)
+	{
+	case 0:
+		break;
+	case 1:
+		if (type_found && image_found) return;
+		if (!type_found) type = list_style_type_none;
+		break;
+	case 2:
+		if (type_found || image_found) return;
+		type = list_style_type_none;
+		break;
+	default:
+		return; // syntax error
 	}
 
 	add_parsed_property(_list_style_type_,			property_value(type,	 important));
