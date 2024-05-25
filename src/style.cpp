@@ -64,6 +64,45 @@ std::map<string_id, string> style::m_valid_values =
 	{ _caption_side_, caption_side_strings },
 };
 
+std::map<string_id, vector<string_id>> shorthands =
+{
+	{ _font_, {_font_style_, _font_variant_, _font_weight_, _font_size_, _line_height_, _font_family_}},
+
+	{ _background_, {
+		_background_color_,
+		_background_position_x_,
+		_background_position_y_,
+		_background_repeat_,
+		_background_attachment_,
+		_background_image_,
+		_background_image_baseurl_,
+		_background_size_,
+		_background_origin_,
+		_background_clip_
+	} },
+
+	{ _list_style_, {_list_style_image_, _list_style_image_baseurl_, _list_style_position_, _list_style_type_}},
+
+	{ _margin_, {_margin_top_, _margin_right_, _margin_bottom_, _margin_left_}},
+	{ _padding_, {_padding_top_, _padding_right_, _padding_bottom_, _padding_left_}},
+
+	{ _border_width_, {_border_top_width_, _border_right_width_, _border_bottom_width_, _border_left_width_}},
+	{ _border_style_, {_border_top_style_, _border_right_style_, _border_bottom_style_, _border_left_style_}},
+	{ _border_color_, {_border_top_color_, _border_right_color_, _border_bottom_color_, _border_left_color_}},
+	{ _border_top_, {_border_top_width_, _border_top_style_, _border_top_color_}},
+	{ _border_right_, {_border_right_width_, _border_right_style_, _border_right_color_}},
+	{ _border_bottom_, {_border_bottom_width_, _border_bottom_style_, _border_bottom_color_}},
+	{ _border_left_, {_border_left_width_, _border_left_style_, _border_left_color_}},
+	{ _border_, {
+		_border_top_width_, _border_right_width_, _border_bottom_width_, _border_left_width_,
+		_border_top_style_, _border_right_style_, _border_bottom_style_, _border_left_style_,
+		_border_top_color_, _border_right_color_, _border_bottom_color_, _border_left_color_
+	} },
+
+	{ _flex_, {_flex_grow_, _flex_shrink_, _flex_basis_}},
+	{ _flex_flow_, {_flex_direction_, _flex_wrap_}},
+};
+
 void style::add(const string& txt, const string& baseurl, document_container* container)
 {
 	auto tokens = normalize(txt, f_componentize);
@@ -105,31 +144,14 @@ bool has_var(const css_token_vector& tokens)
 
 void style::inherit_property(string_id name, bool important)
 {
-	switch (name)
+	auto atomic_properties = at(shorthands, name);
+	if (!atomic_properties.empty())
 	{
-		case _font_:
-			add_parsed_property(_font_style_,   property_value(inherit(), important));
-			add_parsed_property(_font_variant_, property_value(inherit(), important));
-			add_parsed_property(_font_weight_,  property_value(inherit(), important));
-			add_parsed_property(_font_size_,    property_value(inherit(), important));
-			add_parsed_property(_line_height_,  property_value(inherit(), important));
-			add_parsed_property(_font_family_,  property_value(inherit(), important));
-			break;
-		case _background_:
-			add_parsed_property(_background_color_,         property_value(inherit(), important));
-			add_parsed_property(_background_position_x_,    property_value(inherit(), important));
-			add_parsed_property(_background_position_y_,    property_value(inherit(), important));
-			add_parsed_property(_background_repeat_,        property_value(inherit(), important));
-			add_parsed_property(_background_attachment_,    property_value(inherit(), important));
-			add_parsed_property(_background_image_,         property_value(inherit(), important));
-			add_parsed_property(_background_image_baseurl_, property_value(inherit(), important));
-			add_parsed_property(_background_size_,          property_value(inherit(), important));
-			add_parsed_property(_background_origin_,        property_value(inherit(), important));
-			add_parsed_property(_background_clip_,          property_value(inherit(), important));
-			break;
-		default:
-			add_parsed_property(name, property_value(inherit(), important));
+		for (auto atomic : atomic_properties)
+			add_parsed_property(atomic, property_value(inherit(), important));
 	}
+	else
+		add_parsed_property(name, property_value(inherit(), important));
 }
 
 void style::add_length_property(string_id name, css_token val, string keywords, int options, bool important)
