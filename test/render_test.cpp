@@ -1,34 +1,27 @@
 #include <filesystem>
 #include <fstream>
 #include <sstream>
-#if STANDALONE
-	#define ASSERT_TRUE(x)
-#else
-	#include <gtest/gtest.h>
-#endif
 #include "../containers/test/test_container.h"
-
-#define RED(str)   "\33[91m" str "\33[0m"
-#define GREEN(str) "\33[92m" str "\33[0m"
-
 using namespace std;
 using namespace filesystem;
 
 vector<string> find_htm_files(string dir);
-void test(string filename);
-void error(string msg) { printf(RED("%s\n"), msg.c_str()); exit(1); }
-
+bool test(string filename);
 
 #if STANDALONE
 
 #include <chrono>
 using namespace chrono;
+
 string test_dir = ".";
-vector<string> failed_tests;
 auto usage =
 	"Usage: \n"
 	"render_test [folder | html-file]+ \n"
 	"render_test -d png-file png-file ";
+
+#define RED(str)   "\33[91m" str "\33[0m"
+#define GREEN(str) "\33[92m" str "\33[0m"
+void error(string msg) { printf(RED("%s\n"), msg.c_str()); exit(1); }
 
 int main(int argc, char* argv[])
 {
@@ -38,7 +31,6 @@ int main(int argc, char* argv[])
 	// Whenif it stops working ENABLE_VIRTUAL_TERMINAL_PROCESSING can be used instead.
 	system(" ");
 
-	vector<string> files;
 	if (argc == 1) error(usage);
 	else if (string(argv[1]) == "-d")
 	{
@@ -50,24 +42,30 @@ int main(int argc, char* argv[])
 		printf("max_color_diff = %d", max_color_diff(pngfile1, pngfile2));
 		return 0;
 	}
-	else
+
+	vector<string> files;
+	for (int i = 1; i < argc; i++)
 	{
-		for (int i = 1; i < argc; i++)
-		{
-			if (is_directory(argv[i]))
-				files += find_htm_files(argv[i]);
-			else if (exists(argv[i]))
-				files.push_back(argv[i]);
-			else
-				printf(RED("%s not found\n"), argv[i]);
-		}
+		if (is_directory(argv[i]))
+			files += find_htm_files(argv[i]);
+		else if (exists(argv[i]))
+			files.push_back(argv[i]);
+		else
+			printf(RED("%s not found\n"), argv[i]);
 	}
 
 	if (files.empty())
 		error("No html files found");
 
+	vector<string> failed_tests;
 	for (auto file : files)
-		test(file);
+	{
+		if (test(file))
+			printf(GREEN("pass")" %s\n", file.c_str());
+		else
+			printf(RED("FAILURE %s\n"), file.c_str()),
+			failed_tests.push_back(file);
+	}
 
 	if (failed_tests.empty())
 		printf(GREEN("\nAll tests passed\n"));
@@ -85,13 +83,15 @@ int main(int argc, char* argv[])
 
 #else
 
+#include <gtest/gtest.h>
+
 string test_dir = "../test/render"; // ctest is run from litehtml/build
 
 using render_test = testing::TestWithParam<string>;
 
 TEST_P(render_test, _)
 {
-	test(GetParam());
+	ASSERT_TRUE(test(GetParam()));
 }
 
 INSTANTIATE_TEST_SUITE_P(, render_test, testing::ValuesIn(find_htm_files(test_dir)));
@@ -137,7 +137,7 @@ Bitmap draw(document::ptr doc, int width, int height)
 	return Bitmap(canvas);
 }
 
-void test(string filename)
+bool test(string filename)
 {
 	string html = readfile(filename);
 
@@ -153,18 +153,8 @@ void test(string filename)
 	doc->render(width);
 	Bitmap bmp = draw(doc, doc->content_width(), doc->content_height());
 
-	Bitmap good(filename + ".png");
-	bool failed = bmp != good;
-	if (failed)
-	{
+	bool pass = bmp == Bitmap(filename + ".png");
+	if (!pass)
 		bmp.save(filename + "-FAILED.png");
-		ASSERT_TRUE(false);
-	}
-#if STANDALONE
-	if (failed)
-		printf(RED("FAILURE %s\n"), filename.c_str()),
-		failed_tests.push_back(filename);
-	else
-		printf(GREEN("pass")" %s\n", filename.c_str());
-#endif
+	return pass;
 }
