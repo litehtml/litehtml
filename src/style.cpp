@@ -618,7 +618,7 @@ bool parse_border_helper(const css_token_vector& tokens, document_container* con
 	css_length& width, border_style& style, web_color& color)
 {
 	// initial values:  https://developer.mozilla.org/en-US/docs/Web/CSS/border#formal_definition
-	css_length   _width = css_length::predef_value(border_width_medium);
+	css_length   _width = border_width_medium_value;
 	border_style _style = border_style_none;
 	web_color    _color = web_color::current_color;
 
