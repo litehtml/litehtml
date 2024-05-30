@@ -621,16 +621,16 @@ int document::to_pixels( const css_length& val, int fontSize, int size ) const
 		ret = round_f(val.val() * (float) fontSize);
 		break;
 	case css_units_pt:
-		ret = m_container->pt_to_px((int) val.val());
+		ret = m_container->pt_to_px(round_f(val.val()));
 		break;
 	case css_units_in:
-		ret = m_container->pt_to_px((int) (val.val() * 72));
+		ret = m_container->pt_to_px(round_f(val.val() * 72));
 		break;
 	case css_units_cm:
-		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72));
+		ret = m_container->pt_to_px(round_f(val.val() * 0.3937f * 72));
 		break;
 	case css_units_mm:
-		ret = m_container->pt_to_px((int) (val.val() * 0.3937 * 72) / 10);
+		ret = m_container->pt_to_px(round_f(val.val() * 0.3937f * 72 / 10));
 		break;
 	case css_units_vw:
 		ret = (int)((double)m_media.width * (double)val.val() / 100.0);
