@@ -384,8 +384,9 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		break;
 
 	// border-spacing = <length>{1,2}  https://developer.mozilla.org/en-US/docs/Web/CSS/border-spacing
+	// Lengths may not be negative.  https://drafts.csswg.org/css2/#separated-borders
 	case _border_spacing_:
-		if (parse_two_lengths(value, len, f_length))
+		if (parse_two_lengths(value, len, f_length | f_positive))
 		{
 			add_parsed_property(__litehtml_border_spacing_x_, property_value(len[0], important));
 			add_parsed_property(__litehtml_border_spacing_y_, property_value(len[1], important));
