@@ -620,18 +620,24 @@ int document::to_pixels( const css_length& val, int fontSize, int size ) const
 	case css_units_em:
 		ret = round_f(val.val() * (float) fontSize);
 		break;
+
+	// https://drafts.csswg.org/css-values-4/#absolute-lengths
 	case css_units_pt:
 		ret = m_container->pt_to_px(round_f(val.val()));
 		break;
 	case css_units_in:
-		ret = m_container->pt_to_px(round_f(val.val() * 72));
+		ret = m_container->pt_to_px(round_f(val.val() * 72)); // 1in = 72pt
+		break;
+	case css_units_pc:
+		ret = m_container->pt_to_px(round_f(val.val() * 12)); // 1pc = (1/6)in = 12pt
 		break;
 	case css_units_cm:
-		ret = m_container->pt_to_px(round_f(val.val() * 0.3937f * 72));
+		ret = m_container->pt_to_px(round_f(val.val() * 0.3937f * 72)); // 1cm = (1/2.54)in = (72/2.54)pt
 		break;
 	case css_units_mm:
 		ret = m_container->pt_to_px(round_f(val.val() * 0.3937f * 72 / 10));
 		break;
+
 	case css_units_vw:
 		ret = (int)((double)m_media.width * (double)val.val() / 100.0);
 		break;
@@ -665,6 +671,7 @@ void document::cvt_units( css_length& val, int fontSize, int /*size*/ ) const
 		case css_units_em:
 		case css_units_pt:
 		case css_units_in:
+		case css_units_pc:
 		case css_units_cm:
 		case css_units_mm:
 			val.set_value((float)to_pixels(val, fontSize), css_units_px);
