@@ -920,7 +920,8 @@ bool parse_bg_position(const css_token_vector& tokens, int& index, css_length& x
 	{
 		// try to fix wrong order
 		// A pair of keywords can be reordered, while a combination of keyword and length or percentage cannot.
-		if (is_one_of_predef(a, top, bottom) && b.is_predefined())
+		if ((is_one_of_predef(a, top, bottom) && b.is_predefined()) ||
+			(a.is_predefined() && is_one_of_predef(b, left, right)))
 			swap(a, b);
 		
 		// check for wrong order
