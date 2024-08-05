@@ -224,11 +224,13 @@ void cairo::border::draw_double()
 
 void cairo::border::draw_dashed()
 {
+	int line_length = std::abs(bottom - top);
+	if(!line_length) return;
+
 	draw_line(border_width / 2.0,
 			  top_border_width / 2.0,
 			  bottom_border_width / 2.0);
 
-	int line_length = std::abs(bottom - top);
 	int segment_length = border_width * 3;
 	int seg_nums = line_length / segment_length;
 	if(seg_nums < 2)
@@ -265,6 +267,9 @@ void cairo::border::draw_solid()
 
 void cairo::border::draw_dotted()
 {
+	// Zero length line
+	if(bottom == top) return;
+
 	draw_line(border_width / 2.0,
 			  top_border_width / 2.0,
 			  bottom_border_width / 2.0);
