@@ -23,19 +23,15 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
 {
 	if(!marker.image.empty())
 	{
-		/*litehtml::string url;
+		litehtml::string url;
 		make_url(marker.image.c_str(), marker.baseurl, url);
 
-		lock_images_cache();
-		images_map::iterator img_i = m_images.find(url.c_str());
-		if(img_i != m_images.end())
+		auto img = get_image(url);
+		if(img)
 		{
-			if(img_i->second)
-			{
-				draw_txdib((cairo_t*) hdc, img_i->second, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
-			}
+			draw_pixbuf((cairo_t*) hdc, img, marker.pos.x, marker.pos.y, cairo_image_surface_get_width(img),
+						cairo_image_surface_get_height(img));
 		}
-		unlock_images_cache();*/
 	} else
 	{
 		switch(marker.marker_type)
