@@ -607,12 +607,16 @@ cairo_surface_t* container_cairo::scale_surface(cairo_surface_t* surface, int wi
 	int s_width = cairo_image_surface_get_width(surface);
 	int s_height = cairo_image_surface_get_height(surface);
 	cairo_surface_t *result = cairo_surface_create_similar(surface, cairo_surface_get_content(surface), width, height);
+	cairo_pattern_t *pattern = cairo_pattern_create_for_surface(surface);
 	cairo_t *cr = cairo_create(result);
+	cairo_pattern_set_filter(pattern, CAIRO_FILTER_BILINEAR);
+	cairo_pattern_set_extend(pattern, CAIRO_EXTEND_PAD);
 	cairo_scale(cr, (double) width / (double) s_width, (double) height / (double) s_height);
-	cairo_set_source_surface(cr, surface, 0, 0);
-	cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
-	cairo_paint(cr);
+	cairo_set_source(cr, pattern);
+	cairo_rectangle(cr, 0, 0, s_width, s_height);
+	cairo_fill(cr);
 	cairo_destroy(cr);
+	cairo_pattern_destroy(pattern);
 	return result;
 }
 
