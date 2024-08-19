@@ -106,7 +106,7 @@ vector<string> find_htm_files(string dir)
 		string name = entry.path().filename().string();
 		if (entry.is_directory())
 		{
-			if (name[0] != '-')
+			if (name[0] != '-' && name != "support")
 			{
 				files += find_htm_files(dir + "/" + name);
 			}
