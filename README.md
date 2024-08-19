@@ -2,13 +2,6 @@
 
 **litehtml** is the lightweight HTML rendering engine with CSS2/CSS3 support. Note that **litehtml** itself does not draw any text, pictures or other graphics and that **litehtml** does not depend on any image/draw/font library. You are free to use any library to draw images, fonts and any other graphics. **litehtml** just parses HTML/CSS and places the HTML elements into the correct positions (renders HTML). To draw the HTML elements you have to implement the simple callback interface [document_container](https://github.com/litehtml/litehtml/wiki/document_container). This interface is really simple, check it out! The [document_container](https://github.com/litehtml/litehtml/wiki/document_container) implementation is required to render HTML correctly.
 
-# 🍴 Fork
-
-This is a fork which adds the following:
-
-- Tracking of mouse enter/leave events on elements via a new `document_container::on_mouse_event` function. This can be used, for example, to display a URL when a mouse is over an anchor or for extra debugging information.
-- Adds a basic `.clang-format` file to preserve tabs (but otherwise does not touch the formatting).
-
 # Where litehtml can be used
 
 **litehtml** can be used when you need to show HTML formatted text or even to create a mini-browser, but using it as a full-featured HTML engine is not recommended. Usually you don't need something like WebKit to show simple HTML tooltips or HTML-formatted text, **litehtml** is much better for these as it's more lightweight and easier to integrate into your application.
