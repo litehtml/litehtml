@@ -3,7 +3,8 @@ cmake_minimum_required(VERSION 3.11)
 project(litehtml LANGUAGES C CXX)
 
 
-option(LITEHTML_BUILD_TESTING "enable testing for litehtml" ON)
+option(LITEHTML_BUILD_TESTING "enable testing for litehtml" OFF)
+option(LITEHTML_BUILD_RENDER2PNG "build render2html testing utility" OFF)
 
 if(LITEHTML_BUILD_TESTING)
 	include(CTest)
@@ -162,10 +163,17 @@ set(TEST_LITEHTML
 #	test/url_test.cpp
 #	test/url_path_test.cpp
 	test/render_test.cpp
-	containers/test/test_container.cpp
-	containers/test/Font.cpp
-	containers/test/Bitmap.cpp
-	containers/test/lodepng.cpp
+	test/fonts.h
+	test/fonts.cpp
+	containers/cairo/cairo_images_cache.h
+	containers/cairo/cairo_borders.cpp
+	containers/cairo/cairo_borders.h
+	containers/cairo/container_cairo.cpp
+	containers/cairo/container_cairo.h
+	containers/cairo/container_cairo_pango.cpp
+	containers/cairo/container_cairo_pango.h
+	containers/cairo/render2png.cpp
+	containers/cairo/render2png.h
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
@@ -212,6 +220,45 @@ install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib${LIB_S
 
 # Tests
 
+if (LITEHTML_BUILD_RENDER2PNG)
+	set(RENDER2PNG_NAME render2png)
+
+	find_package(PkgConfig REQUIRED)
+
+	pkg_check_modules(RENDER2PNG_LIBS REQUIRED gdk-3.0 cairo pango pangocairo fontconfig)
+
+	add_executable(
+			${RENDER2PNG_NAME}
+			test/render2png_main.cpp
+			containers/cairo/cairo_borders.cpp
+			containers/cairo/cairo_borders.h
+			containers/cairo/container_cairo.cpp
+			containers/cairo/container_cairo.h
+			containers/cairo/container_cairo_pango.cpp
+			containers/cairo/container_cairo_pango.h
+			containers/cairo/render2png.cpp
+			containers/cairo/cairo_images_cache.h
+			test/fonts.h
+			test/fonts.cpp
+	)
+
+	set_target_properties(${RENDER2PNG_NAME} PROPERTIES
+			CXX_STANDARD 17
+			C_STANDARD 99
+			PUBLIC_HEADER "${HEADER_LITEHTML}"
+	)
+
+	target_include_directories(
+			${RENDER2PNG_NAME}
+			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/containers/cairo
+			PRIVATE ${RENDER2PNG_LIBS_INCLUDE_DIRS}
+	)
+
+	target_link_options(${RENDER2PNG_NAME} PRIVATE ${RENDER2PNG_LIBS_LDFLAGS})
+	target_link_libraries(${RENDER2PNG_NAME} PRIVATE ${PROJECT_NAME} ${RENDER2PNG_LIBS_LIBRARIES})
+
+endif ()
+
 if (LITEHTML_BUILD_TESTING)
 	option(EXTERNAL_GTEST "Use external GoogleTest instead of fetching from GitHub" OFF)
 
@@ -236,6 +283,9 @@ if (LITEHTML_BUILD_TESTING)
 
 	set(TEST_NAME ${PROJECT_NAME}_tests)
 
+	find_package(PkgConfig REQUIRED)
+	pkg_check_modules(TEST_LIBS REQUIRED gdk-3.0 cairo pango pangocairo fontconfig)
+
 	add_executable(
 		${TEST_NAME}
 		${TEST_LITEHTML}
@@ -249,13 +299,15 @@ if (LITEHTML_BUILD_TESTING)
 
 	target_include_directories(
 		${TEST_NAME}
-		PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/containers
+		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/containers/cairo
+		PRIVATE ${TEST_LIBS_INCLUDE_DIRS}
 	)
 
 	target_link_libraries(
 		${TEST_NAME}
 		${PROJECT_NAME}
 		gtest_main
+		${TEST_LIBS_LIBRARIES}
 	)
 
 	include(GoogleTest)

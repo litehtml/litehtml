@@ -34,6 +34,8 @@ public:
 	void delete_font(litehtml::uint_ptr hFont) override;
 	int text_width(const char* text, litehtml::uint_ptr hFont) override;
 	void draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) override;
+
+	virtual cairo_font_options_t* get_font_options() { return nullptr; }
 };
 
 #endif //LITEBROWSER_CONTAINER_CAIRO_PANGO_H
