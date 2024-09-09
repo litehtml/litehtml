@@ -1,12 +1,15 @@
 #include <filesystem>
 #include <fstream>
-#include <sstream>
-#include "../containers/test/test_container.h"
-using namespace std;
-using namespace filesystem;
+#include <vector>
+#include <string>
+#include <algorithm>
 
-vector<string> find_htm_files(string dir);
-bool test(string filename);
+#include "fonts.h"
+#include "render2png.h"
+#include "litehtml/html.h"
+
+std::vector<std::string> find_htm_files(std::string dir);
+bool test(std::string filename);
 
 #if STANDALONE
 
@@ -85,76 +88,71 @@ int main(int argc, char* argv[])
 
 #include <gtest/gtest.h>
 
-string test_dir = "../test/render"; // ctest is run from litehtml/build
+std::string test_dir = "../test/render"; // ctest is run from litehtml/build
 
-using render_test = testing::TestWithParam<string>;
+using render_test = testing::TestWithParam<std::string>;
 
 TEST_P(render_test, _)
 {
 	ASSERT_TRUE(test(GetParam()));
 }
 
-INSTANTIATE_TEST_SUITE_P(, render_test, testing::ValuesIn(find_htm_files(test_dir)));
+INSTANTIATE_TEST_SUITE_P(, render_test, testing::ValuesIn(find_htm_files("")));
 
 #endif // STANDALONE
 
-vector<string> find_htm_files(string dir)
+std::vector<std::string> find_htm_files(std::string dir)
 {
-	vector<string> files;
-	for (auto entry : directory_iterator(dir))
+	std::vector<std::string> files;
+	for (const auto& entry : std::filesystem::directory_iterator(test_dir + "/" + dir))
 	{
-		string name = entry.path().filename().string();
+		std::string name = entry.path().filename().string();
+		std::string path;
+		if(dir.empty())
+		{
+			path = name;
+		} else
+		{
+			path = dir + "/" + name;
+		}
 		if (entry.is_directory())
 		{
 			if (name[0] != '-' && name != "support")
 			{
-				files += find_htm_files(dir + "/" + name);
+				auto tmp_files = find_htm_files(path);
+				files.insert(files.end(), tmp_files.begin(), tmp_files.end());
 			}
 		} else
 		{
-			if (name[0] != '-' && is_one_of(path(name).extension(), ".htm", ".html"))
-				files.push_back(dir + "/" + name);
+			if (name[0] != '-' && litehtml::is_one_of(std::filesystem::path(name).extension(), ".htm", ".html"))
+				files.push_back(path);
 		}
 	}
-	sort(files);
+	std::sort(files.begin(), files.end());
 	return files;
 }
 
-string readfile(string filename)
+bool test(std::string filename)
 {
-	stringstream ss;
-	ifstream(filename, ios::binary) >> ss.rdbuf();
-	return ss.str();
-}
+	std::string html_path = test_dir + "/" + filename;
+	std::string png_path = test_dir + "/" + filename + ".png";
+	std::string failed_png_path = test_dir + "/" + filename + "-FAILED.png";
 
-Bitmap draw(document::ptr doc, int width, int height)
-{
-	canvas canvas(width, height, rgba(1,1,1,1));
-	rect clip(0, 0, width, height);
+	auto font_options = prepare_fonts_for_testing();
 
-	doc->draw((uint_ptr)&canvas, 0, 0, &clip);
+	html2png::converter converter(800, 600, 96, "serif", font_options);
+	auto pixbuf = converter.to_pixbuf(html_path);
 
-	return Bitmap(canvas);
-}
+	if(font_options)
+	{
+		cairo_font_options_destroy(font_options);
+	}
 
-bool test(string filename)
-{
-	string html = readfile(filename);
-
-	string base_path = path(filename).parent_path().string();
-	if (base_path == "") base_path = test_dir;
-
-	// image size will be {content_width, content_height} (calculated after layout)
-	// height is nonzero to get finite aspect-ratio media feature
-	int width = 800, height = 1;
-	test_container container(width, height, base_path);
-
-	auto doc = document::createFromString(html, &container);
-	doc->render(width);
-	Bitmap bmp = draw(doc, doc->content_width(), doc->content_height());
-
-	bool pass = bmp == Bitmap(filename + ".png");
-	if (!pass)
-		bmp.save(filename + "-FAILED.png");
-	return pass;
+	bool res = html2png::pngcmp(pixbuf, png_path) == html2png::png_diff_same;
+	if(!res)
+	{
+		gdk_pixbuf_save(pixbuf, failed_png_path.c_str(), "png", nullptr, nullptr);
+	}
+	g_object_unref(pixbuf);
+	return res;
 }

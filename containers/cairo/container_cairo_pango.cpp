@@ -180,6 +180,13 @@ void container_cairo_pango::draw_text(litehtml::uint_ptr hdc, const char *text, 
 	pango_layout_set_font_description (layout, fnt->font);
 	pango_layout_set_text (layout, text, -1);
 
+	auto font_options = get_font_options();
+	if(font_options)
+	{
+		auto ctx = pango_layout_get_context(layout);
+		pango_cairo_context_set_font_options(ctx, font_options);
+	}
+
 	int baseline = PANGO_PIXELS(pango_layout_get_baseline(layout));
 
 	PangoRectangle ink_rect, logical_rect;
