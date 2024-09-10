@@ -2,15 +2,9 @@ cmake_minimum_required(VERSION 3.11)
 
 project(litehtml LANGUAGES C CXX)
 
-
 option(LITEHTML_BUILD_TESTING "enable testing for litehtml" OFF)
-option(LITEHTML_BUILD_RENDER2PNG "build render2html testing utility" OFF)
 
-if(LITEHTML_BUILD_TESTING)
-	include(CTest)
-	enable_testing()
-endif()
-
+if (NOT LITEHTML_BUILD_TESTING)
 # Soname
 # MAJOR is incremented when symbols are removed or changed in an incompatible way
 # MINOR is incremented when new symbols are added
@@ -156,26 +150,6 @@ set(HEADER_LITEHTML
 	include/litehtml/gradient.h
 )
 
-set(TEST_LITEHTML
-	test/encodings_test.cpp
-#	test/codepoint_test.cpp
-#	test/tstring_view_test.cpp
-#	test/url_test.cpp
-#	test/url_path_test.cpp
-	test/render_test.cpp
-	test/fonts.h
-	test/fonts.cpp
-	containers/cairo/cairo_images_cache.h
-	containers/cairo/cairo_borders.cpp
-	containers/cairo/cairo_borders.h
-	containers/cairo/container_cairo.cpp
-	containers/cairo/container_cairo.h
-	containers/cairo/container_cairo_pango.cpp
-	containers/cairo/container_cairo_pango.h
-	containers/cairo/render2png.cpp
-	containers/cairo/render2png.h
-)
-
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
 set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
 
@@ -220,96 +194,15 @@ install(EXPORT litehtmlTargets FILE litehtmlTargets.cmake DESTINATION lib${LIB_S
 
 # Tests
 
-if (LITEHTML_BUILD_RENDER2PNG)
-	set(RENDER2PNG_NAME render2png)
-
-	find_package(PkgConfig REQUIRED)
-
-	pkg_check_modules(RENDER2PNG_LIBS REQUIRED gdk-3.0 cairo pango pangocairo fontconfig)
-
-	add_executable(
-			${RENDER2PNG_NAME}
-			test/render2png_main.cpp
-			containers/cairo/cairo_borders.cpp
-			containers/cairo/cairo_borders.h
-			containers/cairo/container_cairo.cpp
-			containers/cairo/container_cairo.h
-			containers/cairo/container_cairo_pango.cpp
-			containers/cairo/container_cairo_pango.h
-			containers/cairo/render2png.cpp
-			containers/cairo/cairo_images_cache.h
-			test/fonts.h
-			test/fonts.cpp
+else ()
+	include(ExternalProject)
+	ExternalProject_Add(
+			litehtml-tests
+			GIT_REPOSITORY      https://github.com/litehtml/litehtml-tests.git
+			GIT_TAG             967c159f7c4ebaf0e5e0c5883d85d0f5d12b57dc
+			SOURCE_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-src"
+			BINARY_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-build"
+			CMAKE_ARGS          -DLITEHTML_PATH=${CMAKE_CURRENT_SOURCE_DIR}
+			INSTALL_COMMAND     ""
 	)
-
-	set_target_properties(${RENDER2PNG_NAME} PROPERTIES
-			CXX_STANDARD 17
-			C_STANDARD 99
-			PUBLIC_HEADER "${HEADER_LITEHTML}"
-	)
-
-	target_include_directories(
-			${RENDER2PNG_NAME}
-			PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/containers/cairo
-			PRIVATE ${RENDER2PNG_LIBS_INCLUDE_DIRS}
-	)
-
-	target_link_options(${RENDER2PNG_NAME} PRIVATE ${RENDER2PNG_LIBS_LDFLAGS})
-	target_link_libraries(${RENDER2PNG_NAME} PRIVATE ${PROJECT_NAME} ${RENDER2PNG_LIBS_LIBRARIES})
-
-endif ()
-
-if (LITEHTML_BUILD_TESTING)
-	option(EXTERNAL_GTEST "Use external GoogleTest instead of fetching from GitHub" OFF)
-
-	if (EXTERNAL_GTEST)
-		link_libraries("-Wl,--copy-dt-needed-entries")
-	else()
-		include(FetchContent)
-		FetchContent_Declare(
-		  googletest
-		  URL https://github.com/google/googletest/archive/609281088cfefc76f9d0ce82e1ff6c30cc3591e5.zip
-		)
-		# For Windows: Prevent overriding the parent project's compiler/linker settings
-		set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-		FetchContent_GetProperties(googletest)
-		if(NOT googletest_POPULATED)
-		  FetchContent_Populate(googletest)
-		  add_subdirectory(${googletest_SOURCE_DIR} ${googletest_BINARY_DIR})
-		endif()
-	endif()
-
-	enable_testing()
-
-	set(TEST_NAME ${PROJECT_NAME}_tests)
-
-	find_package(PkgConfig REQUIRED)
-	pkg_check_modules(TEST_LIBS REQUIRED gdk-3.0 cairo pango pangocairo fontconfig)
-
-	add_executable(
-		${TEST_NAME}
-		${TEST_LITEHTML}
-	)
-
-	set_target_properties(${TEST_NAME} PROPERTIES
-		CXX_STANDARD 17
-		C_STANDARD 99
-		PUBLIC_HEADER "${HEADER_LITEHTML}"
-	)
-
-	target_include_directories(
-		${TEST_NAME}
-		PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/containers/cairo
-		PRIVATE ${TEST_LIBS_INCLUDE_DIRS}
-	)
-
-	target_link_libraries(
-		${TEST_NAME}
-		${PROJECT_NAME}
-		gtest_main
-		${TEST_LIBS_LIBRARIES}
-	)
-
-	include(GoogleTest)
-	gtest_discover_tests(${TEST_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/test)
 endif()
