@@ -155,7 +155,8 @@ namespace html2png
 			cairo_restore(cr);
 
 			// Draw document
-			doc->draw((litehtml::uint_ptr) cr, 0, 0, nullptr);
+			litehtml::position clip(0, 0, width, height);
+			doc->draw((litehtml::uint_ptr) cr, 0, 0, &clip);
 
 			cairo_surface_flush(surface);
 			cairo_destroy(cr);
