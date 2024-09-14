@@ -1102,6 +1102,7 @@ bool parse_font_style_variant_weight(const css_token_vector& tokens, int& index,
 	bool style_found = false;
 	bool variant_found = false;
 	bool weight_found = false;
+	bool res = false;
 
 	int i = index, count = 0;
 	while (i < (int)tokens.size() && count++ < 3)
@@ -1110,18 +1111,29 @@ bool parse_font_style_variant_weight(const css_token_vector& tokens, int& index,
 		// All three properties can have value "normal", and it changes nothing because initial
 		// values of all three properties are "normal".
 		if (tok.ident() == "normal")
-			continue;
-		else if (!style_found && parse_keyword(tok, style, font_style_strings))
+		{
+			index++;
+			res = true;
+		} else if (!style_found && parse_keyword(tok, style, font_style_strings))
+		{
 			style_found = true;
+			index++;
+			res = true;
+		}
 		else if (!variant_found && parse_keyword(tok, variant, font_variant_strings))
+		{
 			variant_found = true;
+			index++;
+			res = true;
+		}
 		else if (!weight_found && parse_font_weight(tok, weight))
+		{
 			weight_found = true;
-		else
-			return false;
+			index++;
+			res = true;
+		} else break;
 	}
-	index = i;
-	return true;
+	return res;
 }
 
 // https://www.w3.org/TR/css-values-4/#custom-idents
