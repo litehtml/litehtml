@@ -1196,28 +1196,33 @@ void style::parse_font(css_token_vector tokens, bool important)
 	css_length line_height = css_length::predef_value(line_height_normal);
 	string font_family; // this argument is mandatory, no need to set initial value
 
-	int index = 0;
-	parse_font_style_variant_weight(tokens, index, style, variant, weight);
-
-	// font-size = <absolute-size> | <relative-size> | <length-percentage [0,∞]> | math
-	if (!size.from_token(at(tokens, index), f_length_percentage | f_positive, font_size_strings))
-		return;
-	index++;
-
-	if (at(tokens, index).ch == '/')
+	if(tokens.size() == 1 && (tokens[0].type == STRING || tokens[0].type == IDENT) && value_in_list(tokens[0].str, font_system_family_name_strings))
 	{
-		index++;
-		// https://drafts.csswg.org/css2/#propdef-line-height
-		// line-height = normal | <number> | <length> | <percentage>
-		if (!line_height.from_token(at(tokens, index), f_number | f_length_percentage, line_height_strings))
+		font_family = tokens[0].str;
+	} else
+	{
+		int index = 0;
+		parse_font_style_variant_weight(tokens, index, style, variant, weight);
+
+		// font-size = <absolute-size> | <relative-size> | <length-percentage [0,∞]> | math
+		if (!size.from_token(at(tokens, index), f_length_percentage | f_positive, font_size_strings))
 			return;
 		index++;
+
+		if (at(tokens, index).ch == '/')
+		{
+			index++;
+			// https://drafts.csswg.org/css2/#propdef-line-height
+			// line-height = normal | <number> | <length> | <percentage>
+			if (!line_height.from_token(at(tokens, index), f_number | f_length_percentage, line_height_strings))
+				return;
+			index++;
+		}
+
+		remove(tokens, 0, index);
+		if (!parse_font_family(tokens, font_family))
+			return;
 	}
-
-	remove(tokens, 0, index);
-	if (!parse_font_family(tokens, font_family))
-		return;
-
 	add_parsed_property(_font_style_,   property_value(style,       important));
 	add_parsed_property(_font_variant_, property_value(variant,     important));
 	add_parsed_property(_font_weight_,  property_value(weight,      important));
