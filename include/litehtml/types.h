@@ -371,6 +371,8 @@ namespace litehtml
 		font_style_italic
 	};
 
+#define  font_system_family_name_strings		"caption;icon;menu;message-box;small-caption;status-bar"
+
 #define  font_variant_strings		"normal;small-caps"
 
 	enum font_variant
