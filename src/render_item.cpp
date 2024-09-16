@@ -501,33 +501,45 @@ void litehtml::render_item::get_redraw_box(litehtml::position& pos, int x /*= 0*
 
 void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::size& content_size, int x /*= 0*/, int y /*= 0*/ )
 {
-    if(is_visible() && src_el()->css().get_position() != element_position_fixed)
-    {
-		sz.width = std::max(sz.width, x + right());
-		sz.height = std::max(sz.height, y + bottom());
-
-		if(!src_el()->is_root() && !src_el()->is_body())
+	if(css().get_display() != display_inline && css().get_display() != display_table_row)
+	{
+		if (is_visible() && src_el()->css().get_position() != element_position_fixed)
 		{
-			content_size.width = std::max(content_size.width, x + right());
-			content_size.height = std::max(content_size.height, y + bottom());
+			sz.width = std::max(sz.width, x + right());
+			sz.height = std::max(sz.height, y + bottom());
+
+			if (!src_el()->is_root() && !src_el()->is_body())
+			{
+				content_size.width = std::max(content_size.width, x + right());
+				content_size.height = std::max(content_size.height, y + bottom());
+			}
+
+			// All children of tables and blocks with style other than "overflow: visible" are inside element.
+			// We can skip calculating size of children
+			if (src_el()->css().get_overflow() == overflow_visible && src_el()->css().get_display() != display_table)
+			{
+				for (auto &el: m_children)
+				{
+					el->calc_document_size(sz, content_size, x + m_pos.x, y + m_pos.y);
+				}
+			}
+
+			if (src_el()->is_root() || src_el()->is_body())
+			{
+				content_size.width += content_offset_right();
+				content_size.height = std::max(content_size.height, y + bottom());
+			}
 		}
-
-		// All children of tables and blocks with style other than "overflow: visible" are inside element.
-		// We can skip calculating size of children
-        if(src_el()->css().get_overflow() == overflow_visible && src_el()->css().get_display() != display_table)
-        {
-            for(auto& el : m_children)
-            {
-                el->calc_document_size(sz, content_size, x + m_pos.x, y + m_pos.y);
-            }
-        }
-
-		if(src_el()->is_root() || src_el()->is_body())
+	} else
+	{
+		position::vector boxes;
+		get_inline_boxes(boxes);
+		for(auto& box : boxes)
 		{
-			content_size.width += content_offset_right();
-			content_size.height += content_offset_bottom();
+			content_size.width = std::max(content_size.width, x + box.x + box.width);
+			content_size.height = std::max(content_size.height, y + box.y + box.height);
 		}
-    }
+	}
 }
 
 void litehtml::render_item::draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned )
