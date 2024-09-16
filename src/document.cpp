@@ -138,7 +138,10 @@ document::ptr document::createFromString(
 
 		// Finally initialize elements
 		// init() returns pointer to the render_init element because it can change its type
-		doc->m_root_render = doc->m_root_render->init();
+		if(doc->m_root_render)
+		{
+			doc->m_root_render = doc->m_root_render->init();
+		}
 	}
 
 	return doc;
@@ -564,7 +567,7 @@ uint_ptr document::get_font( const char* name, int size, const char* weight, con
 int document::render( int max_width, render_type rt )
 {
 	int ret = 0;
-	if(m_root)
+	if(m_root && m_root_render)
 	{
 		position client_rc;
 		m_container->get_client_rect(client_rc);
