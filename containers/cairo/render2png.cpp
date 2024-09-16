@@ -139,8 +139,8 @@ namespace html2png
 		auto doc = litehtml::document::createFromString(ss.str(), &cont);
 		doc->render(m_screen_width);
 
-		width = doc->content_width();
-		height = doc->content_height();
+		width = doc->content_width() > 0 ? doc->content_width() : 1;
+		height = doc->content_height() > 0 ? doc->content_height() : 1;
 
 		auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 		if(surface)
