@@ -526,7 +526,13 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::si
 
 			if (src_el()->is_root() || src_el()->is_body())
 			{
-				content_size.width += content_offset_right();
+				if (src_el()->css().get_overflow() == overflow_visible && src_el()->css().get_display() != display_table)
+				{
+					content_size.width += content_offset_right();
+				} else
+				{
+					content_size.width = std::max(content_size.width, x + right());
+				}
 				content_size.height = std::max(content_size.height, y + bottom());
 			}
 		}
