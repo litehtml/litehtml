@@ -195,6 +195,14 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 	int ret_width = _render_content(x, y, second_pass, self_size, fmt_ctx);
     //*****************************************
 
+	if (src_el()->css().get_display() == display_list_item)
+	{
+		if(m_pos.height == 0)
+		{
+			m_pos.height = css().get_line_height();
+		}
+	}
+
 	bool requires_rerender = false;		// when true, the second pass for content rendering is required
 
 	// Set block width
@@ -332,7 +340,6 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 				m_pos.height = sz.height;
             }
         }
-
     }
 
     return ret_width + content_offset_width();
