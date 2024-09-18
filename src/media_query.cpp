@@ -410,7 +410,9 @@ bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 		if (val[1].type != 0) return false;
 		css_length length;
 		if (!length.from_token(val[0], f_length)) return false;
-		doc->cvt_units(length, doc->container()->get_default_font_size());
+		font_metrics fm;
+		fm.x_height = fm.font_size = doc->container()->get_default_font_size();
+		doc->cvt_units(length, fm, 0);
 		val[0].n.number = length.val();
 		return true;
 	}

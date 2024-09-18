@@ -29,7 +29,7 @@ int litehtml::render_item_image::_render(int x, int y, const containing_block_co
         // check for max-width
         if(!src_el()->css().get_max_width().is_predefined())
         {
-            int max_width = doc->to_pixels(src_el()->css().get_max_width(), src_el()->css().get_font_size(), parent_width);
+            int max_width = doc->to_pixels(css().get_max_width(), css().get_font_metrics(), parent_width);
             if(m_pos.width > max_width)
             {
                 m_pos.width = max_width;
@@ -90,7 +90,7 @@ int litehtml::render_item_image::_render(int x, int y, const containing_block_co
         // check for max-width
         if(!src_el()->css().get_max_width().is_predefined())
         {
-            int max_width = doc->to_pixels(src_el()->css().get_max_width(), src_el()->css().get_font_size(), parent_width);
+            int max_width = doc->to_pixels(css().get_max_width(), css().get_font_metrics(), parent_width);
             if(m_pos.width > max_width)
             {
                 m_pos.width = max_width;
@@ -126,7 +126,7 @@ int litehtml::render_item_image::_render(int x, int y, const containing_block_co
         // check for max-height
         if(!src_el()->css().get_max_width().is_predefined())
         {
-            int max_width = doc->to_pixels(src_el()->css().get_max_width(), src_el()->css().get_font_size(), parent_width);
+            int max_width = doc->to_pixels(css().get_max_width(), css().get_font_metrics(), parent_width);
             if(m_pos.width > max_width)
             {
                 m_pos.width = max_width;
@@ -143,6 +143,6 @@ int litehtml::render_item_image::_render(int x, int y, const containing_block_co
 int litehtml::render_item_image::calc_max_height(int image_height, int containing_block_height)
 {
     document::ptr doc = src_el()->get_document();
-    return doc->to_pixels(src_el()->css().get_max_height(), src_el()->css().get_font_size(),
+    return doc->to_pixels(css().get_max_height(), css().get_font_metrics(),
 						  containing_block_height == 0 ? image_height : containing_block_height);
 }

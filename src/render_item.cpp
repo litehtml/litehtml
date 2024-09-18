@@ -9,22 +9,22 @@ litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
         m_skip(false)
 {
     document::ptr doc = src_el()->get_document();
-    auto fnt_size = src_el()->css().get_font_size();
+	auto fm = css().get_font_metrics();
 
-    m_margins.left		= doc->to_pixels(src_el()->css().get_margins().left,         fnt_size);
-    m_margins.right		= doc->to_pixels(src_el()->css().get_margins().right,        fnt_size);
-    m_margins.top		= doc->to_pixels(src_el()->css().get_margins().top,          fnt_size);
-    m_margins.bottom	= doc->to_pixels(src_el()->css().get_margins().bottom,       fnt_size);
+    m_margins.left		= doc->to_pixels(src_el()->css().get_margins().left,         fm, 0);
+    m_margins.right		= doc->to_pixels(src_el()->css().get_margins().right,        fm, 0);
+    m_margins.top		= doc->to_pixels(src_el()->css().get_margins().top,          fm, 0);
+    m_margins.bottom	= doc->to_pixels(src_el()->css().get_margins().bottom,       fm, 0);
 
-    m_padding.left		= doc->to_pixels(src_el()->css().get_padding().left,         fnt_size);
-    m_padding.right		= doc->to_pixels(src_el()->css().get_padding().right,        fnt_size);
-    m_padding.top		= doc->to_pixels(src_el()->css().get_padding().top,          fnt_size);
-    m_padding.bottom	= doc->to_pixels(src_el()->css().get_padding().bottom,       fnt_size);
+    m_padding.left		= doc->to_pixels(src_el()->css().get_padding().left,         fm, 0);
+    m_padding.right		= doc->to_pixels(src_el()->css().get_padding().right,        fm, 0);
+    m_padding.top		= doc->to_pixels(src_el()->css().get_padding().top,          fm, 0);
+    m_padding.bottom	= doc->to_pixels(src_el()->css().get_padding().bottom,       fm, 0);
 
-    m_borders.left		= doc->to_pixels(src_el()->css().get_borders().left.width,   fnt_size);
-    m_borders.right		= doc->to_pixels(src_el()->css().get_borders().right.width,  fnt_size);
-    m_borders.top		= doc->to_pixels(src_el()->css().get_borders().top.width,    fnt_size);
-    m_borders.bottom	= doc->to_pixels(src_el()->css().get_borders().bottom.width, fnt_size);
+    m_borders.left		= doc->to_pixels(src_el()->css().get_borders().left.width,   fm, 0);
+    m_borders.right		= doc->to_pixels(src_el()->css().get_borders().right.width,  fm, 0);
+    m_borders.top		= doc->to_pixels(src_el()->css().get_borders().top.width,    fm, 0);
+    m_borders.bottom	= doc->to_pixels(src_el()->css().get_borders().bottom.width, fm, 0);
 }
 
 int litehtml::render_item::render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass)
@@ -1002,7 +1002,7 @@ void litehtml::render_item::calc_cb_length(const css_length& len, int percent_ba
 			out_value.type = litehtml::containing_block_context::cbc_value_type_percentage;
 		} else
 		{
-			out_value.value = src_el()->get_document()->to_pixels(len, src_el()->css().get_font_size());
+			out_value.value = src_el()->get_document()->to_pixels(len, css().get_font_metrics(), 0);
 			out_value.type = containing_block_context::cbc_value_type_absolute;
 		}
 	}

@@ -77,8 +77,8 @@ namespace litehtml
 		int								render(int max_width, render_type rt = render_all);
 		void							draw(uint_ptr hdc, int x, int y, const position* clip);
 		web_color						get_def_color()	{ return m_def_color; }
-		void 							cvt_units(css_length& val, int fontSize, int size = 0) const;
-		int								to_pixels(const css_length& val, int fontSize, int size = 0) const;
+		void 							cvt_units(css_length& val, const font_metrics& metrics, int size) const;
+		int								to_pixels(const css_length& val, const font_metrics& metrics, int size) const;
 		int								width() const;
 		int								height() const;
 		int								content_width() const;

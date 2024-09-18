@@ -194,18 +194,22 @@ namespace litehtml
 
 	struct font_metrics
 	{
+		int 	font_size;
 		int		height;
 		int		ascent;
 		int		descent;
 		int		x_height;
+		int 	ch_width;
 		bool	draw_spaces;
 
 		font_metrics()
 		{
+			font_size		= 0;
 			height			= 0;
 			ascent			= 0;
 			descent			= 0;
 			x_height		= 0;
+			ch_width		= 0;
 			draw_spaces		= true;
 		}
 		int base_line() const	{ return descent; }
@@ -489,7 +493,7 @@ namespace litehtml
 		clear_both
 	};
 
-#define  css_units_strings	"none;%;in;cm;mm;em;ex;pt;pc;px;vw;vh;vmin;vmax;rem"
+#define  css_units_strings	"none;%;in;cm;mm;em;ex;pt;pc;px;vw;vh;vmin;vmax;rem;ch"
 
 	enum css_units : byte // see css_length
 	{
@@ -508,6 +512,7 @@ namespace litehtml
 		css_units_vmin,
 		css_units_vmax,
 		css_units_rem,
+		css_units_ch,
 	};
 
 #define  background_attachment_strings	"scroll;fixed"

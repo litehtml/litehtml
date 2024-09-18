@@ -113,34 +113,34 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	m_css_max_width  = el->get_property<css_length>(_max_width_,  false, none, offset(m_css_max_width));
 	m_css_max_height = el->get_property<css_length>(_max_height_, false, none, offset(m_css_max_height));
 
-	doc->cvt_units(m_css_width, font_size);
-	doc->cvt_units(m_css_height, font_size);
+	doc->cvt_units(m_css_width, m_font_metrics, 0);
+	doc->cvt_units(m_css_height, m_font_metrics, 0);
 
-	doc->cvt_units(m_css_min_width, font_size);
-	doc->cvt_units(m_css_min_height, font_size);
+	doc->cvt_units(m_css_min_width, m_font_metrics, 0);
+	doc->cvt_units(m_css_min_height, m_font_metrics, 0);
 
-	doc->cvt_units(m_css_max_width, font_size);
-	doc->cvt_units(m_css_max_height, font_size);
+	doc->cvt_units(m_css_max_width, m_font_metrics, 0);
+	doc->cvt_units(m_css_max_height, m_font_metrics, 0);
 
 	m_css_margins.left   = el->get_property<css_length>(_margin_left_,   false, 0, offset(m_css_margins.left));
 	m_css_margins.right  = el->get_property<css_length>(_margin_right_,  false, 0, offset(m_css_margins.right));
 	m_css_margins.top    = el->get_property<css_length>(_margin_top_,    false, 0, offset(m_css_margins.top));
 	m_css_margins.bottom = el->get_property<css_length>(_margin_bottom_, false, 0, offset(m_css_margins.bottom));
 
-	doc->cvt_units(m_css_margins.left,	 font_size);
-	doc->cvt_units(m_css_margins.right,	 font_size);
-	doc->cvt_units(m_css_margins.top,	 font_size);
-	doc->cvt_units(m_css_margins.bottom, font_size);
+	doc->cvt_units(m_css_margins.left,	 m_font_metrics, 0);
+	doc->cvt_units(m_css_margins.right,	 m_font_metrics, 0);
+	doc->cvt_units(m_css_margins.top,	 m_font_metrics, 0);
+	doc->cvt_units(m_css_margins.bottom, m_font_metrics, 0);
 
 	m_css_padding.left   = el->get_property<css_length>(_padding_left_,   false, 0, offset(m_css_padding.left));
 	m_css_padding.right  = el->get_property<css_length>(_padding_right_,  false, 0, offset(m_css_padding.right));
 	m_css_padding.top    = el->get_property<css_length>(_padding_top_,    false, 0, offset(m_css_padding.top));
 	m_css_padding.bottom = el->get_property<css_length>(_padding_bottom_, false, 0, offset(m_css_padding.bottom));
 
-	doc->cvt_units(m_css_padding.left,	 font_size);
-	doc->cvt_units(m_css_padding.right,	 font_size);
-	doc->cvt_units(m_css_padding.top,	 font_size);
-	doc->cvt_units(m_css_padding.bottom, font_size);
+	doc->cvt_units(m_css_padding.left,	 m_font_metrics, 0);
+	doc->cvt_units(m_css_padding.right,	 m_font_metrics, 0);
+	doc->cvt_units(m_css_padding.top,	 m_font_metrics, 0);
+	doc->cvt_units(m_css_padding.bottom, m_font_metrics, 0);
 
 	m_css_borders.left.color   = get_color_property(el, _border_left_color_,   false, m_color, offset(m_css_borders.left.color));
 	m_css_borders.right.color  = get_color_property(el, _border_right_color_,  false, m_color, offset(m_css_borders.right.color));
@@ -166,10 +166,10 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	if (m_css_borders.bottom.style == border_style_none || m_css_borders.bottom.style == border_style_hidden)
 		m_css_borders.bottom.width = 0;
 
-	doc->cvt_units(m_css_borders.left.width,	font_size);
-	doc->cvt_units(m_css_borders.right.width,	font_size);
-	doc->cvt_units(m_css_borders.top.width,		font_size);
-	doc->cvt_units(m_css_borders.bottom.width,	font_size);
+	doc->cvt_units(m_css_borders.left.width,	m_font_metrics, 0);
+	doc->cvt_units(m_css_borders.right.width,	m_font_metrics, 0);
+	doc->cvt_units(m_css_borders.top.width,		m_font_metrics, 0);
+	doc->cvt_units(m_css_borders.bottom.width,	m_font_metrics, 0);
 
 	m_css_borders.radius.top_left_x = el->get_property<css_length>(_border_top_left_radius_x_, false, 0, offset(m_css_borders.radius.top_left_x));
 	m_css_borders.radius.top_left_y = el->get_property<css_length>(_border_top_left_radius_y_, false, 0, offset(m_css_borders.radius.top_left_y));
@@ -183,39 +183,39 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	m_css_borders.radius.bottom_right_x = el->get_property<css_length>(_border_bottom_right_radius_x_, false, 0, offset(m_css_borders.radius.bottom_right_x));
 	m_css_borders.radius.bottom_right_y = el->get_property<css_length>(_border_bottom_right_radius_y_, false, 0, offset(m_css_borders.radius.bottom_right_y));
 
-	doc->cvt_units( m_css_borders.radius.top_left_x,			font_size);
-	doc->cvt_units( m_css_borders.radius.top_left_y,			font_size);
-	doc->cvt_units( m_css_borders.radius.top_right_x,			font_size);
-	doc->cvt_units( m_css_borders.radius.top_right_y,			font_size);
-	doc->cvt_units( m_css_borders.radius.bottom_left_x,			font_size);
-	doc->cvt_units( m_css_borders.radius.bottom_left_y,			font_size);
-	doc->cvt_units( m_css_borders.radius.bottom_right_x,		font_size);
-	doc->cvt_units( m_css_borders.radius.bottom_right_y,		font_size);
+	doc->cvt_units( m_css_borders.radius.top_left_x,			m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.top_left_y,			m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.top_right_x,			m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.top_right_y,			m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.bottom_left_x,			m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.bottom_left_y,			m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.bottom_right_x,		m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.bottom_right_y,		m_font_metrics, 0);
 
 	m_border_collapse = (border_collapse) el->get_property<int>(_border_collapse_, true, border_collapse_separate, offset(m_border_collapse));
 
 	m_css_border_spacing_x = el->get_property<css_length>(__litehtml_border_spacing_x_, true, 0, offset(m_css_border_spacing_x));
 	m_css_border_spacing_y = el->get_property<css_length>(__litehtml_border_spacing_y_, true, 0, offset(m_css_border_spacing_y));
 
-	doc->cvt_units(m_css_border_spacing_x, font_size);
-	doc->cvt_units(m_css_border_spacing_y, font_size);
+	doc->cvt_units(m_css_border_spacing_x, m_font_metrics, 0);
+	doc->cvt_units(m_css_border_spacing_y, m_font_metrics, 0);
 
 	m_css_offsets.left	 = el->get_property<css_length>(_left_,	 false, _auto, offset(m_css_offsets.left));
 	m_css_offsets.right  = el->get_property<css_length>(_right_, false, _auto, offset(m_css_offsets.right));
 	m_css_offsets.top	 = el->get_property<css_length>(_top_,	 false, _auto, offset(m_css_offsets.top));
 	m_css_offsets.bottom = el->get_property<css_length>(_bottom_,false, _auto, offset(m_css_offsets.bottom));
 
-	doc->cvt_units(m_css_offsets.left,   font_size);
-	doc->cvt_units(m_css_offsets.right,  font_size);
-	doc->cvt_units(m_css_offsets.top,    font_size);
-	doc->cvt_units(m_css_offsets.bottom, font_size);
+	doc->cvt_units(m_css_offsets.left,   m_font_metrics, 0);
+	doc->cvt_units(m_css_offsets.right,  m_font_metrics, 0);
+	doc->cvt_units(m_css_offsets.top,    m_font_metrics, 0);
+	doc->cvt_units(m_css_offsets.bottom, m_font_metrics, 0);
 
 	m_z_index = el->get_property<css_length>(_z_index_, false, _auto, offset(m_z_index));
 	m_content = el->get_property<string>(_content_, false, "", offset(m_content));
 	m_cursor = el->get_property<string>(_cursor_, true, "auto", offset(m_cursor));
 
 	m_css_text_indent = el->get_property<css_length>(_text_indent_, true, 0, offset(m_css_text_indent));
-	doc->cvt_units(m_css_text_indent, font_size);
+	doc->cvt_units(m_css_text_indent, m_font_metrics, 0);
 
 	m_css_line_height = el->get_property<css_length>(_line_height_, true, normal, offset(m_css_line_height));
 	if(m_css_line_height.is_predefined())
@@ -226,7 +226,7 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 		m_line_height = (int) std::nearbyint(m_css_line_height.val() * font_size);
 	} else
 	{
-		m_line_height = doc->to_pixels(m_css_line_height, font_size, font_size);
+		m_line_height = doc->to_pixels(m_css_line_height, m_font_metrics, m_font_metrics.font_size);
 		m_css_line_height = (float) m_line_height;
 	}
 
@@ -342,7 +342,9 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 			font_size = sz.calc_percent(parent_sz);
 		} else
 		{
-			font_size = doc->to_pixels(sz, parent_sz);
+			font_metrics fm;
+			fm.x_height = fm.font_size = parent_sz;
+			font_size = doc->to_pixels(sz, fm, 0);
 		}
 	}
 	
@@ -365,8 +367,6 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 
 void litehtml::css_properties::compute_background(const html_tag* el, const document::ptr& doc)
 {
-	int font_size = get_font_size();
-
 	m_bg.m_color		= get_color_property(el, _background_color_, false, web_color::transparent, offset(m_bg.m_color));
 
 	const css_size auto_auto(css_length::predef_value(background_size_auto), css_length::predef_value(background_size_auto));
@@ -374,12 +374,12 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
 	m_bg.m_position_y	= el->get_property<length_vector>(_background_position_y_, false, { css_length(0, css_units_percentage) }, offset(m_bg.m_position_y));
 	m_bg.m_size			= el->get_property<size_vector>  (_background_size_,       false, { auto_auto }, offset(m_bg.m_size));
 
-	for (auto& x : m_bg.m_position_x) doc->cvt_units(x, font_size);
-	for (auto& y : m_bg.m_position_y) doc->cvt_units(y, font_size);
+	for (auto& x : m_bg.m_position_x) doc->cvt_units(x, m_font_metrics, 0);
+	for (auto& y : m_bg.m_position_y) doc->cvt_units(y, m_font_metrics, 0);
 	for (auto& size : m_bg.m_size)
 	{
-		doc->cvt_units(size.width,  font_size);
-		doc->cvt_units(size.height, font_size);
+		doc->cvt_units(size.width,  m_font_metrics, 0);
+		doc->cvt_units(size.height, m_font_metrics, 0);
 	}
 
 	m_bg.m_attachment = el->get_property<int_vector>(_background_attachment_, false, { background_attachment_scroll }, offset(m_bg.m_attachment));
@@ -407,7 +407,7 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
 				for(auto& item : image.m_gradient.m_colors)
 				{
 					if (item.length)
-						doc->cvt_units(*item.length, font_size);
+						doc->cvt_units(*item.length, m_font_metrics, 0);
 				}
 				break;
 		}
@@ -437,7 +437,7 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
 			// flex-basis property must contain units
 			m_flex_basis.predef(flex_basis_auto);
 		}
-		doc->cvt_units(m_flex_basis, get_font_size());
+		doc->cvt_units(m_flex_basis, m_font_metrics, 0);
 		if(m_display == display_inline || m_display == display_inline_block)
 		{
 			m_display = display_block;

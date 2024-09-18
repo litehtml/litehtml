@@ -417,10 +417,10 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 
 	if(src_el()->css().get_border_collapse() == border_collapse_separate)
 	{
-		int font_size = src_el()->css().get_font_size();
+		auto fm = css().get_font_metrics();
 		document::ptr doc = src_el()->get_document();
-		m_border_spacing_x = doc->to_pixels(src_el()->css().get_border_spacing_x(), font_size);
-		m_border_spacing_y = doc->to_pixels(src_el()->css().get_border_spacing_y(), font_size);
+		m_border_spacing_x = doc->to_pixels(src_el()->css().get_border_spacing_x(), fm, 0);
+		m_border_spacing_y = doc->to_pixels(src_el()->css().get_border_spacing_y(), fm, 0);
 	} else
 	{
 		m_border_spacing_x	= 0;

@@ -85,6 +85,8 @@ litehtml::uint_ptr container_cairo_pango::create_font(const char *faceName, int 
 
 	if(fm)
 	{
+		fm->font_size = size;
+
 		cairo_save(m_temp_cr);
 		PangoLayout *layout = pango_cairo_create_layout(m_temp_cr);
 		PangoContext *context = pango_layout_get_context(layout);
@@ -99,15 +101,18 @@ litehtml::uint_ptr container_cairo_pango::create_font(const char *faceName, int 
 
 		pango_layout_set_text(layout, "x", 1);
 
-		int x_width, x_height;
-		pango_layout_get_pixel_size(layout, &x_width, &x_height);
+		PangoRectangle ink_rect;
+		PangoRectangle  logical_rect;
+		pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
+		fm->x_height = ink_rect.height;
+		if(fm->x_height == fm->height) fm->x_height = fm->x_height * 4 / 5;
 
-		fm->x_height	= x_height;
+		pango_layout_set_text(layout, "0", 1);
+
+		pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
+		fm->ch_width = logical_rect.width;
 
 		cairo_restore(m_temp_cr);
-
-		g_object_unref(layout);
-		pango_font_metrics_unref(metrics);
 
 		ret = new cairo_font;
 		ret->font		= desc;
@@ -128,6 +133,9 @@ litehtml::uint_ptr container_cairo_pango::create_font(const char *faceName, int 
 		pango_quantize_line_geometry(&ret->strikethrough_thickness, &ret->strikethrough_position);
 		ret->strikethrough_thickness = PANGO_PIXELS(ret->strikethrough_thickness);
 		ret->strikethrough_position = PANGO_PIXELS(ret->strikethrough_position);
+
+		g_object_unref(layout);
+		pango_font_metrics_unref(metrics);
 	}
 
 	return (litehtml::uint_ptr) ret;
