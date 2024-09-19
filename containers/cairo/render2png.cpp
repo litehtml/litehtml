@@ -23,8 +23,26 @@ namespace html2png
 		void load_image([[maybe_unused]] const char *src, [[maybe_unused]] const char *baseurl, [[maybe_unused]] bool redraw_on_ready) override {}
 		void set_caption([[maybe_unused]] const char *caption) override {}
 
-		cairo_surface_t *get_image(const std::string &url) override
+		std::string urlDecode(const std::string &SRC) {
+			std::string ret;
+			char ch;
+			uint32_t i, ii;
+			for (i=0; i < (uint32_t) SRC.length(); i++) {
+				if (SRC[i] == '%') {
+					sscanf(SRC.substr(i + 1, 2).c_str(), "%x", &ii);
+					ch = static_cast<char>(ii);
+					ret += ch;
+					i = i + 2;
+				} else
+				{
+					ret += SRC[i];
+				}
+			}
+			return (ret);
+		}
+		cairo_surface_t *get_image(const std::string& _url) override
 		{
+			std::string url = urlDecode(_url);
 			if(url.empty())
 				return nullptr;
 
@@ -80,6 +98,7 @@ namespace html2png
 		{
 			std::string path;
 			make_url(url.c_str(), baseurl.c_str(), path);
+			path = urlDecode(path);
 
 			std::stringstream ss;
 			std::ifstream(path, std::ios::binary) >> ss.rdbuf();
