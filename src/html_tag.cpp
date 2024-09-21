@@ -855,17 +855,17 @@ bool litehtml::html_tag::is_break() const
 void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const position *clip,
 										 const std::shared_ptr<render_item> &ri)
 {
-	position pos = ri->pos();
-	pos.x	+= x;
-	pos.y	+= y;
-
-	position el_pos = pos;
-	el_pos += ri->get_paddings();
-	el_pos += ri->get_margins();
-
 	if(m_css.get_display() != display_inline && m_css.get_display() != display_table_row)
 	{
-		if(el_pos.does_intersect(clip) || is_root())
+		position pos = ri->pos();
+		pos.x	+= x;
+		pos.y	+= y;
+
+		position border_box = pos;
+		border_box += ri->get_paddings();
+		border_box += ri->get_borders();
+
+		if(border_box.does_intersect(clip) || is_root())
 		{
 			auto v_offset = ri->get_draw_vertical_offset();
 			pos.y += v_offset;
@@ -887,9 +887,6 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 					bg->draw_layer(hdc, i, layer, get_document()->container());
 				}
 			}
-			position border_box = pos;
-			border_box += ri->get_paddings();
-			border_box += ri->get_borders();
 
 			borders bdr = m_css.get_borders();
 			if(bdr.is_visible())
