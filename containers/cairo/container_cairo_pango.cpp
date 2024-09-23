@@ -96,7 +96,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const char *faceName, int 
 
 		fm->ascent = PANGO_PIXELS((double)pango_font_metrics_get_ascent(metrics));
 		fm->descent = PANGO_PIXELS((double)pango_font_metrics_get_descent(metrics));
-		fm->height = fm->ascent + fm->descent;
+		fm->height = PANGO_PIXELS((double)pango_font_metrics_get_height(metrics));
 		fm->x_height = fm->height;
 
 		pango_layout_set_text(layout, "x", 1);
@@ -195,15 +195,13 @@ void container_cairo_pango::draw_text(litehtml::uint_ptr hdc, const char *text, 
 		pango_cairo_context_set_font_options(ctx, font_options);
 	}
 
-	int baseline = PANGO_PIXELS(pango_layout_get_baseline(layout));
-
 	PangoRectangle ink_rect, logical_rect;
 	pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
 
 	int text_baseline = pos.height - fnt->descent;
 
 	int x = pos.left() + logical_rect.x;
-	int y = pos.top() + logical_rect.y + text_baseline - baseline;
+	int y = pos.top();
 
 	cairo_move_to(cr, x, y);
 	pango_cairo_update_layout (cr, layout);
