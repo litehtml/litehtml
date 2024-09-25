@@ -404,7 +404,9 @@ namespace litehtml
                 std::shared_ptr<litehtml::render_item>
                 > split_inlines();
         bool fetch_positioned();
-        void render_positioned(render_type rt = render_all);
+        void render_positioned(render_type width = render_all);
+		// returns element offset related to the containing block
+		std::tuple<int, int> element_static_offset(const std::shared_ptr<litehtml::render_item> &el);
         void add_positioned(const std::shared_ptr<litehtml::render_item> &el);
         void get_redraw_box(litehtml::position& pos, int x = 0, int y = 0);
         void calc_document_size( litehtml::size& sz, litehtml::size& content_size, int x = 0, int y = 0 );

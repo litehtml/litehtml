@@ -90,6 +90,7 @@ namespace litehtml
 		bool							on_mouse_leave(position::vector& redraw_boxes);
 		element::ptr					create_element(const char* tag_name, const string_map& attributes);
 		element::ptr					root();
+		std::shared_ptr<render_item>	root_render();
 		void							get_fixed_boxes(position::vector& fixed_boxes);
 		void							add_fixed_box(const position& pos);
 		void							add_media_list(media_query_list_list::ptr list);
@@ -124,6 +125,12 @@ namespace litehtml
 	{
 		return m_root;
 	}
+
+	inline std::shared_ptr<render_item> document::root_render()
+	{
+		return m_root_render;
+	}
+
 	inline void document::add_tabular(const std::shared_ptr<render_item>& el)
 	{
 		m_tabular_elements.push_back(el);
