@@ -8,8 +8,59 @@
 #include <fstream>
 #include "cairo_images_cache.h"
 
+namespace fs = std::filesystem;
+
 namespace html2png
 {
+	class html_config
+	{
+		std::map<std::string, std::string> m_data;
+	public:
+		explicit html_config(const std::string& html_file)
+		{
+			fs::path cfg_path = html_file + ".cfg";
+			if(exists(cfg_path))
+			{
+				std::ifstream infile(cfg_path);
+				if(infile.is_open())
+				{
+					for(std::string line; std::getline(infile, line);)
+					{
+						auto parts = litehtml::split_string(line, ":");
+						if(parts.size() == 2)
+						{
+							m_data.emplace(
+									litehtml::trim(parts[0], litehtml::split_delims_spaces),
+									litehtml::trim(parts[1], litehtml::split_delims_spaces)
+									);
+						}
+					}
+				}
+			}
+		}
+
+		int get_int(const std::string& key, int default_value)
+		{
+			auto iter = m_data.find(key);
+			if(iter != m_data.end())
+			{
+				return std::stoi(iter->second);
+			}
+			return default_value;
+		}
+
+		bool get_bool(const std::string& key, bool default_value)
+		{
+			auto iter = m_data.find(key);
+			if(iter != m_data.end())
+			{
+				if(iter->second == "true") return true;
+				if(iter->second == "false") return false;
+			}
+			return default_value;
+		}
+	};
+
 	class container : public container_cairo_pango
 	{
 		std::string m_base_path;
@@ -148,6 +199,8 @@ namespace html2png
 
 	GdkPixbuf* converter::to_pixbuf(const std::string &html_file)
 	{
+		html_config cfg(html_file);
+
 		std::stringstream ss;
 		std::ifstream(html_file, std::ios::binary) >> ss.rdbuf();
 
@@ -156,10 +209,18 @@ namespace html2png
 		int width, height;
 		container cont(base_path, this);
 		auto doc = litehtml::document::createFromString(ss.str(), &cont);
-		doc->render(m_screen_width);
+		// document::render returns "best fit" width. We can use this width to rerender document
+		int best_width = doc->render(m_screen_width);
+		if(best_width > 0 && cfg.get_bool("bestfit", true))
+		{
+			best_width = cfg.get_int("width", best_width);
+			std::swap(m_screen_width, best_width);
+			doc->render(m_screen_width);
+			std::swap(m_screen_width, best_width);
+		}
 
-		width = doc->content_width() > 0 ? doc->content_width() : 1;
-		height = doc->content_height() > 0 ? doc->content_height() : 1;
+		width = cfg.get_int("width", doc->content_width() > 0 ? doc->content_width() : 1);
+		height = cfg.get_int("height", doc->content_height() > 0 ? doc->content_height() : 1);
 
 		auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 		if(surface)
