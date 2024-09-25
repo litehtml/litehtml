@@ -5,7 +5,6 @@ namespace litehtml{ const char* const master_css = R"##(
 
 html {
 	display: block;
-	position: relative;
 }
 
 head {
