@@ -10,6 +10,7 @@
 #include <set>
 #include <variant>
 #include <optional>
+#include <algorithm>
 
 namespace litehtml
 {
