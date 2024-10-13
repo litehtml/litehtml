@@ -207,8 +207,7 @@ namespace litehtml
 		if (css().get_display() == display_block ||
 			css().get_display() == display_flex ||
 			css().get_display() == display_table ||
-			css().get_display() == display_list_item ||
-			css().get_display() == display_flex)
+			css().get_display() == display_list_item)
 		{
 			return true;
 		}
