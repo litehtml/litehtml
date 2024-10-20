@@ -28,6 +28,7 @@ std::map<string_id, string> style::m_valid_values =
 	{ _float_, element_float_strings },
 	{ _clear_, element_clear_strings },
 	{ _overflow_, overflow_strings },
+	{ _appearance_, appearance_strings },
 	{ _box_sizing_, box_sizing_strings },
 
 	{ _text_align_, text_align_strings },
@@ -193,6 +194,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	case _position_:
 	case _float_:
 	case _clear_:
+	case _appearance_:
 	case _box_sizing_:
 	case _overflow_:
 
