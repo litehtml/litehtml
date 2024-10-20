@@ -22,6 +22,7 @@ namespace litehtml
 		white_space				m_white_space;
 		style_display			m_display;
 		visibility				m_visibility;
+		appearance				m_appearance;
 		box_sizing				m_box_sizing;
 		css_length				m_z_index;
 		vertical_align			m_vertical_align;
@@ -88,6 +89,7 @@ namespace litehtml
 				m_white_space(white_space_normal),
 				m_display(display_inline),
 				m_visibility(visibility_visible),
+				m_appearance(appearance_none),
 				m_box_sizing(box_sizing_content_box),
 				m_z_index(0),
 				m_vertical_align(va_baseline),
@@ -147,6 +149,9 @@ namespace litehtml
 
 		visibility get_visibility() const;
 		void set_visibility(visibility mVisibility);
+
+		appearance get_appearance() const;
+		void set_appearance(appearance mAppearance);
 
 		box_sizing get_box_sizing() const;
 		void set_box_sizing(box_sizing mBoxSizing);
@@ -319,6 +324,16 @@ namespace litehtml
 	inline void css_properties::set_visibility(visibility mVisibility)
 	{
 		m_visibility = mVisibility;
+	}
+
+	inline appearance css_properties::get_appearance() const
+	{
+		return m_appearance;
+	}
+
+	inline void css_properties::set_appearance(appearance mAppearance)
+	{
+		m_appearance = mAppearance;
 	}
 
 	inline box_sizing css_properties::get_box_sizing() const

@@ -267,6 +267,7 @@ STRING_ID(
 	_overflow_,
 	_display_,
 	_visibility_,
+	_appearance_,
 	_box_sizing_,
 	_z_index_,
 	_float_,
