@@ -316,6 +316,8 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 
     int line_top	= 0;
     int line_bottom	= 0;
+	int line_height = m_default_line_height;
+	bool has_boxes = false;
 
 	va_context current_context;
 	std::list<va_context> contexts;
@@ -415,18 +417,22 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 
 		if(lbi->get_el()->src_el()->css().get_display() == display_inline_text)
 		{
-			m_line_height = std::max(m_line_height, lbi->get_el()->css().get_line_height());
+			line_height = std::max(line_height, lbi->get_el()->css().get_line_height());
+		} else if(lbi->get_el()->src_el()->is_inline_box())
+		{
+			has_boxes = true;
 		}
     }
 
 	m_height = line_bottom - line_top;
 	int top_shift = line_top;
-	if(m_height < m_line_height)
-	{
-		top_shift -= (m_line_height - m_height) / 2;
-		m_height = m_line_height;
-	}
 	m_baseline = line_bottom;
+	if(m_height < line_height || !has_boxes)
+	{
+		top_shift -= (line_height - m_height) / 2;
+		m_baseline += (line_height - m_height) / 2;
+		m_height = line_height;
+	}
 
 	struct inline_item_box
 	{

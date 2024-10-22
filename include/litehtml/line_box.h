@@ -121,7 +121,6 @@ namespace litehtml
         int		                m_right;
         int						m_height;
         int						m_width;
-		int						m_line_height;
 		int						m_default_line_height;
         font_metrics			m_font_metrics;
         int						m_baseline;
@@ -135,7 +134,6 @@ namespace litehtml
 				m_right(right),
 				m_height(0),
 				m_width(0),
-				m_line_height(0),
 				m_default_line_height(line_height),
 				m_font_metrics(fm),
 				m_baseline(0),
