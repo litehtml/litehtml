@@ -151,5 +151,6 @@
 "nobr",
 "spacer",
 "dialog",
+"search",
 "tt",
 "rtc",
