@@ -45,6 +45,11 @@ int litehtml::line_box_item::left() const
 	return m_element->left();
 }
 
+int litehtml::line_box_item::height() const
+{
+	return m_element->height();
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 litehtml::lbi_start::lbi_start(const std::shared_ptr<render_item>& element) : line_box_item(element)
@@ -84,6 +89,11 @@ int litehtml::lbi_start::right() const
 int litehtml::lbi_start::left() const
 {
 	return m_pos.x - m_element->content_offset_left();
+}
+
+int litehtml::lbi_start::height() const
+{
+	return m_pos.height;
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -190,10 +200,10 @@ int litehtml::line_box::calc_va_baseline(const va_context& current, vertical_ali
 										new_font.height - new_font.base_line();
 		case va_text_bottom:
 			return current.baseline + current.fm.base_line() - new_font.base_line();
+		case va_bottom:
+			return bottom - new_font.base_line();
 		case va_top:
 			return top + new_font.height - new_font.base_line();
-		case va_bottom:
-			return bottom - new_font.height + new_font.base_line();
 		default:
 			return current.baseline;
 	}
@@ -280,43 +290,44 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
         return ret_items;
     }
 
-    int spc_x = 0;
+    int spacing_x = 0;	// Number of pixels to distribute between elements
+    int shift_x = 0;	// Shift elements by X to apply the text-align
 
-    int add_x = 0;
     switch(m_text_align)
     {
         case text_align_right:
             if(m_width < (m_right - m_left))
             {
-                add_x = (m_right - m_left) - m_width;
+				shift_x = (m_right - m_left) - m_width;
             }
             break;
         case text_align_center:
             if(m_width < (m_right - m_left))
             {
-                add_x = ((m_right - m_left) - m_width) / 2;
+				shift_x = ((m_right - m_left) - m_width) / 2;
             }
             break;
         case text_align_justify:
             if (m_width < (m_right - m_left))
             {
-                add_x = 0;
-                spc_x = (m_right - m_left) - m_width;
-                if (spc_x > m_width/4)
-                    spc_x = 0;
+				shift_x = 0;
+				spacing_x = (m_right - m_left) - m_width;
+				// don't justify for small lines
+                if (spacing_x > m_width / 4)
+					spacing_x = 0;
             }
             break;
         default:
-            add_x = 0;
+			shift_x = 0;
     }
 
     int counter = 0;
-    float offj  = float(spc_x) / std::max(1.f, float(m_items.size())-1.f);
+    float offj  = float(spacing_x) / std::max(1.f, float(m_items.size()) - 1.f);
     float cixx  = 0.0f;
 
     int line_top	= 0;
     int line_bottom	= 0;
-	int line_height = m_default_line_height;
+	int line_height = 0;
 	bool has_boxes = false;
 
 	va_context current_context;
@@ -324,14 +335,36 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 
 	current_context.baseline = 0;
 	current_context.fm = m_font_metrics;
+	current_context.start_lbi = nullptr;
 
 	m_min_width = 0;
 
+	struct items_dimensions
+	{
+		int top = 0;
+		int bottom = 0;
+
+		void add_item(const line_box_item* item)
+		{
+			top = std::min(top, item->top());
+			bottom = std::max(bottom, item->bottom());
+		}
+		[[nodiscard]] int height() const { return bottom - top; }
+	};
+
+
+	items_dimensions top_aligned_max_height;
+	items_dimensions bottom_aligned_max_height;
+
+	// First pass:
+	// 1. Horizontal align
+	// 2. Vertical align accept top/bottom
+	// 3. Calculate line height
     for (const auto& lbi : m_items)
     {
 		m_min_width += lbi->get_rendered_min_width();
 		{ // start text_align_justify
-			if (spc_x && counter)
+			if (spacing_x && counter)
 			{
 				cixx += offj;
 				if ((counter + 1) == int(m_items.size()))
@@ -339,69 +372,79 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 				lbi->pos().x += int(cixx);
 			}
 			counter++;
-			if ((m_text_align == text_align_right || spc_x) && counter == int(m_items.size()))
+			if ((m_text_align == text_align_right || spacing_x) && counter == int(m_items.size()))
 			{
 				// Forcible justify the last element to the right side for text align right and justify;
 				lbi->pos().x = m_right - lbi->pos().width;
-			} else if (add_x)
+			} else if (shift_x)
 			{
-				lbi->pos().x += add_x;
+				lbi->pos().x += shift_x;
 			}
 		} // end text_align_justify
 
+		// Calculate new baseline for inline start/continue
+		// Inline start/continue elements are inline containers like <span>
 		if (lbi->get_type() == line_box_item::type_inline_start || lbi->get_type() == line_box_item::type_inline_continue)
 		{
 			contexts.push_back(current_context);
-			current_context.baseline = calc_va_baseline(current_context,
-														lbi->get_el()->css().get_vertical_align(),
-														lbi->get_el()->css().get_font_metrics(),
-														line_top, line_bottom);
 			current_context.fm = lbi->get_el()->css().get_font_metrics();
+			if(is_one_of(lbi->get_el()->css().get_vertical_align(), va_top, va_bottom))
+			{
+				current_context.baseline = 0;
+				current_context.start_lbi = lbi.get();
+				current_context.start_lbi->reset_items_height();
+			} else
+			{
+				current_context.start_lbi = nullptr;
+				current_context.baseline = calc_va_baseline(current_context,
+															lbi->get_el()->css().get_vertical_align(),
+															lbi->get_el()->css().get_font_metrics(),
+															line_top, line_bottom);
+			}
 		}
 
-		// Align elements vertically by baseline.
-        if(lbi->get_el()->src_el()->css().get_display() == display_inline_text || lbi->get_el()->src_el()->css().get_display() == display_inline)
-        {
-			// inline elements and text are aligned by baseline only
-			// at this point the baseline for text is properly aligned already
-			lbi->pos().y = current_context.baseline - lbi->get_el()->css().get_font_metrics().height + lbi->get_el()->css().get_font_metrics().base_line();
-        } else
-        {
-            switch(lbi->get_el()->css().get_vertical_align())
-            {
-				case va_sub:
-                case va_super:
-					{
-						int bl = calc_va_baseline(current_context, lbi->get_el()->css().get_vertical_align(), current_context.fm, line_top, line_bottom);
-						lbi->pos().y = bl - lbi->get_el()->get_last_baseline() +
-								lbi->get_el()->content_offset_top();
-					}
-					break;
-				case va_bottom:
-					lbi->pos().y = line_bottom - lbi->get_el()->height() + lbi->get_el()->content_offset_top();
-					break;
-				case va_top:
-					lbi->pos().y = line_top + lbi->get_el()->content_offset_top();
-					break;
-                case va_baseline:
-					lbi->pos().y = current_context.baseline - lbi->get_el()->get_last_baseline() +
-							lbi->get_el()->content_offset_top();
-                    break;
-                case va_text_top:
-					lbi->pos().y = current_context.baseline - current_context.fm.height + current_context.fm.base_line() +
-							lbi->get_el()->content_offset_top();
-                    break;
-				case va_text_bottom:
-					lbi->pos().y = current_context.baseline + current_context.fm.base_line() - lbi->get_el()->height() +
-							lbi->get_el()->content_offset_top();
-					break;
-                case va_middle:
-					lbi->pos().y = current_context.baseline - current_context.fm.x_height / 2 - lbi->get_el()->height() / 2 +
-							lbi->get_el()->content_offset_top();
-                    break;
-            }
-        }
+		if(current_context.start_lbi)
+		{
+			// Align element by baseline
+			lbi->pos().y = current_context.baseline - lbi->get_el()->get_last_baseline() +
+						lbi->get_el()->content_offset_top();
 
+			// Calculate min top and max bottom for items inside top/bottom aligned inline
+			current_context.start_lbi->add_item_height(lbi->top(), lbi->bottom());
+			if(current_context.start_lbi->get_el()->css().get_vertical_align() == va_top)
+			{
+				top_aligned_max_height.add_item(lbi.get());
+			} else if(current_context.start_lbi->get_el()->css().get_vertical_align() == va_bottom)
+			{
+				bottom_aligned_max_height.add_item(lbi.get());
+			}
+
+		} else if(is_one_of(lbi->get_el()->css().get_vertical_align(), va_top, va_bottom) && lbi->get_type() == line_box_item::type_text_part)
+		{
+			// Align element by baseline
+			lbi->pos().y = - (lbi->bottom() - lbi->top()) + lbi->get_el()->content_offset_top() + m_font_metrics.base_line();
+
+			// Calculate min top and max bottom for top/bottom aligned items (inline blocks)
+			if(lbi->get_el()->css().get_vertical_align() == va_top)
+			{
+				top_aligned_max_height.add_item(lbi.get());
+			} else if(lbi->get_el()->css().get_vertical_align() == va_bottom)
+			{
+				bottom_aligned_max_height.add_item(lbi.get());
+			}
+		}
+		else
+		{
+			// Align element by baseline
+			lbi->pos().y = current_context.baseline - lbi->get_el()->get_last_baseline() +
+						lbi->get_el()->content_offset_top();
+
+			// calculate line height
+			line_top = std::min(line_top, lbi->top());
+			line_bottom = std::max(line_bottom, lbi->bottom());
+		}
+
+		// Popup inline context on inline container end
 		if (lbi->get_type() == line_box_item::type_inline_end)
 		{
 			if(!contexts.empty())
@@ -411,28 +454,24 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			}
 		}
 
-		// calculate line height
-		line_top = std::min(line_top, lbi->top());
-		line_bottom = std::max(line_bottom, lbi->bottom());
-
-		if(lbi->get_el()->src_el()->css().get_display() == display_inline_text)
+		/*if(lbi->get_el()->src_el()->css().get_display() == display_inline_text)
 		{
 			line_height = std::max(line_height, lbi->get_el()->css().get_line_height());
 		} else if(lbi->get_el()->src_el()->is_inline_box())
 		{
 			has_boxes = true;
-		}
+		}*/
     }
 
-	m_height = line_bottom - line_top;
-	int top_shift = line_top;
+	m_height = std::max({line_bottom - line_top, bottom_aligned_max_height.height(), top_aligned_max_height.height()});
+	int top_shift = std::min(line_top, -bottom_aligned_max_height.height() + m_font_metrics.base_line());
 	m_baseline = line_bottom;
-	if(m_height < line_height || !has_boxes)
+	/*if(m_height < line_height || !has_boxes)
 	{
 		top_shift -= (line_height - m_height) / 2;
 		m_baseline += (line_height - m_height) / 2;
 		m_height = line_height;
-	}
+	}*/
 
 	struct inline_item_box
 	{
@@ -449,37 +488,33 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 
 	current_context.baseline = 0;
 	current_context.fm = m_font_metrics;
-	bool va_top_bottom = false;
+	current_context.start_lbi = nullptr;
+	//int va_top_bottom = 0;
 
+	// Second pass:
+	// 1. Vertical align top/bottom
+	// 2. Apply relative shift
+	// 3. Calculate inline boxes
     for (const auto& lbi : m_items)
     {
-		// Calculate baseline. Now we calculate baseline for vertical alignment top and bottom
-		if (lbi->get_type() == line_box_item::type_inline_start || lbi->get_type() == line_box_item::type_inline_continue)
+		if(is_one_of(lbi->get_type(), line_box_item::type_inline_start, line_box_item::type_inline_continue))
 		{
 			contexts.push_back(current_context);
-			va_top_bottom = lbi->get_el()->css().get_vertical_align() == va_bottom || lbi->get_el()->css().get_vertical_align() == va_top;
-			current_context.baseline = calc_va_baseline(current_context,
-														lbi->get_el()->css().get_vertical_align(),
-														lbi->get_el()->css().get_font_metrics(),
-														top_shift, top_shift + m_height);
 			current_context.fm = lbi->get_el()->css().get_font_metrics();
-		}
 
-		// Align inlines and text by baseline if current vertical alignment is top or bottom
-		if(va_top_bottom)
-		{
-			if (lbi->get_el()->src_el()->css().get_display() == display_inline_text ||
-				lbi->get_el()->src_el()->css().get_display() == display_inline)
+			if(lbi->get_el()->css().get_vertical_align() == va_top)
 			{
-				// inline elements and text are aligned by baseline only
-				// at this point the baseline for text is properly aligned already
-				lbi->pos().y = current_context.baseline - lbi->get_el()->css().get_font_metrics().height +
-							   lbi->get_el()->css().get_font_metrics().base_line();
+				current_context.baseline = m_top - lbi->get_items_top();
+				current_context.start_lbi = lbi.get();
+			} else if(lbi->get_el()->css().get_vertical_align() == va_bottom)
+			{
+				current_context.baseline = m_top + m_height - lbi->get_items_bottom();
+				current_context.start_lbi = lbi.get();
+			} else
+			{
+				current_context.start_lbi = nullptr;
 			}
-		}
-
-		// Pop the prev context
-		if (lbi->get_type() == line_box_item::type_inline_end)
+		} else if(lbi->get_type() == line_box_item::type_inline_end)
 		{
 			if(!contexts.empty())
 			{
@@ -488,20 +523,25 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			}
 		}
 
-		// move element to the correct position
-		lbi->pos().y += m_top - top_shift;
-
-		// Perform vertical align top and bottom for inline boxes
-        if(lbi->get_el()->css().get_display() != display_inline_text && lbi->get_el()->css().get_display() != display_inline)
-        {
-            if(lbi->get_el()->css().get_vertical_align() == va_top)
+		if(current_context.start_lbi)
+		{
+			lbi->pos().y = current_context.baseline - lbi->get_el()->get_last_baseline() +
+						   lbi->get_el()->content_offset_top();
+		} else if(is_one_of(lbi->get_el()->css().get_vertical_align(), va_top, va_bottom) && lbi->get_type() == line_box_item::type_text_part)
+		{
+			if(lbi->get_el()->css().get_vertical_align() == va_top)
 			{
 				lbi->pos().y = m_top + lbi->get_el()->content_offset_top();
-			} else if(lbi->get_el()->css().get_vertical_align() == va_bottom)
+			} else
 			{
-				lbi->pos().y = m_top + m_height - lbi->get_el()->height() + lbi->get_el()->content_offset_top();
+				lbi->pos().y = m_top + m_height - (lbi->bottom() - lbi->top()) + lbi->get_el()->content_offset_bottom();
 			}
-        }
+		} else
+		{
+			// move element to the correct position
+			lbi->pos().y += m_top - top_shift;
+		}
+
         lbi->get_el()->apply_relative_shift(containing_block_size);
 
 		// Calculate and push inline box into the render item element
@@ -709,11 +749,9 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::new_wi
                 {
                     remove_begin = i;
                     break;
-                } else
-                {
-					(*i)->pos().x += add;
-                    m_width += (*i)->get_el()->width();
                 }
+				(*i)->pos().x += add;
+				m_width += (*i)->get_el()->width();
             }
 			i++;
         }

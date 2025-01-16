@@ -41,25 +41,36 @@ namespace litehtml
 	protected:
 		std::shared_ptr<render_item> m_element;
 		int m_rendered_min_width;
+		int m_items_top;
+		int m_items_bottom;
 	public:
-		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element), m_rendered_min_width(0) {}
+		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element), m_rendered_min_width(0), m_items_top(0), m_items_bottom(0) {}
 		line_box_item() : m_element(), m_rendered_min_width(0) {};
 		line_box_item(const line_box_item& el) = default;
 		line_box_item(line_box_item&&) = default;
 		virtual ~line_box_item();
 
-		int height() const { return right() - left(); }
-		const std::shared_ptr<render_item>& get_el() const { return m_element; }
+		[[nodiscard]] virtual int height() const;
+		[[nodiscard]] const std::shared_ptr<render_item>& get_el() const { return m_element; }
 		virtual position& pos();
 		virtual void place_to(int x, int y);
-		virtual int width() const;
-		virtual int top() const;
-		virtual int bottom() const;
-		virtual int right() const;
-		virtual int left() const;
-		virtual element_type get_type() const	{ return type_text_part; }
-		virtual int get_rendered_min_width() const	{ return m_rendered_min_width; }
+		[[nodiscard]] virtual int width() const;
+		[[nodiscard]] virtual int top() const;
+		[[nodiscard]] virtual int bottom() const;
+		[[nodiscard]] virtual int right() const;
+		[[nodiscard]] virtual int left() const;
+		[[nodiscard]] virtual element_type get_type() const	{ return type_text_part; }
+		[[nodiscard]] virtual int get_rendered_min_width() const	{ return m_rendered_min_width; }
 		virtual void set_rendered_min_width(int min_width)	{ m_rendered_min_width = min_width; }
+
+		void reset_items_height() { m_items_top = m_items_bottom = 0; }
+		void add_item_height(int item_top, int item_bottom) 
+		{ 
+			m_items_top = std::min(m_items_top, item_top); 
+			m_items_bottom = std::max(m_items_bottom, item_bottom);
+		}
+		[[nodiscard]] int get_items_top() const { return m_items_top; }
+		[[nodiscard]] int get_items_bottom() const { return m_items_bottom; }
 	};
 
 	class lbi_start : public line_box_item
@@ -68,17 +79,18 @@ namespace litehtml
 		position m_pos;
 	public:
 		explicit lbi_start(const std::shared_ptr<render_item>& element);
-		virtual ~lbi_start() override;
+		~lbi_start() override;
 
 		void place_to(int x, int y) override;
-		int width() const override;
+		[[nodiscard]] int height() const override;
+		[[nodiscard]] int width() const override;
 		position& pos() override { return m_pos; }
-		int top() const override;
-		int bottom() const override;
-		int right() const override;
-		int left() const override;
-		element_type get_type() const override	{ return type_inline_start; }
-		int get_rendered_min_width() const override { return width(); }
+		[[nodiscard]] int top() const override;
+		[[nodiscard]] int bottom() const override;
+		[[nodiscard]] int right() const override;
+		[[nodiscard]] int left() const override;
+		[[nodiscard]] element_type get_type() const override	{ return type_inline_start; }
+		[[nodiscard]] int get_rendered_min_width() const override { return width(); }
 	};
 
 	class lbi_end : public lbi_start
@@ -112,8 +124,9 @@ namespace litehtml
 		{
 			int 			baseline;
 			font_metrics 	fm;
+			line_box_item*	start_lbi;
 
-			va_context() : baseline(0) {}
+			va_context() : baseline(0), start_lbi(nullptr) {}
 		};
 
         int		                m_top;
