@@ -362,7 +362,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	m_font_family		=              el->get_property<string>(    _font_family_,		true, doc->container()->get_default_font_name(),	offset(m_font_family));
 	m_font_weight		=              el->get_property<css_length>(_font_weight_,		true, css_length::predef_value(font_weight_normal), offset(m_font_weight));
 	m_font_style		= (font_style) el->get_property<int>(       _font_style_,		true, font_style_normal,							offset(m_font_style));
-
+	m_text_emphasis	  =              el->get_property<string>(_text_emphasis_,     true, "none",										offset(m_text_emphasis));
 	bool propagate_decoration = !is_one_of(m_display, display_inline_block, display_inline_table, display_inline_flex) &&
 								m_float == float_none && !is_one_of(m_el_position, element_position_absolute, element_position_fixed);
 

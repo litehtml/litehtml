@@ -68,6 +68,7 @@ namespace litehtml
 		text_decoration_style	m_text_decoration_style = text_decoration_style_solid;
 		css_length				m_text_decoration_thickness;
 		web_color				m_text_decoration_color;
+		string					m_text_emphasis;
 		font_metrics			m_font_metrics;
 		text_transform			m_text_transform;
 		web_color				m_color;
