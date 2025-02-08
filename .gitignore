@@ -148,6 +148,7 @@ csx/
 AppPackages/
 
 # Others
+.DS_Store
 .idea/
 .vs/
 .vscode/

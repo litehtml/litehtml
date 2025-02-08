@@ -256,6 +256,7 @@ STRING_ID(
 	_text_decoration_line_,
 	_text_decoration_color_,
 	_text_decoration_thickness_,
+	_text_emphasis_,
 
 	_white_space_,
 	_text_align_,

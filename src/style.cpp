@@ -446,6 +446,11 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		parse_text_decoration_line(value, important);
 		break;
 
+	case _text_emphasis_:
+		str = get_repr(value, 0, -1, true);
+		add_parsed_property(name, property_value(str, important));
+		break;
+
 	//  =============================  FLEX  =============================
 
 	case _flex_:
