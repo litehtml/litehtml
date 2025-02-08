@@ -1,6 +1,8 @@
 #include "html.h"
 #include "css_properties.h"
 #include <cmath>
+#include <set>
+#include <sstream>
 
 #define offset(member) ((uint_ptr)&this->member - (uint_ptr)this)
 
@@ -357,6 +359,28 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	m_font_style		= (font_style) el->get_property<int>(       _font_style_,		true, font_style_normal,							offset(m_font_style));
 	m_text_decoration	=              el->get_property<string>(    _text_decoration_,	true, "none",										offset(m_text_decoration));
 
+  // Merge parent text decoration with child text decoration
+  if (el->parent())
+  {
+    auto parent_text_decoration = el->parent()->css().m_text_decoration;
+    if (!parent_text_decoration.empty() && !m_text_decoration.empty())
+    {
+      std::set<string> wordSet;
+      std::istringstream stream(parent_text_decoration + " " + m_text_decoration);
+      std::string temp;
+
+      while (stream >> temp) wordSet.insert(temp);
+      if (wordSet.size() > 1)
+      {
+        wordSet.erase("none");
+      }
+      m_text_decoration = "";
+      for (const auto& word : wordSet) {
+        m_text_decoration += word + " ";
+      }
+    }
+  }
+  
 	m_font = doc->get_font(
 		m_font_family.c_str(), 
 		font_size, 
