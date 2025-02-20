@@ -147,6 +147,44 @@ document::ptr document::createFromString(
 	return doc;
 }
 
+void document::update_styles()
+{
+	if (const element::ptr r = root())
+	{
+		r->apply_stylesheet(m_master_css);
+		position::vector redraw_boxes;
+		r->find_styles_changes(redraw_boxes);
+	}
+}
+
+css_keyframes::vector::value_type document::find_keyframe_by_name(const string& name) const
+{
+	for (const auto& css_keyframes : m_styles.keyframes())
+	{
+		if (css_keyframes->name() == name)
+		{
+		return css_keyframes;
+		}
+	}
+
+	for (const auto& css_keyframes : m_master_css.keyframes())
+	{
+		if (css_keyframes->name() == name)
+		{
+			return css_keyframes;
+		}
+	}
+
+	for (const auto& css_keyframes : m_user_css.keyframes())
+	{
+		if (css_keyframes->name() == name)
+		{
+			return css_keyframes;
+		}
+	}
+	return nullptr;
+}
+
 // https://html.spec.whatwg.org/multipage/parsing.html#change-the-encoding
 encoding adjust_meta_encoding(encoding meta_encoding, encoding current_encoding)
 {
@@ -564,7 +602,7 @@ uint_ptr document::get_font( const char* name, int size, const char* weight, con
 	return add_font(name, size, weight, style, decoration, fm);
 }
 
-int document::render( int max_width, render_type rt )
+int document::render(int max_width, render_type rt, time t)
 {
 	int ret = 0;
 	if(m_root && m_root_render)
@@ -580,14 +618,14 @@ int document::render( int max_width, render_type rt )
 		if(rt == render_fixed_only)
 		{
 			m_fixed_boxes.clear();
-			m_root_render->render_positioned(rt);
+			m_root_render->render_positioned(rt, t);
 		} else
 		{
-			ret = m_root_render->render(0, 0, cb_context, nullptr);
+			ret = m_root_render->render(0, 0, cb_context, nullptr, t);
 			if(m_root_render->fetch_positioned())
 			{
 				m_fixed_boxes.clear();
-				m_root_render->render_positioned(rt);
+				m_root_render->render_positioned(rt, t);
 			}
 			m_size.width	= 0;
 			m_size.height	= 0;

@@ -30,11 +30,14 @@ namespace litehtml
 		std::weak_ptr<document>					m_doc;
 		elements_list							m_children;
 		css_properties							m_css;
+		css_transition							m_transition;
 		std::list<std::weak_ptr<render_item>>	m_renders;
 		used_selector::vector					m_used_styles;
 
 		virtual void select_all(const css_selector& selector, elements_list& res);
 		element::ptr _add_before_after(int type, const style& style);
+
+		bool should_be_drawn(const std::shared_ptr<render_item> &ri);
 
 	private:
 		std::map<string_id, int>	m_counter_values;
@@ -45,6 +48,9 @@ namespace litehtml
 
 		const css_properties&		css() const;
 		css_properties&				css_w();
+
+		const css_transition& transition() const;
+		css_transition&				transition_w();
 
 		bool						in_normal_flow()			const;
 		bool						is_inline()					const;	// returns true if element is inline
@@ -138,6 +144,8 @@ namespace litehtml
 			return _add_before_after(1, style);
 		}
 
+		element::ptr get_element_by_tag_id(const string& tag_id) const;
+
 		string				get_counter_value(const string& counter_name);
 		string				get_counters_value(const string_vector& parameters);
 		void				increment_counter(const string_id& counter_name_id, const int increment = 1);
@@ -200,6 +208,16 @@ namespace litehtml
 	inline css_properties& element::css_w()
 	{
 		return m_css;
+	}
+
+	inline const css_transition& element::transition() const
+	{
+		return m_transition;
+	}
+
+	inline css_transition& element::transition_w()
+	{
+		return m_transition;
 	}
 
 	inline bool element::is_block_box() const

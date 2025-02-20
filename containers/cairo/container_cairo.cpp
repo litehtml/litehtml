@@ -87,10 +87,14 @@ void container_cairo::get_image_size(const char* src, const char* baseurl, liteh
 
 void container_cairo::clip_background_layer(cairo_t* cr, const litehtml::background_layer& layer)
 {
-	rounded_rectangle(cr, layer.border_box, layer.border_radius);
+	draw_transformed(cr, layer.border_box, [&](cairo_t* local_cr) {
+		rounded_rectangle(local_cr, layer.border_box, layer.border_radius);
+	});
 	cairo_clip(cr);
 
-	cairo_rectangle(cr, layer.clip_box.x, layer.clip_box.y, layer.clip_box.width, layer.clip_box.height);
+	draw_transformed(cr, layer.clip_box, [&](cairo_t* local_cr) {
+		cairo_rectangle(local_cr, layer.clip_box.x, layer.clip_box.y, layer.clip_box.width, layer.clip_box.height);
+	});
 	cairo_clip(cr);
 }
 
@@ -304,8 +308,21 @@ void container_cairo::make_url(const char* url, const char* /*basepath*/, liteht
 	out = url;
 }
 
-void container_cairo::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg)
+void container_cairo::draw_transformed(cairo_t* cr, const litehtml::position& transformation_pos, std::function<void(cairo_t*)> draw_function)
 {
+	cairo_matrix_t save_matrix;
+	cairo_get_matrix(cr, &save_matrix);
+	const auto x_origin = (transformation_pos.right() + transformation_pos.left()) / 2;
+	const auto y_origin = (transformation_pos.bottom() + transformation_pos.top()) / 2;
+	cairo_translate(cr, x_origin, y_origin);
+	cairo_scale(cr, transformation_pos.x_scale, transformation_pos.y_scale);
+	cairo_rotate(cr, transformation_pos.angle);
+	cairo_translate(cr, -x_origin, -y_origin);
+	draw_function(cr);
+	cairo_set_matrix(cr, &save_matrix);
+}
+
+void container_cairo::add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg) {
 	if(rx > 0 && ry > 0)
 	{
 

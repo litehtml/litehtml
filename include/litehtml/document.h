@@ -74,7 +74,7 @@ namespace litehtml
 		document_container*				container()	{ return m_container; }
 		document_mode					mode() const { return m_mode; }
 		uint_ptr						get_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);
-		int								render(int max_width, render_type rt = render_all);
+		int								render(int max_width, render_type rt = render_all, time time = time::zero());
 		void							draw(uint_ptr hdc, int x, int y, const position* clip);
 		web_color						get_def_color()	{ return m_def_color; }
 		void 							cvt_units(css_length& val, const font_metrics& metrics, int size) const;
@@ -109,6 +109,9 @@ namespace litehtml
 			document_container*  container,
 			const string&        master_styles = litehtml::master_css,
 			const string&        user_styles = "");
+
+		void update_styles();
+		[[nodiscard]] css_keyframes::vector::value_type find_keyframe_by_name(const string& name) const;
 	
 	private:
 		uint_ptr	add_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);

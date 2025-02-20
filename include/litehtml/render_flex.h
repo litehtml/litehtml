@@ -11,9 +11,9 @@ namespace litehtml
 	{
 		std::list<flex_line> m_lines;
 
-		std::list<flex_line> get_lines(const containing_block_context &self_size, formatting_context *fmt_ctx, bool is_row_direction,
+		std::list<flex_line> get_lines(const containing_block_context& self_size, formatting_context* fmt_ctx, time t, bool is_row_direction,
 									   int container_main_size, bool single_line);
-		int _render_content(int x, int y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx) override;
+		int _render_content(int x, int y, bool second_pass, const containing_block_context& self_size, formatting_context* fmt_ctx, time t) override;
 
 	public:
 		explicit render_item_flex(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el))

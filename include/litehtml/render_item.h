@@ -23,16 +23,22 @@ namespace litehtml
         margins						                m_margins;
         margins						                m_padding;
         margins						                m_borders;
+        time                                        m_animation_start_time;
         position					                m_pos;
         bool                                        m_skip;
         std::vector<std::shared_ptr<render_item>>   m_positioned;
 
-		containing_block_context calculate_containing_block_context(const containing_block_context& cb_context);
-		void calc_cb_length(const css_length& len, int percent_base, containing_block_context::typed_int& out_value) const;
-		virtual int _render(int /*x*/, int /*y*/, const containing_block_context& /*containing_block_size*/, formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
-		{
-			return 0;
-		}
+        containing_block_context calculate_containing_block_context(const containing_block_context& cb_context);
+        void calc_cb_length(const css_length& len, int percent_base, containing_block_context::typed_int& out_value) const;
+        virtual int _render(int /*x*/, int /*y*/, const containing_block_context& /*containing_block_size*/, formatting_context* /*fmt_ctx*/, time /*t*/, bool /*second_pass = false*/)
+        {
+            return 0;
+        }
+
+        virtual void apply_time(time t, int max_width);
+        virtual void apply_animation(time t, int max_width);
+        virtual void apply_transition(time t, int max_width);
+        transformation calculate_transformation(bool use_projection) const;
 
     public:
         explicit render_item(std::shared_ptr<element>  src_el);
@@ -47,6 +53,19 @@ namespace litehtml
         position& pos()
         {
             return m_pos;
+        }
+        const position& pos() const
+        {
+            return m_pos;
+        }
+
+        std::array<float, 3> element_normal() const;
+        std::array<float, 3> element_view_direction() const;
+        transformation element_transformation() const;
+
+        time& anim_start_time()
+        {
+            return m_animation_start_time;
         }
 
         bool skip() const
@@ -376,7 +395,7 @@ namespace litehtml
 			return false;
 		}
 
-		int render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false);
+		int render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, time t, bool second_pass = false);
         void apply_relative_shift(const containing_block_context &containing_block_size);
         void calc_outlines( int parent_width );
         int calc_auto_margins(int parent_width);	// returns left margin
@@ -404,7 +423,7 @@ namespace litehtml
                 std::shared_ptr<litehtml::render_item>
                 > split_inlines();
         bool fetch_positioned();
-        void render_positioned(render_type width = render_all);
+        void render_positioned(render_type width, time t);
 		// returns element offset related to the containing block
 		std::tuple<int, int> element_static_offset(const std::shared_ptr<litehtml::render_item> &el);
         void add_positioned(const std::shared_ptr<litehtml::render_item> &el);
@@ -417,6 +436,9 @@ namespace litehtml
         void draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned );
         virtual void draw_children( uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex );
         virtual int get_draw_vertical_offset() { return 0; }
+        web_color get_draw_color(const web_color& color) const;
+        background get_draw_background(const background& background) const;
+        borders get_draw_borders(const borders& borders) const;
         virtual std::shared_ptr<element> get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex);
         std::shared_ptr<element> get_element_by_point(int x, int y, int client_x, int client_y);
         bool is_point_inside( int x, int y );
@@ -429,6 +451,9 @@ namespace litehtml
          * @return
          */
         void get_rendering_boxes( position::vector& redraw_boxes);
+
+    private:
+        web_color blend_color_alpha_with_opacity(const web_color& color) const;
 	};
 }
 

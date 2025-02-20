@@ -7,6 +7,8 @@
 #include "borders.h"
 #include "css_offsets.h"
 #include "background.h"
+#include "css_transition.h"
+#include "css_transform.h"
 
 namespace litehtml
 {
@@ -55,6 +57,7 @@ namespace litehtml
 		font_metrics			m_font_metrics;
 		text_transform			m_text_transform;
 		web_color				m_color;
+		float					m_opacity;
 		string					m_cursor;
 		string					m_content;
 		border_collapse			m_border_collapse;
@@ -73,12 +76,36 @@ namespace litehtml
 
 		caption_side			m_caption_side;
 
+		string m_animation_name{};
+		time m_animation_duration{};
+		time m_animation_delay{};
+		animation_direction m_animation_direction{animation_direction_normal};
+		animation_fill_mode m_animation_fill_mode{animation_fill_mode_none};
+		animation_play_state m_animation_play_state{animation_play_state_running};
+		timing_function_type m_animation_timing_function{timing_function_ease};
+		float m_animation_iteration_count{1.0f};
+
+		string_vector m_transition_properties;
+		std::vector<time> m_transition_duration{};
+		std::vector<time> m_transition_delay{};
+		std::vector<timing_function_type> m_transition_timing_function{};
+		std::vector<transition_behavior> m_transition_behavior{};
+
+		css_transform m_transform;
+		length_vector m_transform_origin;
+		transform_style m_transform_style;
+		css_length m_perspective;
+		length_vector m_perspective_origin;
+		backface_visibility m_backface_visibility;
+
 		int 					m_order;
 
 	private:
 		void compute_font(const html_tag* el, const std::shared_ptr<document>& doc);
 		void compute_background(const html_tag* el, const std::shared_ptr<document>& doc);
 		void compute_flex(const html_tag* el, const std::shared_ptr<document>& doc);
+		void compute_animation(const html_tag* el, const std::shared_ptr<document>& doc);
+		void compute_transition(const html_tag *el, const std::shared_ptr<document> &doc);
 		web_color get_color_property(const html_tag* el, string_id name, bool inherited, web_color default_value, uint_ptr member_offset) const;
 
 	public:
@@ -115,6 +142,8 @@ namespace litehtml
 				m_font_size(0),
 				m_font_metrics(),
 				m_text_transform(text_transform_none),
+				m_color(),
+				m_opacity(1.0f),
 				m_border_collapse(border_collapse_separate),
 				m_css_border_spacing_x(),
 				m_css_border_spacing_y(),
@@ -234,6 +263,9 @@ namespace litehtml
 		web_color get_color() const;
 		void set_color(web_color color);
 
+		float get_opacity() const;
+		void set_opacity(float opacity);
+
 		string get_cursor() const;
 		void set_cursor(const string& cursor);
 
@@ -261,6 +293,34 @@ namespace litehtml
 		flex_align_items get_flex_align_items() const;
 		flex_align_items get_flex_align_self() const;
 		flex_align_content get_flex_align_content() const;
+
+		const string& get_animation_name() const;
+		time get_animation_duration() const;
+		time get_animation_delay() const;
+		animation_direction get_animation_direction() const;
+		animation_fill_mode get_animation_fill_mode() const;
+		animation_play_state get_animation_play_state() const;
+		timing_function_type get_animation_timing_function() const;
+		float get_animation_iteration_count() const;
+		void set_animation_play_state(animation_play_state state);
+
+		const string_vector& get_transition_properties() const;
+		const std::vector<time>& get_transition_duration() const;
+		const std::vector<time>& get_transition_delay() const;
+		const std::vector<timing_function_type>& get_transition_timing_function() const;
+		const std::vector<transition_behavior>& get_transition_behavior() const;
+
+		const css_transform& get_transform() const;
+		void set_transform(const css_transform& transform);
+
+		const length_vector& get_transform_origin() const;
+
+		transform_style get_transform_style() const;
+
+		const css_length& get_perspective() const;
+		const length_vector& get_perspective_origin() const;
+
+		backface_visibility get_backface_visibility() const;
 
 		int get_order() const;
 		void set_order(int order);
@@ -585,6 +645,9 @@ namespace litehtml
 	inline web_color css_properties::get_color() const { return m_color; }
 	inline void css_properties::set_color(web_color color) { m_color = color; }
 
+	inline float css_properties::get_opacity() const { return m_opacity; }
+	inline void css_properties::set_opacity(float opacity) { m_opacity = opacity; }
+
 	inline string css_properties::get_cursor() const { return m_cursor; }
 	inline void css_properties::set_cursor(const string& cursor) { m_cursor = cursor; }
 
@@ -670,9 +733,115 @@ namespace litehtml
 	{
 		return m_caption_side;
 	}
+
 	inline void css_properties::set_caption_side(caption_side side)
 	{
 		m_caption_side = side;
+	}
+
+	inline const std::string& css_properties::get_animation_name() const
+	{
+		return m_animation_name;
+	}
+
+	inline time css_properties::get_animation_duration() const
+	{
+		return m_animation_duration;
+	}
+
+	inline time css_properties::get_animation_delay() const
+	{
+		return m_animation_delay;
+	}
+
+	inline animation_direction css_properties::get_animation_direction() const
+	{
+		return m_animation_direction;
+	}
+
+	inline animation_fill_mode css_properties::get_animation_fill_mode() const
+	{
+		return m_animation_fill_mode;
+	}
+
+	inline animation_play_state css_properties::get_animation_play_state() const
+	{
+		return m_animation_play_state;
+	}
+
+	inline timing_function_type css_properties::get_animation_timing_function() const
+	{
+	    return m_animation_timing_function;
+	}
+
+	inline float css_properties::get_animation_iteration_count() const
+	{
+		return m_animation_iteration_count;
+	}
+
+	inline void css_properties::set_animation_play_state(const animation_play_state state)
+	{
+		m_animation_play_state = state;
+	}
+
+	inline const string_vector& css_properties::get_transition_properties() const
+	{
+		return m_transition_properties;
+	}
+
+	inline const std::vector<time>& css_properties::get_transition_duration() const
+	{
+		return m_transition_duration;
+	}
+
+	inline const std::vector<time>& css_properties::get_transition_delay() const
+	{
+		return m_transition_delay;
+	}
+
+	inline const std::vector<timing_function_type>& css_properties::get_transition_timing_function() const
+	{
+		return m_transition_timing_function;
+	}
+
+	inline const std::vector<transition_behavior>& css_properties::get_transition_behavior() const
+	{
+		return m_transition_behavior;
+	}
+
+	inline const css_transform& css_properties::get_transform() const
+	{
+		return m_transform;
+	}
+
+	inline void css_properties::set_transform(const css_transform& transform)
+	{
+		m_transform = transform;
+	}
+
+	inline const length_vector& css_properties::get_transform_origin() const
+	{
+		return m_transform_origin;
+	}
+
+	inline transform_style css_properties::get_transform_style() const
+	{
+		return m_transform_style;
+	}
+
+	inline const css_length & css_properties::get_perspective() const
+	{
+		return m_perspective;
+	}
+
+	inline const length_vector & css_properties::get_perspective_origin() const
+	{
+		return m_perspective_origin;
+	}
+
+	inline backface_visibility css_properties::get_backface_visibility() const
+	{
+		return m_backface_visibility;
 	}
 
 	inline int css_properties::get_order() const

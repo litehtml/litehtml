@@ -19,9 +19,14 @@ endif()
 
 set(SOURCE_LITEHTML
 	src/codepoint.cpp
+	src/css_angle.cpp
 	src/css_length.cpp
 	src/css_selector.cpp
 	src/css_tokenizer.cpp
+	src/css_keyframes.cpp
+	src/css_timing_function.cpp
+	src/css_transform.cpp
+	src/css_transition.cpp
 	src/css_parser.cpp
 	src/document.cpp
 	src/document_container.cpp
@@ -50,11 +55,13 @@ set(SOURCE_LITEHTML
 	src/html.cpp
 	src/html_tag.cpp
 	src/html_microsyntaxes.cpp
+	src/interpolation.cpp
 	src/iterators.cpp
 	src/media_query.cpp
 	src/style.cpp
 	src/stylesheet.cpp
 	src/table.cpp
+	src/transformation.cpp
 	src/tstring_view.cpp
 	src/url.cpp
 	src/url_path.cpp
@@ -85,11 +92,16 @@ set(HEADER_LITEHTML
 	include/litehtml/background.h
 	include/litehtml/borders.h
 	include/litehtml/codepoint.h
+	include/litehtml/css_angle.h
 	include/litehtml/css_length.h
 	include/litehtml/css_margins.h
 	include/litehtml/css_offsets.h
 	include/litehtml/css_position.h
 	include/litehtml/css_selector.h
+	include/litehtml/css_keyframes.h
+	include/litehtml/css_timing_function.h
+	include/litehtml/css_transform.h
+	include/litehtml/css_transition.h
 	include/litehtml/css_parser.h
 	include/litehtml/css_tokenizer.h
 	include/litehtml/document.h
@@ -119,12 +131,14 @@ set(HEADER_LITEHTML
 	include/litehtml/html.h
 	include/litehtml/html_tag.h
 	include/litehtml/html_microsyntaxes.h
+	include/litehtml/interpolation.h
 	include/litehtml/iterators.h
 	include/litehtml/media_query.h
 	include/litehtml/os_types.h
 	include/litehtml/style.h
 	include/litehtml/stylesheet.h
 	include/litehtml/table.h
+	include/litehtml/transformation.h
 	include/litehtml/tstring_view.h
 	include/litehtml/types.h
 	include/litehtml/url.h

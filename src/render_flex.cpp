@@ -2,7 +2,9 @@
 #include "types.h"
 #include "render_flex.h"
 
-int litehtml::render_item_flex::_render_content(int x, int y, bool /*second_pass*/, const containing_block_context &self_size, formatting_context* fmt_ctx)
+int litehtml::render_item_flex::_render_content(int x, int y, bool /*second_pass*/,
+                                                const containing_block_context& self_size, formatting_context* fmt_ctx,
+                                                time t)
 {
 	bool is_row_direction = true;
 	bool reverse = false;
@@ -61,7 +63,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool /*second_pass
 	/////////////////////////////////////////////////////////////////
 	/// Split flex items to lines
 	/////////////////////////////////////////////////////////////////
-	m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
+	m_lines = get_lines(self_size, fmt_ctx, t, is_row_direction, container_main_size, single_line);
 
 	int sum_cross_size = 0;
 	int sum_main_size = 0;
@@ -77,7 +79,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool /*second_pass
 		{
 			ret_width += ln.base_size;
 		}
-		ln.init(container_main_size, fit_container, is_row_direction, self_size, fmt_ctx);
+		ln.init(container_main_size, fit_container, is_row_direction, self_size, fmt_ctx, t);
 		sum_cross_size += ln.cross_size;
 		sum_main_size = std::max(sum_main_size, ln.main_size);
 		if(reverse)
@@ -225,7 +227,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool /*second_pass
 									justify_content,
 									is_row_direction,
 									self_size,
-									fmt_ctx);
+									fmt_ctx, t);
 		m_pos.height = std::max(m_pos.height, height);
 	}
 
@@ -237,8 +239,7 @@ int litehtml::render_item_flex::_render_content(int x, int y, bool /*second_pass
 	return ret_width;
 }
 
-std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(const litehtml::containing_block_context &self_size,
-																	 litehtml::formatting_context *fmt_ctx,
+std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(const litehtml::containing_block_context &self_size, litehtml::formatting_context* fmt_ctx, time t,
 																	 bool is_row_direction, int container_main_size,
 																	 bool single_line)
 {
@@ -270,7 +271,7 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(const liteh
 		{
 			item = std::make_shared<flex_item_column_direction>(el);
 		}
-		item->init(self_size, fmt_ctx, css().get_flex_align_items());
+		item->init(self_size, fmt_ctx, t, css().get_flex_align_items());
 		item->src_order = src_order++;
 
 		if(prev_order.is_default())

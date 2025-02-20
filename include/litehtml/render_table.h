@@ -13,7 +13,7 @@ namespace litehtml
 		int						    m_border_spacing_x;
 		int						    m_border_spacing_y;
 
-		int _render(int x, int y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass) override;
+		int _render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, time t, bool second_pass) override;
 
 	public:
 		explicit render_item_table(std::shared_ptr<element>  src_el);

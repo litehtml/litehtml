@@ -1,0 +1,27 @@
+{
+  "project": {
+    "name": "gumbo",
+    "base": "cmake-3rdparty",
+    "targets": [
+      {
+        "plugin": "cpp-tight-ship",
+        "platform": "windows",
+        "plugin-config": {
+          "add-cxxflags": [
+            "/wd4100",
+            "/wd4132",
+            "/wd4244",
+            "/wd4245",
+            "/wd4245",
+            "/wd4267",
+            "/wd4305",
+            "/wd4306",
+            "/wd4456",
+            "/wd4701",
+            "/wd4702"
+          ]
+        }
+      }
+    ]
+  }
+}

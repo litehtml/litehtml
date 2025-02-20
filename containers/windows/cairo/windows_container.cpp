@@ -103,11 +103,13 @@ void windows_container::draw_text( litehtml::uint_ptr hdc, const char* text, lit
 
 		apply_clip(cr);
 
-		int x = pos.left();
-		int y = pos.bottom() - fnt->metrics().descent;
+		draw_transformed(cr, pos, [&fnt, &pos, &color, &text](cairo_t* local_cr) {
+			int x = pos.left();
+			int y = pos.bottom() - fnt->metrics().descent;
 
-		set_color(cr, color);
-		fnt->show_text(cr, x, y, text);
+			set_color(local_cr, color);
+			fnt->show_text(local_cr, x, y, text);
+		});
 
 		cairo_restore(cr);
 	}

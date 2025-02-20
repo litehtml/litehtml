@@ -83,10 +83,10 @@ protected:
 							  color.blue / 255.0,
 							  color.alpha / 255.0);
 	}
+	static void draw_transformed(cairo_t* cr, const litehtml::position& transformation_pos, std::function<void(cairo_t*)> draw_function);
 private:
-
 	static void add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg);
-    static void draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x, int y, int cx, int cy);
+	static void draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x, int y, int cx, int cy);
 	static cairo_surface_t* scale_surface(cairo_surface_t* surface, int width, int height);
 };
 

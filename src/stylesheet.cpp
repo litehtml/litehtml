@@ -58,11 +58,35 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 			import_allowed = false;
 			break;
 		}
-		
+		// https://www.w3.org/TR/css-animations-1/#keyframes
+		// @keyframes <custom-ident> | <string> { <keyframe-selector># { <declaration-list> } }
+		case _keyframes_:
+		{
+			if (rule->block.type != CURLY_BLOCK)
+			{
+				break;
+			}
+			// if the animation name is none then there will be no animation. https://www.w3.org/TR/css-animations-1/#valdef-animation-name-none
+			if (rule->prelude.empty())
+			{
+				css_parse_error("@keyframes rule contains empty name");
+				break;
+			}
+
+			this->parse_css_keyframes_block(rule->prelude, rule->block.value, baseurl, doc->container());
+			import_allowed = false;
+			break;
+		}
 		default:
 			css_parse_error("unrecognized rule @" + rule->name);
 		}
 	}
+}
+
+void css::parse_css_keyframes_block(const css_token_vector& prelude, const css_token_vector& block_value,
+                                    const string& baseurl, document_container* container)
+{
+	m_keyframes.emplace_back(make_shared<css_keyframes>(prelude, block_value, baseurl, container));
 }
 
 // https://drafts.csswg.org/css-cascade-5/#at-import

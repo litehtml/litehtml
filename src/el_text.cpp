@@ -107,9 +107,15 @@ void litehtml::el_text::draw(uint_ptr hdc, int x, int y, const position *clip, c
 		return;
 	}
 
+	if (!element::should_be_drawn(ri))
+	{
+		return;
+	}
+
 	position pos = ri->pos();
 	pos.x	+= x;
 	pos.y	+= y;
+	pos.transform = ri->element_transformation();
 
 	if(pos.does_intersect(clip))
 	{
@@ -121,7 +127,7 @@ void litehtml::el_text::draw(uint_ptr hdc, int x, int y, const position *clip, c
 			uint_ptr font = el_parent->css().get_font();
 			if(font)
 			{
-				web_color color = el_parent->css().get_color();
+				web_color color = ri->parent()->get_draw_color(el_parent->css().get_color());
 				doc->container()->draw_text(hdc, m_use_transformed ? m_transformed_text.c_str() : m_text.c_str(), font,
 											color, pos);
 			}

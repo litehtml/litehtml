@@ -11,6 +11,10 @@
 #include <variant>
 #include <optional>
 #include <algorithm>
+#include <chrono>
+#include <cmath>
+
+#include "transformation.h"
 
 namespace litehtml
 {
@@ -57,6 +61,7 @@ namespace litehtml
 
 	using byte = unsigned char;
 	using ucode_t = unsigned int;
+	using time = std::chrono::milliseconds;
 
 	struct margins
 	{
@@ -107,6 +112,8 @@ namespace litehtml
 		int	y;
 		int	width;
 		int	height;
+
+		transformation transform = transformation::identity();
 
 		position()
 		{
@@ -396,6 +403,112 @@ namespace litehtml
 		font_weight_lighter,
 	};
 
+#define animation_fill_mode_strings "none;forwards;backwards;both"
+
+	enum animation_fill_mode
+	{
+		animation_fill_mode_none,
+		animation_fill_mode_forwards,
+		animation_fill_mode_backwards,
+		animation_fill_mode_both,
+	};
+
+#define animation_play_state_strings "running;paused"
+
+	enum animation_play_state
+	{
+		animation_play_state_running,
+		animation_play_state_paused,
+	};
+
+#define animation_direction_strings "normal;reverse;alternate;alternate-reverse"
+
+	enum animation_direction
+	{
+		animation_direction_normal,
+		animation_direction_reverse,
+		animation_direction_alternate,
+		animation_direction_alternate_reverse,
+	};
+
+#define timing_function_type_strings "ease;ease-in;ease-out;ease-in-out;linear;step-start;step-end"
+
+	enum timing_function_type
+	{
+		timing_function_ease,
+		timing_function_ease_in,
+		timing_function_ease_out,
+		timing_function_ease_in_out,
+		timing_function_linear,
+		timing_function_step_start,
+		timing_function_step_end,
+	};
+
+#define transform_function_strings "matrix;matrix3d;perspective;rotate;rotate3d;rotateX;rotateY;rotateZ;translate;translate3d;translateX;translateY;translateZ;scale;scale3d;scaleX;scaleY;scaleZ;skew;skewX;skewY"
+
+	enum transform_function
+	{
+		transform_function_matrix,
+		transform_function_matrix3d,
+		transform_function_perspective,
+		transform_function_rotate,
+		transform_function_rotate3d,
+		transform_function_rotateX,
+		transform_function_rotateY,
+		transform_function_rotateZ,
+		transform_function_translate,
+		transform_function_translate3d,
+		transform_function_translateX,
+		transform_function_translateY,
+		transform_function_translateZ,
+		transform_function_scale,
+		transform_function_scale3d,
+		transform_function_scaleX,
+		transform_function_scaleY,
+		transform_function_scaleZ,
+		transform_function_skew,
+		transform_function_skewX,
+		transform_function_skewY,
+	};
+
+#define transform_box_strings "view-box;content-box;border-box;fill-box;stroke-box"
+
+	enum transform_box
+	{
+		transform_box_view_box,
+		transform_box_content_box,
+		transform_box_border_box,
+		transform_box_fill_box,
+		transform_box_stroke_box,
+	};
+
+#define transform_style_strings "flat;preserve-3d;"
+
+	enum transform_style
+	{
+		transform_style_flat,
+		transform_style_preserve_3d,
+	};
+
+#define transform_origin_strings "left;center;right;top;bottom"
+
+	enum transform_origin
+	{
+		transform_origin_left,
+		transform_origin_center,
+		transform_origin_right,
+		transform_origin_top,
+		transform_origin_bottom,
+	};
+
+#define transition_behavior_strings "normal;allow-discrete"
+
+	enum transition_behavior
+	{
+		transition_behavior_normal,
+		transition_behavior_allow_discrete,
+	};
+
 #define  list_style_type_strings	"none;circle;disc;square;armenian;cjk-ideographic;decimal;decimal-leading-zero;georgian;hebrew;hiragana;hiragana-iroha;katakana;katakana-iroha;lower-alpha;lower-greek;lower-latin;lower-roman;upper-alpha;upper-latin;upper-roman"
 
 	enum list_style_type
@@ -514,6 +627,16 @@ namespace litehtml
 		css_units_vmax,
 		css_units_rem,
 		css_units_ch,
+	};
+
+#define  css_angle_units_strings	"deg;grad;rad;turn"
+
+	enum css_angle_units : byte
+	{
+		css_angle_units_deg,
+		css_angle_units_grad,
+		css_angle_units_rad,
+		css_angle_units_turn,
 	};
 
 #define  background_attachment_strings	"scroll;fixed"
@@ -645,6 +768,14 @@ namespace litehtml
 		content_property_close_quote,
 		content_property_no_open_quote,
 		content_property_no_close_quote,
+	};
+
+#define backface_visibility_strings "visible;hidden"
+
+	enum backface_visibility
+	{
+		backface_visible,
+		backface_hidden,
 	};
 
 	class render_item;
@@ -905,6 +1036,7 @@ namespace litehtml
 		render_all,
 		render_no_fixed,
 		render_fixed_only,
+		render_animated_only,
 	};
 
 	const char* const split_delims_spaces = " \t\r\n\f\v";

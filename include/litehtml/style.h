@@ -21,13 +21,15 @@ namespace litehtml
 		string,
 		string_vector,
 		size_vector,
-		css_token_vector
+		css_token_vector,
+		css_transform
 	>
 	{
 		bool m_important = false;
 		bool m_has_var   = false; // css_token_vector, parsing is delayed because of var()
 
-		property_value() {}
+		explicit property_value() : base(invalid()) {}
+
 		template<class T> property_value(const T& val, bool important, bool has_var = false) 
 			: base(val), m_important(important), m_has_var(has_var) {}
 	};
@@ -50,14 +52,13 @@ namespace litehtml
 
 		void add_property(string_id name, const css_token_vector& tokens, const string& baseurl = "", bool important = false, document_container* container = nullptr);
 		void add_property(string_id name, const string& val,              const string& baseurl = "", bool important = false, document_container* container = nullptr);
+		void add_property(string_id name, const property_value& val);
 
 		const property_value& get_property(string_id name) const;
 
 		void combine(const style& src);
-		void clear()
-		{
-			m_properties.clear();
-		}
+		void clear() { m_properties.clear(); }
+		bool empty() const { return m_properties.empty(); }
 
 		void subst_vars(const html_tag* el);
 
@@ -82,7 +83,27 @@ namespace litehtml
 		void parse_list_style(const css_token_vector& tokens, string baseurl, bool important);
 
 		void parse_font(css_token_vector tokens, bool important);
-		
+
+		void parse_animation(const css_token_vector& tokens);
+
+		void parse_transition(const css_token_vector& tokens);
+		void parse_transition_property(const css_token_vector& tokens);
+		void parse_transition_duration(const css_token_vector& tokens);
+		static bool parse_transition_duration(const css_token& tok, int& transition_duration);
+		void parse_transition_delay(const css_token_vector& tokens);
+		static bool parse_transition_delay(const css_token& tok, int& transition_delay);
+		void parse_transition_timing_function(const css_token_vector& tokens);
+		static bool parse_transition_timing_function(const css_token& tok, int& timing_function);
+		void parse_transition_behavior(const css_token_vector &tokens);
+		static bool parse_transition_behavior(const css_token &tok, int &behavior);
+
+		void parse_transform(const css_token_vector& tokens);
+		void parse_transform_origin(const css_token_vector& tokens);
+		static void parse_predefined_transform_origin(css_length& length);
+		void parse_transform_box(const css_token_vector& tokens);
+		void parse_transform_style(const css_token_vector& tokens);
+		void parse_perspective_origin(const css_token_vector& tokens);
+
 		void parse_flex_flow(const css_token_vector& tokens, bool important);
 		void parse_flex(const css_token_vector& tokens, bool important);
 		void parse_align_self(string_id name, const css_token_vector& tokens, bool important);

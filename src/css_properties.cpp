@@ -7,8 +7,11 @@
 void litehtml::css_properties::compute(const html_tag* el, const document::ptr& doc)
 {
 	compute_font(el, doc);
-	int font_size = get_font_size();
+	const int font_size = get_font_size();
+
 	m_color = el->get_property<web_color>(_color_, true, web_color::black, offset(m_color));
+
+	m_opacity = el->get_property<float>(_opacity_, false, 1.0f, offset(m_opacity));
 
 	m_el_position	 = (element_position) el->get_property<int>( _position_,		false,	element_position_static, offset(m_el_position));
 	m_display		 = (style_display)	  el->get_property<int>( _display_,			false,	display_inline,			 offset(m_display));
@@ -245,6 +248,26 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 
 	compute_background(el, doc);
 	compute_flex(el, doc);
+	compute_animation(el, doc);
+	compute_transition(el, doc);
+
+	m_transform = el->get_property<css_transform>(_transform_, false, {}, offset(m_transform));
+	m_transform_origin = el->get_property<length_vector>(
+		_transform_origin_, false, {}, offset(m_transform_origin));
+	m_transform_style = (transform_style)el->get_property<int>(
+		_transform_style_, false, transform_style_flat,
+		offset(m_transform_style));
+	m_perspective = el->get_property<css_length>(_perspective_, false, none,
+												 offset(m_perspective));
+	length_vector default_perspective_origin{
+		css_length(50, css_units_percentage),
+		css_length(50, css_units_percentage)};
+	m_perspective_origin = el->get_property<length_vector>(
+		_perspective_origin_, false, default_perspective_origin,
+		offset(m_perspective_origin));
+	m_backface_visibility = (backface_visibility)el->get_property<int>(
+		_backface_visibility_, false, backface_visible,
+		offset(m_backface_visibility));
 }
 
 // used for all color properties except `color` (color:currentcolor is converted to color:inherit during parsing)
@@ -450,6 +473,39 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
 			m_display = display_flex;
 		}
 	}
+}
+
+void litehtml::css_properties::compute_animation(const html_tag* el, const document::ptr&)
+{
+	m_animation_name = el->get_property<string>(_animation_name_, false, "", offset(m_animation_name));
+	m_animation_duration = time{el->get_property<int>(_animation_duration_, false, 0, offset(m_animation_duration))};
+	m_animation_delay = time{el->get_property<int>(_animation_delay_, false, 0, offset(m_animation_delay))};
+	m_animation_direction = static_cast<animation_direction>(el->get_property<int>(
+		_animation_direction_, false, animation_direction_normal, offset(m_animation_direction)));
+	m_animation_fill_mode = static_cast<animation_fill_mode>(
+		el->get_property<int>(_animation_fill_mode_, false, animation_fill_mode_none, offset(m_animation_fill_mode)));
+	m_animation_play_state = static_cast<animation_play_state>(
+		el->get_property<int>(_animation_play_state_, false, animation_play_state_running, offset(m_animation_play_state)));
+	m_animation_timing_function = static_cast<timing_function_type>(el->get_property<int>(
+		_animation_timing_function_, false, timing_function_ease, offset(m_animation_timing_function)));
+	m_animation_iteration_count =
+		el->get_property<float>(_animation_iteration_count_, false, 1.0f, offset(m_animation_iteration_count));
+}
+
+void litehtml::css_properties::compute_transition(const html_tag *el, const document::ptr &)
+{
+	m_transition_properties = el->get_property<string_vector>(_transition_property_, false, {}, offset(m_transition_properties));
+	const auto transform = [&el]<class T>(string_id name, uint_ptr offset, std::vector<T>& destination)
+	{
+		const auto int_values = el->get_property<int_vector>(name, false, {}, offset);
+		destination.clear();
+		destination.reserve(int_values.size());
+		std::transform(int_values.begin(), int_values.end(), std::back_inserter(destination), [] (int value) { return static_cast<T>(value); });
+	};
+	transform(_transition_duration_, offset(m_transition_duration), m_transition_duration);
+	transform(_transition_delay_, offset(m_transition_delay), m_transition_delay);
+	transform(_transition_timing_function_, offset(m_transition_timing_function), m_transition_timing_function);
+	transform(_transition_behavior_, offset(m_transition_behavior), m_transition_behavior);
 }
 
 std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::css_properties::dump_get_attrs()

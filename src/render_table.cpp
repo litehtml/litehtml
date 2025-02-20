@@ -11,7 +11,8 @@ litehtml::render_item_table::render_item_table(std::shared_ptr<element> _src_el)
 {
 }
 
-int litehtml::render_item_table::_render(int x, int y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool /*second_pass*/)
+int litehtml::render_item_table::_render(int x, int y, const containing_block_context& containing_block_size,
+                                         formatting_context* fmt_ctx, time t, bool /*second_pass*/)
 {
     if (!m_grid) return 0;
 
@@ -53,7 +54,7 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
             table_cell* cell = m_grid->cell(0, row);
             if (cell && cell->el)
             {
-                cell->min_width = cell->max_width = cell->el->render(0, 0, self_size.new_width(self_size.render_width - table_width_spacing), fmt_ctx);
+                cell->min_width = cell->max_width = cell->el->render(0, 0, self_size.new_width(self_size.render_width - table_width_spacing), fmt_ctx, t);
                 cell->el->pos().width = cell->min_width - cell->el->content_offset_left() -
 						cell->el->content_offset_right();
             }
@@ -71,7 +72,7 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
                     if (!m_grid->column(col).css_width.is_predefined() && m_grid->column(col).css_width.units() != css_units_percentage)
                     {
                         int css_w = m_grid->column(col).css_width.calc_percent(self_size.width);
-                        int el_w = cell->el->render(0, 0, self_size.new_width(css_w),fmt_ctx);
+                        int el_w = cell->el->render(0, 0, self_size.new_width(css_w),fmt_ctx, t);
                         cell->min_width = cell->max_width = std::max(css_w, el_w);
                         cell->el->pos().width = cell->min_width - cell->el->content_offset_left() -
 								cell->el->content_offset_right();
@@ -79,9 +80,9 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
                     else
                     {
                         // calculate minimum content width
-                        cell->min_width = cell->el->render(0, 0, self_size.new_width(cell->el->content_offset_width()), fmt_ctx);
+                        cell->min_width = cell->el->render(0, 0, self_size.new_width(cell->el->content_offset_width()), fmt_ctx, t);
                         // calculate maximum content width
-                        cell->max_width = cell->el->render(0, 0, self_size.new_width(self_size.render_width - table_width_spacing), fmt_ctx);
+                        cell->max_width = cell->el->render(0, 0, self_size.new_width(self_size.render_width - table_width_spacing), fmt_ctx, t);
                     }
                 }
             }
@@ -183,7 +184,7 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
                 //if (cell->el->pos().width != cell_width - cell->el->content_offset_left() -
 				//									 cell->el->content_offset_right())
                 {
-                    cell->el->render(m_grid->column(col).left, 0, self_size.new_width(cell_width), fmt_ctx, true);
+                    cell->el->render(m_grid->column(col).left, 0, self_size.new_width(cell_width), fmt_ctx, t, true);
                     cell->el->pos().width = cell_width - cell->el->content_offset_left() -
 							cell->el->content_offset_right();
                 }
@@ -327,7 +328,7 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
     {
 		if(caption->css().get_caption_side() == caption_side_top)
 		{
-			caption->render(-border_left(), top_captions, self_size.new_width(table_width + border_left() + border_right()), fmt_ctx);
+			caption->render(-border_left(), top_captions, self_size.new_width(table_width + border_left() + border_right()), fmt_ctx, t);
 			top_captions += caption->height();
 		}
     }
@@ -361,7 +362,7 @@ int litehtml::render_item_table::_render(int x, int y, const containing_block_co
 	{
 		if(caption->css().get_caption_side() == caption_side_bottom)
 		{
-			caption->render(-border_left(), table_height + top_captions + bottom_captions, self_size.new_width(table_width + border_left() + border_right()), fmt_ctx);
+			caption->render(-border_left(), table_height + top_captions + bottom_captions, self_size.new_width(table_width + border_left() + border_right()), fmt_ctx, t);
 			bottom_captions += caption->height();
 		}
 	}

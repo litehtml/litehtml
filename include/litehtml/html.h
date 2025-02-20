@@ -14,6 +14,7 @@
 #include "background.h"
 #include "borders.h"
 #include "web_color.h"
+#include "css_transform.h"
 #include "media_query.h"
 #include "html_microsyntaxes.h"
 #include "html_tag.h"

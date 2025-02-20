@@ -3,6 +3,7 @@
 
 #include "style.h"
 #include "css_selector.h"
+#include "css_keyframes.h"
 #include "css_tokenizer.h"
 
 namespace litehtml
@@ -44,11 +45,18 @@ public:
 class css
 {
 	css_selector::vector	m_selectors;
+	css_keyframes::vector	m_keyframes;
+
 public:
 
-	const css_selector::vector& selectors() const
+	[[nodiscard]] const css_selector::vector& selectors() const &
 	{
 		return m_selectors;
+	}
+
+	[[nodiscard]] const css_keyframes::vector& keyframes() const &
+	{
+		return m_keyframes;
 	}
 
 	template<class Input>
@@ -60,6 +68,9 @@ private:
 	bool	parse_style_rule(raw_rule::ptr rule, string baseurl, shared_ptr<document> doc, media_query_list_list::ptr media);
 	void	parse_import_rule(raw_rule::ptr rule, string baseurl, shared_ptr<document> doc, media_query_list_list::ptr media);
 	void	add_selector(const css_selector::ptr& selector);
+
+	void	parse_css_keyframes_block(const css_token_vector& prelude, const css_token_vector& block_value,
+		const string& baseurl, document_container* container);
 };
 
 inline void css::add_selector(const css_selector::ptr& selector)

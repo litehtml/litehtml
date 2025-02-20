@@ -59,7 +59,7 @@ namespace litehtml
 			return false;
 		}
 		void init(const litehtml::containing_block_context &self_size,
-				  litehtml::formatting_context *fmt_ctx, flex_align_items align_items);
+				  litehtml::formatting_context* fmt_ctx, time t, flex_align_items align_items);
 		virtual void apply_main_auto_margins() = 0;
 		virtual bool apply_cross_auto_margins(int cross_size) = 0;
 		virtual void set_main_position(int pos) = 0;
@@ -69,18 +69,18 @@ namespace litehtml
 
 		void place(flex_line &ln, int main_pos,
 				   const containing_block_context &self_size,
-				   formatting_context *fmt_ctx);
+				   formatting_context* fmt_ctx, time t);
 		int get_last_baseline(baseline::_baseline_type type) const;
 		int get_first_baseline(baseline::_baseline_type type) const;
 
 	protected:
 		virtual void direction_specific_init(const litehtml::containing_block_context &self_size,
-											 litehtml::formatting_context *fmt_ctx) = 0;
+											 litehtml::formatting_context* fmt_ctx, time t) = 0;
 		virtual void align_stretch(flex_line &ln, const containing_block_context &self_size,
-								   formatting_context *fmt_ctx) = 0;
+								   formatting_context* fmt_ctx, time t) = 0;
 		virtual void align_baseline(flex_line &ln,
 									const containing_block_context &self_size,
-									formatting_context *fmt_ctx) = 0;
+									formatting_context* fmt_ctx, time t) = 0;
 	};
 
 	/**
@@ -100,12 +100,12 @@ namespace litehtml
 
 	protected:
 		void direction_specific_init(const litehtml::containing_block_context &self_size,
-									 litehtml::formatting_context *fmt_ctx) override;
+									 litehtml::formatting_context* fmt_ctx, time t) override;
 		void align_stretch(flex_line &ln, const containing_block_context &self_size,
-						   formatting_context *fmt_ctx) override;
+		 formatting_context* fmt_ctx, time t) override;
 		void align_baseline(flex_line &ln,
 							const containing_block_context &self_size,
-							formatting_context *fmt_ctx) override;
+							formatting_context* fmt_ctx, time t) override;
 	};
 
 	/**
@@ -125,12 +125,12 @@ namespace litehtml
 
 	protected:
 		void direction_specific_init(const litehtml::containing_block_context &self_size,
-									 litehtml::formatting_context *fmt_ctx) override;
+									 litehtml::formatting_context* fmt_ctx, time t) override;
 		void align_stretch(flex_line &ln, const containing_block_context &self_size,
-						   formatting_context *fmt_ctx) override;
+						   formatting_context* fmt_ctx, time t) override;
 		void align_baseline(flex_line &ln,
 							const containing_block_context &self_size,
-							formatting_context *fmt_ctx) override;
+							formatting_context* fmt_ctx, time t) override;
 	};
 }
 

@@ -3,7 +3,6 @@
 #include "css_parser.h"
 #include "internal.h"
 
-
 // All functions here assume that whitespace have been removed.
 
 namespace litehtml
@@ -19,6 +18,16 @@ int parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int op
 bool parse_border_width(const css_token& tok, css_length& width);
 bool parse_font_family(const css_token_vector& tokens, string& font_family);
 bool parse_font_weight(const css_token& tok, css_length& weight);
+
+bool parse_time(const css_token& tok, int& time);
+
+bool parse_animation_fill_mode(const css_token& tok, int& mode);
+bool parse_animation_play_state(const css_token& tok, int& play_state);
+bool parse_animation_direction(const css_token& tok, int& direction);
+bool parse_animation_timing_function(const css_token& tok, int& timing_function);
+bool parse_animation_iteration_count(const css_token& tok, float& animation_iteration_count);
+bool parse_animation_duration(const css_token& tok, int& animation_duration);
+bool parse_animation_delay(const css_token& tok, int& animation_delay);
 
 std::map<string_id, string> style::m_valid_values =
 {
@@ -63,6 +72,8 @@ std::map<string_id, string> style::m_valid_values =
 	{ _align_self_, flex_align_items_strings },
 
 	{ _caption_side_, caption_side_strings },
+
+	{ _backface_visibility_, backface_visibility_strings },
 };
 
 std::map<string_id, vector<string_id>> shorthands =
@@ -81,6 +92,30 @@ std::map<string_id, vector<string_id>> shorthands =
 		_background_origin_,
 		_background_clip_
 	} },
+
+	{_animation_,
+		{
+			_animation_name_,
+			_animation_duration_,
+			_animation_timing_function_,
+			_animation_delay_,
+			_animation_iteration_count_,
+			_animation_direction_,
+			_animation_fill_mode_,
+			_animation_play_state_,
+			//_animation_timeline_
+		}
+	},
+
+	{_transition_,
+		{
+			_transition_property_,
+			_transition_duration_,
+			_transition_timing_function_,
+			_transition_delay_,
+			_transition_behavior_
+		}
+	},
 
 	{ _list_style_, {_list_style_image_, _list_style_image_baseurl_, _list_style_position_, _list_style_type_}},
 
@@ -222,8 +257,27 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 
 	case _caption_side_:
 
+	case _backface_visibility_:
+
 		if (int index = value_index(ident, m_valid_values[name]); index >= 0)
 			add_parsed_property(name, property_value(index, important));
+		break;
+
+	// <number [0.0, 1.0] | percentage[0, 100]> https://developer.mozilla.org/en-US/docs/Web/CSS/opacity
+	case _opacity_: 
+		{
+			css_length length;
+			if (length.from_token(val, f_number | f_percentage, ""))
+			{
+				float opacity = length.val();
+				if (length.units() == css_units_percentage)
+				{
+					opacity = length.val() / 100.0f;
+				}
+				opacity = std::clamp(opacity, 0.0f, 1.0f);
+				add_parsed_property(name, property_value(opacity, important));
+			}
+		}
 		break;
 
 	//  =============================  LENGTH  =============================
@@ -430,6 +484,117 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		add_parsed_property(name, property_value(str, important));
 		break;
 
+	//  =============================  ANIMATION  =============================
+	case _animation_:
+		parse_animation(value);
+		break;
+
+	case _animation_name_:
+		{
+			string anim_name = val.type == STRING || val.type == IDENT ? val.str : "";
+			add_parsed_property(name, property_value(anim_name, important));
+		}
+		break;
+
+	case _animation_fill_mode_:
+		{
+			int animation_fill_mode = animation_fill_mode_none;
+			parse_animation_fill_mode(val, animation_fill_mode);
+			add_parsed_property(name, property_value(animation_fill_mode, important));
+		}
+		break;
+
+	case _animation_direction_:
+		{
+			int animation_direction = animation_direction_normal;
+			parse_animation_direction(val, animation_direction);
+			add_parsed_property(name, property_value(animation_direction, important));
+		}
+		break;
+
+	case _animation_timing_function_:
+		{
+			int animation_timing_function = timing_function_ease;
+			parse_animation_timing_function(val, animation_timing_function);
+			add_parsed_property(name, property_value(animation_timing_function, important));
+		}
+		break;
+
+	case _animation_iteration_count_:
+		{
+			float animation_iteration_count = 1.0f;
+			parse_animation_iteration_count(val, animation_iteration_count);
+			add_parsed_property(name, property_value(animation_iteration_count, important));
+		}
+		break;
+
+	case _animation_duration_:
+		{
+			int animation_duration = 0;
+			parse_animation_duration(val, animation_duration);
+			add_parsed_property(name, property_value(animation_duration, important));
+		}
+		break;
+
+	case _animation_delay_:
+		{
+			int animation_delay = 0;
+			parse_animation_delay(val, animation_delay);
+			add_parsed_property(name, property_value(animation_delay, important));
+		}
+		break;
+
+	//  =============================  TRANSFORM  =============================
+	case _transform_:
+		parse_transform(value);
+		break;
+
+	case _transform_style_:
+		parse_transform_style(value);
+		break;
+
+	case _transform_origin_:
+		parse_transform_origin(value);
+		break;
+
+	case _transform_box_:
+		parse_transform_box(value);
+		break;
+
+	case _perspective_:
+		add_length_property(name, val, "none", f_length, important);
+		break;
+
+	case _perspective_origin_:
+	  parse_perspective_origin(value);
+		break;
+
+	 //  =============================  TRANSITION  =============================
+
+	case _transition_:
+		parse_transition(value);
+		break;
+
+	case _transition_behavior_:
+		parse_transition_behavior(value);
+		break;
+
+	case _transition_property_:
+		parse_transition_property(value);
+		break;
+
+	case _transition_timing_function_:
+		parse_transition_timing_function(value);
+		break;
+
+	case _transition_duration_:
+		parse_transition_duration(value);
+		break;
+
+	case _transition_delay_:
+		parse_transition_delay(value);
+		break;
+
 	//  =============================  FLEX  =============================
 
 	case _flex_:
@@ -499,6 +664,11 @@ void style::add_property(string_id name, const string& value, const string& base
 {
 	auto tokens = normalize(value, f_componentize | f_remove_whitespace);
 	add_property(name, tokens, baseurl, important, container);
+}
+
+void style::add_property(string_id name, const property_value &val)
+{
+	add_parsed_property(name, val);
 }
 
 // This should be the same as parse_bg_image, but list-style-image is currently a string (not an image).
@@ -1231,6 +1401,604 @@ void style::parse_font(css_token_vector tokens, bool important)
 	add_parsed_property(_font_size_,    property_value(size,        important));
 	add_parsed_property(_line_height_,  property_value(line_height, important));
 	add_parsed_property(_font_family_,  property_value(font_family, important));
+}
+
+bool parse_time(const css_token& tok, int& time)
+{
+	if (tok.type != DIMENSION)
+		return false;
+
+	constexpr float seconds_to_ms = 1000.f;
+	const float duration_in_ms = tok.unit == "s" ? tok.n.number * seconds_to_ms : tok.n.number;
+	time = static_cast<int>(duration_in_ms);
+	return true;
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/animation
+// https://www.w3.org/TR/css-animations-1/#animations
+// https://drafts.csswg.org/css-animations-2/
+// <single-animation> = <'animation-duration'> || <easing-function> || <'animation-delay'> ||
+// <single-animation-iteration-count> || <single-animation-direction> || <single-animation-fill-mode> ||
+// <single-animation-play-state> || [ none | <keyframes-name> ] || <single-animation-timeline>
+void style::parse_animation(const css_token_vector& tokens)
+{
+	string animation_name{};
+	int animation_fill_mode = animation_fill_mode_none;
+	int animation_play_state = animation_play_state_running;
+	int animation_direction = animation_direction_normal;
+	int animation_timing_function = timing_function_ease;
+	float animation_iteration_count = 1.0f;
+	int animation_duration = 0;
+	int animation_delay = 0;
+
+	bool animation_fill_mode_found = false;
+	bool animation_play_state_found = false;
+	bool animation_direction_found = false;
+	bool animation_timing_function_found = false;
+	bool animation_iteration_count_found = false;
+	bool animation_duration_found = false;
+	bool animation_delay_found = false;
+
+	for (const auto& token : tokens)
+	{
+		if (!animation_fill_mode_found && parse_animation_fill_mode(token, animation_fill_mode))
+		{
+			animation_fill_mode_found = true;
+			continue;
+		}
+
+		if (!animation_play_state_found && parse_animation_play_state(token, animation_play_state))
+		{
+			animation_play_state_found = true;
+			continue;
+		}
+
+		if (!animation_direction_found && parse_animation_direction(token, animation_direction))
+		{
+			animation_direction_found = true;
+			continue;
+		}
+
+		if (!animation_timing_function_found && parse_animation_timing_function(token, animation_timing_function))
+		{
+			animation_timing_function_found = true;
+			continue;
+		}
+
+		if (!animation_iteration_count_found && parse_animation_iteration_count(token, animation_iteration_count))
+		{
+			animation_iteration_count_found = true;
+			continue;
+		}
+
+		if (!animation_duration_found && parse_animation_duration(token, animation_duration))
+		{
+			animation_duration_found = true;
+			continue;
+		}
+
+		if (!animation_delay_found && parse_animation_delay(token, animation_delay))
+		{
+			animation_delay_found = true;
+			continue;
+		}
+
+		if (token.type == STRING || token.type == IDENT)
+		{
+			animation_name = token.str;
+		}
+	}
+
+	if (animation_name.empty())
+	{
+		return;
+	}
+
+	add_parsed_property(_animation_name_, property_value(animation_name, false));
+	add_parsed_property(_animation_delay_, property_value(animation_delay, false));
+	add_parsed_property(_animation_direction_, property_value(animation_direction, false));
+	add_parsed_property(_animation_duration_, property_value(animation_duration, false));
+	add_parsed_property(_animation_fill_mode_, property_value(animation_fill_mode, false));
+	add_parsed_property(_animation_iteration_count_, property_value(animation_iteration_count, false));
+	add_parsed_property(_animation_play_state_, property_value(animation_play_state, false));
+	add_parsed_property(_animation_timing_function_, property_value(animation_timing_function, false));
+
+	// add_parsed_property(_animation_timeline_, property_value(0, false));
+}
+
+// https://www.w3.org/TR/css-animations-1/#animation-fill-mode
+bool parse_animation_fill_mode(const css_token& tok, int& mode)
+{
+	return parse_keyword(tok, mode, animation_fill_mode_strings);
+}
+
+// https://www.w3.org/TR/css-animations-1/#animation-play-state
+bool parse_animation_play_state(const css_token& tok, int& play_state)
+{
+	return parse_keyword(tok, play_state, animation_play_state_strings);
+}
+
+// https://www.w3.org/TR/css-animations-1/#animation-direction
+bool parse_animation_direction(const css_token& tok, int& direction)
+{
+	return parse_keyword(tok, direction, animation_direction_strings);
+}
+
+// https://www.w3.org/TR/css-easing-1/#easing-function
+// <easing-function> = linear | <cubic-bezier-easing-function> | <step-easing-function>
+bool parse_animation_timing_function(const css_token& tok, int& timing_function)
+{
+	return parse_keyword(tok, timing_function, timing_function_type_strings);
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/animation-iteration-count
+// <number> | infinite, negative values are invalid
+bool parse_animation_iteration_count(const css_token& tok, float& animation_iteration_count)
+{
+	if (tok.ident() == "infinite")
+	{
+		animation_iteration_count = std::numeric_limits<float>::infinity();
+		return true;
+	}
+
+	if (tok.type == NUMBER && tok.n.number >= 0.f)
+	{
+		animation_iteration_count = tok.n.number;
+		return true;
+	}
+
+	return false;
+}
+
+bool parse_animation_duration(const css_token& tok, int& animation_duration)
+{
+	return parse_time(tok, animation_duration);
+}
+
+bool parse_animation_delay(const css_token& tok, int& animation_delay)
+{
+	return parse_time(tok, animation_delay);
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/transform
+// https://www.w3.org/TR/css-transforms-2/#3d-transform-rendering
+// https://drafts.csswg.org/css-transforms-2/
+void style::parse_transform(const css_token_vector& tokens)
+{
+	css_transform transform;
+
+	for (const auto& token : tokens)
+	{
+		if (token.type != CV_FUNCTION)
+		{
+			continue;
+		}
+
+		if (const auto idx = value_index(token.str, transform_function_strings); idx >= 0)
+		{
+			css_token_vector args{};
+			for (const auto& value : token.value)
+			{
+				if (value.type != WHITESPACE && value.type != COMMA)
+				{
+					args.emplace_back(value);
+				}
+			}
+			if (token.name.starts_with("translate"))
+			{
+				std::array<css_length, 3> translation{css_transform::zero_length,
+													css_transform::zero_length,
+													css_transform::zero_length};
+				bool is_valid = true;
+				for (std::size_t i = 0; i < args.size(); ++i)
+				{
+					is_valid = is_valid && translation[i].from_token(
+											 args[i], f_length_percentage,
+											 css_units_strings);
+				}
+				if (args.size() == 1)
+				{
+					if (token.name == "translateY")
+					{
+						std::swap(translation[0], translation[1]);
+					}
+					else if (token.name == "translateZ")
+					{
+						std::swap(translation[0], translation[2]);
+					}
+				}
+				if (is_valid)
+				{
+					transform.add_translate(translation[0], translation[1], translation[2]);
+				}
+				continue;
+			}
+			if (token.name.starts_with("scale"))
+			{
+				std::array<float, 3> scale{1.0f,1.0f,1.0f,};
+			  bool is_valid = true;
+				for (std::size_t i = 0; i < args.size(); ++i)
+				{
+					css_length arg_value;
+					is_valid = is_valid && arg_value.from_token(
+											 args[i], f_number | f_percentage);
+					scale[i] = arg_value.units() == css_units_percentage
+								   ? arg_value.val() / 100.0f
+								   : arg_value.val();
+				}
+				if (token.name == "scaleY")
+				{
+					std::swap(scale[0], scale[1]);
+				} else if (token.name == "scaleZ")
+				{
+					std::swap(scale[0], scale[2]);
+				} else if (token.name == "scale" && args.size() == 1)
+				{
+					scale[1] = scale[0];
+				}
+				if (is_valid)
+				{
+					transform.add_scale(scale[0], scale[1], scale[2]);
+				}
+				continue;
+			}
+			if (token.name.starts_with("rotate"))
+			{
+				css_angle angle = css_transform::zero_angle;
+				if (args.size() == 1)
+				{
+					if (!angle.from_token(args[0], css_angle_units_strings))
+						continue;
+				}
+				if (token.name == "rotate" || token.name == "rotateZ")
+				{
+					transform.add_rotate(angle);
+				}
+				else if (token.name == "rotateX")
+				{
+					transform.add_rotateX(angle);
+				}
+				else if (token.name == "rotateY")
+				{
+					transform.add_rotateY(angle);
+				}
+				else if (args.size() == 4)
+				{
+					bool is_valid = true;
+					css_length x, y, z;
+					is_valid = is_valid && x.from_token(args[0], f_number);
+					is_valid = is_valid && y.from_token(args[1], f_number);
+					is_valid = is_valid && z.from_token(args[2], f_number);
+					is_valid = is_valid && angle.from_token(args[3], css_angle_units_strings);
+					if (is_valid)
+					{
+						transform.add_rotate(x.val(), y.val(), z.val(), angle);
+					}
+				}
+				continue;
+			}
+			if (token.name.starts_with("skew"))
+			{
+				css_angle x = css_transform::zero_angle;
+				css_angle y = css_transform::zero_angle;
+				if (!x.from_token(args[0], css_angle_units_strings))
+				{
+					continue;
+				}
+				if (args.size() > 1)
+				{
+					if (!y.from_token(args[1], css_angle_units_strings))
+					{
+						continue;
+					}
+				}
+				if (token.name == "skewY")
+				{
+					std::swap(x, y);
+				}
+				transform.add_skew(x, y);
+				continue;
+			}
+			if (token.name.starts_with("matrix"))
+			{
+				const bool is_3d_matrix = token.name == "matrix3d";
+				const auto expected_args_size = is_3d_matrix ? 16 : 6;
+				if (args.size() != expected_args_size)
+				{
+					continue;
+				}
+				if (!std::all_of(args.begin(), args.end(), [](const css_token &token) {
+								   return token.type == NUMBER;
+					}))
+				{
+					continue;
+				}
+				if (is_3d_matrix)
+				{
+					transform.add_matrix(transformation{
+						args[0].n.number, args[1].n.number, args[2].n.number, args[3].n.number,
+						args[4].n.number, args[5].n.number, args[6].n.number, args[3].n.number,
+						args[8].n.number, args[9].n.number, args[10].n.number, args[11].n.number,
+						args[12].n.number, args[13].n.number, args[14].n.number, args[15].n.number,
+					});
+				}
+				else
+				{
+					transform.add_matrix(args[0].n.number, args[1].n.number,
+									   args[2].n.number, args[3].n.number,
+									   args[4].n.number, args[5].n.number);
+				}
+				continue;
+			}
+			if (token.name == "perspective")
+			{
+				css_length length;
+				length.from_token(args[0], f_length | f_positive, css_units_strings);
+				transform.add_perspective(length);
+				continue;
+			}
+		}
+	}
+
+	add_parsed_property(_transform_, property_value(transform, false));
+}
+
+void style::parse_transform_style(const css_token_vector& tokens)
+{
+	int transform_style = transform_style_flat;
+	if (!tokens.empty())
+	{
+		parse_keyword(tokens.front(), transform_style, transform_style_strings);
+	}
+	add_parsed_property(_transform_style_, property_value(transform_style, false));
+}
+
+void style::parse_perspective_origin(const css_token_vector &tokens)
+{
+	css_length x{50.f, css_units_percentage};
+	css_length y{50.f, css_units_percentage};
+	if (!tokens.empty())
+	{
+		x.from_token(tokens.front(), f_length_percentage, transform_origin_strings);
+		parse_predefined_transform_origin(x);
+	}
+	if (tokens.size() == 2)
+	{
+		y.from_token(tokens.at(1), f_length_percentage, transform_origin_strings);
+		parse_predefined_transform_origin(y);
+	}
+	add_parsed_property(_perspective_origin_, property_value(length_vector{x, y}, false));
+}
+
+void style::parse_transform_origin(const css_token_vector& tokens)
+{
+	css_length x{50.f, css_units_percentage};
+	css_length y{50.f, css_units_percentage};
+	css_length z{0.f, css_units_percentage};
+
+	if (!tokens.empty())
+	{
+		x.from_token(tokens.front(), f_length_percentage, transform_origin_strings);
+		parse_predefined_transform_origin(x);
+	}
+	if (tokens.size() >= 2)
+	{
+		y.from_token(tokens.at(1), f_length_percentage, transform_origin_strings);
+		parse_predefined_transform_origin(y);
+	}
+	if (tokens.size() >= 3)
+	{
+		z.from_token(tokens.at(2), f_length, transform_origin_strings);
+		parse_predefined_transform_origin(z);
+	}
+
+	add_parsed_property(_transform_origin_, property_value(length_vector{x,y,z}, false));
+}
+
+void style::parse_predefined_transform_origin(css_length& length)
+{
+	if (!length.is_predefined())
+	{
+		return;
+	}
+
+	switch (length.predef())
+	{
+	case transform_origin_left:
+		length = css_length{0.f, css_units_percentage};
+		break;
+	case transform_origin_center:
+		length = css_length{50.f, css_units_percentage};
+		break;
+	case transform_origin_right:
+		length = css_length{100.f, css_units_percentage};
+		break;
+	case transform_origin_top:
+		length = css_length{0.f, css_units_percentage};
+		break;
+	case transform_origin_bottom:
+		length = css_length{100.f, css_units_percentage};
+		break;
+	default:
+		break;
+	}
+}
+
+void style::parse_transform_box(const css_token_vector& tokens)
+{
+	int transform_box = transform_box_view_box;
+	if (!tokens.empty())
+	{
+		parse_keyword(tokens.front(), transform_box, transform_box_strings);
+	}
+	add_parsed_property(_transform_box_, property_value(transform_box, false));
+}
+
+// https://developer.mozilla.org/en-US/docs/Web/CSS/transition
+// https://www.w3.org/TR/css-view-transitions-1/#lifecycle
+// https://drafts.csswg.org/css-transitions-2/
+void style::parse_transition(const css_token_vector& tokens)
+{
+	string_vector transition_properties{};
+	int_vector transition_durations{};
+	int_vector transition_timing_functions{};
+	int_vector transition_delays{};
+	int_vector transition_behaviors{};
+
+	bool transition_timing_function_found = false;
+	bool transition_duration_found = false;
+	bool transition_delay_found = false;
+	bool transition_behavior_found = false;
+
+	int int_value = 0;
+	for (const auto& token : tokens)
+	{
+		if (!transition_duration_found && parse_transition_duration(token, int_value))
+		{
+			transition_durations.back() = int_value;
+			transition_duration_found = true;
+			continue;
+		}
+
+		if (!transition_timing_function_found && parse_transition_timing_function(token, int_value))
+		{
+			transition_timing_functions.back() = int_value;
+			transition_timing_function_found = true;
+			continue;
+		}
+
+		if (!transition_delay_found && parse_transition_delay(token, int_value))
+		{
+			transition_delays.back() = int_value;
+			transition_delay_found = true;
+			continue;
+		}
+
+		if (!transition_behavior_found && parse_transition_behavior(token, int_value))
+		{
+			transition_behaviors.back() = int_value;
+			transition_behavior_found = true;
+			continue;
+		}
+
+		if (token.type == STRING || token.type == IDENT)
+		{
+			transition_properties.emplace_back(token.str);
+		  transition_durations.push_back(0);
+		  transition_timing_functions.push_back(timing_function_ease);
+		  transition_delays.push_back(0);
+		  transition_behaviors.push_back(transition_behavior_normal);
+			transition_timing_function_found = false;
+			transition_duration_found = false;
+			transition_delay_found = false;
+			transition_behavior_found = false;
+		}
+	}
+
+	if (transition_properties.empty())
+	{
+		return;
+	}
+
+	add_parsed_property(_transition_property_, property_value(transition_properties, false));
+	add_parsed_property(_transition_duration_, property_value(transition_durations, false));
+	add_parsed_property(_transition_timing_function_, property_value(transition_timing_functions, false));
+	add_parsed_property(_transition_delay_, property_value(transition_delays, false));
+	add_parsed_property(_transition_behavior_, property_value(transition_behaviors, false));
+}
+
+void style::parse_transition_property(const css_token_vector& tokens)
+{
+	string_vector transition_property{};
+	for (const auto& token : tokens)
+	{
+		if (token.type == STRING || token.type == IDENT)
+		{
+			transition_property.emplace_back(token.str);
+		}
+	}
+
+	add_parsed_property(_transition_property_, property_value(transition_property, false));
+}
+
+bool style::parse_transition_behavior(const css_token& tok, int& behavior)
+{
+	return parse_keyword(tok, behavior, transition_behavior_strings);
+}
+
+// https://www.w3.org/TR/css-easing-1/#easing-function
+// <easing-function> = linear | <cubic-bezier-easing-function> | <step-easing-function>
+bool style::parse_transition_timing_function(const css_token& tok, int& timing_function)
+{
+	return parse_keyword(tok, timing_function, timing_function_type_strings);
+}
+
+void style::parse_transition_behavior(const css_token_vector &tokens)
+{
+	int_vector transition_behaviors{};
+	for (const auto& token : tokens)
+	{
+		int behavior = transition_behavior_normal;
+		if (parse_transition_timing_function(token, behavior))
+		{
+			transition_behaviors.emplace_back(behavior);
+		}
+	}
+	add_parsed_property(_transition_timing_function_, property_value(transition_behaviors, false));
+}
+
+void style::parse_transition_duration(const css_token_vector& tokens)
+{
+	int_vector transition_durations{};
+	for (const auto& token : tokens)
+	{
+		int duration = 0;
+		if (parse_transition_duration(token, duration))
+		{
+			transition_durations.emplace_back(duration);
+		}
+	}
+
+	add_parsed_property(_transition_duration_, property_value(transition_durations, false));
+}
+
+bool style::parse_transition_duration(const css_token& tok, int& transition_duration)
+{
+	return parse_time(tok, transition_duration);
+}
+
+void style::parse_transition_delay(const css_token_vector& tokens)
+{
+	int_vector transition_delay{};
+	for (const auto& token : tokens)
+	{
+		int delay = 0;
+		if (parse_transition_duration(token, delay))
+		{
+			transition_delay.emplace_back(delay);
+		}
+	}
+
+	add_parsed_property(_transition_delay_, property_value(transition_delay, false));
+}
+
+bool style::parse_transition_delay(const css_token& tok, int& transition_delay)
+{
+	return parse_time(tok, transition_delay);
+}
+
+void style::parse_transition_timing_function(const css_token_vector &tokens)
+{
+	int_vector transition_timing_functions{};
+	for (const auto& token : tokens)
+	{
+		int timing_function = timing_function_ease;
+		if (parse_transition_timing_function(token, timing_function))
+		{
+			transition_timing_functions.emplace_back(timing_function);
+		}
+	}
+	add_parsed_property(_transition_timing_function_, property_value(transition_timing_functions, false));
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/CSS/flex

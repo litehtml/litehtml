@@ -289,6 +289,10 @@ void litehtml::html_tag::get_content_size( size& sz, int max_width )
 
 void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
 {
+	if (!element::should_be_drawn(ri))
+	{
+		return;
+	}
 	position pos = ri->pos();
 	pos.x	+= x;
 	pos.y	+= y;
@@ -348,6 +352,26 @@ void litehtml::html_tag::compute_styles(bool recursive)
 	}
 
 	m_style.subst_vars(this);
+
+	const auto transition_properties = get_property<string_vector>(_transition_property_, false, {}, 0);
+	if (!transition_properties.empty())
+	{
+		litehtml::style next_style;
+		for (const auto &property : transition_properties) {
+			const auto property_id = _id(property);
+			const auto &value = get_property_value(property_id);
+			if (!value.is<invalid>())
+				next_style.add_property(property_id, value);
+		}
+		m_transition.add_next_style(next_style);
+		const auto& from_style = m_transition.from();
+		for (const auto &property : transition_properties) {
+			const auto property_id = _id(property);
+			const auto& value = from_style.get_property(property_id);
+			if (!value.is<invalid>())
+				m_style.add_property(property_id, value);
+		}
+	}
 
 	m_css.compute(this, doc);
 
@@ -860,10 +884,12 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 		position pos = ri->pos();
 		pos.x	+= x;
 		pos.y	+= y;
+		pos.transform = ri->element_transformation();
 
 		position border_box = pos;
 		border_box += ri->get_paddings();
 		border_box += ri->get_borders();
+		border_box.transform = pos.transform;
 
 		if(border_box.does_intersect(clip) || is_root())
 		{
@@ -874,21 +900,22 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 			const background* bg = get_background();
 			if(bg)
 			{
-				int num_layers = bg->get_layers_number();
+			  const auto draw_background = ri->get_draw_background(*bg);
+				int num_layers = draw_background.get_layers_number();
 				for(int i = num_layers - 1; i >= 0; i--)
 				{
 					background_layer layer;
-					if(!bg->get_layer(i, pos, this, ri, layer)) continue;
+					if(!draw_background.get_layer(i, pos, this, ri, layer)) continue;
 					if(is_root() && (clip != nullptr))
 					{
 						layer.clip_box = *clip;
 						layer.border_box = *clip;
 					}
-					bg->draw_layer(hdc, i, layer, get_document()->container());
+					draw_background.draw_layer(hdc, i, layer, get_document()->container());
 				}
 			}
 
-			borders bdr = m_css.get_borders();
+			borders bdr = ri->get_draw_borders(m_css.get_borders());
 			if(bdr.is_visible())
 			{
 				bdr.radius = m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
@@ -898,6 +925,11 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 	} else
 	{
 		const background* bg = get_background();
+		std::optional<background> draw_background;
+		if (bg)
+		{
+			draw_background = ri->get_draw_background(*bg);
+		}
 
 		position::vector boxes;
 		ri->get_inline_boxes(boxes);
@@ -949,18 +981,18 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 
 				if(bg)
 				{
-					int num_layers = bg->get_layers_number();
+					int num_layers = draw_background->get_layers_number();
 					for(int i = num_layers - 1; i >= 0; i--)
 					{
 						background_layer layer;
-						if(!bg->get_layer(i, content_box, this, ri, layer)) continue;
+						if(!draw_background->get_layer(i, content_box, this, ri, layer)) continue;
 						layer.border_radius = bdr.radius.calc_percents(layer.border_box.width, layer.border_box.width);
-						bg->draw_layer(hdc, i, layer, get_document()->container());
+						draw_background->draw_layer(hdc, i, layer, get_document()->container());
 					}
 				}
 				if(bdr.is_visible())
 				{
-					borders b = bdr;
+					borders b = ri->get_draw_borders(bdr);
 					b.radius = bdr.radius.calc_percents(box->width, box->height);
 					get_document()->container()->draw_borders(hdc, b, *box, false);
 				}
@@ -1395,7 +1427,6 @@ void litehtml::html_tag::handle_counter_properties()
 		return;
 	}
 }
-
 
 void litehtml::html_tag::add_style(const style& style)
 {

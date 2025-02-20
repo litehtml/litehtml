@@ -2,7 +2,9 @@
 #include "render_block_context.h"
 #include "document.h"
 
-int litehtml::render_item_block_context::_render_content(int /*x*/, int /*y*/, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx)
+int litehtml::render_item_block_context::_render_content(int /*x*/, int /*y*/, bool second_pass,
+                                                         const containing_block_context& self_size,
+                                                         formatting_context* fmt_ctx, time t)
 {
     element_position el_position;
 
@@ -22,7 +24,7 @@ int litehtml::render_item_block_context::_render_content(int /*x*/, int /*y*/, b
 
         if(el->src_el()->css().get_float() != float_none)
         {
-            int rw = place_float(el, child_top, self_size, fmt_ctx);
+            int rw = place_float(el, child_top, self_size, fmt_ctx, t);
             if (rw > ret_width)
             {
                 ret_width = rw;
@@ -31,10 +33,10 @@ int litehtml::render_item_block_context::_render_content(int /*x*/, int /*y*/, b
         {
             if(el->src_el()->css().get_position() == element_position_absolute || el->src_el()->css().get_position() == element_position_fixed)
             {
-				int min_rendered_width = el->render(0, child_top, self_size, fmt_ctx);
+				int min_rendered_width = el->render(0, child_top, self_size, fmt_ctx, t);
 				if(min_rendered_width < el->width() && el->src_el()->css().get_width().is_predefined())
 				{
-					el->render(0, child_top, self_size.new_width(min_rendered_width), fmt_ctx);
+					el->render(0, child_top, self_size.new_width(min_rendered_width), fmt_ctx, t);
 				}
             } else
             {
@@ -82,11 +84,11 @@ int litehtml::render_item_block_context::_render_content(int /*x*/, int /*y*/, b
                     el->pos().height = el->src_el()->css().get_height().calc_percent(el_parent ? el_parent->pos().height : 0);
                 }
 
-                int rw = el->render(child_x, child_top, self_size.new_width(child_width), fmt_ctx);
+                int rw = el->render(child_x, child_top, self_size.new_width(child_width), fmt_ctx, t);
 				// Render table with "width: auto" into returned width
 				if(el->src_el()->css().get_display() == display_table && rw < child_width && el->src_el()->css().get_width().is_predefined())
 				{
-					el->render(child_x, child_top, self_size.new_width(rw), fmt_ctx);
+					el->render(child_x, child_top, self_size.new_width(rw), fmt_ctx, t);
 				}
 				int auto_margin = el->calc_auto_margins(child_width);
 				if(auto_margin)

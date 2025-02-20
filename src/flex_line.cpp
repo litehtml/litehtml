@@ -209,7 +209,7 @@ bool litehtml::flex_line::distribute_main_auto_margins(int free_main_size)
 
 void litehtml::flex_line::init(int container_main_size, bool fit_container, bool is_row_direction,
 							   const litehtml::containing_block_context &self_size,
-							   litehtml::formatting_context *fmt_ctx)
+							   litehtml::formatting_context* fmt_ctx, time t)
 {
 	cross_size = 0;
 	main_size = 0;
@@ -253,7 +253,7 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 		{
 			item->el->render(0,
 							 0,
-							 self_size.new_width(item->main_size - item->el->render_offset_width(), containing_block_context::size_mode_exact_width), fmt_ctx, false);
+							 self_size.new_width(item->main_size - item->el->render_offset_width(), containing_block_context::size_mode_exact_width), fmt_ctx, t, false);
 
 			if((item->align & 0xFF) == flex_align_items_baseline)
 			{
@@ -320,14 +320,14 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 		{
 			int el_ret_width = item->el->render(0,
 												0,
-												self_size, fmt_ctx, false);
+												self_size, fmt_ctx, t,false);
 			item->el->render(0,
 							 0,
 							 self_size.new_width_height(el_ret_width - item->el->content_offset_width(),
 														item->main_size - item->el->content_offset_height(),
 														containing_block_context::size_mode_exact_width |
 														containing_block_context::size_mode_exact_height),
-							 fmt_ctx, false);
+							 fmt_ctx, t, false);
 			main_size += item->el->height();
 			cross_size = std::max(cross_size, item->el->width());
 		}
@@ -342,7 +342,7 @@ int litehtml::flex_line::calculate_items_position(int container_main_size,
 												  flex_justify_content justify_content,
 												  bool is_row_direction,
 												  const containing_block_context &self_size,
-												  formatting_context *fmt_ctx)
+												  formatting_context* fmt_ctx, time t)
 {
 	/// Distribute main axis free space for auto-margins
 	int free_main_size = container_main_size - main_size;
@@ -433,7 +433,7 @@ int litehtml::flex_line::calculate_items_position(int container_main_size,
 			main_pos++;
 			item_remainder--;
 		}
-		item->place(*this, main_pos, self_size, fmt_ctx);
+		item->place(*this, main_pos, self_size, fmt_ctx, t);
 		main_pos += item->get_el_main_size() + add_after_item;
 		if(add_after_item > 0 && item_remainder > 0)
 		{

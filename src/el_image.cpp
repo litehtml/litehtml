@@ -33,6 +33,10 @@ void litehtml::el_image::parse_attributes()
 
 void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
 {
+	if (!element::should_be_drawn(ri))
+	{
+		return;
+	}
 	html_tag::draw(hdc, x, y, clip, ri);
 	position pos = ri->pos();
 	pos.x += x;

@@ -1,12 +1,46 @@
 #include "html.h"
 #include "render_item.h"
 #include "document.h"
+#include "css_timing_function.h"
 #include <typeinfo>
 #include <utf8_strings.h>
 
-litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
-        m_element(std::move(_src_el)),
-        m_skip(false)
+namespace
+{
+    std::vector<std::shared_ptr<const litehtml::render_item>> get_elements_hierarchy(const litehtml::render_item& bottom_element)
+    {
+        std::vector<std::shared_ptr<const litehtml::render_item>> elements;
+        std::shared_ptr<const litehtml::render_item> curr_element = bottom_element.shared_from_this();
+        while(curr_element != nullptr)
+        {
+            elements.push_back(curr_element);
+            curr_element = curr_element->parent();
+        }
+        std::reverse(elements.begin(), elements.end());
+        return elements;
+    }
+
+    std::vector<litehtml::position> get_elements_positions(
+        const std::vector<std::shared_ptr<const litehtml::render_item>>& elements)
+    {
+        std::vector<litehtml::position> positions(elements.size());
+        for (std::size_t i = 0; i < elements.size(); ++i)
+        {
+            positions[i] = elements[i]->pos();
+            if (i > 0)
+            {
+                positions[i].x += positions[i - 1].x;
+                positions[i].y += positions[i - 1].y;
+            }
+        }
+        return positions;
+    }
+}
+
+litehtml::render_item::render_item(std::shared_ptr<element> _src_el)
+    : m_element(std::move(_src_el)),
+    m_animation_start_time{0},
+    m_skip(false)
 {
     document::ptr doc = src_el()->get_document();
 	auto fm = css().get_font_metrics();
@@ -27,7 +61,115 @@ litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
     m_borders.bottom	= doc->to_pixels(src_el()->css().get_borders().bottom.width, fm, 0);
 }
 
-int litehtml::render_item::render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass)
+litehtml::transformation litehtml::render_item::calculate_transformation(bool use_projection) const
+{
+    std::vector<std::shared_ptr<const litehtml::render_item>> elements =
+        get_elements_hierarchy(*this);
+    const std::vector<position> positions = get_elements_positions(elements);
+
+    auto result = transformation::identity();
+    const auto& document = m_element->get_document();
+    for (std::size_t i = 0; i < elements.size(); ++i)
+    {
+        const auto& transform = elements[i]->css().get_transform();
+        const auto& metrics = elements[i]->css().get_font_metrics();
+        const size max_size{elements[i]->m_pos.width, elements[i]->m_pos.height};
+        std::array<float, 3> origin{
+                positions[i].x + positions[i].width / 2.0f,
+                positions[i].y + positions[i].height / 2.0f,
+                0.0f,
+        };
+        const auto& transform_origin = elements[i]->css().get_transform_origin();
+        if (!transform_origin.empty())
+        {
+            origin = {
+                static_cast<float>(positions[i].x + document->to_pixels(transform_origin[0], metrics, max_size.width)),
+                static_cast<float>(positions[i].y + document->to_pixels(transform_origin[1], metrics, max_size.height)),
+                static_cast<float>(document->to_pixels(transform_origin[2], metrics, 0)),
+            };
+        };
+
+        result = transform.apply(result, origin, document, metrics, max_size);
+
+        if (!use_projection)
+        {
+            continue;
+        }
+
+        const auto transform_style = elements[i]->css().get_transform_style();
+        if (transform_style == transform_style_flat)
+        {
+            result *= transformation::orthogonal();
+        }
+
+        const auto& perspective = elements[i]->css().get_perspective();
+        const bool perspective_is_none =
+            perspective.is_predefined() &&
+            perspective.predef() == value_index("none", css_units_strings);
+        if (!perspective_is_none && perspective.val() != 0.0f)
+        {
+            const auto& perspective_origin = elements[i]->css().get_perspective_origin();
+            const auto x = static_cast<float>(positions[i].x + document->to_pixels(perspective_origin[0], metrics, max_size.width));
+            const auto y = static_cast<float>(positions[i].y + document->to_pixels(perspective_origin[1], metrics, max_size.height));
+            const auto d = static_cast<float>(document->to_pixels(perspective, metrics, 0));
+            result *= transformation::translation(x, y, 0);
+            result *= transformation::perspective(d);
+            result *= transformation::translation(-x, -y, 0);
+        }
+    }
+    return result;
+}
+
+std::array<float, 3> litehtml::render_item::element_normal() const
+{
+    std::array<float, 4> normal{0.0f, 0.0f, 1.0f, 0.0f};
+    const auto transformation = calculate_transformation(false);
+    normal = transformation.apply(normal);
+    return std::array<float, 3>{normal[0], normal[1], normal[2]};
+}
+
+std::array<float, 3> litehtml::render_item::element_view_direction() const
+{
+    std::vector<std::shared_ptr<const litehtml::render_item>> elements =
+        get_elements_hierarchy(*this);
+    const std::vector<position> positions = get_elements_positions(elements);
+    std::array<float, 3> element_origin{
+        positions.back().x + positions.back().width / 2.0f,
+        positions.back().y + positions.back().height / 2.0f,
+        0.0f
+    };
+    const auto transformation = calculate_transformation(false);
+    element_origin = transformation.apply(element_origin);
+    const auto& document = m_element->get_document();
+    std::array<float, 3> view_direction{0.0f, 0.0f, -1.0f};
+    for (std::size_t i = 0; i < elements.size(); ++i)
+    {
+        const auto& metrics = elements[i]->css().get_font_metrics();
+        const auto& perspective = elements[i]->css().get_perspective();
+        const bool perspective_is_none =
+            perspective.is_predefined() &&
+            perspective.predef() == value_index("none", css_units_strings);
+        if (!perspective_is_none && perspective.val() != 0.0f)
+        {
+            const auto& perspective_origin = elements[i]->css().get_perspective_origin();
+            const auto x = static_cast<float>(positions[i].x) + document->to_pixels(perspective_origin[0], metrics, positions[i].width);
+            const auto y = static_cast<float>(positions[i].y) + document->to_pixels(perspective_origin[1], metrics, positions[i].height);
+            const auto z = static_cast<float>(document->to_pixels(perspective, metrics, 0));
+            view_direction[0] = element_origin[0] - x;
+            view_direction[1] = element_origin[1] - y;
+            view_direction[2] = element_origin[2] - z;
+        }
+    }
+    return view_direction;
+}
+
+litehtml::transformation litehtml::render_item::element_transformation() const
+{
+    return calculate_transformation(true);
+}
+
+int litehtml::render_item::render(int x, int y, const containing_block_context& containing_block_size,
+                                  formatting_context* fmt_ctx, time t, bool second_pass)
 {
 	int ret;
 
@@ -42,17 +184,16 @@ int litehtml::render_item::render(int x, int y, const containing_block_context& 
 	m_pos.x += content_left;
 	m_pos.y += content_top;
 
-
 	if(src_el()->is_block_formatting_context() || ! fmt_ctx)
 	{
 		formatting_context fmt;
 		fmt.push_position(content_left, content_top);
-		ret = _render(x, y, containing_block_size, &fmt, second_pass);
+		ret = _render(x, y, containing_block_size, &fmt, t, second_pass);
 		fmt.apply_relative_shift(containing_block_size);
 	} else
 	{
 		fmt_ctx->push_position(x + content_left, y + content_top);
-		ret = _render(x, y, containing_block_size, fmt_ctx, second_pass);
+		ret = _render(x, y, containing_block_size, fmt_ctx, t, second_pass);
 		fmt_ctx->pop_position(x + content_left, y + content_top);
 	}
 	return ret;
@@ -112,6 +253,62 @@ int litehtml::render_item::calc_auto_margins(int parent_width)
         }
     }
 	return 0;
+}
+
+void litehtml::render_item::apply_time(const time t, const int max_width)
+{
+    apply_animation(t, max_width);
+    apply_transition(t, max_width);
+}
+
+void litehtml::render_item::apply_animation(const time t, const int max_width)
+{
+    const auto& css_data = src_el()->css();
+    const auto& animation_name = css_data.get_animation_name();
+    auto& animation_start_time = anim_start_time();
+
+    if (animation_name.empty() || t < animation_start_time)
+    {
+        return;
+    }
+
+    if (const auto keyframe = src_el()->get_document()->find_keyframe_by_name(animation_name))
+    {
+        if (css_keyframes::is_active_animation(css_data, t, animation_start_time))
+        {
+            const auto percentage = css_keyframes::calculate_passed_animation_percentage(css_data, t, animation_start_time);
+            const auto keyframe_point = keyframe->create_keyframe_point_for(percentage);
+            keyframe_point.apply_to(*this, max_width);
+        }
+        else
+        {
+            // Reset animation status by invalidating animation start time and compute initial css properties
+            animation_start_time = time::max();
+            m_element->compute_styles();
+        }
+    }
+}
+
+void litehtml::render_item::apply_transition(const time t, const int max_width)
+{
+    auto& css_data = src_el()->css_w();
+    auto& transition = src_el()->transition_w();
+    transition.validate();
+    const auto transition_state = transition.get_state();
+    switch (transition_state)
+    {
+        case css_transition::state::ready:
+          transition.start(t);
+          break;
+        case css_transition::state::running:
+          transition.apply_time(*this, max_width, t);
+          break;
+        case css_transition::state::invalid:
+        case css_transition::state::finished:
+        default:
+          return;
+    }
+    transition.apply(css_data);
 }
 
 void litehtml::render_item::apply_relative_shift(const containing_block_context &containing_block_size)
@@ -241,7 +438,7 @@ bool litehtml::render_item::fetch_positioned()
     return ret;
 }
 
-void litehtml::render_item::render_positioned(render_type rt)
+void litehtml::render_item::render_positioned(render_type rt, time t)
 {
     position wnd_position;
     src_el()->get_document()->container()->get_client_rect(wnd_position);
@@ -642,7 +839,7 @@ void litehtml::render_item::render_positioned(render_type rt)
             if(need_render)
             {
                 position pos = el->m_pos;
-				el->render(el->left(), el->top(), containing_block_size.new_width(el->width()), nullptr, true);
+				el->render(el->left(), el->top(), containing_block_size.new_width(el->width()), nullptr, t,true);
                 el->m_pos = pos;
             }
 
@@ -654,7 +851,7 @@ void litehtml::render_item::render_positioned(render_type rt)
             }
         }
 
-		el->render_positioned();
+		el->render_positioned(render_all, t);
     }
 
     if(!m_positioned.empty())
@@ -902,6 +1099,31 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
     {
         doc->container()->del_clip();
     }
+}
+
+litehtml::web_color litehtml::render_item::get_draw_color(const litehtml::web_color& color) const
+{
+    auto result = color;
+    result = blend_color_alpha_with_opacity(result);
+    return result;
+}
+
+litehtml::background litehtml::render_item::get_draw_background(const litehtml::background& background) const
+{
+    // TODO: add opacity to background image and gradient
+    auto result = background;
+    result.m_color = blend_color_alpha_with_opacity(result.m_color);
+    return result;
+}
+
+litehtml::borders litehtml::render_item::get_draw_borders(const litehtml::borders& borders) const
+{
+    auto result = borders;
+    result.top.color = blend_color_alpha_with_opacity(result.top.color);
+    result.right.color = blend_color_alpha_with_opacity(result.right.color);
+    result.bottom.color = blend_color_alpha_with_opacity(result.bottom.color);
+    result.left.color = blend_color_alpha_with_opacity(result.left.color);
+    return result;
 }
 
 std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex)
@@ -1340,4 +1562,20 @@ std::tuple<int, int> litehtml::render_item::element_static_offset(const std::sha
 	}
 
 	return {offset_x, offset_y};
+}
+
+// https://www.w3.org/TR/compositing-1/
+litehtml::web_color litehtml::render_item::blend_color_alpha_with_opacity(const litehtml::web_color& color) const
+{
+	const auto elements = get_elements_hierarchy(*this);
+	float accumulated_opacity = 1.0f;
+	for (const auto& element : elements)
+	{
+		accumulated_opacity *= element->css().get_opacity();
+	}
+	web_color result = color;
+	const float color_alpha = color.alpha == 0 ? 0.0f : static_cast<float>(color.alpha) / std::numeric_limits<byte>::max();
+	const float blended_alpha = color_alpha * accumulated_opacity;
+	result.alpha = static_cast<byte>(blended_alpha * std::numeric_limits<byte>::max());
+	return result;
 }

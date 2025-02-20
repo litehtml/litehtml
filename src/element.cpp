@@ -272,6 +272,20 @@ element::ptr element::_add_before_after(int type, const style& /*style*/)
 	return el;
 }
 
+bool element::should_be_drawn(const std::shared_ptr<render_item> &ri)
+{
+	if (css().get_backface_visibility() == backface_visible)
+	{
+		return true;
+	}
+	const std::array<float, 3> view_direction = ri->element_view_direction();
+	const auto element_normal = ri->element_normal();
+	const auto dot = view_direction[0] * element_normal[0] +
+					 view_direction[1] * element_normal[1] +
+					 view_direction[2] * element_normal[2];
+	return dot < 0.0f;
+}
+
 bool element::is_block_formatting_context() const
 {
 	if(m_css.get_display() == display_block)
@@ -296,6 +310,23 @@ bool element::is_block_formatting_context() const
 		return true;
 	}
 	return false;
+}
+
+element::ptr element::get_element_by_tag_id(const string& tag_id) const
+{
+	for (const auto& el : children())
+	{
+		const char* id = el->get_attr("id", nullptr);
+		if (id != nullptr && id == tag_id)
+		{
+			return el;
+		}
+		if (auto child = el->get_element_by_tag_id(tag_id))
+		{
+			return child;
+		}
+	}
+	return nullptr;
 }
 
 litehtml::string litehtml::element::get_counter_value(const string& counter_name)

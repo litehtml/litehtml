@@ -73,6 +73,7 @@ namespace litehtml
 
 		template<class Type>
 		const Type&			get_property(string_id name, bool inherited, const Type& default_value, uint_ptr css_properties_member_offset) const;
+		const property_value& get_property_value(string_id name) const { return m_style.get_property(name); };
 		bool				get_custom_property(string_id name, css_token_vector& result) const;
 
 		elements_list&	children();

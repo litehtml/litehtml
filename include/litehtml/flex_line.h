@@ -41,13 +41,14 @@ namespace litehtml
 
 		void init(int container_main_size, bool fit_container, bool is_row_direction,
 				  const litehtml::containing_block_context &self_size,
-				  litehtml::formatting_context *fmt_ctx);
+				  litehtml::formatting_context* fmt_ctx, time t);
 		bool distribute_main_auto_margins(int free_main_size);
 		int  calculate_items_position(int container_main_size,
 									  flex_justify_content justify_content,
 									  bool is_row_direction,
 									  const containing_block_context &self_size,
-									  formatting_context *fmt_ctx);
+									  formatting_context* fmt_ctx,
+									  time t);
 	protected:
 		void distribute_free_space(int container_main_size);
 	};
