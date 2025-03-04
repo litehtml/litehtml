@@ -19,7 +19,7 @@ int litehtml::render_item_image::_render(int x, int y, const containing_block_co
     m_pos.width		= sz.width;
     m_pos.height	= sz.height;
 
-    src_el()->css_w().set_line_height(height());
+    src_el()->css_w().line_height_w().computed_value = height();
 
     if(src_el()->css().get_height().is_predefined() && src_el()->css().get_width().is_predefined())
     {

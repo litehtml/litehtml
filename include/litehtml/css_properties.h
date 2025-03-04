@@ -13,6 +13,19 @@ namespace litehtml
 	class html_tag;
 	class document;
 
+	template<class CssT, class CompT>
+	class css_property
+	{
+	public:
+		CssT	css_value;
+		CompT	computed_value;
+
+		css_property(const CssT& css_val, const CompT& computed_val) : css_value(css_val), computed_value(computed_val) {}
+	};
+
+	// CSS Properties types
+	using css_line_height_t = css_property<css_length, int>;
+
 	class css_properties
 	{
 	private:
@@ -39,7 +52,7 @@ namespace litehtml
 		css_offsets				m_css_offsets;
 		css_length				m_css_text_indent;
 		css_length				m_css_line_height;
-		int						m_line_height;
+		css_line_height_t		m_line_height {{}, 0};
 		list_style_type			m_list_style_type;
 		list_style_position		m_list_style_position;
 		string					m_list_style_image;
@@ -105,7 +118,6 @@ namespace litehtml
 				m_css_offsets(),
 				m_css_text_indent(),
 				m_css_line_height(0),
-				m_line_height(0),
 				m_list_style_type(list_style_type_none),
 				m_list_style_position(list_style_position_outside),
 				m_bg(),
@@ -196,8 +208,8 @@ namespace litehtml
 		const css_length &get_text_indent() const;
 		void set_text_indent(const css_length &mCssTextIndent);
 
-		int get_line_height() const;
-		void set_line_height(int mLineHeight);
+		const css_line_height_t& line_height() const;
+		css_line_height_t& line_height_w();
 
 		list_style_type get_list_style_type() const;
 		void set_list_style_type(list_style_type mListStyleType);
@@ -481,14 +493,14 @@ namespace litehtml
 		m_css_text_indent = mCssTextIndent;
 	}
 
-	inline int css_properties::get_line_height() const
+	inline const css_line_height_t& css_properties::line_height() const
 	{
 		return m_line_height;
 	}
 
-	inline void css_properties::set_line_height(int mLineHeight)
+	inline css_line_height_t& css_properties::line_height_w()
 	{
-		m_line_height = mLineHeight;
+		return m_line_height;
 	}
 
 	inline list_style_type css_properties::get_list_style_type() const

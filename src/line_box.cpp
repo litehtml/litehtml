@@ -190,9 +190,9 @@ int litehtml::line_box::calc_va_baseline(const va_context& current, vertical_ali
 	switch(va)
 	{
 		case va_super:
-			return current.baseline - current.fm.height / 3;
+			return current.baseline - current.fm.super_shift;
 		case va_sub:
-			return current.baseline + current.fm.height / 3;
+			return current.baseline + current.fm.sub_shift;
 		case va_middle:
 			return current.baseline - current.fm.x_height / 2;
 		case va_text_top:
@@ -285,7 +285,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 
     if( is_empty() || (!is_empty() && last_box && is_break_only()) )
     {
-        m_height = m_default_line_height;
+        m_height = m_default_line_height.computed_value;
 		m_baseline = m_font_metrics.base_line();
         return ret_items;
     }
@@ -325,10 +325,12 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
     float offj  = float(spacing_x) / std::max(1.f, float(m_items.size()) - 1.f);
     float cixx  = 0.0f;
 
-    int line_top	= 0;
-    int line_bottom	= 0;
-	int line_height = 0;
-	bool has_boxes = false;
+	std::optional<int> line_height;
+
+	if(!m_default_line_height.css_value.is_predefined())
+	{
+		line_height = m_default_line_height.computed_value;
+	}
 
 	va_context current_context;
 	std::list<va_context> contexts;
@@ -336,6 +338,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 	current_context.baseline = 0;
 	current_context.fm = m_font_metrics;
 	current_context.start_lbi = nullptr;
+	current_context.line_height = m_default_line_height.computed_value;
 
 	m_min_width = 0;
 
@@ -343,108 +346,176 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 	{
 		int top = 0;
 		int bottom = 0;
+		int count = 0;
+		int max_height = 0;
 
 		void add_item(const line_box_item* item)
 		{
 			top = std::min(top, item->top());
 			bottom = std::max(bottom, item->bottom());
+			max_height = std::max(max_height, item->height());
+			count++;
 		}
-		[[nodiscard]] int height() const { return bottom - top; }
+		int height() const { return bottom - top; }
 	};
 
-
+	items_dimensions line_max_height;
 	items_dimensions top_aligned_max_height;
 	items_dimensions bottom_aligned_max_height;
+	items_dimensions inline_boxes_dims;
 
-	// First pass:
-	// 1. Horizontal align
-	// 2. Vertical align accept top/bottom
-	// 3. Calculate line height
+	// First pass
+	// 1. Apply text-align-justify
+	// 1. Align all items by baseline
+	// 2. top/button aligned items are aligned by baseline
+	// 3. Calculate top and button of the linebox separately for items in baseline
+	//    and for top and bottom aligned items
     for (const auto& lbi : m_items)
-    {
+	{
+		// Apply text-align-justify
 		m_min_width += lbi->get_rendered_min_width();
-		{ // start text_align_justify
-			if (spacing_x && counter)
-			{
-				cixx += offj;
-				if ((counter + 1) == int(m_items.size()))
-					cixx += 0.99f;
-				lbi->pos().x += int(cixx);
-			}
-			counter++;
-			if ((m_text_align == text_align_right || spacing_x) && counter == int(m_items.size()))
-			{
-				// Forcible justify the last element to the right side for text align right and justify;
-				lbi->pos().x = m_right - lbi->pos().width;
-			} else if (shift_x)
-			{
-				lbi->pos().x += shift_x;
-			}
-		} // end text_align_justify
+		if (spacing_x && counter)
+		{
+			cixx += offj;
+			if ((counter + 1) == int(m_items.size()))
+				cixx += 0.99f;
+			lbi->pos().x += int(cixx);
+		}
+		counter++;
+		if ((m_text_align == text_align_right || spacing_x) && counter == int(m_items.size()))
+		{
+			// Forcible justify the last element to the right side for text align right and justify;
+			lbi->pos().x = m_right - lbi->pos().width;
+		} else if (shift_x)
+		{
+			lbi->pos().x += shift_x;
+		}
 
 		// Calculate new baseline for inline start/continue
 		// Inline start/continue elements are inline containers like <span>
 		if (lbi->get_type() == line_box_item::type_inline_start || lbi->get_type() == line_box_item::type_inline_continue)
 		{
 			contexts.push_back(current_context);
-			current_context.fm = lbi->get_el()->css().get_font_metrics();
 			if(is_one_of(lbi->get_el()->css().get_vertical_align(), va_top, va_bottom))
 			{
+				// top/bottom aligned inline boxes are aligned by baseline == 0
 				current_context.baseline = 0;
 				current_context.start_lbi = lbi.get();
 				current_context.start_lbi->reset_items_height();
+			} else if(current_context.start_lbi)
+			{
+				current_context.baseline = calc_va_baseline(current_context,
+					lbi->get_el()->css().get_vertical_align(),
+					lbi->get_el()->css().get_font_metrics(),
+					current_context.start_lbi->top(), current_context.start_lbi->bottom());
 			} else
 			{
 				current_context.start_lbi = nullptr;
 				current_context.baseline = calc_va_baseline(current_context,
 															lbi->get_el()->css().get_vertical_align(),
 															lbi->get_el()->css().get_font_metrics(),
-															line_top, line_bottom);
+															line_max_height.top, line_max_height.bottom);
 			}
+			current_context.fm = lbi->get_el()->css().get_font_metrics();
+			current_context.line_height = lbi->get_el()->css().line_height().computed_value;
 		}
 
-		if(current_context.start_lbi)
-		{
-			// Align element by baseline
-			lbi->pos().y = current_context.baseline - lbi->get_el()->get_last_baseline() +
-						lbi->get_el()->content_offset_top();
+		int bl = current_context.baseline;
+		int content_offset = 0;
+		bool is_top_bottom_box = false;
+		bool ignore = false;
 
-			// Calculate min top and max bottom for items inside top/bottom aligned inline
+		// Align element by baseline
+		if(!is_one_of(lbi->get_el()->src_el()->css().get_display(), display_inline_text, display_inline))
+		{
+			// Apply margins, paddings and border for inline boxes
+			content_offset = lbi->get_el()->content_offset_top();
+			switch (lbi->get_el()->css().get_vertical_align())
+			{
+			case va_bottom:
+			case va_top:
+				// Align by base line 0 all inline boxes with top and bottom vertical aling
+				bl = 0;
+				is_top_bottom_box = true;
+				break;
+
+			case va_text_bottom:
+				lbi->pos().y = bl + current_context.fm.base_line() - lbi->get_el()->height() + content_offset;
+				ignore = true;
+				break;
+
+			case va_text_top:
+				lbi->pos().y = bl - current_context.fm.ascent + content_offset;
+				ignore = true;
+				break;
+
+			case va_middle:
+				lbi->pos().y = bl - current_context.fm.x_height / 2 - lbi->get_el()->height() / 2 + content_offset;
+				ignore = true;
+				break;
+
+			default:
+				bl = calc_va_baseline(current_context,
+									  lbi->get_el()->css().get_vertical_align(),
+									  lbi->get_el()->css().get_font_metrics(),
+									  line_max_height.top, line_max_height.bottom);
+				break;
+			}
+		}
+		if(!ignore)
+		{
+			lbi->pos().y = bl - lbi->get_el()->get_last_baseline() + content_offset;
+		}
+
+		if(is_top_bottom_box)
+		{
+			switch (lbi->get_el()->css().get_vertical_align())
+			{
+				case va_top:
+					top_aligned_max_height.add_item(lbi.get());
+					break;
+				case va_bottom:
+					bottom_aligned_max_height.add_item(lbi.get());
+					break;
+				default:
+					break;
+			}
+		} else if(current_context.start_lbi)
+		{
 			current_context.start_lbi->add_item_height(lbi->top(), lbi->bottom());
-			if(current_context.start_lbi->get_el()->css().get_vertical_align() == va_top)
+			switch (current_context.start_lbi->get_el()->css().get_vertical_align())
 			{
-				top_aligned_max_height.add_item(lbi.get());
-			} else if(current_context.start_lbi->get_el()->css().get_vertical_align() == va_bottom)
-			{
-				bottom_aligned_max_height.add_item(lbi.get());
+				case va_top:
+					top_aligned_max_height.add_item(lbi.get());
+					break;
+				case va_bottom:
+					bottom_aligned_max_height.add_item(lbi.get());
+					break;
+				default:
+					break;
 			}
-
-		} else if(is_one_of(lbi->get_el()->css().get_vertical_align(), va_top, va_bottom) && lbi->get_type() == line_box_item::type_text_part)
+		} else
 		{
-			// Align element by baseline
-			lbi->pos().y = - (lbi->bottom() - lbi->top()) + lbi->get_el()->content_offset_top() + m_font_metrics.base_line();
-
-			// Calculate min top and max bottom for top/bottom aligned items (inline blocks)
-			if(lbi->get_el()->css().get_vertical_align() == va_top)
+			if(!lbi->get_el()->src_el()->is_inline_box())
 			{
-				top_aligned_max_height.add_item(lbi.get());
-			} else if(lbi->get_el()->css().get_vertical_align() == va_bottom)
+				line_max_height.add_item(lbi.get());
+			} else
 			{
-				bottom_aligned_max_height.add_item(lbi.get());
+				inline_boxes_dims.add_item(lbi.get());
 			}
 		}
-		else
-		{
-			// Align element by baseline
-			lbi->pos().y = current_context.baseline - lbi->get_el()->get_last_baseline() +
-						lbi->get_el()->content_offset_top();
 
-			// calculate line height
-			line_top = std::min(line_top, lbi->top());
-			line_bottom = std::max(line_bottom, lbi->bottom());
+		if(!lbi->get_el()->src_el()->is_inline_box() && !lbi->get_el()->css().line_height().css_value.is_predefined())
+		{
+			if(line_height.has_value())
+			{
+				line_height = std::max(line_height.value(), lbi->get_el()->css().line_height().computed_value);
+			} else
+			{
+				line_height = lbi->get_el()->css().line_height().computed_value;
+			}
 		}
 
-		// Popup inline context on inline container end
 		if (lbi->get_type() == line_box_item::type_inline_end)
 		{
 			if(!contexts.empty())
@@ -453,25 +524,68 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 				contexts.pop_back();
 			}
 		}
+	}
 
-		/*if(lbi->get_el()->src_el()->css().get_display() == display_inline_text)
-		{
-			line_height = std::max(line_height, lbi->get_el()->css().get_line_height());
-		} else if(lbi->get_el()->src_el()->is_inline_box())
-		{
-			has_boxes = true;
-		}*/
-    }
-
-	m_height = std::max({line_bottom - line_top, bottom_aligned_max_height.height(), top_aligned_max_height.height()});
-	int top_shift = std::min(line_top, -bottom_aligned_max_height.height() + m_font_metrics.base_line());
-	m_baseline = line_bottom;
-	/*if(m_height < line_height || !has_boxes)
+	int top_shift = 0;
+	if(line_height.has_value())
 	{
-		top_shift -= (line_height - m_height) / 2;
-		m_baseline += (line_height - m_height) / 2;
-		m_height = line_height;
-	}*/
+		m_height = line_height.value();
+		if(line_max_height.count != 0)
+		{
+			// We have inline items
+			top_shift = std::abs(line_max_height.top);
+			const int top_shift_correction = (line_height.value() - line_max_height.height()) / 2;
+			m_baseline = line_max_height.bottom + top_shift_correction;
+			top_shift += top_shift_correction;
+			if(inline_boxes_dims.count)
+			{
+				const int diff2 = std::abs(inline_boxes_dims.top) - std::abs(top_shift);
+				if(diff2 > 0)
+				{
+					m_height += diff2;
+					top_shift += diff2;
+					m_baseline += diff2;
+				}
+				const int diff1 = inline_boxes_dims.bottom - (line_max_height.bottom + top_shift_correction);
+				if(diff1 > 0)
+				{
+					m_height += diff1;
+				}
+			}
+		} else if(inline_boxes_dims.count != 0)
+		{
+			// We have inline boxes only
+			m_height = inline_boxes_dims.height();
+			top_shift = std::abs(inline_boxes_dims.top);
+			m_baseline = inline_boxes_dims.bottom;
+		} else
+		{
+			// We don't have inline items and inline boxes
+			top_shift = 0;
+		}
+
+
+		const int top_down_height = std::max(top_aligned_max_height.max_height, bottom_aligned_max_height.max_height);
+		if(top_down_height > m_height)
+		{
+			if(bottom_aligned_max_height.count)
+			{
+				top_shift += bottom_aligned_max_height.height() - m_height;
+			}
+			m_height = top_down_height;
+		}
+	} else
+	{
+		// Add inline boxes dimentions
+		line_max_height.top = std::min(line_max_height.top, inline_boxes_dims.top);
+		line_max_height.bottom = std::max(line_max_height.bottom, inline_boxes_dims.bottom);
+
+		// Height is maximum from inline elements height and top/bottom aligned elements height
+		m_height = std::max({line_max_height.height(), top_aligned_max_height.height(), bottom_aligned_max_height.height()});
+
+		top_shift = -std::min(line_max_height.top, line_max_height.bottom - bottom_aligned_max_height.height());
+		m_baseline = line_max_height.bottom;
+	}
 
 	struct inline_item_box
 	{
@@ -510,9 +624,6 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			{
 				current_context.baseline = m_top + m_height - lbi->get_items_bottom();
 				current_context.start_lbi = lbi.get();
-			} else
-			{
-				current_context.start_lbi = nullptr;
 			}
 		} else if(lbi->get_type() == line_box_item::type_inline_end)
 		{
@@ -539,7 +650,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		} else
 		{
 			// move element to the correct position
-			lbi->pos().y += m_top - top_shift;
+			lbi->pos().y += m_top + top_shift;
 		}
 
         lbi->get_el()->apply_relative_shift(containing_block_size);
@@ -766,4 +877,3 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::new_wi
     }
 	return ret_items;
 }
-
