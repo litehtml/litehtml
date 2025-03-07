@@ -199,7 +199,7 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 	{
 		if(m_pos.height == 0)
 		{
-			m_pos.height = css().get_line_height();
+			m_pos.height = css().line_height().computed_value;
 		}
 	}
 

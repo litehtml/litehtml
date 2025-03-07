@@ -28,7 +28,7 @@ void litehtml::el_text::compute_styles(bool /*recursive*/)
 	element::ptr el_parent = parent();
 	if (el_parent)
 	{
-		css_w().set_line_height(el_parent->css().get_line_height());
+		css_w().line_height_w() = el_parent->css().line_height();
 		css_w().set_font(el_parent->css().get_font());
 		css_w().set_font_metrics(el_parent->css().get_font_metrics());
 		css_w().set_white_space(el_parent->css().get_white_space());

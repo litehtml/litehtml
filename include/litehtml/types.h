@@ -195,24 +195,16 @@ namespace litehtml
 
 	struct font_metrics
 	{
-		int 	font_size;
-		int		height;
-		int		ascent;
-		int		descent;
-		int		x_height;
-		int 	ch_width;
-		bool	draw_spaces;
+		int 	font_size = 0;		// Font size in pixels. The same as size argument of the create_font function
+		int		height = 0;			// Font height in pixels.
+		int		ascent = 0;			// The distance from the baseline to the top of a line of text.
+		int		descent = 0;		// The distance from the baseline to the bottom of a line of text.
+		int		x_height = 0;		// Height of the symbol x
+		int 	ch_width = 0;		// Height of the symbol 0
+		bool	draw_spaces = true;	// True to call draw text function for spaces. If False, just use space width without draw.
+		int		sub_shift = 0;		// The baseline shift for subscripts.
+		int		super_shift = 0;	// The baseline shift for superscripts.
 
-		font_metrics()
-		{
-			font_size		= 0;
-			height			= 0;
-			ascent			= 0;
-			descent			= 0;
-			x_height		= 0;
-			ch_width		= 0;
-			draw_spaces		= true;
-		}
 		int base_line() const	{ return descent; }
 	};
 

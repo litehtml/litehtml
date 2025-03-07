@@ -36,15 +36,10 @@ namespace litehtml
 	double t_strtod(const char* string, char** endPtr = nullptr);
 	string get_escaped_string(const string& in_str);
 
-	template<typename X, typename A>
-	bool is_one_of(X x, A a)
+	template<typename T, typename... Opts>
+	bool is_one_of(T val, Opts ...opts)
 	{
-		return x == a;
-	}
-	template<typename X, typename A, typename... AA>
-	bool is_one_of(X x, A a, AA... aa)
-	{
-		return x == a || is_one_of(x, aa...);
+		return (... || (val == opts));
 	}
 	template<class T>
 	const T& at(const vector<T>& vec, int index /*may be negative*/)
