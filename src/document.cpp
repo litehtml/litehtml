@@ -36,7 +36,7 @@ document::document(document_container* container)
 
 document::~document()
 {
-	m_over_element = nullptr;
+	m_over_element = m_active_element = nullptr;
 	if(m_container)
 	{
 		for(auto& font : m_fonts)
@@ -700,6 +700,7 @@ bool document::on_lbutton_down( int x, int y, int client_x, int client_y, positi
 	}
 
 	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y);
+    m_active_element = over_el;
 
 	bool state_was_changed = false;
 
@@ -753,12 +754,31 @@ bool document::on_lbutton_up( int /*x*/, int /*y*/, int /*client_x*/, int /*clie
 	}
 	if(m_over_element)
 	{
-		if(m_over_element->on_lbutton_up())
+		if(m_over_element->on_lbutton_up(m_active_element == m_over_element))
 		{
 			return m_root->find_styles_changes(redraw_boxes);
 		}
 	}
 	return false;
+}
+
+bool document::on_button_cancel(position::vector& redraw_boxes) {
+    if(!m_root || !m_root_render)
+    {
+        return false;
+    }
+    if(m_over_element)
+    {
+        if(m_over_element->on_mouse_leave())
+        {
+            m_container->on_mouse_event(m_over_element, mouse_event_leave);
+        }
+        if(m_over_element->on_lbutton_up(false))
+        {
+            return m_root->find_styles_changes(redraw_boxes);
+        }
+    }
+    return false;
 }
 
 void document::get_fixed_boxes( position::vector& fixed_boxes )
