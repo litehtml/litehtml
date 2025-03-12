@@ -64,7 +64,10 @@ namespace litehtml
 		string					m_font_family;
 		css_length				m_font_weight;
 		font_style				m_font_style;
-		string					m_text_decoration;
+		int						m_text_decoration_line = text_decoration_line_none;
+		text_decoration_style	m_text_decoration_style = text_decoration_style_solid;
+		css_length				m_text_decoration_thickness;
+		web_color				m_text_decoration_color;
 		font_metrics			m_font_metrics;
 		text_transform			m_text_transform;
 		web_color				m_color;
@@ -276,6 +279,11 @@ namespace litehtml
 
 		int get_order() const;
 		void set_order(int order);
+
+		int get_text_decoration_line() const;
+		text_decoration_style get_text_decoration_style() const;
+		const css_length& get_text_decoration_thickness() const;
+		const web_color& get_text_decoration_color() const;
 	};
 
 	inline element_position css_properties::get_position() const
@@ -695,6 +703,26 @@ namespace litehtml
 	inline void css_properties::set_order(int order)
 	{
 		m_order = order;
+	}
+
+	inline int css_properties::get_text_decoration_line() const
+	{
+		return m_text_decoration_line;
+	}
+
+	inline text_decoration_style css_properties::get_text_decoration_style() const
+	{
+		return m_text_decoration_style;
+	}
+
+	inline const css_length& css_properties::get_text_decoration_thickness() const
+	{
+		return m_text_decoration_thickness;
+	}
+
+	inline const web_color& css_properties::get_text_decoration_color() const
+	{
+		return m_text_decoration_color;
 	}
 }
 

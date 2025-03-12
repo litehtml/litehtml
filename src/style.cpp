@@ -63,6 +63,8 @@ std::map<string_id, string> style::m_valid_values =
 	{ _align_self_, flex_align_items_strings },
 
 	{ _caption_side_, caption_side_strings },
+
+	{ _text_decoration_style_, style_text_decoration_style_strings },
 };
 
 std::map<string_id, vector<string_id>> shorthands =
@@ -102,6 +104,8 @@ std::map<string_id, vector<string_id>> shorthands =
 
 	{ _flex_, {_flex_grow_, _flex_shrink_, _flex_basis_}},
 	{ _flex_flow_, {_flex_direction_, _flex_wrap_}},
+
+	{ _text_decoration_, {_text_decoration_color_, _text_decoration_line_, _text_decoration_style_, _text_decoration_thickness_}},
 };
 
 void style::add(const string& txt, const string& baseurl, document_container* container)
@@ -168,10 +172,10 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	// Note: empty value is a valid value for a custom property.
 	if (value.empty() && _s(name).substr(0, 2) != "--")
 		return;
-	
+
 	if (has_var(value))
 		return add_parsed_property(name, property_value(value, important, true));
-	
+
 	// valid only if value contains a single token
 	css_token val = value.size() == 1 ? value[0] : css_token();
 	// nonempty if value is a single identifier
@@ -205,6 +209,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 
 	case _font_style_:
 	case _font_variant_:
+	case _text_decoration_style_:
 
 	case _list_style_type_:
 	case _list_style_position_:
@@ -235,7 +240,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	// <length-percentage>  https://developer.mozilla.org/en-US/docs/Web/CSS/text-indent#formal_syntax
 	case _text_indent_:
 		return add_length_property(name, val, "", f_length_percentage, important);
-	
+
 	// <length-percentage [0,∞]>  https://developer.mozilla.org/en-US/docs/Web/CSS/padding-left
 	case _padding_left_:
 	case _padding_right_:
@@ -253,7 +258,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	case _margin_top_:
 	case _margin_bottom_:
 		return add_length_property(name, val, "auto", f_length_percentage, important);
-	
+
 	// auto | min-content | max-content | fit-content | <length-percentage [0,∞]>   https://developer.mozilla.org/en-US/docs/Web/CSS/width#formal_syntax
 	case _width_:
 	case _height_:
@@ -283,7 +288,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		if (int n = parse_1234_lengths(value, len, f_length_percentage | f_positive))
 			add_four_properties(_padding_top_, len, n, important);
 		break;
-		
+
 	//  =============================  COLOR  =============================
 
 	case _color_:
@@ -372,8 +377,8 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	case _border_radius_x_:
 	case _border_radius_y_:
 	{
-		string_id top_left = name == _border_radius_x_ ? 
-			_border_top_left_radius_x_ : 
+		string_id top_left = name == _border_radius_x_ ?
+			_border_top_left_radius_x_ :
 			_border_top_left_radius_y_;
 
 		if (int n = parse_1234_lengths(value, len, f_length_percentage | f_positive))
@@ -426,8 +431,19 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		break;
 
 	case _text_decoration_:
-		str = get_repr(value, 0, -1, true);
-		add_parsed_property(name, property_value(str, important));
+		parse_text_decoration(value, important, container);
+		break;
+
+	case _text_decoration_thickness_:
+		add_length_property(name, val, style_text_decoration_thickness_strings, f_length_percentage|f_positive, important);
+		break;
+
+	case _text_decoration_color_:
+		parse_text_decoration_color(val, important, container);
+		break;
+
+	case _text_decoration_line_:
+		parse_text_decoration_line(value, important);
 		break;
 
 	//  =============================  FLEX  =============================
@@ -486,10 +502,10 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		break;
 
 	//  =============================  CUSTOM PROPERTY  =============================
-	
+
 	// https://drafts.csswg.org/css-variables-2/#defining-variables
 	default:
-		if (_s(name).substr(0, 2) == "--" && _s(name).size() >= 3 && 
+		if (_s(name).substr(0, 2) == "--" && _s(name).size() >= 3 &&
 			(value.empty() || is_declaration_value(value)))
 			add_parsed_property(name, property_value(value, important));
 	}
@@ -529,7 +545,7 @@ void style::parse_list_style(const css_token_vector& tokens, string baseurl, boo
 
 	for (const auto& token : tokens)
 	{
-		// "...none is a valid value for both list-style-image and list-style-type. To resolve this ambiguity, 
+		// "...none is a valid value for both list-style-image and list-style-type. To resolve this ambiguity,
 		// a value of none ... must be applied to whichever of the two properties aren’t otherwise set by the shorthand."
 		if (token.ident() == "none") {
 			none_count++;
@@ -568,12 +584,12 @@ void style::parse_list_style(const css_token_vector& tokens, string baseurl, boo
 }
 
 // https://developer.mozilla.org/en-US/docs/Web/CSS/border-radius
-// border-radius = <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?  
+// border-radius = <length-percentage [0,∞]>{1,4} [ / <length-percentage [0,∞]>{1,4} ]?
 void style::parse_border_radius(const css_token_vector& tokens, bool important)
 {
 	int i;
 	for (i = 0; i < (int)tokens.size() && tokens[i].ch != '/'; i++) {}
-		
+
 	if (i == (int)tokens.size()) // no '/'
 	{
 		css_length len[4];
@@ -587,11 +603,11 @@ void style::parse_border_radius(const css_token_vector& tokens, bool important)
 	{
 		auto raduis_x = slice(tokens, 0, i);
 		auto raduis_y = slice(tokens, i + 1);
-		
+
 		css_length rx[4], ry[4];
 		int n = parse_1234_lengths(raduis_x, rx, f_length_percentage | f_positive);
 		int m = parse_1234_lengths(raduis_y, ry, f_length_percentage | f_positive);
-		
+
 		if (n && m)
 		{
 			add_four_properties(_border_top_left_radius_x_, rx, n, important);
@@ -605,10 +621,10 @@ bool parse_border_width(const css_token& token, css_length& w)
 	css_length width;
 	if (!width.from_token(token, f_length | f_positive, border_width_strings))
 		return false;
-	
+
 	if (width.is_predefined())
 		width.set_value(border_width_values[width.predef()], css_units_px);
-	
+
 	w = width;
 	return true;
 }
@@ -652,7 +668,7 @@ void style::parse_border(const css_token_vector& tokens, bool important, documen
 	css_length width;
 	border_style style;
 	web_color color;
-	
+
 	if (!parse_border_helper(tokens, container, width, style, color))
 		return;
 
@@ -726,7 +742,7 @@ int parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int op
 
 // This function implements the logic of the kind "if two values are specified, the first one applies to
 // top and bottom, the second one to left and right". Works in conjunction with parse_1234_values.
-template<class T> 
+template<class T>
 void style::add_four_properties(string_id top_name, T val[4], int n, bool important)
 {
 	// These always go in trbl order, see comment for "CSS property names" in string_id.
@@ -753,7 +769,7 @@ void style::parse_background(const css_token_vector& tokens, const string& baseu
 	if (layers.empty()) return;
 
 	web_color color;
-	std::vector<image> images; 
+	std::vector<image> images;
 	length_vector x_positions, y_positions;
 	size_vector sizes;
 	int_vector repeats, attachments, origins, clips;
@@ -763,7 +779,7 @@ void style::parse_background(const css_token_vector& tokens, const string& baseu
 		background bg;
 		if (!parse_bg_layer(layers[i], container, bg, i == layers.size() - 1))
 			return;
-		
+
 		color = bg.m_color;
 		images.push_back(bg.m_image[0]);
 		x_positions.push_back(bg.m_position_x[0]);
@@ -823,7 +839,7 @@ bool style::parse_bg_layer(const css_token_vector& tokens, document_container* c
 			repeat_found = true;
 		else if (!attachment_found && parse_keyword(tokens[i], bg.m_attachment[0], background_attachment_strings))
 			attachment_found = true;
-		// If one <visual-box> value is present then it sets both background-origin and background-clip to that value. 
+		// If one <visual-box> value is present then it sets both background-origin and background-clip to that value.
 		// If two values are present, then the first sets background-origin and the second background-clip.
 		else if (!origin_found && parse_keyword(tokens[i], bg.m_origin[0], background_box_strings))
 			origin_found = true, bg.m_clip[0] = bg.m_origin[0];
@@ -843,7 +859,7 @@ bool parse_bg_position_size(const css_token_vector& tokens, int& index, css_leng
 
 	if (at(tokens, index).ch != '/')
 		return true; // no [ / <bg-size> ]
-	
+
 	if (!parse_bg_size(tokens, ++index, size))
 	{
 		index--; // restore index to point to '/'
@@ -861,7 +877,7 @@ bool parse_bg_size(const css_token_vector& tokens, int& index, css_size& size)
 
 	if (!a.from_token(at(tokens, index), f_length_percentage | f_positive, background_size_strings))
 		return false;
-	
+
 	// cover | contain
 	if (a.is_predefined() && a.predef() != background_size_auto)
 	{
@@ -902,7 +918,7 @@ bool parse_bg_position(const css_token_vector& tokens, int& index, css_length& x
 		bottom = background_position_bottom,
 		center = background_position_center
 	};
-	
+
 	css_length a, b;
 
 	if (!a.from_token(at(tokens, index), f_length_percentage, background_position_strings))
@@ -926,7 +942,7 @@ bool parse_bg_position(const css_token_vector& tokens, int& index, css_length& x
 		if ((is_one_of_predef(a, top, bottom) && b.is_predefined()) ||
 			(a.is_predefined() && is_one_of_predef(b, left, right)))
 			swap(a, b);
-		
+
 		// check for wrong order
 		if (is_one_of_predef(a, top, bottom) || is_one_of_predef(b, left, right))
 			return false;
@@ -941,7 +957,7 @@ bool parse_bg_position(const css_token_vector& tokens, int& index, css_length& x
 		if (b.is_predefined())
 			b.set_value(background_position_percentages[b.predef()], css_units_percentage);
 	}
-	
+
 	x = a;
 	y = b;
 	return true;
@@ -951,7 +967,7 @@ void style::parse_background_image(const css_token_vector& tokens, const string&
 {
 	auto layers = parse_comma_separated_list(tokens);
 	if (layers.empty()) return;
-	
+
 	std::vector<image> images;
 
 	for (const auto& layer : layers)
@@ -1011,7 +1027,7 @@ bool parse_url(const css_token& tok, string& url)
 		url = trim(tok.value[0].str);
 		return true;
 	}
-	
+
 	return false;
 }
 
@@ -1233,6 +1249,75 @@ void style::parse_font(css_token_vector tokens, bool important)
 	add_parsed_property(_font_family_,  property_value(font_family, important));
 }
 
+void style::parse_text_decoration(const css_token_vector& tokens, bool important, document_container* container)
+{
+	css_length len;
+	css_token_vector line_tokens;
+	for(const auto& token : tokens)
+	{
+		if(parse_text_decoration_color(token, important, container)) continue;
+
+		if(parse_length(token, len, f_length_percentage|f_positive, style_text_decoration_thickness_strings))
+		{
+			add_parsed_property(_text_decoration_thickness_, property_value(len, important));
+		} else
+		{
+			if(token.type == IDENT)
+			{
+				int style = value_index(token.ident(), style_text_decoration_style_strings);
+				if(style >= 0)
+				{
+					add_parsed_property(_text_decoration_style_, property_value(style, important));
+				} else
+				{
+					line_tokens.push_back(token);
+				}
+			} else
+			{
+				line_tokens.push_back(token);
+			}
+		}
+	}
+	if(!line_tokens.empty())
+	{
+		parse_text_decoration_line(line_tokens, important);
+	}
+}
+
+bool style::parse_text_decoration_color(const css_token& token, bool important, document_container* container)
+{
+	web_color _color;
+	if(parse_color(token, _color, container))
+	{
+		add_parsed_property(_text_decoration_color_, property_value(_color, important));
+		return true;
+	}
+	if(token.type == IDENT && value_in_list(token.ident(), "auto;currentcolor"))
+	{
+		add_parsed_property(_text_decoration_color_, property_value(web_color::current_color, important));
+		return true;
+	}
+	return false;
+}
+
+void style::parse_text_decoration_line(const css_token_vector& tokens, bool important)
+{
+	int val = 0;
+	for(const auto& token : tokens)
+	{
+		if(token.type == IDENT)
+		{
+			int idx = value_index(token.ident(), style_text_decoration_line_strings);
+			if(idx >= 0)
+			{
+				val |= 1 << (idx - 1);
+			}
+		}
+	}
+	add_parsed_property(_text_decoration_line_, property_value(val, important));
+}
+
+
 // https://developer.mozilla.org/en-US/docs/Web/CSS/flex
 // https://drafts.csswg.org/css-flexbox/#flex-property
 // flex = none | [ <'flex-grow'> <'flex-shrink'>? || <'flex-basis'> ]
@@ -1357,9 +1442,9 @@ void style::parse_align_self(string_id name, const css_token_vector& tokens, boo
 		return;
 	if (tokens[0].type != IDENT || (n == 2 && tokens[1].type != IDENT))
 		return;
-	
+
 	string a = tokens[0].ident();
-	
+
 	if (name == _align_items_ && a == "auto")
 		return;
 
@@ -1443,11 +1528,11 @@ const property_value& style::get_property(string_id name) const
 bool check_var_syntax(const css_token_vector& args)
 {
 	if (args.empty()) return false;
-	
+
 	string name = args[0].ident();
 	if (name.substr(0, 2) != "--" || name.size() <= 2)
 		return false;
-	
+
 	if (args.size() > 1 && args[1].ch != ',')
 		return false;
 	if (args.size() > 2 && !is_declaration_value(args, 2))
@@ -1469,11 +1554,11 @@ bool subst_var(css_token_vector& tokens, const html_tag* el, std::set<string_id>
 		{
 			auto args = tok.value; // copy is intentional
 			if (!check_var_syntax(args)) return false;
-			
+
 			auto name = _id(args[0].name);
 			if (name in used_vars) return false; // dependency cycle  https://drafts.csswg.org/css-variables/#cycles
 			used_vars.insert(name);
-			
+
 			css_token_vector value;
 			if (el->get_custom_property(name, value))
 			{

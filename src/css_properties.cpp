@@ -9,8 +9,6 @@
 
 void litehtml::css_properties::compute(const html_tag* el, const document::ptr& doc)
 {
-	compute_font(el, doc);
-	int font_size = get_font_size();
 	m_color = el->get_property<web_color>(_color_, true, web_color::black, offset(m_color));
 
 	m_el_position	 = (element_position) el->get_property<int>( _position_,		false,	element_position_static, offset(m_el_position));
@@ -107,6 +105,9 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 		}
 	}
 	// 5. Otherwise, the remaining 'display' property values apply as specified.
+
+	compute_font(el, doc);
+	int font_size = get_font_size();
 
 	const css_length _auto = css_length::predef_value(0);
 	const css_length none = _auto, normal = _auto;
@@ -361,37 +362,70 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	m_font_family		=              el->get_property<string>(    _font_family_,		true, doc->container()->get_default_font_name(),	offset(m_font_family));
 	m_font_weight		=              el->get_property<css_length>(_font_weight_,		true, css_length::predef_value(font_weight_normal), offset(m_font_weight));
 	m_font_style		= (font_style) el->get_property<int>(       _font_style_,		true, font_style_normal,							offset(m_font_style));
-	m_text_decoration	=              el->get_property<string>(    _text_decoration_,	true, "none",										offset(m_text_decoration));
 
-  // Merge parent text decoration with child text decoration
-  if (el->parent())
-  {
-    auto parent_text_decoration = el->parent()->css().m_text_decoration;
-    if (!parent_text_decoration.empty() && !m_text_decoration.empty())
-    {
-      std::set<string> wordSet;
-      std::istringstream stream(parent_text_decoration + " " + m_text_decoration);
-      std::string temp;
+	bool propagate_decoration = !is_one_of(m_display, display_inline_block, display_inline_table, display_inline_flex) &&
+								m_float == float_none && !is_one_of(m_el_position, element_position_absolute, element_position_fixed);
 
-      while (stream >> temp) wordSet.insert(temp);
-      if (wordSet.size() > 1)
-      {
-        wordSet.erase("none");
-      }
-      m_text_decoration = "";
-      for (const auto& word : wordSet) {
-        m_text_decoration += word + " ";
-      }
-    }
-  }
-  
-	m_font = doc->get_font(
-		m_font_family.c_str(),
-		font_size,
-		m_font_weight.is_predefined() ? index_value(m_font_weight.predef(), font_weight_strings).c_str() : std::to_string(m_font_weight.val()).c_str(),
-		index_value(m_font_style, font_style_strings).c_str(),
-		m_text_decoration.c_str(),
-		&m_font_metrics);
+	m_text_decoration_line = el->get_property<int>(_text_decoration_line_, propagate_decoration, text_decoration_line_none, offset(m_text_decoration_line));
+
+	// Merge parent text decoration with child text decoration
+	if (propagate_decoration && el->parent())
+	{
+		m_text_decoration_line |= el->parent()->css().get_text_decoration_line();
+	}
+
+	if(m_text_decoration_line)
+	{
+		m_text_decoration_thickness = el->get_property<css_length>(_text_decoration_thickness_, propagate_decoration, css_length::predef_value(text_decoration_thickness_auto), offset(m_text_decoration_thickness));
+		m_text_decoration_style = (text_decoration_style) el->get_property<int>(_text_decoration_style_, propagate_decoration, text_decoration_style_solid, offset(m_text_decoration_style));
+		m_text_decoration_color = get_color_property(el, _text_decoration_color_, propagate_decoration, web_color::current_color, offset(m_text_decoration_color));
+	} else
+	{
+		m_text_decoration_thickness = css_length::predef_value(text_decoration_thickness_auto);
+		m_text_decoration_color = web_color::current_color;
+	}
+
+
+	if(m_font_weight.is_predefined())
+	{
+		switch(m_font_weight.predef())
+		{
+			case font_weight_bold:
+				m_font_weight = 700;
+				break;
+			case font_weight_bolder:
+				{
+					const int inherited = (int) el->parent()->css().m_font_weight.val();
+					if(inherited < 400) m_font_weight = 400;
+					else if(inherited >= 400 && inherited < 600) m_font_weight = 700;
+					else m_font_weight = 900;
+				}
+				break;
+			case font_weight_lighter:
+				{
+					const int inherited = (int) el->parent()->css().m_font_weight.val();
+					if(inherited < 600) m_font_weight = 100;
+					else if(inherited >= 600 && inherited < 800) m_font_weight = 400;
+					else m_font_weight = 700;
+				}
+				break;
+			default:
+				m_font_weight = 400;
+				break;
+		}
+	}
+
+	font_description descr;
+	descr.family 				= m_font_family;
+	descr.size					= font_size;
+	descr.style					= m_font_style;
+	descr.weight				= (int) m_font_weight.val();
+	descr.decoration_line		= m_text_decoration_line;
+	descr.decoration_thickness	= m_text_decoration_thickness;
+	descr.decoration_style		= m_text_decoration_style;
+	descr.decoration_color		= m_text_decoration_color;
+
+	m_font = doc->get_font(descr, &m_font_metrics);
 }
 
 void litehtml::css_properties::compute_background(const html_tag* el, const document::ptr& doc)
