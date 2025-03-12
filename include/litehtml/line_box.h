@@ -40,15 +40,16 @@ namespace litehtml
 		};
 	protected:
 		std::shared_ptr<render_item> m_element;
-		int m_rendered_min_width;
+		int m_rendered_min_width = 0;
+		int m_items_top = 0;
+		int m_items_bottom = 0;
 	public:
-		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element), m_rendered_min_width(0) {}
-		line_box_item() : m_element(), m_rendered_min_width(0) {};
+		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element) {}
 		line_box_item(const line_box_item& el) = default;
 		line_box_item(line_box_item&&) = default;
 		virtual ~line_box_item();
 
-		int height() const { return right() - left(); }
+		virtual int height() const;
 		const std::shared_ptr<render_item>& get_el() const { return m_element; }
 		virtual position& pos();
 		virtual void place_to(int x, int y);
@@ -60,6 +61,15 @@ namespace litehtml
 		virtual element_type get_type() const	{ return type_text_part; }
 		virtual int get_rendered_min_width() const	{ return m_rendered_min_width; }
 		virtual void set_rendered_min_width(int min_width)	{ m_rendered_min_width = min_width; }
+
+		void reset_items_height() { m_items_top = m_items_bottom = 0; }
+		void add_item_height(int item_top, int item_bottom)
+		{
+			m_items_top = std::min(m_items_top, item_top);
+			m_items_bottom = std::max(m_items_bottom, item_bottom);
+		}
+		int get_items_top() const { return m_items_top; }
+		int get_items_bottom() const { return m_items_bottom; }
 	};
 
 	class lbi_start : public line_box_item
@@ -68,9 +78,10 @@ namespace litehtml
 		position m_pos;
 	public:
 		explicit lbi_start(const std::shared_ptr<render_item>& element);
-		virtual ~lbi_start() override;
+		~lbi_start() override;
 
 		void place_to(int x, int y) override;
+		int height() const override;
 		int width() const override;
 		position& pos() override { return m_pos; }
 		int top() const override;
@@ -110,10 +121,10 @@ namespace litehtml
     {
 		struct va_context
 		{
-			int 			baseline;
+			int 			line_height = 0;
+			int 			baseline = 0;
 			font_metrics 	fm;
-
-			va_context() : baseline(0) {}
+			line_box_item*	start_lbi = nullptr;
 		};
 
         int		                m_top;
@@ -121,21 +132,19 @@ namespace litehtml
         int		                m_right;
         int						m_height;
         int						m_width;
-		int						m_line_height;
-		int						m_default_line_height;
+		css_line_height_t		m_default_line_height;
         font_metrics			m_font_metrics;
         int						m_baseline;
         text_align				m_text_align;
 		int 					m_min_width;
 		std::list< std::unique_ptr<line_box_item> > m_items;
     public:
-        line_box(int top, int left, int right, int line_height, const font_metrics& fm, text_align align) :
+        line_box(int top, int left, int right, const css_line_height_t& line_height, const font_metrics& fm, text_align align) :
 				m_top(top),
 				m_left(left),
 				m_right(right),
 				m_height(0),
 				m_width(0),
-				m_line_height(0),
 				m_default_line_height(line_height),
 				m_font_metrics(fm),
 				m_baseline(0),

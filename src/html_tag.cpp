@@ -126,7 +126,7 @@ litehtml::elements_list litehtml::html_tag::select_all(const string& selector )
 {
 	css_selector sel;
 	sel.parse(selector, get_document()->mode());
-	
+
 	return select_all(sel);
 }
 
@@ -143,7 +143,7 @@ void litehtml::html_tag::select_all(const css_selector& selector, elements_list&
 	{
 		res.push_back(shared_from_this());
 	}
-	
+
 	for(auto& el : m_children)
 	{
 		el->select_all(selector, res);
@@ -295,7 +295,7 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 
 	draw_background(hdc, x, y, clip, ri);
 
-	if(m_css.get_display() == display_list_item && 
+	if(m_css.get_display() == display_list_item &&
 		(m_css.get_list_style_type() != list_style_type_none || m_css.get_list_style_image() != ""))
 	{
 		if(m_css.get_overflow() > overflow_visible)
@@ -935,7 +935,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const posit
 					bdr.radius.top_right_y		= m_css.get_borders().radius.top_right_y;
 				}
 
-				
+
 				bdr.top		= m_css.get_borders().top;
 				bdr.bottom	= m_css.get_borders().bottom;
 				if(box == boxes.begin())
@@ -1057,7 +1057,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 		lm.baseurl = nullptr;
 	}
 
-	int ln_height	= css().get_line_height();
+	int ln_height	= css().line_height().computed_value;
 	int sz_font		= css().get_font_size();
 	lm.pos.x		= pos.x;
 	lm.pos.width    = sz_font - sz_font * 2 / 3;
@@ -1192,7 +1192,7 @@ bool html_tag::is_nth_child(const element::ptr& el, int num, int off, bool of_ty
 	{
 		if(child->css().get_display() != display_inline_text)
 		{
-			if( (!of_type && selector_list.empty()) || 
+			if( (!of_type && selector_list.empty()) ||
 				(of_type && child->tag() == el->tag()) || child->select(selector_list) )
 			{
 				if(el == child)
@@ -1502,7 +1502,7 @@ const litehtml::background* litehtml::html_tag::get_background(bool own_only)
 		}
 		return nullptr;
 	}
-	
+
 	if(is_body())
 	{
 		element::ptr el_parent = parent();
@@ -1578,7 +1578,7 @@ void html_tag::map_to_dimension_property_ignoring_zero(string_id prop_name, stri
 		tok = {DIMENSION,  x, css_number_number, "px"};
 	else
 		tok = {PERCENTAGE, x, css_number_number};
-		
+
 	m_style.add_property(prop_name, {tok});
 }
 

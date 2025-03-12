@@ -5,6 +5,7 @@
 #include <sstream>
 
 #define offset(member) ((uint_ptr)&this->member - (uint_ptr)this)
+//#define offset(func)	[](const css_properties& css) { return css.func; }
 
 void litehtml::css_properties::compute(const html_tag* el, const document::ptr& doc)
 {
@@ -100,6 +101,9 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 			{
 				m_display = display_block;
 			}
+		} else if(el->is_replaced() && m_display == display_inline)
+		{
+			m_display = display_inline_block;
 		}
 	}
 	// 5. Otherwise, the remaining 'display' property values apply as specified.
@@ -220,17 +224,17 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	m_css_text_indent = el->get_property<css_length>(_text_indent_, true, 0, offset(m_css_text_indent));
 	doc->cvt_units(m_css_text_indent, m_font_metrics, 0);
 
-	m_css_line_height = el->get_property<css_length>(_line_height_, true, normal, offset(m_css_line_height));
-	if(m_css_line_height.is_predefined())
+	m_line_height.css_value = el->get_property<css_length>(_line_height_, true, normal, offset(m_line_height.css_value));
+	if(m_line_height.css_value.is_predefined())
 	{
-		m_line_height = m_font_metrics.height;
-	} else if(m_css_line_height.units() == css_units_none)
+		m_line_height.computed_value = m_font_metrics.height;
+	} else if(m_line_height.css_value.units() == css_units_none)
 	{
-		m_line_height = (int) std::nearbyint(m_css_line_height.val() * font_size);
+		m_line_height.computed_value = (int) std::nearbyint(m_line_height.css_value.val() * font_size);
 	} else
 	{
-		m_line_height = doc->to_pixels(m_css_line_height, m_font_metrics, m_font_metrics.font_size);
-		m_css_line_height = (float) m_line_height;
+		m_line_height.computed_value = doc->to_pixels(m_line_height.css_value, m_font_metrics, m_font_metrics.font_size);
+		m_line_height.css_value = (float) m_line_height.computed_value;
 	}
 
 	m_list_style_type     = (list_style_type)     el->get_property<int>(_list_style_type_,     true, list_style_type_disc,        offset(m_list_style_type));
@@ -284,7 +288,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	{
 		parent_sz = doc_font_size;
 	}
-	
+
 	int font_size = parent_sz;
 
 	if(sz.is_predefined())
@@ -350,7 +354,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 			font_size = doc->to_pixels(sz, fm, 0);
 		}
 	}
-	
+
 	m_font_size = (float)font_size;
 
 	// initialize font
@@ -382,11 +386,11 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
   }
   
 	m_font = doc->get_font(
-		m_font_family.c_str(), 
-		font_size, 
+		m_font_family.c_str(),
+		font_size,
 		m_font_weight.is_predefined() ? index_value(m_font_weight.predef(), font_weight_strings).c_str() : std::to_string(m_font_weight.val()).c_str(),
 		index_value(m_font_style, font_style_strings).c_str(),
-		m_text_decoration.c_str(), 
+		m_text_decoration.c_str(),
 		&m_font_metrics);
 }
 
@@ -504,7 +508,7 @@ std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::css_proper
 	ret.emplace_back("max_height", m_css_max_width.to_string());
 	ret.emplace_back("offsets", m_css_offsets.to_string());
 	ret.emplace_back("text_indent", m_css_text_indent.to_string());
-	ret.emplace_back("line_height", std::to_string(m_line_height));
+	ret.emplace_back("line_height", std::to_string(m_line_height.computed_value));
 	ret.emplace_back("list_style_type", index_value(m_list_style_type, list_style_type_strings));
 	ret.emplace_back("list_style_position", index_value(m_list_style_position, list_style_position_strings));
 	ret.emplace_back("border_spacing_x", m_css_border_spacing_x.to_string());

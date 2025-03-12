@@ -150,7 +150,7 @@ void litehtml::render_item_inline_context::fix_line_width(element_float flt,
                 {
                     line_left += src_el()->css().get_text_indent().calc_percent(self_size.width);
                 }
-            
+
             }
 
             auto items = m_line_boxes.back()->new_width(line_left, line_right);
@@ -227,7 +227,7 @@ int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box
     m_line_boxes.emplace_back(std::make_unique<line_box>(
 			line_ctx.top,
 			line_ctx.left + first_line_margin + text_indent, line_ctx.right,
-			css().get_line_height(),
+			css().line_height(),
 			css().get_font_metrics(),
 			css().get_text_align()));
 
@@ -403,7 +403,7 @@ int litehtml::render_item_inline_context::get_last_baseline()
 		bl = line->bottom() - line->baseline() + content_offset_top();
 	} else
 	{
-		bl = height() - margin_bottom();
+		bl = height();
 	}
 	return bl;
 }

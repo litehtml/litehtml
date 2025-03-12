@@ -98,6 +98,9 @@ litehtml::uint_ptr container_cairo_pango::create_font(const char *faceName, int 
 		fm->descent = PANGO_PIXELS((double)pango_font_metrics_get_descent(metrics));
 		fm->height = PANGO_PIXELS((double)pango_font_metrics_get_height(metrics));
 		fm->x_height = fm->height;
+		fm->draw_spaces = (decoration != litehtml::font_decoration_none);
+		fm->sub_shift = size / 5;
+		fm->super_shift = size / 3;
 
 		pango_layout_set_text(layout, "x", 1);
 
