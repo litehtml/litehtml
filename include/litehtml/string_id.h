@@ -252,6 +252,10 @@ STRING_ID(
 	_font_size_,
 	_line_height_,
 	_text_decoration_,
+	_text_decoration_style_,
+	_text_decoration_line_,
+	_text_decoration_color_,
+	_text_decoration_thickness_,
 
 	_white_space_,
 	_text_align_,

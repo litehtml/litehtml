@@ -14,12 +14,17 @@ struct cairo_font
 	int size;
 	bool underline;
 	bool strikeout;
+	bool overline;
 	int ascent;
 	int descent;
 	int underline_thickness;
 	int underline_position;
 	int strikethrough_thickness;
 	int strikethrough_position;
+	int overline_thickness;
+	int overline_position;
+	int decoration_style;
+	litehtml::web_color decoration_color;
 };
 
 class container_cairo_pango : public container_cairo
@@ -30,7 +35,7 @@ class container_cairo_pango : public container_cairo
 public:
 	container_cairo_pango();
 	~container_cairo_pango() override;
-	litehtml::uint_ptr create_font(const char* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm) override;
+	litehtml::uint_ptr create_font(const litehtml::font_description& descr, const litehtml::document* doc, litehtml::font_metrics* fm) override;
 	void delete_font(litehtml::uint_ptr hFont) override;
 	int text_width(const char* text, litehtml::uint_ptr hFont) override;
 	void draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) override;

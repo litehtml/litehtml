@@ -7,6 +7,7 @@
 #include "background.h"
 #include "borders.h"
 #include "element.h"
+#include "font_description.h"
 #include <memory>
 #include <functional>
 
@@ -22,7 +23,7 @@ namespace litehtml
 		int				index;
 		uint_ptr		font;
 	};
-	
+
 	enum mouse_event
 	{
 		mouse_event_enter,
@@ -33,7 +34,7 @@ namespace litehtml
 	class document_container
 	{
 	public:
-		virtual litehtml::uint_ptr	create_font(const char* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm) = 0;
+		virtual litehtml::uint_ptr	create_font(const font_description& descr, const document* doc, litehtml::font_metrics* fm) = 0;
 		virtual void				delete_font(litehtml::uint_ptr hFont) = 0;
 		virtual int					text_width(const char* text, litehtml::uint_ptr hFont) = 0;
 		virtual void				draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;

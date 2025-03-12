@@ -47,9 +47,9 @@ document::~document()
 }
 
 document::ptr document::createFromString(
-	const estring& str, 
-	document_container* container, 
-	const string& master_styles, 
+	const estring& str,
+	document_container* container,
+	const string& master_styles,
 	const string& user_styles )
 {
 	// Create litehtml::document
@@ -132,7 +132,7 @@ document::ptr document::createFromString(
 		doc->m_root_render = doc->m_root->create_render_item(nullptr);
 
 		// Now the m_tabular_elements is filled with tabular elements.
-		// We have to check the tabular elements for missing table elements 
+		// We have to check the tabular elements for missing table elements
 		// and create the anonymous boxes in visual table layout
 		doc->fix_tables_layout();
 
@@ -216,7 +216,7 @@ GumboOutput* document::parse_html(estring str)
 {
 	// https://html.spec.whatwg.org/multipage/parsing.html#the-input-byte-stream
 	encoding_sniffing_algorithm(str);
-	// cannot store output in local variable because gumbo keeps pointers into it, 
+	// cannot store output in local variable because gumbo keeps pointers into it,
 	// which will be accessed later in gumbo_tag_from_original_text
 	if (str.encoding == encoding::utf_8)
 		m_text = str;
@@ -441,82 +441,17 @@ element::ptr document::create_element(const char* tag_name, const string_map& at
 	return newTag;
 }
 
-uint_ptr document::add_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
+uint_ptr document::add_font( const font_description& descr, font_metrics* fm )
 {
 	uint_ptr ret = 0;
 
-	if(!name)
-	{
-		name = m_container->get_default_font_name();
-	}
-
-	char strSize[20];
-	t_itoa(size, strSize, 20, 10);
-
-	string key = name;
-	key += ":";
-	key += strSize;
-	key += ":";
-	key += weight;
-	key += ":";
-	key += style;
-	key += ":";
-	key += decoration;
+	std::string key = descr.hash();
 
 	if(m_fonts.find(key) == m_fonts.end())
 	{
-		font_style fs = (font_style) value_index(style, font_style_strings, font_style_normal);
-		int	fw = value_index(weight, font_weight_strings, -1);
-		if(fw >= 0)
-		{
-			switch(fw)
-			{
-			case font_weight_bold:
-				fw = 700;
-				break;
-			case font_weight_bolder:
-				fw = 600;
-				break;
-			case font_weight_lighter:
-				fw = 300;
-				break;
-			case font_weight_normal:
-				fw = 400;
-				break;
-			}
-		} else
-		{
-			fw = atoi(weight);
-			if(fw < 100)
-			{
-				fw = 400;
-			}
-		}
+		font_item fi = {0, {}};
 
-		unsigned int decor = 0;
-
-		if(decoration)
-		{
-			std::vector<string> tokens;
-			split_string(decoration, tokens, " ");
-			for(auto & token : tokens)
-			{
-				if(!t_strcasecmp(token.c_str(), "underline"))
-				{
-					decor |= font_decoration_underline;
-				} else if(!t_strcasecmp(token.c_str(), "line-through"))
-				{
-					decor |= font_decoration_linethrough;
-				} else if(!t_strcasecmp(token.c_str(), "overline"))
-				{
-					decor |= font_decoration_overline;
-				}
-			}
-		}
-
-		font_item fi= {0, {}};
-
-		fi.font = m_container->create_font(name, size, fw, fs, decor, &fi.metrics);
+		fi.font = m_container->create_font(descr, this, &fi.metrics);
 		m_fonts[key] = fi;
 		ret = fi.font;
 		if(fm)
@@ -527,29 +462,14 @@ uint_ptr document::add_font( const char* name, int size, const char* weight, con
 	return ret;
 }
 
-uint_ptr document::get_font( const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm )
+uint_ptr document::get_font( const font_description& descr, font_metrics* fm )
 {
-	if(!size)
+	if(!descr.size)
 	{
 		return 0;
 	}
-	if(!name)
-	{
-		name = m_container->get_default_font_name();
-	}
 
-	char strSize[20];
-	t_itoa(size, strSize, 20, 10);
-
-	string key = name;
-	key += ":";
-	key += strSize;
-	key += ":";
-	key += weight;
-	key += ":";
-	key += style;
-	key += ":";
-	key += decoration;
+	auto key = descr.hash();
 
 	auto el = m_fonts.find(key);
 
@@ -561,7 +481,7 @@ uint_ptr document::get_font( const char* name, int size, const char* weight, con
 		}
 		return el->second.font;
 	}
-	return add_font(name, size, weight, style, decoration, fm);
+	return add_font(descr, fm);
 }
 
 int document::render( int max_width, render_type rt )
@@ -744,9 +664,9 @@ bool document::on_mouse_over( int x, int y, int client_x, int client_y, position
 		}
 		cursor = m_over_element->css().get_cursor();
 	}
-	
+
 	m_container->set_cursor(cursor.c_str());
-	
+
 	if(state_was_changed)
 	{
 		m_container->on_mouse_event(m_over_element, mouse_event_enter);
@@ -1136,7 +1056,7 @@ void document::append_children_from_string(element& parent, const char* str)
 		child->compute_styles();
 
 		// Now the m_tabular_elements is filled with tabular elements.
-		// We have to check the tabular elements for missing table elements 
+		// We have to check the tabular elements for missing table elements
 		// and create the anonymous boxes in visual table layout
 		fix_tables_layout();
 
