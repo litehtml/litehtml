@@ -16,7 +16,7 @@ namespace litehtml
 		string	text;
 		string	baseurl;
 		string	media;
-		
+
 		css_text() = default;
 
 		css_text(const char* txt, const char* url, const char* media_str)
@@ -60,6 +60,7 @@ namespace litehtml
 		litehtml::size						m_content_size;
 		position::vector					m_fixed_boxes;
 		element::ptr						m_over_element;
+		element::ptr						m_active_element;
 		std::list<shared_ptr<render_item>>	m_tabular_elements;
 		media_query_list_list::vector		m_media_lists;
 		media_features						m_media;
@@ -87,6 +88,7 @@ namespace litehtml
 		bool							on_mouse_over(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
 		bool							on_lbutton_down(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
 		bool							on_lbutton_up(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
+		bool							on_button_cancel(position::vector& redraw_boxes);
 		bool							on_mouse_leave(position::vector& redraw_boxes);
 		element::ptr					create_element(const char* tag_name, const string_map& attributes);
 		element::ptr					root();
@@ -109,7 +111,7 @@ namespace litehtml
 			document_container*  container,
 			const string&        master_styles = litehtml::master_css,
 			const string&        user_styles = "");
-	
+
 	private:
 		uint_ptr	add_font(const char* name, int size, const char* weight, const char* style, const char* decoration, font_metrics* fm);
 
