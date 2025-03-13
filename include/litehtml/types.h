@@ -50,10 +50,36 @@ namespace litehtml
 		limited_quirks_mode
 	};
 
-	const unsigned int font_decoration_none			= 0x00;
-	const unsigned int font_decoration_underline	= 0x01;
-	const unsigned int font_decoration_linethrough	= 0x02;
-	const unsigned int font_decoration_overline		= 0x04;
+	#define  style_text_decoration_line_strings		"none;underline;overline;line-through"
+
+	enum text_decoration_line
+	{
+		text_decoration_line_none			= 0x00,
+		text_decoration_line_underline		= 0x01,
+		text_decoration_line_overline		= 0x02,
+		text_decoration_line_line_through	= 0x04,
+	};
+
+	#define  style_text_decoration_style_strings	"solid;double;dotted;dashed;wavy"
+
+	enum text_decoration_style
+	{
+		text_decoration_style_solid,
+		text_decoration_style_double,
+		text_decoration_style_dotted,
+		text_decoration_style_dashed,
+		text_decoration_style_wavy,
+		text_decoration_style_max,
+	};
+
+	#define  style_text_decoration_thickness_strings	"auto;from-font"
+
+	enum text_decoration_thickness
+	{
+		text_decoration_thickness_auto,
+		text_decoration_thickness_from_font,
+	};
+
 
 	using byte = unsigned char;
 	using ucode_t = unsigned int;

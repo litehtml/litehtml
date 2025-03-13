@@ -28,7 +28,7 @@ namespace litehtml
 		bool m_has_var   = false; // css_token_vector, parsing is delayed because of var()
 
 		property_value() {}
-		template<class T> property_value(const T& val, bool important, bool has_var = false) 
+		template<class T> property_value(const T& val, bool important, bool has_var = false)
 			: base(val), m_important(important), m_has_var(has_var) {}
 	};
 
@@ -73,26 +73,29 @@ namespace litehtml
 		void parse_keyword_comma_list(string_id name, const css_token_vector& tokens, bool important);
 		void parse_background_position(const css_token_vector& tokens, bool important);
 		void parse_background_size(const css_token_vector& tokens, bool important);
-		
+
 		void parse_border(const css_token_vector& tokens, bool important, document_container* container);
 		void parse_border_side(string_id name, const css_token_vector& tokens, bool important, document_container* container);
 		void parse_border_radius(const css_token_vector& tokens, bool important);
-		
+
 		bool parse_list_style_image(const css_token& tok, string& url);
 		void parse_list_style(const css_token_vector& tokens, string baseurl, bool important);
 
 		void parse_font(css_token_vector tokens, bool important);
-		
+		void parse_text_decoration(const css_token_vector& tokens, bool important, document_container* container);
+		bool parse_text_decoration_color(const css_token& token, bool important, document_container* container);
+		void parse_text_decoration_line(const css_token_vector& tokens, bool important);
+
 		void parse_flex_flow(const css_token_vector& tokens, bool important);
 		void parse_flex(const css_token_vector& tokens, bool important);
 		void parse_align_self(string_id name, const css_token_vector& tokens, bool important);
-		
+
 		void add_parsed_property(string_id name, const property_value& propval);
 		void add_length_property(string_id name, css_token val, string keywords, int options, bool important);
 		template<class T> void add_four_properties(string_id top_name, T val[4], int n, bool important);
 		void remove_property(string_id name, bool important);
 	};
-	
+
 	bool parse_url(const css_token& token, string& url);
 	bool parse_length(const css_token& tok, css_length& length, int options, string keywords = "");
 	bool parse_angle(const css_token& tok, float& angle, bool percents_allowed = false);
