@@ -68,7 +68,9 @@ namespace litehtml
 		text_decoration_style	m_text_decoration_style = text_decoration_style_solid;
 		css_length				m_text_decoration_thickness;
 		web_color				m_text_decoration_color;
-		string					m_text_emphasis;
+		string					m_text_emphasis_style;
+		web_color				m_text_emphasis_color;
+		int						m_text_emphasis_position;
 		font_metrics			m_font_metrics;
 		text_transform			m_text_transform;
 		web_color				m_color;
@@ -285,6 +287,10 @@ namespace litehtml
 		text_decoration_style get_text_decoration_style() const;
 		const css_length& get_text_decoration_thickness() const;
 		const web_color& get_text_decoration_color() const;
+
+		string get_text_emphasis_style() const;
+		web_color get_text_emphasis_color() const;
+		int get_text_emphasis_position() const;
 	};
 
 	inline element_position css_properties::get_position() const
@@ -724,6 +730,21 @@ namespace litehtml
 	inline const web_color& css_properties::get_text_decoration_color() const
 	{
 		return m_text_decoration_color;
+	}
+
+	inline string css_properties::get_text_emphasis_style() const
+	{
+		return m_text_emphasis_style;
+	}
+
+	inline web_color css_properties::get_text_emphasis_color() const
+	{
+		return m_text_emphasis_color;
+	}
+
+	inline int css_properties::get_text_emphasis_position() const
+	{
+		return m_text_emphasis_position;
 	}
 }
 

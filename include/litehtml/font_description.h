@@ -18,6 +18,9 @@ namespace litehtml
 		css_length				decoration_thickness;	// Decoration line thickness in pixels. See predefined values in enumtext_decoration_thickness
 		text_decoration_style	decoration_style = text_decoration_style_solid;	// Decoration line style. See enum text_decoration_style
 		web_color				decoration_color = web_color::current_color;	// Decoration line color
+		std::string				emphasis_style;	// Text emphasis style
+		web_color				emphasis_color = web_color::current_color;	// Text emphasis color
+		int						emphasis_position = text_emphasis_position_over;	// Text emphasis position
 
 		std::string	hash() const
 		{
@@ -30,6 +33,9 @@ namespace litehtml
 			out += ":dt=" + decoration_thickness.to_string();
 			out += ":ds=" + std::to_string(decoration_style);
 			out += ":dc=" + decoration_color.to_string();
+			out += ":ephs=" + emphasis_style;
+			out += ":ephc=" + emphasis_color.to_string();
+			out += ":ephp=" + std::to_string(emphasis_position);
 
 			return out;
 		}
