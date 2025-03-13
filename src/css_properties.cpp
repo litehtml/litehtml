@@ -385,13 +385,13 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	}
 
 	// text-emphasis
-	m_text_emphasis_style = el->get_property<string>(_text_emphasis_style_, true, "unset", offset(m_text_emphasis_style));
+	m_text_emphasis_style = el->get_property<string>(_text_emphasis_style_, true, "", offset(m_text_emphasis_style));
 	m_text_emphasis_position = el->get_property<int>(_text_emphasis_position_, true, text_emphasis_position_over, offset(m_text_emphasis_position));
 	m_text_emphasis_color = get_color_property(el, _text_emphasis_color_, true, web_color::current_color, offset(m_text_emphasis_color));
 
 	if(el->parent())
 	{
-		if(m_text_emphasis_style == "initial" || m_text_emphasis_style == "unset")
+		if(m_text_emphasis_style.empty() || m_text_emphasis_style == "initial" || m_text_emphasis_style == "unset")
 		{
 			m_text_emphasis_style = el->parent()->css().get_text_emphasis_style();
 		}
