@@ -4,3 +4,4 @@
 Standard: c++17
 TabWidth: 4
 UseTab: Always
+IndentWidth: 4

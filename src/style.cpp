@@ -65,6 +65,7 @@ std::map<string_id, string> style::m_valid_values =
 	{ _caption_side_, caption_side_strings },
 
 	{ _text_decoration_style_, style_text_decoration_style_strings },
+	{ _text_emphasis_position_, style_text_emphasis_position_strings },
 };
 
 std::map<string_id, vector<string_id>> shorthands =
@@ -106,6 +107,7 @@ std::map<string_id, vector<string_id>> shorthands =
 	{ _flex_flow_, {_flex_direction_, _flex_wrap_}},
 
 	{ _text_decoration_, {_text_decoration_color_, _text_decoration_line_, _text_decoration_style_, _text_decoration_thickness_}},
+	{ _text_emphasis_, {_text_emphasis_style_, _text_emphasis_color_}},
 };
 
 void style::add(const string& txt, const string& baseurl, document_container* container)
@@ -447,8 +449,20 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 		break;
 
 	case _text_emphasis_:
+		parse_text_emphasis(value, important, container);
+		break;
+
+	case _text_emphasis_style_:
 		str = get_repr(value, 0, -1, true);
 		add_parsed_property(name, property_value(str, important));
+		break;
+
+	case _text_emphasis_color_:
+		parse_text_emphasis_color(val, important, container);
+		break;
+
+	case _text_emphasis_position_:
+		parse_text_emphasis_position(value, important);
 		break;
 
 	//  =============================  FLEX  =============================
@@ -1322,6 +1336,51 @@ void style::parse_text_decoration_line(const css_token_vector& tokens, bool impo
 	add_parsed_property(_text_decoration_line_, property_value(val, important));
 }
 
+void style::parse_text_emphasis(const css_token_vector& tokens, bool important, document_container *container) {
+	string style;
+	for(const auto& token : std::vector(tokens.rbegin(), tokens.rend()))
+	{
+		if(parse_text_emphasis_color(token, important, container)) continue;
+		style.insert(0, token.str + " ");
+	}
+	if (!style.empty())
+	{
+		add_parsed_property(_text_emphasis_style_, property_value(style, important));
+	}
+}
+
+bool style::parse_text_emphasis_color(const css_token &token, bool important, document_container *container)
+{
+	web_color _color;
+	if(parse_color(token, _color, container))
+	{
+		add_parsed_property(_text_emphasis_color_, property_value(_color, important));
+		return true;
+	}
+	if(token.type == IDENT && value_in_list(token.ident(), "auto;currentcolor"))
+	{
+		add_parsed_property(_text_emphasis_color_, property_value(web_color::current_color, important));
+		return true;
+	}
+	return false;
+}
+
+void style::parse_text_emphasis_position(const css_token_vector &tokens, bool important)
+{
+	int val = 0;
+	for(const auto& token : tokens)
+	{
+		if(token.type == IDENT)
+		{
+			int idx = value_index(token.ident(), style_text_emphasis_position_strings);
+			if(idx >= 0)
+			{
+				val |= 1 << (idx - 1);
+			}
+		}
+	}
+	add_parsed_property(_text_emphasis_position_, property_value(val, important));
+}
 
 // https://developer.mozilla.org/en-US/docs/Web/CSS/flex
 // https://drafts.csswg.org/css-flexbox/#flex-property

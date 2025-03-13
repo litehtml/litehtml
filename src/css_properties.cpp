@@ -362,7 +362,6 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	m_font_family		=              el->get_property<string>(    _font_family_,		true, doc->container()->get_default_font_name(),	offset(m_font_family));
 	m_font_weight		=              el->get_property<css_length>(_font_weight_,		true, css_length::predef_value(font_weight_normal), offset(m_font_weight));
 	m_font_style		= (font_style) el->get_property<int>(       _font_style_,		true, font_style_normal,							offset(m_font_style));
-	m_text_emphasis	  =              el->get_property<string>(_text_emphasis_,     true, "none",										offset(m_text_emphasis));
 	bool propagate_decoration = !is_one_of(m_display, display_inline_block, display_inline_table, display_inline_flex) &&
 								m_float == float_none && !is_one_of(m_el_position, element_position_absolute, element_position_fixed);
 
@@ -385,6 +384,23 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 		m_text_decoration_color = web_color::current_color;
 	}
 
+	// text-emphasis
+	m_text_emphasis_style = el->get_property<string>(_text_emphasis_style_, true, "unset", offset(m_text_emphasis_style));
+	m_text_emphasis_position = el->get_property<int>(_text_emphasis_position_, true, text_emphasis_position_over, offset(m_text_emphasis_position));
+	m_text_emphasis_color = get_color_property(el, _text_emphasis_color_, true, web_color::current_color, offset(m_text_emphasis_color));
+
+	if(el->parent())
+	{
+		if(m_text_emphasis_style == "initial" || m_text_emphasis_style == "unset")
+		{
+			m_text_emphasis_style = el->parent()->css().get_text_emphasis_style();
+		}
+		if(m_text_emphasis_color == web_color::current_color)
+		{
+			m_text_emphasis_color = el->parent()->css().get_text_emphasis_color();
+		}
+		m_text_emphasis_position |= el->parent()->css().get_text_emphasis_position();
+	}
 
 	if(m_font_weight.is_predefined())
 	{
@@ -424,6 +440,9 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	descr.decoration_thickness	= m_text_decoration_thickness;
 	descr.decoration_style		= m_text_decoration_style;
 	descr.decoration_color		= m_text_decoration_color;
+	descr.emphasis_style		= m_text_emphasis_style;
+	descr.emphasis_color		= m_text_emphasis_color;
+	descr.emphasis_position		= m_text_emphasis_position;
 
 	m_font = doc->get_font(descr, &m_font_metrics);
 }
