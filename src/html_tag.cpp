@@ -816,7 +816,7 @@ bool litehtml::html_tag::on_lbutton_down()
 	return ret;
 }
 
-bool litehtml::html_tag::on_lbutton_up()
+bool litehtml::html_tag::on_lbutton_up(bool is_click)
 {
 	bool ret = false;
 
@@ -830,7 +830,7 @@ bool litehtml::html_tag::on_lbutton_up()
 		el = el->parent();
 	}
 
-	on_click();
+	if (is_click) on_click();
 
 	return ret;
 }
