@@ -1343,6 +1343,7 @@ void style::parse_text_emphasis(const css_token_vector& tokens, bool important, 
 		if(parse_text_emphasis_color(token, important, container)) continue;
 		style.insert(0, token.str + " ");
 	}
+	style = trim(style);
 	if (!style.empty())
 	{
 		add_parsed_property(_text_emphasis_style_, property_value(style, important));
