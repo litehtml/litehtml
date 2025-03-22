@@ -83,12 +83,3 @@ std::shared_ptr<litehtml::render_item> litehtml::el_image::create_render_item(co
 	ret->parent(parent_ri);
 	return ret;
 }
-
-void litehtml::el_image::on_click() {
-    const char* src = get_attr("src");
-
-    if(src)
-    {
-        get_document()->container()->on_image_click(src, shared_from_this());
-    }
-}

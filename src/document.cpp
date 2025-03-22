@@ -767,6 +767,7 @@ bool document::on_button_cancel(position::vector& redraw_boxes) {
     {
         return false;
     }
+	m_active_element = nullptr;
     if(m_over_element)
     {
         if(m_over_element->on_mouse_leave())

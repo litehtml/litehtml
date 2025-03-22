@@ -12,7 +12,6 @@ namespace litehtml
 	public:
 		el_image(const document::ptr& doc);
 
-        void	on_click() override;
 		bool	is_replaced() const override;
 		void	parse_attributes() override;
 		void	compute_styles(bool recursive = true) override;
