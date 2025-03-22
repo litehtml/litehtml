@@ -94,7 +94,7 @@ namespace litehtml
 		virtual bool				on_mouse_over();
 		virtual bool				on_mouse_leave();
 		virtual bool				on_lbutton_down();
-		virtual bool				on_lbutton_up();
+		virtual bool				on_lbutton_up(bool is_click = true);
 		virtual void				on_click();
 		virtual bool				set_pseudo_class(string_id cls, bool add);
 		virtual bool				set_class(const char* pclass, bool add);
