@@ -31,6 +31,7 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
 		{
 			draw_pixbuf((cairo_t*) hdc, img, marker.pos.x, marker.pos.y, cairo_image_surface_get_width(img),
 						cairo_image_surface_get_height(img));
+			cairo_surface_destroy(img);
 		}
 	} else
 	{
