@@ -61,7 +61,7 @@ namespace litehtml
 		bool				on_mouse_over() override;
 		bool				on_mouse_leave() override;
 		bool				on_lbutton_down() override;
-		bool				on_lbutton_up() override;
+		bool				on_lbutton_up(bool is_click) override;
 		void				on_click() override;
 		bool				set_pseudo_class(string_id cls, bool add) override;
 		bool				set_class(const char* pclass, bool add) override;

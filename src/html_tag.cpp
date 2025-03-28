@@ -816,7 +816,7 @@ bool litehtml::html_tag::on_lbutton_down()
 	return ret;
 }
 
-bool litehtml::html_tag::on_lbutton_up()
+bool litehtml::html_tag::on_lbutton_up(bool is_click)
 {
 	bool ret = false;
 
@@ -830,7 +830,7 @@ bool litehtml::html_tag::on_lbutton_up()
 		el = el->parent();
 	}
 
-	on_click();
+	if (is_click) on_click();
 
 	return ret;
 }
@@ -839,10 +839,13 @@ void litehtml::html_tag::on_click()
 {
 	if (!is_root())
 	{
-		element::ptr el_parent = parent();
-		if (el_parent)
+		if(!get_document()->container()->on_element_click(shared_from_this()))
 		{
-			el_parent->on_click();
+			element::ptr el_parent = parent();
+			if (el_parent)
+			{
+				el_parent->on_click();
+			}
 		}
 	}
 }

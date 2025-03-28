@@ -317,7 +317,7 @@ string litehtml::element::get_counters_value(const string_vector& parameters)
 		litehtml::trim(delims, "\"'");
 
 		string_vector values;
-		
+
 		element::ptr current = shared_from_this();
 		while (current != nullptr)
 		{
@@ -362,7 +362,7 @@ bool litehtml::element::find_counter(const string_id& counter_name_id, std::map<
 		}
 		current = current->parent();
 	}
-	
+
 	return false;
 }
 
@@ -451,7 +451,7 @@ bool element::is_text() const										LITEHTML_RETURN_FUNC(false)
 bool element::on_mouse_over()										LITEHTML_RETURN_FUNC(false)
 bool element::on_mouse_leave()										LITEHTML_RETURN_FUNC(false)
 bool element::on_lbutton_down()										LITEHTML_RETURN_FUNC(false)
-bool element::on_lbutton_up()										LITEHTML_RETURN_FUNC(false)
+bool element::on_lbutton_up(const bool /*is_click*/)										LITEHTML_RETURN_FUNC(false)
 bool element::set_pseudo_class( string_id /*cls*/, bool /*add*/ )			LITEHTML_RETURN_FUNC(false)
 bool element::set_class( const char* /*pclass*/, bool /*add*/ )				LITEHTML_RETURN_FUNC(false)
 bool element::is_replaced() const									LITEHTML_RETURN_FUNC(false)
