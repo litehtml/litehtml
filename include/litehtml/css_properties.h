@@ -225,10 +225,10 @@ namespace litehtml
 		list_style_position get_list_style_position() const;
 		void set_list_style_position(list_style_position mListStylePosition);
 
-		string get_list_style_image() const;
+		const string& get_list_style_image() const;
 		void set_list_style_image(const string& url);
 
-		string get_list_style_image_baseurl() const;
+		const string& get_list_style_image_baseurl() const;
 		void set_list_style_image_baseurl(const string& url);
 
 		const background &get_bg() const;
@@ -249,10 +249,10 @@ namespace litehtml
 		web_color get_color() const;
 		void set_color(web_color color);
 
-		string get_cursor() const;
+		const string& get_cursor() const;
 		void set_cursor(const string& cursor);
 
-		string get_content() const;
+		const string& get_content() const;
 		void set_content(const string& content);
 
 		border_collapse get_border_collapse() const;
@@ -546,10 +546,10 @@ namespace litehtml
 		m_list_style_position = mListStylePosition;
 	}
 
-	inline string css_properties::get_list_style_image() const { return m_list_style_image; }
+	inline const string& css_properties::get_list_style_image() const { return m_list_style_image; }
 	inline void css_properties::set_list_style_image(const string& url) { m_list_style_image = url; }
 
-	inline string css_properties::get_list_style_image_baseurl() const { return m_list_style_image_baseurl; }
+	inline const string& css_properties::get_list_style_image_baseurl() const { return m_list_style_image_baseurl; }
 	inline void css_properties::set_list_style_image_baseurl(const string& url) { m_list_style_image_baseurl = url; }
 
 	inline const background &css_properties::get_bg() const
@@ -605,10 +605,10 @@ namespace litehtml
 	inline web_color css_properties::get_color() const { return m_color; }
 	inline void css_properties::set_color(web_color color) { m_color = color; }
 
-	inline string css_properties::get_cursor() const { return m_cursor; }
+	inline const string& css_properties::get_cursor() const { return m_cursor; }
 	inline void css_properties::set_cursor(const string& cursor) { m_cursor = cursor; }
 
-	inline string css_properties::get_content() const { return m_content; }
+	inline const string& css_properties::get_content() const { return m_content; }
 	inline void css_properties::set_content(const string& content) { m_content = content; }
 
 	inline border_collapse css_properties::get_border_collapse() const
