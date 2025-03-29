@@ -80,6 +80,16 @@ namespace litehtml
 		text_decoration_thickness_from_font,
 	};
 
+	#define  style_text_emphasis_position_strings	"over;under;left;right"
+
+	enum text_emphasis_position
+	{
+		text_emphasis_position_over		= 0x00,
+		text_emphasis_position_under	= 0x01,
+		text_emphasis_position_left		= 0x02,
+		text_emphasis_position_right	= 0x04,
+	};
+
 
 	using byte = unsigned char;
 	using ucode_t = unsigned int;
