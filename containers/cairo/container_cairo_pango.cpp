@@ -1,3 +1,4 @@
+#include <array>
 #include "container_cairo_pango.h"
 
 container_cairo_pango::container_cairo_pango()
