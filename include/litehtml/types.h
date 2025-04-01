@@ -129,23 +129,19 @@ namespace litehtml
 	{
 		using vector = std::vector<position>;
 
-		int	x;
-		int	y;
-		int	width;
-		int	height;
+		int	x = 0;
+		int	y = 0;
+		int	width = 0;
+		int	height = 0;
 
-		position()
-		{
-			x = y = width = height = 0;
-		}
+		position() = default;
 
-		position(int x, int y, int width, int height)
-		{
-			this->x			= x;
-			this->y			= y;
-			this->width		= width;
-			this->height	= height;
-		}
+		position(int _x, int _y, int _width, int _height) :
+			x(_x),
+			y(_y),
+			width(_width),
+			height(_height)
+		{}
 
 		int right()		const		{ return x + width;		}
 		int bottom()	const		{ return y + height;	}
@@ -178,12 +174,18 @@ namespace litehtml
 			height	= sz.height;
 		}
 
+		bool operator==(const position& val)
+		{
+			return x == val.x && y == val.y && width == val.width && height == val.height;
+		}
+
 		void move_to(int _x, int _y)
 		{
 			x = _x;
 			y = _y;
 		}
 
+		[[nodiscard]]
 		bool does_intersect(const position* val) const
 		{
 			if(!val) return true;
@@ -200,22 +202,41 @@ namespace litehtml
 				val->top()		<= bottom()			);
 		}
 
-		bool empty() const
+		[[nodiscard]]
+		position intersect(const position& src) const
 		{
-			if(!width && !height)
+			position dest;
+			int dest_x = std::max(src.x, x);
+			int dest_y = std::max(src.y, y);
+			int dest_x2 = std::min(src.right(), right());
+			int dest_y2 = std::min(src.bottom(), bottom());
+
+			if (dest_x2 > dest_x && dest_y2 > dest_y)
 			{
-				return true;
+				dest.x = dest_x;
+				dest.y = dest_y;
+				dest.width = dest_x2 - dest_x;
+				dest.height = dest_y2 - dest_y;
 			}
-			return false;
+			else
+			{
+				dest.width = 0;
+				dest.height = 0;
+			}
+
+			return dest;
 		}
 
+		[[nodiscard]]
+		bool empty() const
+		{
+			return !width && !height;
+		}
+
+		[[nodiscard]]
 		bool is_point_inside(int _x, int _y) const
 		{
-			if(_x >= left() && _x < right() && _y >= top() && _y < bottom())
-			{
-				return true;
-			}
-			return false;
+			return (_x >= left() && _x < right() && _y >= top() && _y < bottom());
 		}
 	};
 
