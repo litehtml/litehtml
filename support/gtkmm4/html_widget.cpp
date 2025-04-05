@@ -131,8 +131,8 @@ void html_widget::snapshot_vfunc(const Glib::RefPtr<Gtk::Snapshot>& snapshot)
 
 void html_widget::get_client_rect(litehtml::position& client) const
 {
-	client.x		= m_draw_buffer.get_left();
-	client.y		= m_draw_buffer.get_top();
+	client.x		= 0;
+	client.y		= 0;
 	client.width	= m_draw_buffer.get_width();
 	client.height	= m_draw_buffer.get_height();
 }

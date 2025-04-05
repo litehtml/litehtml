@@ -3,7 +3,6 @@
 #include <gtkmm.h>
 #include "html_host.h"
 #include "web_page.h"
-#include "http_requests_pool.h"
 #include "web_history.h"
 #include "draw_buffer.h"
 #include <queue>

@@ -23,8 +23,22 @@ void litebrowser::text_file::on_page_downloaded(u_int32_t http_status,
 
 void litebrowser::web_page::open(const std::string &url, const std::string &hash)
 {
-	m_url = url;
-	m_base_url = url;
+	litehtml::url l_url(url);
+
+	if(!l_url.has_scheme())
+	{
+		if(url.front() != '/')
+		{
+			m_url = "http://" + url;
+		} else
+		{
+			m_url = url;
+		}
+	} else
+	{
+		m_url = url;
+	}
+	m_base_url = m_url;
 	m_hash = hash;
 
 	auto data = std::make_shared<text_file>();

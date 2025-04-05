@@ -20,6 +20,7 @@ _build/
 _build32/
 _build64/
 *.inc
+.cache/
 
 # Test results
 *-FAILED.png
