@@ -1,7 +1,8 @@
 #ifndef LH_EL_TEXT_H
 #define LH_EL_TEXT_H
 
-#include "html_tag.h"
+#include "element.h"
+#include "document.h"
 
 namespace litehtml
 {

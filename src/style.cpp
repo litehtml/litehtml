@@ -2,6 +2,9 @@
 #include "style.h"
 #include "css_parser.h"
 #include "internal.h"
+#include <set>
+#include "html_tag.h"
+#include "document.h"
 
 
 // All functions here assume that whitespace have been removed.

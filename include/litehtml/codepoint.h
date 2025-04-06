@@ -30,10 +30,6 @@
 #ifndef LITEHTML_CODEPOINT_H__
 #define LITEHTML_CODEPOINT_H__
 
-#include <string>
-
-#include "os_types.h"
-
 namespace litehtml {
 
 bool is_ascii_codepoint(char c);

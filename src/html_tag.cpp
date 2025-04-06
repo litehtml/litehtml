@@ -3,6 +3,7 @@
 #include "html.h"
 #include "html_tag.h"
 #include "document.h"
+#include "html_microsyntaxes.h"
 #include "iterators.h"
 #include "stylesheet.h"
 #include "table.h"
@@ -10,6 +11,7 @@
 #include "line_box.h"
 #include "render_item.h"
 #include "internal.h"
+#include "document_container.h"
 
 namespace litehtml
 {

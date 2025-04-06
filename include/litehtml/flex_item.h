@@ -1,8 +1,8 @@
 #ifndef LITEHTML_FLEX_ITEM_H
 #define LITEHTML_FLEX_ITEM_H
 
-#include <functional>
 #include "formatting_context.h"
+#include "render_item.h"
 
 namespace litehtml
 {

@@ -1,7 +1,7 @@
 #ifndef LH_DOCUMENT_H
 #define LH_DOCUMENT_H
 
-#include "style.h"
+#include "stylesheet.h"
 #include "types.h"
 #include "master_css.h"
 #include "encodings.h"
@@ -61,8 +61,8 @@ namespace litehtml
 		litehtml::size						m_size;
 		litehtml::size						m_content_size;
 		position::vector					m_fixed_boxes;
-		element::ptr						m_over_element;
-		element::ptr						m_active_element;
+		std::shared_ptr<element>			m_over_element;
+		std::shared_ptr<element>			m_active_element;
 		std::list<shared_ptr<render_item>>	m_tabular_elements;
 		media_query_list_list::vector		m_media_lists;
 		media_features						m_media;
@@ -92,8 +92,8 @@ namespace litehtml
 		bool							on_lbutton_up(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
 		bool							on_button_cancel(position::vector& redraw_boxes);
 		bool							on_mouse_leave(position::vector& redraw_boxes);
-		element::ptr					create_element(const char* tag_name, const string_map& attributes);
-		element::ptr					root();
+		std::shared_ptr<element>		create_element(const char* tag_name, const string_map& attributes);
+		std::shared_ptr<element>		root();
 		std::shared_ptr<render_item>	root_render();
 		void							get_fixed_boxes(position::vector& fixed_boxes);
 		void							add_fixed_box(const position& pos);
@@ -102,7 +102,7 @@ namespace litehtml
 		bool							lang_changed();
 		bool							match_lang(const string& lang);
 		void							add_tabular(const std::shared_ptr<render_item>& el);
-		element::const_ptr				get_over_element() const { return m_over_element; }
+		std::shared_ptr<const element>	get_over_element() const { return m_over_element; }
 
 		void							append_children_from_string(element& parent, const char* str);
 		void							dump(dumper& cout);
@@ -125,7 +125,7 @@ namespace litehtml
 		void fix_table_parent(const std::shared_ptr<render_item> & el_ptr, style_display disp, const char* disp_str);
 	};
 
-	inline element::ptr document::root()
+	inline std::shared_ptr<element> document::root()
 	{
 		return m_root;
 	}

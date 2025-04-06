@@ -1,8 +1,7 @@
-#include "html.h"
 #include "render_item.h"
 #include "document.h"
 #include <typeinfo>
-#include <utf8_strings.h>
+#include "document_container.h"
 
 litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
         m_element(std::move(_src_el)),

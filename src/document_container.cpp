@@ -1,4 +1,4 @@
-#include "html.h"
+#include "utf8_strings.h"
 #include "document_container.h"
 
 void litehtml::document_container::split_text(const char* text, const std::function<void(const char*)>& on_word, const std::function<void(const char*)>& on_space)

@@ -1,4 +1,5 @@
 #include "html.h"
+#include "utf8_strings.h"
 #include "css_tokenizer.h"
 
 namespace litehtml
@@ -118,7 +119,7 @@ void css_tokenizer::consume_comments()
 		if (str[index] == '/' && str[index + 1] == '*')
 		{
 			int i = (int)str.find("*/", index + 2);
-			
+
 			if (i != -1)
 				index = i + 2;
 			else
@@ -199,7 +200,7 @@ css_token css_tokenizer::consume_string_token(int ending_code_point)
 			// Otherwise, if the next input code point is a newline, consume it.
 			else if (str[index] == '\n')
 				index++;
-			// Otherwise, (the stream starts with a valid escape) consume an escaped code point and 
+			// Otherwise, (the stream starts with a valid escape) consume an escaped code point and
 			// append the returned code point to the <string-token>’s value.
 			else
 				append_char(token.str, consume_escaped_code_point());
@@ -224,7 +225,7 @@ bool css_tokenizer::would_start_ident_sequence(three_chars chars)
 
 	if (c1 == '-')
 	{
-		// If the second code point is an ident-start code point or a U+002D HYPHEN-MINUS, or 
+		// If the second code point is an ident-start code point or a U+002D HYPHEN-MINUS, or
 		// the second and third code points are a valid escape, return true. Otherwise, return false.
 		return is_ident_start_code_point(c2) || c2 == '-' || (c2 == '\\' && c3 != '\n');
 	}
@@ -291,13 +292,13 @@ double css_tokenizer::convert_string_to_number(const string& str)
 
 	// Divide the string into seven components, in order from left to right:
 
-	// 1. A sign: a single U+002B (+) or U+002D (-), or the empty string. 
+	// 1. A sign: a single U+002B (+) or U+002D (-), or the empty string.
 	//    Let s be the number -1 if the sign is U+002D (-); otherwise, let s be the number 1.
 	double s = 1;
 	if (*p == '-') s = -1, p++;
 	else if (*p == '+') p++;
 
-	// 2. An integer part: zero or more digits. If there is at least one digit, let i be the number formed by 
+	// 2. An integer part: zero or more digits. If there is at least one digit, let i be the number formed by
 	//    interpreting the digits as a base-10 integer; otherwise, let i be the number 0.
 	double i = 0;
 	while (is_digit(*p)) i = i * 10 + digit_value(*p++);
@@ -305,8 +306,8 @@ double css_tokenizer::convert_string_to_number(const string& str)
 	// 3. A decimal point: a single U+002E (.), or the empty string.
 	if (*p == '.') p++;
 
-	// 4. A fractional part: zero or more digits. If there is at least one digit, let f be the number formed by 
-	//    interpreting the digits as a base-10 integer and d be the number of digits; 
+	// 4. A fractional part: zero or more digits. If there is at least one digit, let f be the number formed by
+	//    interpreting the digits as a base-10 integer and d be the number of digits;
 	//    otherwise, let f and d be the number 0.
 	double f = 0, d = 0;
 	while (is_digit(*p)) f = f * 10 + digit_value(*p++), d++;
@@ -314,13 +315,13 @@ double css_tokenizer::convert_string_to_number(const string& str)
 	// 5. An exponent indicator: a single U+0045 (E) or U+0065 (e), or the empty string.
 	if (*p == 'e' || *p == 'E') p++;
 
-	// 6. An exponent sign: a single U+002B (+) or U+002D (-), or the empty string. 
+	// 6. An exponent sign: a single U+002B (+) or U+002D (-), or the empty string.
 	//    Let t be the number -1 if the sign is U+002D (-); otherwise, let t be the number 1.
 	double t = 1;
 	if (*p == '-') t = -1, p++;
 	else if (*p == '+') p++;
 
-	// 7. An exponent: zero or more digits. If there is at least one digit, let e be the number formed by 
+	// 7. An exponent: zero or more digits. If there is at least one digit, let e be the number formed by
 	//    interpreting the digits as a base-10 integer; otherwise, let e be the number 0.
 	double e = 0;
 	while (is_digit(*p)) e = e * 10 + digit_value(*p++);
@@ -358,11 +359,11 @@ double css_tokenizer::consume_number(css_number_type& type)
 			append_char(repr, str[index++]);
 	}
 
-	// 5. If the next 2 or 3 input code points are U+0045 (E) or U+0065 (e), 
+	// 5. If the next 2 or 3 input code points are U+0045 (E) or U+0065 (e),
 	//    optionally followed by U+002D (-) or U+002B (+), followed by a digit, then:
 	bool a = lowcase(str[index]) == 'e' && is_one_of(str[index+1], '+', '-') && is_digit(str[index+2]);
 	bool b = lowcase(str[index]) == 'e' && is_digit(str[index+1]);
-			 
+
 	if (a || b)
 	{
 		// 1. Consume them.
@@ -394,7 +395,7 @@ css_token css_tokenizer::consume_numeric_token()
 	// If the next 3 input code points would start an ident sequence, then:
 	if (would_start_ident_sequence(peek_chars()))
 	{
-		// 1. Create a <dimension-token> with the same value and type flag as number, and 
+		// 1. Create a <dimension-token> with the same value and type flag as number, and
 		//    a unit set initially to the empty string.
 		css_token token(DIMENSION, number, type);
 
@@ -405,7 +406,7 @@ css_token css_tokenizer::consume_numeric_token()
 		return token;
 	}
 
-	// Otherwise, if the next input code point is U+0025 (%), consume it. 
+	// Otherwise, if the next input code point is U+0025 (%), consume it.
 	// Create a <percentage-token> with the same value as number, and return it.
 	if (str[index] == '%')
 	{
@@ -491,7 +492,7 @@ css_token css_tokenizer::consume_url_token()
 			return {BAD_URL};
 
 		case '\\':
-			// If the stream starts with a valid escape, consume an escaped code point and 
+			// If the stream starts with a valid escape, consume an escaped code point and
 			// append the returned code point to the <url-token>’s value.
 			if (str[index] != '\n')
 				append_char(token.str, consume_escaped_code_point());
@@ -522,7 +523,7 @@ css_token css_tokenizer::consume_ident_like_token()
 	// Consume an ident sequence, and let string be the result.
 	auto string = consume_ident_sequence();
 
-	// If string’s value is an ASCII case-insensitive match for "url", and the next input code point is 
+	// If string’s value is an ASCII case-insensitive match for "url", and the next input code point is
 	// U+0028 ((), consume it.
 	if (lowcase(string) == "url" && str[index] == '(')
 	{
@@ -543,7 +544,7 @@ css_token css_tokenizer::consume_ident_like_token()
 		}
 	}
 
-	// Otherwise, if the next input code point is U+0028 ((), consume it. 
+	// Otherwise, if the next input code point is U+0028 ((), consume it.
 	// Create a <function-token> with its value set to string and return it.
 	else if (str[index] == '(')
 	{
@@ -629,7 +630,7 @@ css_token css_tokenizer::consume_token()
 			index += 2;
 			token.type = CDC;
 		}
-		// Otherwise, if the input stream starts with an ident sequence, reconsume the current input code point, 
+		// Otherwise, if the input stream starts with an ident sequence, reconsume the current input code point,
 		// consume an ident-like token, and return it.
 		else if (would_start_ident_sequence({ ch, next._1, next._2 }))
 		{
@@ -654,7 +655,7 @@ css_token css_tokenizer::consume_token()
 		break;
 
 	case '@':
-		// If the next 3 input code points would start an ident sequence, consume an ident sequence, 
+		// If the next 3 input code points would start an ident sequence, consume an ident sequence,
 		// create an <at-keyword-token> with its value set to the returned value, and return it.
 		if (would_start_ident_sequence(peek_chars()))
 		{
@@ -667,7 +668,7 @@ css_token css_tokenizer::consume_token()
 		break;
 
 	case '\\':
-		// If the input stream starts with a valid escape, reconsume the current input code point, 
+		// If the input stream starts with a valid escape, reconsume the current input code point,
 		// consume an ident-like token, and return it.
 		if (str[index] != '\n')
 		{

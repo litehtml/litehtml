@@ -1,8 +1,9 @@
 #include <cmath>
 
-#include "html.h"
 #include "background.h"
 #include "render_item.h"
+#include "document.h"
+#include "document_container.h"
 
 #ifndef M_PI
 #       define M_PI    3.14159265358979323846
@@ -807,7 +808,7 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 		{
 			if (!color_points.empty())
 			{
-				color_points.back().hint = item.length ? 
+				color_points.back().hint = item.length ?
 					normalize_length(*item.length, line_len) :
 					*item.angle / 360;
 			}

@@ -1,4 +1,3 @@
-#include "html.h"
 #include "render_image.h"
 #include "document.h"
 

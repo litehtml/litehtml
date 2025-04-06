@@ -2,6 +2,8 @@
 #include "media_query.h"
 #include "css_parser.h"
 #include <cassert>
+#include "document.h"
+#include "document_container.h"
 
 
 namespace litehtml
@@ -50,7 +52,7 @@ bool media_feature::check(const media_features& feat) const
 		return compare(feat.height >= feat.width ? _portrait_ : _landscape_);
 	case _aspect_ratio_:
 		// The standard calls 1/0 "a degenerate ratio" https://drafts.csswg.org/css-values-4/#ratio-value,
-		// but it doesn't specify exactly how it behaves in this context: https://drafts.csswg.org/mediaqueries-5/#aspect-ratio. 
+		// but it doesn't specify exactly how it behaves in this context: https://drafts.csswg.org/mediaqueries-5/#aspect-ratio.
 		// Chrome/Firefox work as expected with 1/0, for example when both width and height are nonzero
 		// (aspect-ratio < 1/0) evaluates to true. But they behave the same for 0/0, which is unexpected
 		// (0/0 is NaN, so any comparisons should evaluate to false).
@@ -76,12 +78,12 @@ trilean media_condition::check(const media_features& features) const
 {
 	if (op == _not_)
 		return not m_conditions[0].check(features);
-	
+
 	if (op == _and_)
 	{
 		// https://drafts.csswg.org/mediaqueries/#evaluating
-		// The result is true if the <media-in-parens> child term and all of the <media-in-parens> 
-		// children of the <media-and> child terms are true, false if at least one of these 
+		// The result is true if the <media-in-parens> child term and all of the <media-in-parens>
+		// children of the <media-and> child terms are true, false if at least one of these
 		// <media-in-parens> terms are false, and unknown otherwise.
 		trilean result = True;
 		for (const auto& condition : m_conditions)
@@ -93,8 +95,8 @@ trilean media_condition::check(const media_features& features) const
 	}
 	if (op == _or_)
 	{
-		// The result is false if the <media-in-parens> child term and all of the <media-in-parens> 
-		// children of the <media-or> child terms are false, true if at least one of these 
+		// The result is false if the <media-in-parens> child term and all of the <media-in-parens>
+		// children of the <media-or> child terms are false, true if at least one of these
 		// <media-in-parens> terms are true, and unknown otherwise.
 		trilean result = False;
 		for (const auto& condition : m_conditions)
@@ -126,7 +128,7 @@ trilean media_query::check(const media_features& features) const
 		result = False;
 	else if (m_media_type == media_type_all)
 		result = True;
-	else 
+	else
 		result = (trilean)(m_media_type == features.type);
 
 	if (result == True)
@@ -234,7 +236,7 @@ bool parse_media_query(const css_token_vector& tokens, media_query& mquery, docu
 	bool _not = false;
 	if (ident == "not") index++, _not = true;
 	else if (ident == "only") index++; // ignored  https://drafts.csswg.org/mediaqueries-5/#mq-only
-	
+
 	// <media-type> = <ident> except only, not, and, or, and layer
 	ident = at(tokens, index).ident();
 	if (is_one_of(ident, "", "only", "not", "and", "or", "layer"))
@@ -307,7 +309,7 @@ bool parse_media_in_parens(const css_token& token, media_in_parens& media_in_par
 		media_in_parens = unknown();
 		return true;
 	}
-	
+
 	if (token.type != ROUND_BLOCK) return false;
 	const css_token_vector& tokens = token.value;
 
@@ -341,7 +343,7 @@ struct mf_info
 	string_id			type		= empty_id; // range, discrete
 	string_id			value_type	= empty_id; // length, ratio, resolution, integer, keyword
 	vector<string_id>	keywords    = {};       // default value is specified here to get rid of gcc warning "missing initializer for member"
-	
+
 	operator bool() { return type != empty_id; }
 };
 
@@ -404,7 +406,7 @@ bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 	case _integer_:
 		// nothing to convert, just verify
 		return val[0].type == NUMBER && val[0].n.number_type == css_number_integer && val[1].type == 0;
-	
+
 	case _length_:
 	{
 		if (val[1].type != 0) return false;
@@ -416,7 +418,7 @@ bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 		val[0].n.number = length.val();
 		return true;
 	}
-	
+
 	case _resolution_: // https://drafts.csswg.org/css-values-4/#resolution
 		if (val[1].type != 0) return false;
 		if (val[0].type == DIMENSION)
@@ -441,7 +443,7 @@ bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 		}
 		// Note: <resolution> doesn't allow unitless zero
 		return false;
-	
+
 	case _ratio_: // https://drafts.csswg.org/css-values-4/#ratio  <ratio> = <number [0,∞]> [ / <number [0,∞]> ]?
 		if (val[0].type == NUMBER && val[0].n.number >= 0 &&
 			((val[1].type == NUMBER && val[1].n.number >= 0) || val[1].type == 0))
@@ -460,7 +462,7 @@ bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 		val[0] = css_token(NUMBER, (float)ident);
 		return true;
 	}
-	
+
 	default:
 		return false;
 	}
@@ -546,7 +548,7 @@ bool parse_media_feature(const css_token& token, media_feature& result, document
 		int index = 2;
 		if (!parse_mf_value(tokens, index, val) || index != (int)tokens.size())
 			return false;
-		
+
 		media_feature mf = {tokens[0].ident()};
 		if (!mf.verify_and_convert_units(_plain_, val, nullptr, doc)) return false;
 		result = mf;
@@ -563,9 +565,9 @@ bool parse_mf_value(const css_token_vector& tokens, int& index, css_token val[2]
 	const css_token& a = at(tokens, index);
 	const css_token& b = at(tokens, index + 1);
 	const css_token& c = at(tokens, index + 2);
-	
+
 	if (!is_one_of(a.type, NUMBER, DIMENSION, IDENT)) return false;
-	
+
 	if (a.type == NUMBER && a.n.number >= 0 && b.ch == '/' &&
 		c.type == NUMBER && c.n.number >= 0)
 	{

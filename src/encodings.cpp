@@ -1,4 +1,6 @@
 #include "html.h"
+#include "os_types.h"
+#include "utf8_strings.h"
 #include "encodings.h"
 #include <cassert>
 
@@ -1888,7 +1890,7 @@ loop:
 		// 1.
 		index = (int)str.find_first_of(" \t\r\n\f>", index);
 		if (index == -1 || end_condition(index)) throw 0; // abort prescan
-			
+
 		// 2.
 		string tmp;
 		while (prescan_get_attribute(str, index, tmp, tmp)) {}

@@ -2,6 +2,8 @@
 #include "css_selector.h"
 #include "css_parser.h"
 #include "internal.h"
+#include "document.h"
+#include <set>
 
 namespace litehtml
 {
@@ -20,7 +22,7 @@ void css_selector::calc_specificity()
 		} else
 		{
 			m_specificity.c++;
-		}	
+		}
 	}
 	if(m_left)
 	{
@@ -273,17 +275,17 @@ bool to_int(string s, int& number)
 	const char* ptr = s.c_str();
 	char* end;
 	int n = strtol(ptr, &end, 10);
-	
+
 	if (end != ptr + s.size())
 		return false;
-	
+
 	number = n;
 	return true;
 }
 
 // https://www.w3.org/TR/css-syntax-3/#anb-syntax
 // I don't use the formal grammar because it creates a lot of unnecessary complexity.
-// Deviations from the standard: 
+// Deviations from the standard:
 // * escapes are not allowed
 // * comments are allowed inside numbers and identifiers: ev/**/en
 an_b parse_an_b(string s)
@@ -336,9 +338,9 @@ int find_of_keyword(const css_token_vector& tokens)
 }
 
 // :nth-child(An+B [of S]?)      https://www.w3.org/TR/selectors-4/#the-nth-child-pseudo
-// :nth-last-child(An+B [of S]?) 
+// :nth-last-child(An+B [of S]?)
 //    where S is a forgiving <complex-selector-list>
-// 
+//
 // :nth-of-type(An+B)            https://www.w3.org/TR/selectors-4/#the-nth-of-type-pseudo
 // :nth-last-of-type(An+B)
 //
@@ -356,7 +358,7 @@ css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword, 
 
 		// The standard doesn't specify if pseudo-elements are allowed in this selector list.
 		// But specifying them will make selector match nothing anyway because
-		// "The structural pseudo-classes only apply to elements in the document tree; 
+		// "The structural pseudo-classes only apply to elements in the document tree;
 		// they must never match pseudo-elements." https://www.w3.org/TR/selectors-4/#structural-pseudos
 		// So I parse as if they were not allowed.
 		selector.selector_list = parse_selector_list(selector_tokens, forgiving_mode + forbid_pseudo_elements, mode);
@@ -374,10 +376,10 @@ css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword, 
 
 	an_b x = parse_an_b(str);
 	if (!x.valid) return {};
-	
+
 	selector.a = x.a;
 	selector.b = x.b;
-	
+
 	return selector;
 }
 
@@ -540,7 +542,7 @@ css_attribute_selector parse_pseudo_element(const css_token_vector& tokens, int&
 	{
 		if (!is_one_of(b.ident(), "before", "after")) // first-line/letter are not supported
 			return {};
-	
+
 		index += 2;
 		return {select_pseudo_element, b.ident()};
 	}
@@ -575,7 +577,7 @@ css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens
 	// <subclass-selector>*
 	while (css_attribute_selector sel = parse_subclass_selector(tokens, index, mode))
 		selector->m_attrs.push_back(sel);
-	
+
 	// [ <pseudo-element-selector> <pseudo-class-selector>* ]*
 	while (true)
 	{
@@ -613,7 +615,7 @@ int parse_combinator(const css_token_vector& tokens, int& index)
 		skip_whitespace(tokens, index);
 		return tok.ch;
 	}
-	
+
 	return ws ? ' ' : 0;
 }
 
@@ -662,10 +664,10 @@ bool has_selector(const css_selector& selector, attr_select_type type, const str
 		if (sel.type == type && (name == "" || equal_i(_s(sel.name), name)))
 			return true;
 	}
-	
+
 	if (selector.m_left)
 		return has_selector(*selector.m_left, type, name);
-	
+
 	return false;
 }
 
@@ -691,7 +693,7 @@ css_selector::vector parse_selector_list(const css_token_vector& tokens, int opt
 			// in forgiving mode, ignore the bad selector
 			if (options & forgiving_mode)
 				continue;
-			
+
 			// in strict mode, entire selector-list fails to parse because of one bad selector
 			return {};
 		}

@@ -1,6 +1,9 @@
 #ifndef LH_WEB_COLOR_H
 #define LH_WEB_COLOR_H
 
+#include "css_tokenizer.h"
+#include "types.h"
+
 namespace litehtml
 {
 	class document_container;

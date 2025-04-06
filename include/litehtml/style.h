@@ -1,7 +1,12 @@
 #ifndef LH_STYLE_H
 #define LH_STYLE_H
 
+#include "background.h"
+#include "css_length.h"
+#include "css_position.h"
 #include "css_tokenizer.h"
+#include "gradient.h"
+#include "web_color.h"
 
 namespace litehtml
 {

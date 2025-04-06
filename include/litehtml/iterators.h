@@ -2,7 +2,6 @@
 #define LH_ITERATORS_H
 
 #include "types.h"
-#include <list>
 #include <functional>
 
 namespace litehtml
@@ -45,7 +44,7 @@ namespace litehtml
 		~elements_iterator() = default;
 
         void process(const std::shared_ptr<render_item>& container, const std::function<void (std::shared_ptr<render_item>&, iterator_item_type)>& func);
-	
+
 	private:
 		void next_idx();
 	};

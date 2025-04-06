@@ -1,6 +1,8 @@
 #include "html.h"
 #include "web_color.h"
 #include "css_parser.h"
+#include "os_types.h"
+#include "document_container.h"
 
 namespace litehtml
 {
@@ -18,7 +20,7 @@ struct def_color
 	const char* rgb;
 };
 
-def_color g_def_colors[] = 
+def_color g_def_colors[] =
 {
 	{"transparent","rgba(0, 0, 0, 0)"},
 	{"AliceBlue","#F0F8FF"},
@@ -268,7 +270,7 @@ bool parse_rgb_func(const css_token& tok, web_color& color)
 	int n = (int)list.size();
 	if (!is_one_of(n, 1, 3, 4))
 		return false;
-	
+
 	css_length r, g, b, a(1, css_units_none);
 	// legacy syntax: <percentage>#{3} , <alpha-value>? | <number>#{3} , <alpha-value>?
 	if (n != 1)
@@ -354,18 +356,18 @@ bool parse_hsl_func(const css_token& tok, web_color& color)
 	float lit = l.val();
 	// For historical reasons, if the saturation is less than 0% it is clamped to 0% at parsed-value time, before being converted to an sRGB color.
 	if (sat < 0) sat = 0;
-	
+
 	// Note: Chrome and Firefox treat invalid hsl values differently.
-	// 
-	// Note: at this point, sat is not clamped at 100, and lit is not clamped at all. The standard 
+	//
+	// Note: at this point, sat is not clamped at 100, and lit is not clamped at all. The standard
 	// mentions only clamping sat at 0. As a result, returning rgb values may not be inside [0,1].
 	float r, g, b;
 	hsl_to_rgb(hue, sat, lit, r, g, b);
-	
+
 	r = clamp(r, 0, 1);
 	g = clamp(g, 0, 1);
 	b = clamp(b, 0, 1);
-	
+
 	color = web_color(
 		(byte)round(r * 255),
 		(byte)round(g * 255),
@@ -411,9 +413,9 @@ bool parse_name_color(const css_token& tok, web_color& color, document_container
 // https://drafts.csswg.org/css-color-5/#typedef-color
 bool parse_color(const css_token& tok, web_color& color, document_container* container)
 {
-	return 
-		parse_hash_color(tok, color) || 
-		parse_func_color(tok, color) || 
+	return
+		parse_hash_color(tok, color) ||
+		parse_func_color(tok, color) ||
 		parse_name_color(tok, color, container);
 }
 

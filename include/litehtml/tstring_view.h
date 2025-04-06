@@ -33,8 +33,6 @@
 #include <cstddef>
 #include <ostream>
 
-#include "types.h"
-
 namespace litehtml {
 
 // tstring_view is a string reference type that provides a view into a string

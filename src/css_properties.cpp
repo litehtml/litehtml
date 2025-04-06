@@ -1,8 +1,9 @@
 #include "html.h"
 #include "css_properties.h"
 #include <cmath>
-#include <set>
-#include <sstream>
+#include "document.h"
+#include "html_tag.h"
+#include "document_container.h"
 
 #define offset(member) ((uint_ptr)&this->member - (uint_ptr)this)
 //#define offset(func)	[](const css_properties& css) { return css.func; }

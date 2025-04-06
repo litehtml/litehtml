@@ -1,4 +1,3 @@
-#include "html.h"
 #include "utf8_strings.h"
 
 namespace litehtml
@@ -13,7 +12,7 @@ char32_t read_utf8_char(const string& str, int& index)
 		if (!str[index]) return 0;
 		return str[index++];
 	};
-	
+
 	byte b1 = getb();
 
 	// Determine whether we are dealing

@@ -1,6 +1,9 @@
 #ifndef LH_CSS_TOKENIZER_H
 #define LH_CSS_TOKENIZER_H
 
+#include "types.h"
+#include <cstdio>
+
 namespace litehtml
 {
 
@@ -11,7 +14,7 @@ namespace litehtml
 enum css_token_type
 {
 	WHITESPACE = ' ',
-	
+
 	// Giving EOF and some chars explicit names to facilitate debugging and to get rid of warning C4063: case '41' is not a valid value for switch of enum 'litehtml::css_token_type'
 	_EOF = EOF,
 	LEFT_BRACE = '{',
@@ -26,7 +29,7 @@ enum css_token_type
 	BANG = '!',
 	DOT = '.',
 	AMPERSAND = '&',
-	
+
 	IDENT = -20,    // do not collide with any unicode chars
 	FUNCTION,       // calc(
 	AT_KEYWORD,     // @media
@@ -62,12 +65,12 @@ enum css_hash_type
 };
 
 // css_token: CSS token or component value ("fat" token)
-// Tokens exist in uncomponentized form only a short time after tokenization, most of the time they are "fat". 
+// Tokens exist in uncomponentized form only a short time after tokenization, most of the time they are "fat".
 // All functions in css_parser work regardless of whether tokens are fat or not, as per standard.
 // All functions outside of css_parser that parse media queries, selectors, property values assume tokens are componentized.
 struct css_token
 {
-	css_token(css_token_type type = css_token_type(), 
+	css_token(css_token_type type = css_token_type(),
 		float number = 0, css_number_type number_type = css_number_integer, string str = "")
 		: type(type), str(str), n{number, number_type}
 	{
@@ -87,13 +90,13 @@ struct css_token
 		case HASH:
 			hash_type = token.hash_type;
 			break;
-		
+
 		case NUMBER:
 		case PERCENTAGE:
 		case DIMENSION:
 			n = token.n;
 			break;
-		
+
 		case CV_FUNCTION:
 		case CURLY_BLOCK:
 		case ROUND_BLOCK:
@@ -104,17 +107,17 @@ struct css_token
 		default:;
 		}
 	}
-	
+
 	css_token& operator=(const css_token& token)
 	{
 		this->~css_token();
 		new(this) css_token(token);
 		return *this;
 	}
-	
+
 	~css_token()
-	{ 
-		str.~string(); 
+	{
+		str.~string();
 		if (is_component_value()) value.~vector();
 	}
 
@@ -132,7 +135,7 @@ struct css_token
 	};
 	union {
 		string str;  // STRING, URL
-		string name; // HASH, IDENT, AT_KEYWORD, FUNCTION, CV_FUNCTION 
+		string name; // HASH, IDENT, AT_KEYWORD, FUNCTION, CV_FUNCTION
 		string unit; // DIMENSION
 	};
 	struct number {
@@ -144,7 +147,7 @@ struct css_token
 		number n;
 		vector<css_token> value; // CV_FUNCTION, XXX_BLOCK
 	};
-	
+
 	string repr; // https://www.w3.org/TR/css-syntax-3/#representation
 };
 
@@ -155,7 +158,7 @@ class css_tokenizer
 {
 public:
 	css_tokenizer(const string& input) : str(input), index(0), current_char(0) {}
-	
+
 	css_token_vector tokenize();
 
 private:
@@ -188,7 +191,7 @@ private:
 	void		consume_comments();
 	int			consume_escaped_code_point();
 	css_token	consume_string_token(int ending_code_point);
-	
+
 	static bool	would_start_ident_sequence(three_chars chars);
 	string		consume_ident_sequence();
 

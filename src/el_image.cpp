@@ -1,6 +1,6 @@
-#include "html.h"
 #include "el_image.h"
 #include "render_image.h"
+#include "document_container.h"
 
 litehtml::el_image::el_image(const document::ptr& doc) : html_tag(doc)
 {

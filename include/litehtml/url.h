@@ -30,8 +30,6 @@
 #ifndef LITEHTML_URL_H__
 #define LITEHTML_URL_H__
 
-#include <ostream>
-
 #include "types.h"
 
 // https://datatracker.ietf.org/doc/html/rfc3986

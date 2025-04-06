@@ -1,3 +1,4 @@
+#include "html_microsyntaxes.h"
 #include "html.h"
 
 namespace litehtml

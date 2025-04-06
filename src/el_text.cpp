@@ -1,6 +1,7 @@
 #include "html.h"
 #include "el_text.h"
 #include "render_item.h"
+#include "document_container.h"
 
 litehtml::el_text::el_text(const char* text, const document::ptr& doc) : element(doc)
 {
