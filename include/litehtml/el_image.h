@@ -2,6 +2,7 @@
 #define LH_EL_IMAGE_H
 
 #include "html_tag.h"
+#include "document.h"
 
 namespace litehtml
 {

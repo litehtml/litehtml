@@ -1,6 +1,11 @@
 #ifndef LITEHTML_GRADIENT_H
 #define LITEHTML_GRADIENT_H
 
+#include "css_length.h"
+#include "string_id.h"
+#include "types.h"
+#include "web_color.h"
+
 namespace litehtml
 {
 	enum gradient_side
@@ -129,7 +134,7 @@ namespace litehtml
 		explicit gradient(string_id type = empty_id)
 		{
 			m_type = type;
-			
+
 			// linear gradient:       m_side default is gradient_side_none (use angle)
 			// radial,conic gradient: m_side default is gradient_side_x_center | gradient_side_y_center (see parse_gradient)
 			m_side = gradient_side_none;
@@ -144,7 +149,7 @@ namespace litehtml
 
 			// <radial-size>  https://drafts.csswg.org/css-images-3/#valdef-radial-gradient-radial-size
 			// if radius is specified radial_extent will be set to none, see parse_radial_size
-			radial_extent = radial_extent_farthest_corner; 
+			radial_extent = radial_extent_farthest_corner;
 			radial_radius_x.predef(0);
 			radial_radius_y.predef(0);
 
@@ -182,7 +187,7 @@ namespace litehtml
 		gradient m_gradient;
 
 		image() : type(type_none) {}
-		
+
 		bool is_empty() const
 		{
 			switch (type)

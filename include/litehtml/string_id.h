@@ -1,6 +1,8 @@
 #ifndef LH_STRING_ID_H
 #define LH_STRING_ID_H
 
+#include <string>
+
 namespace litehtml
 {
 
@@ -355,8 +357,8 @@ STRING_ID(
 extern const string_id empty_id; // _id("")
 extern const string_id star_id; // _id("*")
 
-string_id _id(const string& str);
-const string& _s(string_id id);
+string_id			   _id(const std::string& str);
+const std::string&	   _s(string_id id);
 
 } // namespace litehtml
 

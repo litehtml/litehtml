@@ -1,7 +1,7 @@
 #ifndef LH_EL_COMMENT_H
 #define LH_EL_COMMENT_H
 
-#include "html_tag.h"
+#include "element.h"
 
 namespace litehtml
 {

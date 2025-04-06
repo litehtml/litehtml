@@ -1,6 +1,8 @@
 #include "html.h"
 #include "stylesheet.h"
 #include "css_parser.h"
+#include "document.h"
+#include "document_container.h"
 
 namespace litehtml
 {
@@ -12,12 +14,12 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 	if (doc && media)
 		doc->add_media_list(media);
 
-	// To parse a CSS stylesheet, first parse a stylesheet. 
+	// To parse a CSS stylesheet, first parse a stylesheet.
 	auto rules = css_parser::parse_stylesheet(input, top_level);
 	bool import_allowed = top_level;
 
 	// Interpret all of the resulting top-level qualified rules as style rules, defined below.
-	// If any style rule is invalid, or any at-rule is not recognized or is invalid according 
+	// If any style rule is invalid, or any at-rule is not recognized or is invalid according
 	// to its grammar or context, it's a parse error. Discard that rule.
 	for (auto rule : rules)
 	{
@@ -40,7 +42,7 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 			else
 				css_parse_error("incorrect placement of @import rule");
 			break;
-		
+
 		// https://www.w3.org/TR/css-conditional-3/#at-media
 		// @media <media-query-list> { <stylesheet> }
 		case _media_:
@@ -58,7 +60,7 @@ void css::parse_css_stylesheet(const Input& input, string baseurl, document::ptr
 			import_allowed = false;
 			break;
 		}
-		
+
 		default:
 			css_parse_error("unrecognized rule @" + rule->name);
 		}
@@ -115,7 +117,7 @@ bool css::parse_style_rule(raw_rule::ptr rule, string baseurl, document::ptr doc
 	}
 
 	style::ptr style = make_shared<litehtml::style>(); // style block
-	// The content of the qualified rule's block is parsed as a style block's contents. 
+	// The content of the qualified rule's block is parsed as a style block's contents.
 	style->add(rule->block.value, baseurl, doc->container());
 
 	for (auto sel : list)

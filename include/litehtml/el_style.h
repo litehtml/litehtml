@@ -1,7 +1,7 @@
 #ifndef LH_EL_STYLE_H
 #define LH_EL_STYLE_H
 
-#include "html_tag.h"
+#include "element.h"
 
 namespace litehtml
 {

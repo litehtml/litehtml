@@ -25,6 +25,7 @@
 #include "render_item.h"
 #include "render_table.h"
 #include "render_block.h"
+#include "document_container.h"
 
 namespace litehtml
 {

@@ -1,7 +1,7 @@
 #ifndef LITEHTML_CSS_PROPERTIES_H
 #define LITEHTML_CSS_PROPERTIES_H
 
-#include "os_types.h"
+#include "string_id.h"
 #include "types.h"
 #include "css_margins.h"
 #include "borders.h"

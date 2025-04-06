@@ -1,7 +1,6 @@
 #ifndef LH_STYLESHEET_H
 #define LH_STYLESHEET_H
 
-#include "style.h"
 #include "css_selector.h"
 #include "css_tokenizer.h"
 
@@ -28,7 +27,7 @@ public:
 	using vector = std::vector<ptr>;
 
 	enum rule_type { qualified, at };
-	
+
 	raw_rule(rule_type type, string name = "") : type(type), name(name) {}
 
 	rule_type type;

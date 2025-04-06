@@ -1,6 +1,7 @@
 #ifndef LITEHTML_CAIRO_BORDERS_H
 #define LITEHTML_CAIRO_BORDERS_H
 
+#include <litehtml.h>
 #include <cairo.h>
 
 namespace cairo

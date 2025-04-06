@@ -1,7 +1,6 @@
 #ifndef LH_DOCUMENT_CONTAINER_H
 #define LH_DOCUMENT_CONTAINER_H
 
-#include "os_types.h"
 #include "types.h"
 #include "web_color.h"
 #include "background.h"

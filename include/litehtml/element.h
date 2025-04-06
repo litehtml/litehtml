@@ -1,12 +1,11 @@
 #ifndef LH_ELEMENT_H
 #define LH_ELEMENT_H
 
+#include <functional>
 #include <memory>
 #include <tuple>
 #include <list>
 #include "stylesheet.h"
-#include "css_offsets.h"
-#include "css_margins.h"
 #include "css_properties.h"
 
 namespace litehtml

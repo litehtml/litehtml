@@ -1,4 +1,3 @@
-#include "html.h"
 #include "render_item.h"
 #include "formatting_context.h"
 

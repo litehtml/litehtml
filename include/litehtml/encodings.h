@@ -1,6 +1,7 @@
 #ifndef LH_ENCODINGS_H
 #define LH_ENCODINGS_H
 
+#include "types.h"
 namespace litehtml
 {
 

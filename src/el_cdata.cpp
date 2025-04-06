@@ -1,4 +1,3 @@
-#include "html.h"
 #include "el_cdata.h"
 
 litehtml::el_cdata::el_cdata(const std::shared_ptr<document>& doc) : element(doc)

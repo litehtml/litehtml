@@ -4,8 +4,6 @@
 #include "element.h"
 #include "style.h"
 #include "background.h"
-#include "css_margins.h"
-#include "borders.h"
 #include "css_selector.h"
 #include "stylesheet.h"
 #include "line_box.h"

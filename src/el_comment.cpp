@@ -1,4 +1,3 @@
-#include "html.h"
 #include "el_comment.h"
 
 litehtml::el_comment::el_comment(const std::shared_ptr<document>& doc) : element(doc)

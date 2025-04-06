@@ -1,8 +1,9 @@
 #ifndef LH_CONTAINER_LINUX_H
 #define LH_CONTAINER_LINUX_H
 
-#include "../../include/litehtml.h"
+#include <litehtml.h>
 #include <cairo.h>
+#include <vector>
 
 struct cairo_clip_box
 {

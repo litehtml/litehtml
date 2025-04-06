@@ -1,6 +1,7 @@
 #ifndef LH_CSS_SELECTOR_H
 #define LH_CSS_SELECTOR_H
 
+#include "string_id.h"
 #include "style.h"
 #include "media_query.h"
 #include "css_tokenizer.h"
@@ -154,7 +155,7 @@ namespace litehtml
 		string_id			prefix;   // [prefix|name]
 		string_id			name;     // .name, #name, [name], :name
 		string				value;    // [name=value], :lang(value)
-		
+
 		attr_matcher		matcher;         // <attr-matcher>   = ~= |= ^= $= *=
 		bool				caseless_match;  // value is matched ASCII case-insensitively
 

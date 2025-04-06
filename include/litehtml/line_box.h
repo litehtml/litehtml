@@ -1,9 +1,8 @@
 #ifndef LH_LINE_BOX_H
 #define LH_LINE_BOX_H
 
-#include <vector>
 #include <memory>
-#include "os_types.h"
+#include "css_properties.h"
 #include "types.h"
 
 namespace litehtml

@@ -3,6 +3,7 @@
 
 #include "css_tokenizer.h"
 #include "stylesheet.h"
+#include <functional>
 
 namespace litehtml
 {

@@ -1,6 +1,10 @@
 #ifndef LH_MEDIA_QUERY_H
 #define LH_MEDIA_QUERY_H
 
+#include "css_tokenizer.h"
+#include "string_id.h"
+#include "types.h"
+
 namespace litehtml
 {
 	// https://drafts.csswg.org/mediaqueries/#evaluating
@@ -53,7 +57,7 @@ namespace litehtml
 	{
 		string_id					op = _and_; // _not_ _and_ _or_
 		vector<media_in_parens>		m_conditions;
-		
+
 		trilean check(const media_features& features) const;
 	};
 
@@ -68,7 +72,7 @@ namespace litehtml
 		short op2 = 0;
 
 		bool verify_and_convert_units(string_id syntax, css_token val[2] = 0, css_token val2[2] = 0, shared_ptr<document> doc = 0);
-		
+
 		bool compare(int x) const { return compare((float)x); }
 		bool compare(float x) const;
 		bool check(const media_features& features) const;
@@ -92,7 +96,7 @@ namespace litehtml
 	media_query_list parse_media_query_list(const css_token_vector& tokens, shared_ptr<document> doc);
 	media_query_list parse_media_query_list(const string& str, shared_ptr<document> doc);
 
-	
+
 	class media_query_list_list
 	{
 	public:
