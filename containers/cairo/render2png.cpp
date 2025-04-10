@@ -156,12 +156,12 @@ namespace html2png
 			text = ss.str();
 		}
 
-		void get_client_rect(litehtml::position &client) const override
+		void get_viewport(litehtml::position& viewport) const override
 		{
-			client.width = m_converter->get_screen_width();
-			client.height = m_converter->get_screen_height();
-			client.x = 0;
-			client.y = 0;
+			viewport.width = m_converter->get_screen_width();
+			viewport.height = m_converter->get_screen_height();
+			viewport.x = 0;
+			viewport.y = 0;
 		}
 
 		const char* get_default_font_name() const override { return m_converter->get_default_font(); }

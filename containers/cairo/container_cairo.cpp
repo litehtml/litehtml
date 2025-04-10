@@ -647,11 +647,11 @@ void container_cairo::draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x, int 
 
 void container_cairo::get_media_features(litehtml::media_features& media) const
 {
-	litehtml::position client;
-    get_client_rect(client);
+	litehtml::position viewport;
+    get_viewport(viewport);
 	media.type			= litehtml::media_type_screen;
-	media.width			= client.width;
-	media.height		= client.height;
+	media.width			= viewport.width;
+	media.height		= viewport.height;
 	media.device_width	= get_screen_width();
 	media.device_height	= get_screen_height();
 	media.color			= 8;

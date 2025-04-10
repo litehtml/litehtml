@@ -490,12 +490,12 @@ int document::render( int max_width, render_type rt )
 	int ret = 0;
 	if(m_root && m_root_render)
 	{
-		position client_rc;
-		m_container->get_client_rect(client_rc);
+		position viewport;
+		m_container->get_viewport(viewport);
 		containing_block_context cb_context;
 		cb_context.width = max_width;
 		cb_context.width.type = containing_block_context::cbc_value_type_absolute;
-		cb_context.height = client_rc.height;
+		cb_context.height = viewport.height;
 		cb_context.height.type = containing_block_context::cbc_value_type_absolute;
 
 		if(rt == render_fixed_only)

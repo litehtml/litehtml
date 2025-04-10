@@ -61,7 +61,7 @@ namespace litehtml
 		virtual void				import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl) = 0;
 		virtual void				set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) = 0;
 		virtual void				del_clip() = 0;
-		virtual void				get_client_rect(litehtml::position& client) const = 0;
+		virtual void				get_viewport(litehtml::position& viewport) const = 0;
 		virtual litehtml::element::ptr	create_element( const char* tag_name,
 														const litehtml::string_map& attributes,
 														const std::shared_ptr<litehtml::document>& doc) = 0;

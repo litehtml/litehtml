@@ -47,9 +47,9 @@ void litebrowser::web_page::open(const std::string &url, const std::string &hash
 	http_request(m_url, cb_on_data, cb_on_finish);
 }
 
-void litebrowser::web_page::get_client_rect(litehtml::position& client) const
+void litebrowser::web_page::get_viewport(litehtml::position& viewport) const
 {
-	m_html_host->get_client_rect(client);
+	m_html_host->get_viewport(viewport);
 }
 
 void litebrowser::web_page::on_anchor_click(const char* url, const litehtml::element::ptr& /*el*/)

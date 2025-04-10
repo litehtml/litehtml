@@ -14,7 +14,7 @@ namespace litebrowser
 		virtual void open_url(const std::string& url) = 0;
 		virtual void update_cursor() = 0;
 		virtual void scroll_to(int x, int y) = 0;
-		virtual void get_client_rect(litehtml::position& client) const = 0;
+		virtual void get_viewport(litehtml::position& viewport) const = 0;
 		virtual void redraw_boxes(const litehtml::position::vector& boxes) = 0;
 		virtual int get_render_width() = 0;
 		virtual double get_dpi() = 0;
