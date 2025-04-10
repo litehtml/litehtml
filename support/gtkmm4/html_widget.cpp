@@ -129,12 +129,12 @@ void html_widget::snapshot_vfunc(const Glib::RefPtr<Gtk::Snapshot>& snapshot)
 	snapshot_child(*m_hscrollbar, snapshot);
 }
 
-void html_widget::get_client_rect(litehtml::position& client) const
+void html_widget::get_viewport(litehtml::position& viewport) const
 {
-	client.x		= 0;
-	client.y		= 0;
-	client.width	= m_draw_buffer.get_width();
-	client.height	= m_draw_buffer.get_height();
+	viewport.x		= m_draw_buffer.get_left();
+	viewport.y		= m_draw_buffer.get_top();
+	viewport.width	= m_draw_buffer.get_width();
+	viewport.height = m_draw_buffer.get_height();
 }
 
 void html_widget::set_caption(const std::string& caption)
@@ -346,7 +346,7 @@ long html_widget::draw_measure(int number)
 	if(page)
 	{
 		litehtml::position view_port;
-		get_client_rect(view_port);
+		get_viewport(view_port);
 
 		int width = view_port.width;
 		int height = view_port.height;

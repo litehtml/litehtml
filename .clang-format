@@ -32,7 +32,7 @@ BraceWrapping:
 NamespaceIndentation: All
 AlignConsecutiveDeclarations:
   Enabled: true
-  AcrossEmptyLines: true
+  AcrossEmptyLines: false
   AcrossComments: false
 AlignConsecutiveAssignments:
   Enabled: true
@@ -54,7 +54,7 @@ InsertNewlineAtEOF: true
 BreakConstructorInitializers: AfterColon
 PackConstructorInitializers: Never
 AllowShortLambdasOnASingleLine: true
-AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortIfStatementsOnASingleLine: Never
 AllowShortFunctionsOnASingleLine: Inline
 AlignArrayOfStructures: Left
 AllowShortBlocksOnASingleLine: true

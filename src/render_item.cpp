@@ -2,6 +2,7 @@
 #include "document.h"
 #include <typeinfo>
 #include "document_container.h"
+#include "types.h"
 
 litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
         m_element(std::move(_src_el)),
@@ -242,8 +243,8 @@ bool litehtml::render_item::fetch_positioned()
 
 void litehtml::render_item::render_positioned(render_type rt)
 {
-    position wnd_position;
-    src_el()->get_document()->container()->get_client_rect(wnd_position);
+    position view_port;
+    src_el()->get_document()->container()->get_viewport(view_port);
 
     element_position el_position;
     bool process;
@@ -274,8 +275,8 @@ void litehtml::render_item::render_positioned(render_type rt)
 			containing_block_context containing_block_size;
             if(el_position == element_position_fixed || (is_root() && !src_el()->is_positioned()))
             {
-				containing_block_size.height	= wnd_position.height;
-				containing_block_size.width		= wnd_position.width;
+				containing_block_size.height	= view_port.height;
+				containing_block_size.width		= view_port.width;
             } else
             {
 				containing_block_size.height	= m_pos.height + m_padding.height();
@@ -647,8 +648,8 @@ void litehtml::render_item::render_positioned(render_type rt)
 
             if(el_position == element_position_fixed)
             {
-                position fixed_pos;
-                el->get_redraw_box(fixed_pos);
+				position fixed_pos = el->pos();
+				el->get_redraw_box(fixed_pos);
                 src_el()->get_document()->add_fixed_box(fixed_pos);
             }
         }
@@ -831,12 +832,10 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
                     if (el->src_el()->is_positioned() && el->src_el()->css().get_z_index() == zindex)
                     {
                         if (el->src_el()->css().get_position() == element_position_fixed)
-                        {
-                            position browser_wnd;
-                            doc->container()->get_client_rect(browser_wnd);
-
-                            el->src_el()->draw(hdc, browser_wnd.x, browser_wnd.y, clip, el);
-                            el->draw_stacking_context(hdc, browser_wnd.x, browser_wnd.y, clip, true);
+						{
+							// Fixed elements position is always relative to the (0,0)
+                            el->src_el()->draw(hdc, 0, 0, clip, el);
+                            el->draw_stacking_context(hdc, 0, 0, clip, true);
                         }
                         else
                         {
@@ -1128,17 +1127,39 @@ void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes)
 
     if(src_el()->css().get_position() != element_position_fixed)
     {
-        auto cur_el = parent();
+		auto cur_el = parent();
+		int	 add_x	= 0;
+		int	 add_y	= 0;
+
         while(cur_el)
-        {
-            for(auto& box : redraw_boxes)
-            {
-                box.x += cur_el->m_pos.x;
-                box.y += cur_el->m_pos.y;
-            }
+		{
+			if(cur_el->css().get_position() == element_position_fixed)
+			{
+				position view_port;
+				src_el()->get_document()->container()->get_viewport(view_port);
+				add_x += cur_el->m_pos.x + view_port.left();
+				add_y += cur_el->m_pos.y + view_port.top();
+				break;
+			}
+            add_x += cur_el->m_pos.x;
+            add_y += cur_el->m_pos.y;
             cur_el = cur_el->parent();
         }
-    }
+		for(auto& box : redraw_boxes)
+		{
+			box.x += add_x;
+			box.y += add_y;
+		}
+	} else
+	{
+		position view_port;
+		src_el()->get_document()->container()->get_viewport(view_port);
+		for(auto& box : redraw_boxes)
+		{
+			box.x += view_port.left();
+			box.y += view_port.top();
+		}
+	}
 }
 
 void litehtml::render_item::dump(litehtml::dumper& cout)

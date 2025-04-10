@@ -7,6 +7,7 @@
 #include "html_host.h"
 #include "http_requests_pool.h"
 #include "cairo_images_cache.h"
+#include "litehtml/types.h"
 
 namespace litebrowser
 {
@@ -90,7 +91,7 @@ namespace litebrowser
 
 		void open(const litehtml::string& url, const litehtml::string& hash);
 
-		void get_client_rect(litehtml::position& client) const override;
+		void get_viewport(litehtml::position& viewport) const override;
 		void on_anchor_click(const char* url, const litehtml::element::ptr& el) override;
 		void set_cursor(const char* cursor) override;
 		void import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl) override;
@@ -146,6 +147,14 @@ namespace litebrowser
 		{
 			std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
 			return m_html && m_html->media_changed();
+		}
+
+		litehtml::position::vector get_fixed_boxes()
+		{
+			litehtml::position::vector ret;
+			std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
+			if(m_html) { m_html->get_fixed_boxes(ret); }
+			return ret;
 		}
 
 		void stop_loading()

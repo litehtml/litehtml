@@ -251,7 +251,7 @@ protected:
 	void redraw_boxes(const litehtml::position::vector& boxes) override;
 	int get_render_width() override;
 	void scroll_to(int x, int y) override;
-	void get_client_rect(litehtml::position& client) const override;
+	void get_viewport(litehtml::position& viewport) const override;
 	cairo_surface_t* load_image(const std::string& path) override;
 
 	void snapshot_vfunc(const Glib::RefPtr<Gtk::Snapshot>& snapshot) override;
