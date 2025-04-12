@@ -348,7 +348,8 @@ namespace litehtml
                    m_element->css().get_float() == float_none &&
                    m_margins.top >= 0 &&
 				   !is_flex_item() &&
-                   !is_root();
+                   !is_root() &&
+                   css().get_position() != element_position_fixed;
         }
 
         bool collapse_bottom_margin() const
@@ -358,7 +359,8 @@ namespace litehtml
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.bottom >= 0 &&
-                   !is_root();
+                   !is_root() &&
+                   css().get_position() != element_position_fixed;
         }
 
         bool is_visible() const
