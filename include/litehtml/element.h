@@ -5,6 +5,7 @@
 #include <memory>
 #include <tuple>
 #include <list>
+#include "litehtml/types.h"
 #include "stylesheet.h"
 #include "css_properties.h"
 
@@ -154,7 +155,9 @@ namespace litehtml
 
 	inline bool litehtml::element::in_normal_flow() const
 	{
-		if(css().get_position() != element_position_absolute && css().get_display() != display_none)
+		if(css().get_position() != element_position_absolute &&
+		   css().get_display() != display_none &&
+		   css().get_position() != element_position_fixed)
 		{
 			return true;
 		}
