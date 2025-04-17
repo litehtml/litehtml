@@ -4,6 +4,7 @@
 #include <memory>
 #include <list>
 #include <tuple>
+#include "html.h"
 #include "types.h"
 #include "line_box.h"
 #include "table.h"
@@ -349,7 +350,7 @@ namespace litehtml
                    m_margins.top >= 0 &&
 				   !is_flex_item() &&
                    !is_root() &&
-                   css().get_position() != element_position_fixed;
+                   !is_one_of(css().get_overflow(), overflow_hidden, overflow_scroll, overflow_auto);
         }
 
         bool collapse_bottom_margin() const
@@ -360,7 +361,7 @@ namespace litehtml
                    m_element->css().get_float() == float_none &&
                    m_margins.bottom >= 0 &&
                    !is_root() &&
-                   css().get_position() != element_position_fixed;
+                   !is_one_of(css().get_overflow(), overflow_hidden, overflow_scroll, overflow_auto);
         }
 
         bool is_visible() const
