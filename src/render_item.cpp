@@ -46,7 +46,6 @@ int litehtml::render_item::render(int x, int y, const containing_block_context& 
 	if(src_el()->is_block_formatting_context() || ! fmt_ctx)
 	{
 		formatting_context fmt;
-		fmt.push_position(content_left, content_top);
 		ret = _render(x, y, containing_block_size, &fmt, second_pass);
 		fmt.apply_relative_shift(containing_block_size);
 	} else
