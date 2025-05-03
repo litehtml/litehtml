@@ -126,6 +126,8 @@ trilean media_query::check(const media_features& features) const
 		result = False;
 	else if (m_media_type == media_type_unknown)
 		result = False;
+	else if (m_media_type == media_type_screen)
+		result = True;
 	else if (m_media_type == media_type_all)
 		result = True;
 	else
