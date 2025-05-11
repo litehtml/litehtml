@@ -396,18 +396,42 @@ string resolve_name(const string& name, document_container* container)
 	return "";
 }
 
+// Track recursion depth in parse_name_color calls
+thread_local int parse_name_color_recursion_depth = 0;
+const int MAX_COLOR_RECURSION_DEPTH = 50;
+
 bool parse_name_color(const css_token& tok, web_color& color, document_container* container)
 {
-	if (tok.type != IDENT) return false;
-	if (tok.ident() == "currentcolor")
-	{
-		color = web_color::current_color;
-		return true;
+	// Add recursion depth tracking to prevent stack overflow
+	parse_name_color_recursion_depth++;
+	
+	// Check recursion depth and bail out if too deep
+	if (parse_name_color_recursion_depth > MAX_COLOR_RECURSION_DEPTH) {
+		// Reset recursion depth when returning
+		parse_name_color_recursion_depth--;
+		return false;
 	}
-	string str = resolve_name(tok.name, container);
-	auto tokens = normalize(str, f_componentize | f_remove_whitespace);
-	if (tokens.size() != 1) return false;
-	return parse_color(tokens[0], color, container);
+	
+	bool result = false;
+	
+	if (tok.type != IDENT) {
+		result = false;
+	} else if (tok.ident() == "currentcolor") {
+		color = web_color::current_color;
+		result = true;
+	} else {
+		string str = resolve_name(tok.name, container);
+		auto tokens = normalize(str, f_componentize | f_remove_whitespace);
+		if (tokens.size() != 1) {
+			result = false;
+		} else {
+			result = parse_color(tokens[0], color, container);
+		}
+	}
+	
+	// Reset recursion depth when returning
+	parse_name_color_recursion_depth--;
+	return result;
 }
 
 // https://drafts.csswg.org/css-color-5/#typedef-color
