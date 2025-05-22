@@ -1,47 +1,57 @@
+```cpp
 static document::ptr  document::createFromString(
 	const estring&       str,
 	document_container*  container,
 	const string&        master_styles = litehtml::master_css,
 	const string&        user_styles = "");
+```
 
----------------------------------------------------------------------------------------------------------
-Terminology: 
+### Terminology: 
 
-BOM encoding is the encoding suggested by the byte-order-mark (BOM). Can be UTF-8, UTF-16LE, or	UTF-16BE.
+**BOM encoding** is the encoding suggested by the byte-order-mark (BOM). Can be UTF-8, UTF-16LE, or	UTF-16BE.
     Cannot be UTF-32 because it is not a valid HTML encoding. See bom_sniff.
 
-meta encoding is an HTML encoding suggested by a valid <meta> charset tag.
+**meta encoding** is an HTML encoding suggested by a valid <meta> charset tag.
 
 valid <meta> charset tag:
-    * must be inside <head>
-    * must have one of these forms:
-      <meta charset="utf-8"> or
-      <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    * encoding name must be one of the encoding labels https://encoding.spec.whatwg.org/#names-and-labels (see get_encoding)
+* must be inside \<head>
+* must have one of these forms:
+  * \<meta charset="utf-8"> or
+  * \<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+* encoding name must be one of the encoding labels https://encoding.spec.whatwg.org/#names-and-labels (see get_encoding)
 
-HTTP encoding is the encoding specified in HTTP Content-Type header https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
+**HTTP encoding** is the encoding specified in HTTP Content-Type header https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Content-Type
 
-user override encoding - when your program allows user to manually choose encoding for particular page or site
+**user override encoding** - when your program allows user to manually choose encoding for particular page or site
+
 ---------------------------------------------------------------------------------------------------------
 
 
-Call without specifying encoding: 
-    createFromString(string, container), where string is std::string or char*
-    * if BOM is present, BOM encoding will be used
-    * otherwise, if valid <meta> tag is present, meta encoding will be used
-    * otherwise, UTF-8 will be used
+### Call without specifying encoding: 
+```cpp
+createFromString(string, container);
+```
+where string is ```std::string``` or ```char*```
+* if BOM is present, BOM encoding will be used
+* otherwise, if valid <meta> tag is present, meta encoding will be used
+* otherwise, UTF-8 will be used
 
-Call with encoding, confidence is certain:
-    createFromString({string, encoding::big5}, container)
-    * if BOM is present, BOM encoding will be used
-    * otherwise, Big5 will be used
-    NOTE: encoding from <meta> tag will be ignored
+### Call with encoding, confidence is certain:
+```cpp
+createFromString({string, encoding::big5}, container)
+```
+* if BOM is present, BOM encoding will be used
+* otherwise, Big5 will be used
 
-Call with encoding, confidence is tentative (very rare, you probably don't need this):
-    createFromString({string, encoding::big5, confidence::tentative}, container)
-    * if BOM is present, BOM encoding will be used
-    * otherwise, if valid <meta> tag is present, meta encoding will be used
-    * otherwise, Big5 will be used
+**NOTE**: encoding from <meta> tag will be ignored
+
+### Call with encoding, confidence is tentative (very rare, you probably don't need this):
+```cpp
+createFromString({string, encoding::big5, confidence::tentative}, container)
+```
+* if BOM is present, BOM encoding will be used
+* otherwise, if valid <meta> tag is present, meta encoding will be used
+* otherwise, Big5 will be used
 
 ---------------------------------------------------------------------------------------------------------
 
