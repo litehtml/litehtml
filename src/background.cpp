@@ -602,6 +602,12 @@ std::unique_ptr<litehtml::background_layer::conic_gradient> litehtml::background
 	ret->color_space = m_image[idx].m_gradient.color_space;
 	ret->hue_interpolation = m_image[idx].m_gradient.hue_interpolation;
 
+	float corner1 = distance(ret->position, {(float) layer.origin_box.left(), (float) layer.origin_box.top()});
+	float corner2 = distance(ret->position, {(float) layer.origin_box.right(), (float) layer.origin_box.top()});
+	float corner3 = distance(ret->position, {(float) layer.origin_box.left(), (float) layer.origin_box.bottom()});
+	float corner4 = distance(ret->position, {(float) layer.origin_box.right(), (float) layer.origin_box.bottom()});
+	ret->radius = std::max({corner1, corner2, corner3, corner4});
+
 	if(ret->prepare_color_points(0, m_image[idx].m_gradient.m_type, m_image[idx].m_gradient.m_colors))
 	{
 		return ret;

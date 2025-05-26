@@ -82,8 +82,9 @@ namespace litehtml
 		class conic_gradient : public gradient_base
 		{
 		public:
-			pointF position;
-			float angle = 0;
+			pointF position; // position is the center of the conic gradient
+			float angle = 0; // angle is the angle of the gradient in degrees, starting from 0 at the top and going clockwise
+			float radius = 0; // radius is the distance from the center to the farthest corner of the background box
 		};
 	};
 
