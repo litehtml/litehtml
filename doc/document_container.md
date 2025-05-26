@@ -357,11 +357,13 @@ class conic_gradient : public gradient_base
 {
 public:
     pointF position;
-    float   angle;
+    float  angle;
+	float  radius;
 };
 ```
-* ```position``` - the center of the gradient.
-* ```angle``` - the angle of the gradient.
+* ```position``` - the center of the conic gradient
+* ```angle``` - the angle of the gradient in degrees, starting from 0 at the top and going clockwise
+* ```radius``` - the distance from the center to the farthest corner of the background box
 
 ### draw_borders
 ```cpp
