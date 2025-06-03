@@ -6,10 +6,11 @@
 /// Note, the actual position of the draw buffer can be rounded according to the scale factor.
 /// Use get_left() and get_top() to know the actual position.
 ///
-/// @param page webpage to be redraw if the position was changed
+/// @param cb_draw the callback for drawing the page
 /// @param left new horizontal position
 /// @param top new vertical position
-void litebrowser::draw_buffer::on_scroll(std::shared_ptr<litebrowser::web_page> page, int left, int top)
+/// @param fixed_boxes fixed boxes to be redrawn
+void litebrowser::draw_buffer::on_scroll(const draw_page_function_t& cb_draw, int left, int top, const litehtml::position::vector& fixed_boxes)
 {
 	if(m_width <= 0 || m_height <= 0 || !m_draw_buffer)
 		return;
@@ -26,7 +27,7 @@ void litebrowser::draw_buffer::on_scroll(std::shared_ptr<litebrowser::web_page> 
 		{
 			m_left = left;
 			m_top  = top;
-			redraw(page);
+			redraw(cb_draw);
 		} else
 		{
 			int shift_x			 = m_left - left;
@@ -58,43 +59,42 @@ void litebrowser::draw_buffer::on_scroll(std::shared_ptr<litebrowser::web_page> 
 
 			if(rec_clean.x > m_left)
 			{
-				redraw_area(page, m_left, rec_clean.y, rec_clean.x - m_left, rec_clean.height);
+				redraw_area(cb_draw, m_left, rec_clean.y, rec_clean.x - m_left, rec_clean.height);
 			}
 			if(clean_right < right)
 			{
-				redraw_area(page, clean_right, rec_clean.y, right - clean_right, rec_clean.height);
+				redraw_area(cb_draw, clean_right, rec_clean.y, right - clean_right, rec_clean.height);
 			}
 
 			if(rec_clean.y > m_top)
 			{
-				redraw_area(page, m_left, m_top, m_width, rec_clean.y - m_top);
+				redraw_area(cb_draw, m_left, m_top, m_width, rec_clean.y - m_top);
 			}
 			if(clean_bottom < bottom)
 			{
-				redraw_area(page, m_left, clean_bottom, m_width, bottom - clean_bottom);
+				redraw_area(cb_draw, m_left, clean_bottom, m_width, bottom - clean_bottom);
 			}
-			litehtml::position::vector fixed_boxes = page->get_fixed_boxes();
+
 			for(const auto& box : fixed_boxes)
 			{
-				redraw_area(page, m_left + box.left(), m_top + box.top(), box.width, box.height);
-				redraw_area(page, m_left + box.left() + shift_x, m_top + box.top() + shift_y, box.width, box.height);
+				redraw_area(cb_draw, m_left + box.left(), m_top + box.top(), box.width, box.height);
+				redraw_area(cb_draw, m_left + box.left() + shift_x, m_top + box.top() + shift_y, box.width, box.height);
 			}
 		}
 	}
 }
 
-/// @brief Reraw the defined area of the buffer
+/// @brief Redraw the defined area of the buffer
 ///
-/// All coordinated are not scaled. Actual rectangle could be different according to the scale factor,
+/// All coordinated are not scaled. The actual rectangle could be different, according to the scale factor,
 /// but it must always cover the requested.
 ///
-/// @param page webpage to be redraw
+/// @param cb_draw the callback for drawing the page
 /// @param x left position of the area
 /// @param y top position of the area
 /// @param width width of the area
 /// @param height height of the area
-void litebrowser::draw_buffer::redraw_area(std::shared_ptr<litebrowser::web_page> page, int x, int y, int width,
-										   int height)
+void litebrowser::draw_buffer::redraw_area(const draw_page_function_t& cb_draw, int x, int y, int width, int height)
 {
 	if(m_draw_buffer)
 	{
@@ -134,10 +134,7 @@ void litebrowser::draw_buffer::redraw_area(std::shared_ptr<litebrowser::web_page
 		cairo_scale(cr, m_scale_factor, m_scale_factor);
 
 		// Draw page
-		if(page)
-		{
-			page->draw((litehtml::uint_ptr) cr, -m_left, -m_top, &pos);
-		}
+		cb_draw(cr, -m_left, -m_top, &pos);
 
 		cairo_destroy(cr);
 	}

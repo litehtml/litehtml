@@ -2,16 +2,18 @@
 #define LITEBROWSER_DRAW_BUFFER_H
 
 #include <cairo.h>
+#include <functional>
+#include <cmath>
 #include <memory>
-#include "web_page.h"
+#include "litehtml/types.h"
 
 namespace litebrowser
 {
 	/// @brief Draw Buffer Class
 	///
 	/// This class performs the draw operations into the cairo surface.
-	/// The application draws everything to the buffer, then buffer are
-	/// drawn on widged or window.
+	/// The application draws everything to the buffer, then buffer is
+	/// drawn on widget or window.
 	class draw_buffer
 	{
 		cairo_surface_t*	m_draw_buffer = nullptr;
@@ -22,6 +24,8 @@ namespace litebrowser
 		double				m_scale_factor = 1;
 		int					m_min_int_position = 1;
 	public:
+
+		using draw_page_function_t = std::function<void(cairo_t* cr, int x, int y, const litehtml::position* clip)>;
 
 		~draw_buffer()
 		{
@@ -50,9 +54,9 @@ namespace litebrowser
 		double get_scale_factor() const { return m_scale_factor; }
 
 		/// @brief Set scale factor for draw buffer
-		/// @param page the webpage to be redraw if required
+		/// @param cb_draw the callback for drawing the page
 		/// @param scale the scale factor to be applied
-		void set_scale_factor(std::shared_ptr<litebrowser::web_page> page, double scale)
+		void set_scale_factor(const draw_page_function_t& cb_draw, double scale)
 		{
 			if(m_scale_factor != scale)
 			{
@@ -68,7 +72,7 @@ namespace litebrowser
 				}
 				m_draw_buffer = nullptr;
 				create_draw_buffer(m_width, m_height);
-				redraw(page);
+				redraw(cb_draw);
 			}
 		}
 
@@ -76,8 +80,8 @@ namespace litebrowser
 		/// @param width surface width (not scaled)
 		/// @param height surface height (not scaled)
 		/// @param scale_factor scale factor
-		/// @return poiter to the cairo surface
-		cairo_surface_t* make_surface(int width, int height, double scale_factor)
+		/// @return pointer to the cairo surface
+		static cairo_surface_t* make_surface(int width, int height, double scale_factor)
 		{
 			return cairo_image_surface_create(CAIRO_FORMAT_RGB24,
 				std::ceil((double) width * scale_factor),
@@ -109,14 +113,14 @@ namespace litebrowser
 		}
 
 		/// @brief Call this function when widget size changed
-		/// @param page webpage to be redraw if buffer size changed
+		/// @param cb_draw the callback for drawing the page
 		/// @param width new draw buffer width
 		/// @param height new draw buffer height
-		void on_size_allocate(std::shared_ptr<litebrowser::web_page> page, int width, int height)
+		void on_size_allocate(const draw_page_function_t& cb_draw, int width, int height)
 		{
 			if(create_draw_buffer(width, height))
 			{
-				redraw(page);
+				redraw(cb_draw);
 			}
 		}
 
@@ -125,32 +129,33 @@ namespace litebrowser
 		/// Note, the actual position of the draw buffer can be rounded according to the scale factor.
 		/// Use get_left() and get_top() to know the actual position.
 		///
-		/// @param page webpage to be redraw if the position was changed
+		/// @param cb_draw the callback for drawing the page
 		/// @param left new horizontal position
 		/// @param top new vertical position
-		void on_scroll(std::shared_ptr<litebrowser::web_page> page, int left, int top);
+		/// @param fixed_boxes fixed boxes to be redrawn
+		void on_scroll(const draw_page_function_t& cb_draw, int left, int top, const litehtml::position::vector& fixed_boxes);
 
-		/// @brief Reraw the defined area of the buffer
+		/// @brief Redraw the defined area of the buffer
 		///
-		/// All coordinated are not scaled. Actual rectangle could be different according to the scale factor,
+		/// All coordinated are not scaled. The actual rectangle could be different, according to the scale factor,
 		/// but it must always cover the requested.
 		///
-		/// @param page webpage to be redraw
+		/// @param cb_draw the callback for drawing the page
 		/// @param x left position of the area
 		/// @param y top position of the area
 		/// @param width width of the area
 		/// @param height height of the area
-		void redraw_area(std::shared_ptr<litebrowser::web_page> page, int x, int y, int width, int height);
+		void redraw_area(const draw_page_function_t& cb_draw, int x, int y, int width, int height);
 
 		/// @brief Redraw entire buffer
-		/// @param page webpage to be redraw
-		void redraw(std::shared_ptr<litebrowser::web_page> page)
+		/// @param cb_draw the callback for drawing the page
+		void redraw(const draw_page_function_t& cb_draw)
 		{
-			redraw_area(page, m_left, m_top, m_width, m_height);
+			redraw_area(cb_draw, m_left, m_top, m_width, m_height);
 		}
 
 	private:
-		inline int fix_position(int pos)
+		[[nodiscard]] int fix_position(int pos) const
 		{
 			return (pos / m_min_int_position) * m_min_int_position;
 		}
@@ -172,7 +177,6 @@ namespace litebrowser
 			int denominator = 100;
 
 			int common_divisor = get_common_divisor(numerator, denominator);
-			numerator /= common_divisor;
 			return denominator / common_divisor;
 		}
 	};
