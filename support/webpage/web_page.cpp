@@ -21,7 +21,7 @@ void litebrowser::text_file::on_page_downloaded(u_int32_t http_status,
 	wait_mutex.unlock();
 }
 
-void litebrowser::web_page::open(const std::string &url, const std::string &hash)
+void litebrowser::web_page::open(const std::string &url, const std::string &fragment)
 {
 	litehtml::url l_url(url);
 
@@ -39,7 +39,7 @@ void litebrowser::web_page::open(const std::string &url, const std::string &hash
 		m_url = url;
 	}
 	m_base_url = m_url;
-	m_hash = hash;
+	m_fragment = fragment;
 
 	auto data = std::make_shared<text_file>();
 	auto cb_on_data = [data](auto && PH1, auto && PH2, auto && PH3, auto && PH4) mutable { data->on_data(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3), std::forward<decltype(PH4)>(PH4)); };
@@ -110,15 +110,15 @@ cairo_surface_t* litebrowser::web_page::get_image(const std::string& url)
 	return m_images.get_image(url);
 }
 
-void litebrowser::web_page::show_hash(const litehtml::string& hash)
+void litebrowser::web_page::show_fragment(const litehtml::string& fragment)
 {
 	std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
-	if(hash.empty() || !m_html)
+	if(fragment.empty() || !m_html)
 	{
 		m_html_host->scroll_to(0, 0);
 	} else
 	{
-		auto escaped_hash = litehtml::get_escaped_string(hash);
+		auto escaped_hash = litehtml::get_escaped_string(fragment);
 		std::string selector = ":is([id=\"" + escaped_hash + "\"],[name=\"" + escaped_hash + "\"])";
 		litehtml::element::ptr el = m_html->root()->select_one(selector);
 		if (el)

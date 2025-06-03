@@ -68,7 +68,7 @@ namespace litebrowser
 		std::recursive_mutex			m_html_mutex;
 		litehtml::string				m_cursor;
 		litehtml::string				m_clicked_url;
-		std::string                 	m_hash;
+		std::string                 	m_fragment;
 		html_host_interface*			m_html_host;
 		cairo_images_cache				m_images;
 		litebrowser::http_requests_pool	m_requests_pool;
@@ -89,7 +89,7 @@ namespace litebrowser
 		[[nodiscard]]
 		const std::string& get_html_source() const { return m_html_source; }
 
-		void open(const litehtml::string& url, const litehtml::string& hash);
+		void open(const litehtml::string& url, const litehtml::string& fragment);
 
 		void get_viewport(litehtml::position& viewport) const override;
 		void on_anchor_click(const char* url, const litehtml::element::ptr& el) override;
@@ -105,13 +105,13 @@ namespace litebrowser
 		int get_screen_width() const override;
 		int get_screen_height() const override;
 
-		void show_hash(const litehtml::string& hash);
-		void show_hash_and_reset()
+		void show_fragment(const litehtml::string& fragment);
+		void show_fragment_and_reset()
 		{
-			if(!m_hash.empty() && m_html)
+			if(!m_fragment.empty() && m_html)
 			{
-				show_hash(m_hash);
-				m_hash = "";
+				show_fragment(m_fragment);
+				m_fragment = "";
 			}
 		}
 
