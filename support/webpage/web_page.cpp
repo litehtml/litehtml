@@ -118,13 +118,9 @@ void litebrowser::web_page::show_hash(const litehtml::string& hash)
 		m_html_host->scroll_to(0, 0);
 	} else
 	{
-		std::string selector = "#" + hash;
+		auto escaped_hash = litehtml::get_escaped_string(hash);
+		std::string selector = ":is([id=\"" + escaped_hash + "\"],[name=\"" + escaped_hash + "\"])";
 		litehtml::element::ptr el = m_html->root()->select_one(selector);
-		if (!el)
-		{
-			selector = "[name=" + hash + "]";
-			el = m_html->root()->select_one(selector);
-		}
 		if (el)
 		{
 			litehtml::position pos = el->get_placement();
