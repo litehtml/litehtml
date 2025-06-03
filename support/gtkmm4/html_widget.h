@@ -287,6 +287,16 @@ private:
 		queue_draw();
 		while (g_main_context_iteration(nullptr, false)) {}
 	}
+	litebrowser::draw_buffer::draw_page_function_t get_draw_function(const std::shared_ptr<litebrowser::web_page>& page)
+	{
+		return [this, page](cairo_t* cr, int x, int y, const litehtml::position* clip)
+		{
+			if (page)
+			{
+				page->draw((litehtml::uint_ptr) cr, x, y, clip);
+			}
+		};
+	}
 
 public:
 	// Signals types
