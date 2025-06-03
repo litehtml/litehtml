@@ -42,8 +42,12 @@ void litebrowser::web_page::open(const std::string &url, const std::string &frag
 	m_fragment = fragment;
 
 	auto data = std::make_shared<text_file>();
-	auto cb_on_data = [data](auto && PH1, auto && PH2, auto && PH3, auto && PH4) mutable { data->on_data(std::forward<decltype(PH1)>(PH1), std::forward<decltype(PH2)>(PH2), std::forward<decltype(PH3)>(PH3), std::forward<decltype(PH4)>(PH4)); };
-	auto cb_on_finish = std::bind(&web_page::on_page_downloaded, shared_from_this(), data, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+	auto cb_on_data = [data](void* in_data, size_t len, size_t /*downloaded*/, size_t /*total*/) { data->on_data(in_data, len, 0, 0); };
+	auto shared_this = shared_from_this();
+	auto cb_on_finish = [shared_this, data](u_int32_t http_status, u_int32_t err_code, const std::string &err_text, const std::string& url)
+	{
+		shared_this->on_page_downloaded(data, http_status, err_code, err_text, url);
+	};
 	http_request(m_url, cb_on_data, cb_on_finish);
 }
 
@@ -78,8 +82,11 @@ void litebrowser::web_page::import_css(litehtml::string& text, const litehtml::s
 	make_url(url.c_str(), baseurl.c_str(), css_url);
 
 	auto data = std::make_shared<text_file>();
-	auto cb_on_data = std::bind(&text_file::on_data, data, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-	auto cb_on_finish = std::bind(&text_file::on_page_downloaded, data, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3);
+	auto cb_on_data = [data](void* in_data, size_t len, size_t /*downloaded*/, size_t /*total*/) { data->on_data(in_data, len, 0, 0); };
+	auto cb_on_finish = [data](u_int32_t http_status, u_int32_t err_code, const std::string &err_text, const std::string& /*url*/)
+	{
+		data->on_page_downloaded(http_status, err_code, err_text);
+	};
 	http_request(css_url, cb_on_data, cb_on_finish);
 	data->wait();
 	text = data->str();
@@ -256,8 +263,13 @@ void litebrowser::web_page::load_image(const char *src, const char *baseurl, boo
 	if(m_images.reserve(url))
 	{
 		auto data = std::make_shared<image_file>(url, redraw_on_ready);
-		auto cb_on_data = std::bind(&image_file::on_data, data, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
-		auto cb_on_finish = std::bind(&web_page::on_image_downloaded, this, data, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3, std::placeholders::_4);
+		auto cb_on_data = [data](void* in_data, size_t len, size_t /*downloaded*/, size_t /*total*/) { data->on_data(in_data, len, 0, 0); };
+		auto shared_this = shared_from_this();
+		auto cb_on_finish = [shared_this, data](u_int32_t http_status, u_int32_t err_code, const std::string &err_text, const std::string& url)
+		{
+			shared_this->on_image_downloaded(data, http_status, err_code, err_text, url);
+		};
+
 		http_request(url, cb_on_data, cb_on_finish);
 	}
 }
