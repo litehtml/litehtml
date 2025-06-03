@@ -180,7 +180,7 @@ cairo_surface_t *html_widget::load_image(const std::string &path)
 
 }
 
-void html_widget::open_page(const litehtml::string& url, const litehtml::string& hash)
+void html_widget::open_page(const litehtml::string& url, const litehtml::string& fragment)
 {
 	{
 		std::lock_guard<std::mutex> lock(m_page_mutex);
@@ -189,7 +189,7 @@ void html_widget::open_page(const litehtml::string& url, const litehtml::string&
 			m_current_page->stop_loading();
 		}
 		m_next_page = std::make_shared<litebrowser::web_page>(this, m_notifier, 10);
-		m_next_page->open(url, hash);
+		m_next_page->open(url, fragment);
 	}
 	m_sig_set_address.emit(url);
 	m_sig_update_state.emit(get_state());
@@ -619,37 +619,37 @@ void html_widget::on_page_loaded(uint64_t web_page_id)
 	m_sig_update_state.emit(get_state());
 }
 
-void html_widget::show_hash(const std::string &hash)
+void html_widget::show_fragment(const std::string &fragment)
 {
 	std::shared_ptr<litebrowser::web_page> page = current_page();
 	if(page)
 	{
-		page->show_hash(hash);
+		page->show_fragment(fragment);
 	}
 }
 
 void html_widget::open_url(const std::string &url)
 {
-	std::string hash;
+	std::string fragment;
 	std::string s_url = url;
 
 	m_sig_set_address.emit(url);
 
-	std::string::size_type hash_pos = s_url.find_first_of(L'#');
-	if(hash_pos != std::wstring::npos)
+	std::string::size_type fragment_pos = s_url.find_first_of(L'#');
+	if(fragment_pos != std::wstring::npos)
 	{
-		hash = s_url.substr(hash_pos + 1);
-		s_url.erase(hash_pos);
+		fragment = s_url.substr(fragment_pos + 1);
+		s_url.erase(fragment_pos);
 	}
 
 	bool open_hash_only = false;
 	bool reload = false;
 
 	auto current_url = m_history.current();
-	hash_pos = current_url.find_first_of(L'#');
-	if(hash_pos != std::wstring::npos)
+	fragment_pos = current_url.find_first_of(L'#');
+	if(fragment_pos != std::wstring::npos)
 	{
-		current_url.erase(hash_pos);
+		current_url.erase(fragment_pos);
 	}
 
 	if(!current_url.empty())
@@ -667,10 +667,10 @@ void html_widget::open_url(const std::string &url)
 	}
 	if(!open_hash_only)
 	{
-		open_page(url, hash);
+		open_page(url, fragment);
 	} else
 	{
-		show_hash(hash);
+		show_fragment(fragment);
 	}
 	if(!reload)
 	{

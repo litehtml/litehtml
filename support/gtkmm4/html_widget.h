@@ -235,7 +235,7 @@ public:
 	std::string get_html_source();
     long render_measure(int number);
     long draw_measure(int number);
-	void show_hash(const std::string& hash);
+	void show_fragment(const std::string& fragment);
 	bool on_close();
 	void dump(litehtml::dumper& cout);
 
@@ -246,7 +246,7 @@ protected:
 	double get_dpi() override;
 	int get_screen_width() override;
 	int get_screen_height() override;
-	void open_page(const litehtml::string& url, const litehtml::string& hash);
+	void open_page(const litehtml::string& url, const litehtml::string& fragment);
 	void update_cursor() override;
 	void redraw_boxes(const litehtml::position::vector& boxes) override;
 	int get_render_width() override;
