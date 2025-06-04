@@ -4,7 +4,7 @@
 #include "html_host.h"
 #include "web_page.h"
 #include "web_history.h"
-#include "draw_buffer.h"
+#include "../draw_buffer/draw_buffer.h"
 #include <queue>
 
 enum page_state
