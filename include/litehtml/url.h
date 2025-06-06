@@ -103,6 +103,9 @@ public:
         return !fragment_.empty();
     }
 
+	static string encode(const string& str);
+	static string decode(const string& str);
+
 protected:
     string str_;
 
