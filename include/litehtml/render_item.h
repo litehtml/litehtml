@@ -412,7 +412,7 @@ namespace litehtml
 		std::tuple<pixel_t, pixel_t> element_static_offset(const std::shared_ptr<litehtml::render_item> &el);
         void add_positioned(const std::shared_ptr<litehtml::render_item> &el);
         void get_redraw_box(litehtml::position& pos, pixel_t x = 0, pixel_t y = 0);
-        void calc_document_size( litehtml::size& sz, litehtml::size& content_size, pixel_t x = 0, pixel_t y = 0 );
+        void calc_document_size( litehtml::size& sz, pixel_t x = 0, pixel_t y = 0 ) const;
 		virtual void get_inline_boxes( position::vector& /*boxes*/ ) const {};
 		virtual void set_inline_boxes( position::vector& /*boxes*/ ) {};
 		virtual void add_inline_box( const position& /*box*/ ) {};

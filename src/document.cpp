@@ -611,17 +611,6 @@ pixel_t document::height() const
 	return m_size.height;
 }
 
-pixel_t document::content_width() const
-{
-	return m_content_size.width;
-}
-
-pixel_t document::content_height() const
-{
-	return m_content_size.height;
-}
-
-
 void document::add_stylesheet( const char* str, const char* baseurl, const char* media )
 {
 	if(str && str[0])

@@ -707,7 +707,7 @@ void litehtml::render_item::get_redraw_box(litehtml::position& pos, pixel_t x /*
     }
 }
 
-void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::size& content_size, pixel_t x /*= 0*/, pixel_t y /*= 0*/ )
+void litehtml::render_item::calc_document_size( litehtml::size& sz, pixel_t x /*= 0*/, pixel_t y /*= 0*/ ) const
 {
 	if(css().get_display() != display_inline && css().get_display() != display_table_row)
 	{
@@ -717,7 +717,7 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::si
 			sz.height = std::max(sz.height, y + bottom());
 
 			// All children of tables and blocks with style other than "overflow: visible" are inside element.
-			// We can skip calculating size of children
+			// We can skip calculating the size of children
 			if (src_el()->css().get_overflow() == overflow_visible && src_el()->css().get_display() != display_table)
 			{
 				for (auto &el: m_children)
@@ -730,7 +730,7 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::si
 	{
 		position::vector boxes;
 		get_inline_boxes(boxes);
-		for(auto& box : boxes)
+		for(const auto& box : boxes)
 		{
 			sz.width = std::max(sz.width, x + box.x + box.width);
 			sz.height = std::max(sz.height, y + box.y + box.height);
