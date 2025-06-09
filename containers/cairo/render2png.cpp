@@ -219,8 +219,8 @@ namespace html2png
 			std::swap(m_screen_width, best_width);
 		}
 
-		width = cfg.get_int("width", doc->content_width() > 0 ? doc->content_width() : 1);
-		height = cfg.get_int("height", doc->content_height() > 0 ? doc->content_height() : 1);
+		width = cfg.get_int("width", doc->width() > 0 ? doc->width() : 1);
+		height = cfg.get_int("height", doc->height() > 0 ? doc->height() : 1);
 
 		auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
 		if(surface)

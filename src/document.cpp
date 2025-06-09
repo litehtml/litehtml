@@ -512,9 +512,7 @@ int document::render( int max_width, render_type rt )
 			}
 			m_size.width	= 0;
 			m_size.height	= 0;
-			m_content_size.width = 0;
-			m_content_size.height = 0;
-			m_root_render->calc_document_size(m_size, m_content_size);
+			m_root_render->calc_document_size(m_size);
 		}
 	}
 	return ret;
@@ -611,17 +609,6 @@ int document::height() const
 {
 	return m_size.height;
 }
-
-int document::content_width() const
-{
-	return m_content_size.width;
-}
-
-int document::content_height() const
-{
-	return m_content_size.height;
-}
-
 
 void document::add_stylesheet( const char* str, const char* baseurl, const char* media )
 {

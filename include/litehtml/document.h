@@ -59,7 +59,6 @@ namespace litehtml
 		litehtml::css						m_master_css;
 		litehtml::css						m_user_css;
 		litehtml::size						m_size;
-		litehtml::size						m_content_size;
 		position::vector					m_fixed_boxes;
 		std::shared_ptr<element>			m_over_element;
 		std::shared_ptr<element>			m_active_element;
@@ -84,8 +83,6 @@ namespace litehtml
 		int								to_pixels(const css_length& val, const font_metrics& metrics, int size) const;
 		int								width() const;
 		int								height() const;
-		int								content_width() const;
-		int								content_height() const;
 		void							add_stylesheet(const char* str, const char* baseurl, const char* media);
 		bool							on_mouse_over(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
 		bool							on_lbutton_down(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
