@@ -716,26 +716,14 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::si
 			sz.width = std::max(sz.width, x + right());
 			sz.height = std::max(sz.height, y + bottom());
 
-			if (!src_el()->is_root() && !src_el()->is_body())
-			{
-				content_size.width = std::max(content_size.width, x + right());
-				content_size.height = std::max(content_size.height, y + bottom());
-			}
-
 			// All children of tables and blocks with style other than "overflow: visible" are inside element.
 			// We can skip calculating size of children
 			if (src_el()->css().get_overflow() == overflow_visible && src_el()->css().get_display() != display_table)
 			{
 				for (auto &el: m_children)
 				{
-					el->calc_document_size(sz, content_size, x + m_pos.x, y + m_pos.y);
+					el->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
 				}
-			}
-
-			if (src_el()->is_root() || src_el()->is_body())
-			{
-				content_size.width = std::max(content_size.width, x + right());
-				content_size.height = std::max(content_size.height, y + bottom());
 			}
 		}
 	} else
@@ -744,8 +732,8 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::si
 		get_inline_boxes(boxes);
 		for(auto& box : boxes)
 		{
-			content_size.width = std::max(content_size.width, x + box.x + box.width);
-			content_size.height = std::max(content_size.height, y + box.y + box.height);
+			sz.width = std::max(sz.width, x + box.x + box.width);
+			sz.height = std::max(sz.height, y + box.y + box.height);
 		}
 	}
 }

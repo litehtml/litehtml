@@ -59,7 +59,6 @@ namespace litehtml
 		litehtml::css						m_master_css;
 		litehtml::css						m_user_css;
 		litehtml::size						m_size;
-		litehtml::size						m_content_size;
 		position::vector					m_fixed_boxes;
 		std::shared_ptr<element>			m_over_element;
 		std::shared_ptr<element>			m_active_element;

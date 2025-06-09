@@ -513,9 +513,7 @@ pixel_t document::render( pixel_t max_width, render_type rt )
 			}
 			m_size.width	= 0;
 			m_size.height	= 0;
-			m_content_size.width = 0;
-			m_content_size.height = 0;
-			m_root_render->calc_document_size(m_size, m_content_size);
+			m_root_render->calc_document_size(m_size);
 		}
 	}
 	return ret;
