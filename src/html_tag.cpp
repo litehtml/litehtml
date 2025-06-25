@@ -314,7 +314,7 @@ void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, 
 			get_document()->container()->set_clip(pos, bdr_radius);
 		}
 
-		draw_list_marker(hdc, pos);
+		draw_list_marker(hdc, pos, ri);
 
 		if(m_css.get_overflow() > overflow_visible)
 		{
@@ -1047,7 +1047,7 @@ bool litehtml::html_tag::is_replaced() const
 	return false;
 }
 
-void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
+void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos, const std::shared_ptr<render_item> &ri )
 {
 	list_marker lm;
 
@@ -1072,8 +1072,10 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 
 	if (css().get_list_style_type() >= list_style_type_armenian)
 	{
-		lm.pos.y = pos.y;
-		lm.pos.height = pos.height;
+		auto li_baseline = pos.y + ri->get_first_baseline() - ri->content_offset_top();
+		lm.pos.y = li_baseline - css().get_font_metrics().ascent;
+		lm.pos.height = css().get_font_metrics().height;
+
 		lm.index = atoi(get_attr("list_index", "0"));
 	}
 	else
@@ -1121,7 +1123,6 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 	if (m_css.get_list_style_type() >= list_style_type_armenian)
 	{
 		auto marker_text = get_list_marker_text(lm.index);
-		lm.pos.height = ln_height;
 		if (marker_text.empty())
 		{
 			get_document()->container()->draw_list_marker(hdc, lm);
