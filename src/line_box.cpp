@@ -535,7 +535,14 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			// We have inline items
 			top_shift = std::abs(line_max_height.top);
 			const int top_shift_correction = (line_height.value() - line_max_height.height()) / 2;
-			m_baseline = line_max_height.bottom + top_shift_correction;
+			// We have to calculate the baseline from the top of the line box due to possible round errors.
+			// The top_shift_correction is actually text offset from the top of the line box.
+			// The (top_shift_correction + line_max_height.height()): is the bottom of the text with shift (text_bottom).
+			// The line_max_height.bottom is the text baseline here.
+			// So the formula is:
+			// baseline = line_height - text_bottom + text_baseline
+			// The linebox baseline is the length from the bottom of the line box to the text baseline.
+			m_baseline = line_height.value() - (top_shift_correction + line_max_height.height()) + line_max_height.bottom;
 			top_shift += top_shift_correction;
 			if(inline_boxes_dims.count)
 			{
