@@ -84,8 +84,8 @@ namespace litebrowser
 		static cairo_surface_t* make_surface(int width, int height, double scale_factor)
 		{
 			return cairo_image_surface_create(CAIRO_FORMAT_RGB24,
-				std::ceil((double) width * scale_factor),
-				std::ceil((double) height * scale_factor));
+				(int) std::ceil((double) width * scale_factor),
+				(int) std::ceil((double) height * scale_factor));
 		}
 
 		/// @brief Creates new buffer with specified size

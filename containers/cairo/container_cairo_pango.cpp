@@ -278,7 +278,7 @@ static void draw_dashed_line(cairo_t* cr, int x, int y, int width, int thickness
 
 static void draw_wavy_line(cairo_t* cr, int x, int y, int width, int thickness, draw_type type, litehtml::web_color& color)
 {
-	double h_pad = 1.0;
+	int h_pad = 1;
 	int brush_height = (int) thickness * 3 + h_pad * 2;
 	int brush_width = brush_height * 2 - 2 * thickness;
 
