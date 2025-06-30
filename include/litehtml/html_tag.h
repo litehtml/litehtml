@@ -105,7 +105,7 @@ namespace litehtml
 		string				dump_get_name() override;
 
 	protected:
-		void				draw_list_marker( uint_ptr hdc, const position &pos );
+		void				draw_list_marker( uint_ptr hdc, const position &pos, const std::shared_ptr<render_item> &ri );
 		string				get_list_marker_text(int index);
 		element::ptr		get_element_before(const style& style, bool create);
 		element::ptr		get_element_after(const style& style, bool create);
