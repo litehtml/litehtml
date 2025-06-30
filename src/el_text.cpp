@@ -14,7 +14,7 @@ litehtml::el_text::el_text(const char* text, const document::ptr& doc) : element
 	css_w().set_display(display_inline_text);
 }
 
-void litehtml::el_text::get_content_size( size& sz, int /*max_width*/ )
+void litehtml::el_text::get_content_size( size& sz, pixel_t /*max_width*/ )
 {
 	sz = m_size;
 }
@@ -101,7 +101,7 @@ void litehtml::el_text::compute_styles(bool /*recursive*/)
 	m_draw_spaces = fm.draw_spaces;
 }
 
-void litehtml::el_text::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
+void litehtml::el_text::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item> &ri)
 {
 	if(is_white_space() && !m_draw_spaces)
 	{

@@ -15,18 +15,18 @@ namespace litehtml
 	{
 	public:
 		std::shared_ptr<render_item> el;
-		int base_size;
-		int min_size;
-		def_value<int> max_size;
-		int main_size;
+		pixel_t base_size;
+		pixel_t min_size;
+		def_value<pixel_t> max_size;
+		pixel_t main_size;
 		int grow;
 		int shrink;
-		int scaled_flex_shrink_factor;
+		pixel_t scaled_flex_shrink_factor;
 		bool frozen;
 		int order;
 		int src_order;
-		def_value<int> auto_margin_main_start;
-		def_value<int> auto_margin_main_end;
+		def_value<pixel_t> auto_margin_main_start;
+		def_value<pixel_t> auto_margin_main_end;
 		bool auto_margin_cross_start;
 		bool auto_margin_cross_end;
 		flex_align_items align;
@@ -61,17 +61,17 @@ namespace litehtml
 		void init(const litehtml::containing_block_context &self_size,
 				  litehtml::formatting_context *fmt_ctx, flex_align_items align_items);
 		virtual void apply_main_auto_margins() = 0;
-		virtual bool apply_cross_auto_margins(int cross_size) = 0;
-		virtual void set_main_position(int pos) = 0;
-		virtual void set_cross_position(int pos) = 0;
-		virtual int get_el_main_size() = 0;
-		virtual int get_el_cross_size() = 0;
+		virtual bool apply_cross_auto_margins(pixel_t cross_size) = 0;
+		virtual void set_main_position(pixel_t pos) = 0;
+		virtual void set_cross_position(pixel_t pos) = 0;
+		virtual pixel_t get_el_main_size() = 0;
+		virtual pixel_t get_el_cross_size() = 0;
 
-		void place(flex_line &ln, int main_pos,
+		void place(flex_line &ln, pixel_t main_pos,
 				   const containing_block_context &self_size,
 				   formatting_context *fmt_ctx);
-		int get_last_baseline(baseline::_baseline_type type) const;
-		int get_first_baseline(baseline::_baseline_type type) const;
+		pixel_t get_last_baseline(baseline::_baseline_type type) const;
+		pixel_t get_first_baseline(baseline::_baseline_type type) const;
 
 	protected:
 		virtual void direction_specific_init(const litehtml::containing_block_context &self_size,
@@ -92,11 +92,11 @@ namespace litehtml
 		explicit flex_item_row_direction(std::shared_ptr<render_item> &_el) : flex_item(_el) {}
 
 		void apply_main_auto_margins() override;
-		bool apply_cross_auto_margins(int cross_size) override;
-		void set_main_position(int pos) override;
-		void set_cross_position(int pos) override;
-		int get_el_main_size() override;
-		int get_el_cross_size() override;
+		bool apply_cross_auto_margins(pixel_t cross_size) override;
+		void set_main_position(pixel_t pos) override;
+		void set_cross_position(pixel_t pos) override;
+		pixel_t get_el_main_size() override;
+		pixel_t get_el_cross_size() override;
 
 	protected:
 		void direction_specific_init(const litehtml::containing_block_context &self_size,
@@ -117,11 +117,11 @@ namespace litehtml
 		explicit flex_item_column_direction(std::shared_ptr<render_item> &_el) : flex_item(_el) {}
 
 		void apply_main_auto_margins() override;
-		bool apply_cross_auto_margins(int cross_size) override;
-		void set_main_position(int pos) override;
-		void set_cross_position(int pos) override;
-		int get_el_main_size() override;
-		int get_el_cross_size() override;
+		bool apply_cross_auto_margins(pixel_t cross_size) override;
+		void set_main_position(pixel_t pos) override;
+		void set_cross_position(pixel_t pos) override;
+		pixel_t get_el_main_size() override;
+		pixel_t get_el_cross_size() override;
 
 	protected:
 		void direction_specific_init(const litehtml::containing_block_context &self_size,

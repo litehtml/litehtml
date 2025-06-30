@@ -10,10 +10,10 @@ namespace litehtml
 	protected:
 		// data for table rendering
 		std::unique_ptr<table_grid>	m_grid;
-		int						    m_border_spacing_x;
-		int						    m_border_spacing_y;
+		pixel_t						m_border_spacing_x;
+		pixel_t						m_border_spacing_y;
 
-		int _render(int x, int y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass) override;
+		pixel_t _render(pixel_t x, pixel_t y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass) override;
 
 	public:
 		explicit render_item_table(std::shared_ptr<element>  src_el);
@@ -22,8 +22,8 @@ namespace litehtml
 		{
 			return std::make_shared<render_item_table>(src_el());
 		}
-		void draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex) override;
-		int get_draw_vertical_offset() override;
+		void draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag, int zindex) override;
+		pixel_t get_draw_vertical_offset() override;
 		std::shared_ptr<render_item> init() override;
 	};
 

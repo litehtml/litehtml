@@ -118,7 +118,7 @@ void litebrowser::draw_buffer::redraw_area(const draw_page_function_t& cb_draw, 
 		int s_width		 = (int) std::round((double) fixed_width * m_scale_factor);
 		int s_height	 = (int) std::round((double) fixed_height * m_scale_factor);
 
-		litehtml::position pos{fixed_x, fixed_y, fixed_width, fixed_height};
+		litehtml::position pos{(litehtml::pixel_t) fixed_x, (litehtml::pixel_t) fixed_y, (litehtml::pixel_t) fixed_width, (litehtml::pixel_t) fixed_height};
 		cairo_t*		   cr = cairo_create(m_draw_buffer);
 
 		// Apply clip with scaled position to avoid artifacts

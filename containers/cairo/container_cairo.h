@@ -38,8 +38,8 @@ public:
 	container_cairo() = default;
 	virtual ~container_cairo() = default;
 
-	int pt_to_px(int pt) const override;
-	int get_default_font_size() const override;
+	litehtml::pixel_t pt_to_px(litehtml::pixel_t pt) const override;
+	litehtml::pixel_t get_default_font_size() const override;
 	const char*	get_default_font_name() const override;
 	void get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
 	void draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url) override;

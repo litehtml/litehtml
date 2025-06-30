@@ -8,14 +8,14 @@
 #endif
 
 
-int container_cairo::pt_to_px(int pt ) const
+litehtml::pixel_t container_cairo::pt_to_px(litehtml::pixel_t pt ) const
 {
 	double dpi = get_screen_dpi();
 
 	return (int) ((double) pt * dpi / 72.0);
 }
 
-int container_cairo::get_default_font_size() const
+litehtml::pixel_t container_cairo::get_default_font_size() const
 {
 	return pt_to_px(12);
 }

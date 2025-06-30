@@ -73,7 +73,7 @@ namespace litehtml
 
 		bool verify_and_convert_units(string_id syntax, css_token val[2] = 0, css_token val2[2] = 0, shared_ptr<document> doc = 0);
 
-		bool compare(int x) const { return compare((float)x); }
+		bool compare(int x) const { return compare((float)x); } // TODO
 		bool compare(float x) const;
 		bool check(const media_features& features) const;
 	};

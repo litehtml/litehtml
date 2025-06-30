@@ -277,7 +277,7 @@ void litehtml::html_tag::apply_stylesheet( const litehtml::css& stylesheet )
 	}
 }
 
-void litehtml::html_tag::get_content_size( size& sz, int max_width )
+void litehtml::html_tag::get_content_size( size& sz, pixel_t max_width )
 {
 	sz.height	= 0;
 	if(m_css.get_display() == display_block)
@@ -289,7 +289,7 @@ void litehtml::html_tag::get_content_size( size& sz, int max_width )
 	}
 }
 
-void litehtml::html_tag::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
+void litehtml::html_tag::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item> &ri)
 {
 	position pos = ri->pos();
 	pos.x	+= x;
@@ -857,7 +857,7 @@ bool litehtml::html_tag::is_break() const
 	return false;
 }
 
-void litehtml::html_tag::draw_background(uint_ptr hdc, int x, int y, const position *clip,
+void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip,
 										 const std::shared_ptr<render_item> &ri)
 {
 	if(m_css.get_display() != display_inline && m_css.get_display() != display_table_row)
@@ -1062,8 +1062,8 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos )
 		lm.baseurl = nullptr;
 	}
 
-	int ln_height	= css().line_height().computed_value;
-	int sz_font		= css().get_font_size();
+	pixel_t ln_height	= css().line_height().computed_value;
+	pixel_t sz_font		= css().get_font_size();
 	lm.pos.x		= pos.x;
 	lm.pos.width    = sz_font - sz_font * 2 / 3;
 	lm.color        = css().get_color();

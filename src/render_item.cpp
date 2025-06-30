@@ -27,17 +27,17 @@ litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
     m_borders.bottom	= doc->to_pixels(src_el()->css().get_borders().bottom.width, fm, 0);
 }
 
-int litehtml::render_item::render(int x, int y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass)
+litehtml::pixel_t litehtml::render_item::render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass)
 {
-	int ret;
+	pixel_t ret;
 
 	calc_outlines(containing_block_size.width);
 
 	m_pos.clear();
 	m_pos.move_to(x, y);
 
-	int content_left = content_offset_left();
-	int content_top = content_offset_top();
+	pixel_t content_left = content_offset_left();
+	pixel_t content_top = content_offset_top();
 
 	m_pos.x += content_left;
 	m_pos.y += content_top;
@@ -57,7 +57,7 @@ int litehtml::render_item::render(int x, int y, const containing_block_context& 
 	return ret;
 }
 
-void litehtml::render_item::calc_outlines( int parent_width )
+void litehtml::render_item::calc_outlines( pixel_t parent_width )
 {
     m_padding.left	= m_element->css().get_padding().left.calc_percent(parent_width);
     m_padding.right	= m_element->css().get_padding().right.calc_percent(parent_width);
@@ -75,7 +75,7 @@ void litehtml::render_item::calc_outlines( int parent_width )
     m_padding.bottom	= m_element->css().get_padding().bottom.calc_percent(parent_width);
 }
 
-int litehtml::render_item::calc_auto_margins(int parent_width)
+litehtml::pixel_t litehtml::render_item::calc_auto_margins(pixel_t parent_width)
 {
     if ((src_el()->css().get_display() == display_block || src_el()->css().get_display() == display_table) &&
             src_el()->css().get_position() != element_position_absolute &&
@@ -83,7 +83,7 @@ int litehtml::render_item::calc_auto_margins(int parent_width)
     {
         if (src_el()->css().get_margins().left.is_predefined() && src_el()->css().get_margins().right.is_predefined())
         {
-            int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right;
+            pixel_t el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right;
             if (el_width <= parent_width)
             {
                 m_margins.left = (parent_width - el_width) / 2;
@@ -98,14 +98,14 @@ int litehtml::render_item::calc_auto_margins(int parent_width)
         }
         else if (src_el()->css().get_margins().left.is_predefined() && !src_el()->css().get_margins().right.is_predefined())
         {
-            int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.right;
+            pixel_t el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.right;
             m_margins.left = parent_width - el_width;
             if (m_margins.left < 0) m_margins.left = 0;
 			return m_margins.left;
         }
         else if (!src_el()->css().get_margins().left.is_predefined() && src_el()->css().get_margins().right.is_predefined())
         {
-            int el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.left;
+            pixel_t el_width = m_pos.width + m_borders.left + m_borders.right + m_padding.left + m_padding.right + m_margins.left;
             m_margins.right = parent_width - el_width;
             if (m_margins.right < 0) m_margins.right = 0;
         }
@@ -292,13 +292,13 @@ void litehtml::render_item::render_positioned(render_type rt)
             css_length el_width = el->src_el()->css().get_width();
             css_length el_height = el->src_el()->css().get_height();
 
-			auto fix_height_min_max = [&] (int height)
+			auto fix_height_min_max = [&] (pixel_t height)
 			{
 				auto max_height = el->css().get_max_height();
 				auto min_height = el->css().get_max_height();
 				if(!max_height.is_predefined())
 				{
-					int max_height_value = max_height.calc_percent(containing_block_size.height);
+					pixel_t max_height_value = max_height.calc_percent(containing_block_size.height);
 					if(height > max_height_value)
 					{
 						height = max_height_value;
@@ -306,7 +306,7 @@ void litehtml::render_item::render_positioned(render_type rt)
 				}
 				if(!min_height.is_predefined())
 				{
-					int min_height_value = min_height.calc_percent(containing_block_size.height);
+					pixel_t min_height_value = min_height.calc_percent(containing_block_size.height);
 					if(height < min_height_value)
 					{
 						height = min_height_value;
@@ -316,13 +316,13 @@ void litehtml::render_item::render_positioned(render_type rt)
 				return height;
 			};
 
-			auto fix_width_min_max = [&] (int width)
+			auto fix_width_min_max = [&] (pixel_t width)
 			{
 				auto max_width = el->css().get_max_width();
 				auto min_width = el->css().get_min_width();
 				if(!max_width.is_predefined())
 				{
-					int max_width_value = max_width.calc_percent(containing_block_size.width);
+					pixel_t max_width_value = max_width.calc_percent(containing_block_size.width);
 					if(width > max_width_value)
 					{
 						width = max_width_value;
@@ -330,7 +330,7 @@ void litehtml::render_item::render_positioned(render_type rt)
 				}
 				if(!min_width.is_predefined())
 				{
-					int min_width_value = min_width.calc_percent(containing_block_size.width);
+					pixel_t min_width_value = min_width.calc_percent(containing_block_size.width);
 					if(width < min_width_value)
 					{
 						width = min_width_value;
@@ -340,12 +340,12 @@ void litehtml::render_item::render_positioned(render_type rt)
 				return width;
 			};
 
-			int bottom = 0;
-			int top = 0;
-			int height = 0;
+			pixel_t bottom = 0;
+			pixel_t top = 0;
+			pixel_t height = 0;
 			auto [el_static_offset_x, el_static_offset_y] = element_static_offset(el);
-			int el_static_x = el->m_pos.x + el_static_offset_x;
-			int el_static_y = el->m_pos.y + el_static_offset_y;
+			pixel_t el_static_x = el->m_pos.x + el_static_offset_x;
+			pixel_t el_static_y = el->m_pos.y + el_static_offset_y;
 			// Calculate vertical position
 			// https://www.w3.org/TR/CSS22/visudet.html#abs-non-replaced-height
 			// 10.6.4 Absolutely positioned, non-replaced elements
@@ -395,7 +395,7 @@ void litehtml::render_item::render_positioned(render_type rt)
 				if(el->src_el()->is_replaced())
 				{
 					height = el->height() - el->content_offset_height();
-					int reminded = (containing_block_size.height - top - bottom) - height - el->content_offset_height();
+					pixel_t reminded = (containing_block_size.height - top - bottom) - height - el->content_offset_height();
 					if(reminded > 0)
 					{
 						int divider = 0;
@@ -414,10 +414,10 @@ void litehtml::render_item::render_positioned(render_type rt)
 				}
 				if(!el->css().get_max_height().is_predefined())
 				{
-					int max_height = el->css().get_max_height().calc_percent(containing_block_size.height);
+					pixel_t max_height = el->css().get_max_height().calc_percent(containing_block_size.height);
 					if(height - el->content_offset_height() > max_height)
 					{
-						int reminded = height - el->content_offset_height() - max_height;
+						pixel_t reminded = height - el->content_offset_height() - max_height;
 						height = max_height;
 						int divider = 0;
 						if(el->css().get_margins().top.is_predefined()) divider++;
@@ -452,7 +452,7 @@ void litehtml::render_item::render_positioned(render_type rt)
 				height = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
 				top = css_top.calc_percent(containing_block_size.height);
 				bottom = css_bottom.calc_percent(containing_block_size.height);
-				int remained = containing_block_size.height - height - top - bottom;
+				pixel_t remained = containing_block_size.height - height - top - bottom;
 
 				if(el->css().get_margins().top.is_predefined() && el->css().get_margins().bottom.is_predefined())
 				{
@@ -483,9 +483,9 @@ void litehtml::render_item::render_positioned(render_type rt)
 			}
 
 			// Calculate horizontal position
-			int right = 0;
-			int left = 0;
-			int width = 0;
+			pixel_t right = 0;
+			pixel_t left = 0;
+			pixel_t width = 0;
 			// https://www.w3.org/TR/CSS22/visudet.html#abs-non-replaced-width
 			// 10.3.7 Absolutely positioned, non-replaced elements
 			if(css_left.is_predefined() && !css_right.is_predefined() && el_width.is_predefined())
@@ -533,7 +533,7 @@ void litehtml::render_item::render_positioned(render_type rt)
 				if(el->src_el()->is_replaced())
 				{
 					width = el->width() - el->content_offset_width();
-					int reminded = (containing_block_size.width - left - right) - width - el->content_offset_width();
+					pixel_t reminded = (containing_block_size.width - left - right) - width - el->content_offset_width();
 					if(reminded)
 					{
 						int divider = 0;
@@ -552,10 +552,10 @@ void litehtml::render_item::render_positioned(render_type rt)
 				}
 				if(!el->css().get_max_width().is_predefined())
 				{
-					int max_width = el->css().get_max_width().calc_percent(containing_block_size.height);
+					pixel_t max_width = el->css().get_max_width().calc_percent(containing_block_size.height);
 					if(width - el->content_offset_width() > max_width)
 					{
-						int reminded = width - el->content_offset_width() - max_width;
+						pixel_t reminded = width - el->content_offset_width() - max_width;
 						width = max_width;
 						int divider = 0;
 						if(el->css().get_margins().left.is_predefined()) divider++;
@@ -592,7 +592,7 @@ void litehtml::render_item::render_positioned(render_type rt)
 				width = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
 				left = css_left.calc_percent(containing_block_size.width);
 				right = css_right.calc_percent(containing_block_size.width);
-				int remained = containing_block_size.width - width - left - right;
+				pixel_t remained = containing_block_size.width - width - left - right;
 
 				if(el->css().get_margins().left.is_predefined() && el->css().get_margins().right.is_predefined())
 				{
@@ -680,14 +680,14 @@ void litehtml::render_item::add_positioned(const std::shared_ptr<litehtml::rende
     }
 }
 
-void litehtml::render_item::get_redraw_box(litehtml::position& pos, int x /*= 0*/, int y /*= 0*/)
+void litehtml::render_item::get_redraw_box(litehtml::position& pos, pixel_t x /*= 0*/, pixel_t y /*= 0*/)
 {
     if(is_visible())
     {
-        int p_left		= std::min(pos.left(),	x + m_pos.left() - m_padding.left - m_borders.left);
-        int p_right		= std::max(pos.right(), x + m_pos.right() + m_padding.left + m_borders.left);
-        int p_top		= std::min(pos.top(), y + m_pos.top() - m_padding.top - m_borders.top);
-        int p_bottom	= std::max(pos.bottom(), y + m_pos.bottom() + m_padding.bottom + m_borders.bottom);
+        pixel_t p_left		= std::min(pos.left(),	x + m_pos.left() - m_padding.left - m_borders.left);
+        pixel_t p_right		= std::max(pos.right(), x + m_pos.right() + m_padding.left + m_borders.left);
+        pixel_t p_top		= std::min(pos.top(), y + m_pos.top() - m_padding.top - m_borders.top);
+        pixel_t p_bottom	= std::max(pos.bottom(), y + m_pos.bottom() + m_padding.bottom + m_borders.bottom);
 
         pos.x = p_left;
         pos.y = p_top;
@@ -707,7 +707,7 @@ void litehtml::render_item::get_redraw_box(litehtml::position& pos, int x /*= 0*
     }
 }
 
-void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::size& content_size, int x /*= 0*/, int y /*= 0*/ )
+void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::size& content_size, pixel_t x /*= 0*/, pixel_t y /*= 0*/ )
 {
 	if(css().get_display() != display_inline && css().get_display() != display_table_row)
 	{
@@ -750,7 +750,7 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, litehtml::si
 	}
 }
 
-void litehtml::render_item::draw_stacking_context( uint_ptr hdc, int x, int y, const position* clip, bool with_positioned )
+void litehtml::render_item::draw_stacking_context( uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, bool with_positioned )
 {
     if(!is_visible()) return;
 
@@ -793,7 +793,7 @@ void litehtml::render_item::draw_stacking_context( uint_ptr hdc, int x, int y, c
     }
 }
 
-void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const position* clip, draw_flag flag, int zindex)
+void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag, int zindex)
 {
     position pos = m_pos;
     pos.x += x;
@@ -901,7 +901,7 @@ void litehtml::render_item::draw_children(uint_ptr hdc, int x, int y, const posi
     }
 }
 
-std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(int x, int y, int client_x, int client_y, draw_flag flag, int zindex)
+std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex)
 {
     element::ptr ret = nullptr;
 
@@ -1015,7 +1015,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(in
     return ret;
 }
 
-std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(int x, int y, int client_x, int client_y)
+std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y)
 {
     if(!is_visible()) return nullptr;
 
@@ -1082,7 +1082,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(i
     return ret;
 }
 
-bool litehtml::render_item::is_point_inside( int x, int y )
+bool litehtml::render_item::is_point_inside( pixel_t x, pixel_t y )
 {
 	if(src_el()->css().get_display() != display_inline && src_el()->css().get_display() != display_table_row)
 	{
@@ -1127,8 +1127,8 @@ void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes)
     if(src_el()->css().get_position() != element_position_fixed)
     {
 		auto cur_el = parent();
-		int	 add_x	= 0;
-		int	 add_y	= 0;
+		pixel_t	 add_x	= 0;
+		pixel_t	 add_y	= 0;
 
         while(cur_el)
 		{
@@ -1214,7 +1214,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item::init()
     return shared_from_this();
 }
 
-void litehtml::render_item::calc_cb_length(const css_length& len, int percent_base, containing_block_context::typed_int& out_value) const
+void litehtml::render_item::calc_cb_length(const css_length& len, pixel_t percent_base, containing_block_context::typed_int& out_value) const
 {
 	if (!len.is_predefined())
 	{
@@ -1335,10 +1335,10 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 	return ret;
 }
 
-std::tuple<int, int> litehtml::render_item::element_static_offset(const std::shared_ptr<litehtml::render_item>& el)
+std::tuple<litehtml::pixel_t, litehtml::pixel_t> litehtml::render_item::element_static_offset(const std::shared_ptr<litehtml::render_item>& el)
 {
-	int offset_x = 0;
-	int offset_y = 0;
+	pixel_t offset_x = 0;
+	pixel_t offset_y = 0;
 	auto cur_el = el->parent();
 	auto this_el = el->css().get_position() != element_position_fixed ? shared_from_this() : src_el()->get_document()->root_render();
 	while(cur_el && cur_el != this_el)

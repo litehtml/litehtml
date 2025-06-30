@@ -1,12 +1,13 @@
 #include "flex_line.h"
 #include "flex_item.h"
+#include "types.h"
 
-void litehtml::flex_line::distribute_free_space(int container_main_size)
+void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 {
 	// Determine the used flex factor. Sum the outer hypothetical main sizes of all items on the line.
 	// If the sum is less than the flex container’s inner main size, use the flex grow factor for the
 	// rest of this algorithm; otherwise, use the flex shrink factor.
-	int initial_free_space = container_main_size - base_size;
+	pixel_t initial_free_space = container_main_size - base_size;
 	bool grow;
 	int total_flex_factor;
 	if(initial_free_space < 0)
@@ -46,8 +47,8 @@ void litehtml::flex_line::distribute_free_space(int container_main_size)
 		bool processed = true;
 		while (processed)
 		{
-			int sum_scaled_flex_shrink_factor = 0;
-			int remaining_free_space = container_main_size;
+			pixel_t sum_scaled_flex_shrink_factor = 0;
+			pixel_t remaining_free_space = container_main_size;
 			int total_not_frozen = 0;
 			for (auto &item: items)
 			{
@@ -88,8 +89,8 @@ void litehtml::flex_line::distribute_free_space(int container_main_size)
 							//    flex shrink factors of all unfrozen items on the line. Set the item’s target
 							//    main size to its flex base size minus a fraction of the absolute value of the
 							//    remaining free space proportional to the ratio.
-							int scaled_flex_shrink_factor = item->base_size * item->shrink;
-							item->main_size = (int) ((float) item->base_size - (float) remaining_free_space *
+							pixel_t scaled_flex_shrink_factor = item->base_size * item->shrink;
+							item->main_size = (pixel_t) ((float) item->base_size - (float) remaining_free_space *
 																			 (float) scaled_flex_shrink_factor /
 																			 (float) sum_scaled_flex_shrink_factor);
 
@@ -116,7 +117,7 @@ void litehtml::flex_line::distribute_free_space(int container_main_size)
 							//    factors of all unfrozen items on the line. Set the item’s target main size to
 							//    its flex base size plus a fraction of the remaining free space proportional
 							//    to the ratio.
-							item->main_size = (int) ((float) item->base_size +
+							item->main_size = (pixel_t) ((float) item->base_size +
 													(float) remaining_free_space * (float) item->grow /
 													(float) total_flex_factor);
 							// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
@@ -142,29 +143,32 @@ void litehtml::flex_line::distribute_free_space(int container_main_size)
 			}
 		}
 		// Distribute remaining after algorithm space
-		int sum_main_size = 0;
+		pixel_t sum_main_size = 0;
 		for(auto &item : items)
 		{
 			sum_main_size += item->main_size;
 		}
-		int free_space = container_main_size - sum_main_size;
+
+		pixel_t free_space = container_main_size - sum_main_size;
+
+		pixel_t ditributeStep = 1;
 		if(free_space > 0)
 		{
 			for(auto &item : items)
 			{
 				if(free_space == 0) break;
-				item->main_size++;
-				free_space--;
+				item->main_size += ditributeStep;
+				free_space -= ditributeStep;
 			}
 		}
 	}
 }
 
-bool litehtml::flex_line::distribute_main_auto_margins(int free_main_size)
+bool litehtml::flex_line::distribute_main_auto_margins(pixel_t free_main_size)
 {
 	if(free_main_size > 0 && (num_auto_margin_main_start || num_auto_margin_main_end))
 	{
-		int add = (int) (free_main_size / (items.size() * 2));
+		pixel_t add = (pixel_t) (free_main_size / (items.size() * 2));
 		for (auto &item: items)
 		{
 			if(!item->auto_margin_main_start.is_default())
@@ -205,7 +209,7 @@ bool litehtml::flex_line::distribute_main_auto_margins(int free_main_size)
 	return false;
 }
 
-void litehtml::flex_line::init(int container_main_size, bool fit_container, bool is_row_direction,
+void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, bool is_row_direction,
 							   const litehtml::containing_block_context &self_size,
 							   litehtml::formatting_context *fmt_ctx)
 {
@@ -221,14 +225,14 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 
 	if(is_row_direction)
 	{
-		def_value<int> first_baseline_top = 0;
-		def_value<int> first_baseline_bottom = 0;
-		def_value<int> last_baseline_top = 0;
-		def_value<int> last_baseline_bottom = 0;
-		int non_baseline_height = 0;
+		def_value<pixel_t> first_baseline_top = 0;
+		def_value<pixel_t> first_baseline_bottom = 0;
+		def_value<pixel_t> last_baseline_top = 0;
+		def_value<pixel_t> last_baseline_bottom = 0;
+		pixel_t non_baseline_height = 0;
 
 		// Calculate maximum cross size
-		def_value<int> max_cross_size(0);
+		def_value<pixel_t> max_cross_size(0);
 		if(self_size.height.type != containing_block_context::cbc_value_type_auto)
 		{
 			max_cross_size = self_size.height;
@@ -240,7 +244,7 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 				max_cross_size = self_size.max_height;
 			} else
 			{
-				max_cross_size = std::max((int) max_cross_size, (int) self_size.max_height);
+				max_cross_size = std::max((pixel_t) max_cross_size, (pixel_t) self_size.max_height);
 			}
 		}
 
@@ -259,25 +263,25 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 				{
 					last_baseline.type(reverse_cross ? baseline::baseline_type_top : baseline::baseline_type_bottom);
 
-					int top = -item->el->get_last_baseline();
-					int bottom = top + item->el->height();
+					pixel_t top = -item->el->get_last_baseline();
+					pixel_t bottom = top + item->el->height();
 
 					if(last_baseline_top.is_default()) last_baseline_top = top;
-					else last_baseline_top = std::min((int) last_baseline_top, top);
+					else last_baseline_top = std::min((pixel_t) last_baseline_top, top);
 
 					if(last_baseline_bottom.is_default()) last_baseline_bottom = bottom;
-					else last_baseline_bottom = std::max((int)last_baseline_bottom, bottom);
+					else last_baseline_bottom = std::max((pixel_t) last_baseline_bottom, bottom);
 				} else
 				{
 					first_baseline.type(reverse_cross ? baseline::baseline_type_bottom : baseline::baseline_type_top);
-					int top = -item->el->get_first_baseline();
-					int bottom = top + item->el->height();
+					pixel_t top = -item->el->get_first_baseline();
+					pixel_t bottom = top + item->el->height();
 
 					if(first_baseline_top.is_default()) first_baseline_top = top;
-					else first_baseline_top = std::min((int) first_baseline_top, top);
+					else first_baseline_top = std::min((pixel_t) first_baseline_top, top);
 
 					if(first_baseline_bottom.is_default()) first_baseline_bottom = bottom;
-					else first_baseline_bottom = std::max((int) first_baseline_bottom, bottom);
+					else first_baseline_bottom = std::max((pixel_t) first_baseline_bottom, bottom);
 				}
 			} else
 			{
@@ -298,7 +302,7 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 	} else
 	{
 		// Calculate maximum cross size
-		def_value<int> max_cross_size(0);
+		def_value<pixel_t> max_cross_size(0);
 		if(self_size.width.type != containing_block_context::cbc_value_type_auto)
 		{
 			max_cross_size = self_size.width;
@@ -310,13 +314,13 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 				max_cross_size = self_size.max_width;
 			} else
 			{
-				max_cross_size = std::max((int) max_cross_size, (int) self_size.max_width);
+				max_cross_size = std::max((pixel_t) max_cross_size, (pixel_t) self_size.max_width);
 			}
 		}
 
 		for (auto &item: items)
 		{
-			int el_ret_width = item->el->render(0,
+			pixel_t el_ret_width = item->el->render(0,
 												0,
 												self_size, fmt_ctx, false);
 			item->el->render(0,
@@ -336,14 +340,14 @@ void litehtml::flex_line::init(int container_main_size, bool fit_container, bool
 	}
 }
 
-int litehtml::flex_line::calculate_items_position(int container_main_size,
+litehtml::pixel_t litehtml::flex_line::calculate_items_position(pixel_t container_main_size,
 												  flex_justify_content justify_content,
 												  bool is_row_direction,
 												  const containing_block_context &self_size,
 												  formatting_context *fmt_ctx)
 {
 	/// Distribute main axis free space for auto-margins
-	int free_main_size = container_main_size - main_size;
+	pixel_t free_main_size = container_main_size - main_size;
 	distribute_main_auto_margins(free_main_size);
 	free_main_size = container_main_size - main_size;
 
@@ -373,10 +377,10 @@ int litehtml::flex_line::calculate_items_position(int container_main_size,
 	}
 
 	/// Distribute free main size using justify-content property
-	int main_pos = 0;
-	int add_before_item = 0;
-	int add_after_item = 0;
-	int item_remainder = 0;
+	pixel_t main_pos = 0;
+	pixel_t add_before_item = 0;
+	pixel_t add_after_item = 0;
+	pixel_t item_remainder = 0;
 
 	/// find initial main position and spaces between items
 	switch (justify_content)
@@ -422,21 +426,23 @@ int litehtml::flex_line::calculate_items_position(int container_main_size,
 	}
 
 	/// Place all items in main and cross positions
-	int height =  0;
+	pixel_t height =  0;
+
+	pixel_t distributeStep = 1;
 	for(auto &item : items)
 	{
 		main_pos += add_before_item;
 		if(add_before_item > 0 && item_remainder > 0)
 		{
-			main_pos++;
-			item_remainder--;
+			main_pos += distributeStep;
+			item_remainder -= distributeStep;
 		}
 		item->place(*this, main_pos, self_size, fmt_ctx);
 		main_pos += item->get_el_main_size() + add_after_item;
 		if(add_after_item > 0 && item_remainder > 0)
 		{
-			main_pos++;
-			item_remainder--;
+			main_pos += distributeStep;
+			item_remainder -= distributeStep;
 		}
 		height = std::max(height, item->el->bottom());
 	}

@@ -180,7 +180,7 @@ void container_cairo_pango::delete_font(litehtml::uint_ptr hFont)
 	}
 }
 
-int container_cairo_pango::text_width(const char *text, litehtml::uint_ptr hFont)
+litehtml::pixel_t container_cairo_pango::text_width(const char *text, litehtml::uint_ptr hFont)
 {
 	auto* fnt = (cairo_font*) hFont;
 

@@ -4,6 +4,7 @@
 #include "document.h"
 #include "html_tag.h"
 #include "document_container.h"
+#include "types.h"
 
 #define offset(member) ((uint_ptr)&this->member - (uint_ptr)this)
 //#define offset(func)	[](const css_properties& css) { return css.func; }
@@ -108,7 +109,7 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	// 5. Otherwise, the remaining 'display' property values apply as specified.
 
 	compute_font(el, doc);
-	int font_size = get_font_size();
+	pixel_t font_size = get_font_size();
 
 	const css_length _auto = css_length::predef_value(0);
 	const css_length none = _auto, normal = _auto;
@@ -232,7 +233,7 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 		m_line_height.computed_value = m_font_metrics.height;
 	} else if(m_line_height.css_value.units() == css_units_none)
 	{
-		m_line_height.computed_value = (int) std::nearbyint(m_line_height.css_value.val() * font_size);
+		m_line_height.computed_value = (int) std::nearbyint(m_line_height.css_value.val() * font_size); // TODO
 	} else
 	{
 		m_line_height.computed_value = doc->to_pixels(m_line_height.css_value, m_font_metrics, m_font_metrics.font_size);
@@ -263,7 +264,7 @@ litehtml::web_color litehtml::css_properties::get_color_property(const html_tag*
 	return color;
 }
 
-static const int font_size_table[8][7] =
+static const litehtml::pixel_t font_size_table[8][7] =
 {
 		{ 9,    9,     9,     9,    11,    14,    18},
 		{ 9,    9,     9,    10,    12,    15,    20},
@@ -280,8 +281,8 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 	// initialize font size
 	css_length sz = el->get_property<css_length>(_font_size_, true, css_length::predef_value(font_size_medium), offset(m_font_size));
 
-	int parent_sz = 0;
-	int doc_font_size = doc->container()->get_default_font_size();
+	pixel_t parent_sz = 0;
+	pixel_t doc_font_size = doc->container()->get_default_font_size();
 	element::ptr el_parent = el->parent();
 	if (el_parent)
 	{
@@ -291,7 +292,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 		parent_sz = doc_font_size;
 	}
 
-	int font_size = parent_sz;
+	pixel_t font_size = parent_sz;
 
 	if(sz.is_predefined())
 	{
@@ -303,10 +304,10 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 				font_size = font_size_table[idx_in_table][sz.predef()];
 			} else if(sz.predef() == font_size_smaller)
 			{
-				font_size = (int) (parent_sz / 1.2);
+				font_size = (pixel_t) (parent_sz / 1.2);
 			}  else if(sz.predef() == font_size_larger)
 			{
-				font_size = (int) (parent_sz * 1.2);
+				font_size = (pixel_t) (parent_sz * 1.2);
 			} else
 			{
 				font_size = parent_sz;
@@ -334,10 +335,10 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 					font_size = doc_font_size * 2;
 					break;
 				case font_size_smaller:
-					font_size = (int) (parent_sz / 1.2);
+					font_size = (pixel_t) (parent_sz / 1.2);
 					break;
 				case font_size_larger:
-					font_size = (int) (parent_sz * 1.2);
+					font_size = (pixel_t) (parent_sz * 1.2);
 					break;
 				default:
 					font_size = parent_sz;
