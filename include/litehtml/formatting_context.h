@@ -11,8 +11,8 @@ namespace litehtml
 	private:
 		std::list<floated_box> m_floats_left;
 		std::list<floated_box> m_floats_right;
-		int_int_cache m_cache_line_left;
-		int_int_cache m_cache_line_right;
+		pixel_pixel_cache m_cache_line_left;
+		pixel_pixel_cache m_cache_line_right;
 		pixel_t m_current_top;
 		pixel_t m_current_left;
 

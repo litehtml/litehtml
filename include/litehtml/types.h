@@ -302,14 +302,14 @@ namespace litehtml
 			size_mode_content = 0x04,
 		};
 
-		struct typed_int // TODO: Rename?
+		struct typed_pixel
 		{
 			pixel_t			value;
 			cbc_value_type	type;
 
-			typed_int(const typed_int& v) = default;
+			typed_pixel(const typed_pixel& v) = default;
 
-			typed_int(pixel_t val, cbc_value_type tp)
+			typed_pixel(pixel_t val, cbc_value_type tp)
 			{
 				value = val;
 				type = tp;
@@ -320,23 +320,23 @@ namespace litehtml
 				return value;
 			}
 
-			typed_int& operator=(pixel_t val)
+			typed_pixel& operator=(pixel_t val)
 			{
 				value = val;
 				return *this;
 			}
 
-			typed_int& operator=(const typed_int& v) = default;
+			typed_pixel& operator=(const typed_pixel& v) = default;
 		};
 
-		typed_int width;						// width of the containing block
-		typed_int render_width;
-		typed_int min_width;
-		typed_int max_width;
+		typed_pixel width;						// width of the containing block
+		typed_pixel render_width;
+		typed_pixel min_width;
+		typed_pixel max_width;
 
-		typed_int height;						// height of the containing block
-		typed_int min_height;
-		typed_int max_height;
+		typed_pixel height;						// height of the containing block
+		typed_pixel min_height;
+		typed_pixel max_height;
 
 		int context_idx;
 		uint32_t size_mode;
@@ -742,14 +742,14 @@ namespace litehtml
 		}
 	};
 
-	struct int_int_cache // TODO: Rename?
+	struct pixel_pixel_cache
 	{
 		pixel_t		hash;
 		pixel_t		val;
 		bool	is_valid;
 		bool	is_default;
 
-		int_int_cache()
+		pixel_pixel_cache()
 		{
 			hash		= 0;
 			val			= 0;

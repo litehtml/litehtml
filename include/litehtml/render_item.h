@@ -29,7 +29,7 @@ namespace litehtml
         std::vector<std::shared_ptr<render_item>>   m_positioned;
 
 		containing_block_context calculate_containing_block_context(const containing_block_context& cb_context);
-		void calc_cb_length(const css_length& len, pixel_t percent_base, containing_block_context::typed_int& out_value) const;
+		void calc_cb_length(const css_length& len, pixel_t percent_base, containing_block_context::typed_pixel& out_value) const;
 		virtual pixel_t _render(pixel_t /*x*/, pixel_t /*y*/, const containing_block_context& /*containing_block_size*/, formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
 		{
 			return 0;

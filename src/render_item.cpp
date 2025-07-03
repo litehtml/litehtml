@@ -1214,7 +1214,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item::init()
     return shared_from_this();
 }
 
-void litehtml::render_item::calc_cb_length(const css_length& len, pixel_t percent_base, containing_block_context::typed_int& out_value) const
+void litehtml::render_item::calc_cb_length(const css_length& len, pixel_t percent_base, containing_block_context::typed_pixel& out_value) const
 {
 	if (!len.is_predefined())
 	{
