@@ -27,7 +27,7 @@ namespace litehtml
 	class document;
 	class element;
 
-	using pixel_t = int;
+	using pixel_t = float;
 
 	using string_map = std::map<string, string>;
 	using elements_list = std::list<std::shared_ptr<element>>;
