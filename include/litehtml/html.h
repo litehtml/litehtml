@@ -152,7 +152,7 @@ namespace litehtml
 		return ch >= 0xD800 && ch < 0xE000;
 	}
 
-	inline int round_f(float val) // TODO
+	inline int round_f(float val)
 	{
 		int int_val = (int) val;
 		if(val - int_val >= 0.5)
