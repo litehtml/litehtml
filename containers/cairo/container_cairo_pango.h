@@ -11,12 +11,12 @@
 struct cairo_font
 {
 	PangoFontDescription* font;
-	int size;
+	litehtml::pixel_t size;
 	bool underline;
 	bool strikeout;
 	bool overline;
-	int ascent;
-	int descent;
+	litehtml::pixel_t ascent;
+	litehtml::pixel_t descent;
 	int underline_thickness;
 	int underline_position;
 	int strikethrough_thickness;

@@ -151,7 +151,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
 		ret->strikethrough_thickness = PANGO_PIXELS(ret->strikethrough_thickness);
 		ret->strikethrough_position = PANGO_PIXELS(ret->strikethrough_position);
 
-		ret->overline_position = fm->ascent * PANGO_SCALE;
+		ret->overline_position = pango_units_from_double(fm->ascent);
 		if(thinkness.is_predefined())
 		{
 			ret->overline_thickness = pango_font_metrics_get_underline_thickness(metrics);
@@ -209,7 +209,7 @@ enum class draw_type
 	DRAW_UNDERLINE
 };
 
-static inline void draw_single_line(cairo_t* cr, int x, int y, int width, int thickness, draw_type type)
+static inline void draw_single_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, int thickness, draw_type type)
 {
 	double top;
 	switch (type)
@@ -231,7 +231,7 @@ static inline void draw_single_line(cairo_t* cr, int x, int y, int width, int th
 	cairo_line_to(cr, x + width, top);
 }
 
-static void draw_solid_line(cairo_t* cr, int x, int y, int width, int thickness, draw_type type, litehtml::web_color& color)
+static void draw_solid_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, int thickness, draw_type type, litehtml::web_color& color)
 {
 	draw_single_line(cr, x, y, width, thickness, type);
 
@@ -243,7 +243,7 @@ static void draw_solid_line(cairo_t* cr, int x, int y, int width, int thickness,
 	cairo_stroke(cr);
 }
 
-static void draw_dotted_line(cairo_t* cr, int x, int y, int width, int thickness, draw_type type, litehtml::web_color& color)
+static void draw_dotted_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, int thickness, draw_type type, litehtml::web_color& color)
 {
 	draw_single_line(cr, x, y, width, thickness, type);
 
@@ -260,7 +260,7 @@ static void draw_dotted_line(cairo_t* cr, int x, int y, int width, int thickness
 	cairo_stroke(cr);
 }
 
-static void draw_dashed_line(cairo_t* cr, int x, int y, int width, int thickness, draw_type type, litehtml::web_color& color)
+static void draw_dashed_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, int thickness, draw_type type, litehtml::web_color& color)
 {
 	draw_single_line(cr, x, y, width, thickness, type);
 
@@ -276,7 +276,7 @@ static void draw_dashed_line(cairo_t* cr, int x, int y, int width, int thickness
 	cairo_stroke(cr);
 }
 
-static void draw_wavy_line(cairo_t* cr, int x, int y, int width, int thickness, draw_type type, litehtml::web_color& color)
+static void draw_wavy_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, int thickness, draw_type type, litehtml::web_color& color)
 {
 	int h_pad = 1;
 	int brush_height = (int) thickness * 3 + h_pad * 2;
@@ -330,7 +330,7 @@ static void draw_wavy_line(cairo_t* cr, int x, int y, int width, int thickness, 
 	cairo_surface_destroy(brush_surface);
 }
 
-static void draw_double_line(cairo_t* cr, int x, int y, int width, int thickness, draw_type type, litehtml::web_color& color)
+static void draw_double_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, int thickness, draw_type type, litehtml::web_color& color)
 {
 	cairo_set_line_width(cr, thickness);
 	double top1;
@@ -393,16 +393,16 @@ void container_cairo_pango::draw_text(litehtml::uint_ptr hdc, const char *text, 
 	PangoRectangle ink_rect, logical_rect;
 	pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
 
-	int text_baseline = pos.height - fnt->descent;
+	litehtml::pixel_t text_baseline = pos.height - fnt->descent;
 
-	int x = pos.left() + logical_rect.x;
-	int y = pos.top();
+	litehtml::pixel_t x = pos.left() + logical_rect.x;
+	litehtml::pixel_t y = pos.top();
 
 	cairo_move_to(cr, x, y);
 	pango_cairo_update_layout (cr, layout);
 	pango_cairo_show_layout (cr, layout);
 
-	int tw = 0;
+	litehtml::pixel_t tw = 0;
 
 	if(fnt->underline || fnt->strikeout || fnt->overline)
 	{
