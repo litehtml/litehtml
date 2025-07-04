@@ -1,8 +1,9 @@
 #include "render_inline_context.h"
 #include "document.h"
 #include "iterators.h"
+#include "types.h"
 
-int litehtml::render_item_inline_context::_render_content(int /*x*/, int /*y*/, bool /*second_pass*/, const containing_block_context &self_size, formatting_context* fmt_ctx)
+litehtml::pixel_t litehtml::render_item_inline_context::_render_content(pixel_t /*x*/, pixel_t /*y*/, bool /*second_pass*/, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
     m_line_boxes.clear();
 	m_max_line_width = 0;
@@ -73,7 +74,7 @@ int litehtml::render_item_inline_context::_render_content(int /*x*/, int /*y*/, 
     {
         if (collapse_top_margin())
         {
-            int old_top = m_margins.top;
+            pixel_t old_top = m_margins.top;
             m_margins.top = std::max(m_line_boxes.front()->top_margin(), m_margins.top);
             if (m_margins.top != old_top)
             {
@@ -130,18 +131,18 @@ void litehtml::render_item_inline_context::fix_line_width(element_float flt,
             }
         } else
         {
-            int line_top = 0;
+            pixel_t line_top = 0;
             line_top = m_line_boxes.back()->top();
 
-            int line_left	= 0;
-            int line_right	= self_size.render_width;
+            pixel_t line_left	= 0;
+            pixel_t line_right	= self_size.render_width;
             fmt_ctx->get_line_left_right(line_top, self_size.render_width, line_left, line_right);
 
             if(m_line_boxes.size() == 1)
             {
                 if (src_el()->css().get_list_style_type() != list_style_type_none && src_el()->css().get_list_style_position() == list_style_position_inside)
                 {
-                    int sz_font = src_el()->css().get_font_size();
+                    pixel_t sz_font = src_el()->css().get_font_size();
                     line_left += sz_font;
                 }
 
@@ -181,10 +182,10 @@ std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inlin
     return ret;
 }
 
-int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box_item>& el, line_context& line_ctx, const containing_block_context &self_size, formatting_context* fmt_ctx)
+litehtml::pixel_t litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box_item>& el, line_context& line_ctx, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
 	auto items = finish_last_box(false, self_size);
-	int line_top = 0;
+	pixel_t line_top = 0;
 	if(!m_line_boxes.empty())
 	{
 		line_top = m_line_boxes.back()->bottom();
@@ -208,13 +209,13 @@ int litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box
         }
     }
 
-    int first_line_margin = 0;
-    int text_indent = 0;
+    pixel_t first_line_margin = 0;
+    pixel_t text_indent = 0;
     if(m_line_boxes.empty())
     {
         if(src_el()->css().get_list_style_type() != list_style_type_none && src_el()->css().get_list_style_position() == list_style_position_inside)
         {
-            int sz_font = src_el()->css().get_font_size();
+            pixel_t sz_font = src_el()->css().get_font_size();
             first_line_margin = sz_font;
         }
         if(src_el()->css().get_text_indent().val() != 0)
@@ -245,12 +246,12 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
 
     if(item->get_el()->src_el()->is_float())
     {
-        int line_top = 0;
+        pixel_t line_top = 0;
         if(!m_line_boxes.empty())
         {
             line_top = m_line_boxes.back()->top();
         }
-        int ret = place_float(item->get_el(), line_top, self_size, fmt_ctx);
+        pixel_t ret = place_float(item->get_el(), line_top, self_size, fmt_ctx);
 		if(ret > m_max_line_width)
 		{
 			m_max_line_width = ret;
@@ -271,7 +272,7 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
 	{
 		if(item->get_el()->src_el()->is_inline_box())
 		{
-			int min_rendered_width = item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(line_ctx.right), fmt_ctx);
+			pixel_t min_rendered_width = item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(line_ctx.right), fmt_ctx);
 			if(min_rendered_width < item->get_el()->width() && item->get_el()->src_el()->css().get_width().is_predefined())
 			{
 				item->get_el()->render(line_ctx.left, line_ctx.top, self_size.new_width(min_rendered_width), fmt_ctx);
@@ -316,7 +317,7 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
         {
             if(collapse_top_margin())
             {
-                int shift = item->get_el()->margin_top();
+                pixel_t shift = item->get_el()->margin_top();
                 if(shift >= 0)
                 {
                     line_ctx.top -= shift;
@@ -325,8 +326,8 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
             }
         } else
         {
-            int shift = 0;
-            int prev_margin = m_line_boxes[m_line_boxes.size() - 2]->bottom_margin();
+            pixel_t shift = 0;
+            pixel_t prev_margin = m_line_boxes[m_line_boxes.size() - 2]->bottom_margin();
 
             if(prev_margin > item->get_el()->margin_top())
             {
@@ -350,8 +351,8 @@ void litehtml::render_item_inline_context::apply_vertical_align()
 {
     if(!m_line_boxes.empty())
     {
-        int add = 0;
-        int content_height	= m_line_boxes.back()->bottom();
+        pixel_t add = 0;
+        pixel_t content_height	= m_line_boxes.back()->bottom();
 
         if(m_pos.height > content_height)
         {
@@ -379,9 +380,9 @@ void litehtml::render_item_inline_context::apply_vertical_align()
     }
 }
 
-int litehtml::render_item_inline_context::get_first_baseline()
+litehtml::pixel_t litehtml::render_item_inline_context::get_first_baseline()
 {
-	int bl;
+	pixel_t bl;
 	if(!m_line_boxes.empty())
 	{
 		const auto &line = m_line_boxes.front();
@@ -393,9 +394,9 @@ int litehtml::render_item_inline_context::get_first_baseline()
 	return bl;
 }
 
-int litehtml::render_item_inline_context::get_last_baseline()
+litehtml::pixel_t litehtml::render_item_inline_context::get_last_baseline()
 {
-	int bl;
+	pixel_t bl;
 	if(!m_line_boxes.empty())
 	{
 		const auto &line = m_line_boxes.back();

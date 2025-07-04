@@ -27,16 +27,16 @@ namespace cairo
 		litehtml::web_color color;
 		litehtml::border_style style;
 
-		int border_width;
-		int top_border_width;
-		int bottom_border_width;
+		litehtml::pixel_t border_width;
+		litehtml::pixel_t top_border_width;
+		litehtml::pixel_t bottom_border_width;
 
-		int radius_top_x;
-		int radius_top_y;
-		int radius_bottom_x;
-		int radius_bottom_y;
+		litehtml::pixel_t radius_top_x;
+		litehtml::pixel_t radius_top_y;
+		litehtml::pixel_t radius_bottom_x;
+		litehtml::pixel_t radius_bottom_y;
 
-		border(cairo_t* _cr, int _left, int _top, int _bottom) :
+		border(cairo_t* _cr, litehtml::pixel_t _left, litehtml::pixel_t _top, litehtml::pixel_t _bottom) :
 				real_side(left_side),
 				color(),
 				style(litehtml::border_style_none),
@@ -54,9 +54,9 @@ namespace cairo
 
 	private:
 		cairo_t* cr;
-		int left;
-		int top;
-		int bottom;
+		litehtml::pixel_t left;
+		litehtml::pixel_t top;
+		litehtml::pixel_t bottom;
 		void draw_line(double line_offset, double top_line_offset, double bottom_line_offset);
 		void draw_solid();
 		void draw_dotted();

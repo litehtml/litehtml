@@ -60,10 +60,10 @@ cairo_pattern_t* create_conic_gradient_pattern(double angle, double radius, cons
 		points.push_back(color_points[0]);
 		bg_color_point cp;
 		cp.offset = 0.5f;
-		cp.color.red = INTERPOLATE_COLOR(color_points[0].color.red, color_points[1].color.red, 0.5f);
-		cp.color.green = INTERPOLATE_COLOR(color_points[0].color.green, color_points[1].color.green, 0.5f);
-		cp.color.blue = INTERPOLATE_COLOR(color_points[0].color.blue, color_points[1].color.blue, 0.5f);
-		cp.color.alpha = INTERPOLATE_COLOR(color_points[0].color.alpha, color_points[1].color.alpha, 0.5f);
+		cp.color.red = (litehtml::byte) INTERPOLATE_COLOR(color_points[0].color.red, color_points[1].color.red, 0.5f);
+		cp.color.green = (litehtml::byte) INTERPOLATE_COLOR(color_points[0].color.green, color_points[1].color.green, 0.5f);
+		cp.color.blue = (litehtml::byte) INTERPOLATE_COLOR(color_points[0].color.blue, color_points[1].color.blue, 0.5f);
+		cp.color.alpha = (litehtml::byte) INTERPOLATE_COLOR(color_points[0].color.alpha, color_points[1].color.alpha, 0.5f);
 		points.push_back(cp);
 		points.push_back(color_points[1]);
 		return create_conic_gradient_pattern(angle, radius, points);

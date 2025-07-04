@@ -24,7 +24,7 @@ namespace litehtml
 	};
 
 	// CSS Properties types
-	using css_line_height_t = css_property<css_length, int>;
+	using css_line_height_t = css_property<css_length, pixel_t>;
 
 	class css_properties
 	{
@@ -237,8 +237,8 @@ namespace litehtml
 		const background &get_bg() const;
 		void set_bg(const background &mBg);
 
-		int get_font_size() const;
-		void set_font_size(int mFontSize);
+		pixel_t get_font_size() const;
+		void set_font_size(pixel_t mFontSize);
 
 		uint_ptr get_font() const;
 		void set_font(uint_ptr mFont);
@@ -569,12 +569,12 @@ namespace litehtml
 		m_bg = mBg;
 	}
 
-	inline int css_properties::get_font_size() const
+	inline pixel_t css_properties::get_font_size() const
 	{
-		return (int)m_font_size.val();
+		return (pixel_t)m_font_size.val();
 	}
 
-	inline void css_properties::set_font_size(int mFontSize)
+	inline void css_properties::set_font_size(pixel_t mFontSize)
 	{
 		m_font_size = (float)mFontSize;
 	}

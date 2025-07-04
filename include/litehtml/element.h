@@ -100,8 +100,8 @@ namespace litehtml
 		virtual bool				set_class(const char* pclass, bool add);
 		virtual bool				is_replaced() const;
 		virtual void				compute_styles(bool recursive = true);
-		virtual void				draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item>& ri);
-		virtual void				draw_background(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri);
+		virtual void				draw(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item>& ri);
+		virtual void				draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item> &ri);
 
 		virtual void				get_text(string& text);
 		virtual void				parse_attributes();
@@ -113,7 +113,7 @@ namespace litehtml
 		virtual bool				is_ancestor(const ptr &el) const;
 		virtual element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
 		virtual element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr);
-		virtual void				get_content_size(size& sz, int max_width);
+		virtual void				get_content_size(size& sz, pixel_t max_width);
 		virtual bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list = {}) const;
 		virtual bool				is_nth_last_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list = {}) const;
 		virtual bool				is_only_child(const element::ptr& el, bool of_type) const;
