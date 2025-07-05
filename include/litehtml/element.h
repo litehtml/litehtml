@@ -5,7 +5,7 @@
 #include <memory>
 #include <tuple>
 #include <list>
-#include "litehtml/types.h"
+#include "types.h"
 #include "stylesheet.h"
 #include "css_properties.h"
 

@@ -23,12 +23,12 @@ windows_container::~windows_container(void)
 	cairo_destroy(m_temp_cr);
 }
 
-litehtml::uint_ptr windows_container::create_font( const char* faceName, int size, int weight, litehtml::font_style italic, unsigned int decoration, litehtml::font_metrics* fm )
+litehtml::uint_ptr windows_container::create_font(const litehtml::font_description& descr, const litehtml::document* doc, litehtml::font_metrics* fm)
 {
 	std::wstring fnt_name = L"sans-serif";
 
 	litehtml::string_vector fonts;
-	litehtml::split_string(faceName, fonts, ",");
+	litehtml::split_string(descr.family, fonts, ",");
 	if(!fonts.empty())
 	{
 		litehtml::trim(fonts[0]);
@@ -45,28 +45,32 @@ litehtml::uint_ptr windows_container::create_font( const char* faceName, int siz
 
 	cairo_font* fnt = new cairo_font(	m_font_link,
 										fnt_name.c_str(), 
-										size, 
-										weight, 
-										(italic == litehtml::font_style_italic) ? TRUE : FALSE,
-										(decoration & litehtml::font_decoration_linethrough) ? TRUE : FALSE,
-										(decoration & litehtml::font_decoration_underline) ? TRUE : FALSE);
+										descr.size, 
+										descr.weight, 
+										(descr.style == litehtml::font_style_italic) ? TRUE : FALSE,
+										(descr.decoration_line & litehtml::text_decoration_line_line_through) ? TRUE : FALSE,
+										(descr.decoration_line & litehtml::text_decoration_line_underline) ? TRUE : FALSE);
 
 	cairo_save(m_temp_cr);
 	fnt->load_metrics(m_temp_cr);
 
 	if(fm)
 	{
+		fm->font_size	= descr.size;
 		fm->ascent		= fnt->metrics().ascent;
 		fm->descent		= fnt->metrics().descent;
 		fm->height		= fnt->metrics().height;
 		fm->x_height	= fnt->metrics().x_height;
-		if(italic == litehtml::font_style_italic || decoration)
+		fm->ch_width	= fnt->metrics().ch_width;
+		if(descr.style == litehtml::font_style_italic || descr.decoration_line != litehtml::text_decoration_line_none)
 		{
 			fm->draw_spaces = true;
 		} else
 		{
 			fm->draw_spaces = false;
 		}
+		fm->sub_shift = descr.size / 5;
+		fm->super_shift = descr.size / 3;
 	}
 
 	cairo_restore(m_temp_cr);

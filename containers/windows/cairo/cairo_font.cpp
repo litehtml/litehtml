@@ -282,13 +282,17 @@ void cairo_font::get_metrics(cairo_t* cr, cairo_font_metrics* fm )
 	cairo_font_extents_t ext;
 	cairo_font_extents(cr, &ext);
 
-	cairo_text_extents_t tex;
-	cairo_text_extents(cr, "x", &tex);
+	cairo_text_extents_t tex_x;
+	cairo_text_extents(cr, "x", &tex_x);
+
+	cairo_text_extents_t tex_0;
+	cairo_text_extents(cr, "0", &tex_0);
 
 	fm->ascent		= (int) ext.ascent;
 	fm->descent		= (int) ext.descent;
 	fm->height		= (int) (ext.ascent + ext.descent);
-	fm->x_height	= (int) tex.height;
+	fm->x_height	= (int) tex_x.height;
+	fm->ch_width	= (int) tex_0.width;
 	unlock();
 }
 

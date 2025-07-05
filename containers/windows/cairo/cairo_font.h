@@ -45,6 +45,7 @@ struct cairo_font_metrics
 	int		ascent;
 	int		descent;
 	int		x_height;
+	int		ch_width;
 };
 
 
