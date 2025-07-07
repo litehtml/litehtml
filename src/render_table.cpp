@@ -331,7 +331,7 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y, con
 		}
     }
 
-    if (top_captions)
+    if (top_captions != 0)
     {
         // Add border height to get the top of cells
         top_captions += border_top();

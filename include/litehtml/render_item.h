@@ -343,8 +343,8 @@ namespace litehtml
 
         bool collapse_top_margin() const
         {
-            return !m_borders.top &&
-                   !m_padding.top &&
+            return m_borders.top == 0 &&
+                   m_padding.top == 0 &&
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.top >= 0 &&
@@ -355,8 +355,8 @@ namespace litehtml
 
         bool collapse_bottom_margin() const
         {
-            return !m_borders.bottom &&
-                   !m_padding.bottom &&
+            return m_borders.bottom == 0 &&
+                   m_padding.bottom == 0 &&
                    m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none &&
                    m_margins.bottom >= 0 &&

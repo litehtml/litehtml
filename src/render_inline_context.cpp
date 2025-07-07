@@ -370,7 +370,7 @@ void litehtml::render_item_inline_context::apply_vertical_align()
             }
         }
 
-        if(add)
+        if(add != 0)
         {
             for(auto & box : m_line_boxes)
             {

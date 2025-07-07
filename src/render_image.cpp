@@ -34,7 +34,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
             {
                 m_pos.width = max_width;
             }
-            if(sz.width)
+            if(sz.width != 0)
             {
                 m_pos.height = (pixel_t) ((float) m_pos.width * (float) sz.height / (float)sz.width);
             } else
@@ -51,7 +51,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
             {
                 m_pos.height = max_height;
             }
-            if(sz.height)
+            if(sz.height != 0)
             {
                 m_pos.width = (pixel_t) ((float )m_pos.height * (float)sz.width / (float)sz.height);
             } else
@@ -76,7 +76,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
             }
         }
 
-        if(sz.height)
+        if(sz.height != 0)
         {
             m_pos.width = (pixel_t) ((float )m_pos.height * (float)sz.width / (float)sz.height);
         } else
@@ -97,7 +97,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
             }
         }
 
-        if(sz.width)
+        if(sz.width != 0)
         {
             m_pos.height = (pixel_t) ((float) m_pos.width * (float) sz.height / (float)sz.width);
         } else

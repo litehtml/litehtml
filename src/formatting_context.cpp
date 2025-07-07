@@ -269,7 +269,7 @@ litehtml::pixel_t litehtml::formatting_context::get_cleared_top(const std::share
 		case clear_left:
 			{
 				pixel_t fh = get_left_floats_height();
-				if(fh && fh > line_top)
+				if(fh != 0 && fh > line_top)
 				{
 					line_top = fh;
 				}
@@ -278,7 +278,7 @@ litehtml::pixel_t litehtml::formatting_context::get_cleared_top(const std::share
 		case clear_right:
 			{
 				pixel_t fh = get_right_floats_height();
-				if(fh && fh > line_top)
+				if(fh != 0 && fh > line_top)
 				{
 					line_top = fh;
 				}
@@ -287,7 +287,7 @@ litehtml::pixel_t litehtml::formatting_context::get_cleared_top(const std::share
 		case clear_both:
 			{
 				pixel_t fh = get_floats_height(float_none);
-				if(fh && fh > line_top)
+				if(fh != 0 && fh > line_top)
 				{
 					line_top = fh;
 				}
@@ -297,7 +297,7 @@ litehtml::pixel_t litehtml::formatting_context::get_cleared_top(const std::share
 			if(el->src_el()->css().get_float() != float_none)
 			{
 				pixel_t fh = get_floats_height(el->src_el()->css().get_float());
-				if(fh && fh > line_top)
+				if(fh != 0 && fh > line_top)
 				{
 					line_top = fh;
 				}

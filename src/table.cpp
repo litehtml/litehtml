@@ -83,7 +83,7 @@ void litehtml::table_grid::finish()
 			if(cell(col, row)->el)
 			{
 				// find minimum left border width
-				if(m_columns[col].border_left)
+				if(m_columns[col].border_left != 0)
 				{
 					m_columns[col].border_left = std::min(m_columns[col].border_left, cell(col, row)->borders.left);
 				} else
@@ -91,7 +91,7 @@ void litehtml::table_grid::finish()
 					m_columns[col].border_left = cell(col, row)->borders.left;
 				}
 				// find minimum right border width
-				if(m_columns[col].border_right)
+				if(m_columns[col].border_right != 0)
 				{
 					m_columns[col].border_right = std::min(m_columns[col].border_right, cell(col, row)->borders.right);
 				} else
@@ -99,7 +99,7 @@ void litehtml::table_grid::finish()
 					m_columns[col].border_right = cell(col, row)->borders.right;
 				}
 				// find minimum top border width
-				if(m_rows[row].border_top)
+				if(m_rows[row].border_top != 0)
 				{
 					m_rows[row].border_top = std::min(m_rows[row].border_top, cell(col, row)->borders.top);
 				} else
@@ -107,7 +107,7 @@ void litehtml::table_grid::finish()
 					m_rows[row].border_top = cell(col, row)->borders.top;
 				}
 				// find minimum bottom border width
-				if(m_rows[row].border_bottom)
+				if(m_rows[row].border_bottom != 0)
 				{
 					m_rows[row].border_bottom = std::min(m_rows[row].border_bottom, cell(col, row)->borders.bottom);
 				} else
@@ -176,9 +176,9 @@ void litehtml::table_grid::distribute_width( pixel_t width, int start, int end, 
 	pixel_t added_width = 0;
 	for(int col = start; col <= end; col++)
 	{
-		if(cols_width)
+		if(cols_width != 0)
 		{
-			add = round_f( (float) width * ((float) m_columns[col].max_width / (float) cols_width) );
+			add = (float) width * ((float) m_columns[col].max_width / (float) cols_width);
 		}
 		added_width += add;
 		acc->get(m_columns[col]) += add;
@@ -249,12 +249,12 @@ void litehtml::table_grid::distribute_width( pixel_t width, int start, int end )
 				cols_width += column->max_width - column->min_width;
 			}
 
-			if(cols_width)
+			if(cols_width != 0)
 			{
 				pixel_t add = width / (int) distribute_columns.size();
 				for(const auto& column : distribute_columns)
 				{
-					add = round_f( (float) width * ((float) (column->max_width - column->min_width) / (float) cols_width) );
+					add = (float) width * ((float) (column->max_width - column->min_width) / (float) cols_width);
 					if(column->width + add >= column->min_width)
 					{
 						column->width	+= add;

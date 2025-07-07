@@ -466,7 +466,7 @@ uint_ptr document::add_font( const font_description& descr, font_metrics* fm )
 
 uint_ptr document::get_font( const font_description& descr, font_metrics* fm )
 {
-	if(!descr.size)
+	if(descr.size == 0)
 	{
 		return 0;
 	}

@@ -1085,7 +1085,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos, co
 		lm.index = -1;
 	}
 
-	if(img_size.width && img_size.height)
+	if(img_size.width != 0 && img_size.height != 0)
 	{
 		if(lm.pos.y + img_size.height > pos.y + pos.height)
 		{

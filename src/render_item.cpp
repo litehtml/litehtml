@@ -534,7 +534,7 @@ void litehtml::render_item::render_positioned(render_type rt)
 				{
 					width = el->width() - el->content_offset_width();
 					pixel_t reminded = (containing_block_size.width - left - right) - width - el->content_offset_width();
-					if(reminded)
+					if(reminded != 0)
 					{
 						int divider = 0;
 						if (el->css().get_margins().left.is_predefined()) divider++;

@@ -89,7 +89,7 @@ litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /
 					el->render(child_x, child_top, self_size.new_width(rw), fmt_ctx);
 				}
 				pixel_t auto_margin = el->calc_auto_margins(child_width);
-				if(auto_margin)
+				if(auto_margin != 0)
 				{
 					el->pos().x += auto_margin;
 				}

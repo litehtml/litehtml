@@ -242,7 +242,7 @@ namespace litehtml
 		[[nodiscard]]
 		bool empty() const
 		{
-			return !width && !height;
+			return width == 0 && height == 0;
 		}
 
 		[[nodiscard]]

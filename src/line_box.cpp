@@ -375,7 +375,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 	{
 		// Apply text-align-justify
 		m_min_width += lbi->get_rendered_min_width();
-		if (spacing_x && counter)
+		if (spacing_x != 0 && counter)
 		{
 			cixx += offj;
 			if ((counter + 1) == int(m_items.size()))
@@ -383,11 +383,11 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			lbi->pos().x += (pixel_t) cixx;
 		}
 		counter++;
-		if ((m_text_align == text_align_right || spacing_x) && counter == int(m_items.size()))
+		if ((m_text_align == text_align_right || spacing_x != 0) && counter == int(m_items.size()))
 		{
 			// Forcible justify the last element to the right side for text align right and justify;
 			lbi->pos().x = m_right - lbi->pos().width;
-		} else if (shift_x)
+		} else if (shift_x != 0)
 		{
 			lbi->pos().x += shift_x;
 		}
@@ -852,7 +852,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::new_wi
 {
 	std::list< std::unique_ptr<line_box_item> > ret_items;
     pixel_t add = left - m_left;
-    if(add)
+    if(add != 0)
     {
 		m_left	= left;
 		m_right	= right;

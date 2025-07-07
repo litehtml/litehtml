@@ -13,19 +13,19 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 {
 	m_color = el->get_property<web_color>(_color_, true, web_color::black, offset(m_color));
 
-	m_el_position	 = (element_position) el->get_property<int>( _position_,		false,	element_position_static, offset(m_el_position));
-	m_display		 = (style_display)	  el->get_property<int>( _display_,			false,	display_inline,			 offset(m_display));
-	m_visibility	 = (visibility)		  el->get_property<int>( _visibility_,		true,	visibility_visible,		 offset(m_visibility));
-	m_float			 = (element_float)	  el->get_property<int>( _float_,			false,	float_none,				 offset(m_float));
-	m_clear			 = (element_clear)	  el->get_property<int>( _clear_,			false,	clear_none,				 offset(m_clear));
-	m_appearance	 = (appearance)		  el->get_property<int>( _appearance_,		false,	appearance_none,		 offset(m_appearance));
-	m_box_sizing	 = (box_sizing)		  el->get_property<int>( _box_sizing_,		false,	box_sizing_content_box,	 offset(m_box_sizing));
-	m_overflow		 = (overflow)		  el->get_property<int>( _overflow_,		false,	overflow_visible,		 offset(m_overflow));
-	m_text_align	 = (text_align)		  el->get_property<int>( _text_align_,		true,	text_align_left,		 offset(m_text_align));
-	m_vertical_align = (vertical_align)	  el->get_property<int>( _vertical_align_,	false,	va_baseline,			 offset(m_vertical_align));
-	m_text_transform = (text_transform)	  el->get_property<int>( _text_transform_,	true,	text_transform_none,	 offset(m_text_transform));
-	m_white_space	 = (white_space)	  el->get_property<int>( _white_space_,		true,	white_space_normal,		 offset(m_white_space));
-	m_caption_side	 = (caption_side)	  el->get_property<int>( _caption_side_,	true,	caption_side_top,		 offset(m_caption_side));
+	m_el_position	 = (element_position)	el->get_property<int>( _position_,		false,	element_position_static,	 offset(m_el_position));
+	m_display		 = (style_display)		el->get_property<int>( _display_,			false,	display_inline,			 offset(m_display));
+	m_visibility	 = (visibility)			el->get_property<int>( _visibility_,		true,	visibility_visible,		 offset(m_visibility));
+	m_float			 = (element_float)		el->get_property<int>( _float_,			false,	float_none,				 offset(m_float));
+	m_clear			 = (element_clear)		el->get_property<int>( _clear_,			false,	clear_none,				 offset(m_clear));
+	m_appearance	 = (appearance)			el->get_property<int>( _appearance_,		false,	appearance_none,			 offset(m_appearance));
+	m_box_sizing	 = (box_sizing)			el->get_property<int>( _box_sizing_,		false,	box_sizing_content_box,	 offset(m_box_sizing));
+	m_overflow		 = (overflow)			el->get_property<int>( _overflow_,		false,	overflow_visible,		 offset(m_overflow));
+	m_text_align	 = (text_align)			el->get_property<int>( _text_align_,		true,	text_align_left,			offset(m_text_align));
+	m_vertical_align = (vertical_align)		el->get_property<int>( _vertical_align_,	false,	va_baseline,				 offset(m_vertical_align));
+	m_text_transform = (text_transform)		el->get_property<int>( _text_transform_,	true,	text_transform_none,		 offset(m_text_transform));
+	m_white_space	 = (white_space)		el->get_property<int>( _white_space_,		true,	white_space_normal,		 offset(m_white_space));
+	m_caption_side	 = (caption_side)		el->get_property<int>( _caption_side_,	true,	caption_side_top,		 offset(m_caption_side));
 
 	// https://www.w3.org/TR/CSS22/visuren.html#dis-pos-flo
 	if (m_display == display_none)
@@ -296,7 +296,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 
 	if(sz.is_predefined())
 	{
-		int idx_in_table = doc_font_size - 9;
+		int idx_in_table = round_f(doc_font_size - 9);
 		if(idx_in_table >= 0 && idx_in_table <= 7)
 		{
 			if(sz.predef() >= font_size_xx_small && sz.predef() <= font_size_xx_large)

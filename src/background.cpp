@@ -100,7 +100,7 @@ bool litehtml::background::get_layer(int idx, position pos, const element* el, c
 			litehtml::size img_size;
 			el->get_document()->container()->get_image_size(image_layer->url.c_str(), image_layer->base_url.c_str(),
 															img_size);
-			if (img_size.width && img_size.height)
+			if (img_size.width != 0 && img_size.height != 0)
 			{
 				litehtml::size img_new_sz = img_size;
 				double img_ar_width = (double) img_size.width / (double) img_size.height;

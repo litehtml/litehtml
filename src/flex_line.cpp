@@ -70,7 +70,7 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 			// c. Distribute free space proportional to the flex factors.
 			// If the remaining free space is zero
 			//    Do nothing.
-			if (!remaining_free_space)
+			if (remaining_free_space == 0)
 			{
 				processed = false;
 			} else
@@ -151,14 +151,14 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 
 		pixel_t free_space = container_main_size - sum_main_size;
 
-		pixel_t ditributeStep = 1;
+		pixel_t ditribute_step = 1;
 		if(free_space > 0)
 		{
 			for(auto &item : items)
 			{
-				if(free_space == 0) break;
-				item->main_size += ditributeStep;
-				free_space -= ditributeStep;
+				if(free_space < ditribute_step) break;
+				item->main_size += ditribute_step;
+				free_space -= ditribute_step;
 			}
 		}
 	}
@@ -186,21 +186,23 @@ bool litehtml::flex_line::distribute_main_auto_margins(pixel_t free_main_size)
 				free_main_size -= add;
 			}
 		}
+
+		pixel_t ditribute_step = 1;
 		while (free_main_size > 0)
 		{
 			for (auto &item: items)
 			{
 				if(!item->auto_margin_main_start.is_default())
 				{
-					item->auto_margin_main_start = item->auto_margin_main_start + 1;
-					free_main_size--;
-					if(!free_main_size) break;
+					item->auto_margin_main_start = item->auto_margin_main_start + ditribute_step;
+					free_main_size -= ditribute_step;
+					if(free_main_size < ditribute_step) break;
 				}
 				if(!item->auto_margin_main_end.is_default())
 				{
-					item->auto_margin_main_end = item->auto_margin_main_end + 1;
-					free_main_size--;
-					if(!free_main_size) break;
+					item->auto_margin_main_end = item->auto_margin_main_end + ditribute_step;
+					free_main_size -= ditribute_step;
+					if(free_main_size < ditribute_step) break;
 				}
 			}
 		}
@@ -428,21 +430,21 @@ litehtml::pixel_t litehtml::flex_line::calculate_items_position(pixel_t containe
 	/// Place all items in main and cross positions
 	pixel_t height =  0;
 
-	pixel_t distributeStep = 1;
+	pixel_t distribute_step = 1;
 	for(auto &item : items)
 	{
 		main_pos += add_before_item;
 		if(add_before_item > 0 && item_remainder > 0)
 		{
-			main_pos += distributeStep;
-			item_remainder -= distributeStep;
+			main_pos += distribute_step;
+			item_remainder -= distribute_step;
 		}
 		item->place(*this, main_pos, self_size, fmt_ctx);
 		main_pos += item->get_el_main_size() + add_after_item;
 		if(add_after_item > 0 && item_remainder > 0)
 		{
-			main_pos += distributeStep;
-			item_remainder -= distributeStep;
+			main_pos += distribute_step;
+			item_remainder -= distribute_step;
 		}
 		height = std::max(height, item->el->bottom());
 	}
