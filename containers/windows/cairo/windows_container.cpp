@@ -87,14 +87,14 @@ void windows_container::delete_font( litehtml::uint_ptr hFont )
 	}
 }
 
-int windows_container::text_width( const char* text, litehtml::uint_ptr hFont )
+litehtml::pixel_t windows_container::text_width(const char* text, litehtml::uint_ptr hFont)
 {
 	cairo_font* fnt = (cairo_font*) hFont;
 	
 	cairo_save(m_temp_cr);
-	int ret = fnt->text_width(m_temp_cr, text);
+	double ret = fnt->text_width(m_temp_cr, text);
 	cairo_restore(m_temp_cr);
-	return ret;
+	return (litehtml::pixel_t) ret;
 }
 
 void windows_container::draw_text( litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos )

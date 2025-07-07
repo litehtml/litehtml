@@ -239,19 +239,19 @@ cairo_font_face_t* cairo_font::create_font_face( HFONT fnt )
 	return cairo_win32_font_face_create_for_logfontw(&lf);
 }
 
-int cairo_font::text_width( cairo_t* cr, const char* str )
+double cairo_font::text_width(cairo_t* cr, const char* str)
 {
 	text_chunk::vector chunks;
 	split_text(str, chunks);
 
-	int ret = text_width(cr, chunks);
+	double ret = text_width(cr, chunks);
 
 	free_text_chunks(chunks);
 
-	return (int) ret;
+	return ret;
 }
 
-int cairo_font::text_width( cairo_t* cr, text_chunk::vector& chunks )
+double cairo_font::text_width( cairo_t* cr, text_chunk::vector& chunks )
 {
 	lock();
 	cairo_set_font_size(cr, m_size);
@@ -271,7 +271,7 @@ int cairo_font::text_width( cairo_t* cr, text_chunk::vector& chunks )
 	}
 	unlock();
 
-	return (int) ret;
+	return ret;
 }
 
 void cairo_font::get_metrics(cairo_t* cr, cairo_font_metrics* fm )
