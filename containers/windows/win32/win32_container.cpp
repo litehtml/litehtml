@@ -1,8 +1,10 @@
 #include "win32_container.h"
+#include "litehtml/os_types.h"
+
 using namespace std;
 using namespace litehtml;
 
-wstring utf8_to_utf16(string str)
+static wstring utf8_to_utf16(string str)
 {
 	utf8_to_utf32 utf32 = str;
 	wstring wstr;
@@ -11,12 +13,12 @@ wstring utf8_to_utf16(string str)
 		char32_t ch = *ptr;
 		if (ch <= 0xFFFF) wstr += (wchar_t)ch;
 		// high surrogate goes first in UTF-16LE
-		else wstr += {(wchar_t)(((ch - 0x10000) >> 10) + 0xD800), (ch & 0x3FF) + 0xDC00};
+		else wstr += {(wchar_t) (((ch - 0x10000) >> 10) + 0xD800), (wchar_t) ((ch & 0x3FF) + 0xDC00)};
 	}
 	return wstr;
 }
 
-string utf16_to_utf8(wstring str)
+static string utf16_to_utf8(wstring str)
 {
 	u32string ustr;
 	for (size_t i = 0; i < str.size(); i++)
@@ -87,11 +89,11 @@ static void trim_quotes(string& str)
 		str.erase(str.length() - 1, 1);
 }
 
-uint_ptr win32_container::create_font( const char* font_list, int size, int weight, font_style italic, unsigned int decoration, font_metrics* fm )
+uint_ptr win32_container::create_font(const litehtml::font_description& descr, const litehtml::document* doc, litehtml::font_metrics* fm)
 {
 	wstring font_name;
 	string_vector fonts;
-	split_string(font_list, fonts, ",");
+	split_string(descr.family, fonts, ",");
 	bool found = false;
 	for (auto& name : fonts)
 	{
@@ -111,15 +113,15 @@ uint_ptr win32_container::create_font( const char* font_list, int size, int weig
 	LOGFONT lf = {};
 	wcscpy_s(lf.lfFaceName, LF_FACESIZE, font_name.c_str());
 
-	lf.lfHeight			= -size;
-	lf.lfWeight			= weight;
-	lf.lfItalic			= italic == font_style_italic;
+	lf.lfHeight			= -descr.size;
+	lf.lfWeight			= descr.weight;
+	lf.lfItalic			= descr.style== font_style_italic;
 	lf.lfCharSet		= DEFAULT_CHARSET;
 	lf.lfOutPrecision	= OUT_DEFAULT_PRECIS;
 	lf.lfClipPrecision	= CLIP_DEFAULT_PRECIS;
 	lf.lfQuality		= DEFAULT_QUALITY;
-	lf.lfStrikeOut		= (decoration & font_decoration_linethrough) != 0;
-	lf.lfUnderline		= (decoration & font_decoration_underline) != 0;
+	lf.lfStrikeOut		= (descr.decoration_line & text_decoration_line_line_through) != 0;
+	lf.lfUnderline		= (descr.decoration_line & text_decoration_line_underline) != 0;
 	HFONT hFont = CreateFontIndirect(&lf);
 
 	if (fm)
@@ -127,11 +129,15 @@ uint_ptr win32_container::create_font( const char* font_list, int size, int weig
 		SelectObject(m_tmp_hdc, hFont);
 		TEXTMETRIC tm = {};
 		GetTextMetrics(m_tmp_hdc, &tm);
+		fm->font_size = descr.size;
 		fm->ascent = tm.tmAscent;
 		fm->descent = tm.tmDescent;
 		fm->height = tm.tmHeight;
 		fm->x_height = tm.tmHeight / 2;   // this is an estimate; call GetGlyphOutline to get the real value
-		fm->draw_spaces = italic || decoration;
+		fm->ch_width = tm.tmAveCharWidth;
+		fm->draw_spaces = descr.style == font_style_italic || descr.decoration_line != text_decoration_line_none;
+		fm->sub_shift = descr.size / 5;
+		fm->super_shift = descr.size / 3;
 	}
 
 	return (uint_ptr) hFont;
@@ -147,12 +153,12 @@ const char* win32_container::get_default_font_name() const
 	return "Times New Roman";
 }
 
-int win32_container::get_default_font_size() const
+litehtml::pixel_t win32_container::get_default_font_size() const
 {
 	return 16;
 }
 
-int win32_container::text_width( const char* text, uint_ptr hFont )
+litehtml::pixel_t win32_container::text_width( const char* text, uint_ptr hFont )
 {
 	SIZE size = {};
 	SelectObject(m_tmp_hdc, (HFONT)hFont);
@@ -179,7 +185,7 @@ void win32_container::draw_text( uint_ptr hdc, const char* text, uint_ptr hFont,
 	release_clip((HDC) hdc);
 }
 
-int win32_container::pt_to_px( int pt ) const
+litehtml::pixel_t win32_container::pt_to_px(litehtml::pixel_t pt) const
 {
 	return MulDiv(pt, GetDeviceCaps(m_tmp_hdc, LOGPIXELSY), 72);
 }
@@ -188,14 +194,14 @@ void win32_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
 {
 	apply_clip((HDC)hdc);
 
-	int top_margin = marker.pos.height / 3;
+	litehtml::pixel_t top_margin = marker.pos.height / 3;
 	if (top_margin < 4)
 		top_margin = 0;
 
-	int draw_x = marker.pos.x;
-	int draw_y = marker.pos.y + top_margin;
-	int draw_width = marker.pos.height - top_margin * 2;
-	int draw_height = marker.pos.height - top_margin * 2;
+	litehtml::pixel_t draw_x	  = marker.pos.x;
+	litehtml::pixel_t draw_y	  = marker.pos.y + top_margin;
+	litehtml::pixel_t draw_width  = marker.pos.height - top_margin * 2;
+	litehtml::pixel_t draw_height = marker.pos.height - top_margin * 2;
 
 	switch (marker.marker_type)
 	{
@@ -371,7 +377,7 @@ element::ptr win32_container::create_element(const char* tag_name, const string_
 void win32_container::get_media_features(media_features& media)  const
 {
 	position client;
-	get_client_rect(client);
+	get_viewport(client);
 
 	media.type = media_type_screen;
 	media.width = client.width;

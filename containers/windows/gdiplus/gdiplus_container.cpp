@@ -25,7 +25,7 @@ static Color gdiplus_color(web_color color)
 	return Color(color.alpha, color.red, color.green, color.blue);
 }
 
-void gdiplus_container::draw_ellipse(HDC hdc, int x, int y, int width, int height, web_color color, int line_width)
+void gdiplus_container::draw_ellipse(HDC hdc, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height, web_color color, int line_width)
 {
 	Graphics graphics(hdc);
 
@@ -36,7 +36,7 @@ void gdiplus_container::draw_ellipse(HDC hdc, int x, int y, int width, int heigh
 	graphics.DrawEllipse(&pen, x, y, width, height);
 }
 
-void gdiplus_container::fill_ellipse(HDC hdc, int x, int y, int width, int height, web_color color)
+void gdiplus_container::fill_ellipse(HDC hdc, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height, web_color color)
 {
 	Graphics graphics(hdc);
 
@@ -47,7 +47,7 @@ void gdiplus_container::fill_ellipse(HDC hdc, int x, int y, int width, int heigh
 	graphics.FillEllipse(&brush, x, y, width, height);
 }
 
-void gdiplus_container::fill_rect(HDC hdc, int x, int y, int width, int height, web_color color)
+void gdiplus_container::fill_rect(HDC hdc, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height, web_color color)
 {
 	Graphics graphics(hdc);
 
@@ -88,7 +88,7 @@ void gdiplus_container::draw_img_bg(HDC hdc, uint_ptr img, const litehtml::backg
 		scaled_img = new Bitmap(bg.origin_box.width, bg.origin_box.height);
 		Graphics gr(scaled_img);
 		gr.SetPixelOffsetMode(PixelOffsetModeHighQuality);
-		gr.DrawImage(bgbmp, 0, 0, bg.origin_box.width, bg.origin_box.height);
+		gr.DrawImage(bgbmp, 0.0, 0.0, bg.origin_box.width, bg.origin_box.height);
 		bgbmp = scaled_img;
 	}
 
@@ -147,11 +147,11 @@ void gdiplus_container::draw_img_bg(HDC hdc, uint_ptr img, const litehtml::backg
 const float dash = 3;
 const float space = 2;
 
-static void draw_horz_border(Graphics& graphics, const border& border, int y, int left, int right)
+static void draw_horz_border(Graphics& graphics, const border& border, litehtml::pixel_t y, litehtml::pixel_t left, litehtml::pixel_t right)
 {
 	if (border.style != border_style_double || border.width < 3)
 	{
-		if (border.width == 1) right--; // 1px-wide lines are longer by one pixel in GDI+ (the endpoint is also drawn)
+		if (border.width == 1) right -= 1; // 1px-wide lines are longer by one pixel in GDI+ (the endpoint is also drawn)
 		Pen pen(gdiplus_color(border.color), (float)border.width);
 		if (border.style == border_style_dotted)
 		{
@@ -164,24 +164,24 @@ static void draw_horz_border(Graphics& graphics, const border& border, int y, in
 			pen.SetDashPattern(dashValues, 2);
 		}
 		graphics.DrawLine(&pen,
-			Point(left,  y + border.width / 2),
-			Point(right, y + border.width / 2));
+			PointF(left,  y + border.width / 2),
+			PointF(right, y + border.width / 2));
 	}
 	else
 	{
-		int single_line_width = (int)round(border.width / 3.);
-		if (single_line_width == 1) right--;
+		litehtml::pixel_t single_line_width = border.width / 3.0;
+		if (single_line_width == 1) right -= 1;
 		Pen pen(gdiplus_color(border.color), (float)single_line_width);
 		graphics.DrawLine(&pen,
-			Point(left,  y + single_line_width / 2),
-			Point(right, y + single_line_width / 2));
+			PointF(left,  y + single_line_width / 2),
+			PointF(right, y + single_line_width / 2));
 		graphics.DrawLine(&pen,
-			Point(left,  y + border.width - 1 - single_line_width / 2),
-			Point(right, y + border.width - 1 - single_line_width / 2));
+			PointF(left,  y + border.width - 1 - single_line_width / 2),
+			PointF(right, y + border.width - 1 - single_line_width / 2));
 	}
 }
 
-static void draw_vert_border(Graphics& graphics, const border& border, int x, int top, int bottom)
+static void draw_vert_border(Graphics& graphics, const border& border, litehtml::pixel_t x, litehtml::pixel_t top, litehtml::pixel_t bottom)
 {
 	if (border.style != border_style_double || border.width < 3)
 	{
@@ -198,20 +198,20 @@ static void draw_vert_border(Graphics& graphics, const border& border, int x, in
 			pen.SetDashPattern(dashValues, 2);
 		}
 		graphics.DrawLine(&pen,
-			Point(x + border.width / 2, top),
-			Point(x + border.width / 2, bottom));
+			PointF(x + border.width / 2, top),
+			PointF(x + border.width / 2, bottom));
 	}
 	else
 	{
-		int single_line_width = (int)round(border.width / 3.);
+		litehtml::pixel_t single_line_width = border.width / 3.0;
 		if (single_line_width == 1) bottom--;
 		Pen pen(gdiplus_color(border.color), (float)single_line_width);
 		graphics.DrawLine(&pen,
-			Point(x + single_line_width / 2, top),
-			Point(x + single_line_width / 2, bottom));
+			PointF(x + single_line_width / 2, top),
+			PointF(x + single_line_width / 2, bottom));
 		graphics.DrawLine(&pen,
-			Point(x + border.width - 1 - single_line_width / 2, top),
-			Point(x + border.width - 1 - single_line_width / 2, bottom));
+			PointF(x + border.width - 1 - single_line_width / 2, top),
+			PointF(x + border.width - 1 - single_line_width / 2, bottom));
 	}
 }
 
