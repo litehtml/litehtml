@@ -259,7 +259,7 @@ namespace litehtml
 		pixel_t		ascent = 0;			// The distance from the baseline to the top of a line of text.
 		pixel_t		descent = 0;		// The distance from the baseline to the bottom of a line of text.
 		pixel_t		x_height = 0;		// Height of the symbol x
-		pixel_t 	ch_width = 0;		// Height of the symbol 0
+		pixel_t 	ch_width = 0;		// Width of the symbol 0
 		bool		draw_spaces = true;	// True to call draw text function for spaces. If False, just use space width without draw.
 		pixel_t		sub_shift = 0;		// The baseline shift for subscripts.
 		pixel_t		super_shift = 0;	// The baseline shift for superscripts.
