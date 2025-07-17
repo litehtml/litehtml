@@ -37,7 +37,7 @@ namespace litehtml
 		virtual void				delete_font(litehtml::uint_ptr hFont) = 0;
 		virtual pixel_t				text_width(const char* text, litehtml::uint_ptr hFont) = 0;
 		virtual void				draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;
-		virtual pixel_t				pt_to_px(pixel_t pt) const = 0;
+		virtual pixel_t				pt_to_px(float pt) const = 0;
 		virtual pixel_t				get_default_font_size() const = 0;
 		virtual const char*			get_default_font_name() const = 0;
 		virtual void				draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) = 0;

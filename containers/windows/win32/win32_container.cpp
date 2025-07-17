@@ -185,7 +185,7 @@ void win32_container::draw_text( uint_ptr hdc, const char* text, uint_ptr hFont,
 	release_clip((HDC) hdc);
 }
 
-litehtml::pixel_t win32_container::pt_to_px(litehtml::pixel_t pt) const
+litehtml::pixel_t win32_container::pt_to_px(float pt) const
 {
 	return MulDiv(pt, GetDeviceCaps(m_tmp_hdc, LOGPIXELSY), 72);
 }

@@ -9,7 +9,7 @@
 #endif
 
 
-litehtml::pixel_t container_cairo::pt_to_px(litehtml::pixel_t pt ) const
+litehtml::pixel_t container_cairo::pt_to_px(float pt ) const
 {
 	double dpi = get_screen_dpi();
 

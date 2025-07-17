@@ -125,7 +125,7 @@ void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, w
 	font->draw_text(*(canvas*)hdc, text, color, (int) pos.x, (int) pos.y);
 }
 
-pixel_t test_container::pt_to_px(pixel_t pt) const { return pt * 96 / 72; }
+pixel_t test_container::pt_to_px(float pt) const { return pt * 96 / 72; }
 pixel_t test_container::get_default_font_size() const { return 16; }
 const char* test_container::get_default_font_name() const { return "Terminus"; }
 

@@ -21,7 +21,7 @@ public:
 	void			delete_font(uint_ptr /*hFont*/) override {}
 	pixel_t			text_width(const char* text, uint_ptr hFont) override;
 	void			draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos) override;
-	pixel_t			pt_to_px(pixel_t pt) const override;
+	pixel_t			pt_to_px(float pt) const override;
 	pixel_t			get_default_font_size() const override;
 	const char*		get_default_font_name() const override;
 	void 			load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;

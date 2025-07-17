@@ -33,7 +33,7 @@ public:
 	void				draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) override;
 	void				transform_text(litehtml::string& text, litehtml::text_transform tt) override;
 
-	litehtml::pixel_t	pt_to_px(litehtml::pixel_t pt) const override;
+	litehtml::pixel_t	pt_to_px(float pt) const override;
 	void				draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker) override;
 	void				load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
 	void				get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;

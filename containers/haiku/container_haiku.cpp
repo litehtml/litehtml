@@ -281,7 +281,7 @@ LiteHtmlView::draw_text( litehtml::uint_ptr hdc, const char* text,
 }
 
 litehtml::pixel_t
-LiteHtmlView::pt_to_px( litehtml::pixel_t pt ) const
+LiteHtmlView::pt_to_px( float pt ) const
 {
 	std::cout << "pt_to_px" << std::endl;
 	return pt * 1.3333333333;
