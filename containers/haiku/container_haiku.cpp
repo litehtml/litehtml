@@ -434,7 +434,6 @@ LiteHtmlView::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background
 			BPoint(layer.border_box.right(), layer.border_box.bottom())
 		)
 	);
-	SetHighColor(0, 0, 0);
 }
 
 void 
