@@ -36,7 +36,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
             }
             if(sz.width != 0)
             {
-                m_pos.height = (pixel_t) ((float) m_pos.width * (float) sz.height / (float)sz.width);
+                m_pos.height = m_pos.width * sz.height / sz.width;
             } else
             {
                 m_pos.height = sz.height;
@@ -53,7 +53,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
             }
             if(sz.height != 0)
             {
-                m_pos.width = (pixel_t) ((float )m_pos.height * (float)sz.width / (float)sz.height);
+                m_pos.width = m_pos.height * sz.width / sz.height;
             } else
             {
                 m_pos.width = sz.width;
@@ -78,7 +78,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
 
         if(sz.height != 0)
         {
-            m_pos.width = (pixel_t) ((float )m_pos.height * (float)sz.width / (float)sz.height);
+            m_pos.width = m_pos.height * sz.width / sz.height;
         } else
         {
             m_pos.width = sz.width;
@@ -99,7 +99,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
 
         if(sz.width != 0)
         {
-            m_pos.height = (pixel_t) ((float) m_pos.width * (float) sz.height / (float)sz.width);
+            m_pos.height = m_pos.width * sz.height / sz.width;
         } else
         {
             m_pos.height = sz.height;

@@ -564,25 +564,25 @@ pixel_t document::to_pixels( const css_length& val, const font_metrics& metrics,
 		break;
 
 	case css_units_vw:
-		ret = (pixel_t)((double)m_media.width * (double)val.val() / 100.0);
+		ret = (pixel_t) (m_media.width * val.val() / 100.0);
 		break;
 	case css_units_vh:
-		ret = (pixel_t)((double)m_media.height * (double)val.val() / 100.0);
+		ret = (pixel_t) (m_media.height * val.val() / 100.0);
 		break;
 	case css_units_vmin:
-		ret = (pixel_t)((double)std::min(m_media.height, m_media.width) * (double)val.val() / 100.0);
+		ret = (pixel_t) (std::min(m_media.height, m_media.width) * val.val() / 100.0);
 		break;
 	case css_units_vmax:
-		ret = (pixel_t)((double)std::max(m_media.height, m_media.width) * (double)val.val() / 100.0);
+		ret = (pixel_t) (std::max(m_media.height, m_media.width) * val.val() / 100.0);
 		break;
 	case css_units_rem:
-		ret = (pixel_t) ((double) m_root->css().get_font_size() * (double) val.val());
+		ret = (pixel_t) (m_root->css().get_font_size() * val.val());
 		break;
 	case css_units_ex:
-		ret = (pixel_t) ((double) metrics.x_height * val.val());
+		ret = (pixel_t) (metrics.x_height * val.val());
 		break;
 	case css_units_ch:
-		ret = (pixel_t) ((double) metrics.ch_width * val.val());
+		ret = (pixel_t) (metrics.ch_width * val.val());
 		break;
 	default:
 		ret = (pixel_t) val.val();

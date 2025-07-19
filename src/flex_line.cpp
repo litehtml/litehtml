@@ -90,9 +90,7 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 							//    main size to its flex base size minus a fraction of the absolute value of the
 							//    remaining free space proportional to the ratio.
 							pixel_t scaled_flex_shrink_factor = item->base_size * item->shrink;
-							item->main_size = (pixel_t) ((float) item->base_size - (float) remaining_free_space *
-																			 (float) scaled_flex_shrink_factor /
-																			 (float) sum_scaled_flex_shrink_factor);
+							item->main_size = item->base_size - remaining_free_space * scaled_flex_shrink_factor / sum_scaled_flex_shrink_factor;
 
 							// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
 							// min and max main sizes and floor its content-box size at zero. If the item’s target
@@ -117,9 +115,8 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 							//    factors of all unfrozen items on the line. Set the item’s target main size to
 							//    its flex base size plus a fraction of the remaining free space proportional
 							//    to the ratio.
-							item->main_size = (pixel_t) ((float) item->base_size +
-													(float) remaining_free_space * (float) item->grow /
-													(float) total_flex_factor);
+							item->main_size = item->base_size + remaining_free_space * (pixel_t) item->grow / (pixel_t) total_flex_factor;
+
 							// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
 							// min and max main sizes and floor its content-box size at zero. If the item’s target
 							// main size was made smaller by this, it’s a max violation. If the item’s target main
@@ -168,7 +165,7 @@ bool litehtml::flex_line::distribute_main_auto_margins(pixel_t free_main_size)
 {
 	if(free_main_size > 0 && (num_auto_margin_main_start || num_auto_margin_main_end))
 	{
-		pixel_t add = (pixel_t) (free_main_size / (items.size() * 2));
+		pixel_t add =  free_main_size / (pixel_t) (items.size() * 2);
 		for (auto &item: items)
 		{
 			if(!item->auto_margin_main_start.is_default())
@@ -408,16 +405,16 @@ litehtml::pixel_t litehtml::flex_line::calculate_items_position(pixel_t containe
 			main_pos = free_main_size / 2;
 			break;
 		case flex_justify_content_space_between:
-			add_after_item = free_main_size / ((int) items.size() - 1);
-			item_remainder = free_main_size - (add_after_item * ((int) items.size() - 1));
+			add_after_item = free_main_size / (pixel_t) (items.size() - 1);
+			item_remainder = free_main_size - (add_after_item * (pixel_t) (items.size() - 1));
 			break;
 		case flex_justify_content_space_around:
-			add_after_item = add_before_item = free_main_size / ((int) items.size() * 2);
-			item_remainder = free_main_size - (add_after_item * (int) items.size() * 2);
+			add_after_item = add_before_item = free_main_size / (pixel_t) (items.size() * 2);
+			item_remainder = free_main_size - (add_after_item * (pixel_t) items.size() * 2);
 			break;
 		case flex_justify_content_space_evenly:
-			add_before_item = free_main_size / ((int) items.size() + 1);
-			item_remainder = free_main_size - add_before_item * ((int) items.size() + 1);
+			add_before_item = free_main_size / (pixel_t) (items.size() + 1);
+			item_remainder = free_main_size - add_before_item * (pixel_t) (items.size() + 1);
 			break;
 		default:
 			if(reverse_main)

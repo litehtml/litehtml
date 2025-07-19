@@ -135,7 +135,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
 	/////////////////////////////////////////////////////////////////
 	if(css().get_flex_align_content() == flex_align_content_stretch && free_cross_size > 0)
 	{
-		pixel_t add = (pixel_t)((double) free_cross_size / (double) m_lines.size());
+		pixel_t add = free_cross_size / (pixel_t) m_lines.size();
 		if(add > 0)
 		{
 			for (auto &ln: m_lines)
@@ -191,10 +191,10 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
 			line_pos = free_cross_size / 2;
 			break;
 		case flex_align_content_space_between:
-			add_after_line = free_cross_size / ((int) m_lines.size() - 1);
+			add_after_line = free_cross_size / (pixel_t) (m_lines.size() - 1);
 			break;
 		case flex_align_content_space_around:
-			add_before_line = add_after_line = free_cross_size / ((int) m_lines.size() * 2);
+			add_before_line = add_after_line = free_cross_size / (pixel_t) (m_lines.size() * 2);
 			break;
 		default:
 			if(is_wrap_reverse)

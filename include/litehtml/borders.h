@@ -142,9 +142,9 @@ namespace litehtml
 			pixel_t half_height = height / 2;
 			auto fix_one = [&](pixel_t& radii_x, pixel_t& radii_y)
 				{
-					double factor = std::min((double) half_width / (double) radii_x, (double) half_height / (double) radii_y);
-					radii_x = (pixel_t) ((double) radii_x * factor);
-					radii_y = (pixel_t) ((double) radii_y * factor);
+					pixel_t factor = std::min(half_width / radii_x, half_height / radii_y);
+					radii_x *= factor;
+					radii_y *= factor;
 				};
 
 			if(top_left_x > half_width || top_left_y > half_height)

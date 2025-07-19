@@ -118,7 +118,7 @@ namespace litehtml
 		{
 			if(units() == css_units_percentage)
 			{
-				return (pixel_t) ((double) width * (double) m_value / 100.0);
+				return (pixel_t) (width * m_value / 100.0);
 			} else
 			{
 				return (pixel_t) val();

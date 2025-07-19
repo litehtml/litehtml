@@ -178,7 +178,7 @@ void litehtml::table_grid::distribute_width( pixel_t width, int start, int end, 
 	{
 		if(cols_width != 0)
 		{
-			add = (float) width * ((float) m_columns[col].max_width / (float) cols_width);
+			add = width * (m_columns[col].max_width / cols_width);
 		}
 		added_width += add;
 		acc->get(m_columns[col]) += add;
@@ -251,10 +251,10 @@ void litehtml::table_grid::distribute_width( pixel_t width, int start, int end )
 
 			if(cols_width != 0)
 			{
-				pixel_t add = width / (int) distribute_columns.size();
+				pixel_t add = width / (pixel_t) distribute_columns.size();
 				for(const auto& column : distribute_columns)
 				{
-					add = (float) width * ((float) (column->max_width - column->min_width) / (float) cols_width);
+					add = width * ((column->max_width - column->min_width) / cols_width);
 					if(column->width + add >= column->min_width)
 					{
 						column->width	+= add;
@@ -532,7 +532,7 @@ void litehtml::table_grid::calc_rows_height(pixel_t blockHeight, pixel_t /*borde
 			if (auto_count)
 			{
 				// distribute height to the rows with height=auto
-				pixel_t extra_row_height = (pixel_t)(extra_height / auto_count);
+				pixel_t extra_row_height = extra_height / (pixel_t) auto_count;
 				for (auto& row : m_rows)
 				{
 					if (row.css_height.is_predefined())
@@ -546,7 +546,7 @@ void litehtml::table_grid::calc_rows_height(pixel_t blockHeight, pixel_t /*borde
 				// We don't have rows with height=auto, so distribute height to all rows
 				if (!m_rows.empty())
 				{
-					pixel_t extra_row_height = (pixel_t)(extra_height / m_rows.size());
+					pixel_t extra_row_height = extra_height / (pixel_t) m_rows.size();
 					for (auto& row : m_rows)
 					{
 						row.height += extra_row_height;
