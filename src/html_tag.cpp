@@ -1065,7 +1065,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos, co
 	pixel_t ln_height	= css().line_height().computed_value;
 	pixel_t sz_font		= css().get_font_size();
 	lm.pos.x		= pos.x;
-	lm.pos.width    = sz_font - sz_font * 2 / 3;
+	lm.pos.width    = sz_font / 3;
 	lm.color        = css().get_color();
 	lm.marker_type  = css().get_list_style_type();
 	lm.font         = css().get_font();
@@ -1080,7 +1080,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos, co
 	}
 	else
 	{
-		lm.pos.height = sz_font - sz_font * 2 / 3;
+		lm.pos.height = sz_font / 3;
 		lm.pos.y = pos.y + ln_height / 2 - lm.pos.height / 2;
 		lm.index = -1;
 	}
