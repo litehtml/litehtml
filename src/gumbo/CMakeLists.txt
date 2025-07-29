@@ -58,7 +58,7 @@ set_target_properties(${PROJECT_NAME} PROPERTIES
     PUBLIC_HEADER "${HEADER_GUMBO}"
 )
 
-if (MSVC)
+if (MSVC OR CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
     target_include_directories(${PROJECT_NAME} PRIVATE visualc/include)
 endif()
 
