@@ -1,6 +1,7 @@
 #include <litehtml.h>
 #include "Bitmap.h"
 #include "canvas_ity.hpp"
+#include "litehtml/types.h"
 using namespace litehtml;
 using namespace canvas_ity;
 
@@ -16,12 +17,12 @@ public:
 
 	string make_url(const char* src, const char* baseurl);
 
-	uint_ptr		create_font(const char* faceName, int size, int weight, font_style italic, unsigned int decoration, font_metrics* fm) override;
+	uint_ptr		create_font(const font_description& descr, const document* doc, litehtml::font_metrics* fm) override;
 	void			delete_font(uint_ptr /*hFont*/) override {}
-	int				text_width(const char* text, uint_ptr hFont) override;
+	pixel_t			text_width(const char* text, uint_ptr hFont) override;
 	void			draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos) override;
-	int				pt_to_px(int pt) const override;
-	int				get_default_font_size() const override;
+	pixel_t			pt_to_px(float pt) const override;
+	pixel_t			get_default_font_size() const override;
 	const char*		get_default_font_name() const override;
 	void 			load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
 	void			get_image_size(const char* src, const char* baseurl, size& sz) override;
@@ -49,5 +50,5 @@ public:
 	void			on_mouse_event(const element::ptr& /*el*/, mouse_event /*event*/) override {};
 	void			set_cursor(const char* /*cursor*/) override {}
 	void			import_css(string& text, const string& url, string& baseurl) override;
-	void			get_client_rect(position& client) const override;
+	void			get_viewport(position& client) const override;
 };

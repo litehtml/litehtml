@@ -299,7 +299,7 @@ bool parse_rgb_func(const css_token& tok, web_color& color)
 // https://drafts.csswg.org/css-color-4/#hsl-to-rgb
 void hsl_to_rgb(float hue, float sat, float light, float& r, float& g, float& b)
 {
-	hue = fmod(hue, 360.f);
+	hue = (float) fmod(hue, 360.f);
 
 	if (hue < 0)
 		hue += 360;
@@ -309,7 +309,7 @@ void hsl_to_rgb(float hue, float sat, float light, float& r, float& g, float& b)
 
 	auto f = [=](float n)
 	{
-		float k = fmod(n + hue / 30, 12.f);
+		float k = (float) fmod(n + hue / 30, 12.f);
 		float a = sat * min(light, 1 - light);
 		return light - a * max(-1.f, min({k - 3, 9 - k, 1.f}));
 	};

@@ -39,7 +39,7 @@ namespace litehtml
 		void		set_value(float val, css_units units);
 		float		val() const;
 		css_units	units() const;
-		int			calc_percent(int width) const;
+		pixel_t		calc_percent(pixel_t width) const;
 		bool		from_token(const css_token& token, int options, const string& predefined_keywords = "");
 		string		to_string() const;
 	};
@@ -112,16 +112,16 @@ namespace litehtml
 		return m_units;
 	}
 
-	inline int css_length::calc_percent(int width) const
+	inline pixel_t css_length::calc_percent(pixel_t width) const
 	{
 		if(!is_predefined())
 		{
 			if(units() == css_units_percentage)
 			{
-				return (int) ((double) width * (double) m_value / 100.0);
+				return (pixel_t) (width * m_value / 100.0);
 			} else
 			{
-				return (int) val();
+				return (pixel_t) val();
 			}
 		}
 		return 0;

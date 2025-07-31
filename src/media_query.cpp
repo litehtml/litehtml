@@ -57,9 +57,9 @@ bool media_feature::check(const media_features& feat) const
 		// (aspect-ratio < 1/0) evaluates to true. But they behave the same for 0/0, which is unexpected
 		// (0/0 is NaN, so any comparisons should evaluate to false).
 		// 0/1 is also degenerate according to the standard.
-		return feat.height ? compare(float(feat.width) / feat.height) : false;
+		return feat.height != 0 ? compare(float(feat.width) / feat.height) : false;
 	case _device_aspect_ratio_:
-		return feat.device_height ? compare(float(feat.device_width) / feat.device_height) : false;
+		return feat.device_height != 0 ? compare(float(feat.device_width) / feat.device_height) : false;
 	case _color_:
 		return compare(feat.color);
 	case _color_index_:

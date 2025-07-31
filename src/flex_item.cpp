@@ -1,6 +1,7 @@
 #include <cmath>
 #include "flex_item.h"
 #include "flex_line.h"
+#include "types.h"
 
 void litehtml::flex_item::init(const litehtml::containing_block_context &self_size,
 							   litehtml::formatting_context *fmt_ctx, flex_align_items align_items)
@@ -32,7 +33,7 @@ void litehtml::flex_item::init(const litehtml::containing_block_context &self_si
 	frozen = false;
 }
 
-void litehtml::flex_item::place(flex_line &ln, int main_pos,
+void litehtml::flex_item::place(flex_line &ln, pixel_t main_pos,
 								const containing_block_context &self_size,
 								formatting_context *fmt_ctx)
 {
@@ -80,7 +81,7 @@ void litehtml::flex_item::place(flex_line &ln, int main_pos,
 	}
 }
 
-int litehtml::flex_item::get_last_baseline(baseline::_baseline_type type) const
+litehtml::pixel_t litehtml::flex_item::get_last_baseline(baseline::_baseline_type type) const
 {
 	if(type == baseline::baseline_type_top)
 	{
@@ -92,7 +93,7 @@ int litehtml::flex_item::get_last_baseline(baseline::_baseline_type type) const
 	return 0;
 }
 
-int litehtml::flex_item::get_first_baseline(litehtml::baseline::_baseline_type type) const
+litehtml::pixel_t litehtml::flex_item::get_first_baseline(litehtml::baseline::_baseline_type type) const
 {
 	if(type == baseline::baseline_type_top)
 	{
@@ -126,7 +127,7 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 	{
 		auto_margin_cross_end = true;
 	}
-	def_value<int> content_size(0);
+	def_value<pixel_t> content_size(0);
 	if (el->css().get_min_width().is_predefined())
 	{
 		min_size = el->render(0, 0,
@@ -214,7 +215,7 @@ void litehtml::flex_item_row_direction::apply_main_auto_margins()
 	if(!auto_margin_main_end.is_default()) el->get_margins().right = auto_margin_main_end;
 }
 
-bool litehtml::flex_item_row_direction::apply_cross_auto_margins(int cross_size)
+bool litehtml::flex_item_row_direction::apply_cross_auto_margins(pixel_t cross_size)
 {
 	if(auto_margin_cross_end || auto_margin_cross_start)
 	{
@@ -227,7 +228,7 @@ bool litehtml::flex_item_row_direction::apply_cross_auto_margins(int cross_size)
 		{
 			margins_num++;
 		}
-		int margin = (cross_size - el->height()) / margins_num;
+		pixel_t margin = (cross_size - el->height()) / margins_num;
 		if(auto_margin_cross_start)
 		{
 			el->get_margins().top = margin;
@@ -242,12 +243,12 @@ bool litehtml::flex_item_row_direction::apply_cross_auto_margins(int cross_size)
 	return false;
 }
 
-void litehtml::flex_item_row_direction::set_main_position(int pos)
+void litehtml::flex_item_row_direction::set_main_position(pixel_t pos)
 {
 	el->pos().x = pos + el->content_offset_left();
 }
 
-void litehtml::flex_item_row_direction::set_cross_position(int pos)
+void litehtml::flex_item_row_direction::set_cross_position(pixel_t pos)
 {
 	el->pos().y = pos + el->content_offset_top();
 }
@@ -281,12 +282,12 @@ void litehtml::flex_item_row_direction::align_baseline(litehtml::flex_line &ln,
 	}
 }
 
-int litehtml::flex_item_row_direction::get_el_main_size()
+litehtml::pixel_t litehtml::flex_item_row_direction::get_el_main_size()
 {
 	return el->width();
 }
 
-int litehtml::flex_item_row_direction::get_el_cross_size()
+litehtml::pixel_t litehtml::flex_item_row_direction::get_el_cross_size()
 {
 	return el->height();
 }
@@ -377,7 +378,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 			}
 		} else
 		{
-			base_size = (int) el->css().get_flex_basis().val() + el->content_offset_height();
+			base_size = (pixel_t) el->css().get_flex_basis().val() + el->content_offset_height();
 		}
 		base_size = std::max(base_size, min_size);
 	}
@@ -394,7 +395,7 @@ void litehtml::flex_item_column_direction::apply_main_auto_margins()
 	if(!auto_margin_main_end.is_default()) el->get_margins().bottom = auto_margin_main_end;
 }
 
-bool litehtml::flex_item_column_direction::apply_cross_auto_margins(int cross_size)
+bool litehtml::flex_item_column_direction::apply_cross_auto_margins(pixel_t cross_size)
 {
 	if(auto_margin_cross_end || auto_margin_cross_start)
 	{
@@ -407,7 +408,7 @@ bool litehtml::flex_item_column_direction::apply_cross_auto_margins(int cross_si
 		{
 			margins_num++;
 		}
-		int margin = (cross_size - el->width()) / margins_num;
+		pixel_t margin = (cross_size - el->width()) / margins_num;
 		if(auto_margin_cross_start)
 		{
 			el->get_margins().left = margin;
@@ -421,12 +422,12 @@ bool litehtml::flex_item_column_direction::apply_cross_auto_margins(int cross_si
 	return false;
 }
 
-void litehtml::flex_item_column_direction::set_main_position(int pos)
+void litehtml::flex_item_column_direction::set_main_position(pixel_t pos)
 {
 	el->pos().y = pos + el->content_offset_top();
 }
 
-void litehtml::flex_item_column_direction::set_cross_position(int pos)
+void litehtml::flex_item_column_direction::set_cross_position(pixel_t pos)
 {
 	el->pos().x = pos + el->content_offset_left();
 }
@@ -485,12 +486,12 @@ void litehtml::flex_item_column_direction::align_baseline(litehtml::flex_line &l
 	}
 }
 
-int litehtml::flex_item_column_direction::get_el_main_size()
+litehtml::pixel_t litehtml::flex_item_column_direction::get_el_main_size()
 {
 	return el->height();
 }
 
-int litehtml::flex_item_column_direction::get_el_cross_size()
+litehtml::pixel_t litehtml::flex_item_column_direction::get_el_cross_size()
 {
 	return el->width();
 }

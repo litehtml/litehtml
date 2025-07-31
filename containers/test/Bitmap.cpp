@@ -52,8 +52,8 @@ void Bitmap::draw_rect(int x, int y, int _width, int _height, color color)
 
 void Bitmap::fill_rect(rect rect, color color)
 {
-	for (int y = rect.top(); y < rect.bottom(); y++)
-		for (int x = rect.left(); x < rect.right(); x++)
+	for (int y = (int) rect.top(); y < rect.bottom(); y++)
+		for (int x = (int) rect.left(); x < rect.right(); x++)
 			set_pixel(x, y, color);
 }
 

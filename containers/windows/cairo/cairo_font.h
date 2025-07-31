@@ -45,6 +45,7 @@ struct cairo_font_metrics
 	int		ascent;
 	int		descent;
 	int		x_height;
+	int		ch_width;
 };
 
 
@@ -71,7 +72,7 @@ public:
 	~cairo_font();
 
 	void				show_text(cairo_t* cr, int x, int y, const char*);
-	int					text_width(cairo_t* cr, const char* str);
+	double				text_width(cairo_t* cr, const char* str);
 	void				load_metrics(cairo_t* cr);
 	cairo_font_metrics&	metrics();
 	static std::wstring	utf8_to_wchar(const std::string& src);
@@ -82,7 +83,7 @@ private:
 	cairo_font_face_t*	create_font_face(HFONT fnt);
 	void				set_font(HFONT hFont);
 	void				clear();
-	int					text_width(cairo_t* cr, text_chunk::vector& chunks);
+	double				text_width(cairo_t* cr, text_chunk::vector& chunks);
 	void				lock();
 	void				unlock();
 	int					round_d(double val);

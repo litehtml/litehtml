@@ -5,13 +5,6 @@
 
 namespace litehtml
 {
-	struct col_info
-	{
-		int		width;
-		bool	is_auto;
-	};
-
-
 	class el_table : public html_tag
 	{
 	public:
