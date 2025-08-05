@@ -557,10 +557,10 @@ pixel_t document::to_pixels( const css_length& val, const font_metrics& metrics,
 		ret = m_container->pt_to_px(val.val() * 12); // 1pc = (1/6)in = 12pt
 		break;
 	case css_units_cm:
-		ret = m_container->pt_to_px(val.val() * 0.3937f * 72); // 1cm = (1/2.54)in = (72/2.54)pt
+		ret = m_container->pt_to_px(val.val() * 72 / 2.54f); // 1cm = (1/2.54)in = (72/2.54)pt
 		break;
 	case css_units_mm:
-		ret = m_container->pt_to_px(val.val() * 0.3937f * 72 / 10);
+		ret = m_container->pt_to_px(val.val() * 72 / 2.54f / 10);
 		break;
 
 	case css_units_vw:
