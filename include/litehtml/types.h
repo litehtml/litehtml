@@ -1,6 +1,7 @@
 #ifndef LH_TYPES_H
 #define LH_TYPES_H
 
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -178,6 +179,14 @@ namespace litehtml
 		void clear()
 		{
 			x = y = width = height = 0;
+		}
+
+		void round()
+		{
+			x = std::round(x);
+			y = std::round(y);
+			width = std::round(width);
+			height = std::round(height);
 		}
 
 		void operator=(const size& sz)

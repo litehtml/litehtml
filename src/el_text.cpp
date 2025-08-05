@@ -111,6 +111,7 @@ void litehtml::el_text::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position 
 	position pos = ri->pos();
 	pos.x	+= x;
 	pos.y	+= y;
+	pos.round();
 
 	if(pos.does_intersect(clip))
 	{

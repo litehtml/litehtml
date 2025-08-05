@@ -883,12 +883,19 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, con
 				for(int i = num_layers - 1; i >= 0; i--)
 				{
 					background_layer layer;
+
 					if(!bg->get_layer(i, pos, this, ri, layer)) continue;
+
 					if(is_root() && (clip != nullptr))
 					{
 						layer.clip_box = *clip;
 						layer.border_box = *clip;
 					}
+
+					layer.border_box.round();
+					layer.clip_box.round();
+					layer.origin_box.round();
+
 					bg->draw_layer(hdc, i, layer, get_document()->container());
 				}
 			}
@@ -896,6 +903,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, con
 			borders bdr = m_css.get_borders();
 			if(bdr.is_visible())
 			{
+				border_box.round();
 				bdr.radius = m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
 				get_document()->container()->draw_borders(hdc, bdr, border_box, is_root());
 			}
@@ -958,8 +966,15 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, con
 					for(int i = num_layers - 1; i >= 0; i--)
 					{
 						background_layer layer;
+
 						if(!bg->get_layer(i, content_box, this, ri, layer)) continue;
+
 						layer.border_radius = bdr.radius.calc_percents(box->width, box->height);
+
+						layer.border_box.round();
+						layer.clip_box.round();
+						layer.origin_box.round();
+
 						bg->draw_layer(hdc, i, layer, get_document()->container());
 					}
 				}
@@ -967,6 +982,7 @@ void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, con
 				{
 					borders b = bdr;
 					b.radius = bdr.radius.calc_percents(box->width, box->height);
+					box->round();
 					get_document()->container()->draw_borders(hdc, b, *box, false);
 				}
 			}
@@ -1136,6 +1152,7 @@ void litehtml::html_tag::draw_list_marker( uint_ptr hdc, const position& pos, co
 				auto text_pos = lm.pos;
 				text_pos.move_to(text_pos.right() - tw, text_pos.y);
 				text_pos.width = tw;
+				text_pos.round();
 				get_document()->container()->draw_text(hdc, marker_text.c_str(), lm.font, lm.color, text_pos);
 			}
 		}
