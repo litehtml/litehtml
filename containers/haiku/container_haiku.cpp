@@ -20,7 +20,6 @@
 
 LiteHtmlView::LiteHtmlView(BRect frame, const char *name)
 	: BView(frame, name, B_FOLLOW_ALL, B_WILL_DRAW),
-	fContext(NULL),
 	m_html(NULL),
 	m_images(),
 	m_base_url(),
@@ -44,12 +43,6 @@ LiteHtmlView::LiteHtmlView(BRect frame, const char *name)
 
 LiteHtmlView::~LiteHtmlView()
 {
-}
-
-void
-LiteHtmlView::SetContext(litehtml::context* ctx)
-{
-	fContext = ctx;
 }
 
 void
@@ -83,7 +76,7 @@ LiteHtmlView::RenderHTML(const std::string& htmlText)
 	
 	// now use this string
 	m_html = litehtml::document::createFromString(
-		htmlText.c_str(), this, fContext);
+		htmlText.c_str(), this);
 	if (m_html) 
 	{
 		std::cout << "Successfully read html" << std::endl;
@@ -132,46 +125,44 @@ LiteHtmlView::GetPreferredSize(float* width,float* height)
 }
 
 litehtml::uint_ptr 
-LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size, 
-	int weight, litehtml::font_style italic, unsigned int decoration, 
-	litehtml::font_metrics* fm )
+LiteHtmlView::create_font(const litehtml::font_description& descr, const litehtml::document* doc, litehtml::font_metrics* fm)
 {
 	//std::cout << "create_font" << std::endl;
 	litehtml::string_vector fonts;
-	litehtml::split_string(faceName, fonts, ",");
+	litehtml::split_string(descr.family, fonts, ",");
 	litehtml::trim(fonts[0]);
 
 	uint16 face = B_REGULAR_FACE; // default
-	if (italic == litehtml::font_style_italic)
+	if (descr.style & litehtml::font_style_italic)
 	{
 		face |= B_ITALIC_FACE;
 	}
-	if (decoration & litehtml::font_decoration_underline)
+	if (descr.decoration_line & litehtml::text_decoration_line_underline)
 	{
 		face |= B_UNDERSCORE_FACE;
 	}
-	if (decoration & litehtml::font_decoration_linethrough)
+	if (descr.decoration_line & litehtml::text_decoration_line_line_through)
 	{
 		face |= B_STRIKEOUT_FACE;
 	}
 	// Note: LIGHT, HEAVY, CONDENSED not supported in BeOS R5
 #ifdef __HAIKU__
-	if(weight >= 0 && weight < 150)			face |= B_LIGHT_FACE;
-	else if(weight >= 150 && weight < 250)	face |= B_LIGHT_FACE;
-	else if(weight >= 250 && weight < 350)	face |= B_LIGHT_FACE;
+	if(descr.weight >= 0 && descr.weight < 150)			face |= B_LIGHT_FACE;
+	else if(descr.weight >= 150 && descr.weight < 250)	face |= B_LIGHT_FACE;
+	else if(descr.weight >= 250 && descr.weight < 350)	face |= B_LIGHT_FACE;
 	//else if(weight >= 350 && weight < 450)	face |= B_REGULAR_FACE;
 	//else if(weight >= 450 && weight < 550)	face |= B_REGULAR_FACE;
-	else if(weight >= 550 && weight < 650)	face |= B_CONDENSED_FACE;
+	else if(descr.weight >= 550 && descr.weight < 650)	face |= B_CONDENSED_FACE;
 #else
-	else if(weight >= 550 && weight < 650)	face |= B_BOLD_FACE;
+	else if(descr.weight >= 550 && descr.weight < 650)	face |= B_BOLD_FACE;
 #endif
-	else if(weight >= 650 && weight < 750)	face |= B_BOLD_FACE;
+	else if(descr.weight >= 650 && descr.weight < 750)	face |= B_BOLD_FACE;
 #ifndef __HAIKU__
-	else if(weight >= 750 && weight < 850)	face |= B_BOLD_FACE;
-	else if(weight >= 950)					face |= B_BOLD_FACE;
+	else if(descr.weight >= 750 && descr.weight < 850)	face |= B_BOLD_FACE;
+	else if(descr.weight >= 950)					face |= B_BOLD_FACE;
 #else
-	else if(weight >= 750 && weight < 850)	face |= B_HEAVY_FACE;
-	else if(weight >= 950)					face |= B_HEAVY_FACE;
+	else if(descr.weight >= 750 && descr.weight < 850)	face |= B_HEAVY_FACE;
+	else if(descr.weight >= 950)					face |= B_HEAVY_FACE;
 #endif
 
 	BFont* tempFont = new BFont();
@@ -190,21 +181,32 @@ LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size,
 	{
 		// default to the Be plain font
 		tempFont = new BFont(be_plain_font);
-		if (weight >= 550) 
+		if (descr.weight >= 550)
 		{
 			tempFont = new BFont(be_bold_font);
 		}
 		tempFont->SetFace(face); // chooses closest
 	}
 	
-	tempFont->SetSize(size);
+	tempFont->SetSize(descr.size);
 	
 	font_height hgt;
 	tempFont->GetHeight(&hgt);
+	fm->font_size = descr.size;
 	fm->ascent = hgt.ascent;
 	fm->descent = hgt.descent;
-	fm->height = (int) (hgt.ascent + hgt.descent);
-	fm->x_height = (int) hgt.leading;
+	fm->height = hgt.ascent + hgt.descent;
+	fm->x_height = hgt.leading;
+	fm->ch_width = tempFont->StringWidth("0");
+	if(descr.style == litehtml::font_style_italic || descr.decoration_line != litehtml::text_decoration_line_none)
+	{
+		fm->draw_spaces = true;
+	} else
+	{
+		fm->draw_spaces = false;
+	}
+	fm->sub_shift = descr.size / 5;
+	fm->super_shift = descr.size / 3;
 	
 	return (litehtml::uint_ptr) tempFont;
 }
@@ -212,22 +214,24 @@ LiteHtmlView::create_font( const litehtml::tchar_t* faceName, int size,
 void 
 LiteHtmlView::delete_font( litehtml::uint_ptr hFont )
 {
-	std::cout << "delete_font" << std::endl;
+	BFont* font = (BFont*)hFont;
+	if (font)
+	{
+		delete font;
+	}
 }
 
-int 
-LiteHtmlView::text_width( const litehtml::tchar_t* text, 
+litehtml::pixel_t
+LiteHtmlView::text_width( const char* text,
 	litehtml::uint_ptr hFont )
 {
 	//std::cout << "text_width" << std::endl;
 	BFont* fnt = (BFont*)hFont;
-	int width = fnt->StringWidth(text);
-	//std::cout << "    Width: " << +width << std::endl;
-	return width;
+	return fnt->StringWidth(text);
 }
 
 void 
-LiteHtmlView::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text,
+LiteHtmlView::draw_text( litehtml::uint_ptr hdc, const char* text,
 	litehtml::uint_ptr hFont, litehtml::web_color color, 
 	const litehtml::position& pos )
 {
@@ -276,21 +280,21 @@ LiteHtmlView::draw_text( litehtml::uint_ptr hdc, const litehtml::tchar_t* text,
 	DrawString(mystr);
 }
 
-int 
-LiteHtmlView::pt_to_px( int pt )
+litehtml::pixel_t
+LiteHtmlView::pt_to_px( float pt ) const
 {
 	std::cout << "pt_to_px" << std::endl;
-	return (int) ((double) pt * 1.3333333333);
+	return pt * 1.3333333333;
 }
 
-int 
+litehtml::pixel_t
 LiteHtmlView::get_default_font_size() const
 {
 	//std::cout << "get_default_font_size" << std::endl;
 	return 12;
 }
 
-const litehtml::tchar_t* 
+const char*
 LiteHtmlView::get_default_font_name() const
 {
 	//std::cout << "get_default_font_name" << std::endl;
@@ -298,7 +302,7 @@ LiteHtmlView::get_default_font_name() const
 	font_style style;
 	be_plain_font->GetFamilyAndStyle(&fam,&style);
 	char* cp = strdup(fam);
-	return (litehtml::tchar_t*)cp;
+	return cp;
 }
 
 void 
@@ -313,8 +317,8 @@ LiteHtmlView::draw_list_marker( litehtml::uint_ptr hdc,
 }
 
 void 
-LiteHtmlView::load_image( const litehtml::tchar_t* src, 
-	const litehtml::tchar_t* baseurl, bool redraw_on_ready )
+LiteHtmlView::load_image( const char* src,
+	const char* baseurl, bool redraw_on_ready )
 {
 	std::cout << "load_image" << std::endl;
 	
@@ -332,8 +336,8 @@ LiteHtmlView::load_image( const litehtml::tchar_t* src,
 }
 
 void
-LiteHtmlView::make_url(const litehtml::tchar_t* url, 
-	const litehtml::tchar_t* basepath, litehtml::tstring& out)
+LiteHtmlView::make_url(const char* url,
+	const char* basepath, litehtml::string& out)
 {
 	std::cout << "make_url" << std::endl;
 	std::cout << "    url: " << url << std::endl;
@@ -363,7 +367,7 @@ LiteHtmlView::make_url(const litehtml::tchar_t* url,
 }
 
 void
-LiteHtmlView::set_base_url(const litehtml::tchar_t* base_url)
+LiteHtmlView::set_base_url(const char* base_url)
 {
 	std::cout << "set_base_url" << std::endl;
 /*
@@ -380,8 +384,8 @@ LiteHtmlView::set_base_url(const litehtml::tchar_t* base_url)
 
 
 void 
-LiteHtmlView::get_image_size( const litehtml::tchar_t* src, 
-	const litehtml::tchar_t* baseurl, litehtml::size& sz )
+LiteHtmlView::get_image_size( const char* src,
+	const char* baseurl, litehtml::size& sz )
 {
 	std::cout << "get_image_size" << std::endl;
 	std::string url;
@@ -398,8 +402,14 @@ LiteHtmlView::get_image_size( const litehtml::tchar_t* src,
 }
 
 void
-LiteHtmlView::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src,
-	const litehtml::tchar_t* baseurl, const litehtml::position& pos )
+LiteHtmlView::draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url)
+{
+	draw_image(hdc, url.c_str(), base_url.c_str(), layer.border_box);
+}
+
+void
+LiteHtmlView::draw_image( litehtml::uint_ptr hdc, const char* src,
+	const char* baseurl, const litehtml::position& pos )
 {
 	std::string url;
 	make_url(src, baseurl, url);
@@ -414,16 +424,16 @@ LiteHtmlView::draw_image( litehtml::uint_ptr hdc, const litehtml::tchar_t* src,
 	}
 }
 
-void 
-LiteHtmlView::draw_background( litehtml::uint_ptr hdc, 
-	const litehtml::background_paint& bg )
+void
+LiteHtmlView::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const litehtml::web_color& color)
 {
-	std::cout << "draw_background" << std::endl;
-	if (0 < bg.image.length())
-	{
-		std::cout << "    background includes an image!" << std::endl;
-		draw_image(hdc,bg.image.c_str(),m_base_url.c_str(),litehtml::position(bg.position_x,bg.position_y,bg.image_size.width,bg.image_size.height));
-	}
+	SetHighColor(color.red, color.green, color.blue);
+	FillRect(
+		BRect(
+			BPoint(layer.border_box.left(), layer.border_box.top()),
+			BPoint(layer.border_box.right(), layer.border_box.bottom())
+		)
+	);
 }
 
 void 
@@ -440,40 +450,48 @@ LiteHtmlView::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& bord
 
 	if(borders.top.width != 0 && borders.top.style > litehtml::border_style_hidden)
 	{
-		bdr_top = (int) borders.top.width;
-		std::cout << "	Border top: " << bdr_top << std::endl;
+		SetHighColor(borders.top.color.red, borders.top.color.green, borders.top.color.blue);
+		FillRect(
+			BRect(
+				BPoint(draw_pos.left(), draw_pos.top()),
+				BPoint(draw_pos.right(), draw_pos.top() + borders.top.width)
+			)
+		);
 	}
 	if(borders.bottom.width != 0 && borders.bottom.style > litehtml::border_style_hidden)
 	{
-		bdr_bottom = (int) borders.bottom.width;
-		std::cout << "	Border bottom: " << bdr_bottom << std::endl;
+		SetHighColor(borders.bottom.color.red, borders.bottom.color.green, borders.bottom.color.blue);
+		FillRect(
+			BRect(
+				BPoint(draw_pos.left(), draw_pos.bottom() - borders.bottom.width),
+				BPoint(draw_pos.right(), draw_pos.bottom())
+			)
+		);
 	}
 	if(borders.left.width != 0 && borders.left.style > litehtml::border_style_hidden)
 	{
-		bdr_left = (int) borders.left.width;
-		std::cout << "	Border left: " << bdr_left << std::endl;
+		SetHighColor(borders.left.color.red, borders.left.color.green, borders.left.color.blue);
+		FillRect(
+			BRect(
+				BPoint(draw_pos.left(), draw_pos.top()),
+				BPoint(draw_pos.left() + borders.left.width, draw_pos.bottom())
+			)
+		);
 	}
 	if(borders.right.width != 0 && borders.right.style > litehtml::border_style_hidden)
 	{
-		bdr_right = (int) borders.right.width;
-		std::cout << "	Border right: " << bdr_right << std::endl;
-	}
-	
-	
-	if (bdr_bottom)
-	{
-		// draw rectangle for now - no check for radius
-		StrokeRect(
+		SetHighColor(borders.right.color.red, borders.right.color.green, borders.right.color.blue);
+		FillRect(
 			BRect(
-				BPoint(draw_pos.left(), draw_pos.bottom()),
-				BPoint(draw_pos.left() + bdr_left, draw_pos.bottom() - bdr_bottom)
+				BPoint(draw_pos.right() - borders.right.width, draw_pos.top()),
+				BPoint(draw_pos.right(), draw_pos.bottom())
 			)
 		);
 	}
 }
 
 void 
-LiteHtmlView::transform_text(litehtml::tstring& text, litehtml::text_transform tt)
+LiteHtmlView::transform_text(litehtml::string& text, litehtml::text_transform tt)
 {
 	std::cout << "transform_text" << std::endl;
 }
@@ -490,10 +508,8 @@ LiteHtmlView::del_clip()
 	std::cout << "del_clip" << std::endl;
 }
 
-
-
 std::shared_ptr<litehtml::element>	
-LiteHtmlView::create_element(const litehtml::tchar_t *tag_name,
+LiteHtmlView::create_element(const char *tag_name,
 							 const litehtml::string_map &attributes,
 							 const std::shared_ptr<litehtml::document> &doc)
 {
@@ -506,7 +522,7 @@ LiteHtmlView::get_media_features(litehtml::media_features& media) const
 {
 	std::cout << "get_media_features" << std::endl;
 	litehtml::position client;
-    get_client_rect(client);
+	get_viewport(client);
 	media.type			= litehtml::media_type_screen;
 	media.width			= client.width;
 	media.height		= client.height;
@@ -532,7 +548,7 @@ LiteHtmlView::set_caption(const char* caption)
 }
 
 void
-LiteHtmlView::get_client_rect(litehtml::position& client) const
+LiteHtmlView::get_viewport(litehtml::position& client) const
 {
 	//std::cout << "get_client_rect" << std::endl;
 	BRect bounds(Bounds());
@@ -556,13 +572,13 @@ LiteHtmlView::set_cursor(const char* cursor)
 }
 
 void 
-LiteHtmlView::import_css(litehtml::tstring& s1, const litehtml::tstring& s2, litehtml::tstring& s3)
+LiteHtmlView::import_css(litehtml::string& s1, const litehtml::string& s2, litehtml::string& s3)
 {
 	std::cout << "import_css" << std::endl;
 }
 
 void 
-LiteHtmlView::get_language(litehtml::tstring& s1, litehtml::tstring& s2) const
+LiteHtmlView::get_language(litehtml::string& s1, litehtml::string& s2) const
 {
 	std::cout << "get_language" << std::endl;
 }

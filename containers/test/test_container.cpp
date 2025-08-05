@@ -1,8 +1,17 @@
 #include "test_container.h"
 #include "Font.h"
+#include "litehtml/types.h"
+#include <fstream>
+#include <sstream>
 #define CANVAS_ITY_IMPLEMENTATION
 #include "canvas_ity.hpp"
-string readfile(string filename);
+
+string readfile(string filename)
+{
+	std::stringstream ss;
+	std::ifstream(filename) >> ss.rdbuf();
+	return ss.str();
+}
 
 //
 //  canvas_ity adapters
@@ -54,7 +63,7 @@ void clip_rect(canvas& cvs, rect r)
 }
 
 // without scaling
-void draw_image(canvas& cvs, int x, int y, const Bitmap& bmp)
+void draw_image(canvas& cvs, pixel_t x, pixel_t y, const Bitmap& bmp)
 {
 	cvs.draw_image((byte*)bmp.data.data(), bmp.width, bmp.height, bmp.width * 4, (float)x, (float)y, (float)bmp.width, (float)bmp.height);
 }
@@ -87,24 +96,24 @@ void fill_polygon(canvas& cvs, vector<xy> points, color color)
 //  test_container implementation
 //
 
-uint_ptr test_container::create_font(const char* font_families, int size, int weight, font_style /*italic*/, unsigned int /*decoration*/, font_metrics* fm)
+uint_ptr test_container::create_font(const font_description& descr, const document*, litehtml::font_metrics* fm)
 {
 	Font* font = 0;
-	string_vector fonts = split_string(font_families, ",", "", "");
+	string_vector fonts = split_string(descr.family, ",", "", "");
 	for (auto name : fonts)
 	{
-		font = Font::create(name, size, weight);
+		font = Font::create(name, (int) descr.size, descr.weight);
 		if (font) break;
 	}
 	if (!font)
-		font = Font::create(get_default_font_name(), size, weight);
+		font = Font::create(get_default_font_name(), (int) descr.size, descr.weight);
 
 	if (fm) *fm = *font;
 
 	return (uint_ptr)font;
 }
 
-int test_container::text_width(const char* text, uint_ptr hFont)
+pixel_t test_container::text_width(const char* text, uint_ptr hFont)
 {
 	Font* font = (Font*)hFont;
 	return font->text_width(text);
@@ -113,11 +122,11 @@ int test_container::text_width(const char* text, uint_ptr hFont)
 void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos)
 {
 	Font* font = (Font*)hFont;
-	font->draw_text(*(canvas*)hdc, text, color, pos.x, pos.y);
+	font->draw_text(*(canvas*)hdc, text, color, (int) pos.x, (int) pos.y);
 }
 
-int test_container::pt_to_px(int pt) const { return pt * 96 / 72; }
-int test_container::get_default_font_size() const { return 16; }
+pixel_t test_container::pt_to_px(float pt) const { return pt * 96 / 72; }
+pixel_t test_container::get_default_font_size() const { return 16; }
 const char* test_container::get_default_font_name() const { return "Terminus"; }
 
 void test_container::draw_solid_fill(uint_ptr hdc, const background_layer& layer, const web_color& color)
@@ -128,7 +137,7 @@ void test_container::draw_solid_fill(uint_ptr hdc, const background_layer& layer
 
 void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool /*root*/)
 {
-	canvas img(pos.width, pos.height);
+	canvas img((int) pos.width, (int) pos.height);
 	img.global_composite_operation = lighter;
 
 /*
@@ -223,15 +232,15 @@ void test_container::import_css(string& text, const string& url, string& baseurl
 	text = readfile(baseurl);
 }
 
-void test_container::get_client_rect(position& client) const
+void test_container::get_viewport(position& client) const
 {
-	client = {0, 0, width, height};
+	client = {0, 0, (pixel_t) width, (pixel_t) height};
 }
 
 void test_container::get_media_features(media_features& media) const
 {
 	position client;
-	get_client_rect(client);
+	get_viewport(client);
 	media.type        = media_type_screen;
 	media.width       = client.width;
 	media.height      = client.height;
@@ -251,7 +260,7 @@ void test_container::get_image_size(const char* src, const char* baseurl, size& 
 {
 	string url = make_url(src, baseurl);
 	auto& img = images[url];
-	sz = {img.width, img.height};
+	sz = {(pixel_t) img.width, (pixel_t) img.height};
 }
 
 void draw_image_pattern(canvas& cvs, const background_layer& bg, const Bitmap& img)
@@ -259,10 +268,10 @@ void draw_image_pattern(canvas& cvs, const background_layer& bg, const Bitmap& i
 	cvs.save();
 	clip_rect(cvs, bg.clip_box);
 
-	int x = bg.origin_box.x;
-	int y = bg.origin_box.y;
-	int w = bg.origin_box.width;
-	int h = bg.origin_box.height;
+	pixel_t x = bg.origin_box.x;
+	pixel_t y = bg.origin_box.y;
+	pixel_t w = bg.origin_box.width;
+	pixel_t h = bg.origin_box.height;
 
 	switch (bg.repeat)
 	{
@@ -286,7 +295,7 @@ void draw_image_pattern(canvas& cvs, const background_layer& bg, const Bitmap& i
 		while (x > bg.clip_box.left()) x -= w;
 		while (y > bg.clip_box.top()) y -= h;
 		for (; x < bg.clip_box.right(); x += w)
-			for (int _y = y; _y < bg.clip_box.bottom(); _y += h)
+			for (pixel_t _y = y; _y < bg.clip_box.bottom(); _y += h)
 				draw_image(cvs, {x, _y, w, h}, img);
 		break;
 	}
@@ -330,14 +339,14 @@ void set_gradient(canvas& cvs, const background_layer::conic_gradient& gradient,
 template<class Gradient>
 void draw_gradient(uint_ptr hdc, const background_layer& bg, const Gradient& gradient)
 {
-	int x = bg.origin_box.x;
-	int y = bg.origin_box.y;
-	int w = bg.origin_box.width;
-	int h = bg.origin_box.height;
+	pixel_t x = bg.origin_box.x;
+	pixel_t y = bg.origin_box.y;
+	pixel_t w = bg.origin_box.width;
+	pixel_t h = bg.origin_box.height;
 	
-	canvas img(w, h);
+	canvas img((int) w, (int) h);
 
-	set_gradient(img, gradient, x, y);
+	set_gradient(img, gradient, (int) x, (int) y);
 
 	for (auto cs : gradient.color_points)
 		add_color_stop(img, fill_style, cs.offset, cs.color, cs.hint);

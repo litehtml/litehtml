@@ -1,6 +1,7 @@
 #ifndef LH_TYPES_H
 #define LH_TYPES_H
 
+#include <cmath>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -27,10 +28,13 @@ namespace litehtml
 	class document;
 	class element;
 
+	using pixel_t = float;
+
 	using string_map = std::map<string, string>;
 	using elements_list = std::list<std::shared_ptr<element>>;
 	using int_vector = std::vector<int>;
 	using string_vector = std::vector<string>;
+	using pixel_vector = std::vector<pixel_t>;
 
 	template <class... Types>
 	struct variant : std::variant<Types...>
@@ -95,18 +99,18 @@ namespace litehtml
 
 	struct margins
 	{
-		int	left;
-		int	right;
-		int top;
-		int bottom;
+		pixel_t	left;
+		pixel_t	right;
+		pixel_t top;
+		pixel_t bottom;
 
 		margins()
 		{
 			left = right = top = bottom = 0;
 		}
 
-		int width()		const	{ return left + right; }
-		int height()	const	{ return top + bottom; }
+		pixel_t width()		const	{ return left + right; }
+		pixel_t height()	const	{ return top + bottom; }
 	};
 
 	struct pointF
@@ -122,10 +126,10 @@ namespace litehtml
 
 	struct size
 	{
-		int		width;
-		int		height;
+		pixel_t		width;
+		pixel_t		height;
 
-		size(int w, int h) : width(w), height(h)
+		size(pixel_t w, pixel_t h) : width(w), height(h)
 		{
 		}
 
@@ -138,24 +142,24 @@ namespace litehtml
 	{
 		using vector = std::vector<position>;
 
-		int	x = 0;
-		int	y = 0;
-		int	width = 0;
-		int	height = 0;
+		pixel_t	x = 0;
+		pixel_t	y = 0;
+		pixel_t	width = 0;
+		pixel_t	height = 0;
 
 		position() = default;
 
-		position(int _x, int _y, int _width, int _height) :
+		position(pixel_t _x, pixel_t _y, pixel_t _width, pixel_t _height) :
 			x(_x),
 			y(_y),
 			width(_width),
 			height(_height)
 		{}
 
-		int right()		const		{ return x + width;		}
-		int bottom()	const		{ return y + height;	}
-		int left()		const		{ return x;				}
-		int top()		const		{ return y;				}
+		pixel_t right()		const		{ return x + width;		}
+		pixel_t bottom()	const		{ return y + height;	}
+		pixel_t left()		const		{ return x;				}
+		pixel_t top()		const		{ return y;				}
 
 		void operator+=(const margins& mg)
 		{
@@ -177,6 +181,14 @@ namespace litehtml
 			x = y = width = height = 0;
 		}
 
+		void round()
+		{
+			x = std::round(x);
+			y = std::round(y);
+			width = std::round(width);
+			height = std::round(height);
+		}
+
 		void operator=(const size& sz)
 		{
 			width	= sz.width;
@@ -188,7 +200,7 @@ namespace litehtml
 			return x == val.x && y == val.y && width == val.width && height == val.height;
 		}
 
-		void move_to(int _x, int _y)
+		void move_to(pixel_t _x, pixel_t _y)
 		{
 			x = _x;
 			y = _y;
@@ -215,10 +227,10 @@ namespace litehtml
 		position intersect(const position& src) const
 		{
 			position dest;
-			int dest_x = std::max(src.x, x);
-			int dest_y = std::max(src.y, y);
-			int dest_x2 = std::min(src.right(), right());
-			int dest_y2 = std::min(src.bottom(), bottom());
+			pixel_t dest_x = std::max(src.x, x);
+			pixel_t dest_y = std::max(src.y, y);
+			pixel_t dest_x2 = std::min(src.right(), right());
+			pixel_t dest_y2 = std::min(src.bottom(), bottom());
 
 			if (dest_x2 > dest_x && dest_y2 > dest_y)
 			{
@@ -239,11 +251,11 @@ namespace litehtml
 		[[nodiscard]]
 		bool empty() const
 		{
-			return !width && !height;
+			return width == 0 && height == 0;
 		}
 
 		[[nodiscard]]
-		bool is_point_inside(int _x, int _y) const
+		bool is_point_inside(pixel_t _x, pixel_t _y) const
 		{
 			return (_x >= left() && _x < right() && _y >= top() && _y < bottom());
 		}
@@ -251,17 +263,17 @@ namespace litehtml
 
 	struct font_metrics
 	{
-		int 	font_size = 0;		// Font size in pixels. The same as size argument of the create_font function
-		int		height = 0;			// Font height in pixels.
-		int		ascent = 0;			// The distance from the baseline to the top of a line of text.
-		int		descent = 0;		// The distance from the baseline to the bottom of a line of text.
-		int		x_height = 0;		// Height of the symbol x
-		int 	ch_width = 0;		// Height of the symbol 0
-		bool	draw_spaces = true;	// True to call draw text function for spaces. If False, just use space width without draw.
-		int		sub_shift = 0;		// The baseline shift for subscripts.
-		int		super_shift = 0;	// The baseline shift for superscripts.
+		pixel_t 	font_size = 0;		// Font size in pixels. The same as size argument of the create_font function
+		pixel_t		height = 0;			// Font height in pixels.
+		pixel_t		ascent = 0;			// The distance from the baseline to the top of a line of text.
+		pixel_t		descent = 0;		// The distance from the baseline to the bottom of a line of text.
+		pixel_t		x_height = 0;		// Height of the symbol x
+		pixel_t 	ch_width = 0;		// Width of the symbol 0
+		bool		draw_spaces = true;	// True to call draw text function for spaces. If False, just use space width without draw.
+		pixel_t		sub_shift = 0;		// The baseline shift for subscripts.
+		pixel_t		super_shift = 0;	// The baseline shift for superscripts.
 
-		int base_line() const	{ return descent; }
+		pixel_t base_line() const	{ return descent; }
 	};
 
 	struct font_item
@@ -299,41 +311,41 @@ namespace litehtml
 			size_mode_content = 0x04,
 		};
 
-		struct typed_int
+		struct typed_pixel
 		{
-			int 			value;
+			pixel_t			value;
 			cbc_value_type	type;
 
-			typed_int(const typed_int& v) = default;
+			typed_pixel(const typed_pixel& v) = default;
 
-			typed_int(int val, cbc_value_type tp)
+			typed_pixel(pixel_t val, cbc_value_type tp)
 			{
 				value = val;
 				type = tp;
 			}
 
-			operator int() const
+			operator pixel_t() const
 			{
 				return value;
 			}
 
-			typed_int& operator=(int val)
+			typed_pixel& operator=(pixel_t val)
 			{
 				value = val;
 				return *this;
 			}
 
-			typed_int& operator=(const typed_int& v) = default;
+			typed_pixel& operator=(const typed_pixel& v) = default;
 		};
 
-		typed_int width;						// width of the containing block
-		typed_int render_width;
-		typed_int min_width;
-		typed_int max_width;
+		typed_pixel width;						// width of the containing block
+		typed_pixel render_width;
+		typed_pixel min_width;
+		typed_pixel max_width;
 
-		typed_int height;						// height of the containing block
-		typed_int min_height;
-		typed_int max_height;
+		typed_pixel height;						// height of the containing block
+		typed_pixel min_height;
+		typed_pixel max_height;
 
 		int context_idx;
 		uint32_t size_mode;
@@ -350,7 +362,7 @@ namespace litehtml
 				size_mode(size_mode_normal)
 		{}
 
-		containing_block_context new_width(int w, uint32_t _size_mode = size_mode_normal) const
+		containing_block_context new_width(pixel_t w, uint32_t _size_mode = size_mode_normal) const
 		{
 			containing_block_context ret = *this;
 			ret.render_width = w - (ret.width - ret.render_width);
@@ -359,7 +371,7 @@ namespace litehtml
 			return ret;
 		}
 
-		containing_block_context new_width_height(int w, int h, uint32_t _size_mode = size_mode_normal) const
+		containing_block_context new_width_height(pixel_t w, pixel_t h, uint32_t _size_mode = size_mode_normal) const
 		{
 			containing_block_context ret = *this;
 			ret.render_width = w - (ret.width - ret.render_width);
@@ -704,7 +716,7 @@ namespace litehtml
 		element_clear	                clear_floats;
 		std::shared_ptr<render_item>	el;
 		int								context;
-		int 							min_width;
+		pixel_t							min_width;
 
 		floated_box() = default;
 		floated_box(const floated_box& val)
@@ -739,14 +751,14 @@ namespace litehtml
 		}
 	};
 
-	struct int_int_cache
+	struct pixel_pixel_cache
 	{
-		int		hash;
-		int		val;
+		pixel_t		hash;
+		pixel_t		val;
 		bool	is_valid;
 		bool	is_default;
 
-		int_int_cache()
+		pixel_pixel_cache()
 		{
 			hash		= 0;
 			val			= 0;
@@ -758,7 +770,7 @@ namespace litehtml
 			is_valid	= false;
 			is_default	= false;
 		}
-		void set_value(int vHash, int vVal)
+		void set_value(pixel_t vHash, pixel_t vVal)
 		{
 			hash		= vHash;
 			val			= vVal;
@@ -830,23 +842,23 @@ namespace litehtml
 
 	public:
 		baseline() : m_value(0), m_type(baseline_type_none) {}
-		baseline(int _value, _baseline_type _type) : m_value(_value), m_type(_type) {}
+		baseline(pixel_t _value, _baseline_type _type) : m_value(_value), m_type(_type) {}
 
-		int value() const				{ return m_value; 	}
-		void value(int _value) 			{ m_value = _value; }
+		pixel_t value() const			{ return m_value; 	}
+		void value(pixel_t _value) 		{ m_value = _value; }
 		_baseline_type type() const		{ return m_type; 	}
 		void type(_baseline_type _type)	{ m_type = _type; 	}
 
-		operator int() const	{ return m_value; 	}
-		baseline& operator=(int _value) { m_value = _value; return *this; }
+		operator pixel_t() const	{ return m_value; 	}
+		baseline& operator=(pixel_t _value) { m_value = _value; return *this; }
 
-		void set(int _value, _baseline_type _type)	{ m_value = _value; m_type =_type; }
+		void set(pixel_t _value, _baseline_type _type)	{ m_value = _value; m_type =_type; }
 		/**
 		 * Get baseline offset from top of element with specified height
 		 * @param height - element height
 		 * @return baseline offset
 		 */
-		int get_offset_from_top(int height) const
+		pixel_t get_offset_from_top(pixel_t height) const
 		{
 			if(m_type == baseline_type_top) return m_value;
 			return height - m_value;
@@ -856,7 +868,7 @@ namespace litehtml
 		 * @param height - element height
 		 * @return baseline offset
 		 */
-		int get_offset_from_bottom(int height) const
+		pixel_t get_offset_from_bottom(pixel_t height) const
 		{
 			if(m_type == baseline_type_bottom) return m_value;
 			return height - m_value;
@@ -866,7 +878,7 @@ namespace litehtml
 		 * @param top - top of the aligned element
 		 * @param bottom - bottom of the aligned element
 		 */
-		void calc(int top, int bottom)
+		void calc(pixel_t top, pixel_t bottom)
 		{
 			if(m_type == baseline_type_top)
 				m_value = -top;
@@ -874,7 +886,7 @@ namespace litehtml
 				m_value = bottom;
 		}
 	private:
-		int m_value;
+		pixel_t m_value;
 		_baseline_type m_type;
 	};
 
@@ -925,14 +937,14 @@ namespace litehtml
 	struct media_features
 	{
 		media_type	type;
-		int			width;			// (pixels) For continuous media, this is the width of the viewport including the size of a rendered scroll bar (if any). For paged media, this is the width of the page box.
-		int			height;			// (pixels) The height of the targeted display area of the output device. For continuous media, this is the height of the viewport including the size of a rendered scroll bar (if any). For paged media, this is the height of the page box.
-		int			device_width;	// (pixels) The width of the rendering surface of the output device. For continuous media, this is the width of the screen. For paged media, this is the width of the page sheet size.
-		int			device_height;	// (pixels) The height of the rendering surface of the output device. For continuous media, this is the height of the screen. For paged media, this is the height of the page sheet size.
+		pixel_t		width;			// (pixels) For continuous media, this is the width of the viewport including the size of a rendered scroll bar (if any). For paged media, this is the width of the page box.
+		pixel_t		height;			// (pixels) The height of the targeted display area of the output device. For continuous media, this is the height of the viewport including the size of a rendered scroll bar (if any). For paged media, this is the height of the page box.
+		pixel_t		device_width;	// (pixels) The width of the rendering surface of the output device. For continuous media, this is the width of the screen. For paged media, this is the width of the page sheet size.
+		pixel_t		device_height;	// (pixels) The height of the rendering surface of the output device. For continuous media, this is the height of the screen. For paged media, this is the height of the page sheet size.
 		int			color;			// The number of bits per color component of the output device. If the device is not a color device, the value is zero.
 		int			color_index;	// The number of entries in the color lookup table of the output device. If the device does not use a color lookup table, the value is zero.
 		int			monochrome;		// The number of bits per pixel in a monochrome frame buffer. If the device is not a monochrome device, the output device value will be 0.
-		int			resolution;		// The resolution of the output device (in DPI)
+		pixel_t		resolution;		// The resolution of the output device (in DPI)
 
 		media_features()
 		{

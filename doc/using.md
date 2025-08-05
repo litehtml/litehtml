@@ -52,7 +52,7 @@ If you don't have the fixed size window to draw HTML, you need to get the HTML *
 
 So the example looks like this:
 ```cpp
-int best_width = m_doc->render(max_width);
+pixel_t best_width = m_doc->render(max_width);
 if(best_width < max_width)
 {
 	m_doc->render(best_width);
@@ -74,10 +74,10 @@ Note, the ```x``` and ```y``` parameters are screen relative. The ```clip``` par
 ## Handling the mouse
 If you want to handle the mouse you have call some functions from ```litehtml::document```:
 ```cpp
-bool litehtml::document::on_mouse_over( int x, int y, int client_x, int client_y, position::vector& redraw_boxes );
+bool litehtml::document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
 bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes );
-bool litehtml::document::on_lbutton_down( int x, int y, int client_x, int client_y, position::vector& redraw_boxes );
-bool litehtml::document::on_lbutton_up( int x, int y, int client_x, int client_y, position::vector& redraw_boxes );
+bool litehtml::document::on_lbutton_down( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
+bool litehtml::document::on_lbutton_up( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
 bool on_mouse_leave(position::vector& redraw_boxes);
 ```
 All functions returns the ```bool``` to indicate that you have to redraw the rectangles from *redraw_boxes* vector. Also note the ```x``` and ```y``` are relative to the HTML layout. So ```0,0``` is the top-left corner.

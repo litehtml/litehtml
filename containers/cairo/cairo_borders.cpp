@@ -43,7 +43,7 @@ void cairo::border::draw_border()
 {
 	cairo_save(cr);
 
-	if(radius_top_x && radius_top_y)
+	if(radius_top_x != 0 && radius_top_y != 0)
 	{
 		double start_angle	= M_PI;
 		double end_angle	= start_angle + M_PI / 2.0  / ((double) top_border_width / (double) border_width + 1);
@@ -69,7 +69,7 @@ void cairo::border::draw_border()
 		cairo_line_to(cr, left, top);
 	}
 
-	if(radius_bottom_x && radius_bottom_y)
+	if(radius_bottom_x != 0 && radius_bottom_y != 0)
 	{
 		cairo_line_to(cr, left, bottom - radius_bottom_y);
 
@@ -131,7 +131,7 @@ void cairo::border::draw_border()
 
 void cairo::border::draw_line(double line_offset, double top_line_offset, double bottom_line_offset)
 {
-	if(radius_top_x && radius_top_y)
+	if(radius_top_x != 0 && radius_top_y != 0)
 	{
 		double end_angle = M_PI;
 		double start_angle	= end_angle + M_PI / 2.0  / ((double) top_border_width / (double) border_width + 1);
@@ -148,7 +148,7 @@ void cairo::border::draw_line(double line_offset, double top_line_offset, double
 		cairo_move_to(cr, left + line_offset, top);
 	}
 
-	if(radius_bottom_x && radius_bottom_y)
+	if(radius_bottom_x != 0 && radius_bottom_y != 0)
 	{
 		cairo_line_to(cr, left + line_offset, bottom - radius_bottom_y);
 
@@ -224,15 +224,15 @@ void cairo::border::draw_double()
 
 void cairo::border::draw_dashed()
 {
-	int line_length = std::abs(bottom - top);
-	if(!line_length) return;
+	litehtml::pixel_t line_length = std::abs(bottom - top);
+	if(line_length == 0) return;
 
 	draw_line(border_width / 2.0,
 			  top_border_width / 2.0,
 			  bottom_border_width / 2.0);
 
-	int segment_length = border_width * 3;
-	int seg_nums = line_length / segment_length;
+	litehtml::pixel_t segment_length = border_width * 3;
+	int seg_nums = (int) (line_length / segment_length);
 	if(seg_nums < 2)
 	{
 		seg_nums = 2;

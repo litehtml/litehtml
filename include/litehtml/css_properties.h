@@ -24,7 +24,7 @@ namespace litehtml
 	};
 
 	// CSS Properties types
-	using css_line_height_t = css_property<css_length, int>;
+	using css_line_height_t = css_property<css_length, pixel_t>;
 
 	class css_properties
 	{
@@ -99,6 +99,7 @@ namespace litehtml
 		void compute_background(const html_tag* el, const std::shared_ptr<document>& doc);
 		void compute_flex(const html_tag* el, const std::shared_ptr<document>& doc);
 		web_color get_color_property(const html_tag* el, string_id name, bool inherited, web_color default_value, uint_ptr member_offset) const;
+		void snap_border_width(css_length& width, const std::shared_ptr<document>& doc);
 
 	public:
 		css_properties() :
@@ -237,8 +238,8 @@ namespace litehtml
 		const background &get_bg() const;
 		void set_bg(const background &mBg);
 
-		int get_font_size() const;
-		void set_font_size(int mFontSize);
+		pixel_t get_font_size() const;
+		void set_font_size(pixel_t mFontSize);
 
 		uint_ptr get_font() const;
 		void set_font(uint_ptr mFont);
@@ -569,12 +570,12 @@ namespace litehtml
 		m_bg = mBg;
 	}
 
-	inline int css_properties::get_font_size() const
+	inline pixel_t css_properties::get_font_size() const
 	{
-		return (int)m_font_size.val();
+		return (pixel_t)m_font_size.val();
 	}
 
-	inline void css_properties::set_font_size(int mFontSize)
+	inline void css_properties::set_font_size(pixel_t mFontSize)
 	{
 		m_font_size = (float)mFontSize;
 	}

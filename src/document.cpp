@@ -26,6 +26,7 @@
 #include "render_table.h"
 #include "render_block.h"
 #include "document_container.h"
+#include "types.h"
 
 namespace litehtml
 {
@@ -465,7 +466,7 @@ uint_ptr document::add_font( const font_description& descr, font_metrics* fm )
 
 uint_ptr document::get_font( const font_description& descr, font_metrics* fm )
 {
-	if(!descr.size)
+	if(descr.size == 0)
 	{
 		return 0;
 	}
@@ -485,9 +486,9 @@ uint_ptr document::get_font( const font_description& descr, font_metrics* fm )
 	return add_font(descr, fm);
 }
 
-int document::render( int max_width, render_type rt )
+pixel_t document::render( pixel_t max_width, render_type rt )
 {
-	int ret = 0;
+	pixel_t ret = 0;
 	if(m_root && m_root_render)
 	{
 		position viewport;
@@ -520,7 +521,7 @@ int document::render( int max_width, render_type rt )
 	return ret;
 }
 
-void document::draw( uint_ptr hdc, int x, int y, const position* clip )
+void document::draw( uint_ptr hdc, pixel_t x, pixel_t y, const position* clip )
 {
 	if(m_root && m_root_render)
 	{
@@ -529,68 +530,68 @@ void document::draw( uint_ptr hdc, int x, int y, const position* clip )
 	}
 }
 
-int document::to_pixels( const css_length& val, const font_metrics& metrics, int size ) const
+pixel_t document::to_pixels( const css_length& val, const font_metrics& metrics, pixel_t size ) const
 {
 	if(val.is_predefined())
 	{
 		return 0;
 	}
-	int ret;
+	pixel_t ret;
 	switch(val.units())
 	{
 	case css_units_percentage:
 		ret = val.calc_percent(size);
 		break;
 	case css_units_em:
-		ret = round_f(val.val() * (float) metrics.font_size);
+		ret = val.val() * metrics.font_size;
 		break;
 
 	// https://drafts.csswg.org/css-values-4/#absolute-lengths
 	case css_units_pt:
-		ret = m_container->pt_to_px(round_f(val.val()));
+		ret = m_container->pt_to_px(val.val());
 		break;
 	case css_units_in:
-		ret = m_container->pt_to_px(round_f(val.val() * 72)); // 1in = 72pt
+		ret = m_container->pt_to_px(val.val() * 72); // 1in = 72pt
 		break;
 	case css_units_pc:
-		ret = m_container->pt_to_px(round_f(val.val() * 12)); // 1pc = (1/6)in = 12pt
+		ret = m_container->pt_to_px(val.val() * 12); // 1pc = (1/6)in = 12pt
 		break;
 	case css_units_cm:
-		ret = m_container->pt_to_px(round_f(val.val() * 0.3937f * 72)); // 1cm = (1/2.54)in = (72/2.54)pt
+		ret = m_container->pt_to_px(val.val() * 72 / 2.54f); // 1cm = (1/2.54)in = (72/2.54)pt
 		break;
 	case css_units_mm:
-		ret = m_container->pt_to_px(round_f(val.val() * 0.3937f * 72 / 10));
+		ret = m_container->pt_to_px(val.val() * 72 / 2.54f / 10);
 		break;
 
 	case css_units_vw:
-		ret = (int)((double)m_media.width * (double)val.val() / 100.0);
+		ret = (pixel_t) (m_media.width * val.val() / 100.0);
 		break;
 	case css_units_vh:
-		ret = (int)((double)m_media.height * (double)val.val() / 100.0);
+		ret = (pixel_t) (m_media.height * val.val() / 100.0);
 		break;
 	case css_units_vmin:
-		ret = (int)((double)std::min(m_media.height, m_media.width) * (double)val.val() / 100.0);
+		ret = (pixel_t) (std::min(m_media.height, m_media.width) * val.val() / 100.0);
 		break;
 	case css_units_vmax:
-		ret = (int)((double)std::max(m_media.height, m_media.width) * (double)val.val() / 100.0);
+		ret = (pixel_t) (std::max(m_media.height, m_media.width) * val.val() / 100.0);
 		break;
 	case css_units_rem:
-		ret = (int) ((double) m_root->css().get_font_size() * (double) val.val());
+		ret = (pixel_t) (m_root->css().get_font_size() * val.val());
 		break;
 	case css_units_ex:
-		ret = (int) ((double) metrics.x_height * val.val());
+		ret = (pixel_t) (metrics.x_height * val.val());
 		break;
 	case css_units_ch:
-		ret = (int) ((double) metrics.ch_width * val.val());
+		ret = (pixel_t) (metrics.ch_width * val.val());
 		break;
 	default:
-		ret = (int) val.val();
+		ret = (pixel_t) val.val();
 		break;
 	}
 	return ret;
 }
 
-void document::cvt_units( css_length& val, const font_metrics& metrics, int size ) const
+void document::cvt_units( css_length& val, const font_metrics& metrics, pixel_t size ) const
 {
 	if(val.is_predefined())
 	{
@@ -602,22 +603,22 @@ void document::cvt_units( css_length& val, const font_metrics& metrics, int size
 	}
 }
 
-int document::width() const
+pixel_t document::width() const
 {
 	return m_size.width;
 }
 
-int document::height() const
+pixel_t document::height() const
 {
 	return m_size.height;
 }
 
-int document::content_width() const
+pixel_t document::content_width() const
 {
 	return m_content_size.width;
 }
 
-int document::content_height() const
+pixel_t document::content_height() const
 {
 	return m_content_size.height;
 }
@@ -631,7 +632,7 @@ void document::add_stylesheet( const char* str, const char* baseurl, const char*
 	}
 }
 
-bool document::on_mouse_over( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
+bool document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
 	{
@@ -693,7 +694,7 @@ bool document::on_mouse_leave( position::vector& redraw_boxes )
 	return false;
 }
 
-bool document::on_lbutton_down( int x, int y, int client_x, int client_y, position::vector& redraw_boxes )
+bool document::on_lbutton_down( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
 	{
@@ -747,7 +748,7 @@ bool document::on_lbutton_down( int x, int y, int client_x, int client_y, positi
 	return false;
 }
 
-bool document::on_lbutton_up( int /*x*/, int /*y*/, int /*client_x*/, int /*client_y*/, position::vector& redraw_boxes )
+bool document::on_lbutton_up( pixel_t /*x*/, pixel_t /*y*/, pixel_t /*client_x*/, pixel_t /*client_y*/, position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
 	{

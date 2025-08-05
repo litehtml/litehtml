@@ -4,7 +4,7 @@ class Font : public font_metrics
 {
 public:
 	static Font* create(string face, int size, int weight);
-	virtual int text_width(string text) = 0;
+	virtual pixel_t text_width(string text) = 0;
 	virtual void draw_text(canvas& canvas, string text, color color, int x, int y) = 0;
 };
 
@@ -21,7 +21,7 @@ public:
 	Bitmap get_glyph(int ch, color color);
 	void load(string filename);
 
-	int text_width(string text) override;
+	pixel_t text_width(string text) override;
 	void draw_text(canvas& canvas, string text, color color, int x, int y) override;
 };
 
@@ -36,6 +36,6 @@ public:
 	static string_map installed_fonts;
 	static OutlineFont* create(string name, int size);
 
-	int text_width(string text) override;
+	pixel_t text_width(string text) override;
 	void draw_text(canvas& canvas, string text, color color, int x, int y) override;
 };

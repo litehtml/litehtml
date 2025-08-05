@@ -1,9 +1,11 @@
+#include "Bitmap.h"
+#include "litehtml/types.h"
 #define _CRT_SECURE_NO_WARNINGS
 #include "Font.h"
 #include "canvas_ity.hpp"
 using namespace canvas_ity;
 string readfile(string filename);
-void draw_image(canvas& cvs, int x, int y, const Bitmap& bmp);
+void draw_image(canvas& cvs, pixel_t x, pixel_t y, const Bitmap& bmp);
 bool set_font(canvas& cvs, const string& raw_font_data, int pixel_size);
 void set_color(canvas& cvs, brush_type type, color c);
 
@@ -51,6 +53,12 @@ RasterFont::RasterFont(int size, int weight)
 	}
 
 	load(get_font_dir() + name);
+
+	font_size = size;
+	x_height = get_glyph('x', color(0, 0, 0, 255)).height;
+	ch_width = get_glyph('0', color(0, 0, 0, 255)).width;
+	sub_shift = (pixel_t) size / 5;
+	super_shift = (pixel_t) size / 3;
 }
 
 RasterFont* RasterFont::create(string name, int size, int weight)
@@ -65,8 +73,8 @@ Bitmap RasterFont::get_glyph(int ch, color color)
 {
 	if (glyphs[ch].width == 0)
 	{
-		Bitmap bmp(width, height, transparent);
-		bmp.draw_rect(1, 1, width - 2, height - 2, color);
+		Bitmap bmp(width, (int) height, transparent);
+		bmp.draw_rect(1, 1, width - 2, (int) height - 2, color);
 		return bmp;
 	}
 	else if (color != black)
@@ -102,9 +110,20 @@ void RasterFont::load(string filename)
 		auto val = line.substr(sep + 1);  trim(val);
 		if (val.empty()) break; // end of header
 
-		if (key == "cell-size")    sscanf(val.c_str(), "%d %d", &width, &height);
-		else if (key == "ascent")  ascent = atoi(val.c_str());
-		else if (key == "descent") descent = atoi(val.c_str());
+		if (key == "cell-size")
+		{
+			int parsed_height;
+			sscanf(val.c_str(), "%d %d", &width, &parsed_height);
+			height = (pixel_t) parsed_height;
+		}
+		else if (key == "ascent")
+		{
+			ascent = atoi(val.c_str());
+		}
+		else if (key == "descent")
+		{
+			descent = atoi(val.c_str());
+		}
 	}
 
 	// parse glyphs
@@ -126,7 +145,7 @@ void RasterFont::load(string filename)
 	
 	auto parse_glyph = [&](int ch) {
 		int glyph_width = (int)trim(lines[i]).size();
-		Bitmap& glyph = glyphs[ch] = Bitmap(glyph_width, height, transparent);
+		Bitmap& glyph = glyphs[ch] = Bitmap(glyph_width, (int) height, transparent);
 		for (int y = 0; i < (int)lines.size() && y < height; i++, y++)
 		{
 			string line = trim(lines[i]);
@@ -148,13 +167,13 @@ void RasterFont::load(string filename)
 	x_height = glyphs[(int)'x'].find_picture(transparent).height;
 }
 
-int RasterFont::text_width(string text)
+pixel_t RasterFont::text_width(string text)
 {
 	utf8_to_utf32 utf32(text);
 	int width_ = 0;
 	for (const char32_t* p = utf32; *p; p++)
 		width_ += get_glyph(*p, black).width;
-	return width_;
+	return (pixel_t) width_;
 }
 
 void RasterFont::draw_text(canvas& cvs, string text, color color, int x, int y)
@@ -191,14 +210,26 @@ OutlineFont::OutlineFont(string name, int size) : name(name), size(size)
 
 	canvas cvs;
 	set_font(cvs, data, size);
-	cvs.get_font_metrics(ascent, descent, height, x_height);
+
+	int metric_ascent;
+	int metric_descent;
+	int metric_height;
+	int metric_x_height;
+	cvs.get_font_metrics(metric_ascent, metric_descent, metric_height, metric_x_height);
+
+	ascent = (pixel_t) metric_ascent;
+	descent = (pixel_t) metric_descent;
+	height = (pixel_t) metric_height;
+	x_height = (pixel_t) metric_x_height;
+	sub_shift = (pixel_t) size / 5;
+	super_shift = (pixel_t) size / 3;
 }
 
-int OutlineFont::text_width(string text)
+pixel_t OutlineFont::text_width(string text)
 {
 	canvas cvs;
 	set_font(cvs, data, size);
-	return (int)ceil(cvs.measure_text(text.c_str()));
+	return cvs.measure_text(text.c_str());
 }
 
 void OutlineFont::draw_text(canvas& cvs, string text, color color, int x, int y)

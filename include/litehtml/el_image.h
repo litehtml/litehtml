@@ -3,6 +3,7 @@
 
 #include "html_tag.h"
 #include "document.h"
+#include "types.h"
 
 namespace litehtml
 {
@@ -16,14 +17,14 @@ namespace litehtml
 		bool	is_replaced() const override;
 		void	parse_attributes() override;
 		void	compute_styles(bool recursive = true) override;
-		void	draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) override;
-		void	get_content_size(size& sz, int max_width) override;
+		void	draw(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item> &ri) override;
+		void	get_content_size(size& sz, pixel_t max_width) override;
 		string	dump_get_name() override;
 
 		std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri) override;
 
 	private:
-//		int calc_max_height(int image_height);
+//		pixel_t calc_max_height(pixel_t image_height);
 	};
 }
 

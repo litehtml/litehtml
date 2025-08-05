@@ -2,13 +2,14 @@
 #include "line_box.h"
 #include "element.h"
 #include "render_item.h"
+#include "types.h"
 #include <algorithm>
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
 litehtml::line_box_item::~line_box_item() = default;
 
-void litehtml::line_box_item::place_to(int x, int y)
+void litehtml::line_box_item::place_to(pixel_t x, pixel_t y)
 {
 	m_element->pos().x = x + m_element->content_offset_left();
 	m_element->pos().y = y + m_element->content_offset_top();
@@ -20,32 +21,32 @@ litehtml::position& litehtml::line_box_item::pos()
 }
 
 
-int litehtml::line_box_item::width() const
+litehtml::pixel_t litehtml::line_box_item::width() const
 {
 	return m_element->width();
 }
 
-int litehtml::line_box_item::top() const
+litehtml::pixel_t litehtml::line_box_item::top() const
 {
 	return m_element->top();
 }
 
-int litehtml::line_box_item::bottom() const
+litehtml::pixel_t litehtml::line_box_item::bottom() const
 {
 	return m_element->bottom();
 }
 
-int litehtml::line_box_item::right() const
+litehtml::pixel_t litehtml::line_box_item::right() const
 {
 	return m_element->right();
 }
 
-int litehtml::line_box_item::left() const
+litehtml::pixel_t litehtml::line_box_item::left() const
 {
 	return m_element->left();
 }
 
-int litehtml::line_box_item::height() const
+litehtml::pixel_t litehtml::line_box_item::height() const
 {
 	return m_element->height();
 }
@@ -60,38 +61,38 @@ litehtml::lbi_start::lbi_start(const std::shared_ptr<render_item>& element) : li
 
 litehtml::lbi_start::~lbi_start() = default;
 
-void litehtml::lbi_start::place_to(int x, int y)
+void litehtml::lbi_start::place_to(pixel_t x, pixel_t y)
 {
 	m_pos.x = x + m_element->content_offset_left();
 	m_pos.y = y;
 }
 
-int litehtml::lbi_start::width() const
+litehtml::pixel_t litehtml::lbi_start::width() const
 {
 	return m_pos.width;
 }
 
-int litehtml::lbi_start::top() const
+litehtml::pixel_t litehtml::lbi_start::top() const
 {
 	return m_pos.y;
 }
 
-int litehtml::lbi_start::bottom() const
+litehtml::pixel_t litehtml::lbi_start::bottom() const
 {
 	return m_pos.y + m_pos.height;
 }
 
-int litehtml::lbi_start::right() const
+litehtml::pixel_t litehtml::lbi_start::right() const
 {
 	return m_pos.x;
 }
 
-int litehtml::lbi_start::left() const
+litehtml::pixel_t litehtml::lbi_start::left() const
 {
 	return m_pos.x - m_element->content_offset_left();
 }
 
-int litehtml::lbi_start::height() const
+litehtml::pixel_t litehtml::lbi_start::height() const
 {
 	return m_pos.height;
 }
@@ -106,18 +107,18 @@ litehtml::lbi_end::lbi_end(const std::shared_ptr<render_item>& element) : lbi_st
 
 litehtml::lbi_end::~lbi_end() = default;
 
-void litehtml::lbi_end::place_to(int x, int y)
+void litehtml::lbi_end::place_to(pixel_t x, pixel_t y)
 {
 	m_pos.x = x;
 	m_pos.y = y;
 }
 
-int litehtml::lbi_end::right() const
+litehtml::pixel_t litehtml::lbi_end::right() const
 {
 	return m_pos.x + m_pos.width;
 }
 
-int litehtml::lbi_end::left() const
+litehtml::pixel_t litehtml::lbi_end::left() const
 {
 	return m_pos.x;
 }
@@ -132,23 +133,23 @@ litehtml::lbi_continue::lbi_continue(const std::shared_ptr<render_item>& element
 
 litehtml::lbi_continue::~lbi_continue() = default;
 
-void litehtml::lbi_continue::place_to(int x, int y)
+void litehtml::lbi_continue::place_to(pixel_t x, pixel_t y)
 {
 	m_pos.x = x;
 	m_pos.y = y;
 }
 
-int litehtml::lbi_continue::right() const
+litehtml::pixel_t litehtml::lbi_continue::right() const
 {
 	return m_pos.x;
 }
 
-int litehtml::lbi_continue::left() const
+litehtml::pixel_t litehtml::lbi_continue::left() const
 {
 	return m_pos.x;
 }
 
-int litehtml::lbi_continue::width() const
+litehtml::pixel_t litehtml::lbi_continue::width() const
 {
 	return 0;
 }
@@ -185,7 +186,7 @@ void litehtml::line_box::add_item(std::unique_ptr<line_box_item> item)
 	}
 }
 
-int litehtml::line_box::calc_va_baseline(const va_context& current, vertical_align va, const font_metrics& new_font, int top, int bottom)
+litehtml::pixel_t litehtml::line_box::calc_va_baseline(const va_context& current, vertical_align va, const font_metrics& new_font, pixel_t top, pixel_t bottom)
 {
 	switch(va)
 	{
@@ -290,8 +291,8 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
         return ret_items;
     }
 
-    int spacing_x = 0;	// Number of pixels to distribute between elements
-    int shift_x = 0;	// Shift elements by X to apply the text-align
+    pixel_t spacing_x = 0;	// Number of pixels to distribute between elements
+    pixel_t shift_x = 0;	// Shift elements by X to apply the text-align
 
     switch(m_text_align)
     {
@@ -325,7 +326,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
     float offj  = float(spacing_x) / std::max(1.f, float(m_items.size()) - 1.f);
     float cixx  = 0.0f;
 
-	std::optional<int> line_height;
+	std::optional<pixel_t> line_height;
 
 	if(!m_default_line_height.css_value.is_predefined())
 	{
@@ -344,10 +345,10 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 
 	struct items_dimensions
 	{
-		int top = 0;
-		int bottom = 0;
+		pixel_t top = 0;
+		pixel_t bottom = 0;
 		int count = 0;
-		int max_height = 0;
+		pixel_t max_height = 0;
 
 		void add_item(const line_box_item* item)
 		{
@@ -356,7 +357,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			max_height = std::max(max_height, item->height());
 			count++;
 		}
-		int height() const { return bottom - top; }
+		pixel_t height() const { return bottom - top; }
 	};
 
 	items_dimensions line_max_height;
@@ -374,19 +375,19 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 	{
 		// Apply text-align-justify
 		m_min_width += lbi->get_rendered_min_width();
-		if (spacing_x && counter)
+		if (spacing_x != 0 && counter)
 		{
 			cixx += offj;
 			if ((counter + 1) == int(m_items.size()))
 				cixx += 0.99f;
-			lbi->pos().x += int(cixx);
+			lbi->pos().x += (pixel_t) cixx;
 		}
 		counter++;
-		if ((m_text_align == text_align_right || spacing_x) && counter == int(m_items.size()))
+		if ((m_text_align == text_align_right || spacing_x != 0) && counter == int(m_items.size()))
 		{
 			// Forcible justify the last element to the right side for text align right and justify;
 			lbi->pos().x = m_right - lbi->pos().width;
-		} else if (shift_x)
+		} else if (shift_x != 0)
 		{
 			lbi->pos().x += shift_x;
 		}
@@ -420,8 +421,8 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			current_context.line_height = lbi->get_el()->css().line_height().computed_value;
 		}
 
-		int bl = current_context.baseline;
-		int content_offset = 0;
+		pixel_t bl = current_context.baseline;
+		pixel_t content_offset = 0;
 		bool is_top_bottom_box = false;
 		bool ignore = false;
 
@@ -526,7 +527,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		}
 	}
 
-	int top_shift = 0;
+	pixel_t top_shift = 0;
 	if(line_height.has_value())
 	{
 		m_height = line_height.value();
@@ -534,7 +535,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		{
 			// We have inline items
 			top_shift = std::abs(line_max_height.top);
-			const int top_shift_correction = (line_height.value() - line_max_height.height()) / 2;
+			const pixel_t top_shift_correction = (line_height.value() - line_max_height.height()) / 2;
 			// We have to calculate the baseline from the top of the line box due to possible round errors.
 			// The top_shift_correction is actually text offset from the top of the line box.
 			// The (top_shift_correction + line_max_height.height()): is the bottom of the text with shift (text_bottom).
@@ -546,14 +547,14 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			top_shift += top_shift_correction;
 			if(inline_boxes_dims.count)
 			{
-				const int diff2 = std::abs(inline_boxes_dims.top) - std::abs(top_shift);
+				const pixel_t diff2 = std::abs(inline_boxes_dims.top) - std::abs(top_shift);
 				if(diff2 > 0)
 				{
 					m_height += diff2;
 					top_shift += diff2;
 					m_baseline += diff2;
 				}
-				const int diff1 = inline_boxes_dims.bottom - (line_max_height.bottom + top_shift_correction);
+				const pixel_t diff1 = inline_boxes_dims.bottom - (line_max_height.bottom + top_shift_correction);
 				if(diff1 > 0)
 				{
 					m_height += diff1;
@@ -572,7 +573,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		}
 
 
-		const int top_down_height = std::max(top_aligned_max_height.max_height, bottom_aligned_max_height.max_height);
+		const pixel_t top_down_height = std::max(top_aligned_max_height.max_height, bottom_aligned_max_height.max_height);
 		if(top_down_height > m_height)
 		{
 			if(bottom_aligned_max_height.count)
@@ -801,22 +802,22 @@ bool litehtml::line_box::is_empty() const
     return true;
 }
 
-int litehtml::line_box::baseline() const
+litehtml::pixel_t litehtml::line_box::baseline() const
 {
     return m_baseline;
 }
 
-int litehtml::line_box::top_margin() const
+litehtml::pixel_t litehtml::line_box::top_margin() const
 {
     return 0;
 }
 
-int litehtml::line_box::bottom_margin() const
+litehtml::pixel_t litehtml::line_box::bottom_margin() const
 {
     return 0;
 }
 
-void litehtml::line_box::y_shift( int shift )
+void litehtml::line_box::y_shift( pixel_t shift )
 {
 	m_top += shift;
     for (auto& el : m_items)
@@ -847,11 +848,11 @@ bool litehtml::line_box::is_break_only() const
 	return break_found;
 }
 
-std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::new_width( int left, int right)
+std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::new_width( pixel_t left, pixel_t right)
 {
 	std::list< std::unique_ptr<line_box_item> > ret_items;
-    int add = left - m_left;
-    if(add)
+    pixel_t add = left - m_left;
+    if(add != 0)
     {
 		m_left	= left;
 		m_right	= right;

@@ -7,42 +7,42 @@ class document_container
 {
 public:
     virtual litehtml::uint_ptr  create_font(const font_description& descr, const document* doc, litehtml::font_metrics* fm) = 0;
-    virtual void				delete_font(litehtml::uint_ptr hFont) = 0;
-    virtual int					text_width(const char* text, litehtml::uint_ptr hFont) = 0;
-    virtual void				draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;
-    virtual int					pt_to_px(int pt) const = 0;
-    virtual int					get_default_font_size() const = 0;
-    virtual const char*			get_default_font_name() const = 0;
-    virtual void				draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) = 0;
-    virtual void				load_image(const char* src, const char* baseurl, bool redraw_on_ready) = 0;
-    virtual void				get_image_size(const char* src, const char* baseurl, litehtml::size& sz) = 0;
-    virtual void				draw_image(litehtml::uint_ptr hdc, const background_layer& layer, const std::string& url, const std::string& base_url) = 0;
-    virtual void				draw_solid_fill(litehtml::uint_ptr hdc, const background_layer& layer, const web_color& color) = 0;
-    virtual void				draw_linear_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient) = 0;
-    virtual void				draw_radial_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient) = 0;
-    virtual void				draw_conic_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient) = 0;
-    virtual void				draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) = 0;
+    virtual void                delete_font(litehtml::uint_ptr hFont) = 0;
+    virtual pixel_t             text_width(const char* text, litehtml::uint_ptr hFont) = 0;
+    virtual void                draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;
+    virtual pixel_t             pt_to_px(float pt) const = 0;
+    virtual pixel_t             get_default_font_size() const = 0;
+    virtual const char*         get_default_font_name() const = 0;
+    virtual void                draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) = 0;
+    virtual void                load_image(const char* src, const char* baseurl, bool redraw_on_ready) = 0;
+    virtual void                get_image_size(const char* src, const char* baseurl, litehtml::size& sz) = 0;
+    virtual void                draw_image(litehtml::uint_ptr hdc, const background_layer& layer, const std::string& url, const std::string& base_url) = 0;
+    virtual void                draw_solid_fill(litehtml::uint_ptr hdc, const background_layer& layer, const web_color& color) = 0;
+    virtual void                draw_linear_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient) = 0;
+    virtual void                draw_radial_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient) = 0;
+    virtual void                draw_conic_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient) = 0;
+    virtual void                draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) = 0;
 
-    virtual void				set_caption(const char* caption) = 0;
-    virtual void				set_base_url(const char* base_url) = 0;
-    virtual void				link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el) = 0;
-    virtual void				on_anchor_click(const char* url, const litehtml::element::ptr& el) = 0;
-    virtual bool				on_element_click(const litehtml::element::ptr& /*el*/) { return false; };
-    virtual void				on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event) = 0;
-    virtual void				set_cursor(const char* cursor) = 0;
-    virtual void				transform_text(litehtml::string& text, litehtml::text_transform tt) = 0;
-    virtual void				import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl) = 0;
-    virtual void				set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) = 0;
-    virtual void				del_clip() = 0;
-    virtual void				get_viewport(litehtml::position& viewport) const = 0;
-    virtual litehtml::element::ptr	create_element( const char* tag_name,
-                                                    const litehtml::string_map& attributes,
-                                                    const std::shared_ptr<litehtml::document>& doc) = 0;
+    virtual void                set_caption(const char* caption) = 0;
+    virtual void                set_base_url(const char* base_url) = 0;
+    virtual void                link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el) = 0;
+    virtual void                on_anchor_click(const char* url, const litehtml::element::ptr& el) = 0;
+    virtual bool                on_element_click(const litehtml::element::ptr& /*el*/) { return false; };
+    virtual void                on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event) = 0;
+    virtual void                set_cursor(const char* cursor) = 0;
+    virtual void                transform_text(litehtml::string& text, litehtml::text_transform tt) = 0;
+    virtual void                import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl) = 0;
+    virtual void                set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) = 0;
+    virtual void                del_clip() = 0;
+    virtual void                get_viewport(litehtml::position& viewport) const = 0;
+    virtual litehtml::element::ptr create_element( const char* tag_name,
+                                                   const litehtml::string_map& attributes,
+                                                   const std::shared_ptr<litehtml::document>& doc) = 0;
 
-    virtual void				get_media_features(litehtml::media_features& media) const = 0;
-    virtual void				get_language(litehtml::string& language, litehtml::string& culture) const = 0;
-    virtual litehtml::string	resolve_color(const litehtml::string& /*color*/) const { return litehtml::string(); }
-    virtual void				split_text(const char* text, const std::function<void(const char*)>& on_word, const std::function<void(const char*)>& on_space);
+    virtual void                get_media_features(litehtml::media_features& media) const = 0;
+    virtual void                get_language(litehtml::string& language, litehtml::string& culture) const = 0;
+    virtual litehtml::string    resolve_color(const litehtml::string& /*color*/) const { return litehtml::string(); }
+    virtual void                split_text(const char* text, const std::function<void(const char*)>& on_word, const std::function<void(const char*)>& on_space);
 
 protected:
     virtual ~document_container() = default;
@@ -109,7 +109,7 @@ Below is the list of member functions you have to implement:
 ### create_font
 
 ```cpp
-virtual litehtml::uint_ptr  create_font(const font_description& descr, const document* doc, litehtml::font_metrics* fm);
+virtual litehtml::uint_ptr create_font(const font_description& descr, const document* doc, litehtml::font_metrics* fm);
 ```
 
 This function called by litehtml to create the font. ```create_font``` returns ```uint_ptr``` that must identify the created font.
@@ -121,16 +121,16 @@ Parameters:
 struct font_description
 {
     std::string             family;
-    int						size;
-    font_style				style;
-    int						weight;
-    int						decoration_line;
-    css_length				decoration_thickness;
-    text_decoration_style	decoration_style;
-    web_color				decoration_color;
-    std::string				emphasis_style;
-    web_color				emphasis_color;
-    int						emphasis_position;
+    int                     size;
+    font_style              style;
+    int                     weight;
+    int                     decoration_line;
+    css_length              decoration_thickness;
+    text_decoration_style   decoration_style;
+    web_color               decoration_color;
+    std::string             emphasis_style;
+    web_color               emphasis_color;
+    int                     emphasis_position;
 };
 ```
 * ```family``` - Font family name as described in [CSS specifications](https://developer.mozilla.org/en-US/docs/Web/CSS/font-family). You have to select the proper font.
@@ -158,15 +158,15 @@ struct font_description
 ```cpp
 struct font_metrics
 {
-    int 	font_size;
-    int		height;
-    int		ascent;
-    int		descent;
-    int		x_height;
-    int 	ch_width;
-    bool	draw_spaces;
-    int		sub_shift;
-    int		super_shift;
+    int     font_size;
+    int     height;
+    int     ascent;
+    int     descent;
+    int     x_height;
+    int     ch_width;
+    bool    draw_spaces;
+    int     sub_shift;
+    int     super_shift;
 };
 ```
 * ```font_size``` - the font size in pixels. The same as size argument of the create_font function.
@@ -174,7 +174,7 @@ struct font_metrics
 * ```ascent``` - the distance from the baseline to the top of a line of text.
 * ```descent``` - the distance from the baseline to the bottom of a line of text.
 * ```x_height``` - height of the symbol x.
-* ```ch_width``` - height of the symbol 0.
+* ```ch_width``` - width of the symbol 0.
 * ```draw_spaces``` - true to call draw text function for spaces. If false, just use space width without draw.
 * ```sub_shift``` - the baseline shift for subscripts.
 * ```super_shift``` - the baseline shift for superscripts.
@@ -188,7 +188,7 @@ delete the font created in [create_font](#create_font) function
 
 ### text_width
 ```cpp
-virtual int text_width(const char* text, uint_ptr hFont);
+virtual pixel_t text_width(const char* text, uint_ptr hFont);
 ```
 
 Returns the text width.
@@ -202,14 +202,14 @@ This function draw the text string.
 
 ### pt_to_px
 ```cpp
-virtual int pt_to_px(int pt);
+virtual pixel_t pt_to_px(float pt);
 ```
 
 Convert **points** into **pixels**.
 
 ### get_default_font_size
 ```cpp
-virtual int get_default_font_size();
+virtual pixel_t get_default_font_size();
 ```
 
 Returns the default font size in pixels.
@@ -230,7 +230,7 @@ Draws the list marker. Use the parameter **marker** to find the marker type and 
 
 ### load_image
 ```cpp
-virtual void load_image(const char* src, const char* baseurl);
+virtual void load_image(const char* src, const char* baseurl, bool redraw_on_ready);
 ```
 
 You can preload image in this function. litehtml does not cache the images, so you have to create own images cache if you need it.
@@ -358,7 +358,7 @@ class conic_gradient : public gradient_base
 public:
     pointF position;
     float  angle;
-	float  radius;
+    float  radius;
 };
 ```
 * ```position``` - the center of the conic gradient
@@ -374,14 +374,14 @@ Draw the element borders here. The parameter ```root``` is ```true``` if you hav
 
 ### set_caption
 ```cpp
-virtual	void set_caption(const char* caption);
+virtual void set_caption(const char* caption);
 ```
 
 litehtml calls this function with ```<title>``` html tag text. You can use the ```caption``` parameter to set the window caption text into the html page title.
 
 ### set_base_url
 ```cpp
-virtual	void set_base_url(const char* base_url);
+virtual void set_base_url(const char* base_url);
 ```
 
 litehtml calls this function for the ```<base>``` html tag to set the base url. Save this string for future use in the functions that get the ```baseurl``` parameter.
@@ -416,13 +416,13 @@ litehtml calls this function on mouse event. The parameter **el** is the element
 
 ### set_cursor
 ```cpp
-virtual	void set_cursor(const char* cursor);
+virtual void set_cursor(const char* cursor);
 ```
 Define this function to handle the CSS cursor property.
 
 ### transform_text
 ```cpp
-virtual	void transform_text(std::string& text, litehtml::text_transform tt);
+virtual void transform_text(std::string& text, litehtml::text_transform tt);
 ```
 Transform the ```text``` parameter according the ```tt``` value:
 - ```text_transform_capitalize``` - make the first char upper case.
@@ -475,15 +475,15 @@ The definition of the ```media_features``` structure:
 ```cpp
 struct media_features
 {
-    media_type	type;
-    int			width;
-    int			height;
-    int			device_width;
-    int			device_height;
-    int			color;
-    int			color_index;
-    int			monochrome;
-    int			resolution;
+    media_type    type;
+    int            width;
+    int            height;
+    int            device_width;
+    int            device_height;
+    int            color;
+    int            color_index;
+    int            monochrome;
+    int            resolution;
 };
 ```
 * ```type``` - the type of the media. See enum ```media_type```.
