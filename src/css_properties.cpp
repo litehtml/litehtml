@@ -176,10 +176,10 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	if (m_css_borders.bottom.style == border_style_none || m_css_borders.bottom.style == border_style_hidden)
 		m_css_borders.bottom.width = 0;
 
-	doc->cvt_units(m_css_borders.left.width,	m_font_metrics, 0);
-	doc->cvt_units(m_css_borders.right.width,	m_font_metrics, 0);
-	doc->cvt_units(m_css_borders.top.width,		m_font_metrics, 0);
-	doc->cvt_units(m_css_borders.bottom.width,	m_font_metrics, 0);
+	snap_border_width(m_css_borders.left.width,		doc);
+	snap_border_width(m_css_borders.right.width,	doc);
+	snap_border_width(m_css_borders.top.width,		doc);
+	snap_border_width(m_css_borders.bottom.width,	doc);
 
 	m_css_borders.radius.top_left_x = el->get_property<css_length>(_border_top_left_radius_x_, false, 0, offset(m_css_borders.radius.top_left_x));
 	m_css_borders.radius.top_left_y = el->get_property<css_length>(_border_top_left_radius_y_, false, 0, offset(m_css_borders.radius.top_left_y));
@@ -197,8 +197,8 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 	doc->cvt_units( m_css_borders.radius.top_left_y,			m_font_metrics, 0);
 	doc->cvt_units( m_css_borders.radius.top_right_x,			m_font_metrics, 0);
 	doc->cvt_units( m_css_borders.radius.top_right_y,			m_font_metrics, 0);
-	doc->cvt_units( m_css_borders.radius.bottom_left_x,			m_font_metrics, 0);
-	doc->cvt_units( m_css_borders.radius.bottom_left_y,			m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.bottom_left_x,		m_font_metrics, 0);
+	doc->cvt_units( m_css_borders.radius.bottom_left_y,		m_font_metrics, 0);
 	doc->cvt_units( m_css_borders.radius.bottom_right_x,		m_font_metrics, 0);
 	doc->cvt_units( m_css_borders.radius.bottom_right_y,		m_font_metrics, 0);
 
@@ -533,6 +533,27 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
 			m_display = display_flex;
 		}
 	}
+}
+
+// https://www.w3.org/TR/css-values-4/#snap-a-length-as-a-border-width
+void litehtml::css_properties::snap_border_width(css_length& width, const std::shared_ptr<document>& doc)
+{
+	if (width.is_predefined() || width.units() == css_units_percentage)
+	{
+		return;
+	}
+
+	pixel_t px = doc->to_pixels(width, m_font_metrics, 0);
+	
+	if (px > 0 && px < 1)
+	{
+		px = 1;
+	} else
+	{
+		px = std::floor(px);
+	}
+
+	width.set_value(px, css_units_px);
 }
 
 std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::css_properties::dump_get_attrs()
