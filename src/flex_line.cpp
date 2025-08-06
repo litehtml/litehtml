@@ -139,25 +139,6 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 				if (total_clamped == 0) processed = false;
 			}
 		}
-		// Distribute remaining after algorithm space
-		pixel_t sum_main_size = 0;
-		for(auto &item : items)
-		{
-			sum_main_size += item->main_size;
-		}
-
-		pixel_t free_space = container_main_size - sum_main_size;
-
-		pixel_t ditribute_step = 1;
-		if(free_space > 0)
-		{
-			for(auto &item : items)
-			{
-				if(free_space < ditribute_step) break;
-				item->main_size += ditribute_step;
-				free_space -= ditribute_step;
-			}
-		}
 	}
 }
 
