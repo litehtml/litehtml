@@ -1,6 +1,7 @@
 #include "container_cairo.h"
 #include "cairo_borders.h"
 #include "conic_gradient.h"
+#include "litehtml/html.h"
 #include <cmath>
 
 #ifndef M_PI
@@ -8,14 +9,14 @@
 #endif
 
 
-int container_cairo::pt_to_px(int pt ) const
+litehtml::pixel_t container_cairo::pt_to_px(float pt ) const
 {
 	double dpi = get_screen_dpi();
 
-	return (int) ((double) pt * dpi / 72.0);
+	return pt * dpi / 72.0;
 }
 
-int container_cairo::get_default_font_size() const
+litehtml::pixel_t container_cairo::get_default_font_size() const
 {
 	return pt_to_px(12);
 }
@@ -98,7 +99,7 @@ void container_cairo::clip_background_layer(cairo_t* cr, const litehtml::backgro
 
 void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url)
 {
-	if(url.empty() || (!layer.clip_box.width && !layer.clip_box.height) )
+	if(url.empty() || (layer.clip_box.width == 0 && layer.clip_box.height == 0) )
 	{
 		return;
 	}
@@ -115,10 +116,13 @@ void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::backgro
 	auto bgbmp = get_image(img_url);
 	if (bgbmp)
 	{
-		if (layer.origin_box.width != cairo_image_surface_get_width(bgbmp) ||
-				layer.origin_box.height != cairo_image_surface_get_height(bgbmp))
+		int image_width = litehtml::round_f(layer.origin_box.width);
+		int image_height = litehtml::round_f(layer.origin_box.height);
+
+		if (image_width != cairo_image_surface_get_width(bgbmp) ||
+				image_height != cairo_image_surface_get_height(bgbmp))
 		{
-			auto new_img = scale_surface(bgbmp, layer.origin_box.width, layer.origin_box.height);
+			auto new_img = scale_surface(bgbmp, image_width, image_height);
 			cairo_surface_destroy(bgbmp);
 			bgbmp = new_img;
 		}
@@ -198,17 +202,17 @@ void container_cairo::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::ba
  */
 static void draw_pattern(cairo_t* cr, cairo_pattern_t* pattern,
 						 const litehtml::background_layer& layer,
-						 const std::function<void(cairo_t* cr, cairo_pattern_t* pattern, int x, int y, int width, int height)>& draw)
+						 const std::function<void(cairo_t* cr, cairo_pattern_t* pattern, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height)>& draw)
 {
-	int start_x = layer.origin_box.x;
+	litehtml::pixel_t start_x = layer.origin_box.x;
 	int num_x = 1;
-	int start_y = layer.origin_box.y;
+	litehtml::pixel_t start_y = layer.origin_box.y;
 	int num_y = 1;
 	if(layer.repeat == litehtml::background_repeat_repeat_x || layer.repeat == litehtml::background_repeat_repeat)
 	{
 		if(layer.origin_box.left() > layer.clip_box.left())
 		{
-			int num_left = (layer.origin_box.left() - layer.clip_box.left()) / layer.origin_box.width;
+			int num_left = (int) ((layer.origin_box.left() - layer.clip_box.left()) / layer.origin_box.width);
 			if(layer.origin_box.left() - num_left * layer.origin_box.width > layer.clip_box.left())
 			{
 				num_left++;
@@ -218,7 +222,7 @@ static void draw_pattern(cairo_t* cr, cairo_pattern_t* pattern,
 		}
 		if(layer.origin_box.right() < layer.clip_box.right())
 		{
-			int num_right = (layer.clip_box.right() - layer.origin_box.right()) / layer.origin_box.width;
+			int num_right = (int) ((layer.clip_box.right() - layer.origin_box.right()) / layer.origin_box.width);
 			if(layer.origin_box.left() + num_right * layer.origin_box.width < layer.clip_box.right())
 			{
 				num_right++;
@@ -230,7 +234,7 @@ static void draw_pattern(cairo_t* cr, cairo_pattern_t* pattern,
 	{
 		if(layer.origin_box.top() > layer.clip_box.top())
 		{
-			int num_top = (layer.origin_box.top() - layer.clip_box.top()) / layer.origin_box.height;
+			int num_top = (int) ((layer.origin_box.top() - layer.clip_box.top()) / layer.origin_box.height);
 			if(layer.origin_box.top() - num_top * layer.origin_box.height > layer.clip_box.top())
 			{
 				num_top++;
@@ -240,7 +244,7 @@ static void draw_pattern(cairo_t* cr, cairo_pattern_t* pattern,
 		}
 		if(layer.origin_box.bottom() < layer.clip_box.bottom())
 		{
-			int num_bottom = (layer.clip_box.bottom() - layer.origin_box.bottom()) / layer.origin_box.height;
+			int num_bottom = (int) ((layer.clip_box.bottom() - layer.origin_box.bottom()) / layer.origin_box.height);
 			if(layer.origin_box.bottom() + num_bottom * layer.origin_box.height < layer.clip_box.bottom())
 			{
 				num_bottom++;
@@ -289,7 +293,7 @@ void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtm
 										  color_stop.color.alpha / 255.0);
 	}
 
-	draw_pattern(cr, pattern, layer, [](cairo_t* cr, cairo_pattern_t* pattern, int x, int y, int width, int height)
+	draw_pattern(cr, pattern, layer, [](cairo_t* cr, cairo_pattern_t* pattern, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height)
 		{
 			cairo_set_source(cr, pattern);
 			cairo_rectangle(cr, x, y, width, height);
@@ -340,30 +344,30 @@ void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
 
 	cairo_new_path(cr);
 
-	int bdr_top		= 0;
-	int bdr_bottom	= 0;
-	int bdr_left	= 0;
-	int bdr_right	= 0;
+	litehtml::pixel_t bdr_top		= 0;
+	litehtml::pixel_t bdr_bottom	= 0;
+	litehtml::pixel_t bdr_left		= 0;
+	litehtml::pixel_t bdr_right		= 0;
 
 	if(borders.top.width != 0 && borders.top.style > litehtml::border_style_hidden)
 	{
-		bdr_top = (int) borders.top.width;
+		bdr_top = borders.top.width;
 	}
 	if(borders.bottom.width != 0 && borders.bottom.style > litehtml::border_style_hidden)
 	{
-		bdr_bottom = (int) borders.bottom.width;
+		bdr_bottom = borders.bottom.width;
 	}
 	if(borders.left.width != 0 && borders.left.style > litehtml::border_style_hidden)
 	{
-		bdr_left = (int) borders.left.width;
+		bdr_left = borders.left.width;
 	}
 	if(borders.right.width != 0 && borders.right.style > litehtml::border_style_hidden)
 	{
-		bdr_right = (int) borders.right.width;
+		bdr_right = borders.right.width;
 	}
 
 	// draw right border
-	if(bdr_right)
+	if(bdr_right != 0)
 	{
 		cairo_matrix_t save_matrix;
 		cairo_get_matrix(cr, &save_matrix);
@@ -388,7 +392,7 @@ void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
 	}
 
 	// draw bottom border
-	if(bdr_bottom)
+	if(bdr_bottom != 0)
 	{
 		cairo_matrix_t save_matrix;
 		cairo_get_matrix(cr, &save_matrix);
@@ -413,7 +417,7 @@ void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
 	}
 
 	// draw top border
-	if(bdr_top)
+	if(bdr_top != 0)
 	{
 		cairo_matrix_t save_matrix;
 		cairo_get_matrix(cr, &save_matrix);
@@ -438,7 +442,7 @@ void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
 	}
 
 	// draw left border
-	if(bdr_left)
+	if(bdr_left != 0)
 	{
 		cairo::border border(cr, draw_pos.left(), draw_pos.top(), draw_pos.bottom());
 		border.real_side = cairo::border::left_side;
@@ -483,9 +487,9 @@ void container_cairo::apply_clip(cairo_t* cr )
 	}
 }
 
-void container_cairo::draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width )
+void container_cairo::draw_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height, const litehtml::web_color& color, litehtml::pixel_t line_width )
 {
-	if(!cr || !width || !height) return;
+	if(!cr || width == 0 || height == 0) return;
 	cairo_save(cr);
 
 	apply_clip(cr);
@@ -503,9 +507,9 @@ void container_cairo::draw_ellipse(cairo_t* cr, int x, int y, int width, int hei
 	cairo_restore(cr);
 }
 
-void container_cairo::fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color )
+void container_cairo::fill_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height, const litehtml::web_color& color )
 {
-	if(!cr || !width || !height) return;
+	if(!cr || width == 0 || height == 0) return;
 	cairo_save(cr);
 
 	apply_clip(cr);
@@ -550,7 +554,7 @@ std::shared_ptr<litehtml::element>	container_cairo::create_element(const char */
 void container_cairo::rounded_rectangle(cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius )
 {
 	cairo_new_path(cr);
-	if(radius.top_left_x && radius.top_left_y)
+	if(radius.top_left_x != 0 && radius.top_left_y != 0)
 	{
 		add_path_arc(cr,
 			 pos.left() + radius.top_left_x,
@@ -566,7 +570,7 @@ void container_cairo::rounded_rectangle(cairo_t* cr, const litehtml::position &p
 
 	cairo_line_to(cr, pos.right() - radius.top_right_x, pos.top());
 
-	if(radius.top_right_x && radius.top_right_y)
+	if(radius.top_right_x != 0 && radius.top_right_y != 0)
 	{
 		add_path_arc(cr,
 			 pos.right() - radius.top_right_x,
@@ -579,7 +583,7 @@ void container_cairo::rounded_rectangle(cairo_t* cr, const litehtml::position &p
 
 	cairo_line_to(cr, pos.right(), pos.bottom() - radius.bottom_right_x);
 
-	if(radius.bottom_right_x && radius.bottom_right_y)
+	if(radius.bottom_right_x != 0 && radius.bottom_right_y != 0)
 	{
 		add_path_arc(cr,
 			 pos.right() - radius.bottom_right_x,
@@ -592,7 +596,7 @@ void container_cairo::rounded_rectangle(cairo_t* cr, const litehtml::position &p
 
 	cairo_line_to(cr, pos.left() - radius.bottom_left_x, pos.bottom());
 
-	if(radius.bottom_left_x && radius.bottom_left_y)
+	if(radius.bottom_left_x != 0 && radius.bottom_left_y != 0)
 	{
 		add_path_arc(cr,
 			 pos.left() + radius.bottom_left_x,
@@ -622,7 +626,7 @@ cairo_surface_t* container_cairo::scale_surface(cairo_surface_t* surface, int wi
 	return result;
 }
 
-void container_cairo::draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x, int y, int cx, int cy)
+void container_cairo::draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, litehtml::pixel_t x, litehtml::pixel_t y, int cx, int cy)
 {
 	cairo_save(cr);
 
@@ -703,7 +707,7 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
 										  color_stop.color.alpha / 255.0);
 	}
 
-	draw_pattern(cr, pattern, layer, [&gradient, &position](cairo_t* cr, cairo_pattern_t* pattern, int x, int y, int w, int h)
+	draw_pattern(cr, pattern, layer, [&gradient, &position](cairo_t* cr, cairo_pattern_t* pattern, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t w, litehtml::pixel_t h)
 		{
 			cairo_matrix_t save_matrix;
 			cairo_get_matrix(cr, &save_matrix);
@@ -755,16 +759,16 @@ void container_cairo::draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml
 	position.x -= (float) layer.origin_box.x;
 	position.y -= (float) layer.origin_box.y;
 
-	draw_pattern(cr, pattern, layer, [&position](cairo_t* cr, cairo_pattern_t* pattern, int x, int y, int w, int h)
-				 {
-					 cairo_matrix_t flib_m;
-					 cairo_matrix_init_translate(&flib_m, -(position.x + (float ) x), -(position.y + (float ) y));
-					 cairo_pattern_set_matrix(pattern, &flib_m);
+	draw_pattern(cr, pattern, layer, [&position](cairo_t* cr, cairo_pattern_t* pattern, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t w, litehtml::pixel_t h)
+		{
+			cairo_matrix_t flib_m;
+			cairo_matrix_init_translate(&flib_m, -(position.x + (float ) x), -(position.y + (float ) y));
+			cairo_pattern_set_matrix(pattern, &flib_m);
 
-					 cairo_set_source(cr, pattern);
-					 cairo_rectangle(cr, x, y, w, h);
-					 cairo_fill(cr);
-				 }
+			cairo_set_source(cr, pattern);
+			cairo_rectangle(cr, x, y, w, h);
+			cairo_fill(cr);
+		}
 	);
 
 	cairo_pattern_destroy(pattern);

@@ -1,6 +1,7 @@
 #ifndef LH_CONTAINER_LINUX_H
 #define LH_CONTAINER_LINUX_H
 
+#include "litehtml/types.h"
 #include <litehtml.h>
 #include <cairo.h>
 #include <vector>
@@ -38,8 +39,8 @@ public:
 	container_cairo() = default;
 	virtual ~container_cairo() = default;
 
-	int pt_to_px(int pt) const override;
-	int get_default_font_size() const override;
+	litehtml::pixel_t pt_to_px(float pt) const override;
+	litehtml::pixel_t get_default_font_size() const override;
 	const char*	get_default_font_name() const override;
 	void get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
 	void draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url, const std::string& base_url) override;
@@ -70,8 +71,8 @@ public:
 	void clear_images();
 
 protected:
-	virtual void draw_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color, int line_width);
-	virtual void fill_ellipse(cairo_t* cr, int x, int y, int width, int height, const litehtml::web_color& color);
+	virtual void draw_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height, const litehtml::web_color& color, litehtml::pixel_t line_width);
+	virtual void fill_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width, litehtml::pixel_t height, const litehtml::web_color& color);
 	virtual void rounded_rectangle( cairo_t* cr, const litehtml::position &pos, const litehtml::border_radiuses &radius );
 
 	void clip_background_layer(cairo_t* cr, const litehtml::background_layer& layer);
@@ -87,7 +88,7 @@ protected:
 private:
 
 	static void add_path_arc(cairo_t* cr, double x, double y, double rx, double ry, double a1, double a2, bool neg);
-    static void draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, int x, int y, int cx, int cy);
+    static void draw_pixbuf(cairo_t* cr, cairo_surface_t* bmp, litehtml::pixel_t x, litehtml::pixel_t y, int cx, int cy);
 	static cairo_surface_t* scale_surface(cairo_surface_t* surface, int width, int height);
 };
 

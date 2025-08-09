@@ -4,17 +4,18 @@
 #include "document.h"
 #include "document_container.h"
 #include "html_tag.h"
+#include "types.h"
 
-int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> &el, int top, const containing_block_context &self_size, formatting_context* fmt_ctx)
+litehtml::pixel_t litehtml::render_item_block::place_float(const std::shared_ptr<render_item> &el, pixel_t top, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
-    int line_top	= fmt_ctx->get_cleared_top(el, top);
-    int line_left	= 0;
-    int line_right	= self_size.render_width;
+    pixel_t line_top	= fmt_ctx->get_cleared_top(el, top);
+    pixel_t line_left	= 0;
+    pixel_t line_right	= self_size.render_width;
 	fmt_ctx->get_line_left_right(line_top, self_size.render_width, line_left, line_right);
 
-    int ret_width = 0;
+    pixel_t ret_width = 0;
 
-	int min_rendered_width = el->render(line_left, line_top, self_size.new_width(line_right), fmt_ctx);
+	pixel_t min_rendered_width = el->render(line_left, line_top, self_size.new_width(line_right), fmt_ctx);
 	if(min_rendered_width < el->width() && el->src_el()->css().get_width().is_predefined())
 	{
 		el->render(line_left, line_top, self_size.new_width(min_rendered_width), fmt_ctx);
@@ -36,7 +37,7 @@ int litehtml::render_item_block::place_float(const std::shared_ptr<render_item> 
     {
         if(line_left + el->width() > line_right)
         {
-            int new_top = fmt_ctx->find_next_line_top(el->top(), el->width(), self_size.render_width);
+            pixel_t new_top = fmt_ctx->find_next_line_top(el->top(), el->width(), self_size.render_width);
             el->pos().x = fmt_ctx->get_line_right(new_top, self_size.render_width) - el->width() + el->content_offset_left();
             el->pos().y = new_top + el->content_offset_top();
         } else
@@ -186,14 +187,14 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
     return ret;
 }
 
-int litehtml::render_item_block::_render(int x, int y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass)
+litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass)
 {
 	containing_block_context self_size = calculate_containing_block_context(containing_block_size);
 
     //*****************************************
     // Render content
     //*****************************************
-	int ret_width = _render_content(x, y, second_pass, self_size, fmt_ctx);
+	pixel_t ret_width = _render_content(x, y, second_pass, self_size, fmt_ctx);
     //*****************************************
 
 	if (src_el()->css().get_display() == display_list_item)
@@ -285,7 +286,7 @@ int litehtml::render_item_block::_render(int x, int y, const containing_block_co
 	} else if (src_el()->is_block_formatting_context())
 	{
 		// add the floats' height to the block height
-		int floats_height = fmt_ctx->get_floats_height();
+		pixel_t floats_height = fmt_ctx->get_floats_height();
 		if (floats_height > m_pos.height)
 		{
 			m_pos.height = floats_height;

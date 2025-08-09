@@ -65,8 +65,8 @@ namespace litehtml
 		bool				set_class(const char* pclass, bool add) override;
 		bool				is_replaced() const override;
 		void				compute_styles(bool recursive = true) override;
-		void				draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri) override;
-		void				draw_background(uint_ptr hdc, int x, int y, const position *clip,
+		void				draw(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item> &ri) override;
+		void				draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip,
 									const std::shared_ptr<render_item> &ri) override;
 
 		template<class Type>
@@ -94,7 +94,7 @@ namespace litehtml
 		void				get_text(string& text) override;
 		void				parse_attributes() override;
 
-		void				get_content_size(size& sz, int max_width) override;
+		void				get_content_size(size& sz, pixel_t max_width) override;
 		void				add_style(const style& style) override;
 
 		bool				is_nth_child(const element::ptr& el, int num, int off, bool of_type, const css_selector::vector& selector_list) const override;

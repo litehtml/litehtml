@@ -77,19 +77,19 @@ namespace litehtml
 		document_container*				container()	{ return m_container; }
 		document_mode					mode() const { return m_mode; }
 		uint_ptr						get_font(const font_description& descr, font_metrics* fm);
-		int								render(int max_width, render_type rt = render_all);
-		void							draw(uint_ptr hdc, int x, int y, const position* clip);
+		pixel_t							render(pixel_t max_width, render_type rt = render_all);
+		void							draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip);
 		web_color						get_def_color()	{ return m_def_color; }
-		void 							cvt_units(css_length& val, const font_metrics& metrics, int size) const;
-		int								to_pixels(const css_length& val, const font_metrics& metrics, int size) const;
-		int								width() const;
-		int								height() const;
-		int								content_width() const;
-		int								content_height() const;
+		void 							cvt_units(css_length& val, const font_metrics& metrics, pixel_t size) const;
+		pixel_t							to_pixels(const css_length& val, const font_metrics& metrics, pixel_t size) const;
+		pixel_t							width() const;
+		pixel_t							height() const;
+		pixel_t							content_width() const;
+		pixel_t							content_height() const;
 		void							add_stylesheet(const char* str, const char* baseurl, const char* media);
-		bool							on_mouse_over(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
-		bool							on_lbutton_down(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
-		bool							on_lbutton_up(int x, int y, int client_x, int client_y, position::vector& redraw_boxes);
+		bool							on_mouse_over(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
+		bool							on_lbutton_down(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
+		bool							on_lbutton_up(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
 		bool							on_button_cancel(position::vector& redraw_boxes);
 		bool							on_mouse_leave(position::vector& redraw_boxes);
 		std::shared_ptr<element>		create_element(const char* tag_name, const string_map& attributes);

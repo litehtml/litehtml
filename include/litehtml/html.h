@@ -177,7 +177,7 @@ namespace litehtml
 		return (float)t_strtod(str.c_str(), endPtr);
 	}
 
-	inline int baseline_align(int line_height, int line_base_line, int height, int baseline)
+	inline pixel_t baseline_align(pixel_t line_height, pixel_t line_base_line, pixel_t height, pixel_t baseline)
 	{
 		return (line_height - line_base_line) - (height - baseline);
 	}

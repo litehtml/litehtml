@@ -32,7 +32,7 @@ namespace litehtml
 
 	struct border
 	{
-		int				width;
+		pixel_t			width;
 		border_style	style;
 		web_color		color;
 
@@ -49,14 +49,14 @@ namespace litehtml
 		}
 		border(const css_border& val)
 		{
-			width = (int) val.width.val();
+			width = (pixel_t) val.width.val();
 			style = val.style;
 			color = val.color;
 		}
 		border& operator=(const border& val) = default;
 		border& operator=(const css_border& val)
 		{
-			width = (int) val.width.val();
+			width = (pixel_t) val.width.val();
 			style = val.style;
 			color = val.color;
 			return *this;
@@ -65,17 +65,17 @@ namespace litehtml
 
 	struct border_radiuses
 	{
-		int	top_left_x;
-		int	top_left_y;
+		pixel_t	top_left_x;
+		pixel_t	top_left_y;
 
-		int	top_right_x;
-		int	top_right_y;
+		pixel_t	top_right_x;
+		pixel_t	top_right_y;
 
-		int	bottom_right_x;
-		int	bottom_right_y;
+		pixel_t	bottom_right_x;
+		pixel_t	bottom_right_y;
 
-		int	bottom_left_x;
-		int	bottom_left_y;
+		pixel_t	bottom_left_x;
+		pixel_t	bottom_left_y;
 
 		border_radiuses()
 		{
@@ -135,16 +135,16 @@ namespace litehtml
 			if (bottom_left_x < 0) bottom_left_x = 0;
 			if (bottom_left_y < 0) bottom_left_y = 0;
 		}
-		void fix_values(int width, int height)
+		void fix_values(pixel_t width, pixel_t height)
 		{
 			fix_values();
-			int half_width = width / 2;
-			int half_height = height / 2;
-			auto fix_one = [&](int& radii_x, int& radii_y)
+			pixel_t half_width = width / 2;
+			pixel_t half_height = height / 2;
+			auto fix_one = [&](pixel_t& radii_x, pixel_t& radii_y)
 				{
-					double factor = std::min((double) half_width / (double) radii_x, (double) half_height / (double) radii_y);
-					radii_x = (int) ((double) radii_x * factor);
-					radii_y = (int) ((double) radii_y * factor);
+					pixel_t factor = std::min(half_width / radii_x, half_height / radii_y);
+					radii_x *= factor;
+					radii_y *= factor;
 				};
 
 			if(top_left_x > half_width || top_left_y > half_height)
@@ -196,7 +196,7 @@ namespace litehtml
 
 		css_border_radius& operator=(const css_border_radius& val) = default;
 
-		border_radiuses calc_percents(int width, int height) const
+		border_radiuses calc_percents(pixel_t width, pixel_t height) const
 		{
 			border_radiuses ret;
 			ret.bottom_left_x = bottom_left_x.calc_percent(width);

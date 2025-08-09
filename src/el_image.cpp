@@ -7,7 +7,7 @@ litehtml::el_image::el_image(const document::ptr& doc) : html_tag(doc)
 	m_css.set_display(display_inline_block);
 }
 
-void litehtml::el_image::get_content_size( size& sz, int /*max_width*/ )
+void litehtml::el_image::get_content_size( size& sz, pixel_t /*max_width*/ )
 {
 	get_document()->container()->get_image_size(m_src.c_str(), nullptr, sz);
 }
@@ -31,12 +31,13 @@ void litehtml::el_image::parse_attributes()
 		map_to_dimension_property(_height_, str);
 }
 
-void litehtml::el_image::draw(uint_ptr hdc, int x, int y, const position *clip, const std::shared_ptr<render_item> &ri)
+void litehtml::el_image::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item> &ri)
 {
 	html_tag::draw(hdc, x, y, clip, ri);
 	position pos = ri->pos();
 	pos.x += x;
 	pos.y += y;
+	pos.round();
 
 	// draw image as background
 	if(pos.does_intersect(clip))

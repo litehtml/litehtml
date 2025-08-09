@@ -160,7 +160,7 @@ if (MSVC)
 	add_compile_options(/permissive- /utf-8)
 else()
 	# additional warnings
-	add_compile_options(-Wall -Wextra -Wpedantic)
+	add_compile_options(-Wall -Wextra -Wpedantic -Wfloat-conversion)
 endif()
 
 add_library(${PROJECT_NAME} ${HEADER_LITEHTML} ${SOURCE_LITEHTML})

@@ -100,43 +100,43 @@ bool litehtml::background::get_layer(int idx, position pos, const element* el, c
 			litehtml::size img_size;
 			el->get_document()->container()->get_image_size(image_layer->url.c_str(), image_layer->base_url.c_str(),
 															img_size);
-			if (img_size.width && img_size.height)
+			if (img_size.width != 0 && img_size.height != 0)
 			{
 				litehtml::size img_new_sz = img_size;
-				double img_ar_width = (double) img_size.width / (double) img_size.height;
-				double img_ar_height = (double) img_size.height / (double) img_size.width;
+				pixel_t img_ar_width = img_size.width / img_size.height;
+				pixel_t img_ar_height = img_size.height / img_size.width;
 
 				if (size.width.is_predefined())
 				{
 					switch (size.width.predef())
 					{
 						case background_size_contain:
-							if ((int) ((double) layer.origin_box.width * img_ar_height) <= layer.origin_box.height)
+							if ((layer.origin_box.width * img_ar_height) <= layer.origin_box.height)
 							{
 								img_new_sz.width = layer.origin_box.width;
-								img_new_sz.height = (int) ((double) layer.origin_box.width * img_ar_height);
+								img_new_sz.height = layer.origin_box.width * img_ar_height;
 							} else
 							{
 								img_new_sz.height = layer.origin_box.height;
-								img_new_sz.width = (int) ((double) layer.origin_box.height * img_ar_width);
+								img_new_sz.width = layer.origin_box.height * img_ar_width;
 							}
 							break;
 						case background_size_cover:
-							if ((int) ((double) layer.origin_box.width * img_ar_height) >= layer.origin_box.height)
+							if ((layer.origin_box.width * img_ar_height) >= layer.origin_box.height)
 							{
 								img_new_sz.width = layer.origin_box.width;
-								img_new_sz.height = (int) ((double) layer.origin_box.width * img_ar_height);
+								img_new_sz.height = layer.origin_box.width * img_ar_height;
 							} else
 							{
 								img_new_sz.height = layer.origin_box.height;
-								img_new_sz.width = (int) ((double) layer.origin_box.height * img_ar_width);
+								img_new_sz.width = layer.origin_box.height * img_ar_width;
 							}
 							break;
 						case background_size_auto:
 							if (!size.height.is_predefined())
 							{
 								img_new_sz.height = size.height.calc_percent(layer.origin_box.height);
-								img_new_sz.width = (int) ((double) img_new_sz.height * img_ar_width);
+								img_new_sz.width = img_new_sz.height * img_ar_width;
 							}
 							break;
 					}
@@ -145,7 +145,7 @@ bool litehtml::background::get_layer(int idx, position pos, const element* el, c
 					img_new_sz.width = size.width.calc_percent(layer.origin_box.width);
 					if (size.height.is_predefined())
 					{
-						img_new_sz.height = (int) ((double) img_new_sz.width * img_ar_height);
+						img_new_sz.height = img_new_sz.width * img_ar_height;
 					} else
 					{
 						img_new_sz.height = size.height.calc_percent(layer.origin_box.height);
@@ -169,8 +169,8 @@ bool litehtml::background::get_layer(int idx, position pos, const element* el, c
 	position new_origin_box;
 	new_origin_box.width = bg_size.width;
 	new_origin_box.height = bg_size.height;
-	new_origin_box.x = layer.origin_box.x + (int) position_x.calc_percent(layer.origin_box.width - bg_size.width);
-	new_origin_box.y = layer.origin_box.y + (int) position_y.calc_percent(layer.origin_box.height - bg_size.height);
+	new_origin_box.x = layer.origin_box.x + position_x.calc_percent(layer.origin_box.width - bg_size.width);
+	new_origin_box.y = layer.origin_box.y + position_y.calc_percent(layer.origin_box.height - bg_size.height);
 	layer.origin_box = new_origin_box;
 
 	return true;
