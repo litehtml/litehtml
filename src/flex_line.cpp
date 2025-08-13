@@ -48,6 +48,7 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 		while (processed)
 		{
 			pixel_t sum_scaled_flex_shrink_factor = 0;
+			int sum_flex_grow_factor = 0;
 			pixel_t remaining_free_space = container_main_size;
 			int total_not_frozen = 0;
 			for (auto &item: items)
@@ -55,6 +56,7 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 				if (!item->frozen)
 				{
 					sum_scaled_flex_shrink_factor += item->scaled_flex_shrink_factor;
+					sum_flex_grow_factor += item->grow;
 					remaining_free_space -= item->base_size;
 					total_not_frozen++;
 				} else
@@ -115,7 +117,7 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 							//    factors of all unfrozen items on the line. Set the item’s target main size to
 							//    its flex base size plus a fraction of the remaining free space proportional
 							//    to the ratio.
-							item->main_size = item->base_size + remaining_free_space * (pixel_t) item->grow / (pixel_t) total_flex_factor;
+							item->main_size = item->base_size + remaining_free_space * (pixel_t) item->grow / (pixel_t) sum_flex_grow_factor;
 
 							// d. Fix min/max violations. Clamp each non-frozen item’s target main size by its used
 							// min and max main sizes and floor its content-box size at zero. If the item’s target
