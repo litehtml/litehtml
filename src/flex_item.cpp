@@ -199,8 +199,7 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 	} else
 	{
 		base_size = el->css().get_flex_basis().calc_percent(self_size.render_width) +
-					el->content_offset_width();
-		base_size = std::max(base_size, min_size);
+					el->render_offset_width();
 	}
 }
 
@@ -378,9 +377,8 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 			}
 		} else
 		{
-			base_size = (pixel_t) el->css().get_flex_basis().val() + el->content_offset_height();
+			base_size = (pixel_t) el->css().get_flex_basis().val() + el->render_offset_height();
 		}
-		base_size = std::max(base_size, min_size);
 	}
 }
 
