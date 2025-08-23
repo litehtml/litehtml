@@ -7,7 +7,7 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 	// Determine the used flex factor. Sum the outer hypothetical main sizes of all items on the line.
 	// If the sum is less than the flex container’s inner main size, use the flex grow factor for the
 	// rest of this algorithm; otherwise, use the flex shrink factor.
-	pixel_t initial_free_space = container_main_size - base_size;
+	pixel_t initial_free_space = container_main_size - main_size;
 	bool grow;
 	int total_flex_factor;
 	if(initial_free_space < 0)
@@ -21,7 +21,7 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 		{
 			for(auto &item : items)
 			{
-				item->main_size += initial_free_space * item->shrink / 1000;
+				item->main_size = item->base_size + initial_free_space * item->shrink / 1000;
 			}
 			return;
 		}
@@ -36,7 +36,7 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 		{
 			for(auto &item : items)
 			{
-				item->main_size += initial_free_space * item->grow / 1000;
+				item->main_size = item->base_size + initial_free_space * item->grow / 1000;
 			}
 			return;
 		}
@@ -195,16 +195,16 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
 							   const litehtml::containing_block_context &self_size,
 							   litehtml::formatting_context *fmt_ctx)
 {
-	cross_size = 0;
-	main_size = 0;
-	first_baseline.set(0, baseline::baseline_type_none);
-	last_baseline.set(0, baseline::baseline_type_none);
-
 	if(!fit_container)
 	{
 		distribute_free_space(container_main_size);
 	}
 
+	cross_size = 0;
+	main_size = 0;
+	first_baseline.set(0, baseline::baseline_type_none);
+	last_baseline.set(0, baseline::baseline_type_none);
+	
 	if(is_row_direction)
 	{
 		def_value<pixel_t> first_baseline_top = 0;

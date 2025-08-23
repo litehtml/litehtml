@@ -15,10 +15,13 @@ namespace litehtml
 	{
 	public:
 		std::shared_ptr<render_item> el;
+
+		// All sizes should be interpreted as outer/margin-box sizes.
 		pixel_t base_size;
 		pixel_t min_size;
 		def_value<pixel_t> max_size;
-		pixel_t main_size;
+		pixel_t main_size; // Holds the outer hypothetical main size before distribute_free_space, and the used outer main size after.
+
 		int grow;
 		int shrink;
 		pixel_t scaled_flex_shrink_factor;
