@@ -685,9 +685,11 @@ bool document::on_mouse_leave( position::vector& redraw_boxes )
 	}
 	if(m_over_element)
 	{
-		if(m_over_element->on_mouse_leave())
+		auto el = m_over_element;
+		m_over_element = nullptr;
+		if(el->on_mouse_leave())
 		{
-			m_container->on_mouse_event(m_over_element, mouse_event_leave);
+			m_container->on_mouse_event(el, mouse_event_leave);
 			return m_root->find_styles_changes(redraw_boxes);
 		}
 	}
@@ -765,23 +767,8 @@ bool document::on_lbutton_up( pixel_t /*x*/, pixel_t /*y*/, pixel_t /*client_x*/
 }
 
 bool document::on_button_cancel(position::vector& redraw_boxes) {
-    if(!m_root || !m_root_render)
-    {
-        return false;
-    }
 	m_active_element = nullptr;
-    if(m_over_element)
-    {
-        if(m_over_element->on_mouse_leave())
-        {
-            m_container->on_mouse_event(m_over_element, mouse_event_leave);
-        }
-        if(m_over_element->on_lbutton_up(false))
-        {
-            return m_root->find_styles_changes(redraw_boxes);
-        }
-    }
-    return false;
+	return on_mouse_leave(redraw_boxes);
 }
 
 void document::get_fixed_boxes( position::vector& fixed_boxes )
