@@ -301,12 +301,13 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(const liteh
 	// Add flex items to lines
 	for(auto& item : items)
 	{
-		if(!line.items.empty() && !single_line && line.base_size + item->base_size > container_main_size)
+		if(!line.items.empty() && !single_line && line.main_size + item->main_size > container_main_size)
 		{
 			lines.emplace_back(line);
 			line = flex_line(reverse_main, reverse_cross);
 		}
 		line.base_size += item->base_size;
+		line.main_size += item->main_size;
 		line.total_grow += item->grow;
 		line.total_shrink += item->shrink;
 		if(!item->auto_margin_main_start.is_default()) line.num_auto_margin_main_start++;

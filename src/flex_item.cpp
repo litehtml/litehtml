@@ -28,7 +28,18 @@ void litehtml::flex_item::init(const litehtml::containing_block_context &self_si
 	{
 		align = el->css().get_flex_align_self();
 	}
-	main_size = base_size;
+
+	if (base_size < min_size)
+	{
+		main_size = min_size;
+	} else if (!max_size.is_default() && base_size > max_size)
+	{
+		main_size = max_size;
+	} else
+	{
+		main_size = base_size;
+	}
+
 	scaled_flex_shrink_factor = base_size * shrink;
 	frozen = false;
 }
