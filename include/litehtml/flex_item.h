@@ -8,6 +8,14 @@ namespace litehtml
 {
 	class flex_line;
 
+	enum flex_clamp_state
+	{
+		flex_clamp_state_unclamped,
+		flex_clamp_state_inflexible,
+		flex_clamp_state_min_violation,
+		flex_clamp_state_max_violation
+	};
+
 	/**
 	 * Base class for flex item
 	 */
@@ -25,13 +33,18 @@ namespace litehtml
 		int grow;
 		int shrink;
 		pixel_t scaled_flex_shrink_factor;
+
 		bool frozen;
+		flex_clamp_state clamp_state;
+
 		int order;
 		int src_order;
+
 		def_value<pixel_t> auto_margin_main_start;
 		def_value<pixel_t> auto_margin_main_end;
 		bool auto_margin_cross_start;
 		bool auto_margin_cross_end;
+
 		flex_align_items align;
 
 		explicit flex_item(std::shared_ptr<render_item> &_el) :
@@ -44,6 +57,7 @@ namespace litehtml
 				shrink(0),
 				scaled_flex_shrink_factor(0),
 				frozen(false),
+				clamp_state(flex_clamp_state_unclamped),
 				order(0),
 				src_order(0),
 				auto_margin_main_start(0),

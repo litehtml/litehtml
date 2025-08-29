@@ -50,6 +50,9 @@ namespace litehtml
 									  formatting_context *fmt_ctx);
 	protected:
 		void distribute_free_space(pixel_t container_main_size);
+		void distribute_free_space_grow(pixel_t container_main_size);
+		void distribute_free_space_shrink(pixel_t container_main_size);
+		bool fix_min_max_violations();
 	};
 }
 
