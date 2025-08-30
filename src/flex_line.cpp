@@ -238,20 +238,17 @@ bool litehtml::flex_line::fix_min_max_violations()
 		? flex_clamp_state_min_violation
 		: flex_clamp_state_max_violation;
 
-	if (total_violation > 0)
+	for (auto& item : items)
 	{
-		for (auto& item : items)
+		if (!item->frozen)
 		{
-			if (!item->frozen)
+			if (item->clamp_state == state_to_freeze)
 			{
-				if (item->clamp_state == state_to_freeze)
-				{
-					item->frozen = true;
-				} else
-				{
-					all_frozen = false;
-					item->clamp_state = flex_clamp_state_unclamped;
-				}
+				item->frozen = true;
+			} else
+			{
+				all_frozen = false;
+				item->clamp_state = flex_clamp_state_unclamped;
 			}
 		}
 	}
