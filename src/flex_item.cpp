@@ -40,7 +40,6 @@ void litehtml::flex_item::init(const litehtml::containing_block_context &self_si
 		main_size = base_size;
 	}
 
-	scaled_flex_shrink_factor = base_size * shrink;
 	frozen = false;
 }
 
@@ -212,6 +211,8 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 		base_size = el->css().get_flex_basis().calc_percent(self_size.render_width) +
 					el->render_offset_width();
 	}
+
+	scaled_flex_shrink_factor = (base_size - el->render_offset_width()) * shrink;
 }
 
 void litehtml::flex_item_row_direction::apply_main_auto_margins()
@@ -391,6 +392,8 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 			base_size = (pixel_t) el->css().get_flex_basis().val() + el->render_offset_height();
 		}
 	}
+
+	scaled_flex_shrink_factor = (base_size - el->render_offset_height()) * shrink;
 }
 
 void litehtml::flex_item_column_direction::apply_main_auto_margins()
