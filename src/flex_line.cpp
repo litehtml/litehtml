@@ -21,6 +21,8 @@ void litehtml::flex_line::distribute_free_space_grow(pixel_t container_main_size
 {
 	pixel_t initial_free_space = container_main_size;
 
+	bool all_inflexible = true;
+
 	for (auto& item : items)
 	{
 		// 2. Size inflexible items. Freeze, setting its target main size to its hypothetical main size
@@ -39,6 +41,7 @@ void litehtml::flex_line::distribute_free_space_grow(pixel_t container_main_size
 		} else
 		{
 			initial_free_space -= item->base_size;
+			all_inflexible = false;
 		}
 	}
 
@@ -46,7 +49,9 @@ void litehtml::flex_line::distribute_free_space_grow(pixel_t container_main_size
 
 	// 4.a Check for flexible items. If all the flex items on the line are frozen, free space has been
 	// distributed; exit this loop.
-	
+
+	if (all_inflexible) return;
+
 	while (true)
 	{
 		// 4.b Calculate the remaining free space as for initial free space, above. If the sum of the
@@ -107,6 +112,8 @@ void litehtml::flex_line::distribute_free_space_shrink(pixel_t container_main_si
 {
 	pixel_t initial_free_space = container_main_size;
 
+	bool all_inflexible = true;
+
 	for (auto& item : items)
 	{
 		// 2. Size inflexible items. Freeze, setting its target main size to its hypothetical main size
@@ -125,6 +132,7 @@ void litehtml::flex_line::distribute_free_space_shrink(pixel_t container_main_si
 		} else
 		{
 			initial_free_space -= item->base_size;
+			all_inflexible = false;
 		}
 	}
 
@@ -132,7 +140,9 @@ void litehtml::flex_line::distribute_free_space_shrink(pixel_t container_main_si
 
 	// 4.a Check for flexible items. If all the flex items on the line are frozen, free space has been
 	// distributed; exit this loop.
-	
+
+	if (all_inflexible) return;
+
 	while (true)
 	{
 		// 4.b Calculate the remaining free space as for initial free space, above. If the sum of the
