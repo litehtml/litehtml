@@ -279,10 +279,7 @@ litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y, con
 		{
 			m_pos.height = self_size.height;
 		}
-		if (src_el()->css().get_box_sizing() == box_sizing_border_box)
-		{
-			m_pos.height -= box_sizing_height();
-		}
+		m_pos.height -= box_sizing_height();
 	} else if (src_el()->is_block_formatting_context())
 	{
 		// add the floats' height to the block height
