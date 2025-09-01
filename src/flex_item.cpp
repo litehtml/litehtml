@@ -147,12 +147,12 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 	} else
 	{
 		min_size = el->css().get_min_width().calc_percent(self_size.render_width) +
-				   el->content_offset_width();
+				   el->render_offset_width();
 	}
 	if (!el->css().get_max_width().is_predefined())
 	{
 		max_size = el->css().get_max_width().calc_percent(self_size.render_width) +
-				   el->content_offset_width();
+				   el->render_offset_width();
 	}
 	bool flex_basis_predefined = el->css().get_flex_basis().is_predefined();
 	int predef = flex_basis_auto;
@@ -331,12 +331,12 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 	} else
 	{
 		min_size = el->css().get_min_height().calc_percent(self_size.height) +
-				   el->content_offset_height();
+				   el->render_offset_height();
 	}
 	if (!el->css().get_max_height().is_predefined())
 	{
 		max_size = el->css().get_max_height().calc_percent(self_size.height) +
-				   el->content_offset_width();
+				   el->render_offset_height();
 	}
 
 	bool flex_basis_predefined = el->css().get_flex_basis().is_predefined();
@@ -362,7 +362,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 		{
 			case flex_basis_auto:
 				base_size = el->css().get_height().calc_percent(self_size.height) +
-							el->content_offset_height();
+							el->render_offset_height();
 				break;
 			case flex_basis_max_content:
 			case flex_basis_fit_content:
@@ -382,7 +382,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 			if(self_size.height.type == containing_block_context::cbc_value_type_absolute)
 			{
 				base_size = el->css().get_flex_basis().calc_percent(self_size.height) +
-							el->content_offset_height();
+							el->render_offset_height();
 			} else
 			{
 				base_size = 0;
