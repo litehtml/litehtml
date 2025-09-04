@@ -300,8 +300,6 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(const liteh
 		}
 		line.base_size += item->base_size;
 		line.main_size += item->main_size;
-		line.total_grow += item->grow;
-		line.total_shrink += item->shrink;
 		if(!item->auto_margin_main_start.is_default()) line.num_auto_margin_main_start++;
 		if(!item->auto_margin_main_end.is_default()) line.num_auto_margin_main_end++;
 		line.items.push_back(item);
