@@ -2031,7 +2031,7 @@ void encoding_sniffing_algorithm(estring& str)
 	if (str.encoding == encoding::null)
 	{
 		str.encoding = encoding::utf_8;
-		str.confidence = confidence::tentative; // tentative means it will be overriden by <meta> encoding if present
+		str.confidence = confidence::tentative; // tentative means it will be overridden by <meta> encoding if present
 	}
 	// otherwise use str.encoding (tentative)
 }

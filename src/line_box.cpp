@@ -435,7 +435,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 			{
 			case va_bottom:
 			case va_top:
-				// Align by base line 0 all inline boxes with top and bottom vertical aling
+				// Align by base line 0 all inline boxes with top and bottom vertical align
 				bl = 0;
 				is_top_bottom_box = true;
 				break;
@@ -584,7 +584,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 		}
 	} else
 	{
-		// Add inline boxes dimentions
+		// Add inline boxes dimensions
 		line_max_height.top = std::min(line_max_height.top, inline_boxes_dims.top);
 		line_max_height.bottom = std::max(line_max_height.bottom, inline_boxes_dims.bottom);
 

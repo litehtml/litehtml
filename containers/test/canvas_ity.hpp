@@ -260,7 +260,7 @@ public:
 
     /// @brief  Add an arbitrary transform to the current transform.
     ///
-    /// This takes six values for the upper two rows of a homogenous 3x3
+    /// This takes six values for the upper two rows of a homogeneous 3x3
     /// matrix (i.e., {{a, c, e}, {b, d, f}, {0.0, 0.0, 1.0}}) describing an
     /// arbitrary affine transform and appends it to the current transform.
     /// The values can represent any affine transform such as scaling,
@@ -285,7 +285,7 @@ public:
 
     /// @brief  Replace the current transform.
     ///
-    /// This takes six values for the upper two rows of a homogenous 3x3
+    /// This takes six values for the upper two rows of a homogeneous 3x3
     /// matrix (i.e., {{a, c, e}, {b, d, f}, {0.0, 0.0, 1.0}}) describing
     /// an arbitrary affine transform and replaces the current transform
     /// with it.  The values can represent any affine transform such as

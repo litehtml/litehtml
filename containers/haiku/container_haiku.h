@@ -1,7 +1,7 @@
 /*
  * Copyright 2019-2020 Haiku Inc.
  * All rights reserved. Distributed under the terms of the BSD 3-clause license.
- * Constributors
+ * Contributors
  * 2019-2020	Adam Fowler <adamfowleruk@gmail.com>
  */
 #ifndef LITEHTMLVIEW_H

@@ -251,7 +251,7 @@ Returns ```true``` if something is downloading.
 
 ### litebrowser::draw_buffer
 
-A helper class to perform the draw operations into the cairo surface. The application draws everything to the buffer, then buffer are drawn on widged or window.
+A helper class to perform the draw operations into the cairo surface. The application draws everything to the buffer, then buffer are drawn on widget or window.
 
 Some notes about scaling support:
 * All functions accept scale independent coordinates and sizes. So don't apply scale to the coordinates and sizes.

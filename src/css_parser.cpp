@@ -141,7 +141,7 @@ css_token_vector normalize(string input, int options, keep_whitespace_fn keep_wh
 }
 
 // https://www.w3.org/TR/css-syntax-3/#parse-stylesheet
-// I don't create a stylesheet because its only perpose is to pass a list of rules to
+// I don't create a stylesheet because its only purpose is to pass a list of rules to
 // parse_css_stylesheet. I just return the list of rules directly instead.
 raw_rule::vector css_parser::parse_stylesheet(const string& input, bool top_level)
 {

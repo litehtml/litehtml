@@ -1371,7 +1371,7 @@ static unsigned inflateNoCompression(ucvector* out, LodePNGBitReader* reader,
   /*read the literal data: LEN bytes are now stored in the out buffer*/
   if(bytepos + LEN > size) return 23; /*error: reading outside of in buffer*/
 
-  /*out->data can be NULL (when LEN is zero), and arithmetics on NULL ptr is undefined*/
+  /*out->data can be NULL (when LEN is zero), and arithmetic on NULL ptr is undefined*/
   if (LEN) {
     lodepng_memcpy(out->data + out->size - LEN, reader->data + bytepos, LEN);
     bytepos += LEN;
@@ -6060,7 +6060,7 @@ unsigned lodepng_encode(unsigned char** out, size_t* outsize,
     if(state->encoder.force_palette) {
       if(info.color.colortype != LCT_GREY && info.color.colortype != LCT_GREY_ALPHA &&
          (auto_color.colortype == LCT_GREY || auto_color.colortype == LCT_GREY_ALPHA)) {
-        /*user speficially forced a PLTE palette, so cannot convert to grayscale types because
+        /*user specifically forced a PLTE palette, so cannot convert to grayscale types because
         the PNG specification only allows writing a suggested palette in PLTE for truecolor types*/
         allow_convert = 0;
       }
