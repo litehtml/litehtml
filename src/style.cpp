@@ -1663,7 +1663,7 @@ void style::subst_vars(const html_tag* el)
 			auto& value = prop.second.get<css_token_vector>();
 			subst_vars_(prop.first, value, el);
 			// re-adding the same property
-			// if it is a custom property it will be readded as a css_token_vector
+			// if it is a custom property it will be re-added as a css_token_vector
 			// if it is a standard css property it will be parsed and properly added as typed property
 			add_property(prop.first, value, "", prop.second.m_important, el->get_document()->container());
 		}

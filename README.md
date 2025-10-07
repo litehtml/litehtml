@@ -30,7 +30,7 @@ The litebrowser source codes are available on GitHub:
 ## License
 
 **litehtml** is distributed under [New BSD License](https://opensource.org/licenses/BSD-3-Clause).
-The **gumbo-parser** is disributed under [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+The **gumbo-parser** is distributed under [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
 
 ## Links
 

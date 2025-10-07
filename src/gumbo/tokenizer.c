@@ -83,7 +83,7 @@ typedef struct GumboInternalTagState {
   const char* _original_text;
 
   // The current tag enum, computed once the tag name state has finished so that
-  // the buffer can be re-used for building up attributes.
+  // the buffer can be reused for building up attributes.
   GumboTag _tag;
 
   // The starting location of the text in the buffer.
@@ -409,7 +409,7 @@ static void reset_token_start_point(GumboTokenizerState* tokenizer) {
 
 // Sets the tag buffer original text and start point to the current iterator
 // position.  This is necessary because attribute names & values may have
-// whitespace preceeding them, and so we can't assume that the actual token
+// whitespace preceding them, and so we can't assume that the actual token
 // starting point was the end of the last tag buffer usage.
 static void reset_tag_buffer_start_point(GumboParser* parser) {
   GumboTokenizerState* tokenizer = parser->_tokenizer_state;
