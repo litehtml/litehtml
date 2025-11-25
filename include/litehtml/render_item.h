@@ -424,7 +424,8 @@ namespace litehtml
         std::shared_ptr<element> get_element_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y);
         bool is_point_inside( pixel_t x, pixel_t y );
         void dump(litehtml::dumper& cout);
-        position get_placement() const;
+		position get_placement() const;
+        virtual void y_shift(pixel_t shift);
         /**
          * Returns the boxes of rendering element. All coordinates are absolute
          *

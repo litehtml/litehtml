@@ -59,7 +59,8 @@ namespace litehtml
 		virtual pixel_t left() const;
 		virtual element_type get_type() const	{ return type_text_part; }
 		virtual pixel_t get_rendered_min_width() const	{ return m_rendered_min_width; }
-		virtual void set_rendered_min_width(pixel_t min_width)	{ m_rendered_min_width = min_width; }
+		virtual void set_rendered_min_width(pixel_t min_width) { m_rendered_min_width = min_width; }
+		virtual void y_shift(pixel_t shift);
 
 		void reset_items_height() { m_items_top = m_items_bottom = 0; }
 		void add_item_height(pixel_t item_top, pixel_t item_bottom)
@@ -101,6 +102,7 @@ namespace litehtml
 		pixel_t right() const override;
 		pixel_t left() const override;
 		element_type get_type() const override	{ return type_inline_end; }
+		void y_shift(pixel_t) override {}
 	};
 
 	class lbi_continue : public lbi_start
