@@ -1360,3 +1360,8 @@ std::tuple<litehtml::pixel_t, litehtml::pixel_t> litehtml::render_item::element_
 
 	return {offset_x, offset_y};
 }
+
+void litehtml::render_item::y_shift(pixel_t delta)
+{
+	m_pos.y += delta;
+}

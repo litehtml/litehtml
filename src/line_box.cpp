@@ -51,6 +51,11 @@ litehtml::pixel_t litehtml::line_box_item::height() const
 	return m_element->height();
 }
 
+void litehtml::line_box_item::y_shift(pixel_t shift)
+{
+	m_element->y_shift(shift);
+}
+
 //////////////////////////////////////////////////////////////////////////////////////////
 
 litehtml::lbi_start::lbi_start(const std::shared_ptr<render_item>& element) : line_box_item(element)
@@ -820,10 +825,10 @@ litehtml::pixel_t litehtml::line_box::bottom_margin() const
 void litehtml::line_box::y_shift( pixel_t shift )
 {
 	m_top += shift;
-    for (auto& el : m_items)
-    {
-        el->pos().y += shift;
-    }
+	for (auto& el : m_items)
+	{
+		el->y_shift(shift);
+	}
 }
 
 bool litehtml::line_box::is_break_only() const

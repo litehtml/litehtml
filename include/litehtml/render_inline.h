@@ -2,6 +2,7 @@
 #define LITEHTML_RENDER_INLINE_H
 
 #include "render_item.h"
+#include "types.h"
 
 namespace litehtml
 {
@@ -30,6 +31,17 @@ namespace litehtml
 		std::shared_ptr<render_item> clone() override
 		{
 			return std::make_shared<render_item_inline>(src_el());
+		}
+		virtual void y_shift(pixel_t shift) override
+		{
+			if(css().get_display() == display_inline_text)
+			{
+				render_item::y_shift(shift);
+			}
+			for(auto& box : m_boxes)
+			{
+				box.y += shift;
+			}
 		}
 	};
 }
