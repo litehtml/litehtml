@@ -745,7 +745,7 @@ void litehtml::html_tag::parse_attributes()
 	}
 }
 
-void litehtml::html_tag::get_text( string& text )
+void litehtml::html_tag::get_text( string& text ) const
 {
 	for (auto& el : m_children)
 	{

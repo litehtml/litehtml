@@ -11,7 +11,7 @@ namespace litehtml
 	public:
 		explicit el_cdata(const std::shared_ptr<document>& doc);
 
-		void get_text(string& text) override;
+		void get_text(string& text) const override;
 		void set_data(const char* data) override;
 	};
 }
