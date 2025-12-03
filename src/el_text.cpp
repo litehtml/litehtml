@@ -19,7 +19,7 @@ void litehtml::el_text::get_content_size( size& sz, pixel_t /*max_width*/ )
 	sz = m_size;
 }
 
-void litehtml::el_text::get_text( string& text )
+void litehtml::el_text::get_text( string& text ) const
 {
 	text += m_text;
 }

@@ -457,7 +457,7 @@ bool element::set_class( const char* /*pclass*/, bool /*add*/ )						LITEHTML_RE
 bool element::is_replaced() const													LITEHTML_RETURN_FUNC(false)
 void element::draw(uint_ptr /*hdc*/, pixel_t /*x*/, pixel_t /*y*/, const position */*clip*/, const std::shared_ptr<render_item> &/*ri*/) LITEHTML_EMPTY_FUNC
 void element::draw_background(uint_ptr /*hdc*/, pixel_t /*x*/, pixel_t /*y*/, const position */*clip*/, const std::shared_ptr<render_item> &/*ri*/) LITEHTML_EMPTY_FUNC
-void element::get_text( string& /*text*/ )											LITEHTML_EMPTY_FUNC
+void element::get_text( string& /*text*/ ) const									LITEHTML_EMPTY_FUNC
 void element::parse_attributes()													LITEHTML_EMPTY_FUNC
 int	element::select(const css_selector::vector& /*selector_list*/, bool /*apply_pseudo*/) LITEHTML_RETURN_FUNC(select_no_match)
 int element::select(const string& /*selector*/)										LITEHTML_RETURN_FUNC(select_no_match)

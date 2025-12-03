@@ -91,7 +91,7 @@ namespace litehtml
 		element::ptr		find_ancestor(const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr) override;
 		element::ptr		find_adjacent_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr) override;
 		element::ptr		find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true, bool* is_pseudo = nullptr) override;
-		void				get_text(string& text) override;
+		void				get_text(string& text) const override;
 		void				parse_attributes() override;
 
 		void				get_content_size(size& sz, pixel_t max_width) override;

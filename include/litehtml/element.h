@@ -103,7 +103,7 @@ namespace litehtml
 		virtual void				draw(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item>& ri);
 		virtual void				draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item> &ri);
 
-		virtual void				get_text(string& text);
+		virtual void				get_text(string& text) const;
 		virtual void				parse_attributes();
 		virtual int					select(const css_selector::vector& selector_list, bool apply_pseudo = true);
 		virtual int					select(const string& selector);
