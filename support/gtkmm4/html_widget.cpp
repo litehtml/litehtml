@@ -235,6 +235,8 @@ void html_widget::on_button_release_event(int /* n_press */, double x, double y)
 
 void html_widget::on_mouse_move(double x, double y)
 {
+	m_mouse_x = x;
+	m_mouse_y = y;
 	bool restart_timer = true;
 	if(m_hscrollbar->is_visible())
 	{
@@ -499,8 +501,40 @@ void html_widget::on_adjustments_changed()
 
 bool html_widget::on_scroll(double dx, double dy)
 {
-	m_vadjustment->set_value(m_vadjustment->get_value() + dy * 60);
-	m_hadjustment->set_value(m_hadjustment->get_value() + dx * 60);
+	litehtml::position scroll_box;
+	auto page = current_page();
+	if (page)
+	{
+		bool redraw = false;
+		if (page->on_v_scroll(	(int) dy * 60,
+								(int) (m_mouse_x + m_draw_buffer.get_left()),
+								(int) (m_mouse_y + m_draw_buffer.get_top()),
+								(int) m_mouse_x,
+								(int) m_mouse_y, scroll_box) == 0)
+		{
+			m_vadjustment->set_value(m_vadjustment->get_value() + dy * 60);
+		} else
+		{
+			redraw = true;
+		}
+		if (page->on_h_scroll(	(int) dx * 60,
+								(int) (m_mouse_x + m_draw_buffer.get_left()),
+								(int) (m_mouse_y + m_draw_buffer.get_top()),
+								(int) m_mouse_x,
+								(int) m_mouse_y, scroll_box) == 0)
+		{
+			m_hadjustment->set_value(m_hadjustment->get_value() + dx * 60);
+		} else
+		{
+			redraw = true;
+		}
+		if (redraw)
+		{
+			m_draw_buffer.redraw(get_draw_function(current_page()));
+			queue_draw();
+
+		}
+	}
 	return true;
 }
 

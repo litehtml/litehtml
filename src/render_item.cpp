@@ -707,22 +707,49 @@ void litehtml::render_item::get_redraw_box(litehtml::position& pos, pixel_t x /*
     }
 }
 
-void litehtml::render_item::calc_document_size( litehtml::size& sz, pixel_t x /*= 0*/, pixel_t y /*= 0*/ ) const
+void litehtml::render_item::calc_document_size(litehtml::size& sz, pixel_t x /*= 0*/, pixel_t y /*= 0*/)
 {
 	if(css().get_display() != display_inline && css().get_display() != display_table_row)
 	{
-		if (is_visible() && src_el()->css().get_position() != element_position_fixed)
+		if(is_visible())
 		{
-			sz.width = std::max(sz.width, x + right());
-			sz.height = std::max(sz.height, y + bottom());
-
-			// All children of tables and blocks with style other than "overflow: visible" are inside element.
-			// We can skip calculating the size of children
-			if (src_el()->css().get_overflow() == overflow_visible && src_el()->css().get_display() != display_table)
+			if(src_el()->css().get_position() != element_position_fixed)
 			{
-				for (auto &el: m_children)
+				sz.width  = std::max(sz.width, x + right());
+				sz.height = std::max(sz.height, y + bottom());
+			}
+
+			if(is_one_of(src_el()->css().get_overflow(), overflow_scroll, overflow_auto))
+			{
+				size child_size;
+				for(const auto& el : m_children)
 				{
-					el->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
+					el->calc_document_size(child_size, 0, 0);
+				}
+				if(!m_scroll_view)
+				{
+					m_scroll_view = std::make_shared<scroll_view>(m_pos, child_size);
+				} else
+				{
+					m_scroll_view->set(m_pos, child_size);
+				}
+			} else
+			{
+				// All children of tables and blocks with style other than "overflow: visible" are inside element.
+				// We can skip calculating the size of children
+				if(src_el()->css().get_overflow() == overflow_visible && src_el()->css().get_display() != display_table)
+				{
+					for(const auto& el : m_children)
+					{
+						el->calc_document_size(sz, x + m_pos.x, y + m_pos.y);
+					}
+				} else
+				{
+					size child_size;
+					for(const auto& el : m_children)
+					{
+						el->calc_document_size(child_size, 0, 0);
+					}
 				}
 			}
 		}
@@ -732,7 +759,7 @@ void litehtml::render_item::calc_document_size( litehtml::size& sz, pixel_t x /*
 		get_inline_boxes(boxes);
 		for(const auto& box : boxes)
 		{
-			sz.width = std::max(sz.width, x + box.x + box.width);
+			sz.width  = std::max(sz.width, x + box.x + box.width);
 			sz.height = std::max(sz.height, y + box.y + box.height);
 		}
 	}
@@ -784,8 +811,8 @@ void litehtml::render_item::draw_stacking_context( uint_ptr hdc, pixel_t x, pixe
 void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag, int zindex)
 {
     position pos = m_pos;
-    pos.x += x;
-    pos.y += y;
+    pos.x += x - get_scroll_left();
+    pos.y += y - get_scroll_top();
 
     document::ptr doc = src_el()->get_document();
 
@@ -794,7 +821,10 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
         // TODO: Process overflow for inline elements
         if(src_el()->css().get_display() != display_inline)
         {
-            position border_box = pos;
+        	position clip_box = m_pos;
+        	clip_box.x += x;
+        	clip_box.y += y;
+        	position border_box = clip_box;
             border_box += m_padding;
             border_box += m_borders;
 
@@ -804,7 +834,7 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
             bdr_radius -= m_borders;
             bdr_radius -= m_padding;
 
-            doc->container()->set_clip(pos, bdr_radius);
+            doc->container()->set_clip(clip_box, bdr_radius);
         }
     }
 
@@ -889,28 +919,29 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
     }
 }
 
-std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex)
+std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex, const std::function<bool(const std::shared_ptr<render_item>&)>& check)
 {
-    element::ptr ret = nullptr;
-
     if(src_el()->css().get_overflow() > overflow_visible)
     {
         if(!m_pos.is_point_inside(x, y))
         {
-            return ret;
+            return nullptr;
         }
     }
 
-    position el_pos = m_pos;
-    el_pos.x	= x - el_pos.x;
-    el_pos.y	= y - el_pos.y;
+    element::ptr ret = nullptr;
 
-    for(auto i = m_children.rbegin(); i != m_children.rend() && !ret; std::advance(i, 1))
+    position el_pos = m_pos;
+    el_pos.x	= x - el_pos.x + get_scroll_left();
+    el_pos.y	= y - el_pos.y + get_scroll_top();
+
+    for(auto i = m_children.crbegin(); i != m_children.crend() && !ret; std::advance(i, 1))
     {
-        auto el = (*i);
+        const auto& el = *i;
 
         if(el->is_visible() && el->src_el()->css().get_display() != display_inline_text)
         {
+        	bool process = true;
             switch(flag)
             {
                 case draw_positioned:
@@ -918,41 +949,53 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pi
                     {
                         if(el->src_el()->css().get_position() == element_position_fixed)
                         {
-                            ret = el->get_element_by_point(client_x, client_y, client_x, client_y);
-                            if(!ret && (*i)->is_point_inside(client_x, client_y))
+                            ret = el->get_element_by_point(client_x, client_y, client_x, client_y, check);
+                            if(!ret && el->is_point_inside(client_x, client_y))
                             {
-                                ret = (*i)->src_el();
+								if (!check || check(el))
+								{
+									ret = el->src_el();
+								}
                             }
                         } else
                         {
-                            ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y);
-                            if(!ret && (*i)->is_point_inside(el_pos.x, el_pos.y))
+                            ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, check);
+                            if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
                             {
-                                ret = (*i)->src_el();
+								if (!check || check(el))
+								{
+									ret = el->src_el();
+								}
                             }
                         }
-                        el = nullptr;
+                        process = false;
                     }
                     break;
                 case draw_block:
                     if(!el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none && !el->src_el()->is_positioned())
                     {
-                        if(el->is_point_inside(el_pos.x, el_pos.y))
+                        ret = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex, check);
+
+                    	if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
                         {
-                            ret = el->src_el();
+							if (!check || check(el))
+							{
+								ret = el->src_el();
+							}
                         }
+                    	process = (ret == nullptr);
                     }
                     break;
                 case draw_floats:
                     if(el->src_el()->css().get_float() != float_none && !el->src_el()->is_positioned())
                     {
-                        ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y);
+                        ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, check);
 
-                        if(!ret && (*i)->is_point_inside(el_pos.x, el_pos.y))
+                        if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
                         {
-                            ret = (*i)->src_el();
+                            ret = el->src_el();
                         }
-                        el = nullptr;
+                        process = false;
                     }
                     break;
                 case draw_inlines:
@@ -962,12 +1005,15 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pi
                                 el->src_el()->css().get_display() == display_inline_table ||
                                 el->src_el()->css().get_display() == display_inline_flex)
                         {
-                            ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y);
-                            el = nullptr;
+                            ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, check);
+                            process = false;
                         }
-                        if(!ret && (*i)->is_point_inside(el_pos.x, el_pos.y))
+                        if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
                         {
-                            ret = (*i)->src_el();
+                        	if (!check || check(el))
+                        	{
+                        		ret = el->src_el();
+                        	}
                         }
                     }
                     break;
@@ -975,24 +1021,30 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pi
                     break;
             }
 
-            if(el && !el->src_el()->is_positioned())
+            if(process && !el->src_el()->is_positioned())
             {
                 if(flag == draw_positioned)
                 {
-                    element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex);
+                    element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex, check);
                     if(child)
                     {
-                        ret = child;
+                    	if (!check || check(el))
+                    	{
+                    		ret = child;
+                    	}
                     }
                 } else
                 {
                     if(	el->src_el()->css().get_float() == float_none &&
                            el->src_el()->css().get_display() != display_inline_block && el->src_el()->css().get_display() != display_inline_flex)
                     {
-                        element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex);
+                        element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex, check);
                         if(child)
                         {
-                            ret = child;
+                        	if (!check || check(el))
+                        	{
+                        		ret = child;
+                        	}
                         }
                     }
                 }
@@ -1003,7 +1055,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pi
     return ret;
 }
 
-std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y)
+std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, const std::function<bool(const std::shared_ptr<render_item>&)>& check)
 {
     if(!is_visible()) return nullptr;
 
@@ -1016,11 +1068,11 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(p
         z_indexes[i->src_el()->css().get_z_index()];
     }
 
-    for(auto iter = z_indexes.rbegin(); iter != z_indexes.rend(); iter++)
+    for(auto iter = z_indexes.rbegin(); iter != z_indexes.rend(); ++iter)
     {
         if(iter->first > 0)
         {
-            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, iter->first);
+            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, iter->first, check);
 			if(ret) return ret;
         }
     }
@@ -1029,26 +1081,26 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(p
     {
         if(z_index.first == 0)
         {
-            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, z_index.first);
+            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, z_index.first, check);
 			if(ret) return ret;
         }
     }
 
-    ret = get_child_by_point(x, y, client_x, client_y, draw_inlines, 0);
+    ret = get_child_by_point(x, y, client_x, client_y, draw_inlines, 0, check);
     if(ret) return ret;
 
-    ret = get_child_by_point(x, y, client_x, client_y, draw_floats, 0);
+    ret = get_child_by_point(x, y, client_x, client_y, draw_floats, 0, check);
     if(ret) return ret;
 
-    ret = get_child_by_point(x, y, client_x, client_y, draw_block, 0);
+    ret = get_child_by_point(x, y, client_x, client_y, draw_block, 0,check);
     if(ret) return ret;
 
 
-	for(auto iter = z_indexes.rbegin(); iter != z_indexes.rend(); iter++)
+	for(auto iter = z_indexes.rbegin(); iter != z_indexes.rend(); ++iter)
 	{
         if(iter->first < 0)
         {
-            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, iter->first);
+            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, iter->first, check);
 			if(ret) return ret;
         }
     }
@@ -1057,33 +1109,34 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(p
     {
         if(is_point_inside(client_x, client_y))
         {
-            ret = src_el();
+			if (!check || check(this->shared_from_this()))
+			{
+				ret = src_el();
+			}
+
         }
     } else
     {
         if(is_point_inside(x, y))
         {
-            ret = src_el();
+			if (!check || check(this->shared_from_this()))
+			{
+				ret = src_el();
+			}
         }
     }
 
     return ret;
 }
 
-bool litehtml::render_item::is_point_inside( pixel_t x, pixel_t y )
+bool litehtml::render_item::is_point_inside( pixel_t x, pixel_t y ) const
 {
 	if(src_el()->css().get_display() != display_inline && src_el()->css().get_display() != display_table_row)
 	{
 		position pos = m_pos;
 		pos += m_padding;
 		pos += m_borders;
-		if(pos.is_point_inside(x, y))
-		{
-			return true;
-		} else
-		{
-			return false;
-		}
+		return pos.is_point_inside(x, y);
 	} else
 	{
 		position::vector boxes;
@@ -1099,16 +1152,20 @@ bool litehtml::render_item::is_point_inside( pixel_t x, pixel_t y )
     return false;
 }
 
-void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes)
+void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes) const
 {
     if(src_el()->css().get_display() == display_inline || src_el()->css().get_display() == display_table_row)
     {
         get_inline_boxes(redraw_boxes);
+		for(auto& box : redraw_boxes)
+		{
+			scroll_box(box);
+		}
     } else
     {
         position pos = m_pos;
-        pos += m_padding;
-        pos += m_borders;
+        pos 	+= m_padding;
+        pos 	+= m_borders;
         redraw_boxes.push_back(pos);
     }
 
@@ -1124,12 +1181,12 @@ void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes)
 			{
 				position view_port;
 				src_el()->get_document()->container()->get_viewport(view_port);
-				add_x += cur_el->m_pos.x + view_port.left();
-				add_y += cur_el->m_pos.y + view_port.top();
+				add_x += cur_el->m_pos.x + view_port.left() - cur_el->get_scroll_left();
+				add_y += cur_el->m_pos.y + view_port.top() - cur_el->get_scroll_top();
 				break;
 			}
-            add_x += cur_el->m_pos.x;
-            add_y += cur_el->m_pos.y;
+            add_x += cur_el->m_pos.x - cur_el->get_scroll_left();
+            add_y += cur_el->m_pos.y - cur_el->get_scroll_top();
             cur_el = cur_el->parent();
         }
 		for(auto& box : redraw_boxes)

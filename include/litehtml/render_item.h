@@ -10,6 +10,7 @@
 #include "table.h"
 #include "formatting_context.h"
 #include "element.h"
+#include "scroll_view.h"
 
 namespace litehtml
 {
@@ -27,6 +28,7 @@ namespace litehtml
         position					                m_pos;
         bool                                        m_skip;
         std::vector<std::shared_ptr<render_item>>   m_positioned;
+    	std::shared_ptr<scroll_view>				m_scroll_view;
 
 		containing_block_context calculate_containing_block_context(const containing_block_context& cb_context);
 		void calc_cb_length(const css_length& len, pixel_t percent_base, containing_block_context::typed_pixel& out_value) const;
@@ -40,15 +42,56 @@ namespace litehtml
 
         virtual ~render_item() = default;
 
+    	pixel_t get_scroll_left() const
+		{
+			return m_scroll_view ? m_scroll_view->get_left() : 0;
+		}
+
+    	pixel_t get_scroll_top() const
+    	{
+    		return m_scroll_view ? m_scroll_view->get_top() : 0;
+    	}
+
+		void scroll_box(position& box) const
+        {
+        	if (m_scroll_view)
+        	{
+        		box.x -= m_scroll_view->get_left();
+        		box.y -= m_scroll_view->get_top();
+        	}
+        }
+
+    	pixel_t h_scroll(pixel_t dx)
+    	{
+    		return m_scroll_view ? m_scroll_view->h_scroll(dx) : 0;
+    	}
+
+    	pixel_t v_scroll(pixel_t dy)
+    	{
+    		return m_scroll_view ? m_scroll_view->v_scroll(dy) : 0;
+    	}
+
         std::list<std::shared_ptr<render_item>>& children()
         {
             return m_children;
         }
 
+    	// Access to the m_pos
         position& pos()
         {
             return m_pos;
         }
+
+    	// Calculates the position of the element in the document
+    	// This position is relative to the x and y arguments
+    	// Scroll shifts are applied to the position
+    	position calc_placement(int x = 0, int y = 0) const
+    	{
+    		position pos = m_pos;
+    		pos.x += x - get_scroll_left();
+    		pos.y += y - get_scroll_top();
+    		return pos;
+    	}
 
         bool skip() const
         {
@@ -392,7 +435,7 @@ namespace litehtml
 		 */
 		virtual pixel_t get_first_baseline() { return height() - margin_bottom(); }
 		/**
-		 * Get last baseline position.  Default position is element bottom without bottom margin.
+		 * Get the last baseline position.  The default position is element bottom without bottom margin.
 		 * @returns offset of the last baseline from element top
 		 */
 		virtual pixel_t get_last_baseline() { return height() - margin_bottom(); }
@@ -412,7 +455,7 @@ namespace litehtml
 		std::tuple<pixel_t, pixel_t> element_static_offset(const std::shared_ptr<litehtml::render_item> &el);
         void add_positioned(const std::shared_ptr<litehtml::render_item> &el);
         void get_redraw_box(litehtml::position& pos, pixel_t x = 0, pixel_t y = 0);
-        void calc_document_size( litehtml::size& sz, pixel_t x = 0, pixel_t y = 0 ) const;
+        void calc_document_size( litehtml::size& sz, pixel_t x = 0, pixel_t y = 0 );
 		virtual void get_inline_boxes( position::vector& /*boxes*/ ) const {};
 		virtual void set_inline_boxes( position::vector& /*boxes*/ ) {};
 		virtual void add_inline_box( const position& /*box*/ ) {};
@@ -420,9 +463,11 @@ namespace litehtml
         void draw_stacking_context( uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, bool with_positioned );
         virtual void draw_children( uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag, int zindex );
         virtual pixel_t get_draw_vertical_offset() { return 0; }
-        virtual std::shared_ptr<element> get_child_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex);
-        std::shared_ptr<element> get_element_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y);
-        bool is_point_inside( pixel_t x, pixel_t y );
+        virtual std::shared_ptr<element> get_child_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex,
+        	const std::function<bool(const std::shared_ptr<render_item>&)>& check);
+        std::shared_ptr<element> get_element_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+        	const std::function<bool(const std::shared_ptr<render_item>&)>& check);
+        bool is_point_inside( pixel_t x, pixel_t y ) const;
         void dump(litehtml::dumper& cout);
 		position get_placement() const;
         virtual void y_shift(pixel_t shift);
@@ -432,7 +477,7 @@ namespace litehtml
          * @param redraw_boxes [out] resulting rendering boxes
          * @return
          */
-        void get_rendering_boxes( position::vector& redraw_boxes);
+        void get_rendering_boxes( position::vector& redraw_boxes) const;
 	};
 }
 

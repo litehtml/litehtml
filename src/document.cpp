@@ -626,7 +626,7 @@ bool document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t cl
 		return false;
 	}
 
-	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y);
+	element::ptr over_el   = m_root_render->get_element_by_point(x, y, client_x, client_y, nullptr);
 
 	bool state_was_changed = false;
 
@@ -664,6 +664,42 @@ bool document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t cl
 	return false;
 }
 
+pixel_t document::on_v_scroll(pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position& /* scroll_box */) const
+{
+	if (dy == 0) return 0;
+
+	pixel_t ret = 0;
+	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, [&ret, dy](const shared_ptr<render_item>& el) -> bool {
+		pixel_t scrolled_by = 0;
+		if ((scrolled_by = el->v_scroll(dy)) != 0)
+		{
+			ret = scrolled_by;
+			return true;
+		}
+		return false;
+	});
+
+	return ret;
+}
+
+pixel_t document::on_h_scroll(pixel_t dx, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position& /* scroll_box */) const
+{
+	if (dx == 0) return 0;
+
+	pixel_t ret = 0;
+	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, [&ret, dx](const shared_ptr<render_item>& el) -> bool {
+		pixel_t scrolled_by = 0;
+		if ((scrolled_by = el->h_scroll(dx)) != 0)
+		{
+			ret = scrolled_by;
+			return true;
+		}
+		return false;
+	});
+
+	return ret;
+}
+
 bool document::on_mouse_leave( position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
@@ -690,7 +726,7 @@ bool document::on_lbutton_down( pixel_t x, pixel_t y, pixel_t client_x, pixel_t 
 		return false;
 	}
 
-	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y);
+	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, nullptr);
     m_active_element = over_el;
 
 	bool state_was_changed = false;
