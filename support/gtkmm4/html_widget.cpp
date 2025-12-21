@@ -501,38 +501,31 @@ void html_widget::on_adjustments_changed()
 
 bool html_widget::on_scroll(double dx, double dy)
 {
-	litehtml::position scroll_box;
 	auto page = current_page();
 	if (page)
 	{
-		bool redraw = false;
-		if (page->on_v_scroll(	(int) dy * 60,
-								(int) (m_mouse_x + m_draw_buffer.get_left()),
-								(int) (m_mouse_y + m_draw_buffer.get_top()),
-								(int) m_mouse_x,
-								(int) m_mouse_y, scroll_box) == 0)
+		auto values = page->on_scroll((litehtml::pixel_t) dx * 60, (litehtml::pixel_t) dy * 60,
+									  (int) (m_mouse_x + m_draw_buffer.get_left()),
+									  (int) (m_mouse_y + m_draw_buffer.get_top()), (int) m_mouse_x, (int) m_mouse_y);
+		bool dx_used = false;
+		bool dy_used = false;
+		if(!values.empty())
 		{
-			m_vadjustment->set_value(m_vadjustment->get_value() + dy * 60);
-		} else
-		{
-			redraw = true;
+			for(const auto& val : values)
+			{
+				if(val.dx != 0) dx_used = true;
+				if(val.dy != 0) dy_used = true;
+				m_draw_buffer.redraw_area(get_draw_function(current_page()), val.scroll_box.left(), val.scroll_box.top(), val.scroll_box.width, val.scroll_box.height);
+			}
+			queue_draw();
 		}
-		if (page->on_h_scroll(	(int) dx * 60,
-								(int) (m_mouse_x + m_draw_buffer.get_left()),
-								(int) (m_mouse_y + m_draw_buffer.get_top()),
-								(int) m_mouse_x,
-								(int) m_mouse_y, scroll_box) == 0)
+		if(!dx_used)
 		{
 			m_hadjustment->set_value(m_hadjustment->get_value() + dx * 60);
-		} else
-		{
-			redraw = true;
 		}
-		if (redraw)
+		if(!dy_used)
 		{
-			m_draw_buffer.redraw(get_draw_function(current_page()));
-			queue_draw();
-
+			m_vadjustment->set_value(m_vadjustment->get_value() + dy * 60);
 		}
 	}
 	return true;

@@ -26,7 +26,7 @@ position element::get_placement() const
 		auto ri = ri_el.lock();
 		if(ri)
 		{
-			position ri_pos = ri_el.lock()->get_placement();
+			position ri_pos = ri->get_placement();
 			if(is_first)
 			{
 				is_first = false;
@@ -412,6 +412,41 @@ void litehtml::element::increment_counter(const string_id& counter_name_id, cons
 void litehtml::element::reset_counter(const string_id& counter_name_id, const int value)
 {
 	m_counter_values[counter_name_id] = value;
+}
+
+pixel_t litehtml::element::v_scroll(pixel_t dy) const
+{
+	if(m_renders.empty())
+		return 0;
+	auto ri_el = m_renders.front().lock();
+	if(!ri_el)
+		return 0;
+	return ri_el->v_scroll(dy);
+}
+
+pixel_t litehtml::element::h_scroll(pixel_t dx) const
+{
+	if(m_renders.empty())
+		return 0;
+	auto ri_el = m_renders.front().lock();
+	if(!ri_el)
+		return 0;
+	return ri_el->h_scroll(dx);
+}
+
+void litehtml::element::run_on_renderers(const std::function<bool(const std::shared_ptr<render_item>&)>& func)
+{
+	for(const auto& weak_ri : m_renders)
+	{
+		auto ri = weak_ri.lock();
+		if(ri)
+		{
+			if(!func(ri))
+			{
+				break;
+			}
+		}
+	}
 }
 
 const background* element::get_background(bool /*own_only*/)						LITEHTML_RETURN_FUNC(nullptr)

@@ -1027,11 +1027,21 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pi
                 {
                     element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex, check);
                     if(child)
-                    {
-                    	if (!check || check(el))
-                    	{
-                    		ret = child;
-                    	}
+					{
+						if(!check)
+						{
+							ret = child;
+						} else
+						{
+							child->run_on_renderers([&check, &ret, &child](const std::shared_ptr<render_item>& ri) -> bool {
+								if(check(ri))
+								{
+									ret = child;
+									return false;
+								}
+								return true;
+							});
+						}
                     }
                 } else
                 {
@@ -1039,13 +1049,23 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pi
                            el->src_el()->css().get_display() != display_inline_block && el->src_el()->css().get_display() != display_inline_flex)
                     {
                         element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex, check);
-                        if(child)
-                        {
-                        	if (!check || check(el))
-                        	{
-                        		ret = child;
-                        	}
-                        }
+						if(child)
+						{
+							if(!check)
+							{
+								ret = child;
+							} else
+							{
+								child->run_on_renderers([&check, &ret, &child](const std::shared_ptr<render_item>& ri) -> bool {
+									if(check(ri))
+									{
+										ret = child;
+										return false;
+									}
+									return true;
+								});
+							}
+						}
                     }
                 }
             }
@@ -1237,11 +1257,30 @@ void litehtml::render_item::dump(litehtml::dumper& cout)
 litehtml::position litehtml::render_item::get_placement() const
 {
 	litehtml::position pos = m_pos;
+	if(css().get_position() == element_position_fixed)
+	{
+		position view_port;
+		src_el()->get_document()->container()->get_viewport(view_port);
+		pos.x += view_port.left();
+		pos.y += view_port.top();
+		return pos;
+	}
 	auto cur_el = parent();
 	while(cur_el)
 	{
-		pos.x += cur_el->m_pos.x;
-		pos.y += cur_el->m_pos.y;
+		auto p = cur_el->calc_placement();
+		pos.x += p.x;
+		pos.y += p.y;
+
+		if(cur_el->css().get_position() == element_position_fixed)
+		{
+			position view_port;
+			src_el()->get_document()->container()->get_viewport(view_port);
+			pos.x += view_port.left();
+			pos.y += view_port.top();
+			return pos;
+		}
+
 		cur_el = cur_el->parent();
 	}
 	return pos;

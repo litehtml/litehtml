@@ -6,6 +6,7 @@
 #include "master_css.h"
 #include "encodings.h"
 #include "font_description.h"
+#include <vector>
 
 typedef struct GumboInternalOutput GumboOutput;
 
@@ -87,8 +88,7 @@ namespace litehtml
 		pixel_t							content_height() const;
 		void							add_stylesheet(const char* str, const char* baseurl, const char* media);
 		bool							on_mouse_over(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
-		pixel_t							on_v_scroll(pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position& scroll_box) const;
-		pixel_t							on_h_scroll(pixel_t dx, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position& scroll_box) const;
+		std::vector<scroll_values>		on_scroll(pixel_t dx, pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y) const;
 		bool							on_lbutton_down(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
 		bool							on_lbutton_up(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
 		bool							on_button_cancel(position::vector& redraw_boxes);

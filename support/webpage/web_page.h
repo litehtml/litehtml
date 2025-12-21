@@ -3,6 +3,7 @@
 
 #include <unistd.h>
 #include <sstream>
+#include <vector>
 #include "container_cairo_pango.h"
 #include "html_host.h"
 #include "http_requests_pool.h"
@@ -177,16 +178,10 @@ namespace litebrowser
 			}
 		}
 
-		int on_h_scroll(int dx, int x, int y, int client_x, int client_y, litehtml::position& scroll_box)
+		std::vector<litehtml::scroll_values> on_scroll(litehtml::pixel_t dx, litehtml::pixel_t dy, int x, int y, int client_x, int client_y)
 		{
 			std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
-			return m_html ? m_html->on_h_scroll(dx, x, y, client_x, client_y, scroll_box) : 0;
-		}
-
-		int on_v_scroll(int dy, int x, int y, int client_x, int client_y, litehtml::position& scroll_box)
-		{
-			std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
-			return m_html ? m_html->on_v_scroll(dy, x, y, client_x, client_y, scroll_box) : 0;
+			return m_html ? m_html->on_scroll(dx, dy, x, y, client_x, client_y) : std::vector<litehtml::scroll_values>();
 		}
 
 	private:

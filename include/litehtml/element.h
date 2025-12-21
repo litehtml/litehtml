@@ -55,6 +55,9 @@ namespace litehtml
 		bool						is_float()					const;
 		bool						is_block_formatting_context() const;
 
+		pixel_t						v_scroll(pixel_t dy)		const;
+		pixel_t						h_scroll(pixel_t dx)		const;
+
 		bool						is_root() const;
 		element::ptr				parent() const;
 		void						parent(const element::ptr& par);
@@ -142,6 +145,8 @@ namespace litehtml
 		string				get_counters_value(const string_vector& parameters);
 		void				increment_counter(const string_id& counter_name_id, const int increment = 1);
 		void				reset_counter(const string_id& counter_name_id, const int value = 0);
+
+		void				run_on_renderers(const std::function<bool(const std::shared_ptr<render_item>&)>& func);
 
 	private:
 		std::vector<element::ptr> get_siblings_before() const;

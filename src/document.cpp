@@ -664,38 +664,58 @@ bool document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t cl
 	return false;
 }
 
-pixel_t document::on_v_scroll(pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position& /* scroll_box */) const
+std::vector<scroll_values> document::on_scroll(pixel_t dx, pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y) const
 {
-	if (dy == 0) return 0;
+	if(dy == 0 && dx == 0)
+		return {};
 
-	pixel_t ret = 0;
-	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, [&ret, dy](const shared_ptr<render_item>& el) -> bool {
-		pixel_t scrolled_by = 0;
-		if ((scrolled_by = el->v_scroll(dy)) != 0)
-		{
-			ret = scrolled_by;
-			return true;
-		}
-		return false;
-	});
+	element::ptr vscroll_el;
+	element::ptr hscroll_el;
 
-	return ret;
-}
+	if(dy != 0.f)
+	{
+		vscroll_el = m_root_render->get_element_by_point(
+			x, y, client_x, client_y,
+			[dy](const shared_ptr<render_item>& el) -> bool { return el->is_v_scrollable(dy); });
+	}
 
-pixel_t document::on_h_scroll(pixel_t dx, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position& /* scroll_box */) const
-{
-	if (dx == 0) return 0;
+	if(dx != 0.f)
+	{
+		hscroll_el = m_root_render->get_element_by_point(
+			x, y, client_x, client_y,
+			[dx](const shared_ptr<render_item>& el) -> bool { return el->is_h_scrollable(dx); });
+	}
 
-	pixel_t ret = 0;
-	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, [&ret, dx](const shared_ptr<render_item>& el) -> bool {
-		pixel_t scrolled_by = 0;
-		if ((scrolled_by = el->h_scroll(dx)) != 0)
-		{
-			ret = scrolled_by;
-			return true;
-		}
-		return false;
-	});
+	if(!vscroll_el && !hscroll_el)
+		return {};
+
+	if(vscroll_el == hscroll_el)
+	{
+		scroll_values sv;
+		sv.dx = hscroll_el->h_scroll(dx);
+		sv.dy = vscroll_el->v_scroll(dy);
+		sv.scroll_box = hscroll_el->get_placement();
+		return {sv};
+	}
+
+	std::vector<scroll_values> ret;
+	ret.reserve(2);
+
+	if(vscroll_el)
+	{
+		scroll_values sv;
+		sv.dy = vscroll_el->v_scroll(dy);
+		sv.scroll_box = vscroll_el->get_placement();
+		ret.push_back(sv);
+	}
+
+	if(hscroll_el)
+	{
+		scroll_values sv;
+		sv.dx = hscroll_el->h_scroll(dx);
+		sv.scroll_box = hscroll_el->get_placement();
+		ret.push_back(sv);
+	}
 
 	return ret;
 }

@@ -71,6 +71,16 @@ namespace litehtml
     		return m_scroll_view ? m_scroll_view->v_scroll(dy) : 0;
     	}
 
+		bool is_h_scrollable(const pixel_t dx) const
+		{
+			return m_scroll_view ? m_scroll_view->is_h_scrollable(dx) : false;
+		}
+
+		bool is_v_scrollable(const pixel_t dy) const
+		{
+			return m_scroll_view ? m_scroll_view->is_v_scrollable(dy) : false;
+		}
+
         std::list<std::shared_ptr<render_item>>& children()
         {
             return m_children;

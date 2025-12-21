@@ -36,6 +36,15 @@ namespace litehtml
 
 		const position& get_viewport() const { return m_viewport; }
 
+		bool is_h_scrollable(const pixel_t dx) const
+		{
+			if(m_scroll_size.width == 0)
+				return false;
+			if(m_left != std::clamp(m_left + dx, 0.f, get_max_h_scroll()))
+				return true;
+			return false;
+		}
+
 		pixel_t h_scroll(const pixel_t dx)
 		{
 			if(m_scroll_size.width == 0)
@@ -45,6 +54,15 @@ namespace litehtml
 			const pixel_t ret	   = new_left - m_left;
 			m_left				   = new_left;
 			return ret;
+		}
+
+		bool is_v_scrollable(const pixel_t dy) const
+		{
+			if(m_scroll_size.height == 0)
+				return false;
+			if(m_top != std::clamp(m_top + dy, 0.f, get_max_v_scroll()))
+				return true;
+			return false;
 		}
 
 		pixel_t v_scroll(const pixel_t dy)
