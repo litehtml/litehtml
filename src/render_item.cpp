@@ -983,7 +983,7 @@ std::shared_ptr<litehtml::element>  litehtml::render_item::get_child_by_point(pi
 								ret = el->src_el();
 							}
                         }
-                    	process = (ret == nullptr);
+                        process = false;
                     }
                     break;
                 case draw_floats:
