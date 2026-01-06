@@ -71,6 +71,34 @@ m_doc->draw(hdc, -50, -100, litehtml::position(50, 100, window_width, window_hei
 
 Note, the ```x``` and ```y``` parameters are screen relative. The ```clip``` parameter is always document relative. Also note, defining the ```clip``` parameter in ```draw``` does not guarantee the valid clipping. Some elements can be drawn out off the clipping area. litehtml just checks if the element's bounding rectangle is intersected with clipping rectangle to draw elements. So you must implement your own clipping.
 
+## Scrolling of the internal elements
+
+The content of a block can be scrolled when element has CSS property ```overflow: auto``` or ```overflow: scroll```. To make this possible call ```document::on_scroll``` function:
+```cpp
+std::vector<scroll_values> on_scroll(pixel_t dx, pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y) const;
+```
+
+Arguments:
+
+* **dx, dy** - number of pixels to scroll horizontally and/or vertically
+* **x, y** - cursor position in the document coordinates
+* **client_x, client_y** - cursor position in the window/view port coordinates (for fixed elements)
+
+If something has been scrolled the function returns non-empty array of ```scroll_values```. The structure ```scroll_values``` defined as:
+```cpp
+struct scroll_values
+{
+    pixel_t	dx;
+    pixel_t dy;
+    position scroll_box;
+};
+```
+
+Members:
+
+* **dx, dy** - number of pixels scrolled horizontally and/or vertically. Note, these values can differ from arguments with the same names.
+* **scroll_box** - position of the box that has been scrolled.
+
 ## Handling the mouse
 If you want to handle the mouse you have call some functions from ```litehtml::document```:
 ```cpp
