@@ -64,6 +64,8 @@ namespace litehtml
 		std::shared_ptr<document>	get_document() const;
 		const std::list<std::shared_ptr<element>>& children() const;
 
+		std::shared_ptr<render_item> render();
+
 		virtual elements_list		select_all(const string& selector);
 		virtual elements_list		select_all(const css_selector& selector);
 
@@ -219,6 +221,11 @@ namespace litehtml
 	inline const std::list<std::shared_ptr<element>>& element::children() const
 	{
 		return m_children;
+	}
+
+	inline std::shared_ptr<render_item> element::render()
+	{
+		return m_renders.front().lock();
 	}
 }
 

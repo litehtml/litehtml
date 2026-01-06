@@ -1043,10 +1043,12 @@ void document::append_children_from_string(element& parent, const char* str)
 
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
-
+	auto body_element = child_elements.back()->children().back();
+	auto parent_render = parent.render();
 	// Let's process created elements tree
-	for (const auto& child : child_elements)
+	for (const auto& child : body_element->children())
 	{
+
 		// Add the child element to parent
 		parent.appendChild(child);
 
@@ -1065,14 +1067,15 @@ void document::append_children_from_string(element& parent, const char* str)
 		// Initialize m_css
 		child->compute_styles();
 
-		// Now the m_tabular_elements is filled with tabular elements.
-		// We have to check the tabular elements for missing table elements
-		// and create the anonymous boxes in visual table layout
-		fix_tables_layout();
-
 		// Finally initialize elements
-		//child->init();
+		auto child_render = child->create_render_item(parent_render);
+		if (child_render)
+		{
+			child_render = child_render->init();
+			parent_render->add_child(child_render);
+		}
 	}
+
 }
 
 void document::dump(dumper& cout)
