@@ -105,7 +105,7 @@ namespace litehtml
 		void							add_tabular(const std::shared_ptr<render_item>& el);
 		std::shared_ptr<const element>	get_over_element() const { return m_over_element; }
 
-		void							append_children_from_string(element& parent, const char* str);
+		void							append_children_from_string(element& parent, const char* str, bool replace_existing);
 		void							dump(dumper& cout);
 
 		// see doc/document_createFromString.txt
@@ -119,7 +119,7 @@ namespace litehtml
 		uint_ptr	add_font(const font_description& descr, font_metrics* fm);
 
 		GumboOutput* parse_html(estring str);
-		void create_node(void* gnode, elements_list& elements, bool parseTextNode);
+		void create_node(void* gnode, elements_list& elements, bool parseTextNode, bool process_root);
 		bool update_media_lists(const media_features& features);
 		void fix_tables_layout();
 		void fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str);

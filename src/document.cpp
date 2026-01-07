@@ -70,7 +70,7 @@ document::ptr document::createFromString(
 
 	// Create litehtml::elements.
 	elements_list root_elements;
-	doc->create_node(output->root, root_elements, true);
+	doc->create_node(output->root, root_elements, true, true);
 	if (!root_elements.empty())
 	{
 		doc->m_root = root_elements.back();
@@ -259,57 +259,66 @@ GumboOutput* document::parse_html(estring str)
 	return output;
 }
 
-void document::create_node(void* gnode, elements_list& elements, bool parseTextNode)
+void document::create_node(void* gnode, elements_list& elements, bool parseTextNode, bool process_root)
 {
 	auto* node = (GumboNode*)gnode;
 	switch (node->type)
 	{
 	case GUMBO_NODE_ELEMENT:
 	{
-		string_map attrs;
-		GumboAttribute* attr;
-		for (unsigned int i = 0; i < node->v.element.attributes.length; i++)
+		if(process_root)
 		{
-			attr = (GumboAttribute*)node->v.element.attributes.data[i];
-			attrs[attr->name] = attr->value;
-		}
-
-
-		element::ptr ret;
-		const char* tag = gumbo_normalized_tagname(node->v.element.tag);
-		if (tag[0])
-		{
-			ret = create_element(tag, attrs);
-		}
-		else
-		{
-			if (node->v.element.original_tag.data && node->v.element.original_tag.length)
+			string_map attrs;
+			GumboAttribute* attr;
+			for (unsigned int i = 0; i < node->v.element.attributes.length; i++)
 			{
-				string str;
-				gumbo_tag_from_original_text(&node->v.element.original_tag);
-				str.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
-				ret = create_element(str.c_str(), attrs);
+				attr = (GumboAttribute*)node->v.element.attributes.data[i];
+				attrs[attr->name] = attr->value;
 			}
-		}
-		if (!strcmp(tag, "script"))
+
+
+			element::ptr ret;
+			const char* tag = gumbo_normalized_tagname(node->v.element.tag);
+			if (tag[0])
+			{
+				ret = create_element(tag, attrs);
+			}
+			else
+			{
+				if (node->v.element.original_tag.data && node->v.element.original_tag.length)
+				{
+					string str;
+					gumbo_tag_from_original_text(&node->v.element.original_tag);
+					str.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
+					ret = create_element(str.c_str(), attrs);
+				}
+			}
+			if (!strcmp(tag, "script"))
+			{
+				parseTextNode = false;
+			}
+			if (ret)
+			{
+				elements_list child;
+				for (unsigned int i = 0; i < node->v.element.children.length; i++)
+				{
+					child.clear();
+					create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child, parseTextNode, true);
+					std::for_each(child.begin(), child.end(),
+						[&ret](element::ptr& el)
+						{
+							ret->appendChild(el);
+						}
+					);
+				}
+				elements.push_back(ret);
+			}
+		} else
 		{
-			parseTextNode = false;
-		}
-		if (ret)
-		{
-			elements_list child;
 			for (unsigned int i = 0; i < node->v.element.children.length; i++)
 			{
-				child.clear();
-				create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), child, parseTextNode);
-				std::for_each(child.begin(), child.end(),
-					[&ret](element::ptr& el)
-					{
-						ret->appendChild(el);
-					}
-				);
+				create_node(static_cast<GumboNode*> (node->v.element.children.data[i]), elements, parseTextNode, true);
 			}
-			elements.push_back(ret);
 		}
 	}
 	break;
@@ -1069,7 +1078,7 @@ void document::fix_table_parent(const std::shared_ptr<render_item>& el_ptr, styl
 	}
 }
 
-void document::append_children_from_string(element& parent, const char* str)
+void document::append_children_from_string(element& parent, const char* str, bool replace_existing)
 {
 	// parent must belong to this document
 	if (parent.get_document().get() != this)
@@ -1077,15 +1086,28 @@ void document::append_children_from_string(element& parent, const char* str)
 		return;
 	}
 
+	GumboOptions opts = kGumboDefaultOptions;
+	// This is require to prevent creating html, head, body tags around the fragment
+	// Although Gumbo always creates html tag anyway. We have to ignore it in create_node.
+	opts.fragment_context = GUMBO_TAG_BODY;
 	// parse document into GumboOutput
-	GumboOutput* output = gumbo_parse(str);
+	GumboOutput* output = gumbo_parse_with_options(&opts, str, strlen(str));
 
 	// Create litehtml::elements.
 	elements_list child_elements;
-	create_node(output->root, child_elements, true);
+	// Create elements excluding the root node
+	create_node(output->root, child_elements, true, false);
 
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
+
+	auto parent_render = parent.get_render_item();
+
+	if (replace_existing)
+	{
+		parent.clearRecursive();
+		parent_render->children().clear();
+	}
 
 	// Let's process created elements tree
 	for (const auto& child : child_elements)
@@ -1108,14 +1130,21 @@ void document::append_children_from_string(element& parent, const char* str)
 		// Initialize m_css
 		child->compute_styles();
 
-		// Now the m_tabular_elements is filled with tabular elements.
-		// We have to check the tabular elements for missing table elements
-		// and create the anonymous boxes in visual table layout
-		fix_tables_layout();
-
 		// Finally initialize elements
-		//child->init();
+		if(parent_render)
+		{
+			auto child_render = child->create_render_item(parent_render);
+			if (child_render)
+			{
+				child_render = child_render->init();
+				parent_render->add_child(child_render);
+			}
+		}
 	}
+	// Now the m_tabular_elements is filled with tabular elements.
+	// We have to check the tabular elements for missing table elements
+	// and create the anonymous boxes in visual table layout
+	fix_tables_layout();
 }
 
 void document::dump(dumper& cout)
