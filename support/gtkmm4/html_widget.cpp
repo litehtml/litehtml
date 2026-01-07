@@ -235,6 +235,8 @@ void html_widget::on_button_release_event(int /* n_press */, double x, double y)
 
 void html_widget::on_mouse_move(double x, double y)
 {
+	m_mouse_x = x;
+	m_mouse_y = y;
 	bool restart_timer = true;
 	if(m_hscrollbar->is_visible())
 	{
@@ -499,8 +501,33 @@ void html_widget::on_adjustments_changed()
 
 bool html_widget::on_scroll(double dx, double dy)
 {
-	m_vadjustment->set_value(m_vadjustment->get_value() + dy * 60);
-	m_hadjustment->set_value(m_hadjustment->get_value() + dx * 60);
+	auto page = current_page();
+	if (page)
+	{
+		auto values = page->on_scroll((litehtml::pixel_t) dx * 60, (litehtml::pixel_t) dy * 60,
+									  (int) (m_mouse_x + m_draw_buffer.get_left()),
+									  (int) (m_mouse_y + m_draw_buffer.get_top()), (int) m_mouse_x, (int) m_mouse_y);
+		bool dx_used = false;
+		bool dy_used = false;
+		if(!values.empty())
+		{
+			for(const auto& val : values)
+			{
+				if(val.dx != 0) dx_used = true;
+				if(val.dy != 0) dy_used = true;
+				m_draw_buffer.redraw_area(get_draw_function(current_page()), val.scroll_box.left(), val.scroll_box.top(), val.scroll_box.width, val.scroll_box.height);
+			}
+			queue_draw();
+		}
+		if(!dx_used)
+		{
+			m_hadjustment->set_value(m_hadjustment->get_value() + dx * 60);
+		}
+		if(!dy_used)
+		{
+			m_vadjustment->set_value(m_vadjustment->get_value() + dy * 60);
+		}
+	}
 	return true;
 }
 

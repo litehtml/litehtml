@@ -204,6 +204,8 @@ class html_widget :		public Gtk::Widget,
 {
 	int m_rendered_width = 0;
 	int m_rendered_height = 0;
+	double m_mouse_x = 0;
+	double m_mouse_y = 0;
 	bool m_do_force_redraw_on_adjustment = true;
 	std::mutex m_page_mutex;
 	std::shared_ptr<litebrowser::web_page> 	m_current_page;
@@ -289,7 +291,7 @@ private:
 	}
 	litebrowser::draw_buffer::draw_page_function_t get_draw_function(const std::shared_ptr<litebrowser::web_page>& page)
 	{
-		return [this, page](cairo_t* cr, int x, int y, const litehtml::position* clip)
+		return [page](cairo_t* cr, int x, int y, const litehtml::position* clip)
 		{
 			if (page)
 			{

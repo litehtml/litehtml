@@ -513,9 +513,7 @@ pixel_t document::render( pixel_t max_width, render_type rt )
 			}
 			m_size.width	= 0;
 			m_size.height	= 0;
-			m_content_size.width = 0;
-			m_content_size.height = 0;
-			m_root_render->calc_document_size(m_size, m_content_size);
+			m_root_render->calc_document_size(m_size);
 		}
 	}
 	return ret;
@@ -613,17 +611,6 @@ pixel_t document::height() const
 	return m_size.height;
 }
 
-pixel_t document::content_width() const
-{
-	return m_content_size.width;
-}
-
-pixel_t document::content_height() const
-{
-	return m_content_size.height;
-}
-
-
 void document::add_stylesheet( const char* str, const char* baseurl, const char* media )
 {
 	if(str && str[0])
@@ -639,7 +626,7 @@ bool document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t cl
 		return false;
 	}
 
-	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y);
+	element::ptr over_el   = m_root_render->get_element_by_point(x, y, client_x, client_y, nullptr);
 
 	bool state_was_changed = false;
 
@@ -677,6 +664,62 @@ bool document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t cl
 	return false;
 }
 
+std::vector<scroll_values> document::on_scroll(pixel_t dx, pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y) const
+{
+	if(dy == 0 && dx == 0)
+		return {};
+
+	element::ptr vscroll_el;
+	element::ptr hscroll_el;
+
+	if(dy != 0.f)
+	{
+		vscroll_el = m_root_render->get_element_by_point(
+			x, y, client_x, client_y,
+			[dy](const shared_ptr<render_item>& el) -> bool { return el->is_v_scrollable(dy); });
+	}
+
+	if(dx != 0.f)
+	{
+		hscroll_el = m_root_render->get_element_by_point(
+			x, y, client_x, client_y,
+			[dx](const shared_ptr<render_item>& el) -> bool { return el->is_h_scrollable(dx); });
+	}
+
+	if(!vscroll_el && !hscroll_el)
+		return {};
+
+	if(vscroll_el == hscroll_el)
+	{
+		scroll_values sv;
+		sv.dx = hscroll_el->h_scroll(dx);
+		sv.dy = vscroll_el->v_scroll(dy);
+		sv.scroll_box = hscroll_el->get_placement();
+		return {sv};
+	}
+
+	std::vector<scroll_values> ret;
+	ret.reserve(2);
+
+	if(vscroll_el)
+	{
+		scroll_values sv;
+		sv.dy = vscroll_el->v_scroll(dy);
+		sv.scroll_box = vscroll_el->get_placement();
+		ret.push_back(sv);
+	}
+
+	if(hscroll_el)
+	{
+		scroll_values sv;
+		sv.dx = hscroll_el->h_scroll(dx);
+		sv.scroll_box = hscroll_el->get_placement();
+		ret.push_back(sv);
+	}
+
+	return ret;
+}
+
 bool document::on_mouse_leave( position::vector& redraw_boxes )
 {
 	if(!m_root || !m_root_render)
@@ -703,7 +746,7 @@ bool document::on_lbutton_down( pixel_t x, pixel_t y, pixel_t client_x, pixel_t 
 		return false;
 	}
 
-	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y);
+	element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, nullptr);
     m_active_element = over_el;
 
 	bool state_was_changed = false;

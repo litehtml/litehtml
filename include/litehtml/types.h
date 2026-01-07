@@ -261,6 +261,19 @@ namespace litehtml
 		}
 	};
 
+	struct scroll_values
+	{
+		pixel_t	dx;
+		pixel_t dy;
+		position scroll_box;
+
+		scroll_values()
+		{
+			dx = 0;
+			dy = 0;
+		}
+	};
+
 	struct font_metrics
 	{
 		pixel_t 	font_size = 0;		// Font size in pixels. The same as size argument of the create_font function

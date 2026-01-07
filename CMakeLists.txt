@@ -149,6 +149,7 @@ set(HEADER_LITEHTML
 	include/litehtml/flex_line.h
 	include/litehtml/gradient.h
 	include/litehtml/font_description.h
+	include/litehtml/scroll_view.h
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
@@ -200,7 +201,7 @@ else ()
 	ExternalProject_Add(
 			litehtml-tests
 			GIT_REPOSITORY      https://github.com/litehtml/litehtml-tests.git
-			GIT_TAG             be2ae88bf07ed6b04941e1c4027e1400ed541e53
+			GIT_TAG             0a7d9e3958ff888ac1eeb9761c68efb86ec82c1d
 			SOURCE_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-src"
 			BINARY_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-build"
 			CMAKE_ARGS          -DLITEHTML_PATH=${CMAKE_CURRENT_SOURCE_DIR}
