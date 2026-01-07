@@ -1043,8 +1043,26 @@ void document::append_children_from_string(element& parent, const char* str)
 
 	// Destroy GumboOutput
 	gumbo_destroy_output(&kGumboDefaultOptions, output);
-	auto body_element = child_elements.back()->children().back();
-	auto parent_render = parent.render();
+
+	// Get body element;
+	if (child_elements.empty()) { return; }
+	auto root_element = child_elements.back();
+	if (!root_element) { return; }
+	litehtml::element::ptr body_element;
+	for (auto child: root_element->children())
+	{
+		if(child->is_body())
+		{
+			body_element = child;
+			break;
+		}
+	}
+	if (!body_element) { return; }
+
+	// Get parent render
+	auto parent_render = parent.get_render_item();
+	if (!parent_render) { return; }
+
 	// Let's process created elements tree
 	for (const auto& child : body_element->children())
 	{
