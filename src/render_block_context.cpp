@@ -40,23 +40,46 @@ litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /
             {
                 child_top = fmt_ctx->get_cleared_top(el, child_top);
                 pixel_t child_x  = 0;
-                pixel_t child_width = self_size.render_width;
+				pixel_t child_width = self_size.render_width;
+				pixel_t line_right	= self_size.render_width;
+				pixel_t top_margin = m_margins.top;
 
                 el->calc_outlines(self_size.width);
 
-                // Collapse top margin
-                if(is_first && collapse_top_margin())
+				// Adjust child width for tables and replaced elements with floting blocks width
+				if(el->src_el()->is_replaced() ||
+				   el->src_el()->is_block_formatting_context() ||
+				   el->src_el()->css().get_display() == display_table)
                 {
+                    pixel_t line_left = 0;
+					fmt_ctx->get_line_left_right(child_top, child_width, line_left, line_right);
+					if(line_left != child_x)
+					{
+						child_x = line_left - el->margin_left();
+					}
+					if(line_right != self_size.render_width)
+                    {
+                        line_right += el->margin_right();
+                    }
+					if(el->css().get_width().is_predefined())
+					{
+						child_width = line_right - line_left;
+                    }
+                }
+
+				// Collapse top margin
+				if(is_first && collapse_top_margin())
+				{
 					if(el->get_margins().top > 0)
 					{
 						child_top -= el->get_margins().top;
 						if (el->get_margins().top > get_margins().top)
 						{
-							m_margins.top = el->get_margins().top;
+							top_margin = el->get_margins().top;
 						}
 					}
-                } else
-                {
+				} else
+				{
 					if(el->get_margins().top > 0)
 					{
 						if (last_margin > el->get_margins().top)
@@ -67,20 +90,7 @@ litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /
 							child_top -= last_margin;
 						}
 					}
-                }
-
-                if(el->src_el()->is_replaced() || el->src_el()->is_block_formatting_context() || el->src_el()->css().get_display() == display_table)
-                {
-                    pixel_t ln_left = 0;
-                    pixel_t ln_right = child_width;
-                    fmt_ctx->get_line_left_right(child_top, child_width, ln_left, ln_right);
-                    child_x = ln_left;
-                    child_width = ln_right - ln_left;
-
-                    auto el_parent = el->parent();
-                    el->pos().width = el->src_el()->css().get_width().calc_percent(child_width);
-                    el->pos().height = el->src_el()->css().get_height().calc_percent(el_parent ? el_parent->pos().height : 0);
-                }
+				}
 
                 pixel_t rw = el->render(child_x, child_top, self_size.new_width(child_width), fmt_ctx);
 				// Render table with "width: auto" into returned width
@@ -88,6 +98,34 @@ litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /
 				{
 					el->render(child_x, child_top, self_size.new_width(rw), fmt_ctx);
 				}
+
+				// Check if we need to move block to the next line
+				if(el->src_el()->is_replaced() ||
+				   el->src_el()->is_block_formatting_context() ||
+				   el->src_el()->css().get_display() == display_table)
+				{
+					if(el->right() > line_right)
+					{
+                        pixel_t ln_left  = 0;
+                        pixel_t ln_right = el->width();
+						pixel_t new_top	 = fmt_ctx->find_next_line_top(child_top, el->width(), ln_right);
+						// If block was moved to the next line, recalculate its position
+						if(new_top != child_top)
+						{
+							child_top = new_top;
+							fmt_ctx->get_line_left_right(child_top, el->width(), ln_left, ln_right);
+							el->pos().x = ln_left + el->content_offset_left();
+							el->pos().y = child_top + el->border_top() + el->padding_top();
+							child_top	-= el->get_margins().top;
+							// Rollback top margin collapse
+							if(is_first && collapse_top_margin())
+							{
+								top_margin = m_margins.top;
+							}
+						}
+                    }
+                }
+
 				pixel_t auto_margin = el->calc_auto_margins(child_width);
 				if(auto_margin != 0)
 				{
@@ -96,7 +134,8 @@ litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /
                 if (rw > ret_width)
                 {
                     ret_width = rw;
-                }
+				}
+				m_margins.top = top_margin;
                 child_top += el->height();
                 last_margin = el->get_margins().bottom;
 				last_margin_el = el;
