@@ -20,29 +20,9 @@ element::element(const document::ptr& doc) : m_doc(doc)
 position element::get_placement() const
 {
 	position pos;
-	bool is_first = true;
-	for(const auto& ri_el : m_renders)
+	if(m_render)
 	{
-		auto ri = ri_el.lock();
-		if(ri)
-		{
-			position ri_pos = ri->get_placement();
-			if(is_first)
-			{
-				is_first = false;
-				pos = ri_pos;
-			} else
-			{
-				if(pos.x < ri_pos.x)
-				{
-					pos.x = ri_pos.x;
-				}
-				if(pos.y < ri_pos.y)
-				{
-					pos.y = ri_pos.y;
-				}
-			}
-		}
+		pos = m_render->get_placement();
 	}
 	return pos;
 }
@@ -204,9 +184,9 @@ bool element::requires_styles_update()
 	return false;
 }
 
-void element::add_render(const std::shared_ptr<render_item>& ri)
+void element::add_render( std::shared_ptr<render_item> ri)
 {
-	m_renders.push_back(ri);
+	m_render = std::move(ri);
 }
 
 bool element::find_styles_changes( position::vector& redraw_boxes)
@@ -222,19 +202,17 @@ bool element::find_styles_changes( position::vector& redraw_boxes)
 	{
 		auto fetch_boxes = [&](const std::shared_ptr<element>& el)
 			{
-				for(const auto& weak_ri : el->m_renders)
+				auto render_item = el->get_render_item();
+				if(render_item)
 				{
-					auto ri = weak_ri.lock();
-					if(ri)
+					position::vector boxes;
+					render_item->get_rendering_boxes(boxes);
+					for (auto& box : boxes)
 					{
-						position::vector boxes;
-						ri->get_rendering_boxes(boxes);
-						for (auto &box: boxes)
-						{
-							redraw_boxes.push_back(box);
-						}
+						redraw_boxes.push_back(box);
 					}
 				}
+
 			};
 		fetch_boxes(shared_from_this());
 		for (auto& el : m_children)
@@ -416,29 +394,23 @@ void litehtml::element::reset_counter(const string_id& counter_name_id, const in
 
 pixel_t litehtml::element::v_scroll(pixel_t dy) const
 {
-	if(m_renders.empty())
+	if(!m_render)
 		return 0;
-	auto ri_el = m_renders.front().lock();
-	if(!ri_el)
-		return 0;
-	return ri_el->v_scroll(dy);
+	return m_render->v_scroll(dy);
 }
 
 pixel_t litehtml::element::h_scroll(pixel_t dx) const
 {
-	if(m_renders.empty())
+
+	if(!m_render)
 		return 0;
-	auto ri_el = m_renders.front().lock();
-	if(!ri_el)
-		return 0;
-	return ri_el->h_scroll(dx);
+	return m_render->h_scroll(dx);
 }
 
 void litehtml::element::run_on_renderers(const std::function<bool(const std::shared_ptr<render_item>&)>& func)
 {
-	for(const auto& weak_ri : m_renders)
+	for(const auto& ri : m_render->children())
 	{
-		auto ri = weak_ri.lock();
 		if(ri)
 		{
 			if(!func(ri))

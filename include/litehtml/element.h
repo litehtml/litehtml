@@ -30,7 +30,7 @@ namespace litehtml
 		std::weak_ptr<document>					m_doc;
 		elements_list							m_children;
 		css_properties							m_css;
-		std::list<std::weak_ptr<render_item>>	m_renders;
+		std::shared_ptr<render_item>	        m_render;
 		used_selector::vector					m_used_styles;
 
 		virtual void select_all(const css_selector& selector, elements_list& res);
@@ -132,7 +132,7 @@ namespace litehtml
 		std::tuple<element::ptr, element::ptr, element::ptr> split_inlines();
 		virtual std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri);
 		bool requires_styles_update();
-		void add_render(const std::shared_ptr<render_item>& ri);
+		void add_render(std::shared_ptr<render_item> ri);
 		bool find_styles_changes( position::vector& redraw_boxes);
 		element::ptr add_pseudo_before(const style& style)
 		{
@@ -230,11 +230,7 @@ namespace litehtml
 
 	inline std::shared_ptr<render_item> element::get_render_item()
 	{
-		if(m_renders.empty())
-		{
-			return nullptr;
-		}
-		return m_renders.front().lock();
+		return m_render;
 	}
 }
 
