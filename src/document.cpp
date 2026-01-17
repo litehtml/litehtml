@@ -534,6 +534,7 @@ void document::draw( uint_ptr hdc, pixel_t x, pixel_t y, const position* clip )
 	{
 		m_root->draw(hdc, x, y, clip, m_root_render);
 		m_root_render->draw_stacking_context(hdc, x, y, clip, true);
+		m_container->draw_finished(hdc);
 	}
 }
 
