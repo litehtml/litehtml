@@ -2,12 +2,30 @@
 #define LITEHTML_FLOATS_HOLDER_H
 
 #include <list>
+#include "media_query.h"
 #include "types.h"
 
 namespace litehtml
 {
 	class formatting_context
 	{
+	  public:
+		struct new_position
+		{
+			bool	found	 = false; // true if position found else use the suplied position
+			bool	new_line = false; // true if element was moved to new line
+			pixel_t top		 = 0;	  // element top position
+			pixel_t left	 = 0;	  // element left position
+			pixel_t width	 = 0;	  // maximum width available for element
+		};
+
+		struct el_position
+		{
+			margins	 el_margins;		  // element margins
+			position el_pos;			  // element position including margins
+			pixel_t	 container_width = 0; // maximum width on containing block
+		};
+
 	private:
 		std::list<floated_box> m_floats_left;
 		std::list<floated_box> m_floats_right;
@@ -32,7 +50,9 @@ namespace litehtml
 
 		void add_float(const std::shared_ptr<render_item> &el, pixel_t min_width, int context);
 		void clear_floats(int context);
-		pixel_t find_next_line_top( pixel_t top, pixel_t width, pixel_t def_right );
+		new_position place_to_left(const el_position& el_pos);
+		new_position place_to_right(const el_position& el_pos);
+		pixel_t		 find_next_line_top(pixel_t top, pixel_t width, pixel_t def_right);
 		pixel_t get_floats_height(element_float el_float = float_none) const;
 		pixel_t get_left_floats_height() const;
 		pixel_t get_right_floats_height() const;

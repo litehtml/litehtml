@@ -207,20 +207,30 @@ namespace litehtml
 		}
 
 		[[nodiscard]]
-		bool does_intersect(const position* val) const
+		bool does_intersect(const position* val, bool can_touch = false) const
 		{
-			if(!val) return true;
+			if(!val)
+				return true;
 
-			return (
-				left()			<= val->right()		&&
-				right()			>= val->left()		&&
-				bottom()		>= val->top()		&&
-				top()			<= val->bottom()	)
-				|| (
-				val->left()		<= right()			&&
-				val->right()	>= left()			&&
-				val->bottom()	>= top()			&&
-				val->top()		<= bottom()			);
+			if(!can_touch)
+				return (left() <= val->right() && right() >= val->left() && bottom() >= val->top() &&
+						top() <= val->bottom()) ||
+					   (val->left() <= right() && val->right() >= left() && val->bottom() >= top() &&
+						val->top() <= bottom());
+			else
+				return (left() < val->right() && right() > val->left() && bottom() > val->top() &&
+						top() < val->bottom()) ||
+					   (val->left() < right() && val->right() > left() && val->bottom() > top() &&
+						val->top() < bottom());
+		}
+
+		[[nodiscard]]
+		bool on_same_line(const position& val, bool can_touch = false) const
+		{
+			if(can_touch)
+				return !(bottom() <= val.top() || top() >= val.bottom());
+			else
+				return !(bottom() < val.top() || top() > val.bottom());
 		}
 
 		[[nodiscard]]
