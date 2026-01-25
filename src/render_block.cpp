@@ -1,4 +1,5 @@
 #include "render_block.h"
+#include "formatting_context.h"
 #include "render_inline_context.h"
 #include "render_block_context.h"
 #include "document.h"
@@ -8,48 +9,43 @@
 
 litehtml::pixel_t litehtml::render_item_block::place_float(const std::shared_ptr<render_item> &el, pixel_t top, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
-    pixel_t line_top	= fmt_ctx->get_cleared_top(el, top);
-    pixel_t line_left	= 0;
-    pixel_t line_right	= self_size.render_width;
-	fmt_ctx->get_line_left_right(line_top, self_size.render_width, line_left, line_right);
+	pixel_t line_top		   = fmt_ctx->get_cleared_top(el, top);
+	pixel_t line_left		   = 0;
 
-    pixel_t ret_width = 0;
-
-	pixel_t min_rendered_width = el->render(line_left, line_top, self_size.new_width(line_right), fmt_ctx);
+	pixel_t min_rendered_width = el->render(line_left, line_top, self_size.new_width(self_size.render_width), fmt_ctx);
 	if(min_rendered_width < el->width() && el->src_el()->css().get_width().is_predefined())
 	{
 		el->render(line_left, line_top, self_size.new_width(min_rendered_width), fmt_ctx);
 	}
 
-    if (el->src_el()->css().get_float() == float_left)
-    {
-        if(el->right() > line_right)
-        {
-			line_top = fmt_ctx->find_next_line_top(el->top(), el->width(), self_size.render_width);
-            el->pos().x = fmt_ctx->get_line_left(line_top) + el->content_offset_left();
-            el->pos().y = line_top + el->content_offset_top();
-        }
-		fmt_ctx->add_float(el, min_rendered_width, self_size.context_idx);
-		fix_line_width(float_left, self_size, fmt_ctx);
+	formatting_context::new_position new_pos;
+	formatting_context::el_position	 el_pos;
+	el_pos.el_pos			= el->pos();
+	el_pos.el_pos		   += el->get_margins();
+	el_pos.el_pos		   += el->get_paddings();
+	el_pos.el_pos		   += el->get_borders();
+	el_pos.container_width	= self_size.render_width;
+	if(el->src_el()->css().get_float() == float_left)
+	{
+		new_pos = fmt_ctx->place_to_left(el_pos);
+	} else if(el->src_el()->css().get_float() == float_right)
+	{
+		el->pos().x		= self_size.render_width - el_pos.el_pos.width + el->content_offset_left();
+		el_pos.el_pos.x = self_size.render_width - el_pos.el_pos.width;
+		new_pos			= fmt_ctx->place_to_right(el_pos);
+	}
+	pixel_t ret_width = min_rendered_width;
+	if(new_pos.found)
+	{
+		el->pos().x = new_pos.left + el->content_offset_left();
+		el->pos().y = new_pos.top + el->content_offset_top();
+		line_top	= new_pos.top;
+		ret_width	= self_size.render_width - new_pos.width + min_rendered_width;
+	}
+	fmt_ctx->add_float(el, min_rendered_width, self_size.context_idx);
+	fix_line_width(el->src_el()->css().get_float(), self_size, fmt_ctx);
 
-		ret_width = fmt_ctx->find_min_left(line_top, self_size.context_idx);
-    } else if (el->src_el()->css().get_float() == float_right)
-    {
-        if(line_left + el->width() > line_right)
-        {
-            pixel_t new_top = fmt_ctx->find_next_line_top(el->top(), el->width(), self_size.render_width);
-            el->pos().x = fmt_ctx->get_line_right(new_top, self_size.render_width) - el->width() + el->content_offset_left();
-            el->pos().y = new_top + el->content_offset_top();
-        } else
-        {
-            el->pos().x = line_right - el->width() + el->content_offset_left();
-        }
-		fmt_ctx->add_float(el, min_rendered_width, self_size.context_idx);
-		fix_line_width(float_right, self_size, fmt_ctx);
-		line_right = fmt_ctx->find_min_right(line_top, self_size.render_width, self_size.context_idx);
-		ret_width = self_size.render_width - line_right;
-    }
-    return ret_width;
+	return ret_width;
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()

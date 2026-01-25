@@ -1,5 +1,7 @@
 #include "render_item.h"
+#include "string_id.h"
 #include "types.h"
+#include <optional>
 #include "formatting_context.h"
 
 void litehtml::formatting_context::add_float(const std::shared_ptr<render_item> &el, pixel_t min_width, int context)
@@ -307,7 +309,194 @@ litehtml::pixel_t litehtml::formatting_context::get_cleared_top(const std::share
 	return line_top;
 }
 
-litehtml::pixel_t litehtml::formatting_context::find_next_line_top(pixel_t top, pixel_t width, pixel_t def_right )
+litehtml::formatting_context::new_position litehtml::formatting_context::place_to_left(const el_position& el_pos)
+{
+	position pos_el	  = el_pos.el_pos;
+	pos_el.x		 += m_current_left + el_pos.el_margins.left;
+	pos_el.y		 += m_current_top + el_pos.el_margins.top;
+	pos_el.width	 -= el_pos.el_margins.left + el_pos.el_margins.right;
+	auto max_right	  = el_pos.container_width + m_current_left;
+	bool was_changed  = false;
+	bool next_line	  = false;
+	bool left_side	   = false; // true if floating block at the left side
+	bool right_side	   = false; // true if floating block at the right side
+
+	while(true)
+	{
+		std::optional<position> max_left_pos;
+		bool					found	 = false;
+		pixel_t					max_left = m_current_left;
+		left_side						 = false;
+		// check intersection with left floats
+		for(const auto& fb : m_floats_left)
+		{
+			if(fb.pos.on_same_line(pos_el, true))
+			{
+				left_side = true;
+				max_left  = std::max(max_left, fb.pos.right());
+				if(pos_el.x < fb.pos.right())
+				{
+					pos_el.x	 = fb.pos.right();
+					max_left_pos = fb.pos;
+					found		 = true;
+					was_changed	 = true;
+				}
+			}
+		}
+		if(pos_el.right() > max_right && found)
+		{
+			// move to next line
+			next_line = true;
+			pos_el.x  = m_current_left + el_pos.el_margins.left;
+			pos_el.y  = max_left_pos->bottom();
+			left_side = false;
+		} else
+		{
+			found			  = false;
+			pixel_t min_right = max_right;
+			right_side		  = false;
+			// check intersection with right floats
+			for(const auto& fb : m_floats_right)
+			{
+				// calculate minimum right position
+				if(fb.pos.on_same_line(pos_el, true))
+				{
+					right_side = true;
+					min_right  = std::min(min_right, fb.pos.left());
+				}
+				// if element intersects float box move it to the next line
+				if(fb.pos.does_intersect(&pos_el, true))
+				{
+					right_side = false;
+					pos_el.x = m_current_left + el_pos.el_margins.left;
+					pos_el.y =
+						max_left_pos.has_value() ? std::min(max_left_pos->bottom(), fb.pos.bottom()) : fb.pos.bottom();
+					found		= true;
+					next_line	= true;
+					was_changed = true;
+					break;
+				}
+			}
+			if(!found)
+			{
+				// position found
+				new_position pos;
+				pos.found	 = was_changed;
+				pos.new_line = next_line;
+				pos.top		 = pos_el.y - m_current_top - el_pos.el_margins.top;
+				pos.left	 = pos_el.x - m_current_left - el_pos.el_margins.left;
+				pos.width	 = min_right - max_left;
+
+				if(left_side)
+					pos.width += el_pos.el_margins.left;
+				if(right_side)
+					pos.width += el_pos.el_margins.right;
+
+				return pos;
+			}
+		}
+	}
+	// position not found
+	new_position pos;
+	pos.found = false;
+	return pos;
+}
+
+litehtml::formatting_context::new_position litehtml::formatting_context::place_to_right(const el_position& el_pos)
+{
+	position pos_el	  = el_pos.el_pos;
+	pos_el.x		 += m_current_left + el_pos.el_margins.left;
+	pos_el.y		 += m_current_top + el_pos.el_margins.top;
+	pos_el.width	 -= el_pos.el_margins.left + el_pos.el_margins.right;
+	auto max_right	  = el_pos.container_width + m_current_left;
+	bool was_changed  = false;
+	bool next_line	  = false;
+	bool left_side	   = false; // true if floating block at the left side
+	bool right_side	   = false; // true if floating block at the right side
+
+	while(true)
+	{
+		std::optional<position> min_right_pos;
+		bool					found	  = false;
+		pixel_t					min_right = max_right;
+		right_side						  = false;
+		// check intersection with right floats
+		for(const auto& fb : m_floats_right)
+		{
+			// if element intersects float box move it to the left of float box
+			if(fb.pos.on_same_line(pos_el, true))
+			{
+				right_side = true;
+				min_right  = std::min(min_right, fb.pos.left());
+				if(pos_el.right() > fb.pos.left())
+				{
+					pos_el.x	  = fb.pos.left() - pos_el.width;
+					min_right_pos = fb.pos;
+					found		  = true;
+					was_changed	  = true;
+				}
+			}
+		}
+		if(pos_el.left() < m_current_left && found)
+		{
+			// move to next line
+			right_side = false;
+			next_line = true;
+			pos_el.x  = max_right - pos_el.width - el_pos.el_margins.left;
+			pos_el.y  = min_right_pos->bottom();
+		} else
+		{
+			found			 = false;
+			pixel_t max_left = m_current_left;
+			left_side		 = false;
+			// check intersection with left floats
+			for(const auto& fb : m_floats_left)
+			{
+				// calculate maximum left position
+				if(fb.pos.on_same_line(pos_el, true))
+				{
+					left_side = true;
+					max_left  = std::max(max_left, fb.pos.right());
+				}
+				// if element intersects float box move it to the next line
+				if(fb.pos.does_intersect(&pos_el, true))
+				{
+					left_side	= false;
+					pos_el.x	= max_right - pos_el.width - el_pos.el_margins.left;
+					pos_el.y	= min_right_pos.has_value() ? std::min(min_right_pos->bottom(), fb.pos.bottom())
+															: fb.pos.bottom();
+					found		= true;
+					next_line	= true;
+					was_changed = true;
+					break;
+				}
+			}
+			if(!found)
+			{
+				// position found
+				new_position pos;
+				pos.found	 = was_changed;
+				pos.new_line = next_line;
+				pos.top		 = pos_el.y - m_current_top - el_pos.el_margins.top;
+				pos.left	 = pos_el.x - m_current_left - el_pos.el_margins.left;
+				pos.width	 = min_right - max_left;
+
+				if(left_side)
+					pos.width += el_pos.el_margins.left;
+				if(right_side)
+					pos.width += el_pos.el_margins.right;
+
+				return pos;
+			}
+		}
+	}
+	// position not found
+	new_position pos;
+	pos.found = false;
+	return pos;
+}
+
+litehtml::pixel_t litehtml::formatting_context::find_next_line_top(pixel_t top, pixel_t width, pixel_t def_right)
 {
 	top += m_current_top;
 	def_right += m_current_left;
