@@ -318,9 +318,9 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
             {
 				shift_x = 0;
 				spacing_x = (m_right - m_left) - m_width;
-				// don't justify for small lines
-                if (spacing_x > m_width / 4)
-					spacing_x = 0;
+            	// don't justify the last line or small lines
+            	if (last_box || spacing_x > m_width / 2)
+            		spacing_x = 0;
             }
             break;
         default:
