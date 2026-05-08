@@ -182,9 +182,10 @@ std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inlin
     return ret;
 }
 
+
 litehtml::pixel_t litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box_item>& el, line_context& line_ctx, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
-	auto items = finish_last_box(false, self_size);
+    auto items = finish_last_box(end_of_render(el->get_el()->src_el()), self_size);
 	pixel_t line_top = 0;
 	if(!m_line_boxes.empty())
 	{
@@ -345,6 +346,19 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
     }
 
 	m_line_boxes.back()->add_item(std::move(item));
+}
+
+bool litehtml::render_item_inline_context::end_of_render(const shared_ptr<element> &el) {
+    if (!m_line_boxes.empty() && !m_line_boxes.back()->items().empty()) {
+        if (m_line_boxes.back()->items().back()->get_el()->src_el()->is_break()) {
+            return true;
+        }
+    }
+    auto display_style = el->css().get_display();
+    if (display_style == display_inline_block || display_style == display_block) {
+        return true;
+    }
+    return false;
 }
 
 void litehtml::render_item_inline_context::apply_vertical_align()

@@ -37,6 +37,9 @@ namespace litehtml
 
 		std::list<std::unique_ptr<line_box_item> > finish_last_box(bool end_of_render, const containing_block_context &self_size);
 		void place_inline(std::unique_ptr<line_box_item> item, const containing_block_context &self_size, formatting_context* fmt_ctx);
+
+        bool end_of_render(const shared_ptr<element> &el);
+
 		pixel_t new_box(const std::unique_ptr<line_box_item>& el, line_context& line_ctx, const containing_block_context &self_size, formatting_context* fmt_ctx);
 		void apply_vertical_align() override;
 	public:
