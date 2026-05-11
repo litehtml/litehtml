@@ -36,8 +36,8 @@ AlignConsecutiveDeclarations:
   AcrossComments: false
 AlignConsecutiveAssignments:
   Enabled: true
-  AcrossEmptyLines: true
-  AcrossComments: true
+  AcrossEmptyLines: false
+  AcrossComments: false
   AlignCompound: true
   AlignFunctionPointers: true
   PadOperators: true
