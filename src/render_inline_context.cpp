@@ -192,6 +192,7 @@ litehtml::pixel_t litehtml::render_item_inline_context::new_box(const std::uniqu
 	{
 		line_top = m_line_boxes.back()->bottom();
 	}
+	line_top = fmt_ctx->get_cleared_top(el->get_el(), line_top);
 
 	pixel_t first_line_margin = 0;
 	pixel_t text_indent		  = 0;
