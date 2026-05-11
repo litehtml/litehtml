@@ -330,6 +330,10 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 		// check intersection with left floats
 		for(const auto& fb : m_floats_left)
 		{
+			if(fb.pos.height == 0)
+			{
+				continue;
+			}
 			if(fb.pos.on_same_line(pos_el, true))
 			{
 				left_side = true;
@@ -358,6 +362,10 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 			// check intersection with right floats
 			for(const auto& fb : m_floats_right)
 			{
+				if(fb.pos.height == 0)
+				{
+					continue;
+				}
 				// calculate minimum right position
 				if(fb.pos.on_same_line(pos_el, true))
 				{
@@ -423,6 +431,10 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 		// check intersection with right floats
 		for(const auto& fb : m_floats_right)
 		{
+			if(fb.pos.height == 0)
+			{
+				continue;
+			}
 			// if element intersects float box move it to the left of float box
 			if(fb.pos.on_same_line(pos_el, true))
 			{
@@ -452,6 +464,10 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 			// check intersection with left floats
 			for(const auto& fb : m_floats_left)
 			{
+				if(fb.pos.height == 0)
+				{
+					continue;
+				}
 				// calculate maximum left position
 				if(fb.pos.on_same_line(pos_el, true))
 				{
