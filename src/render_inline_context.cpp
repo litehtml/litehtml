@@ -68,7 +68,7 @@ litehtml::pixel_t litehtml::render_item_inline_context::_render_content(pixel_t 
 			}
         });
 
-    finish_last_box(true, self_size);
+    finish_last_box(true, self_size, true);
 
     if (!m_line_boxes.empty())
     {
@@ -162,13 +162,13 @@ void litehtml::render_item_inline_context::fix_line_width(element_float flt,
     }
 }
 
-std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inline_context::finish_last_box(bool end_of_render, const containing_block_context &self_size)
+std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inline_context::finish_last_box(bool end_of_render, const containing_block_context &self_size, bool is_last_line)
 {
 	std::list<std::unique_ptr<line_box_item> > ret;
 
     if(!m_line_boxes.empty())
     {
-		ret = m_line_boxes.back()->finish(end_of_render, self_size);
+		ret = m_line_boxes.back()->finish(end_of_render, self_size, is_last_line);
 
         if(m_line_boxes.back()->is_empty() && end_of_render)
         {
@@ -185,7 +185,7 @@ std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inlin
 
 litehtml::pixel_t litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box_item>& el, line_context& line_ctx, const containing_block_context &self_size, formatting_context* fmt_ctx)
 {
-    auto items = finish_last_box(end_of_render(el->get_el()->src_el()), self_size);
+    auto items = finish_last_box(false, self_size, end_of_line(el->get_el()->src_el()));
 	pixel_t line_top = 0;
 	if(!m_line_boxes.empty())
 	{
@@ -348,7 +348,7 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
 	m_line_boxes.back()->add_item(std::move(item));
 }
 
-bool litehtml::render_item_inline_context::end_of_render(const shared_ptr<element> &el) {
+bool litehtml::render_item_inline_context::end_of_line(const shared_ptr<element> &el) {
     if (!m_line_boxes.empty() && !m_line_boxes.back()->items().empty()) {
         if (m_line_boxes.back()->items().back()->get_el()->src_el()->is_break()) {
             return true;

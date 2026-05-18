@@ -215,7 +215,7 @@ litehtml::pixel_t litehtml::line_box::calc_va_baseline(const va_context& current
 	}
 }
 
-std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish(bool last_box, const containing_block_context &containing_block_size)
+std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish(bool last_box, const containing_block_context &containing_block_size, bool is_last_line)
 {
 	std::list< std::unique_ptr<line_box_item> > ret_items;
 
@@ -319,7 +319,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 				shift_x = 0;
 				spacing_x = (m_right - m_left) - m_width;
             	// don't justify the last line or small lines
-            	if (last_box || spacing_x > m_width / 2)
+            	if (is_last_line || spacing_x > m_width / 2)
             		spacing_x = 0;
             }
             break;
