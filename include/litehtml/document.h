@@ -115,6 +115,18 @@ namespace litehtml
 			const string&        master_styles = litehtml::master_css,
 			const string&        user_styles = "");
 
+		static document::ptr  createFromString(
+			const char* str,
+			document_container* container,
+			const string& master_styles = litehtml::master_css,
+			const string& user_styles = "");
+
+		static document::ptr  createFromString(
+			const string& str,
+			document_container* container,
+			const string& master_styles = litehtml::master_css,
+			const string& user_styles = "");
+
 	private:
 		uint_ptr	add_font(const font_description& descr, font_metrics* fm);
 

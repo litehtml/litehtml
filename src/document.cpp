@@ -149,6 +149,17 @@ document::ptr document::createFromString(
 	return doc;
 }
 
+document::ptr document::createFromString(const char* str, document_container* container, const string& master_styles, const string& user_styles)
+{
+	if (!str) { return nullptr; }
+	return createFromString({str, encoding::utf_8}, container, master_styles, user_styles);
+}
+
+document::ptr document::createFromString(const string& str, document_container* container, const string& master_styles, const string& user_styles)
+{
+	return createFromString(str.c_str(), container, master_styles, user_styles);
+}
+
 // https://html.spec.whatwg.org/multipage/parsing.html#change-the-encoding
 encoding adjust_meta_encoding(encoding meta_encoding, encoding current_encoding)
 {
