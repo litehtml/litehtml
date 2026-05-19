@@ -16,7 +16,7 @@ static document::ptr  document::createFromString(
     const string&        user_styles = "");
 ```
 
-if it's conding is `utf-8`, you can simply:
+if it's enconding is `utf-8`, you can simply:
 
 ```cpp
 std::string html = "<html>...</html>";
@@ -38,13 +38,13 @@ auto doc = litehtml::createFromString("<html>...</html>", container, litehtml::m
 
 ### Parameter
 
-- **str** is input `HTML` string;
+- `str` is input **HTML** string;
 
-- **container** is platform specific, you could use already existed ( for example `win32_container` `cario_container` and so on), or just according to `litehtml::document_container()` to write you own's container 
+- `container` is platform specific, you could use already existed ( for example **win32_container** **cario_container** and so on), or just according to **litehtml::document_container()** to write you own's container 
 
--  **master_styles** is all element's default css style
+-  `master_styles` is all element's **default** css style
 
-- **user_styles** is user custom css style, it's highest priority, and `user_styles` > HTML content's CSS( style sheets **linked in document** and **seperate css file**  ) > `master_styles`
+- `user_styles` is user custom css style, it's **highest** priority, and `user_styles` > HTML content's CSS( style sheets **linked in document** and **seperate css file**  ) > `master_styles`
 
 
 ## Advanced Encoding
