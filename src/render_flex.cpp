@@ -2,7 +2,9 @@
 #include "render_flex.h"
 #include "html_tag.h"
 
-litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t y, bool /*second_pass*/, const containing_block_context &self_size, formatting_context* fmt_ctx)
+litehtml::rendered_width litehtml::render_item_flex::_render_content(pixel_t x, pixel_t y, bool /*second_pass*/,
+																	 const containing_block_context& self_size,
+																	 formatting_context*			 fmt_ctx)
 {
 	bool is_row_direction = true;
 	bool reverse = false;
@@ -227,7 +229,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
 	m_pos.x += content_offset_left();
 	m_pos.y += content_offset_top();
 
-	return ret_width;
+	return {ret_width, ret_width};
 }
 
 std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(const litehtml::containing_block_context &self_size,

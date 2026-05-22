@@ -7,15 +7,17 @@
 #include "html_tag.h"
 #include "types.h"
 
-litehtml::pixel_t litehtml::render_item_block::place_float(const std::shared_ptr<render_item> &el, pixel_t top, const containing_block_context &self_size, formatting_context* fmt_ctx)
+litehtml::rendered_width litehtml::render_item_block::place_float(const std::shared_ptr<render_item>& el, pixel_t top,
+																  const containing_block_context& self_size,
+																  formatting_context*			  fmt_ctx)
 {
 	pixel_t line_top		   = fmt_ctx->get_cleared_top(el, top);
-	pixel_t line_left		   = 0;
+	pixel_t line_left = 0;
 
-	pixel_t min_rendered_width = el->render(line_left, line_top, self_size.new_width(self_size.render_width), fmt_ctx);
-	if(min_rendered_width < el->width() && el->src_el()->css().get_width().is_predefined())
+	auto nv = el->render(line_left, line_top, self_size.new_width(self_size.render_width), fmt_ctx);
+	if(nv.natural_width < el->width() && el->src_el()->css().get_width().is_predefined())
 	{
-		el->render(line_left, line_top, self_size.new_width(min_rendered_width), fmt_ctx);
+		el->render(line_left, line_top, self_size.new_width(nv.natural_width), fmt_ctx);
 	}
 
 	formatting_context::new_position new_pos;
@@ -34,18 +36,17 @@ litehtml::pixel_t litehtml::render_item_block::place_float(const std::shared_ptr
 		el_pos.el_pos.x = self_size.render_width - el_pos.el_pos.width;
 		new_pos			= fmt_ctx->place_to_right(el_pos);
 	}
-	pixel_t ret_width = min_rendered_width;
+	nv.min_width = nv.natural_width;
 	if(new_pos.found)
 	{
 		el->pos().x = new_pos.left + el->content_offset_left();
 		el->pos().y = new_pos.top + el->content_offset_top();
-		line_top	= new_pos.top;
-		ret_width	= self_size.render_width - new_pos.width + min_rendered_width;
 	}
-	fmt_ctx->add_float(el, min_rendered_width, self_size.context_idx);
+	nv.natural_width = self_size.render_width - new_pos.width + nv.natural_width;
+	fmt_ctx->add_float(el, nv.min_width, self_size.context_idx);
 	fix_line_width(el->src_el()->css().get_float(), self_size, fmt_ctx);
 
-	return ret_width;
+	return nv;
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
@@ -178,20 +179,22 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
     for(auto& el : ret->children())
     {
         el = el->init();
-    }
+	}
 
-    return ret;
+	return ret;
 }
 
-litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y, const containing_block_context &containing_block_size, formatting_context* fmt_ctx, bool second_pass)
+litehtml::rendered_width litehtml::render_item_block::_render(pixel_t x, pixel_t y,
+															  const containing_block_context& containing_block_size,
+															  formatting_context* fmt_ctx, bool second_pass)
 {
 	containing_block_context self_size = calculate_containing_block_context(containing_block_size);
 
     //*****************************************
     // Render content
     //*****************************************
-	pixel_t ret_width = _render_content(x, y, second_pass, self_size, fmt_ctx);
-    //*****************************************
+	auto [ret_width, ret_min_width] = _render_content(x, y, second_pass, self_size, fmt_ctx);
+	//*****************************************
 
 	if (src_el()->css().get_display() == display_list_item)
 	{
@@ -333,9 +336,26 @@ litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y, con
             if (m_pos.height < sz.height)
             {
 				m_pos.height = sz.height;
-            }
-        }
-    }
+			}
+		}
+	}
 
-    return ret_width + content_offset_width();
+	rendered_width ret;
+	ret.natural_width = ret_width + content_offset_width();
+	if(css().get_overflow() > overflow_visible && css().get_width().is_predefined() &&
+	   css().get_display() != display_table_cell)
+	{
+		ret.min_width = content_offset_left() + content_offset_right();
+	} else
+	{
+		if(css().get_width().is_predefined())
+		{
+			ret.min_width = ret_min_width + content_offset_width();
+		} else
+		{
+			ret.min_width = width();
+		}
+	}
+
+	return ret;
 }

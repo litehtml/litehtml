@@ -309,7 +309,7 @@ litehtml::pixel_t litehtml::formatting_context::get_cleared_top(const std::share
 	return line_top;
 }
 
-litehtml::formatting_context::new_position litehtml::formatting_context::place_to_left(const el_position& el_pos)
+litehtml::formatting_context::new_position litehtml::formatting_context::place_to_left(const el_position& el_pos) const
 {
 	position pos_el	  = el_pos.el_pos;
 	pos_el.x		 += m_current_left + el_pos.el_margins.left;
@@ -410,7 +410,7 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 	return pos;
 }
 
-litehtml::formatting_context::new_position litehtml::formatting_context::place_to_right(const el_position& el_pos)
+litehtml::formatting_context::new_position litehtml::formatting_context::place_to_right(const el_position& el_pos) const
 {
 	position pos_el	  = el_pos.el_pos;
 	pos_el.x		 += m_current_left + el_pos.el_margins.left;

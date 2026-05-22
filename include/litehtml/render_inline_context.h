@@ -28,10 +28,11 @@ namespace litehtml
 			explicit inlines_item(const std::shared_ptr<render_item>& el) : element(el) {}
 		};
 	protected:
-		std::vector<std::unique_ptr<litehtml::line_box> > m_line_boxes;
-		pixel_t m_max_line_width;
+		std::vector<std::unique_ptr<litehtml::line_box>> m_line_boxes;
+		rendered_width									 m_rendered_width;
 
-		pixel_t _render_content(pixel_t x, pixel_t y, bool second_pass, const containing_block_context &self_size, formatting_context* fmt_ctx) override;
+		rendered_width _render_content(pixel_t x, pixel_t y, bool second_pass,
+									   const containing_block_context& self_size, formatting_context* fmt_ctx) override;
 		void fix_line_width(element_float flt,
 							const containing_block_context &self_size, formatting_context* fmt_ctx) override;
 
@@ -40,9 +41,12 @@ namespace litehtml
 		pixel_t new_box(const std::unique_ptr<line_box_item>& el, const containing_block_context& self_size,
 						formatting_context* fmt_ctx);
 		void apply_vertical_align() override;
-	public:
-		explicit render_item_inline_context(std::shared_ptr<element>  src_el) : render_item_block(std::move(src_el)), m_max_line_width(0)
-		{}
+
+	  public:
+		explicit render_item_inline_context(std::shared_ptr<element> src_el) :
+			render_item_block(std::move(src_el))
+		{
+		}
 
 		std::shared_ptr<render_item> clone() override
 		{

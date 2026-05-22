@@ -32,12 +32,12 @@ namespace litehtml
 
 		containing_block_context calculate_containing_block_context(const containing_block_context& cb_context);
 		void calc_cb_length(const css_length& len, pixel_t percent_base, containing_block_context::typed_pixel& out_value) const;
-		virtual pixel_t _render(pixel_t /*x*/, pixel_t /*y*/, const containing_block_context& /*containing_block_size*/, formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
-		{
-			return 0;
-		}
+		virtual rendered_width	 _render(pixel_t /*x*/, pixel_t /*y*/,
+										 const containing_block_context& /*containing_block_size*/,
+										 formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
+		{ return {0, 0}; }
 
-    public:
+	  public:
         explicit render_item(std::shared_ptr<element>  src_el);
 
         virtual ~render_item() = default;
@@ -432,8 +432,9 @@ namespace litehtml
 			return false;
 		}
 
-		pixel_t render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass = false);
-        void apply_relative_shift(const containing_block_context &containing_block_size);
+		rendered_width render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
+							  formatting_context* fmt_ctx, bool second_pass = false);
+		void apply_relative_shift(const containing_block_context &containing_block_size);
         void calc_outlines( pixel_t parent_width );
         pixel_t calc_auto_margins(pixel_t parent_width);	// returns left margin
 

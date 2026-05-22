@@ -27,10 +27,10 @@ litehtml::render_item::render_item(std::shared_ptr<element>  _src_el) :
     m_borders.bottom	= doc->to_pixels(src_el()->css().get_borders().bottom.width, fm, 0);
 }
 
-litehtml::pixel_t litehtml::render_item::render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size, formatting_context* fmt_ctx, bool second_pass)
+litehtml::rendered_width litehtml::render_item::render(pixel_t x, pixel_t y,
+													   const containing_block_context& containing_block_size,
+													   formatting_context* fmt_ctx, bool second_pass)
 {
-	pixel_t ret;
-
 	calc_outlines(containing_block_size.width);
 
 	m_pos.clear();
@@ -46,14 +46,14 @@ litehtml::pixel_t litehtml::render_item::render(pixel_t x, pixel_t y, const cont
 	if(src_el()->is_block_formatting_context() || ! fmt_ctx)
 	{
 		formatting_context fmt;
-		ret = _render(x, y, containing_block_size, &fmt, second_pass);
+		auto			   ret = _render(x, y, containing_block_size, &fmt, second_pass);
 		fmt.apply_relative_shift(containing_block_size);
-	} else
-	{
-		fmt_ctx->push_position(x + content_left, y + content_top);
-		ret = _render(x, y, containing_block_size, fmt_ctx, second_pass);
-		fmt_ctx->pop_position(x + content_left, y + content_top);
+		return ret;
 	}
+
+	fmt_ctx->push_position(x + content_left, y + content_top);
+	auto ret = _render(x, y, containing_block_size, fmt_ctx, second_pass);
+	fmt_ctx->pop_position(x + content_left, y + content_top);
 	return ret;
 }
 
