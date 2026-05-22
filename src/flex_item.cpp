@@ -140,9 +140,11 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 	def_value<pixel_t> content_size(0);
 	if (el->css().get_min_width().is_predefined())
 	{
-		min_size = el->render(0, 0,
-							  self_size.new_width(el->content_offset_width(),
-												  containing_block_context::size_mode_content), fmt_ctx);
+		min_size =
+			el->render(0, 0,
+					   self_size.new_width(el->content_offset_width(), containing_block_context::size_mode_content),
+					   fmt_ctx)
+				.natural_width;
 		content_size = min_size;
 	} else
 	{
@@ -183,10 +185,12 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 				break;
 			case flex_basis_fit_content:
 			case flex_basis_content:
-				base_size = el->render(0, 0, self_size.new_width(self_size.render_width + el->content_offset_width(),
-																 containing_block_context::size_mode_content |
-																 containing_block_context::size_mode_exact_width),
-									   fmt_ctx);
+				base_size = el->render(0, 0,
+									   self_size.new_width(self_size.render_width + el->content_offset_width(),
+														   containing_block_context::size_mode_content |
+															   containing_block_context::size_mode_exact_width),
+									   fmt_ctx)
+								.natural_width;
 				break;
 			case flex_basis_min_content:
 				if(content_size.is_default())
@@ -194,7 +198,8 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 					content_size = el->render(0, 0,
 											  self_size.new_width(el->content_offset_width(),
 																  containing_block_context::size_mode_content),
-											  fmt_ctx);
+											  fmt_ctx)
+									   .natural_width;
 				}
 				base_size = content_size;
 				break;

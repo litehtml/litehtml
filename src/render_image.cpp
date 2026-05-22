@@ -2,7 +2,9 @@
 #include "document.h"
 #include "types.h"
 
-litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, const containing_block_context &containing_block_size, formatting_context* /*fmt_ctx*/, bool /*second_pass*/)
+litehtml::rendered_width litehtml::render_item_image::_render(pixel_t x, pixel_t y,
+															  const containing_block_context& containing_block_size,
+															  formatting_context* /*fmt_ctx*/, bool /*second_pass*/)
 {
     pixel_t parent_width = containing_block_size.width;
 	containing_block_context self_size = calculate_containing_block_context(containing_block_size);
@@ -137,7 +139,10 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y, con
     m_pos.x	+= content_offset_left();
     m_pos.y += content_offset_top();
 
-    return m_pos.width + content_offset_left() + content_offset_right();
+	rendered_width ret;
+	ret.natural_width = ret.min_width = m_pos.width + content_offset_left() + content_offset_right();
+
+	return ret;
 }
 
 litehtml::pixel_t litehtml::render_item_image::calc_max_height(pixel_t image_height, pixel_t containing_block_height)

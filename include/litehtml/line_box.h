@@ -137,39 +137,41 @@ namespace litehtml
         font_metrics			m_font_metrics;
         pixel_t					m_baseline;
         text_align				m_text_align;
-		pixel_t 				m_min_width;
+		rendered_width			m_rendered_width;
+
 		std::list< std::unique_ptr<line_box_item> > m_items;
     public:
-        line_box(pixel_t top, pixel_t left, pixel_t right, const css_line_height_t& line_height, const font_metrics& fm, text_align align) :
-				m_top(top),
-				m_left(left),
-				m_right(right),
-				m_height(0),
-				m_width(0),
-				m_default_line_height(line_height),
-				m_font_metrics(fm),
-				m_baseline(0),
-				m_text_align(align),
-				m_min_width(0)
+		line_box(pixel_t top, pixel_t left, pixel_t right, const css_line_height_t& line_height, const font_metrics& fm,
+				 text_align align) :
+			m_top(top),
+			m_left(left),
+			m_right(right),
+			m_height(0),
+			m_width(0),
+			m_default_line_height(line_height),
+			m_font_metrics(fm),
+			m_baseline(0),
+			m_text_align(align)
 		{
-        }
+		}
 
-        pixel_t		bottom() const	{ return m_top + height();	}
-        pixel_t		top() const		{ return m_top;				}
-        pixel_t		right() const	{ return m_left + width();	}
-        pixel_t		left() const	{ return m_left;			}
-        pixel_t		height() const  { return m_height;				}
-        pixel_t	 	width() const	{ return m_width;				}
-		pixel_t	 	line_right() const	{ return m_right;			}
-		pixel_t	 	min_width() const	{ return m_min_width;		}
+		pixel_t		   bottom() const { return m_top + height(); }
+		pixel_t		   top() const { return m_top; }
+		pixel_t		   right() const { return m_left + width(); }
+		pixel_t		   left() const { return m_left; }
+		pixel_t		   height() const { return m_height; }
+		pixel_t		   width() const { return m_width; }
+		pixel_t		   line_right() const { return m_right; }
+		rendered_width get_rendered_width() const { return m_rendered_width; }
 
-        void				add_item(std::unique_ptr<line_box_item> item);
-        bool				can_hold(const std::unique_ptr<line_box_item>& item, white_space ws) const;
-        bool				is_empty() const;
-        pixel_t				baseline() const;
-        pixel_t				top_margin() const;
-        pixel_t				bottom_margin() const;
-        void				y_shift(pixel_t shift);
+		void	add_item(std::unique_ptr<line_box_item> item);
+		bool	can_hold(const std::unique_ptr<line_box_item>& item, white_space ws) const;
+		bool	is_empty() const;
+		pixel_t baseline() const;
+		pixel_t top_margin() const;
+		pixel_t bottom_margin() const;
+		void	y_shift(pixel_t shift);
+		
 		std::list< std::unique_ptr<line_box_item> >	finish(bool last_box, const containing_block_context &containing_block_size);
 		std::list< std::unique_ptr<line_box_item> > new_width(pixel_t left, pixel_t right);
 		std::shared_ptr<render_item> 		get_last_text_part() const;

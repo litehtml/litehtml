@@ -346,7 +346,7 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
 	current_context.start_lbi = nullptr;
 	current_context.line_height = m_default_line_height.computed_value;
 
-	m_min_width = 0;
+	m_rendered_width.reset();
 
 	struct items_dimensions
 	{
@@ -379,7 +379,8 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
     for (const auto& lbi : m_items)
 	{
 		// Apply text-align-justify
-		m_min_width += lbi->get_rendered_min_width();
+		m_rendered_width.natural_width += lbi->get_rendered_min_width();
+		m_rendered_width.min_width		= std::max(m_rendered_width.min_width, lbi->get_rendered_min_width());
 		if (spacing_x != 0 && counter)
 		{
 			cixx += offj;

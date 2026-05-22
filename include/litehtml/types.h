@@ -93,6 +93,23 @@ namespace litehtml
 		text_emphasis_position_right	= 0x04,
 	};
 
+	struct rendered_width
+	{
+		pixel_t natural_width = 0; // The width required to render the element without additional word wrapping.
+		pixel_t min_width	  = 0; // The minimum width the element can be rendered
+
+		void merge(const rendered_width& other)
+		{
+			natural_width = std::max(natural_width, other.natural_width);
+			min_width	  = std::max(min_width, other.min_width);
+		}
+
+		void reset()
+		{
+			natural_width = 0;
+			min_width	  = 0;
+		}
+	};
 
 	using byte = unsigned char;
 	using ucode_t = unsigned int;

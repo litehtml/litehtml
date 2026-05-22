@@ -3,16 +3,16 @@
 #include "iterators.h"
 #include "types.h"
 
-litehtml::pixel_t litehtml::render_item_inline_context::_render_content(pixel_t /*x*/, pixel_t /*y*/, bool /*second_pass*/, const containing_block_context &self_size, formatting_context* fmt_ctx)
+litehtml::rendered_width litehtml::render_item_inline_context::_render_content(
+	pixel_t /*x*/, pixel_t /*y*/, bool /*second_pass*/, const containing_block_context& self_size,
+	formatting_context* fmt_ctx)
 {
     m_line_boxes.clear();
-	m_max_line_width = 0;
+	m_rendered_width.reset();
 
-    white_space ws = src_el()->css().get_white_space();
-    bool skip_spaces = false;
-    if (ws == white_space_normal ||
-        ws == white_space_nowrap ||
-        ws == white_space_pre_line)
+	white_space ws			= src_el()->css().get_white_space();
+	bool		skip_spaces = false;
+	if(ws == white_space_normal || ws == white_space_nowrap || ws == white_space_pre_line)
     {
         skip_spaces = true;
     }
@@ -92,7 +92,7 @@ litehtml::pixel_t litehtml::render_item_inline_context::_render_content(pixel_t 
         }
     }
 
-    return m_max_line_width;
+	return m_rendered_width;
 }
 
 void litehtml::render_item_inline_context::fix_line_width(element_float flt,
@@ -176,10 +176,10 @@ std::list<std::unique_ptr<litehtml::line_box_item> > litehtml::render_item_inlin
             m_line_boxes.pop_back();
         } else
 		{
-			m_max_line_width = std::max(m_max_line_width, m_line_boxes.back()->min_width());
+			m_rendered_width.merge(m_line_boxes.back()->get_rendered_width());
 		}
-    }
-    return ret;
+	}
+	return ret;
 }
 
 litehtml::pixel_t litehtml::render_item_inline_context::new_box(const std::unique_ptr<line_box_item>& el,
@@ -243,19 +243,16 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
         {
             line_top = m_line_boxes.back()->top();
         }
-        pixel_t ret = place_float(item->get_el(), line_top, self_size, fmt_ctx);
-		if(ret > m_max_line_width)
-		{
-			m_max_line_width = ret;
-		}
+		auto rw = place_float(item->get_el(), line_top, self_size, fmt_ctx);
+		m_rendered_width.merge(rw);
 		return;
-    }
+	}
 
 	if(item->get_type() == line_box_item::type_text_part)
 	{
 		if(item->get_el()->src_el()->is_inline_box())
 		{
-			pixel_t min_rendered_width = item->get_el()->render(0, 0, self_size, fmt_ctx);
+			pixel_t min_rendered_width = item->get_el()->render(0, 0, self_size, fmt_ctx).natural_width;
 			if(min_rendered_width < item->get_el()->width() && item->get_el()->src_el()->css().get_width().is_predefined())
 			{
 				item->get_el()->render(0, 0, self_size.new_width(min_rendered_width), fmt_ctx);
