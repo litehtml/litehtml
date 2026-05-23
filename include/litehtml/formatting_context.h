@@ -52,7 +52,6 @@ namespace litehtml
 		void clear_floats(int context);
 		new_position place_to_left(const el_position& el_pos) const;
 		new_position place_to_right(const el_position& el_pos) const;
-		pixel_t		 find_next_line_top(pixel_t top, pixel_t width, pixel_t def_right);
 		pixel_t get_floats_height(element_float el_float = float_none) const;
 		pixel_t get_left_floats_height() const;
 		pixel_t get_right_floats_height() const;
