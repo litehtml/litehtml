@@ -55,8 +55,7 @@ set(SOURCE_LITEHTML
 	src/style.cpp
 	src/stylesheet.cpp
 	src/table.cpp
-	src/tstring_view.cpp
-	src/url.cpp
+		src/url.cpp
 	src/url_path.cpp
 	src/utf8_strings.cpp
 	src/web_color.cpp
@@ -125,8 +124,7 @@ set(HEADER_LITEHTML
 	include/litehtml/style.h
 	include/litehtml/stylesheet.h
 	include/litehtml/table.h
-	include/litehtml/tstring_view.h
-	include/litehtml/types.h
+		include/litehtml/types.h
 	include/litehtml/url.h
 	include/litehtml/url_path.h
 	include/litehtml/utf8_strings.h
