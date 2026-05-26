@@ -1699,11 +1699,16 @@ bool end_condition(int index)
 	return index >= 1024;
 }
 
+struct abort_prescan_exception : public std::exception
+{
+	const char* what() const noexcept override { return "abort prescan"; }
+};
+
 void increment(int& index, const string& str)
 {
 	index++;
 	if (index >= (int)str.size() || end_condition(index))
-		throw 0; // abort prescan
+		throw abort_prescan_exception(); // abort prescan
 }
 
 // https://html.spec.whatwg.org/multipage/parsing.html#concept-get-attributes-when-sniffing
@@ -1808,7 +1813,8 @@ loop:
 	if (match(str, index, "<!--"))
 	{
 		index = (int)str.find("-->", index);
-		if (index == -1 || end_condition(index)) throw 0; // abort prescan
+		if(index == -1 || end_condition(index))
+			throw abort_prescan_exception(); // abort prescan
 		index += 2; // not 3 because it will be incremented one more time in step 5 (next_byte)
 	}
 	else if (match_i(str, index, "<meta") && (is_whitespace(str[index + 5]) || str[index + 5] == '/'))
@@ -1889,7 +1895,8 @@ loop:
 	{
 		// 1.
 		index = (int)str.find_first_of(" \t\r\n\f>", index);
-		if (index == -1 || end_condition(index)) throw 0; // abort prescan
+		if(index == -1 || end_condition(index))
+			throw abort_prescan_exception(); // abort prescan
 
 		// 2.
 		string tmp;
@@ -1899,7 +1906,8 @@ loop:
 	else if (str[index] == '<' && is_one_of(str[index + 1], '!', '/', '?'))
 	{
 		index = (int)str.find('>', index);
-		if (index == -1 || end_condition(index)) throw 0; // abort prescan
+		if(index == -1 || end_condition(index))
+			throw abort_prescan_exception(); // abort prescan
 	}
 
 	// 5.
@@ -1979,7 +1987,7 @@ encoding prescan_for_encoding(const string& str)
 	try {
 		return prescan_a_byte_stream_to_determine_its_encoding(str);
 	}
-	catch (int)
+	catch(abort_prescan_exception&)
 	{
 		return get_xml_encoding(str);
 	}
