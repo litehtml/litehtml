@@ -292,7 +292,6 @@
     <ClCompile Include="src\style.cpp" />
     <ClCompile Include="src\stylesheet.cpp" />
     <ClCompile Include="src\table.cpp" />
-    <ClCompile Include="src\tstring_view.cpp" />
     <ClCompile Include="src\url.cpp" />
     <ClCompile Include="src\url_path.cpp" />
     <ClCompile Include="src\utf8_strings.cpp" />
