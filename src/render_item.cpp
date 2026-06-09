@@ -1416,6 +1416,28 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 		ret.max_height.value -= box_sizing_height();
 	}
 
+	// Issue #459: a flex item is rendered to its resolved main size via
+	// size_mode_exact_width. For a row-direction flex container the flex algorithm
+	// has already clamped the item's main size by its min/max-width, resolved
+	// against the flex container's width (see
+	// flex_item_row_direction::direction_specific_init). Re-applying a *percentage*
+	// min/max-width here would resolve it against the item's own exact size
+	// (cb_context.width == the assigned main size) instead of the container, and
+	// because the item is rendered more than once (flex_line::init, then
+	// align_stretch) the error compounds and the item collapses towards its content
+	// width. So skip the width clamp on that exact-width pass.
+	if (cb_context.size_mode & containing_block_context::size_mode_exact_width)
+	{
+		auto par = parent();
+		if (par && (par->css().get_display() == display_flex || par->css().get_display() == display_inline_flex)
+			&& (par->css().get_flex_direction() == flex_direction_row
+				|| par->css().get_flex_direction() == flex_direction_row_reverse))
+		{
+			ret.min_width.type = containing_block_context::cbc_value_type_none;
+			ret.max_width.type = containing_block_context::cbc_value_type_none;
+		}
+	}
+
 	return ret;
 }
 
