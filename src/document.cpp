@@ -840,6 +840,17 @@ bool document::media_changed()
 	{
 		m_root->refresh_styles();
 		m_root->compute_styles();
+		// The set of rendered elements can change across a media breakpoint
+		// (e.g. display:none <-> block on responsive nav/hero blocks). The render
+		// tree is built once in createFromString() from the computed display values,
+		// so rebuild it here to add/remove render items for elements whose display
+		// just changed; otherwise a newly-shown element keeps no render item and
+		// never lays out (it collapses to zero).
+		m_root_render = m_root->create_render_item(nullptr);
+		if (m_root_render)
+		{
+			m_root_render = m_root_render->init();
+		}
 		return true;
 	}
 	return false;
