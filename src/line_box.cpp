@@ -218,9 +218,14 @@ litehtml::pixel_t litehtml::line_box::calc_va_baseline(const va_context& current
 std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish(bool last_box, const containing_block_context &containing_block_size)
 {
 	std::list< std::unique_ptr<line_box_item> > ret_items;
+	bool									  finished_with_break = false;
 
 	if(!last_box)
 	{
+		if(!is_empty())
+		{
+			finished_with_break = m_items.back()->get_el()->src_el()->is_break();
+		}
 		while(!m_items.empty())
 		{
 			if (m_items.back()->get_type() == line_box_item::type_text_part)
@@ -314,16 +319,13 @@ std::list< std::unique_ptr<litehtml::line_box_item> > litehtml::line_box::finish
             }
             break;
         case text_align_justify:
-            if (m_width < (m_right - m_left))
-            {
-				shift_x = 0;
+			if(m_width < (m_right - m_left) && !last_box && !finished_with_break)
+			{
+				shift_x	  = 0;
 				spacing_x = (m_right - m_left) - m_width;
-				// don't justify for small lines
-                if (spacing_x > m_width / 4)
-					spacing_x = 0;
-            }
-            break;
-        default:
+			}
+			break;
+		default:
 			shift_x = 0;
     }
 
