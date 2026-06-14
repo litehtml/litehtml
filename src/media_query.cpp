@@ -241,8 +241,8 @@ bool parse_media_query(const css_token_vector& tokens, media_query& mquery, docu
 	ident = at(tokens, index).ident();
 	if (is_one_of(ident, "", "only", "not", "and", "or", "layer"))
 		return false;
-	int idx = value_index(ident, media_type_strings);
-	int media_type = idx == -1 ? media_type_unknown : idx + 1;
+	auto idx		= css_values(media_type_strings).value_index(ident);
+	int	 media_type = idx.has_value() ? static_cast<int>(*idx) + 1 : media_type_unknown;
 	index++;
 
 	if (at(tokens, index).ident() == "and")
@@ -424,9 +424,10 @@ bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
 		if (val[0].type == DIMENSION)
 		{
 			string unit = lowcase(val[0].unit);
-			int idx = value_index(unit, "dpi;dpcm;dppx;x"); // x == dppx
+			constexpr auto allowed_units = split_css_values<4>("dpi;dpcm;dppx;x"); // x == dppx
 			// The allowed range of <resolution> values always excludes negative values
-			if (idx < 0 || val[0].n.number < 0) return false;
+			if(css_values(allowed_units).has(unit) || val[0].n.number < 0)
+				return false;
 			// dppx is the canonical unit, but we convert to dpi instead to match document_container::get_media_features
 			// "Note that due to the 1:96 fixed ratio of CSS in to CSS px, 1dppx is equivalent to 96dpi."
 			if (unit == "dppx" || unit == "x")

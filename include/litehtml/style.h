@@ -48,7 +48,8 @@ namespace litehtml
 		typedef std::vector<style::ptr>		vector;
 	private:
 		props_map							m_properties;
-		static std::map<string_id, string>	m_valid_values;
+	  static std::map<string_id, css_values> m_valid_values;
+
 	public:
 		void add(const css_token_vector& tokens, const string& baseurl = "", document_container* container = nullptr);
 		void add(const string& txt,              const string& baseurl = "", document_container* container = nullptr);
@@ -100,23 +101,23 @@ namespace litehtml
 		void parse_align_self(string_id name, const css_token_vector& tokens, bool important);
 
 		void add_parsed_property(string_id name, const property_value& propval);
-		void add_length_property(string_id name, css_token val, string keywords, int options, bool important);
-		template<class T> void add_four_properties(string_id top_name, T val[4], int n, bool important);
+		void add_length_property(string_id name, css_token val, css_values keywords, int options, bool important);
+		template <class T> void add_four_properties(string_id top_name, T val[4], int n, bool important);
 		void remove_property(string_id name, bool important);
 	};
 
 	bool parse_url(const css_token& token, string& url);
-	bool parse_length(const css_token& tok, css_length& length, int options, string keywords = "");
+	bool parse_length(const css_token& tok, css_length& length, int options, css_values keywords = {});
 	bool parse_angle(const css_token& tok, float& angle, bool percents_allowed = false);
 	bool parse_bg_position(const css_token_vector& tokens, int& index, css_length& x, css_length& y, bool convert_keywords_to_percents);
 
 	template<typename Enum>
-	bool parse_keyword(const css_token& tok, Enum& val, string keywords, int first_keyword_value = 0)
+	bool parse_keyword(const css_token& tok, Enum& val, css_values keywords, int first_keyword_value = 0)
 	{
-		int	value_index(const string& val, const string& strings, int defValue = -1, char delim = ';');
-		int idx = value_index(tok.ident(), keywords);
-		if (idx == -1) return false;
-		val = (Enum)(first_keyword_value + idx);
+		auto idx = keywords.value_index(tok.ident());
+		if(!idx.has_value())
+			return false;
+		val = (Enum) (first_keyword_value + *idx);
 		return true;
 	}
 

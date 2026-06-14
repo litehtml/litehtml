@@ -222,26 +222,30 @@ bool parse_modern_syntax(const css_token_vector& tokens, bool is_hsl,
 	css_length& x, css_length& y, css_length& z, css_length& a)
 {
 	auto n = tokens.size();
+	constexpr auto none_val = split_css_values<1>("none");
 	if (!(n == 3 || n == 5)) return false;
 	if (is_hsl)
 	{
 		// [<hue> | none] [<number> | <percentage> | none]{2} [ / [<alpha-value> | none] ]?
 		// <hue> = <number> | <angle>
-		if (!x.from_token(tokens[0], f_number, "none"))
+		if(!x.from_token(tokens[0], f_number, none_val))
 		{
 			float hue;
 			if (!parse_angle(tokens[0], hue)) return false;
 			x.set_value(hue, css_units_none);
 		}
-	}
-	else if (!x.from_token(tokens[0], f_number | f_percentage, "none")) return false;
-	if (!y.from_token(tokens[1], f_number | f_percentage, "none")) return false;
-	if (!z.from_token(tokens[2], f_number | f_percentage, "none")) return false;
+	} else if(!x.from_token(tokens[0], f_number | f_percentage, none_val))
+		return false;
+	if(!y.from_token(tokens[1], f_number | f_percentage, none_val))
+		return false;
+	if(!z.from_token(tokens[2], f_number | f_percentage, none_val))
+		return false;
 	if (n == 5)
 	{
 		if (tokens[3].ch != '/') return false;
 		// <alpha-value> = <number> | <percentage>
-		if (!a.from_token(tokens[4], f_number | f_percentage, "none")) return false;
+		if(!a.from_token(tokens[4], f_number | f_percentage, none_val))
+			return false;
 	}
 	// convert nones to zeros
 	// https://drafts.csswg.org/css-color-4/#missing

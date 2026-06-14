@@ -148,6 +148,7 @@ set(HEADER_LITEHTML
 	include/litehtml/gradient.h
 	include/litehtml/font_description.h
 	include/litehtml/scroll_view.h
+		include/litehtml/css_values.h
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)

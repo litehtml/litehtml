@@ -490,7 +490,8 @@ bool parse_radial_gradient_shape_size_position_interpolation(const css_token_vec
 	auto shape = radial_shape_none;
 	auto radial_shape = [&](const css_token_vector& tokens, int& index)
 	{
-		if (!parse_keyword(at(tokens, index), shape, "circle;ellipse", 1))
+		constexpr auto vals = split_css_values<2>("circle;ellipse");
+		if(!parse_keyword(at(tokens, index), shape, vals, 1))
 			return false;
 		index++;
 		return true;

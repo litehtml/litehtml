@@ -60,66 +60,6 @@ string::size_type find_close_bracket(const string& s, string::size_type off, cha
 	return string::npos;
 }
 
-string index_value(int index, const string& strings, char delim)
-{
-	std::vector<string> vals;
-	string delims;
-	delims.push_back(delim);
-	split_string(strings, vals, delims);
-	if(index >= 0 && index < (int) vals.size())
-	{
-		return vals[index];
-	}
-	return std::to_string(index);
-}
-
-int value_index( const string& val, const string& strings, int defValue, char delim )
-{
-	if(val.empty() || strings.empty() || !delim)
-	{
-		return defValue;
-	}
-
-	int idx = 0;
-	string::size_type delim_start	= 0;
-	string::size_type delim_end	= strings.find(delim, delim_start);
-	string::size_type item_len;
-	while(true)
-	{
-		if(delim_end == string::npos)
-		{
-			item_len = strings.length() - delim_start;
-		} else
-		{
-			item_len = delim_end - delim_start;
-		}
-		if(item_len == val.length())
-		{
-			if(val == strings.substr(delim_start, item_len))
-			{
-				return idx;
-			}
-		}
-		idx++;
-		delim_start = delim_end;
-		if(delim_start == string::npos) break;
-		delim_start++;
-		if(delim_start == strings.length()) break;
-		delim_end = strings.find(delim, delim_start);
-	}
-	return defValue;
-}
-
-bool value_in_list( const string& val, const string& strings, char delim )
-{
-	int idx = value_index(val, strings, -1, delim);
-	if(idx >= 0)
-	{
-		return true;
-	}
-	return false;
-}
-
 string_vector split_string(const string& str, const string& delims, const string& delims_preserve, const string& quote)
 {
 	string_vector result;

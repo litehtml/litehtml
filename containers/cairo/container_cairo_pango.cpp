@@ -40,7 +40,9 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
 	for(auto& font : tokens)
 	{
 		litehtml::trim(font, " \t\r\n\f\v\"\'");
-		if(litehtml::value_in_list(font, "serif;sans-serif;monospace;cursive;fantasy;"))
+		constexpr auto font_family_strings =
+			litehtml::split_css_values<5>("serif;sans-serif;monospace;cursive;fantasy");
+		if(litehtml::css_values(font_family_strings).has(font))
 		{
 			fonts = font + ",";
 			break;
