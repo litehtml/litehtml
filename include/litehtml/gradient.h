@@ -29,67 +29,6 @@ namespace litehtml
 		radial_shape_ellipse,
 	};
 
-#define radial_extent_strings "closest-corner;closest-side;farthest-corner;farthest-side"
-	enum radial_extent_t
-	{
-		radial_extent_none,
-		radial_extent_closest_corner,
-		radial_extent_closest_side,
-		radial_extent_farthest_corner,
-		radial_extent_farthest_side,
-	};
-
-#define color_space_strings \
-			"srgb;"\
-			"srgb-linear;"\
-			"display-p3;"\
-			"a98-rgb;"\
-			"prophoto-rgb;"\
-			"rec2020;"\
-			"lab;"\
-			"oklab;"\
-			"xyz;"\
-			"xyz-d50;"\
-			"xyz-d65;"\
-			"hsl;"\
-			"hwb;"\
-			"lch;"\
-			"oklch"
-
-	enum color_space_t
-	{
-		color_space_none,
-
-		// rectangular-color-space
-		color_space_srgb,
-		color_space_srgb_linear,
-		color_space_display_p3,
-		color_space_a98_rgb,
-		color_space_prophoto_rgb,
-		color_space_rec2020,
-		color_space_lab,
-		color_space_oklab,
-		color_space_xyz,
-		color_space_xyz_d50,
-		color_space_xyz_d65,
-
-		// polar-color-space
-		color_space_hsl, color_space_polar_start = color_space_hsl,
-		color_space_hwb,
-		color_space_lch,
-		color_space_oklch,
-	};
-
-#define hue_interpolation_strings "shorter;longer;increasing;decreasing"
-	enum hue_interpolation_t
-	{
-		hue_interpolation_none,
-		hue_interpolation_shorter,
-		hue_interpolation_longer,
-		hue_interpolation_increasing,
-		hue_interpolation_decreasing
-	};
-
 	class gradient
 	{
 	public:

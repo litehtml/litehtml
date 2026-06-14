@@ -18,57 +18,56 @@ bool parse_bg_size(const css_token_vector& tokens, int& index, css_size& size);
 bool parse_two_lengths(const css_token_vector& tokens, css_length len[2], int options);
 template<class T, class... Args>
 int parse_1234_values(const css_token_vector& tokens, T result[4], bool (*func)(const css_token&, T&, Args...), Args... args);
-int parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, string keywords = "");
+int	 parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, css_values keywords = {});
 bool parse_border_width(const css_token& tok, css_length& width);
 bool parse_font_family(const css_token_vector& tokens, string& font_family);
 bool parse_font_weight(const css_token& tok, css_length& weight);
 
-std::map<string_id, string> style::m_valid_values =
-{
-	{ _display_, style_display_strings },
-	{ _visibility_, visibility_strings },
-	{ _position_, element_position_strings },
-	{ _float_, element_float_strings },
-	{ _clear_, element_clear_strings },
-	{ _overflow_, overflow_strings },
-	{ _appearance_, appearance_strings },
-	{ _box_sizing_, box_sizing_strings },
+std::map<string_id, css_values> style::m_valid_values = {
+	{_display_,				style_display_strings				 },
+	{_visibility_,			   visibility_strings					 },
+	{_position_,				 element_position_strings			 },
+	{_float_,				  element_float_strings			   },
+	{_clear_,				  element_clear_strings			   },
+	{_overflow_,				 overflow_strings					 },
+	{_appearance_,			   appearance_strings					 },
+	{_box_sizing_,			   box_sizing_strings					 },
 
-	{ _text_align_, text_align_strings },
-	{ _vertical_align_, vertical_align_strings },
-	{ _text_transform_, text_transform_strings },
-	{ _white_space_, white_space_strings },
+	{_text_align_,			   text_align_strings					 },
+	{_vertical_align_,		   vertical_align_strings				 },
+	{_text_transform_,		   text_transform_strings				 },
+	{_white_space_,			white_space_strings				   },
 
-	{ _font_style_, font_style_strings },
-	{ _font_variant_, font_variant_strings },
-	{ _font_weight_, font_weight_strings },
+	{_font_style_,			   font_style_strings					 },
+	{_font_variant_,			 font_variant_strings				 },
+	{_font_weight_,			font_weight_strings				   },
 
-	{ _list_style_type_, list_style_type_strings },
-	{ _list_style_position_, list_style_position_strings },
+	{_list_style_type_,		list_style_type_strings			   },
+	{_list_style_position_,	list_style_position_strings		   },
 
-	{ _border_left_style_, border_style_strings },
-	{ _border_right_style_, border_style_strings },
-	{ _border_top_style_, border_style_strings },
-	{ _border_bottom_style_, border_style_strings },
-	{ _border_collapse_, border_collapse_strings },
+	{_border_left_style_,	  border_style_strings				  },
+	{_border_right_style_,	   border_style_strings				   },
+	{_border_top_style_,		 border_style_strings				 },
+	{_border_bottom_style_,	border_style_strings				},
+	{_border_collapse_,		border_collapse_strings			   },
 
 	// these 4 properties are comma-separated lists of keywords, see parse_keyword_comma_list
-	{ _background_attachment_, background_attachment_strings },
-	{ _background_repeat_, background_repeat_strings },
-	{ _background_clip_, background_box_strings },
-	{ _background_origin_, background_box_strings },
+	{_background_attachment_,  background_attachment_strings	   },
+	{_background_repeat_,	  background_repeat_strings		   },
+	{_background_clip_,		background_box_strings			  },
+	{_background_origin_,	  background_box_strings				},
 
-	{ _flex_direction_, flex_direction_strings },
-	{ _flex_wrap_, flex_wrap_strings },
-	{ _justify_content_, flex_justify_content_strings },
-	{ _align_content_, flex_align_content_strings },
-	{ _align_items_, flex_align_items_strings },
-	{ _align_self_, flex_align_items_strings },
+	{_flex_direction_,		   flex_direction_strings				 },
+	{_flex_wrap_,			  flex_wrap_strings				   },
+	{_justify_content_,		flex_justify_content_strings		},
+	{_align_content_,		  flex_align_content_strings			},
+	{_align_items_,			flex_align_items_strings			},
+	{_align_self_,			   flex_align_items_strings			   },
 
-	{ _caption_side_, caption_side_strings },
+	{_caption_side_,			 caption_side_strings				 },
 
-	{ _text_decoration_style_, style_text_decoration_style_strings },
-	{ _text_emphasis_position_, style_text_emphasis_position_strings },
+	{_text_decoration_style_,  style_text_decoration_style_strings },
+	{_text_emphasis_position_, style_text_emphasis_position_strings},
 };
 
 std::map<string_id, vector<string_id>> shorthands =
@@ -164,7 +163,7 @@ void style::inherit_property(string_id name, bool important)
 		add_parsed_property(name, property_value(inherit(), important));
 }
 
-void style::add_length_property(string_id name, css_token val, string keywords, int options, bool important)
+void style::add_length_property(string_id name, css_token val, css_values keywords, int options, bool important)
 {
 	css_length length;
 	if (length.from_token(val, options, keywords))
@@ -232,26 +231,29 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 
 	case _caption_side_:
 
-		if (int index = value_index(ident, m_valid_values[name]); index >= 0)
-			add_parsed_property(name, property_value(index, important));
+		if(auto index = m_valid_values.at(name).value_index(ident); index.has_value())
+			add_parsed_property(name, property_value(*index, important));
 		break;
 
 	//  =============================  LENGTH  =============================
 
 	// auto | <integer>  https://developer.mozilla.org/en-US/docs/Web/CSS/z-index#formal_syntax
 	case _z_index_:
-		return add_length_property(name, val, "auto", f_integer, important);
+		{
+			constexpr auto auto_val = split_css_values<1>("auto");
+			return add_length_property(name, val, auto_val, f_integer, important);
+		}
 
 	// <length-percentage>  https://developer.mozilla.org/en-US/docs/Web/CSS/text-indent#formal_syntax
 	case _text_indent_:
-		return add_length_property(name, val, "", f_length_percentage, important);
+		return add_length_property(name, val, css_values(), f_length_percentage, important);
 
 	// <length-percentage [0,∞]>  https://developer.mozilla.org/en-US/docs/Web/CSS/padding-left
 	case _padding_left_:
 	case _padding_right_:
 	case _padding_top_:
 	case _padding_bottom_:
-		return add_length_property(name, val, "", f_length_percentage|f_positive, important);
+		return add_length_property(name, val, css_values(), f_length_percentage | f_positive, important);
 
 	// auto | <length-percentage>  https://developer.mozilla.org/en-US/docs/Web/CSS/left
 	case _left_:
@@ -262,31 +264,50 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 	case _margin_right_:
 	case _margin_top_:
 	case _margin_bottom_:
-		return add_length_property(name, val, "auto", f_length_percentage, important);
+		{
+			constexpr auto auto_val = split_css_values<1>("auto");
+			return add_length_property(name, val, auto_val, f_length_percentage, important);
+		}
 
-	// auto | min-content | max-content | fit-content | <length-percentage [0,∞]>   https://developer.mozilla.org/en-US/docs/Web/CSS/width#formal_syntax
+	// auto | min-content | max-content | fit-content | <length-percentage [0,∞]>
+	// https://developer.mozilla.org/en-US/docs/Web/CSS/width#formal_syntax
 	case _width_:
 	case _height_:
 	case _min_width_:
 	case _min_height_:
-		return add_length_property(name, val, "auto", f_length_percentage|f_positive, important);
+		{
+			constexpr auto auto_val = split_css_values<1>("auto");
+			return add_length_property(name, val, auto_val, f_length_percentage | f_positive, important);
+		}
 
-	// none | min-content | max-content | fit-content | <length-percentage [0,∞]>   https://developer.mozilla.org/en-US/docs/Web/CSS/max-width#formal_syntax
+	// none | min-content | max-content | fit-content | <length-percentage [0,∞]>
+	// https://developer.mozilla.org/en-US/docs/Web/CSS/max-width#formal_syntax
 	case _max_width_:
 	case _max_height_:
-		return add_length_property(name, val, "none", f_length_percentage|f_positive, important);
+		{
+			constexpr auto none_val = split_css_values<1>("none");
+			return add_length_property(name, val, none_val, f_length_percentage | f_positive, important);
+		}
 
-	//  normal | <number [0,∞]> | <length-percentage [0,∞]>   https://developer.mozilla.org/en-US/docs/Web/CSS/line-height#formal_syntax
+	//  normal | <number [0,∞]> | <length-percentage [0,∞]>
+	//  https://developer.mozilla.org/en-US/docs/Web/CSS/line-height#formal_syntax
 	case _line_height_:
-		return add_length_property(name, val, "normal", f_number|f_length_percentage|f_positive, important);
+		{
+			constexpr auto normal_val = split_css_values<1>("normal");
+			return add_length_property(name, val, normal_val, f_number | f_length_percentage | f_positive, important);
+		}
 
-	// font-size = <absolute-size> | <relative-size> | <length-percentage [0,∞]>   https://developer.mozilla.org/en-US/docs/Web/CSS/font-size#formal_syntax
+	// font-size = <absolute-size> | <relative-size> | <length-percentage [0,∞]>
+	// https://developer.mozilla.org/en-US/docs/Web/CSS/font-size#formal_syntax
 	case _font_size_:
 		return add_length_property(name, val, font_size_strings, f_length_percentage|f_positive, important);
 
 	case _margin_:
-		if (int n = parse_1234_lengths(value, len, f_length_percentage, "auto"))
-			add_four_properties(_margin_top_, len, n, important);
+		{
+			constexpr auto auto_val = split_css_values<1>("auto");
+			if(int n = parse_1234_lengths(value, len, f_length_percentage, auto_val))
+				add_four_properties(_margin_top_, len, n, important);
+		}
 		break;
 
 	case _padding_:
@@ -351,7 +372,7 @@ void style::add_property(string_id name, const css_token_vector& value, const st
 			add_four_properties(_border_top_width_, len, n, important);
 		break;
 	case _border_style_:
-		if (int n = parse_1234_values(value, idx, parse_keyword, (string)border_style_strings, 0))
+		if(int n = parse_1234_values(value, idx, parse_keyword, css_values(border_style_strings), 0))
 			add_four_properties(_border_top_style_, idx, n, important);
 		break;
 	case _border_color_:
@@ -720,10 +741,8 @@ void style::parse_border_side(string_id name, const css_token_vector& tokens, bo
 	add_parsed_property(_id(_s(name) + "-color"), property_value(color, important));
 }
 
-bool parse_length(const css_token& tok, css_length& length, int options, string keywords)
-{
-	return length.from_token(tok, options, keywords);
-}
+bool parse_length(const css_token& tok, css_length& length, int options, css_values keywords)
+{ return length.from_token(tok, options, keywords); }
 
 // parses 1 or 2 lengths, but always returns 2 lengths
 bool parse_two_lengths(const css_token_vector& tokens, css_length len[2], int options)
@@ -757,10 +776,8 @@ int parse_1234_values(const css_token_vector& tokens, T result[4], bool (*parse)
 	return (int)tokens.size();
 }
 
-int parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, string keywords)
-{
-	return parse_1234_values(tokens, len, parse_length, options, keywords);
-}
+int parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, css_values keywords)
+{ return parse_1234_values(tokens, len, parse_length, options, keywords); }
 
 // This function implements the logic of the kind "if two values are specified, the first one applies to
 // top and bottom, the second one to left and right". Works in conjunction with parse_1234_values.
@@ -769,9 +786,9 @@ void style::add_four_properties(string_id top_name, T val[4], int n, bool import
 {
 	// These always go in trbl order, see comment for "CSS property names" in string_id.
 	string_id top    = top_name; // top-left for corners
-	string_id right  = string_id(top_name + 1);
-	string_id bottom = string_id(top_name + 2);
-	string_id left   = string_id(top_name + 3);
+	auto	  right	 = static_cast<string_id>(top_name + 1);
+	auto	  bottom = static_cast<string_id>(top_name + 2);
+	auto	  left	 = static_cast<string_id>(top_name + 3);
 
 	// n      4 3 2 1
 	// top    0 0 0 0  0
@@ -908,7 +925,8 @@ bool parse_bg_size(const css_token_vector& tokens, int& index, css_size& size)
 		return true;
 	}
 
-	if (b.from_token(at(tokens, index + 1), f_length_percentage | f_positive, "auto"))
+	constexpr auto auto_val = split_css_values<1>("auto");
+	if(b.from_token(at(tokens, index + 1), f_length_percentage | f_positive, auto_val))
 		index += 2;
 	else
 	{
@@ -1063,8 +1081,10 @@ void style::parse_keyword_comma_list(string_id name, const css_token_vector& tok
 	for (const auto& layer : layers)
 	{
 		int idx;
-		if (layer.size() != 1) return;
-		if (!parse_keyword(layer[0], idx, m_valid_values[name])) return;
+		if(layer.size() != 1)
+			return;
+		if(!parse_keyword(layer[0], idx, m_valid_values.at(name)))
+			return;
 		vec.push_back(idx);
 	}
 
@@ -1115,9 +1135,9 @@ void style::parse_background_size(const css_token_vector& tokens, bool important
 
 bool parse_font_weight(const css_token& tok, css_length& weight)
 {
-	if (int idx = value_index(tok.ident(), font_weight_strings); idx >= 0)
+	if(auto idx = css_values(font_weight_strings).value_index(tok.ident()); idx.has_value())
 	{
-		weight.predef(idx);
+		weight.predef(idx.value());
 		return true;
 	}
 
@@ -1236,7 +1256,8 @@ void style::parse_font(css_token_vector tokens, bool important)
 	css_length line_height = css_length::predef_value(line_height_normal);
 	string font_family; // this argument is mandatory, no need to set initial value
 
-	if(tokens.size() == 1 && (tokens[0].type == STRING || tokens[0].type == IDENT) && value_in_list(tokens[0].str, font_system_family_name_strings))
+	if(tokens.size() == 1 && (tokens[0].type == STRING || tokens[0].type == IDENT) &&
+	   css_values(font_system_family_name_strings).has(tokens[0].str))
 	{
 		font_family = tokens[0].str;
 	} else
@@ -1286,10 +1307,10 @@ void style::parse_text_decoration(const css_token_vector& tokens, bool important
 		{
 			if(token.type == IDENT)
 			{
-				int style = value_index(token.ident(), style_text_decoration_style_strings);
-				if(style >= 0)
+				auto style = css_values(style_text_decoration_style_strings).value_index(token.ident());
+				if(style.has_value())
 				{
-					add_parsed_property(_text_decoration_style_, property_value(style, important));
+					add_parsed_property(_text_decoration_style_, property_value(style.value(), important));
 				} else
 				{
 					line_tokens.push_back(token);
@@ -1314,7 +1335,8 @@ bool style::parse_text_decoration_color(const css_token& token, bool important, 
 		add_parsed_property(_text_decoration_color_, property_value(_color, important));
 		return true;
 	}
-	if(token.type == IDENT && value_in_list(token.ident(), "auto;currentcolor"))
+	constexpr auto allowed_values = split_css_values<2>("auto;currentcolor");
+	if(token.type == IDENT && css_values(allowed_values).has(token.ident()))
 	{
 		add_parsed_property(_text_decoration_color_, property_value(web_color::current_color, important));
 		return true;
@@ -1329,10 +1351,10 @@ void style::parse_text_decoration_line(const css_token_vector& tokens, bool impo
 	{
 		if(token.type == IDENT)
 		{
-			int idx = value_index(token.ident(), style_text_decoration_line_strings);
-			if(idx >= 0)
+			auto idx = css_values(style_text_decoration_line_strings).value_index(token.ident());
+			if(idx.has_value())
 			{
-				val |= 1 << (idx - 1);
+				val |= 1 << (idx.value() - 1);
 			}
 		}
 	}
@@ -1361,7 +1383,8 @@ bool style::parse_text_emphasis_color(const css_token &token, bool important, do
 		add_parsed_property(_text_emphasis_color_, property_value(_color, important));
 		return true;
 	}
-	if(token.type == IDENT && value_in_list(token.ident(), "auto;currentcolor"))
+	constexpr auto allowed_values = split_css_values<2>("auto;currentcolor");
+	if(token.type == IDENT && css_values(allowed_values).has(token.ident()))
 	{
 		add_parsed_property(_text_emphasis_color_, property_value(web_color::current_color, important));
 		return true;
@@ -1376,10 +1399,10 @@ void style::parse_text_emphasis_position(const css_token_vector &tokens, bool im
 	{
 		if(token.type == IDENT)
 		{
-			int idx = value_index(token.ident(), style_text_emphasis_position_strings);
-			if(idx >= 0)
+			auto idx = css_values(style_text_emphasis_position_strings).value_index(token.ident());
+			if(idx.has_value())
 			{
-				val |= 1 << (idx - 1);
+				val |= 1 << (idx.value() - 1);
 			}
 		}
 	}
@@ -1516,11 +1539,11 @@ void style::parse_align_self(string_id name, const css_token_vector& tokens, boo
 	if (name == _align_items_ && a == "auto")
 		return;
 
-	if (n == 1)
+	if(n == 1)
 	{
-		int idx = value_index(a, flex_align_items_strings);
-		if (idx >= 0)
-			add_parsed_property(name, property_value(idx, important));
+		auto idx = css_values(flex_align_items_strings).value_index(a);
+		if(idx.has_value())
+			add_parsed_property(name, property_value(*idx, important));
 		return;
 	}
 
@@ -1537,11 +1560,11 @@ void style::parse_align_self(string_id name, const css_token_vector& tokens, boo
 	}
 
 	// <overflow-position> <self-position>
-	int idx = value_index(b, self_position_strings);
-	if (idx >= 0 && is_one_of(a, "safe", "unsafe"))
+	auto idx = css_values(self_position_strings).value_index(b);
+	if(idx.has_value() && is_one_of(a, "safe", "unsafe"))
 	{
-		idx |= (a == "safe" ? flex_align_items_safe : flex_align_items_unsafe);
-		add_parsed_property(name, property_value(idx, important));
+		int value = *idx | (a == "safe" ? flex_align_items_safe : flex_align_items_unsafe);
+		add_parsed_property(name, property_value(value, important));
 	}
 }
 

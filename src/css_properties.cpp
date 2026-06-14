@@ -560,19 +560,19 @@ std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::css_proper
 {
 	std::vector<std::tuple<string, string>> ret;
 
-	ret.emplace_back("display", index_value(m_display, style_display_strings));
-	ret.emplace_back("el_position", index_value(m_el_position, element_position_strings));
-	ret.emplace_back("text_align", index_value(m_text_align, text_align_strings));
+	ret.emplace_back("display", css_values(style_display_strings).value_by_index(m_display));
+	ret.emplace_back("el_position", css_values(element_position_strings).value_by_index(m_el_position));
+	ret.emplace_back("text_align", css_values(text_align_strings).value_by_index(m_text_align));
 	ret.emplace_back("font_size", m_font_size.to_string());
-	ret.emplace_back("overflow", index_value(m_overflow, overflow_strings));
-	ret.emplace_back("white_space", index_value(m_white_space, white_space_strings));
-	ret.emplace_back("visibility", index_value(m_visibility, visibility_strings));
-	ret.emplace_back("appearance", index_value(m_appearance, appearance_strings));
-	ret.emplace_back("box_sizing", index_value(m_box_sizing, box_sizing_strings));
+	ret.emplace_back("overflow", css_values(overflow_strings).value_by_index(m_overflow));
+	ret.emplace_back("white_space", css_values(white_space_strings).value_by_index(m_white_space));
+	ret.emplace_back("visibility", css_values(visibility_strings).value_by_index(m_visibility));
+	ret.emplace_back("appearance", css_values(appearance_strings).value_by_index(m_appearance));
+	ret.emplace_back("box_sizing", css_values(box_sizing_strings).value_by_index(m_box_sizing));
 	ret.emplace_back("z_index", m_z_index.to_string());
-	ret.emplace_back("vertical_align", index_value(m_vertical_align, vertical_align_strings));
-	ret.emplace_back("float", index_value(m_float, element_float_strings));
-	ret.emplace_back("clear", index_value(m_clear, element_clear_strings));
+	ret.emplace_back("vertical_align", css_values(vertical_align_strings).value_by_index(m_vertical_align));
+	ret.emplace_back("float", css_values(element_float_strings).value_by_index(m_float));
+	ret.emplace_back("clear", css_values(element_clear_strings).value_by_index(m_clear));
 	ret.emplace_back("margins", m_css_margins.to_string());
 	ret.emplace_back("padding", m_css_padding.to_string());
 	ret.emplace_back("borders", m_css_borders.to_string());
@@ -585,8 +585,9 @@ std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::css_proper
 	ret.emplace_back("offsets", m_css_offsets.to_string());
 	ret.emplace_back("text_indent", m_css_text_indent.to_string());
 	ret.emplace_back("line_height", std::to_string(m_line_height.computed_value));
-	ret.emplace_back("list_style_type", index_value(m_list_style_type, list_style_type_strings));
-	ret.emplace_back("list_style_position", index_value(m_list_style_position, list_style_position_strings));
+	ret.emplace_back("list_style_type", css_values(list_style_type_strings).value_by_index(m_list_style_type));
+	ret.emplace_back("list_style_position",
+					 css_values(list_style_position_strings).value_by_index(m_list_style_position));
 	ret.emplace_back("border_spacing_x", m_css_border_spacing_x.to_string());
 	ret.emplace_back("border_spacing_y", m_css_border_spacing_y.to_string());
 

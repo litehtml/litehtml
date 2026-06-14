@@ -40,7 +40,7 @@ namespace litehtml
 		float		val() const;
 		css_units	units() const;
 		pixel_t		calc_percent(pixel_t width) const;
-		bool		from_token(const css_token& token, int options, const string& predefined_keywords = "");
+		bool			  from_token(const css_token& token, int options, css_values predefined_keywords = {});
 		string		to_string() const;
 	};
 

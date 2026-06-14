@@ -20,9 +20,9 @@ void litehtml::el_before_after_base::add_style(const style& style)
 	const auto& content_property = style.get_property(_content_);
 	if(content_property.is<string>() && !content_property.get<string>().empty())
 	{
-		const string& str = content_property.get<string>();
-		int idx = value_index(str, content_property_string);
-		if(idx < 0)
+		const auto& str = content_property.get<string>();
+		auto		idx = css_values(content_property_strings).value_index(str);
+		if(!idx.has_value())
 		{
 			string fnc;
 			string::size_type i = 0;
@@ -140,8 +140,14 @@ void litehtml::el_before_after_base::add_text( const string& txt )
 
 void litehtml::el_before_after_base::add_function( const string& fnc, const string& params )
 {
-	int idx = value_index(fnc, "attr;counter;counters;url");
-	switch(idx)
+	constexpr auto content_function_strings = split_css_values<4>("attr;counter;counters;url");
+
+	auto idx = css_values(content_function_strings).value_index(fnc);
+	if(!idx.has_value())
+	{
+		return;
+	}
+	switch(idx.value())
 	{
 	// attr
 	case 0:
