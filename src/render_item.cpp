@@ -1151,25 +1151,11 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(p
 
 bool litehtml::render_item::is_point_inside( pixel_t x, pixel_t y ) const
 {
-	if(src_el()->css().get_display() != display_inline && src_el()->css().get_display() != display_table_row)
-	{
-		position pos = m_pos;
-		pos += m_padding;
-		pos += m_borders;
-		return pos.is_point_inside(x, y);
-	} else
-	{
-		position::vector boxes;
-		get_inline_boxes(boxes);
-		for(auto & box : boxes)
-		{
-			if(box.is_point_inside(x, y))
-			{
-				return true;
-			}
-		}
-	}
-    return false;
+	position pos = m_pos;
+
+	pos += m_padding;
+	pos += m_borders;
+	return pos.is_point_inside(x, y);
 }
 
 void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes) const
