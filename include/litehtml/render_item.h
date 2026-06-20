@@ -478,8 +478,8 @@ namespace litehtml
         	const std::function<bool(const std::shared_ptr<render_item>&)>& check);
         std::shared_ptr<element> get_element_by_point(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
         	const std::function<bool(const std::shared_ptr<render_item>&)>& check);
-        bool is_point_inside( pixel_t x, pixel_t y ) const;
-        void dump(litehtml::dumper& cout);
+		virtual bool			 is_point_inside(pixel_t x, pixel_t y) const;
+		void dump(litehtml::dumper& cout);
 		position get_placement() const;
         virtual void y_shift(pixel_t shift);
         /**

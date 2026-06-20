@@ -32,7 +32,7 @@ namespace litehtml
 		{
 			return std::make_shared<render_item_inline>(src_el());
 		}
-		virtual void y_shift(pixel_t shift) override
+		void y_shift(pixel_t shift) override
 		{
 			if(css().get_display() == display_inline_text)
 			{
@@ -42,6 +42,17 @@ namespace litehtml
 			{
 				box.y += shift;
 			}
+		}
+		bool is_point_inside(pixel_t x, pixel_t y) const override
+		{
+			for(auto& box : m_boxes)
+			{
+				if(box.is_point_inside(x, y))
+				{
+					return true;
+				}
+			}
+			return false;
 		}
 	};
 }
