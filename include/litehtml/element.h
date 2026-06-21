@@ -133,7 +133,7 @@ namespace litehtml
 		virtual std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri);
 		bool requires_styles_update();
 		void add_render(const std::shared_ptr<render_item>& ri);
-		bool find_styles_changes( position::vector& redraw_boxes);
+		bool		 find_styles_changes(const std::function<void(const position&)>& redraw_box);
 		element::ptr add_pseudo_before(const style& style)
 		{
 			return _add_before_after(0, style);

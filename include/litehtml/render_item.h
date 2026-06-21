@@ -493,12 +493,12 @@ namespace litehtml
 		position get_placement() const;
         virtual void y_shift(pixel_t shift);
         /**
-         * Returns the boxes of rendering element. All coordinates are absolute
-         *
-         * @param redraw_boxes [out] resulting rendering boxes
-         * @return
-         */
-        void get_rendering_boxes( position::vector& redraw_boxes) const;
+		 * Returns the boxes of rendering element. All coordinates are absolute
+		 *
+		 * @param redraw_box function to be called on every rendering box
+		 * @return
+		 */
+		void get_rendering_boxes(const std::function<void(const position&)>& redraw_box) const;
 	};
 }
 

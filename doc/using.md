@@ -102,14 +102,42 @@ Members:
 ## Handling the mouse
 If you want to handle the mouse you have call some functions from ```litehtml::document```:
 ```cpp
-bool litehtml::document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
-bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes );
-bool litehtml::document::on_lbutton_down( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
-bool litehtml::document::on_lbutton_up( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
-bool on_mouse_leave(position::vector& redraw_boxes);
+bool litehtml::document::on_mouse_over( pixel_t x,
+                                        pixel_t y,
+                                        pixel_t client_x,
+                                        pixel_t client_y,
+                                        const std::function<void(const litehtml::position&)>& redraw_box );
+bool litehtml::document::on_mouse_leave( pixel_t x, 
+                                         pixel_t y,
+                                         pixel_t client_x,
+                                         pixel_t client_y,
+                                         const std::function<void(const litehtml::position&)>& redraw_box );
+bool litehtml::document::on_lbutton_down( pixel_t x, 
+                                         pixel_t y,
+                                         pixel_t client_x,
+                                         pixel_t client_y,
+                                         const std::function<void(const litehtml::position&)>& redraw_box );
+bool litehtml::document::on_lbutton_up( pixel_t x, 
+                                        pixel_t y,
+                                        pixel_t client_x,
+                                        pixel_t client_y,
+                                        const std::function<void(const litehtml::position&)>& redraw_box );
+bool litehtml::document::on_mouse_leave( pixel_t x, 
+                                         pixel_t y,
+                                         pixel_t client_x,
+                                         pixel_t client_y,
+                                         const std::function<void(const litehtml::position&)>& redraw_box );
 ```
-All functions returns the ```bool``` to indicate that you have to redraw the rectangles from *redraw_boxes* vector. Also note the ```x``` and ```y``` are relative to the HTML layout. So ```0,0``` is the top-left corner.
-The parameters ```client_x``` and ```client_y``` are the mouse position in the client area (draw area). These parameters are used to handle the elements with **fixed** position.
+
+All these functions accept the ```redraw_box``` function to be called when you need to redraw some part of the document.
+The parameter of the ```redraw_box``` is the rectangle that you need to redraw. Functions call ```redraw_box``` multiple
+times if you need to redraw several rectangles. Please note, you should queue the redraw of the rectangles and call the
+actual redraw after functions are called.
+
+All functions returns the ```bool``` to indicate that you have to redraw something. Also note the ```x``` and ```y```
+are relative to the HTML layout. So ```0,0``` is the top-left corner.
+The parameters ```client_x``` and ```client_y``` are the mouse position in the client area (draw area). These parameters
+are used to handle the elements with **fixed** position.
 
 ## Processing anchor click
 
