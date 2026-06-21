@@ -13,10 +13,23 @@ namespace litehtml
 
 	public:
 		explicit render_item_inline(std::shared_ptr<element>  src_el) : render_item(std::move(src_el))
-		{}
+	  {
+	  }
 
-		void get_inline_boxes( position::vector& boxes ) const override { boxes = m_boxes; }
-		void set_inline_boxes( position::vector& boxes ) override { m_boxes = boxes; }
+	  bool for_inline_boxes([[maybe_unused]] const std::function<bool(const position& box, bool first, bool last)>&
+								process) const override
+	  {
+		  for(auto box = m_boxes.begin(); box != m_boxes.end(); ++box)
+		  {
+			  if(!process(*box, box == m_boxes.begin(), box == m_boxes.end() - 1))
+			  {
+				  break;
+			  }
+		  }
+		  return true;
+	  }
+
+	  void set_inline_boxes( position::vector& boxes ) override { m_boxes = boxes; }
 		void add_inline_box( const position& box ) override { m_boxes.emplace_back(box); };
 		void clear_inline_boxes() override { m_boxes.clear(); }
 		pixel_t get_first_baseline() override
@@ -54,6 +67,19 @@ namespace litehtml
 			}
 			return false;
 		}
+	};
+
+	class render_text : public render_item_inline
+	{
+	  public:
+		explicit render_text(std::shared_ptr<element> src_el) :
+			render_item_inline(std::move(src_el))
+		{
+		}
+
+		bool for_inline_boxes([[maybe_unused]] const std::function<bool(const position& box, bool first, bool last)>&
+								  process) const override
+		{ return false; }
 	};
 }
 

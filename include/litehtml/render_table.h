@@ -50,7 +50,8 @@ namespace litehtml
 		{
 			return std::make_shared<render_item_table_row>(src_el());
 		}
-		void get_inline_boxes( position::vector& boxes ) const override;
+		bool for_inline_boxes([[maybe_unused]] const std::function<bool(const position& box, bool first, bool last)>&
+								  process) const override;
 		bool is_point_inside(pixel_t x, pixel_t y) const override;
 	};
 }
