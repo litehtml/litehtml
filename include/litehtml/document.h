@@ -6,6 +6,8 @@
 #include "master_css.h"
 #include "encodings.h"
 #include "font_description.h"
+
+#include <functional>
 #include <vector>
 
 typedef struct GumboInternalOutput GumboOutput;
@@ -87,12 +89,15 @@ namespace litehtml
 		pixel_t							content_width() const;
 		pixel_t							content_height() const;
 		void							add_stylesheet(const char* str, const char* baseurl, const char* media);
-		bool							on_mouse_over(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
+		bool							on_mouse_over(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+													  const std::function<void(const position&)>& redraw_box);
 		std::vector<scroll_values>		on_scroll(pixel_t dx, pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y) const;
-		bool							on_lbutton_down(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
-		bool							on_lbutton_up(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes);
-		bool							on_button_cancel(position::vector& redraw_boxes);
-		bool							on_mouse_leave(position::vector& redraw_boxes);
+		bool							on_lbutton_down(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+														const std::function<void(const position&)>& redraw_box);
+		bool							on_lbutton_up(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+													  const std::function<void(const position&)>& redraw_box);
+		bool							on_button_cancel(const std::function<void(const position&)>& redraw_box);
+		bool							on_mouse_leave(const std::function<void(const position&)>& redraw_box);
 		std::shared_ptr<element>		create_element(const char* tag_name, const string_map& attributes);
 		std::shared_ptr<element>		root();
 		std::shared_ptr<render_item>	root_render();

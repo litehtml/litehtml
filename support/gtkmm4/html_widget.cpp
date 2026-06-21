@@ -207,6 +207,18 @@ void html_widget::on_redraw()
 	queue_draw();
 }
 
+inline static void update_rect(const litehtml::position& pos, Gdk::Rectangle& rect, bool& is_first)
+{
+	if(is_first)
+	{
+		rect	 = Gdk::Rectangle(pos.x, pos.y, pos.width, pos.height);
+		is_first = false;
+	} else
+	{
+		rect.join(Gdk::Rectangle(pos.x, pos.y, pos.width, pos.height));
+	}
+}
+
 void html_widget::on_button_press_event(int /* n_press */, double x, double y)
 {
 	if(!has_focus())
@@ -216,9 +228,16 @@ void html_widget::on_button_press_event(int /* n_press */, double x, double y)
 	auto page = current_page();
 	if (page)
 	{
-		page->on_lbutton_down(	(int) (x + m_draw_buffer.get_left()),
-								(int) (y + m_draw_buffer.get_top()),
-								(int) x, (int) y);
+		Gdk::Rectangle rect(0, 0, 0, 0);
+		bool		   is_first = true;
+		page->on_lbutton_down((int) (x + m_draw_buffer.get_left()), (int) (y + m_draw_buffer.get_top()), (int) x,
+							  (int) y, [&](const litehtml::position& box) { update_rect(box, rect, is_first); });
+		if(!rect.has_zero_area())
+		{
+			m_draw_buffer.redraw_area(get_draw_function(current_page()), rect.get_x(), rect.get_y(), rect.get_width(),
+									  rect.get_height());
+			queue_draw();
+		}
 	}
 }
 
@@ -227,9 +246,16 @@ void html_widget::on_button_release_event(int /* n_press */, double x, double y)
 	auto page = current_page();
 	if(page)
 	{
-		page->on_lbutton_up((int) (x + m_draw_buffer.get_left()),
-							(int) (y + m_draw_buffer.get_top()),
-							(int) x, (int) y);
+		Gdk::Rectangle rect(0, 0, 0, 0);
+		bool		   is_first = true;
+		page->on_lbutton_up((int) (x + m_draw_buffer.get_left()), (int) (y + m_draw_buffer.get_top()), (int) x, (int) y,
+							[&](const litehtml::position& box) { update_rect(box, rect, is_first); });
+		if(!rect.has_zero_area())
+		{
+			m_draw_buffer.redraw_area(get_draw_function(current_page()), rect.get_x(), rect.get_y(), rect.get_width(),
+									  rect.get_height());
+			queue_draw();
+		}
 	}
 }
 
@@ -273,9 +299,16 @@ void html_widget::on_mouse_move(double x, double y)
 	std::shared_ptr<litebrowser::web_page> page = current_page();
 	if(page)
 	{
-		page->on_mouse_over((int) (x + m_draw_buffer.get_left()),
-							(int) (y + m_draw_buffer.get_top()),
-							(int) x, (int) y);
+		Gdk::Rectangle rect(0, 0, 0, 0);
+		bool		   is_first = true;
+		page->on_mouse_over((int) (x + m_draw_buffer.get_left()), (int) (y + m_draw_buffer.get_top()), (int) x, (int) y,
+							[&](const litehtml::position& box) { update_rect(box, rect, is_first); });
+		if(!rect.has_zero_area())
+		{
+			m_draw_buffer.redraw_area(get_draw_function(current_page()), rect.get_x(), rect.get_y(), rect.get_width(),
+									  rect.get_height());
+			queue_draw();
+		}
 	}
 }
 

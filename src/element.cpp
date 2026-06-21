@@ -212,7 +212,7 @@ void element::add_render(const std::shared_ptr<render_item>& ri)
 	m_renders.push_back(ri);
 }
 
-bool element::find_styles_changes( position::vector& redraw_boxes)
+bool element::find_styles_changes(const std::function<void(const position&)>& redraw_box)
 {
 	if(css().get_display() == display_inline_text)
 	{
@@ -223,26 +223,20 @@ bool element::find_styles_changes( position::vector& redraw_boxes)
 
 	if(requires_styles_update())
 	{
-		auto fetch_boxes = [&](const std::shared_ptr<element>& el)
-			{
+		auto process_boxes = [&](const std::shared_ptr<element>& el) {
 				for(const auto& weak_ri : el->m_renders)
 				{
 					auto ri = weak_ri.lock();
 					if(ri)
 					{
-						position::vector boxes;
-						ri->get_rendering_boxes(boxes);
-						for (auto &box: boxes)
-						{
-							redraw_boxes.push_back(box);
-						}
+						ri->get_rendering_boxes(redraw_box);
 					}
 				}
 			};
-		fetch_boxes(shared_from_this());
+		process_boxes(shared_from_this());
 		for (auto& el : m_children)
 		{
-			fetch_boxes(el);
+			process_boxes(el);
 		}
 
 		refresh_styles();
@@ -251,7 +245,7 @@ bool element::find_styles_changes( position::vector& redraw_boxes)
 	}
 	for (auto& el : m_children)
 	{
-		if(el->find_styles_changes(redraw_boxes))
+		if(el->find_styles_changes(redraw_box))
 		{
 			ret = true;
 		}

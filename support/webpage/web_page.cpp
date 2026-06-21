@@ -153,33 +153,36 @@ void litebrowser::web_page::make_url(const char* url, const char* basepath, lite
 	}
 }
 
-void litebrowser::web_page::on_mouse_over(int x, int y, int client_x, int client_y)
+void litebrowser::web_page::on_mouse_over(int x, int y, int client_x, int client_y,
+										  const std::function<void(const litehtml::position&)>& redraw_box)
 {
 	std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
 	if(m_html)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(m_html->on_mouse_over(x, y, client_x, client_y, redraw_boxes))
+		if(m_html->on_mouse_over(x, y, client_x, client_y, redraw_box))
 		{
 			m_html_host->redraw_boxes(redraw_boxes);
 		}
 	}
 }
 
-void litebrowser::web_page::on_lbutton_down(int x, int y, int client_x, int client_y)
+void litebrowser::web_page::on_lbutton_down(int x, int y, int client_x, int client_y,
+											const std::function<void(const litehtml::position&)>& redraw_box)
 {
 	std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
 	if(m_html)
 	{
 		litehtml::position::vector redraw_boxes;
-		if(m_html->on_lbutton_down(x, y, client_x, client_y, redraw_boxes))
+		if(m_html->on_lbutton_down(x, y, client_x, client_y, redraw_box))
 		{
 			m_html_host->redraw_boxes(redraw_boxes);
 		}
 	}
 }
 
-void litebrowser::web_page::on_lbutton_up(int x, int y, int client_x, int client_y)
+void litebrowser::web_page::on_lbutton_up(int x, int y, int client_x, int client_y,
+										  const std::function<void(const litehtml::position&)>& redraw_box)
 {
 	if(m_html)
 	{
@@ -188,7 +191,7 @@ void litebrowser::web_page::on_lbutton_up(int x, int y, int client_x, int client
 
 			litehtml::position::vector redraw_boxes;
 			m_clicked_url.clear();
-			if (m_html->on_lbutton_up(x, y, client_x, client_y, redraw_boxes))
+			if(m_html->on_lbutton_up(x, y, client_x, client_y, redraw_box))
 			{
 				m_html_host->redraw_boxes(redraw_boxes);
 			}

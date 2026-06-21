@@ -117,9 +117,12 @@ namespace litebrowser
 			}
 		}
 
-		void on_mouse_over(int x, int y, int client_x, int client_y);
-		void on_lbutton_down(int x, int y, int client_x, int client_y);
-		void on_lbutton_up(int x, int y, int client_x, int client_y);
+		void on_mouse_over(int x, int y, int client_x, int client_y,
+						   const std::function<void(const litehtml::position&)>& redraw_box);
+		void on_lbutton_down(int x, int y, int client_x, int client_y,
+							 const std::function<void(const litehtml::position&)>& redraw_box);
+		void on_lbutton_up(int x, int y, int client_x, int client_y,
+						   const std::function<void(const litehtml::position&)>& redraw_box);
 
 		[[nodiscard]]
 		const std::string& get_cursor() const	{ return m_cursor; }
