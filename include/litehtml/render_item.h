@@ -467,8 +467,18 @@ namespace litehtml
         void add_positioned(const std::shared_ptr<litehtml::render_item> &el);
         void get_redraw_box(litehtml::position& pos, pixel_t x = 0, pixel_t y = 0);
         void calc_document_size( litehtml::size& sz, pixel_t x = 0, pixel_t y = 0 );
-		virtual void get_inline_boxes( position::vector& /*boxes*/ ) const {};
-		virtual void set_inline_boxes( position::vector& /*boxes*/ ) {};
+
+		/**
+		 * @brief Call func for all inline boxes
+		 * @param process function to call for boxes. "first "argument is true for the first box, "last" argument is
+		 * true for the last box. Function should return true to continue.
+		 * @return returns true if supported, else returns false
+		 */
+		virtual bool for_inline_boxes(
+			[[maybe_unused]] const std::function<bool(const position& box, bool first, bool last)>& process) const
+		{ return false; }
+
+		virtual void	set_inline_boxes(position::vector& /*boxes*/) {};
 		virtual void add_inline_box( const position& /*box*/ ) {};
 		virtual void clear_inline_boxes() {};
         void draw_stacking_context( uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, bool with_positioned );

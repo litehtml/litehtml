@@ -152,9 +152,12 @@ std::shared_ptr<render_item> element::create_render_item(const std::shared_ptr<r
 	} else if(css().get_display() == display_table || css().get_display() == display_inline_table)
 	{
 		ret = std::make_shared<render_item_table>(shared_from_this());
-	} else if(css().get_display() == display_inline || css().get_display() == display_inline_text)
+	} else if(css().get_display() == display_inline)
 	{
 		ret = std::make_shared<render_item_inline>(shared_from_this());
+	} else if(css().get_display() == display_inline_text)
+	{
+		ret = std::make_shared<render_text>(shared_from_this());
 	} else if(css().get_display() == display_flex || css().get_display() == display_inline_flex)
 	{
 		ret = std::make_shared<render_item_flex>(shared_from_this());

@@ -709,7 +709,13 @@ void litehtml::render_item::get_redraw_box(litehtml::position& pos, pixel_t x /*
 
 void litehtml::render_item::calc_document_size(litehtml::size& sz, pixel_t x /*= 0*/, pixel_t y /*= 0*/)
 {
-	if(css().get_display() != display_inline && css().get_display() != display_table_row)
+	auto inline_processed = for_inline_boxes([&sz, &x, &y](const position& box, bool, bool) {
+		sz.width  = std::max(sz.width, x + box.x + box.width);
+		sz.height = std::max(sz.height, y + box.y + box.height);
+		return true;
+	});
+
+	if(!inline_processed)
 	{
 		if(is_visible())
 		{
@@ -752,15 +758,6 @@ void litehtml::render_item::calc_document_size(litehtml::size& sz, pixel_t x /*=
 					}
 				}
 			}
-		}
-	} else
-	{
-		position::vector boxes;
-		get_inline_boxes(boxes);
-		for(const auto& box : boxes)
-		{
-			sz.width  = std::max(sz.width, x + box.x + box.width);
-			sz.height = std::max(sz.height, y + box.y + box.height);
 		}
 	}
 }
@@ -1160,28 +1157,28 @@ bool litehtml::render_item::is_point_inside( pixel_t x, pixel_t y ) const
 
 void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes) const
 {
-    if(src_el()->css().get_display() == display_inline || src_el()->css().get_display() == display_table_row)
-    {
-        get_inline_boxes(redraw_boxes);
-		for(auto& box : redraw_boxes)
-		{
-			scroll_box(box);
-		}
-    } else
-    {
-        position pos = m_pos;
-        pos 	+= m_padding;
-        pos 	+= m_borders;
-        redraw_boxes.push_back(pos);
-    }
+	auto inline_processed = for_inline_boxes([this, &redraw_boxes](const position& box, bool, bool) {
+		position box_ = box;
+		scroll_box(box_);
+		redraw_boxes.push_back(box_);
+		return true;
+	});
 
-    if(src_el()->css().get_position() != element_position_fixed)
-    {
-		auto cur_el = parent();
-		pixel_t	 add_x	= 0;
-		pixel_t	 add_y	= 0;
+	if(!inline_processed)
+	{
+		position pos  = m_pos;
+		pos			 += m_padding;
+		pos			 += m_borders;
+		redraw_boxes.push_back(pos);
+	}
 
-        while(cur_el)
+	if(src_el()->css().get_position() != element_position_fixed)
+	{
+		auto	cur_el = parent();
+		pixel_t add_x  = 0;
+		pixel_t add_y  = 0;
+
+		while(cur_el)
 		{
 			if(cur_el->css().get_position() == element_position_fixed)
 			{
@@ -1191,10 +1188,10 @@ void litehtml::render_item::get_rendering_boxes( position::vector& redraw_boxes)
 				add_y += cur_el->m_pos.y + view_port.top() - cur_el->get_scroll_top();
 				break;
 			}
-            add_x += cur_el->m_pos.x - cur_el->get_scroll_left();
-            add_y += cur_el->m_pos.y - cur_el->get_scroll_top();
-            cur_el = cur_el->parent();
-        }
+			add_x  += cur_el->m_pos.x - cur_el->get_scroll_left();
+			add_y  += cur_el->m_pos.y - cur_el->get_scroll_top();
+			cur_el	= cur_el->parent();
+		}
 		for(auto& box : redraw_boxes)
 		{
 			box.x += add_x;

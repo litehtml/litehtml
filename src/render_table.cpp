@@ -492,22 +492,39 @@ litehtml::pixel_t litehtml::render_item_table::get_draw_vertical_offset()
     return 0;
 }
 
-void litehtml::render_item_table_row::get_inline_boxes( position::vector& boxes ) const
+bool litehtml::render_item_table_row::for_inline_boxes(
+	const std::function<bool(const position& box, bool first, bool last)>& process) const
 {
-	position pos;
+	std::optional<position> prev_pos;
+	bool					first = true;
 	for(auto& el : m_children)
 	{
 		if(el->src_el()->css().get_display() == display_table_cell)
 		{
-			pos.x		= el->left() + el->margin_left();
-			pos.y		= el->top() - m_padding.top - m_borders.top;
+			if(prev_pos.has_value())
+			{
+				if(!process(prev_pos.value(), first, false))
+				{
+					return true;
+				}
+				if(first)
+					first = false;
+			}
+			position pos;
+			pos.x = el->left() + el->margin_left();
+			pos.y = el->top() - m_padding.top - m_borders.top;
 
-			pos.width	= el->right() - pos.x - el->margin_right() - el->margin_left();
-			pos.height	= el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom;
+			pos.width  = el->right() - pos.x - el->margin_right() - el->margin_left();
+			pos.height = el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom;
 
-			boxes.push_back(pos);
+			prev_pos = pos;
 		}
 	}
+	if(prev_pos.has_value())
+	{
+		process(prev_pos.value(), first, true);
+	}
+	return true;
 }
 
 bool litehtml::render_item_table_row::is_point_inside(pixel_t x, pixel_t y) const
