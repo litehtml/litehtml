@@ -169,12 +169,12 @@ else()
 						-Wold-style-cast
 						-Wredundant-move
 						-Woverloaded-virtual
-						#-Wsign-promo
+						-Wsign-promo
 						-Wfloat-equal
 						-Wcast-qual
-						#-Wzero-as-null-pointer-constant
-						#-Woverloaded-virtual
-						#-Wredundant-decls
+						-Wzero-as-null-pointer-constant
+						-Woverloaded-virtual
+						-Wredundant-decls
 						)
 endif()
 
