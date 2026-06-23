@@ -30,17 +30,18 @@
 #ifndef LITEHTML_CODEPOINT_H__
 #define LITEHTML_CODEPOINT_H__
 
-namespace litehtml {
+namespace litehtml
+{
 
-bool is_ascii_codepoint(char c);
+	bool is_ascii_codepoint(char c);
 
-// Returns true if the codepoint is a reserved codepoint for URLs.
-// https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
-bool is_url_reserved_codepoint(char c);
+	// Returns true if the codepoint is a reserved codepoint for URLs.
+	// https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
+	bool is_url_reserved_codepoint(char c);
 
-// Returns true if the codepoint is a scheme codepoint for URLs.
-// https://datatracker.ietf.org/doc/html/rfc3986#section-3.1
-bool is_url_scheme_codepoint(char c);
+	// Returns true if the codepoint is a scheme codepoint for URLs.
+	// https://datatracker.ietf.org/doc/html/rfc3986#section-3.1
+	bool is_url_scheme_codepoint(char c);
 
 } // namespace litehtml
 

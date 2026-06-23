@@ -39,10 +39,11 @@ namespace litehtml
 		};
 	protected:
 		std::shared_ptr<render_item> m_element;
-		pixel_t m_rendered_min_width = 0;
-		pixel_t m_items_top = 0;
-		pixel_t m_items_bottom = 0;
-	public:
+		pixel_t						 m_rendered_min_width;
+		pixel_t						 m_items_top;
+		pixel_t						 m_items_bottom;
+
+	  public:
 		explicit line_box_item(const std::shared_ptr<render_item>& element) : m_element(element) {}
 		line_box_item(const line_box_item& el) = default;
 		line_box_item(line_box_item&&) = default;
@@ -62,7 +63,10 @@ namespace litehtml
 		virtual void set_rendered_min_width(pixel_t min_width) { m_rendered_min_width = min_width; }
 		virtual void y_shift(pixel_t shift);
 
-		void reset_items_height() { m_items_top = m_items_bottom = 0; }
+		void reset_items_height()
+		{
+			m_items_top = m_items_bottom = 0_px;
+		}
 		void add_item_height(pixel_t item_top, pixel_t item_bottom)
 		{
 			m_items_top = std::min(m_items_top, item_top);
@@ -109,7 +113,7 @@ namespace litehtml
 	{
 	public:
 		explicit lbi_continue(const std::shared_ptr<render_item>& element);
-		virtual ~lbi_continue() override;
+		~lbi_continue() override;
 
 		void place_to(pixel_t x, pixel_t y) override;
 		pixel_t right() const override;
@@ -122,8 +126,8 @@ namespace litehtml
     {
 		struct va_context
 		{
-			pixel_t			line_height = 0;
-			pixel_t			baseline = 0;
+			pixel_t			line_height;
+			pixel_t			baseline;
 			font_metrics 	fm;
 			line_box_item*	start_lbi = nullptr;
 		};
@@ -171,7 +175,7 @@ namespace litehtml
 		pixel_t top_margin() const;
 		pixel_t bottom_margin() const;
 		void	y_shift(pixel_t shift);
-		
+
 		std::list< std::unique_ptr<line_box_item> >	finish(bool last_box, const containing_block_context &containing_block_size);
 		std::list< std::unique_ptr<line_box_item> > new_width(pixel_t left, pixel_t right);
 		std::shared_ptr<render_item> 		get_last_text_part() const;
@@ -182,6 +186,6 @@ namespace litehtml
         bool				is_break_only() const;
 		static pixel_t		calc_va_baseline(const va_context& current, vertical_align va, const font_metrics& new_font, pixel_t top, pixel_t bottom);
     };
-}
+} // namespace litehtml
 
 #endif //LH_LINE_BOX_H

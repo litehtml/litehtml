@@ -12,18 +12,6 @@ namespace litehtml
 		css_length	top;
 		css_length	bottom;
 
-		css_margins() = default;
-
-		css_margins(const css_margins& val)
-		{
-			left	= val.left;
-			right	= val.right;
-			top		= val.top;
-			bottom	= val.bottom;
-		}
-
-		css_margins& operator=(const css_margins& val) = default;
-
 		string to_string() const
 		{
 			return	"left: " + left.to_string() +

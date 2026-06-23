@@ -36,34 +36,34 @@ litehtml::rendered_width litehtml::render_item_image::_render(pixel_t x, pixel_t
             {
                 m_pos.width = max_width;
             }
-            if(sz.width != 0)
-            {
-                m_pos.height = m_pos.width * sz.height / sz.width;
-            } else
-            {
-                m_pos.height = sz.height;
-            }
-        }
+			if(sz.width != 0_px)
+			{
+				m_pos.height = m_pos.width * sz.height / sz.width;
+			} else
+			{
+				m_pos.height = sz.height;
+			}
+		}
 
-        // check for max-height
-        if(!src_el()->css().get_max_height().is_predefined())
+		// check for max-height
+		if(!src_el()->css().get_max_height().is_predefined())
         {
             pixel_t max_height = calc_max_height(sz.height, containing_block_size.height);
             if(m_pos.height > max_height)
             {
                 m_pos.height = max_height;
             }
-            if(sz.height != 0)
-            {
-                m_pos.width = m_pos.height * sz.width / sz.height;
-            } else
-            {
-                m_pos.width = sz.width;
-            }
-        }
-    } else if(!src_el()->css().get_height().is_predefined() && src_el()->css().get_width().is_predefined())
+			if(sz.height != 0_px)
+			{
+				m_pos.width = m_pos.height * sz.width / sz.height;
+			} else
+			{
+				m_pos.width = sz.width;
+			}
+		}
+	} else if(!src_el()->css().get_height().is_predefined() && src_el()->css().get_width().is_predefined())
     {
-		if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height > 0)
+		if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height.value > 0_px)
 		{
 			m_pos.height = self_size.height;
 		}
@@ -78,15 +78,15 @@ litehtml::rendered_width litehtml::render_item_image::_render(pixel_t x, pixel_t
             }
         }
 
-        if(sz.height != 0)
-        {
-            m_pos.width = m_pos.height * sz.width / sz.height;
-        } else
-        {
-            m_pos.width = sz.width;
-        }
-    } else if(src_el()->css().get_height().is_predefined() && !src_el()->css().get_width().is_predefined())
-    {
+		if(sz.height != 0_px)
+		{
+			m_pos.width = m_pos.height * sz.width / sz.height;
+		} else
+		{
+			m_pos.width = sz.width;
+		}
+	} else if(src_el()->css().get_height().is_predefined() && !src_el()->css().get_width().is_predefined())
+	{
         m_pos.width = src_el()->css().get_width().calc_percent(parent_width);
 
         // check for max-width
@@ -99,18 +99,18 @@ litehtml::rendered_width litehtml::render_item_image::_render(pixel_t x, pixel_t
             }
         }
 
-        if(sz.width != 0)
-        {
-            m_pos.height = m_pos.width * sz.height / sz.width;
-        } else
-        {
-            m_pos.height = sz.height;
-        }
-    } else
-    {
+		if(sz.width != 0_px)
+		{
+			m_pos.height = m_pos.width * sz.height / sz.width;
+		} else
+		{
+			m_pos.height = sz.height;
+		}
+	} else
+	{
         m_pos.width		= src_el()->css().get_width().calc_percent(parent_width);
-        m_pos.height	= 0;
-		if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height > 0)
+		m_pos.height	= 0_px;
+		if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height.value > 0_px)
 		{
 			m_pos.height = self_size.height;
 		}
@@ -148,6 +148,6 @@ litehtml::rendered_width litehtml::render_item_image::_render(pixel_t x, pixel_t
 litehtml::pixel_t litehtml::render_item_image::calc_max_height(pixel_t image_height, pixel_t containing_block_height)
 {
     document::ptr doc = src_el()->get_document();
-    return doc->to_pixels(css().get_max_height(), css().get_font_metrics(),
-						  containing_block_height == 0 ? image_height : containing_block_height);
+	return doc->to_pixels(css().get_max_height(), css().get_font_metrics(),
+						  containing_block_height == 0_px ? image_height : containing_block_height);
 }

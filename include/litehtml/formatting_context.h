@@ -14,16 +14,16 @@ namespace litehtml
 		{
 			bool	found	 = false; // true if position found else use the suplied position
 			bool	new_line = false; // true if element was moved to new line
-			pixel_t top		 = 0;	  // element top position
-			pixel_t left	 = 0;	  // element left position
-			pixel_t width	 = 0;	  // maximum width available for element
+			pixel_t top;			  // element top position
+			pixel_t left;			  // element left position
+			pixel_t width;			  // maximum width available for element
 		};
 
 		struct el_position
 		{
 			margins	 el_margins;		  // element margins
 			position el_pos;			  // element position including margins
-			pixel_t	 container_width = 0; // maximum width on containing block
+			pixel_t	 container_width;	  // maximum width on containing block
 		};
 
 	private:

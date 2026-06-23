@@ -4,7 +4,7 @@
 #include <optional>
 #include "formatting_context.h"
 
-void litehtml::formatting_context::add_float(const std::shared_ptr<render_item> &el, pixel_t min_width, int context)
+void litehtml::formatting_context::add_float(const std::shared_ptr<render_item>& el, pixel_t min_width, int context)
 {
 	floated_box fb;
 	fb.pos.x		= el->left() + m_current_left;
@@ -12,7 +12,7 @@ void litehtml::formatting_context::add_float(const std::shared_ptr<render_item> 
 	fb.pos.width	= el->width();
 	fb.pos.height	= el->height();
 	fb.float_side	= el->src_el()->css().get_float();
-	fb.clear_floats	= el->src_el()->css().get_clear();
+	fb.clear_floats = el->src_el()->css().get_clear();
 	fb.el			= el;
 	fb.context		= context;
 	fb.min_width	= min_width;
@@ -75,21 +75,21 @@ litehtml::pixel_t litehtml::formatting_context::get_floats_height(element_float 
 		bool process = false;
 		switch(el_float)
 		{
-			case float_none:
+		case float_none:
+			process = true;
+			break;
+		case float_left:
+			if(fb.clear_floats == clear_left || fb.clear_floats == clear_both)
+			{
 				process = true;
-				break;
-			case float_left:
-				if (fb.clear_floats == clear_left || fb.clear_floats == clear_both)
-				{
-					process = true;
-				}
-				break;
-			case float_right:
-				if (fb.clear_floats == clear_right || fb.clear_floats == clear_both)
-				{
-					process = true;
-				}
-				break;
+			}
+			break;
+		case float_right:
+			if(fb.clear_floats == clear_right || fb.clear_floats == clear_both)
+			{
+				process = true;
+			}
+			break;
 		}
 		if(process)
 		{
@@ -103,27 +103,26 @@ litehtml::pixel_t litehtml::formatting_context::get_floats_height(element_float 
 		}
 	}
 
-
 	for(const auto& fb : m_floats_right)
 	{
 		bool process = false;
 		switch(el_float)
 		{
-			case float_none:
+		case float_none:
+			process = true;
+			break;
+		case float_left:
+			if(fb.clear_floats == clear_left || fb.clear_floats == clear_both)
+			{
 				process = true;
-				break;
-			case float_left:
-				if (fb.clear_floats == clear_left || fb.clear_floats == clear_both)
-				{
-					process = true;
-				}
-				break;
-			case float_right:
-				if (fb.clear_floats == clear_right || fb.clear_floats == clear_both)
-				{
-					process = true;
-				}
-				break;
+			}
+			break;
+		case float_right:
+			if(fb.clear_floats == clear_right || fb.clear_floats == clear_both)
+			{
+				process = true;
+			}
+			break;
 		}
 		if(process)
 		{
@@ -142,10 +141,10 @@ litehtml::pixel_t litehtml::formatting_context::get_floats_height(element_float 
 
 litehtml::pixel_t litehtml::formatting_context::get_left_floats_height() const
 {
-	pixel_t h = 0;
+	pixel_t h = 0_px;
 	if(!m_floats_left.empty())
 	{
-		for (const auto& fb : m_floats_left)
+		for(const auto& fb : m_floats_left)
 		{
 			h = std::max(h, fb.pos.bottom());
 		}
@@ -155,7 +154,7 @@ litehtml::pixel_t litehtml::formatting_context::get_left_floats_height() const
 
 litehtml::pixel_t litehtml::formatting_context::get_right_floats_height() const
 {
-	pixel_t h = 0;
+	pixel_t h = 0_px;
 	if(!m_floats_right.empty())
 	{
 		for(const auto& fb : m_floats_right)
@@ -166,26 +165,26 @@ litehtml::pixel_t litehtml::formatting_context::get_right_floats_height() const
 	return h - m_current_top;
 }
 
-litehtml::pixel_t litehtml::formatting_context::get_line_left(pixel_t y )
+litehtml::pixel_t litehtml::formatting_context::get_line_left(pixel_t y)
 {
 	y += m_current_top;
 
 	if(m_cache_line_left.is_valid && m_cache_line_left.hash == y)
 	{
-		if(m_cache_line_left.val - m_current_left < 0)
+		if(m_cache_line_left.val - m_current_left < 0_px)
 		{
-			return 0;
+			return 0_px;
 		}
 		return m_cache_line_left.val - m_current_left;
 	}
 
-	pixel_t w = 0;
+	pixel_t w = 0_px;
 	for(const auto& fb : m_floats_left)
 	{
-		if (y >= fb.pos.top() && y < fb.pos.bottom())
+		if(y >= fb.pos.top() && y < fb.pos.bottom())
 		{
 			w = std::max(w, fb.pos.right());
-			if (w < fb.pos.right())
+			if(w < fb.pos.right())
 			{
 				break;
 			}
@@ -193,13 +192,16 @@ litehtml::pixel_t litehtml::formatting_context::get_line_left(pixel_t y )
 	}
 	m_cache_line_left.set_value(y, w);
 	w -= m_current_left;
-	if(w < 0) return 0;
+	if(w < 0_px)
+	{
+		return 0_px;
+	}
 	return w;
 }
 
-litehtml::pixel_t litehtml::formatting_context::get_line_right(pixel_t y, pixel_t def_right )
+litehtml::pixel_t litehtml::formatting_context::get_line_right(pixel_t y, pixel_t def_right)
 {
-	y += m_current_top;
+	y		  += m_current_top;
 	def_right += m_current_left;
 	if(m_cache_line_right.is_valid && m_cache_line_right.hash == y)
 	{
@@ -209,18 +211,21 @@ litehtml::pixel_t litehtml::formatting_context::get_line_right(pixel_t y, pixel_
 		} else
 		{
 			pixel_t w = std::min(m_cache_line_right.val, def_right) - m_current_left;
-			if(w < 0) return 0;
+			if(w < 0_px)
+			{
+				return 0_px;
+			}
 			return w;
 		}
 	}
 
-	pixel_t w = def_right;
+	pixel_t w					  = def_right;
 	m_cache_line_right.is_default = true;
 	for(const auto& fb : m_floats_right)
 	{
 		if(y >= fb.pos.top() && y < fb.pos.bottom())
 		{
-			w = std::min(w, fb.pos.left());
+			w							  = std::min(w, fb.pos.left());
 			m_cache_line_right.is_default = false;
 			if(w > fb.pos.left())
 			{
@@ -230,10 +235,12 @@ litehtml::pixel_t litehtml::formatting_context::get_line_right(pixel_t y, pixel_
 	}
 	m_cache_line_right.set_value(y, w);
 	w -= m_current_left;
-	if(w < 0) return 0;
+	if(w < 0_px)
+	{
+		return 0_px;
+	}
 	return w;
 }
-
 
 void litehtml::formatting_context::clear_floats(int context)
 {
@@ -264,47 +271,48 @@ void litehtml::formatting_context::clear_floats(int context)
 	}
 }
 
-litehtml::pixel_t litehtml::formatting_context::get_cleared_top(const std::shared_ptr<render_item> &el, pixel_t line_top) const
+litehtml::pixel_t litehtml::formatting_context::get_cleared_top(const std::shared_ptr<render_item>& el,
+																pixel_t								line_top) const
 {
 	switch(el->src_el()->css().get_clear())
 	{
-		case clear_left:
+	case clear_left:
+		{
+			pixel_t fh = get_left_floats_height();
+			if(fh != 0_px && fh > line_top)
 			{
-				pixel_t fh = get_left_floats_height();
-				if(fh != 0 && fh > line_top)
-				{
-					line_top = fh;
-				}
+				line_top = fh;
 			}
-			break;
-		case clear_right:
+		}
+		break;
+	case clear_right:
+		{
+			pixel_t fh = get_right_floats_height();
+			if(fh != 0_px && fh > line_top)
 			{
-				pixel_t fh = get_right_floats_height();
-				if(fh != 0 && fh > line_top)
-				{
-					line_top = fh;
-				}
+				line_top = fh;
 			}
-			break;
-		case clear_both:
+		}
+		break;
+	case clear_both:
+		{
+			pixel_t fh = get_floats_height(float_none);
+			if(fh != 0_px && fh > line_top)
 			{
-				pixel_t fh = get_floats_height(float_none);
-				if(fh != 0 && fh > line_top)
-				{
-					line_top = fh;
-				}
+				line_top = fh;
 			}
-			break;
-		default:
-			if(el->src_el()->css().get_float() != float_none)
+		}
+		break;
+	default:
+		if(el->src_el()->css().get_float() != float_none)
+		{
+			pixel_t fh = get_floats_height(el->src_el()->css().get_float());
+			if(fh != 0_px && fh > line_top)
 			{
-				pixel_t fh = get_floats_height(el->src_el()->css().get_float());
-				if(fh != 0 && fh > line_top)
-				{
-					line_top = fh;
-				}
+				line_top = fh;
 			}
-			break;
+		}
+		break;
 	}
 	return line_top;
 }
@@ -330,7 +338,7 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 		// check intersection with left floats
 		for(const auto& fb : m_floats_left)
 		{
-			if(fb.pos.height == 0)
+			if(fb.pos.height == 0_px)
 			{
 				continue;
 			}
@@ -362,7 +370,7 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 			// check intersection with right floats
 			for(const auto& fb : m_floats_right)
 			{
-				if(fb.pos.height == 0)
+				if(fb.pos.height == 0_px)
 				{
 					continue;
 				}
@@ -376,7 +384,7 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 				if(fb.pos.does_intersect(&pos_el, true))
 				{
 					right_side = false;
-					pos_el.x = m_current_left + el_pos.el_margins.left;
+					pos_el.x   = m_current_left + el_pos.el_margins.left;
 					pos_el.y =
 						max_left_pos.has_value() ? std::min(max_left_pos->bottom(), fb.pos.bottom()) : fb.pos.bottom();
 					found		= true;
@@ -396,9 +404,13 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 				pos.width	 = min_right - max_left;
 
 				if(left_side)
+				{
 					pos.width += el_pos.el_margins.left;
+				}
 				if(right_side)
+				{
 					pos.width += el_pos.el_margins.right;
+				}
 
 				return pos;
 			}
@@ -431,7 +443,7 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 		// check intersection with right floats
 		for(const auto& fb : m_floats_right)
 		{
-			if(fb.pos.height == 0)
+			if(fb.pos.height == 0_px)
 			{
 				continue;
 			}
@@ -453,9 +465,9 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 		{
 			// move to next line
 			right_side = false;
-			next_line = true;
-			pos_el.x  = max_right - pos_el.width - el_pos.el_margins.left;
-			pos_el.y  = min_right_pos->bottom();
+			next_line  = true;
+			pos_el.x   = max_right - pos_el.width - el_pos.el_margins.left;
+			pos_el.y   = min_right_pos->bottom();
 		} else
 		{
 			found			 = false;
@@ -464,7 +476,7 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 			// check intersection with left floats
 			for(const auto& fb : m_floats_left)
 			{
-				if(fb.pos.height == 0)
+				if(fb.pos.height == 0_px)
 				{
 					continue;
 				}
@@ -498,9 +510,13 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 				pos.width	 = min_right - max_left;
 
 				if(left_side)
+				{
 					pos.width += el_pos.el_margins.left;
+				}
 				if(right_side)
+				{
 					pos.width += el_pos.el_margins.right;
+				}
 
 				return pos;
 			}
@@ -512,14 +528,14 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
 	return pos;
 }
 
-void litehtml::formatting_context::update_floats(pixel_t dy, const std::shared_ptr<render_item> &parent)
+void litehtml::formatting_context::update_floats(pixel_t dy, const std::shared_ptr<render_item>& parent)
 {
 	bool reset_cache = false;
 	for(auto fb = m_floats_left.rbegin(); fb != m_floats_left.rend(); fb++)
 	{
 		if(fb->el->src_el()->is_ancestor(parent->src_el()))
 		{
-			reset_cache	= true;
+			reset_cache	 = true;
 			fb->pos.y	+= dy;
 		}
 	}
@@ -532,7 +548,7 @@ void litehtml::formatting_context::update_floats(pixel_t dy, const std::shared_p
 	{
 		if(fb->el->src_el()->is_ancestor(parent->src_el()))
 		{
-			reset_cache	= true;
+			reset_cache	 = true;
 			fb->pos.y	+= dy;
 		}
 	}
@@ -542,9 +558,9 @@ void litehtml::formatting_context::update_floats(pixel_t dy, const std::shared_p
 	}
 }
 
-void litehtml::formatting_context::apply_relative_shift(const containing_block_context &containing_block_size)
+void litehtml::formatting_context::apply_relative_shift(const containing_block_context& containing_block_size)
 {
-	for (const auto& fb : m_floats_left)
+	for(const auto& fb : m_floats_left)
 	{
 		fb.el->apply_relative_shift(containing_block_size);
 	}
@@ -552,30 +568,36 @@ void litehtml::formatting_context::apply_relative_shift(const containing_block_c
 
 litehtml::pixel_t litehtml::formatting_context::find_min_left(pixel_t y, int context_idx)
 {
-	y += m_current_top;
-	pixel_t min_left = m_current_left;
+	y				 += m_current_top;
+	pixel_t min_left  = m_current_left;
 	for(const auto& fb : m_floats_left)
 	{
-		if (y >= fb.pos.top() && y < fb.pos.bottom() && fb.context == context_idx)
+		if(y >= fb.pos.top() && y < fb.pos.bottom() && fb.context == context_idx)
 		{
 			min_left += fb.min_width;
 		}
 	}
-	if(min_left < m_current_left) return 0;
+	if(min_left < m_current_left)
+	{
+		return 0_px;
+	}
 	return min_left - m_current_left;
 }
 
 litehtml::pixel_t litehtml::formatting_context::find_min_right(pixel_t y, pixel_t right, int context_idx)
 {
-	y += m_current_top;
-	pixel_t min_right = right + m_current_left;
+	y				  += m_current_top;
+	pixel_t min_right  = right + m_current_left;
 	for(const auto& fb : m_floats_right)
 	{
-		if (y >= fb.pos.top() && y < fb.pos.bottom() && fb.context == context_idx)
+		if(y >= fb.pos.top() && y < fb.pos.bottom() && fb.context == context_idx)
 		{
 			min_right -= fb.min_width;
 		}
 	}
-	if(min_right < m_current_left) return 0;
+	if(min_right < m_current_left)
+	{
+		return 0_px;
+	}
 	return min_right - m_current_left;
 }

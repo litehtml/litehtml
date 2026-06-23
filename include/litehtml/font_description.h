@@ -11,7 +11,7 @@ namespace litehtml
 	struct font_description
 	{
 		std::string				family;	// Font Family
-		pixel_t					size = 0;	// Font size
+		pixel_t					size;	// Font size
 		font_style				style = font_style_normal;	// Font stype, see the enum font_style
 		int						weight;	// Font weight.
 		int						decoration_line = text_decoration_line_none;	// Decoration line. A bitset of flags of the enum text_decoration_line
@@ -26,7 +26,7 @@ namespace litehtml
 		{
 			std::string out;
 			out += family;
-			out += ":sz=" + std::to_string(size);
+			out += ":sz=" + std::to_string(size.value());
 			out += ":st=" + std::to_string(style);
 			out += ":w=" + std::to_string(weight);
 			out += ":dl=" + std::to_string(decoration_line);
@@ -40,6 +40,6 @@ namespace litehtml
 			return out;
 		}
 	};
-}
+} // namespace litehtml
 
 #endif

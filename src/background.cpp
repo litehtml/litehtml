@@ -1,9 +1,9 @@
 #include <cmath>
 
 #include "background.h"
-#include "render_item.h"
 #include "document.h"
 #include "document_container.h"
+#include "render_item.h"
 
 #ifndef M_PI
 #       define M_PI    3.14159265358979323846
@@ -100,7 +100,7 @@ bool litehtml::background::get_layer(int idx, position pos, const element* el, c
 			litehtml::size img_size;
 			el->get_document()->container()->get_image_size(image_layer->url.c_str(), image_layer->base_url.c_str(),
 															img_size);
-			if (img_size.width != 0 && img_size.height != 0)
+			if(img_size.width != 0_px && img_size.height != 0_px)
 			{
 				litehtml::size img_new_sz = img_size;
 				pixel_t img_ar_width = img_size.width / img_size.height;
@@ -665,7 +665,7 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_image:
-			if(layer.origin_box.width != 0 && layer.origin_box.height != 0)
+			if(layer.origin_box.width != 0_px && layer.origin_box.height != 0_px)
 			{
 				auto image_layer = get_image_layer(idx);
 				if(image_layer)
@@ -675,7 +675,7 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_linear_gradient:
-			if(layer.origin_box.width != 0 && layer.origin_box.height != 0)
+			if(layer.origin_box.width != 0_px && layer.origin_box.height != 0_px)
 			{
 				auto gradient_layer = get_linear_gradient_layer(idx, layer);
 				if(gradient_layer)
@@ -685,7 +685,7 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_radial_gradient:
-			if(layer.origin_box.width != 0 && layer.origin_box.height != 0)
+			if(layer.origin_box.width != 0_px && layer.origin_box.height != 0_px)
 			{
 				auto gradient_layer = get_radial_gradient_layer(idx, layer);
 				if(gradient_layer)
@@ -695,7 +695,7 @@ void litehtml::background::draw_layer(uint_ptr hdc, int idx, const background_la
 			}
 			break;
 		case background::type_conic_gradient:
-			if(layer.origin_box.width != 0 && layer.origin_box.height != 0)
+			if(layer.origin_box.width != 0_px && layer.origin_box.height != 0_px)
 			{
 				auto gradient_layer = get_conic_gradient_layer(idx, layer);
 				if(gradient_layer)
@@ -880,7 +880,7 @@ bool litehtml::background_layer::gradient_base::prepare_color_points(float line_
 		size_t i = 1;
 		while(i < color_points.size())
 		{
-			if(color_points[i].offset != 0)
+			if(color_points[i].offset != 0.0)
 			{
 				i++;
 				continue;

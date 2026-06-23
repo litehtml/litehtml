@@ -136,7 +136,7 @@ namespace litebrowser
 		int render(int max_width)
 		{
 			std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
-			return m_html ? m_html->render(max_width) : 0;
+			return m_html ? m_html->render(max_width).value() : 0;
 		}
 
 		[[nodiscard]]
@@ -146,14 +146,14 @@ namespace litebrowser
 		int width() const
 		{
 			std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
-			return m_html ? m_html->width() : 0;
+			return m_html ? m_html->width().value() : 0;
 		}
 
 		[[nodiscard]]
 		int height() const
 		{
 			std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
-			return m_html ? m_html->height() : 0;
+			return m_html ? m_html->height().value() : 0;
 		}
 
 		bool media_changed()
