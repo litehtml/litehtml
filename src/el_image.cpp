@@ -42,7 +42,7 @@ void litehtml::el_image::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position
 	// draw image as background
 	if(pos.does_intersect(clip))
 	{
-		if (pos.width > 0 && pos.height > 0)
+		if(pos.width > 0_px && pos.height > 0_px)
 		{
 			background_layer layer;
 			layer.clip_box = pos;

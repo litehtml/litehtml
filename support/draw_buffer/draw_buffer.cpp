@@ -10,10 +10,13 @@
 /// @param left new horizontal position
 /// @param top new vertical position
 /// @param fixed_boxes fixed boxes to be redrawn
-void litebrowser::draw_buffer::on_scroll(const draw_page_function_t& cb_draw, int left, int top, const litehtml::position::vector& fixed_boxes)
+void litebrowser::draw_buffer::on_scroll(const draw_page_function_t& cb_draw, int left, int top,
+										 const litehtml::position::vector& fixed_boxes)
 {
 	if(m_width <= 0 || m_height <= 0 || !m_draw_buffer)
+	{
 		return;
+	}
 
 	top	 = fix_position(top);
 	left = fix_position(left);
@@ -30,16 +33,16 @@ void litebrowser::draw_buffer::on_scroll(const draw_page_function_t& cb_draw, in
 			redraw(cb_draw);
 		} else
 		{
-			int shift_x			 = m_left - left;
-			int shift_y			 = m_top - top;
+			int shift_x = m_left - left;
+			int shift_y = m_top - top;
 
-			int surface_shift_x	 = (int) std::floor((double) shift_x * m_scale_factor);
-			int surface_shift_y	 = (int) std::floor((double) shift_y * m_scale_factor);
+			int surface_shift_x = static_cast<int>(std::floor(static_cast<double>(shift_x) * m_scale_factor));
+			int surface_shift_y = static_cast<int>(std::floor(static_cast<double>(shift_y) * m_scale_factor));
 
-			auto	 new_surface = make_surface(m_width, m_height, m_scale_factor);
+			auto*	 new_surface = make_surface(m_width, m_height, m_scale_factor);
 			cairo_t* cr			 = cairo_create(new_surface);
-			cairo_rectangle(cr, (rec_clean.x - left) * m_scale_factor - m_scale_factor,
-							(rec_clean.y - top) * m_scale_factor - m_scale_factor,
+			cairo_rectangle(cr, (rec_clean.x.value() - left) * m_scale_factor - m_scale_factor,
+							(rec_clean.y.value() - top) * m_scale_factor - m_scale_factor,
 							std::ceil((double) rec_clean.width * m_scale_factor) + 2.0 * m_scale_factor,
 							std::ceil((double) rec_clean.height * m_scale_factor) + 2.0 * m_scale_factor);
 			cairo_clip(cr);
@@ -47,28 +50,28 @@ void litebrowser::draw_buffer::on_scroll(const draw_page_function_t& cb_draw, in
 			cairo_paint(cr);
 			cairo_destroy(cr);
 			cairo_surface_destroy(m_draw_buffer);
-			m_draw_buffer	 = new_surface;
+			m_draw_buffer = new_surface;
 
-			m_left			 = left;
-			m_top			 = top;
+			m_left = left;
+			m_top  = top;
 
 			int right		 = fix_position(m_left + m_width);
 			int bottom		 = fix_position(m_top + m_height);
 			int clean_right	 = fix_position(rec_clean.x + rec_clean.width);
 			int clean_bottom = fix_position(rec_clean.y + rec_clean.height);
 
-			if(rec_clean.x > m_left)
+			if(rec_clean.x > litehtml::pixel_t(m_left))
 			{
-				redraw_area(cb_draw, m_left, rec_clean.y, rec_clean.x - m_left, rec_clean.height);
+				redraw_area(cb_draw, m_left, rec_clean.y, rec_clean.x.value() - m_left, rec_clean.height);
 			}
 			if(clean_right < right)
 			{
 				redraw_area(cb_draw, clean_right, rec_clean.y, right - clean_right, rec_clean.height);
 			}
 
-			if(rec_clean.y > m_top)
+			if(rec_clean.y > litehtml::pixel_t(m_top))
 			{
-				redraw_area(cb_draw, m_left, m_top, m_width, rec_clean.y - m_top);
+				redraw_area(cb_draw, m_left, m_top, m_width, rec_clean.y.value() - m_top);
 			}
 			if(clean_bottom < bottom)
 			{
@@ -77,8 +80,9 @@ void litebrowser::draw_buffer::on_scroll(const draw_page_function_t& cb_draw, in
 
 			for(const auto& box : fixed_boxes)
 			{
-				redraw_area(cb_draw, m_left + box.left(), m_top + box.top(), box.width, box.height);
-				redraw_area(cb_draw, m_left + box.left() + shift_x, m_top + box.top() + shift_y, box.width, box.height);
+				redraw_area(cb_draw, m_left + box.left().value(), m_top + box.top().value(), box.width, box.height);
+				redraw_area(cb_draw, m_left + box.left().value() + shift_x, m_top + box.top().value() + shift_y,
+							box.width, box.height);
 			}
 		}
 	}
@@ -104,21 +108,26 @@ void litebrowser::draw_buffer::redraw_area(const draw_page_function_t& cb_draw, 
 		int fixed_bottom = fix_position(y - m_top + height);
 
 		if(fixed_right < x + width)
+		{
 			fixed_right += m_min_int_position;
+		}
 		if(fixed_bottom < y + height)
+		{
 			fixed_bottom += m_min_int_position;
+		}
 
 		int fixed_x		 = fixed_left;
 		int fixed_y		 = fixed_top;
 		int fixed_width	 = fixed_right - fixed_left;
 		int fixed_height = fixed_bottom - fixed_top;
 
-		int s_x			 = (int) std::round((double) fixed_x * m_scale_factor);
-		int s_y			 = (int) std::round((double) fixed_y * m_scale_factor);
-		int s_width		 = (int) std::round((double) fixed_width * m_scale_factor);
-		int s_height	 = (int) std::round((double) fixed_height * m_scale_factor);
+		int s_x		 = (int) std::round((double) fixed_x * m_scale_factor);
+		int s_y		 = (int) std::round((double) fixed_y * m_scale_factor);
+		int s_width	 = (int) std::round((double) fixed_width * m_scale_factor);
+		int s_height = (int) std::round((double) fixed_height * m_scale_factor);
 
-		litehtml::position pos{(litehtml::pixel_t) fixed_x, (litehtml::pixel_t) fixed_y, (litehtml::pixel_t) fixed_width, (litehtml::pixel_t) fixed_height};
+		litehtml::position pos{(litehtml::pixel_t) fixed_x, (litehtml::pixel_t) fixed_y,
+							   (litehtml::pixel_t) fixed_width, (litehtml::pixel_t) fixed_height};
 		cairo_t*		   cr = cairo_create(m_draw_buffer);
 
 		// Apply clip with scaled position to avoid artifacts

@@ -1,6 +1,8 @@
 #include "render_block_context.h"
+
 #include "document.h"
 #include "types.h"
+#include <algorithm>
 
 litehtml::rendered_width litehtml::render_item_block_context::_render_content(pixel_t /*x*/, pixel_t /*y*/,
 																			  bool second_pass,
@@ -10,8 +12,8 @@ litehtml::rendered_width litehtml::render_item_block_context::_render_content(pi
 	std::shared_ptr<render_item> last_margin_el;
 
 	rendered_width ret_width;
-	pixel_t		   child_top   = 0;
-	pixel_t		   last_margin = 0;
+	pixel_t		   child_top   = 0_px;
+	pixel_t		   last_margin = 0_px;
 	bool		   is_first	   = true;
 	for(const auto& el : m_children)
 	{
@@ -20,7 +22,9 @@ litehtml::rendered_width litehtml::render_item_block_context::_render_content(pi
 		{
 			auto el_position = el->src_el()->css().get_position();
 			if((el_position == element_position_absolute || el_position == element_position_fixed))
+			{
 				continue;
+			}
 		}
 
 		if(el->src_el()->css().get_float() != float_none)
@@ -32,15 +36,15 @@ litehtml::rendered_width litehtml::render_item_block_context::_render_content(pi
 			if(el->src_el()->css().get_position() == element_position_absolute ||
 			   el->src_el()->css().get_position() == element_position_fixed)
 			{
-				pixel_t min_rendered_width = el->render(0, child_top, self_size, fmt_ctx).natural_width;
+				pixel_t min_rendered_width = el->render(0_px, child_top, self_size, fmt_ctx).natural_width;
 				if(min_rendered_width < el->width() && el->src_el()->css().get_width().is_predefined())
 				{
-					el->render(0, child_top, self_size.new_width(min_rendered_width), fmt_ctx);
+					el->render(0_px, child_top, self_size.new_width(min_rendered_width), fmt_ctx);
 				}
 			} else
 			{
 				child_top			= fmt_ctx->get_cleared_top(el, child_top);
-				pixel_t child_x		= 0;
+				pixel_t child_x		= 0_px;
 				pixel_t child_width = self_size.render_width;
 				pixel_t top_margin	= m_margins.top;
 
@@ -49,7 +53,7 @@ litehtml::rendered_width litehtml::render_item_block_context::_render_content(pi
 				// Collapse top margin
 				if(is_first && collapse_top_margin())
 				{
-					if(el->get_margins().top > 0)
+					if(el->get_margins().top > 0_px)
 					{
 						child_top -= el->get_margins().top;
 						if(el->get_margins().top > get_margins().top)
@@ -59,7 +63,7 @@ litehtml::rendered_width litehtml::render_item_block_context::_render_content(pi
 					}
 				} else
 				{
-					if(el->get_margins().top > 0)
+					if(el->get_margins().top > 0_px)
 					{
 						if(last_margin > el->get_margins().top)
 						{
@@ -107,11 +111,11 @@ litehtml::rendered_width litehtml::render_item_block_context::_render_content(pi
 					{
 						rw = el->render(new_pos.left, new_pos.top, self_size.new_width(new_pos.width), fmt_ctx);
 					}
-					rw.natural_width = self_size.render_width - new_pos.width + rw.natural_width;
+					rw.natural_width = self_size.render_width.value - new_pos.width + rw.natural_width;
 				}
 
 				pixel_t auto_margin = el->calc_auto_margins(child_width);
-				if(auto_margin != 0)
+				if(auto_margin != 0_px)
 				{
 					el->pos().x += auto_margin;
 				}
@@ -130,7 +134,7 @@ litehtml::rendered_width litehtml::render_item_block_context::_render_content(pi
 		}
 	}
 
-	if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height > 0)
+	if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height.value > 0_px)
 	{
 		m_pos.height = self_size.height;
 	} else
@@ -138,14 +142,11 @@ litehtml::rendered_width litehtml::render_item_block_context::_render_content(pi
 		m_pos.height = child_top;
 		if(collapse_bottom_margin())
 		{
-			m_pos.height -= last_margin;
-			if(m_margins.bottom < last_margin)
-			{
-				m_margins.bottom = last_margin;
-			}
+			m_pos.height	 -= last_margin;
+			m_margins.bottom  = std::max(m_margins.bottom, last_margin);
 			if(last_margin_el)
 			{
-				last_margin_el->get_margins().bottom = 0;
+				last_margin_el->get_margins().bottom = 0_px;
 			}
 		}
 	}

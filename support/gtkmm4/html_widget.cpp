@@ -1,5 +1,6 @@
 #include "html_widget.h"
-#include <chrono>
+
+using litehtml::operator""_px;
 
 html_widget::html_widget()
 {
@@ -59,9 +60,12 @@ html_widget::~html_widget()
 {
 	m_notifier->disconnect();
 
-	if (!gobj()) return;
+	if(!gobj())
+	{
+		return;
+	}
 
-	while (Widget* child = get_first_child())
+	while(Widget* child = get_first_child())
 	{
 		child->unparent();
 	}
@@ -76,12 +80,12 @@ double html_widget::get_dpi()
 int html_widget::get_screen_width()
 {
 	auto display = Gdk::Display::get_default();
-	if (display)
+	if(display)
 	{
 		auto monitors = display->get_monitors();
-		if (monitors->get_n_items() > 0)
+		if(monitors->get_n_items() > 0)
 		{
-			auto monitor = monitors->get_typed_object<Gdk::Monitor>(0);
+			auto		   monitor = monitors->get_typed_object<Gdk::Monitor>(0);
 			Gdk::Rectangle rect;
 			monitor->get_geometry(rect);
 			return rect.get_width();
@@ -93,12 +97,12 @@ int html_widget::get_screen_width()
 int html_widget::get_screen_height()
 {
 	auto display = Gdk::Display::get_default();
-	if (display)
+	if(display)
 	{
 		auto monitors = display->get_monitors();
-		if (monitors->get_n_items() > 0)
+		if(monitors->get_n_items() > 0)
 		{
-			auto monitor = monitors->get_typed_object<Gdk::Monitor>(0);
+			auto		   monitor = monitors->get_typed_object<Gdk::Monitor>(0);
 			Gdk::Rectangle rect;
 			monitor->get_geometry(rect);
 			return rect.get_height();
@@ -109,14 +113,14 @@ int html_widget::get_screen_height()
 
 void html_widget::snapshot_vfunc(const Glib::RefPtr<Gtk::Snapshot>& snapshot)
 {
-    if (get_allocated_width() <= 0 || get_allocated_height() <= 0)
+	if(get_allocated_width() <= 0 || get_allocated_height() <= 0)
 	{
-        return;
-    }
+		return;
+	}
 
 	{
 		auto allocation = get_allocation();
-		auto cr = snapshot->append_cairo(Gdk::Rectangle(0, 0, allocation.get_width(), allocation.get_height()));
+		auto cr			= snapshot->append_cairo(Gdk::Rectangle(0, 0, allocation.get_width(), allocation.get_height()));
 		if(m_draw_buffer.get_cairo_surface())
 		{
 			cr->scale(1.0 / m_draw_buffer.get_scale_factor(), 1.0 / m_draw_buffer.get_scale_factor());
@@ -143,23 +147,29 @@ void html_widget::set_caption(const std::string& caption)
 	if(root)
 	{
 		auto window = dynamic_cast<Gtk::Window*>(root);
-		if (window)
+		if(window)
 		{
 			window->set_title(caption.c_str());
 		};
 	}
 }
 
-cairo_surface_t *html_widget::load_image(const std::string &path)
+cairo_surface_t* html_widget::load_image(const std::string& path)
 {
 	Glib::RefPtr<Gdk::Pixbuf> ptr;
 
 	try
 	{
 		ptr = Gdk::Pixbuf::create_from_file(path);
-	} catch (...) {	}
+	}
+	catch(...)
+	{
+	}
 
-	if(!ptr) return nullptr;
+	if(!ptr)
+	{
+		return nullptr;
+	}
 
 	cairo_surface_t* ret = nullptr;
 
@@ -177,14 +187,13 @@ cairo_surface_t *html_widget::load_image(const std::string &path)
 	ctx->paint();
 
 	return ret;
-
 }
 
 void html_widget::open_page(const litehtml::string& url, const litehtml::string& fragment)
 {
 	{
 		std::lock_guard<std::mutex> lock(m_page_mutex);
-		if (m_current_page)
+		if(m_current_page)
 		{
 			m_current_page->stop_loading();
 		}
@@ -226,7 +235,7 @@ void html_widget::on_button_press_event(int /* n_press */, double x, double y)
 		grab_focus();
 	}
 	auto page = current_page();
-	if (page)
+	if(page)
 	{
 		Gdk::Rectangle rect(0, 0, 0, 0);
 		bool		   is_first = true;
@@ -261,8 +270,8 @@ void html_widget::on_button_release_event(int /* n_press */, double x, double y)
 
 void html_widget::on_mouse_move(double x, double y)
 {
-	m_mouse_x = x;
-	m_mouse_y = y;
+	m_mouse_x		   = x;
+	m_mouse_y		   = y;
 	bool restart_timer = true;
 	if(m_hscrollbar->is_visible())
 	{
@@ -314,7 +323,7 @@ void html_widget::on_mouse_move(double x, double y)
 
 bool html_widget::on_key_pressed(guint keyval, guint /* keycode */, Gdk::ModifierType /* state */)
 {
-	switch (keyval)
+	switch(keyval)
 	{
 	case GDK_KEY_KP_Page_Down:
 	case GDK_KEY_Page_Down:
@@ -353,7 +362,7 @@ bool html_widget::on_key_pressed(guint keyval, guint /* keycode */, Gdk::Modifie
 		break;
 	}
 
-    return false;
+	return false;
 }
 
 void html_widget::update_cursor()
@@ -382,7 +391,7 @@ void html_widget::size_allocate_vfunc(int width, int height, int /* baseline */)
 	{
 		if(m_rendered_width != width || m_rendered_height != height)
 		{
-			m_rendered_width = width;
+			m_rendered_width  = width;
 			m_rendered_height = height;
 			m_draw_buffer.on_size_allocate(get_draw_function(page), width, height);
 			page->media_changed();
@@ -395,7 +404,6 @@ void html_widget::size_allocate_vfunc(int width, int height, int /* baseline */)
 	{
 		m_draw_buffer.on_size_allocate(get_draw_function(page), width, height);
 	}
-
 }
 
 void html_widget::allocate_scrollbars(int width, int height)
@@ -428,10 +436,8 @@ void html_widget::allocate_scrollbars(int width, int height)
 void html_widget::on_vadjustment_changed()
 {
 	auto page = current_page();
-	m_draw_buffer.on_scroll(get_draw_function(page),
-		(int) m_hadjustment->get_value(),
-		(int) m_vadjustment->get_value(),
-		page ? page->get_fixed_boxes() : litehtml::position::vector{});
+	m_draw_buffer.on_scroll(get_draw_function(page), (int) m_hadjustment->get_value(), (int) m_vadjustment->get_value(),
+							page ? page->get_fixed_boxes() : litehtml::position::vector{});
 
 	if(m_do_force_redraw_on_adjustment)
 	{
@@ -445,10 +451,8 @@ void html_widget::on_vadjustment_changed()
 void html_widget::on_hadjustment_changed()
 {
 	auto page = current_page();
-	m_draw_buffer.on_scroll(get_draw_function(page),
-		(int) m_hadjustment->get_value(),
-		(int) m_vadjustment->get_value(),
-		page ? page->get_fixed_boxes() : litehtml::position::vector{});
+	m_draw_buffer.on_scroll(get_draw_function(page), (int) m_hadjustment->get_value(), (int) m_vadjustment->get_value(),
+							page ? page->get_fixed_boxes() : litehtml::position::vector{});
 
 	if(m_do_force_redraw_on_adjustment)
 	{
@@ -468,20 +472,26 @@ void html_widget::on_adjustments_changed()
 bool html_widget::on_scroll(double dx, double dy)
 {
 	auto page = current_page();
-	if (page)
+	if(page)
 	{
-		auto values = page->on_scroll((litehtml::pixel_t) dx * 60, (litehtml::pixel_t) dy * 60,
-									  (int) (m_mouse_x + m_draw_buffer.get_left()),
-									  (int) (m_mouse_y + m_draw_buffer.get_top()), (int) m_mouse_x, (int) m_mouse_y);
+		auto values	 = page->on_scroll((float) dx * 60, (float) dy * 60, (int) (m_mouse_x + m_draw_buffer.get_left()),
+									   (int) (m_mouse_y + m_draw_buffer.get_top()), (int) m_mouse_x, (int) m_mouse_y);
 		bool dx_used = false;
 		bool dy_used = false;
 		if(!values.empty())
 		{
 			for(const auto& val : values)
 			{
-				if(val.dx != 0) dx_used = true;
-				if(val.dy != 0) dy_used = true;
-				m_draw_buffer.redraw_area(get_draw_function(current_page()), val.scroll_box.left(), val.scroll_box.top(), val.scroll_box.width, val.scroll_box.height);
+				if(val.dx != 0_px)
+				{
+					dx_used = true;
+				}
+				if(val.dy != 0_px)
+				{
+					dy_used = true;
+				}
+				m_draw_buffer.redraw_area(get_draw_function(current_page()), val.scroll_box.left(),
+										  val.scroll_box.top(), val.scroll_box.width, val.scroll_box.height);
 			}
 			queue_draw();
 		}
@@ -514,8 +524,7 @@ void html_widget::on_realize()
 	{
 		if(auto surface = native->get_surface())
 		{
-			surface->property_scale().signal_changed().connect([this]()
-			{
+			surface->property_scale().signal_changed().connect([this]() {
 				if(auto native = get_native())
 				{
 					if(auto surface = native->get_surface())
@@ -557,26 +566,29 @@ void html_widget::update_view_port(std::shared_ptr<litebrowser::web_page> page)
 
 void html_widget::restart_scrollbar_timer()
 {
-	if (m_scrollbar_timer)
+	if(m_scrollbar_timer)
 	{
 		m_scrollbar_timer.disconnect();
 	}
 
-	m_scrollbar_timer = Glib::signal_timeout().connect_seconds(
-		sigc::mem_fun(*this, &html_widget::on_scrollbar_timeout), 2);
+	m_scrollbar_timer =
+		Glib::signal_timeout().connect_seconds(sigc::mem_fun(*this, &html_widget::on_scrollbar_timeout), 2);
 }
 
 void html_widget::redraw_boxes(const litehtml::position::vector& boxes)
 {
-	if(boxes.empty()) return;
+	if(boxes.empty())
+	{
+		return;
+	}
 
 	Gdk::Rectangle rect(0, 0, 0, 0);
-	bool is_first = true;
+	bool		   is_first = true;
 	for(const auto& pos : boxes)
 	{
 		if(is_first)
 		{
-			rect = Gdk::Rectangle(pos.x, pos.y, pos.width, pos.height);
+			rect	 = Gdk::Rectangle(pos.x, pos.y, pos.width, pos.height);
 			is_first = false;
 		} else
 		{
@@ -586,7 +598,8 @@ void html_widget::redraw_boxes(const litehtml::position::vector& boxes)
 
 	if(!rect.has_zero_area())
 	{
-		m_draw_buffer.redraw_area(get_draw_function(current_page()), rect.get_x(), rect.get_y(), rect.get_width(), rect.get_height());
+		m_draw_buffer.redraw_area(get_draw_function(current_page()), rect.get_x(), rect.get_y(), rect.get_width(),
+								  rect.get_height());
 		queue_draw();
 	}
 }
@@ -601,10 +614,13 @@ void html_widget::on_page_loaded(uint64_t web_page_id)
 	std::string url;
 	{
 		std::lock_guard<std::mutex> lock(m_page_mutex);
-		if(m_next_page->id() != web_page_id) return;
+		if(m_next_page->id() != web_page_id)
+		{
+			return;
+		}
 		m_current_page = m_next_page;
-		m_next_page = nullptr;
-		url = m_current_page->url();
+		m_next_page	   = nullptr;
+		url			   = m_current_page->url();
 		update_view_port(m_current_page);
 	}
 	scroll_to(0, 0);
@@ -613,7 +629,7 @@ void html_widget::on_page_loaded(uint64_t web_page_id)
 	m_sig_update_state.emit(get_state());
 }
 
-void html_widget::show_fragment(const std::string &fragment)
+void html_widget::show_fragment(const std::string& fragment)
 {
 	std::shared_ptr<litebrowser::web_page> page = current_page();
 	if(page)
@@ -622,7 +638,7 @@ void html_widget::show_fragment(const std::string &fragment)
 	}
 }
 
-void html_widget::open_url(const std::string &url)
+void html_widget::open_url(const std::string& url)
 {
 	std::string fragment;
 	std::string s_url = url;
@@ -637,10 +653,10 @@ void html_widget::open_url(const std::string &url)
 	}
 
 	bool open_hash_only = false;
-	bool reload = false;
+	bool reload			= false;
 
 	auto current_url = m_history.current();
-	fragment_pos = current_url.find_first_of(L'#');
+	fragment_pos	 = current_url.find_first_of(L'#');
 	if(fragment_pos != std::wstring::npos)
 	{
 		current_url.erase(fragment_pos);
@@ -650,7 +666,7 @@ void html_widget::open_url(const std::string &url)
 	{
 		if(m_history.current() != url)
 		{
-			if (current_url == s_url)
+			if(current_url == s_url)
 			{
 				open_hash_only = true;
 			}
@@ -718,7 +734,7 @@ void html_widget::go_back()
 
 uint32_t html_widget::get_state()
 {
-	uint32_t ret = 0;
+	uint32_t	ret = 0;
 	std::string url;
 	if(m_history.back(url))
 	{
@@ -755,7 +771,7 @@ void html_widget::stop_download()
 	if(m_next_page)
 	{
 		m_next_page->stop_loading();
-	} else if (m_current_page)
+	} else if(m_current_page)
 	{
 		m_current_page->stop_loading();
 	}
@@ -774,6 +790,8 @@ std::string html_widget::get_html_source()
 {
 	std::lock_guard<std::mutex> lock(m_page_mutex);
 	if(m_current_page)
+	{
 		return m_current_page->get_html_source();
+	}
 	return {};
 }

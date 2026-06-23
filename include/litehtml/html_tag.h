@@ -138,7 +138,7 @@ namespace litehtml
 		{
 			return value.get<Type>();
 		}
-		else if (inherited || value.is<inherit>())
+		if(inherited || value.is<inherit>())
 		{
 			if (auto _parent = parent())
 			{

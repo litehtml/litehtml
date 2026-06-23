@@ -55,7 +55,7 @@ set(SOURCE_LITEHTML
 	src/style.cpp
 	src/stylesheet.cpp
 	src/table.cpp
-		src/url.cpp
+	src/url.cpp
 	src/url_path.cpp
 	src/utf8_strings.cpp
 	src/web_color.cpp
@@ -124,7 +124,8 @@ set(HEADER_LITEHTML
 	include/litehtml/style.h
 	include/litehtml/stylesheet.h
 	include/litehtml/table.h
-		include/litehtml/types.h
+	include/litehtml/types.h
+	include/litehtml/pixel_type.h
 	include/litehtml/url.h
 	include/litehtml/url_path.h
 	include/litehtml/utf8_strings.h
@@ -148,7 +149,7 @@ set(HEADER_LITEHTML
 	include/litehtml/gradient.h
 	include/litehtml/font_description.h
 	include/litehtml/scroll_view.h
-		include/litehtml/css_values.h
+	include/litehtml/css_values.h
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
@@ -160,7 +161,21 @@ if (MSVC)
 	add_compile_options(/permissive- /utf-8)
 else()
 	# additional warnings
-	add_compile_options(-Wall -Wextra -Wpedantic -Wfloat-conversion)
+	add_compile_options(-Wall
+	                    -Wextra
+						-Wpedantic
+						#-Wfloat-conversion
+						#-Wnon-virtual-dtor
+						#-Wold-style-cast
+						#-Wredundant-move
+						#-Woverloaded-virtual
+						#-Wsign-promo
+						#-Wfloat-equal
+						#-Wcast-qual
+						#-Wzero-as-null-pointer-constant
+						#-Woverloaded-virtual
+						#-Wredundant-decls
+						)
 endif()
 
 add_library(${PROJECT_NAME} ${HEADER_LITEHTML} ${SOURCE_LITEHTML})
