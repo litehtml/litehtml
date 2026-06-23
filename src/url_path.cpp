@@ -29,58 +29,65 @@
 
 #include "url_path.h"
 
-namespace litehtml {
-
-bool is_url_path_absolute(const string& path)
+namespace litehtml
 {
-    return path.length() > 0 && path[0] == '/';
-}
 
-string url_path_directory_name(const string& path)
-{
-    size_t offset = path.find_last_of('/');
-    if (offset == string::npos) {
-        return ".";
-    } else {
-        return path.substr(0, offset + 1);
-    }
-}
-
-string url_path_base_name(const string& path)
-{
-    size_t offset = path.find_last_of('/');
-    if (offset == string::npos) {
-        return path;
-    } else {
-        return path.substr(offset + 1);
-    }
-}
-
-string url_path_append(const string& base, const string& path)
-{
-    string result(base);
-
-    // Only append a separator if both base and path are not empty and if the
-    // last character of base is not already a separator.
-    if (!result.empty() && !path.empty() && result.back() != '/') {
-        result.append(1, '/');
+    bool is_url_path_absolute(const string& path)
+    {
+        return path.length() > 0 && path[0] == '/';
     }
 
-    result.append(path);
-
-    return result;
-}
-
-string url_path_resolve(const string& base, const string& path)
-{
-
-    // If the possibly relative path is an absolute path then it is not
-    // relative and the base path is irrelevant.
-    if (is_url_path_absolute(path)) {
-        return path;
+    string url_path_directory_name(const string& path)
+    {
+        size_t offset = path.find_last_of('/');
+        if(offset == string::npos)
+        {
+            return ".";
+        } else
+        {
+            return path.substr(0, offset + 1);
+        }
     }
 
-    return url_path_append(url_path_directory_name(base), path);
-}
+    string url_path_base_name(const string& path)
+    {
+        size_t offset = path.find_last_of('/');
+        if(offset == string::npos)
+        {
+            return path;
+        } else
+        {
+            return path.substr(offset + 1);
+        }
+    }
+
+    string url_path_append(const string& base, const string& path)
+    {
+        string result(base);
+
+        // Only append a separator if both base and path are not empty and if the
+        // last character of base is not already a separator.
+        if(!result.empty() && !path.empty() && result.back() != '/')
+        {
+            result.append(1, '/');
+        }
+
+        result.append(path);
+
+        return result;
+    }
+
+    string url_path_resolve(const string& base, const string& path)
+    {
+
+        // If the possibly relative path is an absolute path then it is not
+        // relative and the base path is irrelevant.
+        if(is_url_path_absolute(path))
+        {
+            return path;
+        }
+
+        return url_path_append(url_path_directory_name(base), path);
+    }
 
 } // namespace litehtml

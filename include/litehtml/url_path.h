@@ -32,17 +32,18 @@
 
 #include "types.h"
 
-namespace litehtml {
+namespace litehtml
+{
 
-bool is_url_path_absolute(const string& path);
+    bool is_url_path_absolute(const string& path);
 
-string url_path_directory_name(const string& path);
+    string url_path_directory_name(const string& path);
 
-string url_path_base_name(const string& path);
+    string url_path_base_name(const string& path);
 
-string url_path_append(const string& base, const string& path);
+    string url_path_append(const string& base, const string& path);
 
-string url_path_resolve(const string& base, const string& path);
+    string url_path_resolve(const string& base, const string& path);
 
 } // namespace litehtml
 

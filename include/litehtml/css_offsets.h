@@ -5,33 +5,31 @@
 
 namespace litehtml
 {
-	struct css_offsets
-	{
-		css_length	left;
-		css_length	top;
-		css_length	right;
-		css_length	bottom;
+    struct css_offsets
+    {
+        css_length left;
+        css_length top;
+        css_length right;
+        css_length bottom;
 
-		css_offsets() = default;
+        css_offsets() = default;
 
-		css_offsets(const css_offsets& val)
-		{
-			left	= val.left;
-			top		= val.top;
-			right	= val.right;
-			bottom	= val.bottom;
-		}
+        css_offsets(const css_offsets& val)
+        {
+            left   = val.left;
+            top    = val.top;
+            right  = val.right;
+            bottom = val.bottom;
+        }
 
-		css_offsets& operator=(const css_offsets& val) = default;
+        css_offsets& operator=(const css_offsets& val) = default;
 
-		string to_string() const
-		{
-			return	"left: " + left.to_string() +
-					", top: " + top.to_string() +
-					", right: " + right.to_string() +
-					", bottom: " + bottom.to_string();
-		}
-	};
-}
+        string to_string() const
+        {
+            return "left: " + left.to_string() + ", top: " + top.to_string() + ", right: " + right.to_string() +
+                   ", bottom: " + bottom.to_string();
+        }
+    };
+} // namespace litehtml
 
-#endif  // LH_CSS_OFFSETS_H
+#endif // LH_CSS_OFFSETS_H

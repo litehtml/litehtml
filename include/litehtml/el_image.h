@@ -8,24 +8,26 @@
 namespace litehtml
 {
 
-	class el_image : public html_tag
-	{
-		string	m_src;
-	public:
-		el_image(const document::ptr& doc);
+    class el_image : public html_tag
+    {
+        string m_src;
 
-		bool	is_replaced() const override;
-		void	parse_attributes() override;
-		void	compute_styles(bool recursive = true) override;
-		void	draw(uint_ptr hdc, pixel_t x, pixel_t y, const position *clip, const std::shared_ptr<render_item> &ri) override;
-		void	get_content_size(size& sz, pixel_t max_width) override;
-		string	dump_get_name() override;
+      public:
+        el_image(const document::ptr& doc);
 
-		std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri) override;
+        bool   is_replaced() const override;
+        void   parse_attributes() override;
+        void   compute_styles(bool recursive = true) override;
+        void   draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+                    const std::shared_ptr<render_item>& ri) override;
+        void   get_content_size(size& sz, pixel_t max_width) override;
+        string dump_get_name() override;
 
-	private:
-//		pixel_t calc_max_height(pixel_t image_height);
-	};
-}
+        std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri) override;
 
-#endif  // LH_EL_IMAGE_H
+      private:
+        //		pixel_t calc_max_height(pixel_t image_height);
+    };
+} // namespace litehtml
+
+#endif // LH_EL_IMAGE_H

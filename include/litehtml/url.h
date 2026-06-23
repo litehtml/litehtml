@@ -34,106 +34,105 @@
 
 // https://datatracker.ietf.org/doc/html/rfc3986
 
-namespace litehtml {
+namespace litehtml
+{
 
-class url {
-public:
-    url() = default;
-
-    explicit url(const string& str);
-
-    url(const string& scheme,
-        const string& authority,
-        const string& path,
-        const string& query,
-        const string& fragment);
-
-    const string& str() const
+    class url
     {
-        return str_;
-    }
+      public:
+        url() = default;
 
-    const string& scheme() const
-    {
-        return scheme_;
-    }
+        explicit url(const string& str);
 
-    bool has_scheme() const
-    {
-        return !scheme_.empty();
-    }
+        url(const string& scheme, const string& authority, const string& path, const string& query,
+            const string& fragment);
 
-    const string& authority() const
-    {
-        return authority_;
-    }
+        const string& str() const
+        {
+            return str_;
+        }
 
-    bool has_authority() const
-    {
-        return !authority_.empty();
-    }
+        const string& scheme() const
+        {
+            return scheme_;
+        }
 
-    const string& path() const
-    {
-        return path_;
-    }
+        bool has_scheme() const
+        {
+            return !scheme_.empty();
+        }
 
-    bool has_path() const
-    {
-        return !path_.empty();
-    }
+        const string& authority() const
+        {
+            return authority_;
+        }
 
-    const string& query() const
-    {
-        return query_;
-    }
+        bool has_authority() const
+        {
+            return !authority_.empty();
+        }
 
-    bool has_query() const
-    {
-        return !query_.empty();
-    }
+        const string& path() const
+        {
+            return path_;
+        }
 
-    const string& fragment() const
-    {
-        return fragment_;
-    }
+        bool has_path() const
+        {
+            return !path_.empty();
+        }
 
-    bool has_fragment() const
-    {
-        return !fragment_.empty();
-    }
+        const string& query() const
+        {
+            return query_;
+        }
 
-	static string encode(const string& str);
-	static string decode(const string& str);
+        bool has_query() const
+        {
+            return !query_.empty();
+        }
 
-protected:
-    string str_;
+        const string& fragment() const
+        {
+            return fragment_;
+        }
 
-    // Assume URLs are relative by default.  See RFC 3986 Section 4.3 for
-    // information on which URLs are considered relative and which URLs are
-    // considered absolute:
-    //
-    //   https://datatracker.ietf.org/doc/html/rfc3986#section-4.3
+        bool has_fragment() const
+        {
+            return !fragment_.empty();
+        }
 
-    bool absolute_ = false;
+        static string encode(const string& str);
+        static string decode(const string& str);
 
-    string scheme_;
+      protected:
+        string str_;
 
-    string authority_;
+        // Assume URLs are relative by default.  See RFC 3986 Section 4.3 for
+        // information on which URLs are considered relative and which URLs are
+        // considered absolute:
+        //
+        //   https://datatracker.ietf.org/doc/html/rfc3986#section-4.3
 
-    string path_;
+        bool absolute_ = false;
 
-    string query_;
+        string scheme_;
 
-    string fragment_;
-};
+        string authority_;
 
-// Returns a URL that is resolved from the reference URL that might be
-// relative to the base URL.  For example, given <https://www.twitter.com/> as
-// the base URL and </foo> as the relative URL, resolve() will return the URL
-// <https://www.twitter.com/foo>.
+        string path_;
 
-url resolve(const url& base, const url& reference);
+        string query_;
+
+        string fragment_;
+    };
+
+    // Returns a URL that is resolved from the reference URL that might be
+    // relative to the base URL.  For example, given <https://www.twitter.com/> as
+    // the base URL and </foo> as the relative URL, resolve() will return the URL
+    // <https://www.twitter.com/foo>.
+
+    url resolve(const url& base, const url& reference);
 
 } // namespace litehtml
 
