@@ -30,11 +30,11 @@ namespace litehtml
             std::string out;
             out += family;
             out += ":sz=" + std::to_string(size.value());
-            out += ":st=" + std::to_string(style);
+            out += ":st=" + std::to_string(static_cast<int>(style));
             out += ":w=" + std::to_string(weight);
             out += ":dl=" + std::to_string(decoration_line);
             out += ":dt=" + decoration_thickness.to_string();
-            out += ":ds=" + std::to_string(decoration_style);
+            out += ":ds=" + std::to_string(static_cast<int>(decoration_style));
             out += ":dc=" + decoration_color.to_string();
             out += ":ephs=" + emphasis_style;
             out += ":ephc=" + emphasis_color.to_string();

@@ -37,7 +37,7 @@ namespace litehtml
     };
 
     using keep_whitespace_fn = std::function<bool(const css_token& left, const css_token& right)>;
-    void remove_whitespace(css_token_vector& tokens, keep_whitespace_fn keep_whitespace = 0);
+    void remove_whitespace(css_token_vector& tokens, keep_whitespace_fn keep_whitespace = nullptr);
 
     enum
     {
@@ -45,7 +45,7 @@ namespace litehtml
         f_remove_whitespace = 2
     };
     template <class Input>
-    css_token_vector normalize(Input input, int options = 0, keep_whitespace_fn keep_whitespace = 0);
+    css_token_vector normalize(Input input, int options = 0, keep_whitespace_fn keep_whitespace = nullptr);
 
     vector<css_token_vector> parse_comma_separated_list(const css_token_vector& tokens);
     bool                     is_declaration_value(const css_token_vector& tokens, int index = 0);
