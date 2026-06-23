@@ -167,11 +167,11 @@ else()
 						-Wfloat-conversion
 						-Wnon-virtual-dtor
 						-Wold-style-cast
-						#-Wredundant-move
-						#-Woverloaded-virtual
+						-Wredundant-move
+						-Woverloaded-virtual
 						#-Wsign-promo
-						#-Wfloat-equal
-						#-Wcast-qual
+						-Wfloat-equal
+						-Wcast-qual
 						#-Wzero-as-null-pointer-constant
 						#-Woverloaded-virtual
 						#-Wredundant-decls

@@ -1647,7 +1647,7 @@ namespace litehtml
             // must be interpreted as a flex factor."
             bool basis(const css_token& tok, bool unitless_zero_allowed = false)
             {
-                if(!unitless_zero_allowed and tok.type == NUMBER and tok.n.number == 0)
+                if(!unitless_zero_allowed and tok.type == NUMBER and pixel_t(tok.n.number) == 0_px)
                 {
                     return false;
                 }

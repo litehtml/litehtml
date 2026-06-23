@@ -111,7 +111,7 @@ namespace litehtml
     {
         float               x;
         html_dimension_type t;
-        if(!html_parse_dimension_value(str, x, t) || x == 0)
+        if(!html_parse_dimension_value(str, x, t) || pixel_t(x) == 0_px)
         {
             return false;
         }
