@@ -5,18 +5,19 @@
 
 namespace litehtml
 {
-	class el_style : public element
-	{
-		elements_list		m_children;
-	public:
-		explicit el_style(const std::shared_ptr<document>& doc);
+    class el_style : public element
+    {
+        elements_list m_children;
 
-		void			parse_attributes() override;
-		bool			appendChild(const ptr &el) override;
-		void			compute_styles(bool recursive) override;
-		string_id		tag() const override;
-		const char*		get_tagName() const override;
-	};
-}
+      public:
+        explicit el_style(const std::shared_ptr<document>& doc);
 
-#endif  // LH_EL_STYLE_H
+        void        parse_attributes() override;
+        bool        appendChild(const ptr& el) override;
+        void        compute_styles(bool recursive) override;
+        string_id   tag() const override;
+        const char* get_tagName() const override;
+    };
+} // namespace litehtml
+
+#endif // LH_EL_STYLE_H

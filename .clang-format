@@ -5,7 +5,7 @@ Language: Cpp
 BasedOnStyle: Microsoft
 Standard: c++17
 TabWidth: 4
-UseTab: Always
+UseTab: Never
 IndentWidth: 4
 PointerAlignment: Left
 SpaceAfterCStyleCast: true

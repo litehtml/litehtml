@@ -5,13 +5,13 @@
 
 namespace litehtml
 {
-	class el_break : public html_tag
-	{
-	public:
-		explicit el_break(const std::shared_ptr<litehtml::document>& doc);
+    class el_break : public html_tag
+    {
+      public:
+        explicit el_break(const std::shared_ptr<litehtml::document>& doc);
 
-		bool is_break() const override;
-	};
-}
+        bool is_break() const override;
+    };
+} // namespace litehtml
 
-#endif  // LH_EL_BREAK_H
+#endif // LH_EL_BREAK_H
