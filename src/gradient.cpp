@@ -76,7 +76,7 @@ namespace litehtml
 
     bool end(const css_token_vector& tokens, int index)
     {
-        return index == (int) tokens.size();
+        return index == static_cast<int>(tokens.size());
     }
 
     ////////////////////////////////////////////////////////////////////////////////////////////
@@ -273,7 +273,7 @@ namespace litehtml
             return false;
         }
 
-        if(index != (int) tokens.size())
+        if(index != static_cast<int>(tokens.size()))
         {
             return false;
         }
@@ -391,7 +391,7 @@ namespace litehtml
             return false;
         }
 
-        if(index != (int) tokens.size())
+        if(index != static_cast<int>(tokens.size()))
         {
             return false;
         }

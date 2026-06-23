@@ -1,13 +1,11 @@
 #ifndef LH_HTML_H
 #define LH_HTML_H
 
-#include <cstdlib>
-#include <cmath>
-#include <cctype>
-#include <cstring>
-#include <algorithm>
 #include "types.h"
 #include "media_query.h"
+#include <algorithm>
+#include <cstdlib>
+#include <cstring>
 
 namespace litehtml
 {
@@ -33,9 +31,9 @@ namespace litehtml
         static T invalid_item; // T's default constructor must create invalid item
         if(index < 0)
         {
-            index += (int) vec.size();
+            index += static_cast<int>(vec.size());
         }
-        return index >= 0 && index < (int) vec.size() ? vec[index] : invalid_item;
+        return index >= 0 && index < static_cast<int>(vec.size()) ? vec[index] : invalid_item;
     }
     template <class Map, class Key> auto at(const Map& map, Key key)
     {
@@ -47,7 +45,7 @@ namespace litehtml
     {
         if(count == -1)
         {
-            count = (int) vec.size() - index;
+            count = static_cast<int>(vec.size()) - index;
         }
         return {vec.begin() + index, vec.begin() + index + count};
     }
@@ -56,15 +54,15 @@ namespace litehtml
     {
         if(index < 0)
         {
-            index += (int) vec.size();
+            index += static_cast<int>(vec.size());
         }
 
-        if(!(index >= 0 && index < (int) vec.size()))
+        if(!(index >= 0 && index < static_cast<int>(vec.size())))
         {
             return;
         }
 
-        count = min(count, (int) vec.size() - index);
+        count = std::min(count, static_cast<int>(vec.size()) - index);
         if(count <= 0)
         {
             return;
@@ -108,7 +106,7 @@ namespace litehtml
     {
         if(index < 0)
         {
-            index += (int) str.size();
+            index += static_cast<int>(str.size());
         }
         if(index < 0)
         {
@@ -120,7 +118,7 @@ namespace litehtml
     {
         if(index < 0)
         {
-            index += (int) str.size();
+            index += static_cast<int>(str.size());
         }
         if(index < 0)
         {
@@ -156,7 +154,7 @@ namespace litehtml
     {
         for(char& c : str)
         {
-            c = (char) t_tolower(c);
+            c = static_cast<char>(t_tolower(c));
         }
         return str;
     }
@@ -184,8 +182,8 @@ namespace litehtml
 
     inline int round_f(float val)
     {
-        int int_val = (int) val;
-        if(val - int_val >= 0.5)
+        int int_val = static_cast<int>(val);
+        if(val - static_cast<float>(int_val) >= 0.5f)
         {
             int_val++;
         }
@@ -194,7 +192,7 @@ namespace litehtml
 
     inline int round_d(double val)
     {
-        int int_val = (int) val;
+        int int_val = static_cast<int>(val);
         if(val - int_val >= 0.5)
         {
             int_val++;
@@ -204,7 +202,7 @@ namespace litehtml
 
     inline float t_strtof(const string& str, char** endPtr = nullptr)
     {
-        return (float) t_strtod(str.c_str(), endPtr);
+        return static_cast<float>(t_strtod(str.c_str(), endPtr));
     }
 
     inline pixel_t baseline_align(pixel_t line_height, pixel_t line_base_line, pixel_t height, pixel_t baseline)

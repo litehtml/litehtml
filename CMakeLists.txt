@@ -164,9 +164,9 @@ else()
 	add_compile_options(-Wall
 	                    -Wextra
 						-Wpedantic
-						#-Wfloat-conversion
-						#-Wnon-virtual-dtor
-						#-Wold-style-cast
+						-Wfloat-conversion
+						-Wnon-virtual-dtor
+						-Wold-style-cast
 						#-Wredundant-move
 						#-Woverloaded-virtual
 						#-Wsign-promo

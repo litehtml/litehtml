@@ -20,7 +20,7 @@ static litehtml::string to_mapped_alpha(int num, const std::vector<char>& map)
     {
         modulo   = (dividend - 1) % map.size();
         out      = map[modulo] + out;
-        dividend = (int) ((dividend - modulo) / map.size());
+        dividend = static_cast<int>((dividend - modulo) / map.size());
     }
 
     return out;
@@ -36,7 +36,7 @@ static litehtml::string to_mapped_alpha(int num, const std::vector<std::u32strin
     {
         modulo   = (dividend - 1) % map.size();
         out      = litehtml_from_utf32(map[modulo]).c_str() + out;
-        dividend = (int) ((dividend - modulo) / map.size());
+        dividend = static_cast<int>((dividend - modulo) / map.size());
     }
 
     return out;

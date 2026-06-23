@@ -728,7 +728,7 @@ namespace litehtml
             break;
 
         case attribute_ends_with_string: // $=
-            if(sel.value != "" && match(attr_value, -(int) sel.value.size(), sel.value))
+            if(sel.value != "" && match(attr_value, -static_cast<int>(sel.value.size()), sel.value))
             {
                 return select_match;
             }
@@ -1587,7 +1587,7 @@ namespace litehtml
         int n;
         if(html_parse_non_negative_integer(attr_value, n))
         {
-            css_token tok(DIMENSION, (float) n, css_number_integer, "px");
+            css_token tok(DIMENSION, static_cast<float>(n), css_number_integer, "px");
             m_style.add_property(prop_name, {tok});
         }
     }
@@ -1598,7 +1598,7 @@ namespace litehtml
     {
         int n = default_value;
         html_parse_non_negative_integer(attr_value, n);
-        css_token tok(DIMENSION, (float) n, css_number_integer, "px");
+        css_token tok(DIMENSION, static_cast<float>(n), css_number_integer, "px");
         m_style.add_property(prop_name, {tok});
     }
 

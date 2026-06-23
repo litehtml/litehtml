@@ -5,7 +5,7 @@ void litehtml::document_container::split_text(const char* text, const std::funct
                                               const std::function<void(const char*)>& on_space)
 {
     std::u32string str;
-    std::u32string str_in = (const char32_t*) utf8_to_utf32(text);
+    std::u32string str_in = static_cast<const char32_t*>(utf8_to_utf32(text));
     for(auto c : str_in)
     {
         if(c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))

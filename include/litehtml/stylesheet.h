@@ -1,6 +1,8 @@
 #ifndef LH_STYLESHEET_H
 #define LH_STYLESHEET_H
 
+#include <utility>
+
 #include "css_selector.h"
 #include "css_tokenizer.h"
 
@@ -12,9 +14,11 @@ namespace litehtml
     {
         using vector = std::vector<raw_declaration>;
 
-        string           name; // property name
-        css_token_vector value =
-            {}; // default value is specified here to get rid of gcc warning "missing initializer for member"
+        // property name
+        string name;
+        // default value is specified here to get rid of gcc warning "missing initializer for member"
+        css_token_vector value;
+
         bool important = false;
 
         operator bool() const
@@ -36,9 +40,9 @@ namespace litehtml
             at
         };
 
-        raw_rule(rule_type type, string name = "") :
+        raw_rule(rule_type type, string name = {}) :
             type(type),
-            name(name)
+            name(std::move(name))
         {
         }
 
@@ -80,7 +84,7 @@ namespace litehtml
 
     inline void css::add_selector(const css_selector::ptr& selector)
     {
-        selector->m_order = (int) m_selectors.size();
+        selector->m_order = static_cast<int>(m_selectors.size());
         m_selectors.push_back(selector);
     }
 

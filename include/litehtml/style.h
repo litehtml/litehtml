@@ -123,7 +123,7 @@ namespace litehtml
         {
             return false;
         }
-        val = (Enum) (first_keyword_value + *idx);
+        val = static_cast<Enum>(first_keyword_value + *idx);
         return true;
     }
 

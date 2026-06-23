@@ -184,7 +184,7 @@ namespace litehtml
         GumboNode* head = nullptr;
         for(size_t i = 0; i < root->v.element.children.length; i++)
         {
-            GumboNode* node = (GumboNode*) root->v.element.children.data[i];
+            GumboNode* node = static_cast<GumboNode*>(root->v.element.children.data[i]);
             if(node->type == GUMBO_NODE_ELEMENT && node->v.element.tag == GUMBO_TAG_HEAD)
             {
                 head = node;
@@ -199,15 +199,15 @@ namespace litehtml
         // go through <meta> tags in <head>
         for(size_t i = 0; i < head->v.element.children.length; i++)
         {
-            GumboNode* node = (GumboNode*) head->v.element.children.data[i];
+            auto* node = static_cast<GumboNode*>(head->v.element.children.data[i]);
             if(node->type != GUMBO_NODE_ELEMENT || node->v.element.tag != GUMBO_TAG_META)
             {
                 continue;
             }
 
-            auto charset    = gumbo_get_attribute(&node->v.element.attributes, "charset");
-            auto http_equiv = gumbo_get_attribute(&node->v.element.attributes, "http-equiv");
-            auto content    = gumbo_get_attribute(&node->v.element.attributes, "content");
+            auto* charset    = gumbo_get_attribute(&node->v.element.attributes, "charset");
+            auto* http_equiv = gumbo_get_attribute(&node->v.element.attributes, "http-equiv");
+            auto* content    = gumbo_get_attribute(&node->v.element.attributes, "content");
             // 1. If the element has a charset attribute...
             if(charset)
             {
@@ -287,7 +287,7 @@ namespace litehtml
 
     void document::create_node(void* gnode, elements_list& elements, bool parseTextNode, bool process_root)
     {
-        auto* node = (GumboNode*) gnode;
+        auto* node = static_cast<GumboNode*>(gnode);
         switch(node->type)
         {
         case GUMBO_NODE_ELEMENT:
@@ -295,10 +295,10 @@ namespace litehtml
                 if(process_root)
                 {
                     string_map      attrs;
-                    GumboAttribute* attr;
+                    GumboAttribute* attr = nullptr;
                     for(unsigned int i = 0; i < node->v.element.attributes.length; i++)
                     {
-                        attr              = (GumboAttribute*) node->v.element.attributes.data[i];
+                        attr              = static_cast<GumboAttribute*>(node->v.element.attributes.data[i]);
                         attrs[attr->name] = attr->value;
                     }
 
@@ -617,7 +617,7 @@ namespace litehtml
         }
         if(val.units() != css_units_percentage)
         {
-            val.set_value((float) to_pixels(val, metrics, size), css_units_px);
+            val.set_value(static_cast<float>(to_pixels(val, metrics, size)), css_units_px);
         }
     }
 

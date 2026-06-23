@@ -1,6 +1,6 @@
 #include "html.h"
-#include "utf8_strings.h"
 #include "css_tokenizer.h"
+#include "utf8_strings.h"
 
 namespace litehtml
 {
@@ -49,7 +49,7 @@ namespace litehtml
             return name + '(' + get_repr(value, 0, -1, insert_spaces) + ')';
         }
 
-        char opening_bracket = char(-type - 100);
+        char opening_bracket = static_cast<char>(-type - 100);
         char closing_bracket = mirror(opening_bracket);
         return opening_bracket + get_repr(value, 0, -1, insert_spaces) + closing_bracket;
     }
@@ -59,7 +59,7 @@ namespace litehtml
     {
         if(count == -1)
         {
-            count = (int) tokens.size() - index;
+            count = static_cast<int>(tokens.size()) - index;
         }
         string str;
         string space = insert_spaces ? " " : "";
@@ -131,11 +131,12 @@ namespace litehtml
 
     css_tokenizer::three_chars css_tokenizer::peek_chars()
     {
-        three_chars chars;
-        int         i = index;
-        chars._1      = read_utf8_char(str, i);
-        chars._2      = read_utf8_char(str, i);
-        chars._3      = read_utf8_char(str, i);
+        three_chars chars = {};
+        int         i     = index;
+
+        chars._1 = read_utf8_char(str, i);
+        chars._2 = read_utf8_char(str, i);
+        chars._3 = read_utf8_char(str, i);
         return chars;
     }
 
@@ -146,14 +147,14 @@ namespace litehtml
         {
             if(str[index] == '/' && str[index + 1] == '*')
             {
-                int i = (int) str.find("*/", index + 2);
+                int i = static_cast<int>(str.find("*/", index + 2));
 
                 if(i != -1)
                 {
                     index = i + 2;
                 } else
                 {
-                    index = (int) str.size();
+                    index = static_cast<int>(str.size());
                     css_parse_error("eof in comment");
                     break;
                 }
@@ -194,16 +195,16 @@ namespace litehtml
             }
             // Otherwise, return the code point with that value.
             return number;
-        } else if(ch == 0) // EOF
+        }
+        if(ch == 0) // EOF
         {
             // This is a parse error. Return U+FFFD.
             css_parse_error("eof in escaped codepoint");
             return 0xFFFD;
-        } else // anything else
-        {
-            // Return the current input code point.
-            return ch;
         }
+        // anything else
+        // Return the current input code point.
+        return ch;
     }
 
     // https://www.w3.org/TR/css-syntax-3/#consume-string-token
@@ -272,17 +273,17 @@ namespace litehtml
             // If the second code point is an ident-start code point or a U+002D HYPHEN-MINUS, or
             // the second and third code points are a valid escape, return true. Otherwise, return false.
             return is_ident_start_code_point(c2) || c2 == '-' || (c2 == '\\' && c3 != '\n');
-        } else if(is_ident_start_code_point(c1))
+        }
+        if(is_ident_start_code_point(c1))
         {
             return true;
-        } else if(c1 == '\\')
+        }
+        if(c1 == '\\')
         {
             // If the first and second code points are a valid escape, return true. Otherwise, return false.
             return c2 != '\n';
-        } else
-        {
-            return false;
         }
+        return false;
     }
 
     // https://www.w3.org/TR/css-syntax-3/#consume-name
@@ -328,23 +329,19 @@ namespace litehtml
                 return true;
             }
             // Otherwise, if the second code point is a U+002E (.) and the third code point is a digit, return true.
-            else if(y == '.' && is_digit(z))
+            if(y == '.' && is_digit(z))
             {
                 return true;
             }
             // Otherwise, return false.
-            else
-            {
-                return false;
-            }
-        } else if(x == '.')
+            return false;
+        }
+        if(x == '.')
         {
             // If the second code point is a digit, return true. Otherwise, return false.
             return is_digit(y);
-        } else
-        {
-            return is_digit(x);
         }
+        return is_digit(x);
     }
 
     // https://www.w3.org/TR/css-syntax-3/#convert-string-to-number
@@ -382,7 +379,8 @@ namespace litehtml
         // 4. A fractional part: zero or more digits. If there is at least one digit, let f be the number formed by
         //    interpreting the digits as a base-10 integer and d be the number of digits;
         //    otherwise, let f and d be the number 0.
-        double f = 0, d = 0;
+        double f = 0;
+        double d = 0;
         while(is_digit(*p))
         {
             f = f * 10 + digit_value(*p++), d++;
@@ -488,7 +486,8 @@ namespace litehtml
     {
         // Consume a number and let number be the result.
         css_number_type type;
-        float           number = (float) consume_number(type);
+
+        float number = static_cast<float>(consume_number(type));
 
         // If the next 3 input code points would start an ident sequence, then:
         if(would_start_ident_sequence(peek_chars()))
@@ -529,7 +528,7 @@ namespace litehtml
             }
             // else if the input stream starts with a valid escape
             // NOTE: the wording is confusing because ch is not in the input stream anymore (it has been consumed)
-            else if(ch == '\\' && str[index] != '\n')
+            if(ch == '\\' && str[index] != '\n')
             {
                 consume_escaped_code_point();
             }
@@ -655,15 +654,14 @@ namespace litehtml
                     index--;
                 }
                 return {FUNCTION, string};
-            } else // Otherwise, consume a url token, and return it.
-            {
-                return consume_url_token();
             }
+            // Otherwise, consume a url token, and return it.
+            return consume_url_token();
         }
 
         // Otherwise, if the next input code point is U+0028 ((), consume it.
         // Create a <function-token> with its value set to string and return it.
-        else if(str[index] == '(')
+        if(str[index] == '(')
         {
             index++;
             return {FUNCTION, string};
@@ -682,8 +680,8 @@ namespace litehtml
         int       start = index;
 
         // Consume the next input code point.
-        int         ch = consume_char();
-        three_chars next;
+        int         ch   = consume_char();
+        three_chars next = {};
 
         switch(ch)
         {

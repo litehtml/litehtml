@@ -45,7 +45,7 @@ namespace litehtml
         }
         // else: str not found, add it to the array and the map
         array.push_back(str);
-        return map[str] = (string_id) (array.size() - 1);
+        return map[str] = static_cast<string_id>(array.size() - 1);
     }
 
     const string& _s(string_id id)

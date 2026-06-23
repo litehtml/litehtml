@@ -14,13 +14,13 @@ namespace litehtml
 
         string result(input.size() + 2 * null_count, 0);
 
-        for(int i = 0, j = 0; i < (int) input.size(); i++)
+        for(int i = 0, j = 0; i < static_cast<int>(input.size()); i++)
         {
             switch(input[i])
             {
             case '\r':
                 result[j++] = '\n';
-                if(i + 1 < (int) input.size() && input[i + 1] == '\n')
+                if(i + 1 < static_cast<int>(input.size()) && input[i + 1] == '\n')
                 {
                     i++; // skip \n after \r
                 }
@@ -92,7 +92,7 @@ namespace litehtml
 
     void remove_whitespace_small(css_token_vector& tokens, keep_whitespace_fn keep_whitespace)
     {
-        for(int i = 0; i < (int) tokens.size(); i++)
+        for(int i = 0; i < static_cast<int>(tokens.size()); i++)
         {
             auto& tok = tokens[i];
             if(tok.type == ' ')
@@ -190,7 +190,7 @@ namespace litehtml
     // https://www.w3.org/TR/css-syntax-3/#consume-the-next-input-token
     css_token css_parser::next_token()
     {
-        if(m_index == (int) m_tokens.size())
+        if(m_index == static_cast<int>(m_tokens.size()))
         {
             return css_token_type(EOF);
         } else
@@ -201,13 +201,11 @@ namespace litehtml
 
     css_token css_parser::peek_token()
     {
-        if(m_index == (int) m_tokens.size())
+        if(m_index == static_cast<int>(m_tokens.size()))
         {
             return css_token_type(EOF);
-        } else
-        {
-            return m_tokens[m_index];
         }
+        return m_tokens[m_index];
     }
 
     // https://www.w3.org/TR/css-syntax-3/#consume-list-of-rules
@@ -393,7 +391,7 @@ namespace litehtml
         case '{':
         case '[':
         case '(':
-            return consume_simple_block((char) token.ch);
+            return consume_simple_block(static_cast<char>(token.ch));
 
             // Otherwise, if the current input token is a <function-token>, consume a function and return it.
         case FUNCTION:
@@ -457,7 +455,7 @@ namespace litehtml
         // Consume the next input token. Create a new declaration with its name set to the value of
         // the current input token and its value initially set to an empty list.
         css_token       token = next_token();
-        raw_declaration decl  = {token.name};
+        raw_declaration decl  = {token.name, {}};
         auto&           value = decl.value;
 
         // 1. While the next input token is a <whitespace-token>, consume the next input token.
@@ -632,11 +630,11 @@ namespace litehtml
     // assumes that tokens have been componentized
     bool is_declaration_value(const css_token_vector& tokens, int index)
     {
-        if(index >= (int) tokens.size())
+        if(index >= static_cast<int>(tokens.size()))
         {
             return false;
         }
-        for(int i = index; i < (int) tokens.size(); i++)
+        for(int i = index; i < static_cast<int>(tokens.size()); i++)
         {
             auto& tok = tokens[i];
             if(is_one_of(tok.type, BAD_STRING, BAD_URL, ')', ']', '}', ';', '!'))
@@ -644,7 +642,7 @@ namespace litehtml
                 return false;
             }
             // Note: ';' '!' inside component values are allowed, so using is_any_value here.
-            else if(tok.is_component_value() && !is_any_value(tok.value))
+            if(tok.is_component_value() && !is_any_value(tok.value))
             {
                 return false;
             }

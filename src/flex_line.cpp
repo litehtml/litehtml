@@ -79,7 +79,7 @@ void litehtml::flex_line::distribute_free_space_grow(pixel_t container_main_size
 
         if(sum_flex_grow_factor < 1000)
         {
-            pixel_t adjusted_free_space = initial_free_space * (pixel_t) sum_flex_grow_factor / (pixel_t) 1000;
+            pixel_t adjusted_free_space = initial_free_space * pixel_t(sum_flex_grow_factor) / 1000_px;
             if(adjusted_free_space < remaining_free_space)
             {
                 remaining_free_space = adjusted_free_space;
@@ -103,7 +103,7 @@ void litehtml::flex_line::distribute_free_space_grow(pixel_t container_main_size
                     // fraction of the remaining free space proportional to the ratio.
 
                     item->main_size =
-                        item->base_size + remaining_free_space * (pixel_t) item->grow / (pixel_t) sum_flex_grow_factor;
+                        item->base_size + remaining_free_space * pixel_t(item->grow) / pixel_t(sum_flex_grow_factor);
                 }
             }
         }
@@ -179,7 +179,7 @@ void litehtml::flex_line::distribute_free_space_shrink(pixel_t container_main_si
 
         if(sum_flex_shrink_factor < 1000)
         {
-            pixel_t adjusted_free_space = initial_free_space * (pixel_t) sum_flex_shrink_factor / (pixel_t) 1000;
+            pixel_t adjusted_free_space = initial_free_space * pixel_t(sum_flex_shrink_factor) / 1000_px;
             if(adjusted_free_space > remaining_free_space)
             {
                 remaining_free_space = adjusted_free_space;
@@ -366,7 +366,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                 max_cross_size = self_size.max_height;
             } else
             {
-                max_cross_size = std::max((pixel_t) max_cross_size, (pixel_t) self_size.max_height);
+                max_cross_size = std::max(pixel_t(max_cross_size), pixel_t(self_size.max_height));
             }
         }
 
@@ -394,7 +394,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                         last_baseline_top = top;
                     } else
                     {
-                        last_baseline_top = std::min((pixel_t) last_baseline_top, top);
+                        last_baseline_top = std::min(pixel_t(last_baseline_top), top);
                     }
 
                     if(last_baseline_bottom.is_default())
@@ -402,7 +402,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                         last_baseline_bottom = bottom;
                     } else
                     {
-                        last_baseline_bottom = std::max((pixel_t) last_baseline_bottom, bottom);
+                        last_baseline_bottom = std::max(pixel_t(last_baseline_bottom), bottom);
                     }
                 } else
                 {
@@ -415,7 +415,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                         first_baseline_top = top;
                     } else
                     {
-                        first_baseline_top = std::min((pixel_t) first_baseline_top, top);
+                        first_baseline_top = std::min(pixel_t(first_baseline_top), top);
                     }
 
                     if(first_baseline_bottom.is_default())
@@ -423,7 +423,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                         first_baseline_bottom = bottom;
                     } else
                     {
-                        first_baseline_bottom = std::max((pixel_t) first_baseline_bottom, bottom);
+                        first_baseline_bottom = std::max(pixel_t(first_baseline_bottom), bottom);
                     }
                 }
             } else
@@ -458,7 +458,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                 max_cross_size = self_size.max_width;
             } else
             {
-                max_cross_size = std::max((pixel_t) max_cross_size, (pixel_t) self_size.max_width);
+                max_cross_size = std::max(pixel_t(max_cross_size), pixel_t(self_size.max_width));
             }
         }
 

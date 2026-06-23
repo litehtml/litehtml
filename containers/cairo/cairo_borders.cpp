@@ -1,7 +1,9 @@
-#include <litehtml.h>
 #include "cairo_borders.h"
 #include "litehtml/pixel_type.h"
+#include <algorithm>
+#include <array>
 #include <cmath>
+#include <litehtml.h>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -49,7 +51,9 @@ void cairo::border::draw_border()
     if(radius_top_x != 0_px && radius_top_y != 0_px)
     {
         double start_angle = M_PI;
-        double end_angle   = start_angle + M_PI / 2.0 / ((double) top_border_width / (double) border_width + 1);
+        double end_angle =
+            start_angle +
+            M_PI / 2.0 / ((static_cast<double>(top_border_width) / static_cast<double>(border_width)) + 1.0);
 
         add_path_arc(cr, left + radius_top_x, top + radius_top_y, radius_top_x - border_width,
                      radius_top_y - border_width + (border_width - top_border_width), start_angle, end_angle, false);
@@ -66,8 +70,10 @@ void cairo::border::draw_border()
     {
         cairo_line_to(cr, left, bottom - radius_bottom_y);
 
-        double end_angle   = M_PI;
-        double start_angle = end_angle - M_PI / 2.0 / ((double) bottom_border_width / (double) border_width + 1);
+        double end_angle = M_PI;
+        double start_angle =
+            end_angle -
+            M_PI / 2.0 / ((static_cast<double>(bottom_border_width) / static_cast<double>(border_width)) + 1.0);
 
         add_path_arc(cr, left + radius_bottom_x, bottom - radius_bottom_y, radius_bottom_x, radius_bottom_y, end_angle,
                      start_angle, true);
@@ -117,8 +123,10 @@ void cairo::border::draw_line(double line_offset, double top_line_offset, double
 {
     if(radius_top_x != 0_px && radius_top_y != 0_px)
     {
-        double end_angle   = M_PI;
-        double start_angle = end_angle + M_PI / 2.0 / ((double) top_border_width / (double) border_width + 1);
+        double end_angle = M_PI;
+        double start_angle =
+            end_angle +
+            M_PI / 2.0 / ((static_cast<double>(top_border_width) / static_cast<double>(border_width)) + 1.0);
 
         add_path_arc(cr, left + radius_top_x, top + radius_top_y, radius_top_x.value() - line_offset,
                      radius_top_y.value() - line_offset + (line_offset - top_line_offset), start_angle, end_angle,
@@ -133,7 +141,9 @@ void cairo::border::draw_line(double line_offset, double top_line_offset, double
         cairo_line_to(cr, left.value() + line_offset, bottom.value() - radius_bottom_y.value());
 
         double start_angle = M_PI;
-        double end_angle   = start_angle - M_PI / 2.0 / ((double) bottom_border_width / (double) border_width + 1);
+        double end_angle =
+            start_angle -
+            M_PI / 2.0 / ((static_cast<double>(bottom_border_width) / static_cast<double>(border_width)) + 1.0);
 
         add_path_arc(cr, left.value() + radius_bottom_x.value(), bottom.value() - radius_bottom_y.value(),
                      radius_bottom_x.value() - line_offset,
@@ -205,23 +215,18 @@ void cairo::border::draw_dashed()
     draw_line(border_width.value() / 2.0, top_border_width.value() / 2.0, bottom_border_width.value() / 2.0);
 
     litehtml::pixel_t segment_length = border_width * 3;
-    int               seg_nums       = (int) (line_length / segment_length);
-    if(seg_nums < 2)
-    {
-        seg_nums = 2;
-    }
+    int               seg_nums       = static_cast<int>(line_length / segment_length);
+    seg_nums                         = std::max(seg_nums, 2);
     if(seg_nums % 2 != 0)
     {
         seg_nums = seg_nums + 1;
     }
     seg_nums++;
-    double seg_len = (double) line_length / (double) seg_nums;
+    double seg_len = static_cast<double>(line_length) / static_cast<double>(seg_nums);
 
-    double dashes[2];
-    dashes[0] = seg_len;
-    dashes[1] = seg_len;
+    std::array<double, 2> dashes = {seg_len, seg_len};
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
-    cairo_set_dash(cr, dashes, 2, 0);
+    cairo_set_dash(cr, dashes.data(), 2, 0);
     set_color(cr, color);
     cairo_set_line_width(cr, border_width);
     cairo_stroke(cr);
@@ -250,23 +255,18 @@ void cairo::border::draw_dotted()
     double line_length = std::abs(bottom.value() - top.value());
 
     double dot_size = border_width;
-    int    num_dots = (int) std::nearbyint(line_length / (dot_size * 2.0));
-    if(num_dots < 2)
-    {
-        num_dots = 2;
-    }
+    int    num_dots = static_cast<int>(std::nearbyint(line_length / (dot_size * 2.0)));
+    num_dots        = std::max(num_dots, 2);
     if(num_dots % 2 != 0)
     {
         num_dots = num_dots + 1;
     }
     num_dots++;
-    double space_len = ((double) line_length - (double) border_width) / (num_dots - 1.0);
+    double space_len = (line_length - static_cast<double>(border_width)) / (num_dots - 1.0);
 
-    double dashes[2];
-    dashes[0] = 0;
-    dashes[1] = space_len;
+    std::array<double, 2> dashes = {0, space_len};
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
-    cairo_set_dash(cr, dashes, 2, -dot_size / 2.0);
+    cairo_set_dash(cr, dashes.data(), 2, -dot_size / 2.0);
 
     set_color(cr, color);
     cairo_set_line_width(cr, border_width);

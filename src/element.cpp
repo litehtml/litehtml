@@ -380,11 +380,11 @@ namespace litehtml
                                                  std::function<void(const string_id&, const int)> handler) const
     {
         int pos = 0;
-        while(pos < (int) tokens.size())
+        while(pos < static_cast<int>(tokens.size()))
         {
             const string& name  = tokens[pos];
             int           value = default_value;
-            if(pos < (int) tokens.size() - 1 && litehtml::is_number(tokens[pos + 1], false))
+            if(pos < static_cast<int>(tokens.size()) - 1 && litehtml::is_number(tokens[pos + 1], false))
             {
                 value  = atoi(tokens[pos + 1].c_str());
                 pos   += 2;

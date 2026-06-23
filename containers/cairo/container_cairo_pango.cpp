@@ -75,7 +75,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         pango_font_description_set_style(desc, PANGO_STYLE_NORMAL);
     }
 
-    pango_font_description_set_weight(desc, (PangoWeight) descr.weight);
+    pango_font_description_set_weight(desc, static_cast<PangoWeight>(descr.weight));
 
     cairo_font* ret = nullptr;
 
@@ -90,8 +90,8 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         pango_layout_set_font_description(layout, desc);
         PangoFontMetrics* metrics = pango_context_get_metrics(context, desc, language);
 
-        fm->ascent      = PANGO_PIXELS((double) pango_font_metrics_get_ascent(metrics));
-        fm->height      = PANGO_PIXELS((double) pango_font_metrics_get_height(metrics));
+        fm->ascent      = PANGO_PIXELS(static_cast<double>(pango_font_metrics_get_ascent(metrics)));
+        fm->height      = PANGO_PIXELS(static_cast<double>(pango_font_metrics_get_height(metrics)));
         fm->descent     = fm->height - fm->ascent;
         fm->x_height    = fm->height;
         fm->draw_spaces = (descr.decoration_line != litehtml::text_decoration_line_none);
@@ -132,7 +132,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         {
             litehtml::css_length one_em(1.0, litehtml::css_units_em);
             doc->cvt_units(one_em, *fm, 0);
-            doc->cvt_units(thinkness, *fm, (int) one_em.val());
+            doc->cvt_units(thinkness, *fm, static_cast<int>(one_em.val()));
         }
 
         ret->underline_position = -pango_font_metrics_get_underline_position(metrics);
@@ -141,7 +141,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
             ret->underline_thickness = pango_font_metrics_get_underline_thickness(metrics);
         } else
         {
-            ret->underline_thickness = (int) (thinkness.val() * PANGO_SCALE);
+            ret->underline_thickness = static_cast<int>(thinkness.val() * PANGO_SCALE);
         }
         pango_quantize_line_geometry(&ret->underline_thickness, &ret->underline_position);
         ret->underline_thickness = PANGO_PIXELS(ret->underline_thickness);
@@ -153,7 +153,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
             ret->strikethrough_thickness = pango_font_metrics_get_strikethrough_thickness(metrics);
         } else
         {
-            ret->strikethrough_thickness = (int) (thinkness.val() * PANGO_SCALE);
+            ret->strikethrough_thickness = static_cast<int>(thinkness.val() * PANGO_SCALE);
         }
         pango_quantize_line_geometry(&ret->strikethrough_thickness, &ret->strikethrough_position);
         ret->strikethrough_thickness = PANGO_PIXELS(ret->strikethrough_thickness);
@@ -165,7 +165,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
             ret->overline_thickness = pango_font_metrics_get_underline_thickness(metrics);
         } else
         {
-            ret->overline_thickness = (int) (thinkness.val() * PANGO_SCALE);
+            ret->overline_thickness = static_cast<int>(thinkness.val() * PANGO_SCALE);
         }
         pango_quantize_line_geometry(&ret->overline_thickness, &ret->overline_position);
         ret->overline_thickness = PANGO_PIXELS(ret->overline_thickness);
@@ -175,12 +175,12 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         pango_font_metrics_unref(metrics);
     }
 
-    return (litehtml::uint_ptr) ret;
+    return reinterpret_cast<litehtml::uint_ptr>(ret);
 }
 
 void container_cairo_pango::delete_font(litehtml::uint_ptr hFont)
 {
-    auto* fnt = (cairo_font*) hFont;
+    auto* fnt = reinterpret_cast<cairo_font*>(hFont);
     if(fnt)
     {
         pango_font_description_free(fnt->font);
@@ -190,7 +190,7 @@ void container_cairo_pango::delete_font(litehtml::uint_ptr hFont)
 
 litehtml::pixel_t container_cairo_pango::text_width(const char* text, litehtml::uint_ptr hFont)
 {
-    auto* fnt = (cairo_font*) hFont;
+    auto* fnt = reinterpret_cast<cairo_font*>(hFont);
 
     cairo_save(m_temp_cr);
 
@@ -220,14 +220,14 @@ enum class draw_type
 static inline void draw_single_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width,
                                     int thickness, draw_type type)
 {
-    double top;
+    double top = 0;
     switch(type)
     {
     case draw_type::DRAW_UNDERLINE:
-        top = y + (float) thickness / 2.0f;
+        top = y + static_cast<float>(thickness) / 2.0f;
         break;
     case draw_type::DRAW_OVERLINE:
-        top = y - (float) thickness / 2.0f;
+        top = y - static_cast<float>(thickness) / 2.0f;
         break;
     case draw_type::DRAW_STRIKETHROUGH:
         top = y + 0.5f;
@@ -245,8 +245,8 @@ static void draw_solid_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t 
 {
     draw_single_line(cr, x, y, width, thickness, type);
 
-    cairo_set_source_rgba(cr, (double) color.red / 255.0, (double) color.green / 255.0, (double) color.blue / 255.0,
-                          (double) color.alpha / 255.0);
+    cairo_set_source_rgba(cr, static_cast<double>(color.red) / 255.0, static_cast<double>(color.green) / 255.0,
+                          static_cast<double>(color.blue) / 255.0, static_cast<double>(color.alpha) / 255.0);
     cairo_set_line_width(cr, thickness);
     cairo_stroke(cr);
 }
@@ -265,8 +265,8 @@ static void draw_dotted_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
     cairo_set_dash(cr, dashes.data(), 2, x);
 
-    cairo_set_source_rgba(cr, (double) color.red / 255.0, (double) color.green / 255.0, (double) color.blue / 255.0,
-                          (double) color.alpha / 255.0);
+    cairo_set_source_rgba(cr, static_cast<double>(color.red) / 255.0, static_cast<double>(color.green) / 255.0,
+                          static_cast<double>(color.blue) / 255.0, static_cast<double>(color.alpha) / 255.0);
     cairo_stroke(cr);
 }
 
@@ -280,8 +280,8 @@ static void draw_dashed_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
     cairo_set_dash(cr, dashes.data(), 2, x);
 
-    cairo_set_source_rgba(cr, (double) color.red / 255.0, (double) color.green / 255.0, (double) color.blue / 255.0,
-                          (double) color.alpha / 255.0);
+    cairo_set_source_rgba(cr, static_cast<double>(color.red) / 255.0, static_cast<double>(color.green) / 255.0,
+                          static_cast<double>(color.blue) / 255.0, static_cast<double>(color.alpha) / 255.0);
     cairo_stroke(cr);
 }
 
@@ -289,17 +289,17 @@ static void draw_wavy_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y
                            int thickness, draw_type type, litehtml::web_color& color)
 {
     int h_pad        = 1;
-    int brush_height = (int) thickness * 3 + h_pad * 2;
-    int brush_width  = brush_height * 2 - 2 * thickness;
+    int brush_height = static_cast<int>(thickness) * 3 + h_pad * 2;
+    int brush_width  = brush_height * 2 - 2 * static_cast<int>(thickness);
 
     double top;
     switch(type)
     {
     case draw_type::DRAW_UNDERLINE:
-        top = y + (float) brush_height / 2.0f;
+        top = y + static_cast<float>(brush_height) / 2.0f;
         break;
     case draw_type::DRAW_OVERLINE:
-        top = y - (float) brush_height / 2.0f;
+        top = y - static_cast<float>(brush_height) / 2.0f;
         break;
     default:
         top = y;
@@ -309,16 +309,16 @@ static void draw_wavy_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y
     cairo_surface_t* brush_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, brush_width, brush_height);
     cairo_t*         brush_cr      = cairo_create(brush_surface);
 
-    cairo_set_source_rgba(brush_cr, (double) color.red / 255.0, (double) color.green / 255.0,
-                          (double) color.blue / 255.0, (double) color.alpha / 255.0);
+    cairo_set_source_rgba(brush_cr, static_cast<double>(color.red) / 255.0, static_cast<double>(color.green) / 255.0,
+                          static_cast<double>(color.blue) / 255.0, static_cast<double>(color.alpha) / 255.0);
     cairo_set_line_width(brush_cr, thickness);
     double w = thickness / 2.0;
-    cairo_move_to(brush_cr, 0, brush_height - (float) thickness / 2.0f - h_pad);
-    cairo_line_to(brush_cr, w, brush_height - (float) thickness / 2.0f - h_pad);
-    cairo_line_to(brush_cr, brush_width / 2.0f - w, (float) thickness / 2.0f + h_pad);
-    cairo_line_to(brush_cr, brush_width / 2.0f + w, (float) thickness / 2.0f + h_pad);
-    cairo_line_to(brush_cr, brush_width - w, brush_height - (float) thickness / 2.0f - h_pad);
-    cairo_line_to(brush_cr, brush_width, brush_height - (float) thickness / 2.0f - h_pad);
+    cairo_move_to(brush_cr, 0, brush_height - static_cast<float>(thickness) / 2.0f - h_pad);
+    cairo_line_to(brush_cr, w, brush_height - static_cast<float>(thickness) / 2.0f - h_pad);
+    cairo_line_to(brush_cr, brush_width / 2.0f - w, static_cast<float>(thickness) / 2.0f + h_pad);
+    cairo_line_to(brush_cr, brush_width / 2.0f + w, static_cast<float>(thickness) / 2.0f + h_pad);
+    cairo_line_to(brush_cr, brush_width - w, brush_height - static_cast<float>(thickness) / 2.0f - h_pad);
+    cairo_line_to(brush_cr, brush_width, brush_height - static_cast<float>(thickness) / 2.0f - h_pad);
     cairo_stroke(brush_cr);
     cairo_destroy(brush_cr);
 
@@ -347,16 +347,16 @@ static void draw_double_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t
     switch(type)
     {
     case draw_type::DRAW_UNDERLINE:
-        top1 = y + (float) thickness / 2.0f;
-        top2 = top1 + (float) thickness + (float) thickness / 2.0 + 0.5;
+        top1 = y + static_cast<float>(thickness) / 2.0f;
+        top2 = top1 + static_cast<float>(thickness) + static_cast<float>(thickness) / 2.0 + 0.5;
         break;
     case draw_type::DRAW_OVERLINE:
-        top1 = y - (float) thickness / 2.0f;
-        top2 = top1 - (float) thickness - (float) thickness / 2.0f - 0.5f;
+        top1 = y - static_cast<float>(thickness) / 2.0f;
+        top2 = top1 - static_cast<float>(thickness) - static_cast<float>(thickness) / 2.0f - 0.5f;
         break;
     case draw_type::DRAW_STRIKETHROUGH:
-        top1 = y - (float) thickness + 0.5f;
-        top2 = y + (float) thickness + 0.5f;
+        top1 = y - static_cast<float>(thickness) + 0.5f;
+        top2 = y + static_cast<float>(thickness) + 0.5f;
         break;
     default:
         top1 = y;
@@ -368,16 +368,16 @@ static void draw_double_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t
     cairo_stroke(cr);
     cairo_move_to(cr, x, top2);
     cairo_line_to(cr, x + width, top2);
-    cairo_set_source_rgba(cr, (double) color.red / 255.0, (double) color.green / 255.0, (double) color.blue / 255.0,
-                          (double) color.alpha / 255.0);
+    cairo_set_source_rgba(cr, static_cast<double>(color.red) / 255.0, static_cast<double>(color.green) / 255.0,
+                          static_cast<double>(color.blue) / 255.0, static_cast<double>(color.alpha) / 255.0);
     cairo_stroke(cr);
 }
 
 void container_cairo_pango::draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont,
                                       litehtml::web_color color, const litehtml::position& pos)
 {
-    auto* fnt = (cairo_font*) hFont;
-    auto* cr  = (cairo_t*) hdc;
+    auto* fnt = reinterpret_cast<cairo_font*>(hFont);
+    auto* cr  = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
 
     apply_clip(cr);
@@ -390,10 +390,10 @@ void container_cairo_pango::draw_text(litehtml::uint_ptr hdc, const char* text, 
     pango_layout_set_font_description(layout, fnt->font);
     pango_layout_set_text(layout, text, -1);
 
-    auto font_options = get_font_options();
+    auto* font_options = get_font_options();
     if(font_options)
     {
-        auto ctx = pango_layout_get_context(layout);
+        auto* ctx = pango_layout_get_context(layout);
         pango_cairo_context_set_font_options(ctx, font_options);
     }
 

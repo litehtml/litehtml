@@ -178,7 +178,7 @@ namespace litehtml
         }
 
         string s   = tok.str;
-        int    len = (int) s.size();
+        int    len = static_cast<int>(s.size());
         if(!is_one_of(len, 3, 4, 6, 8))
         {
             return false;
@@ -301,7 +301,7 @@ namespace litehtml
             x = (x / 100) * max;
         }
         x = clamp(x, 0, max);
-        return (byte) round(max == 1 ? x * 255 : x);
+        return static_cast<byte>(round(max == 1 ? x * 255 : x));
     }
 
     // https://drafts.csswg.org/css-color-4/#rgb-functions
@@ -313,7 +313,7 @@ namespace litehtml
         }
 
         auto list = parse_comma_separated_list(tok.value);
-        int  n    = (int) list.size();
+        int  n    = static_cast<int>(list.size());
         if(!is_one_of(n, 1, 3, 4))
         {
             return false;
@@ -368,7 +368,7 @@ namespace litehtml
     // https://drafts.csswg.org/css-color-4/#hsl-to-rgb
     void hsl_to_rgb(float hue, float sat, float light, float& r, float& g, float& b)
     {
-        hue = (float) fmod(hue, 360.f);
+        hue = static_cast<float>(fmod(hue, 360.f));
 
         if(hue < 0)
         {
@@ -379,7 +379,7 @@ namespace litehtml
         light /= 100;
 
         auto f = [=](float n) {
-            float k = (float) fmod(n + hue / 30, 12.f);
+            float k = static_cast<float>(fmod(n + hue / 30, 12.f));
             float a = sat * min(light, 1 - light);
             return light - a * max(-1.f, min({k - 3, 9 - k, 1.f}));
         };
@@ -398,7 +398,7 @@ namespace litehtml
         }
 
         auto list = parse_comma_separated_list(tok.value);
-        int  n    = (int) list.size();
+        int  n    = static_cast<int>(list.size());
         if(!is_one_of(n, 1, 3, 4))
         {
             return false;
@@ -469,8 +469,8 @@ namespace litehtml
         g = clamp(g, 0, 1);
         b = clamp(b, 0, 1);
 
-        color = web_color((byte) round(r * 255), (byte) round(g * 255), (byte) round(b * 255),
-                          calc_percent_and_clamp(a, 1));
+        color = web_color(static_cast<byte>(round(r * 255)), static_cast<byte>(round(g * 255)),
+                          static_cast<byte>(round(b * 255)), calc_percent_and_clamp(a, 1));
         return true;
     }
 
@@ -526,13 +526,13 @@ namespace litehtml
 
     web_color web_color::darken(double fraction) const
     {
-        int v_red   = (int) red;
-        int v_blue  = (int) blue;
-        int v_green = (int) green;
-        v_red       = (int) max(v_red - (v_red * fraction), 0.0);
-        v_blue      = (int) max(v_blue - (v_blue * fraction), 0.0);
-        v_green     = (int) max(v_green - (v_green * fraction), 0.0);
-        return {(byte) v_red, (byte) v_green, (byte) v_blue, alpha};
+        int v_red   = static_cast<int>(red);
+        int v_blue  = static_cast<int>(blue);
+        int v_green = static_cast<int>(green);
+        v_red       = static_cast<int>(max(v_red - (v_red * fraction), 0.0));
+        v_blue      = static_cast<int>(max(v_blue - (v_blue * fraction), 0.0));
+        v_green     = static_cast<int>(max(v_green - (v_green * fraction), 0.0));
+        return {static_cast<byte>(v_red), static_cast<byte>(v_green), static_cast<byte>(v_blue), alpha};
     }
 
     string web_color::to_string() const

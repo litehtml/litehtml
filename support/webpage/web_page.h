@@ -106,7 +106,7 @@ namespace litebrowser
         [[nodiscard]]
         uint64_t id() const
         {
-            return (uint64_t) this;
+            return reinterpret_cast<uint64_t>(this);
         }
 
         [[nodiscard]]

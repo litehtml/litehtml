@@ -333,7 +333,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
     }
 
     int   counter = 0;
-    float offj    = float(spacing_x) / std::max(1.f, float(m_items.size()) - 1.f);
+    float offj    = static_cast<float>(spacing_x) / std::max(1.f, static_cast<float>(m_items.size()) - 1.f);
     float cixx    = 0.0f;
 
     std::optional<pixel_t> line_height;
@@ -399,7 +399,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
             lbi->pos().x += pixel_t(cixx);
         }
         counter++;
-        if((m_text_align == text_align_right || spacing_x != 0_px) && counter == int(m_items.size()))
+        if((m_text_align == text_align_right || spacing_x != 0_px) && counter == static_cast<int>(m_items.size()))
         {
             // Forcible justify the last element to the right side for text align right and justify;
             lbi->pos().x = m_right - lbi->pos().width;

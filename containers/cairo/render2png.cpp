@@ -91,7 +91,7 @@ namespace html2png
             std::string ret;
             char        ch;
             uint32_t    i, ii;
-            for(i = 0; i < (uint32_t) SRC.length(); i++)
+            for(i = 0; i < static_cast<uint32_t>(SRC.length()); i++)
             {
                 if(SRC[i] == '%')
                 {
@@ -262,10 +262,10 @@ namespace html2png
         width  = cfg.get_int("width", doc->width() > 0_px ? doc->width() : 1_px);
         height = cfg.get_int("height", doc->height() > 0_px ? doc->height() : 1_px);
 
-        auto surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
+        auto* surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
         if(surface)
         {
-            auto cr = cairo_create(surface);
+            auto* cr = cairo_create(surface);
 
             // Fill background with white color
             cairo_save(cr);
@@ -276,7 +276,7 @@ namespace html2png
 
             // Draw document
             litehtml::position clip(0, 0, width, height);
-            doc->draw((litehtml::uint_ptr) cr, 0, 0, &clip);
+            doc->draw(reinterpret_cast<litehtml::uint_ptr>(cr), 0, 0, &clip);
 
             cairo_surface_flush(surface);
             cairo_destroy(cr);

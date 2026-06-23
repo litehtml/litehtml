@@ -46,7 +46,7 @@ namespace litehtml
 
     bool is_ascii_codepoint(char c)
     {
-        return ((unsigned char) c < 128);
+        return (static_cast<unsigned char>(c) < 128);
     }
 
     // https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
