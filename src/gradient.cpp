@@ -408,7 +408,7 @@ namespace litehtml
     {
         // The unit identifier may be omitted if the <angle> is zero.
         // https://drafts.csswg.org/css-images-3/#linear-gradient-syntax
-        if(tok.type == NUMBER && tok.n.number == 0)
+        if(tok.type == NUMBER && pixel_t(tok.n.number) == 0_px)
         {
             angle = 0;
             return true;

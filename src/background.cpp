@@ -212,28 +212,28 @@ namespace litehtml
             angle_deg += 360;
         }
 
-        if(angle_deg == 0)
+        if(pixel_t(angle_deg) == 0_px)
         {
             first_point.set(0, static_cast<float>(size.height));
             second_point.set(0, 0);
             return;
         }
 
-        if(angle_deg == 90)
+        if(pixel_t(angle_deg) == 90_px)
         {
             first_point.set(0, 0);
             second_point.set(static_cast<float>(size.width), 0);
             return;
         }
 
-        if(angle_deg == 180)
+        if(pixel_t(angle_deg) == 180_px)
         {
             first_point.set(0, 0);
             second_point.set(0, static_cast<float>(size.height));
             return;
         }
 
-        if(angle_deg == 270)
+        if(pixel_t(angle_deg) == 270_px)
         {
             first_point.set(static_cast<float>(size.width), 0);
             second_point.set(0, 0);
@@ -343,7 +343,7 @@ namespace litehtml
     {
         // If the aspectRatio is 0 or infinite, the ellipse is completely flat.
         // (If it is NaN, the ellipse is 0x0, and should be handled as zero width.)
-        if(!std::isfinite(aspect_ratio) || aspect_ratio == 0)
+        if(!std::isfinite(aspect_ratio) || pixel_t(aspect_ratio) == 0_px)
         {
             return {0, 0};
         }
@@ -837,7 +837,8 @@ namespace litehtml
         if(length.units() == css_units_percentage)
         {
             return length.val() / 100.0f;
-        } else if(line_len != 0)
+        }
+        if(pixel_t(line_len) != 0_px)
         {
             return length.val() / line_len;
         }
@@ -896,14 +897,14 @@ namespace litehtml
         if(!repeating)
         {
             // Add color point with offset 0 if not exists
-            if(color_points[0].offset != 0)
+            if(pixel_t(color_points[0].offset) != 0_px)
             {
                 color_points.emplace(color_points.begin(), 0.0f, color_points[0].color);
             }
             // Add color point with offset 1.0 if not exists
-            if(color_points.back().offset < 1)
+            if(pixel_t(color_points.back().offset) < 1_px)
             {
-                if(color_points.back().offset == 0)
+                if(pixel_t(color_points.back().offset) == 0_px)
                 {
                     color_points.back().offset = 1;
                     none_units--;
@@ -915,7 +916,7 @@ namespace litehtml
         } else
         {
             // Add color point with offset 1.0 if not exists
-            if(color_points.back().offset == 0)
+            if(pixel_t(color_points.back().offset) == 0_px)
             {
                 color_points.back().offset = 1;
                 none_units--;
@@ -927,14 +928,14 @@ namespace litehtml
             size_t i = 1;
             while(i < color_points.size())
             {
-                if(color_points[i].offset != 0.0)
+                if(pixel_t(color_points[i].offset) != 0_px)
                 {
                     i++;
                     continue;
                 }
                 // Find next defined offset
                 size_t j = i + 1;
-                while(color_points[j].offset == 0)
+                while(pixel_t(color_points[j].offset) == 0_px)
                 {
                     j++;
                 }

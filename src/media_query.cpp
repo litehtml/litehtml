@@ -26,17 +26,17 @@ namespace litehtml
         switch(op)
         {
         case '<':
-            return x < value;
+            return pixel_t(x) < pixel_t(value);
         case u'⩽':
-            return x <= value;
+            return pixel_t(x) <= pixel_t(value);
         case '>':
-            return x > value;
+            return pixel_t(x) > pixel_t(value);
         case u'⩾':
-            return x >= value;
+            return pixel_t(x) >= pixel_t(value);
         case '=':
-            return x == value;
+            return pixel_t(x) == pixel_t(value);
         case u'≠':
-            return x != value;
+            return pixel_t(x) != pixel_t(value);
         default:
             return false;
         }

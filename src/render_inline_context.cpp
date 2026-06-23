@@ -142,7 +142,7 @@ void litehtml::render_item_inline_context::fix_line_width(element_float flt, con
                     line_left       += sz_font;
                 }
 
-                if(src_el()->css().get_text_indent().val() != 0)
+                if(pixel_t(src_el()->css().get_text_indent().val()) != 0_px)
                 {
                     line_left += src_el()->css().get_text_indent().calc_percent(self_size.width);
                 }
@@ -199,7 +199,7 @@ litehtml::pixel_t litehtml::render_item_inline_context::new_box(const std::uniqu
         {
             first_line_margin = src_el()->css().get_font_size();
         }
-        if(src_el()->css().get_text_indent().val() != 0)
+        if(pixel_t(src_el()->css().get_text_indent().val()) != 0_px)
         {
             text_indent = src_el()->css().get_text_indent().calc_percent(self_size.width);
         }

@@ -601,7 +601,8 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
         m_flex_shrink = el->get_property<float>(_flex_shrink_, false, 1, offset(m_flex_shrink));
         m_flex_basis  = el->get_property<css_length>(_flex_basis_, false, css_length::predef_value(flex_basis_auto),
                                                      offset(m_flex_basis));
-        if(!m_flex_basis.is_predefined() && m_flex_basis.units() == css_units_none && m_flex_basis.val() != 0)
+        if(!m_flex_basis.is_predefined() && m_flex_basis.units() == css_units_none &&
+           pixel_t(m_flex_basis.val()) != 0_px)
         {
             // flex-basis property must contain units
             m_flex_basis.predef(flex_basis_auto);

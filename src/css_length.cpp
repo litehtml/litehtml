@@ -53,12 +53,12 @@ namespace litehtml
         } else if(token.type == NUMBER)
         {
             // if token is a nonzero number and neither f_number nor f_integer is specified in the options
-            if(!(options & (f_number | f_integer)) && token.n.number != 0)
+            if(!(options & (f_number | f_integer)) && pixel_t(token.n.number) != 0_px)
             {
                 return false;
             }
             // if token is a zero number and neither of f_number, f_integer or f_length are specified in the options
-            if(!(options & (f_number | f_integer | f_length)) && token.n.number == 0)
+            if(!(options & (f_number | f_integer | f_length)) && pixel_t(token.n.number) == 0_px)
             {
                 return false;
             }

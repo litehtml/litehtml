@@ -362,7 +362,7 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
             }
         }
         auto scale = static_cast<float>(100.0 / percent);
-        if(scale != 1.0f)
+        if(pixel_t(scale) != 1_px)
         {
             cur_width = 0;
             for(int col = 0; col < m_cols_count; col++)

@@ -301,7 +301,7 @@ namespace litehtml
             x = (x / 100) * max;
         }
         x = clamp(x, 0, max);
-        return static_cast<byte>(round(max == 1 ? x * 255 : x));
+        return static_cast<byte>(round(pixel_t(max) == 1_px ? x * 255 : x));
     }
 
     // https://drafts.csswg.org/css-color-4/#rgb-functions
