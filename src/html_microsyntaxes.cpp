@@ -51,7 +51,7 @@ namespace litehtml
         // 5. Collect a sequence of code points that are ASCII digits from input given position, and interpret the
         // resulting sequence as a base-ten integer. Let value be that number.
         char* end;
-        float value = (float) strtol(position, &end, 10);
+        float value = static_cast<float>(strtol(position, &end, 10));
         position    = end;
         // 6. If position is past the end of input, then return value as a length.
         if(!*position)

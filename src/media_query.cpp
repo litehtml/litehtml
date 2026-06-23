@@ -162,7 +162,7 @@ namespace litehtml
             result = True;
         } else
         {
-            result = (trilean) (m_media_type == features.type);
+            result = static_cast<trilean>(m_media_type == features.type);
         }
 
         if(result == True)
@@ -273,7 +273,7 @@ namespace litehtml
             return false;
         }
         int  index = 0;
-        auto end   = [&]() { return index == (int) tokens.size(); };
+        auto end   = [&]() { return index == static_cast<int>(tokens.size()); };
 
         media_condition condition;
         if(parse_media_condition(tokens, index, true, condition, doc) && end())
@@ -318,7 +318,7 @@ namespace litehtml
             return false;
         }
         mquery.m_not        = _not;
-        mquery.m_media_type = (litehtml::media_type) media_type;
+        mquery.m_media_type = static_cast<litehtml::media_type>(media_type);
         return true;
     }
 
@@ -402,7 +402,7 @@ namespace litehtml
         int             index = 0;
         media_condition condition;
         media_feature   media_feature;
-        if(parse_media_condition(tokens, index, true, condition, doc) && index == (int) tokens.size())
+        if(parse_media_condition(tokens, index, true, condition, doc) && index == static_cast<int>(tokens.size()))
         {
             media_in_parens = condition;
         } else if(parse_media_feature(token, media_feature, doc))
@@ -579,7 +579,7 @@ namespace litehtml
                 {
                     return false;
                 }
-                val[0] = css_token(NUMBER, (float) ident);
+                val[0] = css_token(NUMBER, static_cast<float>(ident));
                 return true;
             }
 
@@ -601,7 +601,7 @@ namespace litehtml
             {
                 return false;
             }
-            value = mf_info.value_type == _keyword_ ? (float) _none_ : 0;
+            value = mf_info.value_type == _keyword_ ? static_cast<float>(_none_) : 0;
             op    = u'≠';
             return true;
         } else if(syntax == _plain_) // ({min-,max-,}name: value)
@@ -688,7 +688,7 @@ namespace litehtml
         {
             css_token val[2];
             int       index = 2;
-            if(!parse_mf_value(tokens, index, val) || index != (int) tokens.size())
+            if(!parse_mf_value(tokens, index, val) || index != static_cast<int>(tokens.size()))
             {
                 return false;
             }
@@ -821,7 +821,7 @@ namespace litehtml
             index = 0;
             return true;
         };
-        auto end = [&]() { return index == (int) tokens.size(); };
+        auto end = [&]() { return index == static_cast<int>(tokens.size()); };
 
         short     op;
         css_token val[2];

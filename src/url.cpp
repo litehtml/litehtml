@@ -147,7 +147,7 @@ namespace litehtml
                 encoded << c;
             } else
             {
-                encoded << '%' << std::setw(2) << int((unsigned char) c);
+                encoded << '%' << std::setw(2) << static_cast<int>(c);
             }
         }
 

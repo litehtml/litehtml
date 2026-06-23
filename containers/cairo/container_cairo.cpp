@@ -31,8 +31,8 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
         auto img = get_image(url);
         if(img)
         {
-            draw_pixbuf((cairo_t*) hdc, img, marker.pos.x, marker.pos.y, cairo_image_surface_get_width(img),
-                        cairo_image_surface_get_height(img));
+            draw_pixbuf(reinterpret_cast<cairo_t*>(hdc), img, marker.pos.x, marker.pos.y,
+                        cairo_image_surface_get_width(img), cairo_image_surface_get_height(img));
             cairo_surface_destroy(img);
         }
     } else
@@ -41,20 +41,20 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
         {
         case litehtml::list_style_type_circle:
             {
-                draw_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height,
-                             marker.color, 1);
+                draw_ellipse(reinterpret_cast<cairo_t*>(hdc), marker.pos.x, marker.pos.y, marker.pos.width,
+                             marker.pos.height, marker.color, 1);
             }
             break;
         case litehtml::list_style_type_disc:
             {
-                fill_ellipse((cairo_t*) hdc, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height,
-                             marker.color);
+                fill_ellipse(reinterpret_cast<cairo_t*>(hdc), marker.pos.x, marker.pos.y, marker.pos.width,
+                             marker.pos.height, marker.color);
             }
             break;
         case litehtml::list_style_type_square:
             if(hdc)
             {
-                auto* cr = (cairo_t*) hdc;
+                auto* cr = reinterpret_cast<cairo_t*>(hdc);
                 cairo_save(cr);
 
                 cairo_new_path(cr);
@@ -107,7 +107,7 @@ void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::backgro
         return;
     }
 
-    auto* cr = (cairo_t*) hdc;
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
     apply_clip(cr);
 
@@ -116,7 +116,7 @@ void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::backgro
     std::string img_url;
     make_url(url.c_str(), base_url.c_str(), img_url);
 
-    auto bgbmp = get_image(img_url);
+    auto* bgbmp = get_image(img_url);
     if(bgbmp)
     {
         int image_width  = litehtml::round_f(layer.origin_box.width);
@@ -124,7 +124,7 @@ void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::backgro
 
         if(image_width != cairo_image_surface_get_width(bgbmp) || image_height != cairo_image_surface_get_height(bgbmp))
         {
-            auto new_img = scale_surface(bgbmp, image_width, image_height);
+            auto* new_img = scale_surface(bgbmp, image_width, image_height);
             cairo_surface_destroy(bgbmp);
             bgbmp = new_img;
         }
@@ -179,7 +179,7 @@ void container_cairo::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::ba
         return;
     }
 
-    auto* cr = (cairo_t*) hdc;
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
     apply_clip(cr);
 
@@ -216,7 +216,7 @@ static void draw_pattern(
     {
         if(layer.origin_box.left() > layer.clip_box.left())
         {
-            int num_left = (int) ((layer.origin_box.left() - layer.clip_box.left()) / layer.origin_box.width);
+            int num_left = static_cast<int>((layer.origin_box.left() - layer.clip_box.left()) / layer.origin_box.width);
             if(layer.origin_box.left() - num_left * layer.origin_box.width > layer.clip_box.left())
             {
                 num_left++;
@@ -226,7 +226,8 @@ static void draw_pattern(
         }
         if(layer.origin_box.right() < layer.clip_box.right())
         {
-            int num_right = (int) ((layer.clip_box.right() - layer.origin_box.right()) / layer.origin_box.width);
+            int num_right =
+                static_cast<int>((layer.clip_box.right() - layer.origin_box.right()) / layer.origin_box.width);
             if(layer.origin_box.left() + litehtml::pixel_t(num_right) * layer.origin_box.width < layer.clip_box.right())
             {
                 num_right++;
@@ -238,7 +239,7 @@ static void draw_pattern(
     {
         if(layer.origin_box.top() > layer.clip_box.top())
         {
-            int num_top = (int) ((layer.origin_box.top() - layer.clip_box.top()) / layer.origin_box.height);
+            int num_top = static_cast<int>((layer.origin_box.top() - layer.clip_box.top()) / layer.origin_box.height);
             if(layer.origin_box.top() - num_top * layer.origin_box.height > layer.clip_box.top())
             {
                 num_top++;
@@ -248,7 +249,8 @@ static void draw_pattern(
         }
         if(layer.origin_box.bottom() < layer.clip_box.bottom())
         {
-            int num_bottom = (int) ((layer.clip_box.bottom() - layer.origin_box.bottom()) / layer.origin_box.height);
+            int num_bottom =
+                static_cast<int>((layer.clip_box.bottom() - layer.origin_box.bottom()) / layer.origin_box.height);
             if(layer.origin_box.bottom() + litehtml::pixel_t(num_bottom) * layer.origin_box.height <
                layer.clip_box.bottom())
             {
@@ -276,16 +278,17 @@ static void draw_pattern(
 void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
                                            const litehtml::background_layer::linear_gradient& gradient)
 {
-    auto* cr = (cairo_t*) hdc;
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
     apply_clip(cr);
 
     clip_background_layer(cr, layer);
 
     // Translate pattern to the (layer.origin_box.x, layer.origin_box.y) point
-    cairo_pattern_t* pattern = cairo_pattern_create_linear(
-        gradient.start.x - (float) layer.origin_box.x, gradient.start.y - (float) layer.origin_box.y,
-        gradient.end.x - (float) layer.origin_box.x, gradient.end.y - (float) layer.origin_box.y);
+    cairo_pattern_t* pattern = cairo_pattern_create_linear(gradient.start.x - static_cast<float>(layer.origin_box.x),
+                                                           gradient.start.y - static_cast<float>(layer.origin_box.y),
+                                                           gradient.end.x - static_cast<float>(layer.origin_box.x),
+                                                           gradient.end.y - static_cast<float>(layer.origin_box.y));
 
     for(const auto& color_stop : gradient.color_points)
     {
@@ -341,7 +344,7 @@ void container_cairo::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders,
                                    const litehtml::position& draw_pos, bool /*root*/)
 {
-    auto* cr = (cairo_t*) hdc;
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
     apply_clip(cr);
 
@@ -668,7 +671,7 @@ void container_cairo::link(const std::shared_ptr<litehtml::document>& /*ptr*/, c
 void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
                                            const litehtml::background_layer::radial_gradient& gradient)
 {
-    auto* cr = (cairo_t*) hdc;
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
     apply_clip(cr);
 
@@ -676,8 +679,8 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
 
     // Translate pattern to the (layer.origin_box.x, layer.origin_box.y) point
     litehtml::pointF position  = gradient.position;
-    position.x                -= (float) layer.origin_box.x;
-    position.y                -= (float) layer.origin_box.y;
+    position.x                -= static_cast<float>(layer.origin_box.x);
+    position.y                -= static_cast<float>(layer.origin_box.y);
 
     cairo_pattern_t* pattern =
         cairo_pattern_create_radial(position.x, position.y, 0, position.x, position.y, gradient.radius.x);
@@ -695,17 +698,17 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
                      cairo_matrix_t save_matrix;
                      cairo_get_matrix(cr, &save_matrix);
 
-                     auto top    = (float) y;
-                     auto height = (float) h;
+                     auto top    = static_cast<float>(y);
+                     auto height = static_cast<float>(h);
                      if(gradient.radius.x != gradient.radius.y)
                      {
                          litehtml::pointF pos  = position;
-                         pos.x                += (float) x;
-                         pos.y                += (float) y;
+                         pos.x                += static_cast<float>(x);
+                         pos.y                += static_cast<float>(y);
                          // Scale height and top of the origin box
                          float aspect_ratio  = gradient.radius.x / gradient.radius.y;
                          height             *= aspect_ratio;
-                         auto center_y       = (pos.y - (float) y) * aspect_ratio;
+                         auto center_y       = (pos.y - static_cast<float>(y)) * aspect_ratio;
                          top                 = pos.y - center_y;
 
                          cairo_translate(cr, pos.x, pos.y);
@@ -727,7 +730,7 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
 void container_cairo::draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
                                           const litehtml::background_layer::conic_gradient& gradient)
 {
-    auto* cr = (cairo_t*) hdc;
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
     apply_clip(cr);
 
@@ -741,15 +744,17 @@ void container_cairo::draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml
     }
 
     // Translate a pattern to the (layer.origin_box.x, layer.origin_box.y) point
-    litehtml::pointF position  = gradient.position;
-    position.x                -= (float) layer.origin_box.x;
-    position.y                -= (float) layer.origin_box.y;
+    litehtml::pointF position = gradient.position;
+
+    position.x -= static_cast<float>(layer.origin_box.x);
+    position.y -= static_cast<float>(layer.origin_box.y);
 
     draw_pattern(cr, pattern, layer,
                  [&position](cairo_t* cr, cairo_pattern_t* pattern, litehtml::pixel_t x, litehtml::pixel_t y,
                              litehtml::pixel_t w, litehtml::pixel_t h) {
                      cairo_matrix_t flib_m;
-                     cairo_matrix_init_translate(&flib_m, -(position.x + (float) x), -(position.y + (float) y));
+                     cairo_matrix_init_translate(&flib_m, -(position.x + static_cast<float>(x)),
+                                                 -(position.y + static_cast<float>(y)));
                      cairo_pattern_set_matrix(pattern, &flib_m);
 
                      cairo_set_source(cr, pattern);

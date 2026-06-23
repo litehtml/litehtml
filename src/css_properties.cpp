@@ -5,32 +5,37 @@
 #include "html_tag.h"
 #include "document_container.h"
 #include "types.h"
+#include <cstddef>
 
-#define offset(member) ((uint_ptr) & this->member - (uint_ptr) this)
+#define offset(member) offsetof(litehtml::css_properties, member)
 // #define offset(func)	[](const css_properties& css) { return css.func; }
 
 void litehtml::css_properties::compute(const html_tag* el, const document::ptr& doc)
 {
     m_color = el->get_property<web_color>(_color_, true, web_color::black, offset(m_color));
 
-    m_el_position =
-        (element_position) el->get_property<int>(_position_, false, element_position_static, offset(m_el_position));
-    m_display    = (style_display) el->get_property<int>(_display_, false, display_inline, offset(m_display));
-    m_visibility = (visibility) el->get_property<int>(_visibility_, true, visibility_visible, offset(m_visibility));
-    m_float      = (element_float) el->get_property<int>(_float_, false, float_none, offset(m_float));
-    m_clear      = (element_clear) el->get_property<int>(_clear_, false, clear_none, offset(m_clear));
-    m_appearance = (appearance) el->get_property<int>(_appearance_, false, appearance_none, offset(m_appearance));
-    m_box_sizing =
-        (box_sizing) el->get_property<int>(_box_sizing_, false, box_sizing_content_box, offset(m_box_sizing));
-    m_overflow   = (overflow) el->get_property<int>(_overflow_, false, overflow_visible, offset(m_overflow));
-    m_text_align = (text_align) el->get_property<int>(_text_align_, true, text_align_left, offset(m_text_align));
-    m_vertical_align =
-        (vertical_align) el->get_property<int>(_vertical_align_, false, va_baseline, offset(m_vertical_align));
-    m_text_transform =
-        (text_transform) el->get_property<int>(_text_transform_, true, text_transform_none, offset(m_text_transform));
-    m_white_space = (white_space) el->get_property<int>(_white_space_, true, white_space_normal, offset(m_white_space));
-    m_caption_side =
-        (caption_side) el->get_property<int>(_caption_side_, true, caption_side_top, offset(m_caption_side));
+    m_el_position = static_cast<element_position>(
+        el->get_property<int>(_position_, false, element_position_static, offset(m_el_position)));
+    m_display = static_cast<style_display>(el->get_property<int>(_display_, false, display_inline, offset(m_display)));
+    m_visibility =
+        static_cast<visibility>(el->get_property<int>(_visibility_, true, visibility_visible, offset(m_visibility)));
+    m_float = static_cast<element_float>(el->get_property<int>(_float_, false, float_none, offset(m_float)));
+    m_clear = static_cast<element_clear>(el->get_property<int>(_clear_, false, clear_none, offset(m_clear)));
+    m_appearance =
+        static_cast<appearance>(el->get_property<int>(_appearance_, false, appearance_none, offset(m_appearance)));
+    m_box_sizing = static_cast<box_sizing>(
+        el->get_property<int>(_box_sizing_, false, box_sizing_content_box, offset(m_box_sizing)));
+    m_overflow = static_cast<overflow>(el->get_property<int>(_overflow_, false, overflow_visible, offset(m_overflow)));
+    m_text_align =
+        static_cast<text_align>(el->get_property<int>(_text_align_, true, text_align_left, offset(m_text_align)));
+    m_vertical_align = static_cast<vertical_align>(
+        el->get_property<int>(_vertical_align_, false, va_baseline, offset(m_vertical_align)));
+    m_text_transform = static_cast<text_transform>(
+        el->get_property<int>(_text_transform_, true, text_transform_none, offset(m_text_transform)));
+    m_white_space =
+        static_cast<white_space>(el->get_property<int>(_white_space_, true, white_space_normal, offset(m_white_space)));
+    m_caption_side = static_cast<caption_side>(
+        el->get_property<int>(_caption_side_, true, caption_side_top, offset(m_caption_side)));
 
     // https://www.w3.org/TR/CSS22/visuren.html#dis-pos-flo
     if(m_display == display_none)
@@ -151,14 +156,14 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     m_css_borders.bottom.color =
         get_color_property(el, _border_bottom_color_, false, m_color, offset(m_css_borders.bottom.color));
 
-    m_css_borders.left.style   = (border_style) el->get_property<int>(_border_left_style_, false, border_style_none,
-                                                                      offset(m_css_borders.left.style));
-    m_css_borders.right.style  = (border_style) el->get_property<int>(_border_right_style_, false, border_style_none,
-                                                                      offset(m_css_borders.right.style));
-    m_css_borders.top.style    = (border_style) el->get_property<int>(_border_top_style_, false, border_style_none,
-                                                                      offset(m_css_borders.top.style));
-    m_css_borders.bottom.style = (border_style) el->get_property<int>(_border_bottom_style_, false, border_style_none,
-                                                                      offset(m_css_borders.bottom.style));
+    m_css_borders.left.style = static_cast<border_style>(
+        el->get_property<int>(_border_left_style_, false, border_style_none, offset(m_css_borders.left.style)));
+    m_css_borders.right.style = static_cast<border_style>(
+        el->get_property<int>(_border_right_style_, false, border_style_none, offset(m_css_borders.right.style)));
+    m_css_borders.top.style = static_cast<border_style>(
+        el->get_property<int>(_border_top_style_, false, border_style_none, offset(m_css_borders.top.style)));
+    m_css_borders.bottom.style = static_cast<border_style>(
+        el->get_property<int>(_border_bottom_style_, false, border_style_none, offset(m_css_borders.bottom.style)));
 
     m_css_borders.left.width   = el->get_property<css_length>(_border_left_width_, false, border_width_medium_value,
                                                               offset(m_css_borders.left.width));
@@ -220,8 +225,8 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     doc->cvt_units(m_css_borders.radius.bottom_right_x, m_font_metrics, 0_px);
     doc->cvt_units(m_css_borders.radius.bottom_right_y, m_font_metrics, 0_px);
 
-    m_border_collapse = (border_collapse) el->get_property<int>(_border_collapse_, true, border_collapse_separate,
-                                                                offset(m_border_collapse));
+    m_border_collapse = static_cast<border_collapse>(
+        el->get_property<int>(_border_collapse_, true, border_collapse_separate, offset(m_border_collapse)));
 
     m_css_border_spacing_x =
         el->get_property<css_length>(__litehtml_border_spacing_x_, true, 0, offset(m_css_border_spacing_x));
@@ -260,13 +265,13 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     {
         m_line_height.computed_value =
             doc->to_pixels(m_line_height.css_value, m_font_metrics, m_font_metrics.font_size);
-        m_line_height.css_value = (float) m_line_height.computed_value;
+        m_line_height.css_value = static_cast<float>(m_line_height.computed_value);
     }
 
-    m_list_style_type     = (list_style_type) el->get_property<int>(_list_style_type_, true, list_style_type_disc,
-                                                                    offset(m_list_style_type));
-    m_list_style_position = (list_style_position) el->get_property<int>(
-        _list_style_position_, true, list_style_position_outside, offset(m_list_style_position));
+    m_list_style_type = static_cast<list_style_type>(
+        el->get_property<int>(_list_style_type_, true, list_style_type_disc, offset(m_list_style_type)));
+    m_list_style_position = static_cast<list_style_position>(
+        el->get_property<int>(_list_style_position_, true, list_style_position_outside, offset(m_list_style_position)));
 
     m_list_style_image = el->get_property<string>(_list_style_image_, true, "", offset(m_list_style_image));
     if(!m_list_style_image.empty())
@@ -306,7 +311,7 @@ namespace litehtml
         {9_px, 10_px, 12_px, 15_px, 17_px, 23_px, 30_px},
         {9_px, 10_px, 13_px, 16_px, 18_px, 24_px, 32_px}
     };
-}
+} // namespace litehtml
 
 void litehtml::css_properties::compute_font(const html_tag* el, const document::ptr& doc)
 {
@@ -391,7 +396,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
         }
     }
 
-    m_font_size = (float) font_size;
+    m_font_size = static_cast<float>(font_size);
 
     // initialize font
     m_font_family =
@@ -418,9 +423,9 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
         m_text_decoration_thickness = el->get_property<css_length>(
             _text_decoration_thickness_, propagate_decoration, css_length::predef_value(text_decoration_thickness_auto),
             offset(m_text_decoration_thickness));
-        m_text_decoration_style =
-            (text_decoration_style) el->get_property<int>(_text_decoration_style_, propagate_decoration,
-                                                          text_decoration_style_solid, offset(m_text_decoration_style));
+        m_text_decoration_style = static_cast<text_decoration_style>(
+            el->get_property<int>(_text_decoration_style_, propagate_decoration, text_decoration_style_solid,
+                                  offset(m_text_decoration_style)));
         m_text_decoration_color = get_color_property(el, _text_decoration_color_, propagate_decoration,
                                                      web_color::current_color, offset(m_text_decoration_color));
     } else
@@ -458,7 +463,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
             break;
         case font_weight_bolder:
             {
-                const int inherited = (int) el->parent()->css().m_font_weight.val();
+                const int inherited = static_cast<int>(el->parent()->css().m_font_weight.val());
                 if(inherited < 400)
                 {
                     m_font_weight = 400;
@@ -473,7 +478,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
             break;
         case font_weight_lighter:
             {
-                const int inherited = (int) el->parent()->css().m_font_weight.val();
+                const int inherited = static_cast<int>(el->parent()->css().m_font_weight.val());
                 if(inherited < 600)
                 {
                     m_font_weight = 100;
@@ -575,19 +580,20 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
 {
     if(m_display == display_flex || m_display == display_inline_flex)
     {
-        m_flex_direction = (flex_direction) el->get_property<int>(_flex_direction_, false, flex_direction_row,
-                                                                  offset(m_flex_direction));
-        m_flex_wrap      = (flex_wrap) el->get_property<int>(_flex_wrap_, false, flex_wrap_nowrap, offset(m_flex_wrap));
+        m_flex_direction = static_cast<flex_direction>(
+            el->get_property<int>(_flex_direction_, false, flex_direction_row, offset(m_flex_direction)));
+        m_flex_wrap =
+            static_cast<flex_wrap>(el->get_property<int>(_flex_wrap_, false, flex_wrap_nowrap, offset(m_flex_wrap)));
 
-        m_flex_justify_content = (flex_justify_content) el->get_property<int>(
-            _justify_content_, false, flex_justify_content_flex_start, offset(m_flex_justify_content));
-        m_flex_align_items   = (flex_align_items) el->get_property<int>(_align_items_, false, flex_align_items_normal,
-                                                                        offset(m_flex_align_items));
-        m_flex_align_content = (flex_align_content) el->get_property<int>(
-            _align_content_, false, flex_align_content_stretch, offset(m_flex_align_content));
+        m_flex_justify_content = static_cast<flex_justify_content>(el->get_property<int>(
+            _justify_content_, false, flex_justify_content_flex_start, offset(m_flex_justify_content)));
+        m_flex_align_items     = static_cast<flex_align_items>(
+            el->get_property<int>(_align_items_, false, flex_align_items_normal, offset(m_flex_align_items)));
+        m_flex_align_content = static_cast<flex_align_content>(
+            el->get_property<int>(_align_content_, false, flex_align_content_stretch, offset(m_flex_align_content)));
     }
-    m_flex_align_self =
-        (flex_align_items) el->get_property<int>(_align_self_, false, flex_align_items_auto, offset(m_flex_align_self));
+    m_flex_align_self = static_cast<flex_align_items>(
+        el->get_property<int>(_align_self_, false, flex_align_items_auto, offset(m_flex_align_self)));
     auto parent = el->parent();
     if(parent && (parent->css().m_display == display_flex || parent->css().m_display == display_inline_flex))
     {

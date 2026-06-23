@@ -558,7 +558,7 @@ namespace litehtml
         case _order_: // <integer>
             if(val.type == NUMBER && val.n.number_type == css_number_integer)
             {
-                add_parsed_property(name, property_value((int) val.n.number, important));
+                add_parsed_property(name, property_value(static_cast<int>(val.n.number), important));
             }
             break;
 
@@ -695,11 +695,11 @@ namespace litehtml
     void style::parse_border_radius(const css_token_vector& tokens, bool important)
     {
         int i;
-        for(i = 0; i < (int) tokens.size() && tokens[i].ch != '/'; i++)
+        for(i = 0; i < static_cast<int>(tokens.size()) && tokens[i].ch != '/'; i++)
         {
         }
 
-        if(i == (int) tokens.size()) // no '/'
+        if(i == static_cast<int>(tokens.size())) // no '/'
         {
             css_length len[4];
             if(int n = parse_1234_lengths(tokens, len, f_length_percentage | f_positive))
@@ -877,7 +877,7 @@ namespace litehtml
                 return 0;
             }
         }
-        return (int) tokens.size();
+        return static_cast<int>(tokens.size());
     }
 
     int parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, css_values keywords)
@@ -978,7 +978,7 @@ namespace litehtml
         bool origin_found     = false;
         bool clip_found       = false;
 
-        for(int i = 0; i < (int) tokens.size(); i++)
+        for(int i = 0; i < static_cast<int>(tokens.size()); i++)
         {
             if(!color_found && final_layer && parse_color(tokens[i], bg.m_color, container))
             {
@@ -1266,7 +1266,7 @@ namespace litehtml
         {
             css_length x, y;
             int        index = 0;
-            if(!parse_bg_position(layer, index, x, y, true) || index != (int) layer.size())
+            if(!parse_bg_position(layer, index, x, y, true) || index != static_cast<int>(layer.size()))
             {
                 return;
             }
@@ -1293,7 +1293,7 @@ namespace litehtml
         {
             css_size size;
             int      index = 0;
-            if(!parse_bg_size(layer, index, size) || index != (int) layer.size())
+            if(!parse_bg_size(layer, index, size) || index != static_cast<int>(layer.size()))
             {
                 return;
             }
@@ -1316,7 +1316,7 @@ namespace litehtml
         // Note: fractional values are allowed.
         if(tok.type == NUMBER && tok.n.number >= 1 && tok.n.number <= 1000)
         {
-            weight.set_value(tok.n.number, css_units_none);
+            weight.set_value(static_cast<float>(tok.n.number), css_units_none);
             return true;
         }
 
@@ -1335,8 +1335,9 @@ namespace litehtml
         bool weight_found  = false;
         bool res           = false;
 
-        int i = index, count = 0;
-        while(i < (int) tokens.size() && count++ < 3)
+        int i     = index;
+        int count = 0;
+        while(i < static_cast<int>(tokens.size()) && count++ < 3)
         {
             const auto& tok = tokens[i++];
             // All three properties can have value "normal", and it changes nothing because initial
@@ -1876,7 +1877,7 @@ namespace litehtml
     // returns true if there was error or var() was not found
     bool subst_var(css_token_vector& tokens, const html_tag* el, std::set<string_id>& used_vars)
     {
-        for(int i = 0; i < (int) tokens.size(); i++)
+        for(int i = 0; i < static_cast<int>(tokens.size()); i++)
         {
             auto& tok = tokens[i];
             if(tok.type == CV_FUNCTION && lowcase(tok.name) == "var")

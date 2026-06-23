@@ -23,6 +23,8 @@ namespace litehtml
     {
         using ptr = shared_ptr<decoder>;
 
+        virtual ~decoder() = default;
+
         // invalid value of code_point or pointer (in std terminology, pointer is an offset into index table).
         // it is called null to match the standard.
         enum
@@ -204,7 +206,8 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#utf-8-decoder
     decoder::result utf_8_decoder::handler(inout string& input, inout int& index, out int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read byte from input
+        int b =
+            index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read byte from input
 
         // 1. If byte is end-of-queue and UTF-8 bytes needed is not 0, set UTF-8 bytes needed to 0 and return error.
         if(b == EOF && m_bytes_needed != 0)
@@ -317,12 +320,12 @@ namespace litehtml
 
         single_byte_decoder(encoding _encoding)
         {
-            m_index = m_indexes[(int) _encoding - (int) encoding::ibm866];
+            m_index = m_indexes[static_cast<int>(_encoding) - static_cast<int>(encoding::ibm866)];
         }
 
         result handler(string& input, int& index, int ch[2]) override;
 
-        static int* m_indexes[(int) encoding::x_mac_cyrillic - (int) encoding::ibm866 + 1];
+        static int* m_indexes[static_cast<int>(encoding::x_mac_cyrillic) - static_cast<int>(encoding::ibm866) + 1];
 
         static int ibm866_index[128];
         static int iso_8859_2_index[128];
@@ -593,7 +596,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#single-byte-decoder
     decoder::result single_byte_decoder::handler(string& input, int& index, int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         // 1. If byte is end-of-queue, return finished.
         if(b == EOF)
@@ -2385,7 +2388,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#gb18030-decoder
     decoder::result gb18030_decoder::handler(string& input, int& index, int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         // 1. If byte is end-of-queue and gb18030 first, gb18030 second, and gb18030 third are 0x00, return finished.
         if(b == EOF && m_first == 0 && m_second == 0 && m_third == 0)
@@ -2409,7 +2412,7 @@ namespace litehtml
             if(!(b >= 0x30 && b <= 0x39))
             {
                 // 1. Restore « gb18030 second, gb18030 third, byte » to ioQueue.
-                input.insert(index, {(char) m_second, (char) m_third, (char) b});
+                input.insert(index, {static_cast<char>(m_second), static_cast<char>(m_third), static_cast<char>(b)});
 
                 // 2. Set gb18030 first, gb18030 second, and gb18030 third to 0x00.
                 m_first  = 0;
@@ -2451,7 +2454,7 @@ namespace litehtml
             }
 
             // Restore « gb18030 second, byte » to ioQueue
-            input.insert(index, {(char) m_second, (char) b});
+            input.insert(index, {static_cast<char>(m_second), static_cast<char>(b)});
             m_first  = 0;
             m_second = 0;
             return result_error;
@@ -3956,7 +3959,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#big5-decoder
     decoder::result big5_decoder::handler(inout string& input, inout int& index, out int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         // 1. If byte is end-of-queue and Big5 lead is not 0x00, set Big5 lead to 0x00 and return error.
         if(b == EOF && m_lead != 0)
@@ -5325,7 +5328,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#euc-jp-decoder
     decoder::result euc_jp_decoder::handler(inout string& input, inout int& index, out int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         // 1. If byte is end-of-queue and EUC-JP lead is not 0x00, set EUC-JP lead to 0x00, and return error.
         if(b == EOF && m_lead != 0)
@@ -5439,7 +5442,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#iso-2022-jp-decoder
     decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& index, out int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         switch(m_state)
         {
@@ -5611,10 +5614,10 @@ namespace litehtml
                 // ioQueue.
                 if(b == EOF)
                 {
-                    input.insert(index, 1, (char) lead);
+                    input.insert(index, 1, static_cast<char>(lead));
                 } else
                 {
-                    input.insert(index, {(char) lead, (char) b});
+                    input.insert(index, {static_cast<char>(lead), static_cast<char>(b)});
                 }
                 // 9.
                 m_output = false;
@@ -5642,7 +5645,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#shift_jis-decoder
     decoder::result shift_jis_decoder::handler(inout string& input, inout int& index, out int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         // 1. If byte is end-of-queue and Shift_JIS lead is not 0x00, set Shift_JIS lead to 0x00 and return error.
         if(b == EOF && m_lead != 0)
@@ -7240,7 +7243,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#euc-kr-decoder
     decoder::result euc_kr_decoder::handler(inout string& input, inout int& index, out int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         // 1. If byte is end-of-queue and EUC-KR lead is not 0x00, set EUC-KR lead to 0x00 and return error.
         if(b == EOF && m_lead != 0)
@@ -7319,7 +7322,7 @@ namespace litehtml
     decoder::result replacement_decoder::handler(inout string& input, inout int& index, int[2])
     {
         // 1. If byte is end-of-queue, return finished.
-        if(index == (int) input.size())
+        if(index == static_cast<int>(input.size()))
         {
             return result_finished;
         }
@@ -7354,7 +7357,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#shared-utf-16-decoder
     decoder::result utf_16_decoder::handler(inout string& input, inout int& index, out int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         // 1. If byte is end-of-queue and either UTF-16 lead byte or UTF-16 lead surrogate is non-null, set UTF-16 lead
         // byte and UTF-16 lead surrogate to null, and return error.
@@ -7397,8 +7400,8 @@ namespace litehtml
             }
 
             // 2,3.
-            char b1 = char(code_unit >> 8);
-            char b2 = char(code_unit & 0xFF);
+            char b1 = static_cast<char>(code_unit >> 8);
+            char b2 = static_cast<char>(code_unit & 0xFF);
 
             // 4. Let bytes be two bytes whose values are byte1 and byte2, if is UTF-16BE decoder is true, and byte2 and
             // byte1 otherwise.
@@ -7437,7 +7440,7 @@ namespace litehtml
     // https://encoding.spec.whatwg.org/#x-user-defined-decoder
     decoder::result x_user_defined_decoder::handler(inout string& input, inout int& index, out int ch[2])
     {
-        int b = index == (int) input.size() ? EOF : (byte) input[index++]; // read input byte
+        int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
         // 1. If byte is end-of-queue, return finished.
         if(b == EOF)
@@ -7882,7 +7885,7 @@ namespace litehtml
     void increment(int& index, const string& str)
     {
         index++;
-        if(index >= (int) str.size() || end_condition(index))
+        if(index >= static_cast<int>(str.size()) || end_condition(index))
         {
             throw abort_prescan_exception(); // abort prescan
         }
@@ -7920,7 +7923,7 @@ namespace litehtml
             return true;
         } else // A..Z or anything else
         {
-            name += (char) lowcase(str[index]);
+            name += static_cast<char>(lowcase(str[index]));
         }
 
         // 5.
@@ -7968,10 +7971,8 @@ namespace litehtml
             }
 
             // 4,5.
-            else
-            {
-                value += (char) lowcase(str[index]);
-            }
+
+            value += static_cast<char>(lowcase(str[index]));
 
             // 6.
             goto quote_loop;
@@ -7980,7 +7981,7 @@ namespace litehtml
             return true;
         } else // A..Z or anything else
         {
-            value += (char) lowcase(str[index]);
+            value += static_cast<char>(lowcase(str[index]));
         }
 
         // 11.
@@ -7990,7 +7991,7 @@ namespace litehtml
             return true;
         } else // A..Z or anything else
         {
-            value += (char) lowcase(str[index]);
+            value += static_cast<char>(lowcase(str[index]));
         }
 
         // 12.
@@ -8019,7 +8020,7 @@ namespace litehtml
     loop:
         if(match(str, index, "<!--"))
         {
-            index = (int) str.find("-->", index);
+            index = static_cast<int>(str.find("-->", index));
             if(index == -1 || end_condition(index))
             {
                 throw abort_prescan_exception(); // abort prescan
@@ -8085,7 +8086,7 @@ namespace litehtml
             }
 
             // 12.
-            if(need_pragma == (int) true && !got_pragma)
+            if(need_pragma == static_cast<int>(true) && !got_pragma)
             {
                 goto next_byte;
             }
@@ -8114,7 +8115,7 @@ namespace litehtml
                   (str[index] == '<' && is_letter(str[index + 1])))
         {
             // 1.
-            index = (int) str.find_first_of(" \t\r\n\f>", index);
+            index = static_cast<int>(str.find_first_of(" \t\r\n\f>", index));
             if(index == -1 || end_condition(index))
             {
                 throw abort_prescan_exception(); // abort prescan
@@ -8128,7 +8129,7 @@ namespace litehtml
             goto next_byte;
         } else if(str[index] == '<' && is_one_of(str[index + 1], '!', '/', '?'))
         {
-            index = (int) str.find('>', index);
+            index = static_cast<int>(str.find('>', index));
             if(index == -1 || end_condition(index))
             {
                 throw abort_prescan_exception(); // abort prescan
@@ -8155,24 +8156,24 @@ namespace litehtml
 
         // 3.
         // NOTE: xmlDeclarationEnd is unused
-        index = (int) str.find('>', index);
+        index = static_cast<int>(str.find('>', index));
         if(index == -1)
         {
             return encoding::null;
         }
 
         // 4.
-        index = (int) str.find("encoding", index);
+        index = static_cast<int>(str.find("encoding", index));
         if(index == -1)
         {
             return encoding::null;
         }
 
         // 5.
-        index += (int) strlen("encoding");
+        index += static_cast<int>(strlen("encoding"));
 
         // 6.
-        while((byte) str[index] <= 0x20 && index < (int) str.size())
+        while(static_cast<byte>(str[index]) <= 0x20 && index < static_cast<int>(str.size()))
         {
             index++;
         }
@@ -8187,7 +8188,7 @@ namespace litehtml
         index++; // skip '='
 
         // 9.
-        while((byte) str[index] <= 0x20 && index < (int) str.size())
+        while(static_cast<byte>(str[index]) <= 0x20 && index < static_cast<int>(str.size()))
         {
             index++;
         }

@@ -157,7 +157,10 @@ namespace litehtml
         {
             if(auto _parent = parent())
             {
-                return *(Type*) ((byte*) &_parent->css() + css_properties_member_offset);
+                // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+                return *reinterpret_cast<const Type*>(reinterpret_cast<const byte*>(&_parent->css()) +
+                                                      css_properties_member_offset);
+                // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             }
             return default_value;
         }

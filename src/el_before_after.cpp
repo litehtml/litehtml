@@ -102,7 +102,7 @@ void litehtml::el_before_after_base::add_text(const string& txt)
                 word += convert_escape(esc.c_str() + 1);
                 esc.clear();
             }
-            if(isspace((unsigned char) chr))
+            if(isspace(static_cast<unsigned char>(chr)))
             {
                 if(!word.empty())
                 {
@@ -214,7 +214,7 @@ litehtml::string litehtml::el_before_after_base::convert_escape(const char* txt)
 {
     char*    str_end;
     char32_t u_str[2];
-    u_str[0] = (char32_t) strtol(txt, &str_end, 16);
+    u_str[0] = static_cast<char32_t>(strtol(txt, &str_end, 16));
     u_str[1] = 0;
     return string(litehtml_from_utf32(u_str));
 }

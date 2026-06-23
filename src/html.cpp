@@ -34,7 +34,7 @@ namespace litehtml
     {
         for(char& i : s)
         {
-            i = (char) t_tolower(i);
+            i = static_cast<char>(t_tolower(i));
         }
         return s;
     }
@@ -156,8 +156,8 @@ namespace litehtml
 
         for(i = 0;; i++)
         {
-            c = t_tolower((unsigned char) s1[i]);
-            d = c - t_tolower((unsigned char) s2[i]);
+            c = t_tolower(static_cast<unsigned char>(s1[i]));
+            d = c - t_tolower(static_cast<unsigned char>(s2[i]));
             if(d < 0)
             {
                 return -1;
@@ -175,10 +175,10 @@ namespace litehtml
     {
         int i, d, c;
 
-        for(i = 0; i < (int) n; i++)
+        for(i = 0; i < static_cast<int>(n); i++)
         {
-            c = t_tolower((unsigned char) s1[i]);
-            d = c - t_tolower((unsigned char) s2[i]);
+            c = t_tolower(static_cast<unsigned char>(s1[i]));
+            d = c - t_tolower(static_cast<unsigned char>(s2[i]));
             if(d < 0)
             {
                 return -1;

@@ -12,7 +12,7 @@ void litehtml::table_grid::add_cell(const std::shared_ptr<render_item>& el)
     cell.rowspan = atoi(el->src_el()->get_attr("rowspan", "1"));
     cell.borders = el->get_borders();
 
-    while(is_rowspanned((int) m_cells.size() - 1, (int) m_cells.back().size()))
+    while(is_rowspanned(static_cast<int>(m_cells.size()) - 1, static_cast<int>(m_cells.back().size())))
     {
         m_cells.back().emplace_back();
     }
@@ -37,7 +37,7 @@ bool litehtml::table_grid::is_rowspanned(int r, int c)
 {
     for(int row = r - 1; row >= 0; row--)
     {
-        if(c < (int) m_cells[row].size())
+        if(c < static_cast<int>(m_cells[row].size()))
         {
             if(m_cells[row][c].rowspan > 1)
             {
@@ -53,15 +53,15 @@ bool litehtml::table_grid::is_rowspanned(int r, int c)
 
 void litehtml::table_grid::finish()
 {
-    m_rows_count = (int) m_cells.size();
+    m_rows_count = static_cast<int>(m_cells.size());
     m_cols_count = 0;
     for(auto& cell : m_cells)
     {
-        m_cols_count = std::max(m_cols_count, (int) cell.size());
+        m_cols_count = std::max(m_cols_count, static_cast<int>(cell.size()));
     }
     for(auto& cell : m_cells)
     {
-        for(int j = (int) cell.size(); j < m_cols_count; j++)
+        for(int j = static_cast<int>(cell.size()); j < m_cols_count; j++)
         {
             table_cell empty_cell;
             cell.push_back(empty_cell);
@@ -361,7 +361,7 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
                 fixed_width += m_columns[col].width;
             }
         }
-        auto scale = (float) (100.0 / percent);
+        auto scale = static_cast<float>(100.0 / percent);
         if(scale != 1.0f)
         {
             cur_width = 0;
@@ -500,9 +500,9 @@ void litehtml::table_grid::calc_rows_height(pixel_t blockHeight, pixel_t /*borde
         {
             if(row.css_height.units() != css_units_percentage)
             {
-                if(row.height < (pixel_t) row.css_height.val())
+                if(row.height < pixel_t(row.css_height.val()))
                 {
-                    row.height = (pixel_t) row.css_height.val();
+                    row.height = pixel_t(row.css_height.val());
                 }
             }
         }
@@ -542,7 +542,7 @@ void litehtml::table_grid::calc_rows_height(pixel_t blockHeight, pixel_t /*borde
             if(auto_count)
             {
                 // distribute height to the rows with height=auto
-                pixel_t extra_row_height = extra_height / (pixel_t) auto_count;
+                pixel_t extra_row_height = extra_height / pixel_t(auto_count);
                 for(auto& row : m_rows)
                 {
                     if(row.css_height.is_predefined())

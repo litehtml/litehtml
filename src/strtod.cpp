@@ -257,7 +257,7 @@ double litehtml::t_strtod(const char* string, char** endPtr)
 done:
     if(endPtr != nullptr)
     {
-        *endPtr = (char*) p;
+        *endPtr = const_cast<char*>(p);
     }
 
     if(sign)

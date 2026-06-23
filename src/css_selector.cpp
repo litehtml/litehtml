@@ -137,7 +137,7 @@ namespace litehtml
         }
 
         index   += 2;
-        matcher  = (attr_matcher) a.ch;
+        matcher  = static_cast<attr_matcher>(a.ch);
         return true;
     }
 
@@ -167,7 +167,7 @@ namespace litehtml
         auto name   = lowcase(wq_name.name);
 
         skip_whitespace(tokens, index);
-        if(index == (int) tokens.size()) // [name]
+        if(index == static_cast<int>(tokens.size())) // [name]
         {
             selector.type    = select_attr;
             selector.prefix  = _id(prefix);
@@ -213,7 +213,7 @@ namespace litehtml
         }
 
         skip_whitespace(tokens, index);
-        if(index != (int) tokens.size())
+        if(index != static_cast<int>(tokens.size()))
         {
             return {}; // junk at the end of attribute selector
         }
@@ -298,7 +298,7 @@ namespace litehtml
 
         int a, b;
 
-        int i = (int) s.find('n');
+        int i = static_cast<int>(s.find('n'));
         if(i == -1)
         {
             if(!to_int(s, b))
@@ -347,7 +347,7 @@ namespace litehtml
 
     int find_of_keyword(const css_token_vector& tokens)
     {
-        for(int i = 0; i < (int) tokens.size(); i++)
+        for(int i = 0; i < static_cast<int>(tokens.size()); i++)
         {
             if(tokens[i].ident() == "of")
             {
@@ -713,7 +713,7 @@ namespace litehtml
         while(true)
         {
             int combinator = parse_combinator(tokens, index);
-            if(index == (int) tokens.size())
+            if(index == static_cast<int>(tokens.size()))
             {
                 // combinator == 0 means index already was at the end before the call to parse_combinator
                 return !combinator || combinator == ' ' ? selector : nullptr;
@@ -734,7 +734,7 @@ namespace litehtml
             auto new_selector          = make_shared<css_selector>();
             new_selector->m_left       = selector;
             new_selector->m_right      = *sel;
-            new_selector->m_combinator = (css_combinator) combinator;
+            new_selector->m_combinator = static_cast<css_combinator>(combinator);
             selector                   = new_selector;
         }
     }
