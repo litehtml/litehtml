@@ -1,9 +1,8 @@
-#ifndef LITEHTML_FLOATS_HOLDER_H
-#define LITEHTML_FLOATS_HOLDER_H
+#ifndef LITEHTML_FORMATTING_CONTEXT_H
+#define LITEHTML_FORMATTING_CONTEXT_H
 
-#include <list>
-#include "media_query.h"
 #include "types.h"
+#include <list>
 
 namespace litehtml
 {
@@ -74,4 +73,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LITEHTML_FLOATS_HOLDER_H
+#endif // LITEHTML_FORMATTING_CONTEXT_H

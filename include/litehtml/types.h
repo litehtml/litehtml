@@ -1,5 +1,5 @@
-#ifndef LH_TYPES_H
-#define LH_TYPES_H
+#ifndef LITEHTML_TYPES_H
+#define LITEHTML_TYPES_H
 
 #include <cmath>
 #include <cstdint>
@@ -9,31 +9,21 @@
 #include <map>
 #include <list>
 #include <variant>
-#include <optional>
 #include <algorithm>
 #include "css_values.h"
 #include "pixel_type.h"
 
 namespace litehtml
 {
-    using uint_ptr = std::uintptr_t;
-    using std::abs;
-    using std::make_shared;
-    using std::max;
-    using std::min;
-    using std::optional;
-    using std::shared_ptr;
-    using std::string;
-    using std::swap;
-    using std::vector;
+    using uint_ptr = uintptr_t;
 
     class document;
     class element;
 
-    using string_map    = std::map<string, string>;
+    using string_map    = std::map<std::string, std::string>;
     using elements_list = std::list<std::shared_ptr<element>>;
     using int_vector    = std::vector<int>;
-    using string_vector = std::vector<string>;
+    using string_vector = std::vector<std::string>;
     using pixel_vector  = std::vector<pixel_t>;
 
     template <class... Types> struct variant : std::variant<Types...>
@@ -211,7 +201,7 @@ namespace litehtml
             return *this;
         }
 
-        bool operator==(const position& val)
+        bool operator==(const position& val) const
         {
             return x == val.x && y == val.y && width == val.width && height == val.height;
         }
@@ -334,7 +324,7 @@ namespace litehtml
         font_metrics metrics;
     };
 
-    using fonts_map = std::map<string, font_item>;
+    using fonts_map = std::map<std::string, font_item>;
 
     enum draw_flag
     {
@@ -432,30 +422,6 @@ namespace litehtml
         int                          context      = 0;
         pixel_t                      min_width;
         std::shared_ptr<render_item> el;
-
-        floated_box()                                  = default;
-        floated_box(const floated_box& val)            = default;
-        floated_box& operator=(const floated_box& val) = default;
-
-        floated_box(floated_box&& val)
-        {
-            pos          = val.pos;
-            float_side   = val.float_side;
-            clear_floats = val.clear_floats;
-            el           = std::move(val.el);
-            context      = val.context;
-            min_width    = val.min_width;
-        }
-        floated_box& operator=(floated_box&& val) noexcept
-        {
-            pos          = val.pos;
-            float_side   = val.float_side;
-            clear_floats = val.clear_floats;
-            el           = std::move(val.el);
-            context      = val.context;
-            min_width    = val.min_width;
-            return *this;
-        }
     };
 
     struct pixel_pixel_cache
@@ -529,12 +495,8 @@ namespace litehtml
             m_is_default = false;
             return m_val;
         }
-        def_value<T>& operator=(const def_value<T>& val)
-        {
-            m_is_default = val.m_is_default;
-            m_val        = val.m_val;
-            return *this;
-        }
+        def_value<T>& operator=(const def_value<T>& val) = default;
+
         operator T() const
         {
             return m_val;
@@ -689,4 +651,4 @@ namespace litehtml
 
 } // namespace litehtml
 
-#endif // LH_TYPES_H
+#endif // LITEHTML_TYPES_H

@@ -1,5 +1,5 @@
-#ifndef LH_EL_STYLE_H
-#define LH_EL_STYLE_H
+#ifndef LITEHTML_EL_STYLE_H
+#define LITEHTML_EL_STYLE_H
 
 #include "element.h"
 
@@ -20,4 +20,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_EL_STYLE_H
+#endif // LITEHTML_EL_STYLE_H

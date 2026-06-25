@@ -3,7 +3,6 @@
 
 #include "css_length.h"
 #include "string_id.h"
-#include "types.h"
 #include "web_color.h"
 
 namespace litehtml
@@ -20,7 +19,7 @@ namespace litehtml
         gradient_side_x_length = 0x40,
         gradient_side_y_length = 0x80,
     };
-    static_assert(gradient_side_left == (1 << background_position_left),
+    static_assert(gradient_side_left == (1u << background_position_left),
                   "parse_bg_position is also used to parse radial gradient position");
 
     enum radial_shape_t
@@ -43,12 +42,12 @@ namespace litehtml
         class color_stop
         {
           public:
-            bool                 is_color_hint = false;
-            web_color            color;
-            optional<css_length> length;
-            optional<float>      angle;
+            bool                      is_color_hint = false;
+            web_color                 color;
+            std::optional<css_length> length;
+            std::optional<float>      angle;
 
-            color_stop() {}
+            color_stop() = default;
             color_stop(web_color color) :
                 color(color)
             {
@@ -75,52 +74,42 @@ namespace litehtml
             }
         };
 
-        string_id           m_type;
-        uint32_t            m_side;
-        float               angle;
-        vector<color_stop>  m_colors;
-        css_length          position_x;
-        css_length          position_y;
-        radial_shape_t      radial_shape;
-        radial_extent_t     radial_extent;
-        css_length          radial_radius_x;
-        css_length          radial_radius_y;
-        float               conic_from_angle;
-        color_space_t       color_space;
-        hue_interpolation_t hue_interpolation;
+        string_id m_type;
+        // linear gradient:       m_side default is gradient_side_none (use angle)
+        // radial,conic gradient: m_side default is gradient_side_x_center | gradient_side_y_center (see
+        // parse_gradient)
+        uint32_t m_side = gradient_side_none;
+        // linear gradient angle, used when m_side == gradient_side_none
+        float                   angle = 180.0f;
+        std::vector<color_stop> m_colors;
+        // radial,conic position (together with m_side)
+        css_length position_x;
+        // radial,conic position (together with m_side)
+        css_length position_y;
+        // actual default depends on the number of radii provided, see
+        // parse_radial_gradient_shape_size_position_interpolation
+        radial_shape_t radial_shape = radial_shape_ellipse;
+        // <radial-size>  https://drafts.csswg.org/css-images-3/#valdef-radial-gradient-radial-size
+        // if radius is specified radial_extent will be set to none, see parse_radial_size
+        radial_extent_t radial_extent = radial_extent_farthest_corner;
+        css_length      radial_radius_x;
+        css_length      radial_radius_y;
+        float           conic_from_angle = 0;
+        // If the host syntax does not define what color space interpolation should take place in, it defaults to
+        // Oklab.
+        color_space_t color_space = color_space_oklab;
+        // Unless otherwise specified, if no specific hue interpolation algorithm is selected by the host syntax,
+        // the default is shorter.
+        hue_interpolation_t hue_interpolation = hue_interpolation_shorter;
 
-        explicit gradient(string_id type = empty_id)
+        explicit gradient(string_id type = empty_id) :
+            m_type(type)
         {
-            m_type = type;
-
-            // linear gradient:       m_side default is gradient_side_none (use angle)
-            // radial,conic gradient: m_side default is gradient_side_x_center | gradient_side_y_center (see
-            // parse_gradient)
-            m_side = gradient_side_none;
-            // linear gradient angle, used when m_side == gradient_side_none
-            angle = 180; // to bottom
-            // radial,conic position (together with m_side)
             position_x.predef(0);
             position_y.predef(0);
 
-            // actual default depends on the number of radii provided, see
-            // parse_radial_gradient_shape_size_position_interpolation
-            radial_shape = radial_shape_ellipse;
-
-            // <radial-size>  https://drafts.csswg.org/css-images-3/#valdef-radial-gradient-radial-size
-            // if radius is specified radial_extent will be set to none, see parse_radial_size
-            radial_extent = radial_extent_farthest_corner;
             radial_radius_x.predef(0);
             radial_radius_y.predef(0);
-
-            conic_from_angle = 0;
-
-            // If the host syntax does not define what color space interpolation should take place in, it defaults to
-            // Oklab.
-            color_space = color_space_oklab;
-            // Unless otherwise specified, if no specific hue interpolation algorithm is selected by the host syntax,
-            // the default is shorter.
-            hue_interpolation = hue_interpolation_shorter;
         }
 
         bool is_empty() const
@@ -153,14 +142,9 @@ namespace litehtml
             type_url,
             type_gradient,
         };
-        type     type;
-        string   url;
-        gradient m_gradient;
-
-        image() :
-            type(type_none)
-        {
-        }
+        type        type = type_none;
+        std::string url;
+        gradient    m_gradient;
 
         bool is_empty() const
         {

@@ -80,12 +80,12 @@ namespace litebrowser
 
     class web_page : public container_cairo_pango, public std::enable_shared_from_this<web_page>
     {
-        litehtml::string                m_url;
-        litehtml::string                m_base_url;
+        std::string                     m_url;
+        std::string                     m_base_url;
         litehtml::document::ptr         m_html;
         mutable std::recursive_mutex    m_html_mutex;
-        litehtml::string                m_cursor;
-        litehtml::string                m_clicked_url;
+        std::string                     m_cursor;
+        std::string                     m_clicked_url;
         std::string                     m_fragment;
         html_host_interface*            m_html_host;
         cairo_images_cache              m_images;
@@ -115,23 +115,23 @@ namespace litebrowser
             return m_html_source;
         }
 
-        void open(const litehtml::string& url, const litehtml::string& fragment);
+        void open(const std::string& url, const std::string& fragment);
 
-        void get_viewport(litehtml::position& viewport) const override;
-        void on_anchor_click(const char* url, const litehtml::element::ptr& el) override;
-        void set_cursor(const char* cursor) override;
-        void import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl) override;
-        void set_caption(const char* caption) override;
-        void set_base_url(const char* base_url) override;
+        void             get_viewport(litehtml::position& viewport) const override;
+        void             on_anchor_click(const char* url, const litehtml::element::ptr& el) override;
+        void             set_cursor(const char* cursor) override;
+        void             import_css(std::string& text, const std::string& url, std::string& baseurl) override;
+        void             set_caption(const char* caption) override;
+        void             set_base_url(const char* base_url) override;
         cairo_surface_t* get_image(const std::string& url) override;
-        void             make_url(const char* url, const char* basepath, litehtml::string& out) override;
+        void             make_url(const char* url, const char* basepath, std::string& out) override;
         void             load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
         void             on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event) override;
         double           get_screen_dpi() const override;
         int              get_screen_width() const override;
         int              get_screen_height() const override;
 
-        void show_fragment(const litehtml::string& fragment);
+        void show_fragment(const std::string& fragment);
         void show_fragment_and_reset()
         {
             if(!m_fragment.empty() && m_html)

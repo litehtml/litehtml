@@ -1,4 +1,3 @@
-#include "html.h"
 #include "table.h"
 #include "element.h"
 #include "render_item.h"
@@ -160,7 +159,7 @@ void litehtml::table_grid::distribute_min_width(pixel_t width, int start, int en
 
 void litehtml::table_grid::distribute_width(pixel_t width, int start, int end, table_column_accessor* acc)
 {
-    if(!(start >= 0 && start < m_cols_count && end >= 0 && end < m_cols_count))
+    if(start < 0 || start >= m_cols_count || end < 0 || end >= m_cols_count)
     {
         return;
     }
@@ -190,7 +189,7 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end, t
 
 void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
 {
-    if(!(start >= 0 && start < m_cols_count && end >= 0 && end < m_cols_count))
+    if(start < 0 || start >= m_cols_count || end < 0 || end >= m_cols_count)
     {
         return;
     }
@@ -261,7 +260,7 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
                         added_width   += add;
                     } else
                     {
-                        added_width   += (column->width - column->min_width) * (add / abs(add.value()));
+                        added_width   += (column->width - column->min_width) * (add / std::abs(add.value()));
                         column->width  = column->min_width;
                     }
                 }
@@ -280,10 +279,8 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
         if(added_width == width)
         {
             break;
-        } else
-        {
-            width -= added_width;
         }
+        width -= added_width;
     }
 }
 

@@ -1,5 +1,5 @@
-#ifndef LH_DOCUMENT_CONTAINER_H
-#define LH_DOCUMENT_CONTAINER_H
+#ifndef LITEHTML_DOCUMENT_CONTAINER_H
+#define LITEHTML_DOCUMENT_CONTAINER_H
 
 #include "types.h"
 #include "web_color.h"
@@ -14,7 +14,7 @@ namespace litehtml
 {
     struct list_marker
     {
-        string          image;
+        std::string     image;
         const char*     baseurl;
         list_style_type marker_type;
         web_color       color;
@@ -65,19 +65,19 @@ namespace litehtml
         {
             return false;
         };
-        virtual void on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event)              = 0;
-        virtual void set_cursor(const char* cursor)                                                             = 0;
-        virtual void transform_text(litehtml::string& text, litehtml::text_transform tt)                        = 0;
-        virtual void import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl) = 0;
-        virtual void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius)       = 0;
-        virtual void del_clip()                                                                                 = 0;
-        virtual void get_viewport(litehtml::position& viewport) const                                           = 0;
+        virtual void on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event)        = 0;
+        virtual void set_cursor(const char* cursor)                                                       = 0;
+        virtual void transform_text(std::string& text, litehtml::text_transform tt)                       = 0;
+        virtual void import_css(std::string& text, const std::string& url, std::string& baseurl)          = 0;
+        virtual void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) = 0;
+        virtual void del_clip()                                                                           = 0;
+        virtual void get_viewport(litehtml::position& viewport) const                                     = 0;
         virtual litehtml::element::ptr create_element(const char* tag_name, const litehtml::string_map& attributes,
-                                                      const std::shared_ptr<litehtml::document>& doc)           = 0;
+                                                      const std::shared_ptr<litehtml::document>& doc)     = 0;
 
-        virtual void             get_media_features(litehtml::media_features& media) const                 = 0;
-        virtual void             get_language(litehtml::string& language, litehtml::string& culture) const = 0;
-        virtual litehtml::string resolve_color(const litehtml::string& /*color*/) const
+        virtual void        get_media_features(litehtml::media_features& media) const       = 0;
+        virtual void        get_language(std::string& language, std::string& culture) const = 0;
+        virtual std::string resolve_color(const std::string& /*color*/) const
         {
             return {};
         }
@@ -89,4 +89,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_DOCUMENT_CONTAINER_H
+#endif // LITEHTML_DOCUMENT_CONTAINER_H

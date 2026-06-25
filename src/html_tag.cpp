@@ -1,17 +1,18 @@
 #include <algorithm>
+#include <cstdint>
 
 #include "html.h"
-#include "html_tag.h"
 #include "document.h"
+#include "document_container.h"
 #include "html_microsyntaxes.h"
+#include "html_tag.h"
+#include "internal.h"
 #include "iterators.h"
+#include "line_box.h"
+#include "num_cvt.h"
+#include "render_item.h"
 #include "stylesheet.h"
 #include "table.h"
-#include "num_cvt.h"
-#include "line_box.h"
-#include "render_item.h"
-#include "internal.h"
-#include "document_container.h"
 
 namespace litehtml
 {
@@ -19,14 +20,10 @@ namespace litehtml
     litehtml::html_tag::html_tag(const std::shared_ptr<document>& doc) :
         element(doc)
     {
-        m_tag = empty_id;
-        m_id  = empty_id;
     }
 
-    litehtml::html_tag::html_tag(const element::ptr& parent, const string& style) :
-        element(parent->get_document()),
-        m_tag(empty_id),
-        m_id(empty_id)
+    litehtml::html_tag::html_tag(const element::ptr& parent, const std::string& style) :
+        element(parent->get_document())
     {
         litehtml::style st;
         st.add(style);
@@ -92,14 +89,14 @@ namespace litehtml
         if(_name && _val)
         {
             // attribute names in attribute selector are matched ASCII case-insensitively regardless of document mode
-            string name = lowcase(_name);
+            std::string name = lowcase(_name);
             // m_attrs has all attribute values, including class and id, in their original case
             // because in attribute selector values are matched case-sensitively even in quirks mode
             m_attrs[name] = _val;
 
             if(name == "class")
             {
-                string val = _val;
+                std::string val = _val;
                 // class names in class selector (.xxx) are matched ASCII case-insensitively in quirks mode
                 if(get_document()->mode() == quirks_mode)
                 {
@@ -107,13 +104,13 @@ namespace litehtml
                 }
                 m_str_classes = split_string(val, whitespace, "", "");
                 m_classes.clear();
-                for(auto cls : m_str_classes)
+                for(const auto& cls : m_str_classes)
                 {
                     m_classes.push_back(_id(cls));
                 }
             } else if(name == "id")
             {
-                string val = _val;
+                std::string val = _val;
                 // ids in id selector (#xxx) are matched ASCII case-insensitively in quirks mode
                 if(get_document()->mode() == quirks_mode)
                 {
@@ -134,7 +131,7 @@ namespace litehtml
         return def;
     }
 
-    litehtml::elements_list litehtml::html_tag::select_all(const string& selector)
+    litehtml::elements_list litehtml::html_tag::select_all(const std::string& selector)
     {
         css_selector sel;
         sel.parse(selector, get_document()->mode());
@@ -162,7 +159,7 @@ namespace litehtml
         }
     }
 
-    litehtml::element::ptr litehtml::html_tag::select_one(const string& selector)
+    litehtml::element::ptr litehtml::html_tag::select_one(const std::string& selector)
     {
         css_selector sel;
         sel.parse(selector, get_document()->mode());
@@ -210,7 +207,7 @@ namespace litehtml
                 }
             }
 
-            int apply = select(*sel, false);
+            uint32_t apply = select(*sel, false);
 
             if(apply != select_no_match)
             {
@@ -220,7 +217,8 @@ namespace litehtml
                 {
                     auto apply_before_after = [&]() {
                         const auto& content_property = sel->m_style->get_property(_content_);
-                        bool content_none = content_property.is<string>() && content_property.get<string>() == "none";
+                        bool        content_none =
+                            content_property.is<std::string>() && content_property.get<std::string>() == "none";
                         bool create =
                             !content_none && (sel->m_right.m_attrs.size() > 1 || sel->m_right.m_tag != star_id);
 
@@ -345,7 +343,8 @@ namespace litehtml
         {
             result = value.get<css_token_vector>();
             return true;
-        } else if(auto _parent = dynamic_cast<html_tag*>(parent().get()))
+        }
+        if(auto _parent = dynamic_cast<html_tag*>(parent().get()))
         {
             return _parent->get_custom_property(name, result);
         }
@@ -382,7 +381,7 @@ namespace litehtml
 
     int html_tag::select(const css_selector::vector& selector_list, bool apply_pseudo)
     {
-        for(auto sel : selector_list)
+        for(const auto& sel : selector_list)
         {
             if(int result = select(*sel, apply_pseudo))
             {
@@ -392,7 +391,7 @@ namespace litehtml
         return select_no_match;
     }
 
-    int litehtml::html_tag::select(const string& selector)
+    int litehtml::html_tag::select(const std::string& selector)
     {
         css_selector sel;
         sel.parse(selector, get_document()->mode());
@@ -422,12 +421,10 @@ namespace litehtml
                     if(!res)
                     {
                         return select_no_match;
-                    } else
+                    }
+                    if(is_pseudo)
                     {
-                        if(is_pseudo)
-                        {
-                            right_res |= select_match_pseudo_class;
-                        }
+                        right_res |= select_match_pseudo_class;
                     }
                 }
                 break;
@@ -437,12 +434,10 @@ namespace litehtml
                     if(res == select_no_match)
                     {
                         return select_no_match;
-                    } else
+                    }
+                    if(right_res != select_match_pseudo_class)
                     {
-                        if(right_res != select_match_pseudo_class)
-                        {
-                            right_res |= res;
-                        }
+                        right_res |= res;
                     }
                 }
                 break;
@@ -454,12 +449,10 @@ namespace litehtml
                     if(!res)
                     {
                         return select_no_match;
-                    } else
+                    }
+                    if(is_pseudo)
                     {
-                        if(is_pseudo)
-                        {
-                            right_res |= select_match_pseudo_class;
-                        }
+                        right_res |= select_match_pseudo_class;
                     }
                 }
                 break;
@@ -471,12 +464,10 @@ namespace litehtml
                     if(!res)
                     {
                         return select_no_match;
-                    } else
+                    }
+                    if(is_pseudo)
                     {
-                        if(is_pseudo)
-                        {
-                            right_res |= select_match_pseudo_class;
-                        }
+                        right_res |= select_match_pseudo_class;
                     }
                 }
                 break;
@@ -673,7 +664,7 @@ namespace litehtml
     }
 
     // https://www.w3.org/TR/selectors-4/#attribute-selectors
-    int html_tag::select_attribute(const css_attribute_selector& sel)
+    int html_tag::select_attribute(const css_attribute_selector& sel) const
     {
         const char* sz_attr_value = get_attr(_s(sel.name).c_str());
 
@@ -682,7 +673,7 @@ namespace litehtml
             return select_no_match;
         }
 
-        string attr_value = sel.caseless_match ? lowcase(sz_attr_value) : sz_attr_value;
+        std::string attr_value = sel.caseless_match ? lowcase(sz_attr_value) : sz_attr_value;
 
         switch(sel.matcher)
         {
@@ -770,7 +761,7 @@ namespace litehtml
         }
     }
 
-    void litehtml::html_tag::get_text(string& text) const
+    void litehtml::html_tag::get_text(std::string& text) const
     {
         for(auto& el : m_children)
         {
@@ -1071,15 +1062,13 @@ namespace litehtml
 
         if(changed)
         {
-            string class_string;
+            std::string class_string;
             join_string(class_string, m_str_classes, " ");
             set_attr("class", class_string.c_str());
 
             return true;
-        } else
-        {
-            return false;
         }
+        return false;
     }
 
     bool litehtml::html_tag::is_replaced() const
@@ -1183,7 +1172,7 @@ namespace litehtml
         }
     }
 
-    litehtml::string litehtml::html_tag::get_list_marker_text(int index)
+    std::string litehtml::html_tag::get_list_marker_text(int index)
     {
         switch(m_css.get_list_style_type())
         {
@@ -1333,10 +1322,8 @@ namespace litehtml
                         }
                     }
                     return nullptr;
-                } else
-                {
-                    ret = e;
                 }
+                ret = e;
             }
         }
         return nullptr;
@@ -1353,7 +1340,8 @@ namespace litehtml
                 if(e == el)
                 {
                     return ret;
-                } else if(!ret)
+                }
+                if(!ret)
                 {
                     int res = e->select(selector, apply_pseudo);
                     if(res != select_no_match)
@@ -1393,11 +1381,7 @@ namespace litehtml
                 }
             }
         }
-        if(child_count > 1)
-        {
-            return false;
-        }
-        return true;
+        return child_count <= 1;
     }
 
     litehtml::element::ptr litehtml::html_tag::get_element_before(const style& style, bool create)
@@ -1572,7 +1556,7 @@ namespace litehtml
         return &m_css.get_bg();
     }
 
-    string html_tag::dump_get_name()
+    std::string html_tag::dump_get_name()
     {
         if(m_tag == empty_id)
         {
@@ -1582,7 +1566,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-pixel-length-property
-    void html_tag::map_to_pixel_length_property(string_id prop_name, string attr_value)
+    void html_tag::map_to_pixel_length_property(string_id prop_name, const std::string& attr_value)
     {
         int n;
         if(html_parse_non_negative_integer(attr_value, n))
@@ -1593,7 +1577,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-border
-    void html_tag::map_to_pixel_length_property_with_default_value(string_id prop_name, string attr_value,
+    void html_tag::map_to_pixel_length_property_with_default_value(string_id prop_name, const std::string& attr_value,
                                                                    int default_value)
     {
         int n = default_value;
@@ -1603,7 +1587,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-dimension-property
-    void html_tag::map_to_dimension_property(string_id prop_name, string attr_value)
+    void html_tag::map_to_dimension_property(string_id prop_name, const std::string& attr_value)
     {
         float               x    = 0;
         html_dimension_type type = html_length;
@@ -1625,7 +1609,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-dimension-property-(ignoring-zero)
-    void html_tag::map_to_dimension_property_ignoring_zero(string_id prop_name, string attr_value)
+    void html_tag::map_to_dimension_property_ignoring_zero(string_id prop_name, const std::string& attr_value)
     {
         float               x    = 0;
         html_dimension_type type = html_length;

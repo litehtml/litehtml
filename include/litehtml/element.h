@@ -1,13 +1,13 @@
-#ifndef LH_ELEMENT_H
-#define LH_ELEMENT_H
+#ifndef LITEHTML_ELEMENT_H
+#define LITEHTML_ELEMENT_H
 
+#include "types.h"
+#include "css_properties.h"
+#include "stylesheet.h"
 #include <functional>
+#include <list>
 #include <memory>
 #include <tuple>
-#include <list>
-#include "types.h"
-#include "stylesheet.h"
-#include "css_properties.h"
 
 namespace litehtml
 {
@@ -23,9 +23,9 @@ namespace litehtml
         friend class document;
 
       public:
-        typedef std::shared_ptr<element>       ptr;
-        typedef std::shared_ptr<const element> const_ptr;
-        typedef std::weak_ptr<element>         weak_ptr;
+        using ptr       = std::shared_ptr<element>;
+        using const_ptr = std::shared_ptr<const element>;
+        using weak_ptr  = std::weak_ptr<element>;
 
       protected:
         std::weak_ptr<element>                m_parent;
@@ -71,10 +71,10 @@ namespace litehtml
 
         std::shared_ptr<render_item> get_render_item();
 
-        virtual elements_list select_all(const string& selector);
+        virtual elements_list select_all(const std::string& selector);
         virtual elements_list select_all(const css_selector& selector);
 
-        virtual element::ptr select_one(const string& selector);
+        virtual element::ptr select_one(const std::string& selector);
         virtual element::ptr select_one(const css_selector& selector);
 
         virtual bool appendChild(const ptr& el);
@@ -112,10 +112,10 @@ namespace litehtml
         virtual void draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
                                      const std::shared_ptr<render_item>& ri);
 
-        virtual void              get_text(string& text) const;
+        virtual void              get_text(std::string& text) const;
         virtual void              parse_attributes();
         virtual int               select(const css_selector::vector& selector_list, bool apply_pseudo = true);
-        virtual int               select(const string& selector);
+        virtual int               select(const std::string& selector);
         virtual int               select(const css_selector& selector, bool apply_pseudo = true);
         virtual int               select(const css_element_selector& selector, bool apply_pseudo = true);
         virtual element::ptr      find_ancestor(const css_selector& selector, bool apply_pseudo = true,
@@ -134,9 +134,9 @@ namespace litehtml
         virtual void              add_style(const style& style);
         virtual const background* get_background(bool own_only = false);
 
-        virtual string                                  dump_get_name();
-        virtual std::vector<std::tuple<string, string>> dump_get_attrs();
-        void                                            dump(litehtml::dumper& cout);
+        virtual std::string                                       dump_get_name();
+        virtual std::vector<std::tuple<std::string, std::string>> dump_get_attrs();
+        void                                                      dump(litehtml::dumper& cout);
 
         std::tuple<element::ptr, element::ptr, element::ptr> split_inlines();
         virtual std::shared_ptr<render_item> create_render_item(const std::shared_ptr<render_item>& parent_ri);
@@ -154,18 +154,18 @@ namespace litehtml
             return _add_before_after(1, style);
         }
 
-        string get_counter_value(const string& counter_name);
-        string get_counters_value(const string_vector& parameters);
-        void   increment_counter(const string_id& counter_name_id, const int increment = 1);
-        void   reset_counter(const string_id& counter_name_id, const int value = 0);
+        std::string get_counter_value(const std::string& counter_name);
+        std::string get_counters_value(const std::vector<std::string>& parameters);
+        void        increment_counter(const string_id& counter_name_id, int increment = 1);
+        void        reset_counter(const string_id& counter_name_id, int value = 0);
 
         void run_on_renderers(const std::function<bool(const std::shared_ptr<render_item>&)>& func);
 
       private:
         std::vector<element::ptr> get_siblings_before() const;
-        bool find_counter(const string_id& counter_name_id, std::map<string_id, int>::iterator& map_iterator);
-        void parse_counter_tokens(const string_vector& tokens, const int default_value,
-                                  std::function<void(const string_id&, const int)> handler) const;
+        bool find_counter(string_id counter_name_id, std::map<string_id, int>::iterator& map_iterator);
+        void parse_counter_tokens(const std::vector<std::string>& tokens, int default_value,
+                                  const std::function<void(string_id, int)>& handler) const;
     };
 
     //////////////////////////////////////////////////////////////////////////
@@ -174,12 +174,8 @@ namespace litehtml
 
     inline bool litehtml::element::in_normal_flow() const
     {
-        if(css().get_position() != element_position_absolute && css().get_display() != display_none &&
-           css().get_position() != element_position_fixed)
-        {
-            return true;
-        }
-        return false;
+        return css().get_position() != element_position_absolute && css().get_display() != display_none &&
+               css().get_position() != element_position_fixed;
     }
 
     inline bool litehtml::element::is_root() const
@@ -224,12 +220,8 @@ namespace litehtml
 
     inline bool element::is_block_box() const
     {
-        if(css().get_display() == display_block || css().get_display() == display_flex ||
-           css().get_display() == display_table || css().get_display() == display_list_item)
-        {
-            return true;
-        }
-        return false;
+        return css().get_display() == display_block || css().get_display() == display_flex ||
+               css().get_display() == display_table || css().get_display() == display_list_item;
     }
 
     inline const std::list<std::shared_ptr<element>>& element::children() const
@@ -247,4 +239,4 @@ namespace litehtml
     }
 } // namespace litehtml
 
-#endif // LH_ELEMENT_H
+#endif // LITEHTML_ELEMENT_H

@@ -9,7 +9,7 @@ litehtml::el_title::el_title(const std::shared_ptr<document>& doc) :
 
 void litehtml::el_title::parse_attributes()
 {
-    string text;
+    std::string text;
     get_text(text);
     get_document()->container()->set_caption(text.c_str());
 }

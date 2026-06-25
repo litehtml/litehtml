@@ -1,11 +1,12 @@
 #include "utf8_strings.h"
+#include "types.h"
 
 namespace litehtml
 {
 
     // consume one utf-8 char and increment index accordingly
     // if str[index] == 0 index is not incremented
-    char32_t read_utf8_char(const string& str, int& index)
+    char32_t read_utf8_char(const std::string& str, int& index)
     {
         auto getb = [&]() -> byte {
             if(!str[index])
@@ -24,20 +25,23 @@ namespace litehtml
         {
             // 1-byte sequence: 000000000xxxxxxx = 0xxxxxxx
             return b1;
-        } else if((b1 & 0xe0) == 0xc0)
+        }
+        if((b1 & 0xe0) == 0xc0)
         {
             // 2-byte sequence: 00000yyyyyxxxxxx = 110yyyyy 10xxxxxx
             char32_t r  = (b1 & 0x1f) << 6;
             r          |= getb() & 0x3f;
             return r;
-        } else if((b1 & 0xf0) == 0xe0)
+        }
+        if((b1 & 0xf0) == 0xe0)
         {
             // 3-byte sequence: zzzzyyyyyyxxxxxx = 1110zzzz 10yyyyyy 10xxxxxx
             char32_t r  = (b1 & 0x0f) << 12;
             r          |= (getb() & 0x3f) << 6;
             r          |= getb() & 0x3f;
             return r;
-        } else if((b1 & 0xf8) == 0xf0)
+        }
+        if((b1 & 0xf8) == 0xf0)
         {
             // 4-byte sequence: uuuzzzzzzyyyyyyxxxxxx = 11110uuu 10zzzzzz 10yyyyyy 10xxxxxx
             byte b2 = getb() & 0x3f;
@@ -52,13 +56,13 @@ namespace litehtml
     // No error handling, str must be valid UTF-8 (it is ensured by document::parse_html and
     // css_parser::parse_stylesheet). Currently used only in css parser, where actual char value is not needed, so it
     // returns void.
-    void prev_utf8_char(const string& str, int& index)
+    void prev_utf8_char(const std::string& str, int& index)
     {
         while(index && (static_cast<byte>(str[--index]) >> 6) == 0b10)
             ; // skip continuation bytes
     }
 
-    void append_char(string& str, char32_t code)
+    void append_char(std::string& str, char32_t code)
     {
         if(code <= 0x7F)
         {
@@ -84,7 +88,7 @@ namespace litehtml
         }
     }
 
-    utf8_to_utf32::utf8_to_utf32(const string& val)
+    utf8_to_utf32::utf8_to_utf32(const std::string& val)
     {
         int index = 0;
         while(char32_t ch = read_utf8_char(val, index))

@@ -1,5 +1,5 @@
-#ifndef LH_WEB_COLOR_H
-#define LH_WEB_COLOR_H
+#ifndef LITEHTML_WEB_COLOR_H
+#define LITEHTML_WEB_COLOR_H
 
 #include "css_tokenizer.h"
 #include "types.h"
@@ -21,7 +21,7 @@ namespace litehtml
         static const web_color white;
         static const web_color current_color;
 
-        web_color() {}
+        web_color() = default;
         web_color(byte r, byte g, byte b, byte a = 255) :
             red(r),
             green(g),
@@ -43,11 +43,11 @@ namespace litehtml
             return !(*this == color);
         }
 
-        web_color darken(double fraction) const;
-        string    to_string() const;
+        web_color   darken(double fraction) const;
+        std::string to_string() const;
     };
 
     bool parse_color(const css_token& token, web_color& color, document_container* container);
 } // namespace litehtml
 
-#endif // LH_WEB_COLOR_H
+#endif // LITEHTML_WEB_COLOR_H

@@ -33,7 +33,7 @@ class win32_container : public litehtml::document_container
     litehtml::pixel_t text_width(const char* text, uint_ptr hFont) override;
     void              draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, litehtml::web_color color,
                                 const litehtml::position& pos) override;
-    void              transform_text(litehtml::string& text, litehtml::text_transform tt) override;
+    void              transform_text(std::string& text, litehtml::text_transform tt) override;
 
     litehtml::pixel_t pt_to_px(float pt) const override;
     void              draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker) override;
@@ -58,12 +58,12 @@ class win32_container : public litehtml::document_container
 
     void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
     void del_clip() override;
-    litehtml::element::ptr create_element(const char* tag_name, const litehtml::string_map& attributes,
+    litehtml::element::ptr create_element(const char* tag_name, const std::string& attributes,
                                           const litehtml::document::ptr& doc) override;
     void                   get_media_features(litehtml::media_features& media) const override;
-    void                   get_language(litehtml::string& language, litehtml::string& culture) const override;
+    void                   get_language(std::string& language, std::string& culture) const override;
     void                   link(const litehtml::document::ptr& doc, const litehtml::element::ptr& el) override;
-    litehtml::string       resolve_color(const litehtml::string& color) const override;
+    std::string            resolve_color(const std::string& color) const override;
 
   protected:
     void apply_clip(HDC hdc);

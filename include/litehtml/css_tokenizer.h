@@ -1,8 +1,10 @@
-#ifndef LH_CSS_TOKENIZER_H
-#define LH_CSS_TOKENIZER_H
+#ifndef LITEHTML_CSS_TOKENIZER_H
+#define LITEHTML_CSS_TOKENIZER_H
 
-#include "types.h"
 #include <cstdio>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace litehtml
 {
@@ -70,34 +72,29 @@ namespace litehtml
     // All functions in css_parser work regardless of whether tokens are fat or not, as per standard.
     // All functions outside of css_parser that parse media queries, selectors, property values assume tokens are
     // componentized.
-    struct css_token
+    class css_token
     {
+        std::string m_str;
+
+      public:
         css_token(css_token_type type = css_token_type(), float number = 0,
-                  css_number_type number_type = css_number_integer, string str = "") :
+                  css_number_type number_type = css_number_integer, std::string str = "") :
+            m_str(std::move(str)),
             type(type),
-            str(str),
             n{number, number_type}
         {
-            if(is_component_value())
-            {
-                new(&value) vector<css_token>;
-            }
         }
 
-        css_token(css_token_type type, const string& str) :
+        css_token(css_token_type type, const std::string& str) :
+            m_str(str),
             type(type),
-            str(str),
             n()
         {
-            if(is_component_value())
-            {
-                new(&value) vector<css_token>;
-            }
         }
 
         css_token(const css_token& token) :
+            m_str(token.str()),
             type(token.type),
-            str(token.str),
             repr(token.repr)
         {
             switch(type)
@@ -116,70 +113,78 @@ namespace litehtml
             case CURLY_BLOCK:
             case ROUND_BLOCK:
             case SQUARE_BLOCK:
-                new(&value) vector(token.value);
+                value = std::vector<css_token>(token.value);
                 break;
 
             default:;
             }
         }
 
-        css_token& operator=(const css_token& token)
-        {
-            this->~css_token();
-            new(this) css_token(token);
-            return *this;
-        }
-
-        ~css_token()
-        {
-            str.~string();
-            if(is_component_value())
-            {
-                value.~vector();
-            }
-        }
+        css_token& operator=(const css_token& token) = default;
 
         bool is_component_value() const
         {
             return type <= CV_FUNCTION;
         }
 
-        string ident() const;
-        string get_repr(bool insert_spaces = false) const;
+        std::string ident() const;
+        std::string get_repr(bool insert_spaces = false) const;
 
         union {
             css_token_type type;
             int            ch; // used for <delim-token> or :;,()[]{}
         };
-        union {
-            string str;  // STRING, URL
-            string name; // HASH, IDENT, AT_KEYWORD, FUNCTION, CV_FUNCTION
-            string unit; // DIMENSION
-        };
+
+        // STRING, URL
+        std::string& str()
+        {
+            return m_str;
+        }
+        const std::string& str() const
+        {
+            return m_str;
+        }
+        // HASH, IDENT, AT_KEYWORD, FUNCTION, CV_FUNCTION
+        std::string& name()
+        {
+            return m_str;
+        }
+        const std::string& name() const
+        {
+            return m_str;
+        }
+        // DIMENSION
+        std::string& unit()
+        {
+            return m_str;
+        }
+        const std::string& unit() const
+        {
+            return m_str;
+        }
+
         struct number
         {
             float           number;      // NUMBER, PERCENTAGE, DIMENSION
             css_number_type number_type; // NUMBER, DIMENSION
         };
         union {
-            css_hash_type     hash_type; // HASH
-            number            n;
-            vector<css_token> value; // CV_FUNCTION, XXX_BLOCK
+            css_hash_type hash_type; // HASH
+            number        n;
         };
+        std::vector<css_token> value; // CV_FUNCTION, XXX_BLOCK
 
-        string repr; // https://www.w3.org/TR/css-syntax-3/#representation
+        std::string repr; // https://www.w3.org/TR/css-syntax-3/#representation
     };
 
-    using css_token_vector = vector<css_token>;
-    string get_repr(const css_token_vector& tokens, int index = 0, int count = -1, bool insert_spaces = false);
+    using css_token_vector = std::vector<css_token>;
+    std::string get_repr(const css_token_vector& tokens, int index = 0, int count = -1, bool insert_spaces = false);
 
     class css_tokenizer
     {
       public:
-        css_tokenizer(const string& input) :
-            str(input),
-            index(0),
-            current_char(0)
+        css_tokenizer(const std::string& input) :
+            str(input)
         {
         }
 
@@ -187,17 +192,17 @@ namespace litehtml
 
       private:
         // Input stream. Valid UTF-8; no NUL bytes. https://www.w3.org/TR/css-syntax-3/#input-stream
-        string str;
+        std::string str;
 
         // Index of the next input char.  https://www.w3.org/TR/css-syntax-3/#next-input-code-point
-        int index;
+        int index = 0;
 
         // https://www.w3.org/TR/css-syntax-3/#current-input-code-point
         // This is needed to handle the situation when unconsume_char is called when index == str.size().
         // We need to distinguish between the situation when we just read the last char and
         // the situation when we already have been at the end and just read NUL.
         // If we don't do this tokenizer will loop forever on input "a".
-        int current_char;
+        int current_char = 0;
 
       private:
         static bool is_whitespace(int ch);
@@ -220,10 +225,10 @@ namespace litehtml
         css_token consume_string_token(int ending_code_point);
 
         static bool would_start_ident_sequence(three_chars chars);
-        string      consume_ident_sequence();
+        std::string consume_ident_sequence();
 
         static bool   would_start_a_number(int x, int y, int z);
-        static double convert_string_to_number(const string& str);
+        static double convert_string_to_number(const std::string& str);
         double        consume_number(css_number_type& number_type);
         css_token     consume_numeric_token();
 
@@ -234,12 +239,12 @@ namespace litehtml
         css_token consume_token();
     };
 
-    void                    css_parse_error(string msg);
-    inline css_token_vector tokenize(const string& str)
+    void                    css_parse_error(const std::string& msg);
+    inline css_token_vector tokenize(const std::string& str)
     {
         return css_tokenizer(str).tokenize();
     }
 
 } // namespace litehtml
 
-#endif // LH_CSS_TOKENIZER_H
+#endif // LITEHTML_CSS_TOKENIZER_H

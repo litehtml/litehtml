@@ -50,50 +50,30 @@ void litehtml::elements_iterator::process(
 
 bool litehtml::go_inside_inline::select(const std::shared_ptr<render_item>& el)
 {
-    if(el->src_el()->css().get_display() == display_inline && el->src_el()->css().get_float() == float_none)
-    {
-        return true;
-    }
-    return false;
+    return el->src_el()->css().get_display() == display_inline && el->src_el()->css().get_float() == float_none;
 }
 
 bool litehtml::inline_selector::select(const std::shared_ptr<render_item>& el)
 {
-    if(el->src_el()->css().get_display() == display_inline_text ||
-       el->src_el()->css().get_display() == display_inline_table ||
-       el->src_el()->css().get_display() == display_inline_block ||
-       el->src_el()->css().get_display() == display_inline_flex || el->src_el()->css().get_float() != float_none)
-    {
-        return true;
-    }
-    return false;
+    return el->src_el()->css().get_display() == display_inline_text ||
+           el->src_el()->css().get_display() == display_inline_table ||
+           el->src_el()->css().get_display() == display_inline_block ||
+           el->src_el()->css().get_display() == display_inline_flex || el->src_el()->css().get_float() != float_none;
 }
 
 bool litehtml::go_inside_table::select(const std::shared_ptr<render_item>& el)
 {
-    if(el->src_el()->css().get_display() == display_table_row_group ||
-       el->src_el()->css().get_display() == display_table_header_group ||
-       el->src_el()->css().get_display() == display_table_footer_group)
-    {
-        return true;
-    }
-    return false;
+    return el->src_el()->css().get_display() == display_table_row_group ||
+           el->src_el()->css().get_display() == display_table_header_group ||
+           el->src_el()->css().get_display() == display_table_footer_group;
 }
 
 bool litehtml::table_rows_selector::select(const std::shared_ptr<render_item>& el)
 {
-    if(el->src_el()->css().get_display() == display_table_row)
-    {
-        return true;
-    }
-    return false;
+    return el->src_el()->css().get_display() == display_table_row;
 }
 
 bool litehtml::table_cells_selector::select(const std::shared_ptr<render_item>& el)
 {
-    if(el->src_el()->css().get_display() == display_table_cell)
-    {
-        return true;
-    }
-    return false;
+    return el->src_el()->css().get_display() == display_table_cell;
 }

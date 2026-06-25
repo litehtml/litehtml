@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.11)
 project(litehtml LANGUAGES C CXX)
 
 option(LITEHTML_BUILD_TESTING "enable testing for litehtml" OFF)
+option(LITEHTML_ENABLE_LINT "enable linting for litehtml" ON)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (NOT LITEHTML_BUILD_TESTING)
 # Soname
@@ -152,6 +155,14 @@ set(HEADER_LITEHTML
 	include/litehtml/css_values.h
 )
 
+find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+
+if(CLANG_TIDY_EXE AND LITEHTML_ENABLE_LINT)
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-warnings-as-errors=*")
+else()
+    message(WARNING "Clang-Tidy not found or linting disabled. Static analysis skipped.")
+endif()
+
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
 set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
 
@@ -179,7 +190,10 @@ else()
 endif()
 
 add_library(${PROJECT_NAME} ${HEADER_LITEHTML} ${SOURCE_LITEHTML})
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_LIB_VERSION} SOVERSION ${PROJECT_SO_VERSION})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	VERSION ${PROJECT_LIB_VERSION}
+	SOVERSION ${PROJECT_SO_VERSION}
+	)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_STANDARD 17

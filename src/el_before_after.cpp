@@ -19,27 +19,27 @@ void litehtml::el_before_after_base::add_style(const style& style)
     m_children.clear();
 
     const auto& content_property = style.get_property(_content_);
-    if(content_property.is<string>() && !content_property.get<string>().empty())
+    if(content_property.is<std::string>() && !content_property.get<std::string>().empty())
     {
-        const auto& str = content_property.get<string>();
+        const auto& str = content_property.get<std::string>();
         auto        idx = css_values(content_property_strings).value_index(str);
         if(!idx.has_value())
         {
-            string            fnc;
-            string::size_type i = 0;
-            while(i < str.length() && i != string::npos)
+            std::string            fnc;
+            std::string::size_type i = 0;
+            while(i < str.length() && i != std::string::npos)
             {
                 if(str.at(i) == '"' || str.at(i) == '\'')
                 {
                     auto chr = str.at(i);
                     fnc.clear();
                     i++;
-                    string::size_type pos = str.find(chr, i);
-                    string            txt;
-                    if(pos == string::npos)
+                    std::string::size_type pos = str.find(chr, i);
+                    std::string            txt;
+                    if(pos == std::string::npos)
                     {
                         txt = str.substr(i);
-                        i   = string::npos;
+                        i   = std::string::npos;
                     } else
                     {
                         txt = str.substr(i, pos - i);
@@ -51,12 +51,12 @@ void litehtml::el_before_after_base::add_style(const style& style)
                     i++;
                     litehtml::trim(fnc);
                     litehtml::lcase(fnc);
-                    string::size_type pos = str.find(')', i);
-                    string            params;
-                    if(pos == string::npos)
+                    std::string::size_type pos = str.find(')', i);
+                    std::string            params;
+                    if(pos == std::string::npos)
                     {
                         params = str.substr(i);
-                        i      = string::npos;
+                        i      = std::string::npos;
                     } else
                     {
                         params = str.substr(i, pos - i);
@@ -79,10 +79,10 @@ void litehtml::el_before_after_base::add_style(const style& style)
     }
 }
 
-void litehtml::el_before_after_base::add_text(const string& txt)
+void litehtml::el_before_after_base::add_text(const std::string& txt)
 {
-    string word;
-    string esc;
+    std::string word;
+    std::string esc;
 
     for(auto chr : txt)
     {
@@ -133,7 +133,7 @@ void litehtml::el_before_after_base::add_text(const string& txt)
     }
 }
 
-void litehtml::el_before_after_base::add_function(const string& fnc, const string& params)
+void litehtml::el_before_after_base::add_function(const std::string& fnc, const std::string& params)
 {
     constexpr auto content_function_strings = split_css_values<4>("attr;counter;counters;url");
 
@@ -147,7 +147,7 @@ void litehtml::el_before_after_base::add_function(const string& fnc, const strin
     // attr
     case 0:
         {
-            string p_name = params;
+            std::string p_name = params;
             trim(p_name);
             lcase(p_name);
             element::ptr el_parent = parent();
@@ -180,7 +180,7 @@ void litehtml::el_before_after_base::add_function(const string& fnc, const strin
     // url
     case 3:
         {
-            string p_url = params;
+            std::string p_url = params;
             trim(p_url);
             if(!p_url.empty())
             {
@@ -210,11 +210,11 @@ void litehtml::el_before_after_base::add_function(const string& fnc, const strin
     }
 }
 
-litehtml::string litehtml::el_before_after_base::convert_escape(const char* txt)
+std::string litehtml::el_before_after_base::convert_escape(const char* txt)
 {
     char*    str_end;
     char32_t u_str[2];
     u_str[0] = static_cast<char32_t>(strtol(txt, &str_end, 16));
     u_str[1] = 0;
-    return string(litehtml_from_utf32(u_str));
+    return {litehtml_from_utf32(u_str)};
 }

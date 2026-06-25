@@ -1,3 +1,4 @@
+#include "gradient.h"
 #include "html.h"
 #include "style.h"
 #include "css_parser.h"
@@ -21,7 +22,7 @@ namespace litehtml
                            Args... args);
     int  parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, css_values keywords = {});
     bool parse_border_width(const css_token& tok, css_length& width);
-    bool parse_font_family(const css_token_vector& tokens, string& font_family);
+    bool parse_font_family(const css_token_vector& tokens, std::string& font_family);
     bool parse_font_weight(const css_token& tok, css_length& weight);
 
     std::map<string_id, css_values> style::m_valid_values = {
@@ -71,7 +72,7 @@ namespace litehtml
         {_text_emphasis_position_, style_text_emphasis_position_strings},
     };
 
-    std::map<string_id, vector<string_id>> shorthands = {
+    std::map<string_id, std::vector<string_id>> shorthands = {
         {_font_,            {_font_style_, _font_variant_, _font_weight_, _font_size_, _line_height_, _font_family_}  },
 
         {_background_,
@@ -104,13 +105,13 @@ namespace litehtml
         {_text_emphasis_,   {_text_emphasis_style_, _text_emphasis_color_}                                            },
     };
 
-    void style::add(const string& txt, const string& baseurl, document_container* container)
+    void style::add(const std::string& txt, const std::string& baseurl, document_container* container)
     {
         auto tokens = normalize(txt, f_componentize);
         add(tokens, baseurl, container);
     }
 
-    void style::add(const css_token_vector& tokens, const string& baseurl, document_container* container)
+    void style::add(const css_token_vector& tokens, const std::string& baseurl, document_container* container)
     {
         raw_declaration::vector decls;
         raw_rule::vector        rules;
@@ -130,7 +131,7 @@ namespace litehtml
             remove_whitespace(decl.value);
             // Note: decl.value is already componentized, see consume_qualified_rule and consume_style_block_contents.
             // Note: decl.value may be empty.
-            string name = decl.name.substr(0, 2) == "--" ? decl.name : lowcase(decl.name);
+            std::string name = decl.name.substr(0, 2) == "--" ? decl.name : lowcase(decl.name);
             add_property(_id(name), decl.value, baseurl, decl.important, container);
         }
     }
@@ -139,7 +140,7 @@ namespace litehtml
     {
         for(auto& tok : tokens)
         {
-            if(tok.type == CV_FUNCTION && lowcase(tok.name) == "var")
+            if(tok.type == CV_FUNCTION && lowcase(tok.name()) == "var")
             {
                 return true;
             }
@@ -166,7 +167,8 @@ namespace litehtml
         }
     }
 
-    void style::add_length_property(string_id name, css_token val, css_values keywords, int options, bool important)
+    void style::add_length_property(string_id name, const css_token& val, const css_values& keywords, int options,
+                                    bool important)
     {
         css_length length;
         if(length.from_token(val, options, keywords))
@@ -176,7 +178,7 @@ namespace litehtml
     }
 
     // `value` is a list of component values with all whitespace tokens removed, including those inside component values
-    void style::add_property(string_id name, const css_token_vector& value, const string& baseurl, bool important,
+    void style::add_property(string_id name, const css_token_vector& value, const std::string& baseurl, bool important,
                              document_container* container)
     {
         // Note: empty value is a valid value for a custom property.
@@ -193,17 +195,17 @@ namespace litehtml
         // valid only if value contains a single token
         css_token val = value.size() == 1 ? value[0] : css_token();
         // nonempty if value is a single identifier
-        string ident = val.ident();
+        std::string ident = val.ident();
 
         if(ident == "inherit")
         {
             return inherit_property(name, important);
         }
 
-        int        idx[4];
-        web_color  clr[4];
-        css_length len[4];
-        string     str;
+        int         idx[4];
+        web_color   clr[4];
+        css_length  len[4];
+        std::string str;
 
         switch(name)
         {
@@ -463,7 +465,7 @@ namespace litehtml
             //  =============================  LIST  =============================
 
         case _list_style_image_:
-            if(string url; parse_list_style_image(val, url))
+            if(std::string url; parse_list_style_image(val, url))
             {
                 add_parsed_property(_list_style_image_, property_value(url, important));
                 add_parsed_property(_list_style_image_baseurl_, property_value(baseurl, important));
@@ -601,7 +603,7 @@ namespace litehtml
         }
     }
 
-    void style::add_property(string_id name, const string& value, const string& baseurl, bool important,
+    void style::add_property(string_id name, const std::string& value, const std::string& baseurl, bool important,
                              document_container* container)
     {
         auto tokens = normalize(value, f_componentize | f_remove_whitespace);
@@ -609,7 +611,7 @@ namespace litehtml
     }
 
     // This should be the same as parse_bg_image, but list-style-image is currently a string (not an image).
-    bool style::parse_list_style_image(const css_token& tok, string& url)
+    bool style::parse_list_style_image(const css_token& tok, std::string& url)
     {
         if(tok.ident() == "none")
         {
@@ -622,12 +624,12 @@ namespace litehtml
 
     // https://drafts.csswg.org/css-lists/#list-style-property
     // <'list-style-position'> || <'list-style-image'> || <'list-style-type'>
-    void style::parse_list_style(const css_token_vector& tokens, string baseurl, bool important)
+    void style::parse_list_style(const css_token_vector& tokens, const std::string& baseurl, bool important)
     {
         // initial values:  https://developer.mozilla.org/en-US/docs/Web/CSS/list-style#formal_definition
-        int    type     = list_style_type_disc;
-        int    position = list_style_position_outside;
-        string image    = ""; // none
+        int         type     = list_style_type_disc;
+        int         position = list_style_position_outside;
+        std::string image    = ""; // none
 
         bool type_found     = false;
         bool position_found = false;
@@ -907,7 +909,7 @@ namespace litehtml
         add_parsed_property(left, property_value(val[n / 2 + n / 4], important));
     }
 
-    void style::parse_background(const css_token_vector& tokens, const string& baseurl, bool important,
+    void style::parse_background(const css_token_vector& tokens, const std::string& baseurl, bool important,
                                  document_container* container)
     {
         auto layers = parse_comma_separated_list(tokens);
@@ -960,7 +962,7 @@ namespace litehtml
                                bool final_layer)
     {
         bg.m_color      = web_color::transparent;
-        bg.m_image      = {{}};
+        bg.m_image      = {image()};
         bg.m_position_x = {css_length(0, css_units_percentage)};
         bg.m_position_y = {css_length(0, css_units_percentage)};
         bg.m_size       = {
@@ -1109,7 +1111,7 @@ namespace litehtml
             // fix wrong order
             if(is_one_of_predef(a, top, bottom))
             {
-                swap(a, b);
+                std::swap(a, b);
             }
 
             index++;
@@ -1120,7 +1122,7 @@ namespace litehtml
             if((is_one_of_predef(a, top, bottom) && b.is_predefined()) ||
                (a.is_predefined() && is_one_of_predef(b, left, right)))
             {
-                swap(a, b);
+                std::swap(a, b);
             }
 
             // check for wrong order
@@ -1149,7 +1151,7 @@ namespace litehtml
         return true;
     }
 
-    void style::parse_background_image(const css_token_vector& tokens, const string& baseurl, bool important,
+    void style::parse_background_image(const css_token_vector& tokens, const std::string& baseurl, bool important,
                                        document_container* container)
     {
         auto layers = parse_comma_separated_list(tokens);
@@ -1188,7 +1190,7 @@ namespace litehtml
             return true;
         }
 
-        string url;
+        std::string url;
         if(parse_url(tok, url))
         {
             bg_image.type = image::type_url;
@@ -1206,19 +1208,19 @@ namespace litehtml
     }
 
     // https://drafts.csswg.org/css-values-4/#urls
-    bool parse_url(const css_token& tok, string& url)
+    bool parse_url(const css_token& tok, std::string& url)
     {
         if(tok.type == URL) // legacy syntax without quotes: url(x.com)
         {
-            url = trim(tok.str);
+            url = trim(tok.str());
             return true;
         }
 
-        if(tok.type == CV_FUNCTION && is_one_of(lowcase(tok.name), "url", "src") &&
+        if(tok.type == CV_FUNCTION && is_one_of(lowcase(tok.name()), "url", "src") &&
            // note: relying on whitespace having been removed from tok.value
            tok.value.size() == 1 && tok.value[0].type == STRING)
         {
-            url = trim(tok.value[0].str);
+            url = trim(tok.value[0].str());
             return true;
         }
 
@@ -1378,14 +1380,14 @@ namespace litehtml
         }
         // Custom identifiers are case-sensitive, but they should not case-insensitively match any of
         // CSS-wide keywords or "default".
-        return !is_one_of(lowcase(tok.name), "default", "initial", "inherit", "unset");
+        return !is_one_of(lowcase(tok.name()), "default", "initial", "inherit", "unset");
     }
 
     // https://drafts.csswg.org/css-fonts/#propdef-font-family
     // font-family = [ <family-name> | <generic-family> ]#
     // <family-name> = <string> | <custom-ident>+
     // <generic-family> = generic( <custom-ident>+ ) | <string> | <custom-ident>+
-    bool parse_font_family(const css_token_vector& tokens, string& font_family)
+    bool parse_font_family(const css_token_vector& tokens, std::string& font_family)
     {
         auto list = parse_comma_separated_list(tokens);
         if(list.empty())
@@ -1393,26 +1395,26 @@ namespace litehtml
             return false;
         }
 
-        string result;
+        std::string result;
         for(const auto& name : list)
         {
             if(name.size() == 1 && name[0].type == STRING)
             {
                 // result.push_back(name[0].str);
-                result += name[0].str + ',';
+                result += name[0].str() + ',';
                 continue;
             }
 
             // Otherwise: name must be a list of <custom-ident>s
             // Note: generic( <custom-ident>+ ) is not supported
-            string str;
+            std::string str;
             for(const auto& tok : name)
             {
                 if(!is_custom_ident(tok))
                 {
                     return false;
                 }
-                str += tok.name + ' ';
+                str += tok.name() + ' ';
             }
             // result.push_back(trim(str));
             result += trim(str) + ',';
@@ -1431,17 +1433,17 @@ namespace litehtml
     void style::parse_font(css_token_vector tokens, bool important)
     {
         // initial values
-        int        style       = font_style_normal;
-        int        variant     = font_variant_normal;
-        css_length weight      = css_length::predef_value(font_weight_normal);
-        css_length size        = css_length::predef_value(font_size_medium);
-        css_length line_height = css_length::predef_value(line_height_normal);
-        string     font_family; // this argument is mandatory, no need to set initial value
+        int         style       = font_style_normal;
+        int         variant     = font_variant_normal;
+        css_length  weight      = css_length::predef_value(font_weight_normal);
+        css_length  size        = css_length::predef_value(font_size_medium);
+        css_length  line_height = css_length::predef_value(line_height_normal);
+        std::string font_family; // this argument is mandatory, no need to set initial value
 
         if(tokens.size() == 1 && (tokens[0].type == STRING || tokens[0].type == IDENT) &&
-           css_values(font_system_family_name_strings).has(tokens[0].str))
+           css_values(font_system_family_name_strings).has(tokens[0].str()))
         {
-            font_family = tokens[0].str;
+            font_family = tokens[0].str();
         } else
         {
             int index = 0;
@@ -1554,14 +1556,14 @@ namespace litehtml
 
     void style::parse_text_emphasis(const css_token_vector& tokens, bool important, document_container* container)
     {
-        string style;
+        std::string style;
         for(const auto& token : std::vector(tokens.rbegin(), tokens.rend()))
         {
             if(parse_text_emphasis_color(token, important, container))
             {
                 continue;
             }
-            style.insert(0, token.str + " ");
+            style.insert(0, token.str() + " ");
         }
         style = trim(style);
         if(!style.empty())
@@ -1758,7 +1760,7 @@ namespace litehtml
             return;
         }
 
-        string a = tokens[0].ident();
+        std::string a = tokens[0].ident();
 
         if(name == _align_items_ && a == "auto")
         {
@@ -1777,11 +1779,11 @@ namespace litehtml
 
         // Otherwise: n == 2
 
-        string b = tokens[1].ident();
+        std::string b = tokens[1].ident();
 
         if(a == "baseline")
         {
-            swap(a, b);
+            std::swap(a, b);
         }
         if(b == "baseline" && is_one_of(a, "first", "last"))
         {
@@ -1853,7 +1855,7 @@ namespace litehtml
             return false;
         }
 
-        string name = args[0].ident();
+        std::string name = args[0].ident();
         if(name.substr(0, 2) != "--" || name.size() <= 2)
         {
             return false;
@@ -1880,7 +1882,7 @@ namespace litehtml
         for(int i = 0; i < static_cast<int>(tokens.size()); i++)
         {
             auto& tok = tokens[i];
-            if(tok.type == CV_FUNCTION && lowcase(tok.name) == "var")
+            if(tok.type == CV_FUNCTION && lowcase(tok.name()) == "var")
             {
                 auto args = tok.value; // copy is intentional
                 if(!check_var_syntax(args))
@@ -1888,7 +1890,7 @@ namespace litehtml
                     return false;
                 }
 
-                auto name = _id(args[0].name);
+                auto name = _id(args[0].name());
                 if(name in used_vars)
                 {
                     return false; // dependency cycle  https://drafts.csswg.org/css-variables/#cycles

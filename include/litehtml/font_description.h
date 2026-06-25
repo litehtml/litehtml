@@ -1,10 +1,9 @@
-#ifndef LITEHTML_FONT_DESCRIPTION
-#define LITEHTML_FONT_DESCRIPTION
+#ifndef LITEHTML_FONT_DESCRIPTION_H
+#define LITEHTML_FONT_DESCRIPTION_H
 
-#include <string>
-#include "types.h"
 #include "css_length.h"
 #include "web_color.h"
+#include <string>
 
 namespace litehtml
 {
@@ -45,4 +44,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif
+#endif // LITEHTML_FONT_DESCRIPTION_H

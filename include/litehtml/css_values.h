@@ -3,6 +3,7 @@
 
 #include <array>
 #include <cstdint>
+#include <optional>
 #include <string_view>
 
 namespace litehtml
@@ -239,11 +240,11 @@ namespace litehtml
         border_width_thick
     };
 
-    constexpr float border_width_thin_value   = 1;
-    constexpr float border_width_medium_value = 3;
-    constexpr float border_width_thick_value  = 5;
-    constexpr float border_width_values[]     = {border_width_thin_value, border_width_medium_value,
-                                                 border_width_thick_value};
+    constexpr float                border_width_thin_value   = 1;
+    constexpr float                border_width_medium_value = 3;
+    constexpr float                border_width_thick_value  = 5;
+    constexpr std::array<float, 3> border_width_values       = {border_width_thin_value, border_width_medium_value,
+                                                                border_width_thick_value};
 
     // ==========================================================
     // CSS Property: border-style
@@ -356,8 +357,8 @@ namespace litehtml
     // ==========================================================
     // CSS Property: background-position
     // ==========================================================
-    inline constexpr auto background_position_strings       = split_css_values<5>("left;right;top;bottom;center");
-    const float           background_position_percentages[] = {0, 100, 0, 100, 50};
+    inline constexpr auto background_position_strings = split_css_values<5>("left;right;top;bottom;center");
+    inline constexpr std::array<float, 5> background_position_percentages = {0, 100, 0, 100, 50};
 
     enum background_position
     {
@@ -531,7 +532,7 @@ namespace litehtml
     // https://drafts.csswg.org/mediaqueries/#media-types
     // User agents must recognize the following media types as valid, but must make them match nothing.
 #define deprecated_media_type_strings "tty;tv;projection;handheld;braille;embossed;aural;speech"
-    inline auto media_type_strings = split_css_values<11>("all;print;screen;" deprecated_media_type_strings);
+    inline constexpr auto media_type_strings = split_css_values<11>("all;print;screen;" deprecated_media_type_strings);
 
     enum media_type
     {
@@ -545,7 +546,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: flex-direction
     // ==========================================================
-    inline auto flex_direction_strings = split_css_values<4>("row;row-reverse;column;column-reverse");
+    inline constexpr auto flex_direction_strings = split_css_values<4>("row;row-reverse;column;column-reverse");
 
     enum flex_direction
     {
@@ -558,7 +559,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: flex-wrap
     // ==========================================================
-    inline auto flex_wrap_strings = split_css_values<3>("nowrap;wrap;wrap-reverse");
+    inline constexpr auto flex_wrap_strings = split_css_values<3>("nowrap;wrap;wrap-reverse");
 
     enum flex_wrap
     {
@@ -570,7 +571,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: flex-justify-content
     // ==========================================================
-    inline auto flex_justify_content_strings = split_css_values<12>(
+    inline constexpr auto flex_justify_content_strings = split_css_values<12>(
         "normal;flex-start;flex-end;center;space-between;space-around;start;end;left;right;space-evenly;stretch");
 
     enum flex_justify_content
@@ -590,8 +591,9 @@ namespace litehtml
     };
 
 #define self_position_vals "center;start;end;self-start;self-end;flex-start;flex-end"
-    inline auto self_position_strings    = split_css_values<7>(self_position_vals);
-    inline auto flex_align_items_strings = split_css_values<11>("auto;normal;stretch;baseline;" self_position_vals);
+    inline constexpr auto self_position_strings = split_css_values<7>(self_position_vals);
+    inline constexpr auto flex_align_items_strings =
+        split_css_values<11>("auto;normal;stretch;baseline;" self_position_vals);
 
     enum flex_align_items
     {
@@ -617,7 +619,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: flex-align-content
     // ==========================================================
-    inline auto flex_align_content_strings =
+    inline constexpr auto flex_align_content_strings =
         split_css_values<8>("flex-start;start;flex-end;end;center;space-between;space-around;stretch");
 
     enum flex_align_content
@@ -635,7 +637,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: flex-basis
     // ==========================================================
-    inline auto flex_basis_strings = split_css_values<5>("auto;content;fit-content;min-content;max-content");
+    inline constexpr auto flex_basis_strings = split_css_values<5>("auto;content;fit-content;min-content;max-content");
 
     enum flex_basis
     {
@@ -649,7 +651,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: caption-side
     // ==========================================================
-    inline auto caption_side_strings = split_css_values<2>("top;bottom");
+    inline constexpr auto caption_side_strings = split_css_values<2>("top;bottom");
 
     enum caption_side
     {
@@ -660,7 +662,8 @@ namespace litehtml
     // ==========================================================
     // CSS Property: text-decoration-line
     // ==========================================================
-    inline auto style_text_decoration_line_strings = split_css_values<4>("none;underline;overline;line-through");
+    inline constexpr auto style_text_decoration_line_strings =
+        split_css_values<4>("none;underline;overline;line-through");
 
     enum text_decoration_line
     {
@@ -673,7 +676,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: text-decoration-style
     // ==========================================================
-    inline auto style_text_decoration_style_strings = split_css_values<5>("solid;double;dotted;dashed;wavy");
+    inline constexpr auto style_text_decoration_style_strings = split_css_values<5>("solid;double;dotted;dashed;wavy");
 
     enum text_decoration_style
     {
@@ -688,7 +691,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: text-decoration-thickness
     // ==========================================================
-    inline auto style_text_decoration_thickness_strings = split_css_values<2>("auto;from-font");
+    inline constexpr auto style_text_decoration_thickness_strings = split_css_values<2>("auto;from-font");
 
     enum text_decoration_thickness
     {
@@ -699,7 +702,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: text-emphasis-position
     // ==========================================================
-    inline auto style_text_emphasis_position_strings = split_css_values<4>("over;under;left;right");
+    inline constexpr auto style_text_emphasis_position_strings = split_css_values<4>("over;under;left;right");
 
     enum text_emphasis_position
     {
@@ -712,7 +715,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: radial-extent
     // ==========================================================
-    inline auto radial_extent_strings =
+    inline constexpr auto radial_extent_strings =
         split_css_values<4>("closest-corner;closest-side;farthest-corner;farthest-side");
     enum radial_extent_t
     {
@@ -726,7 +729,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: color-space
     // ==========================================================
-    inline auto color_space_strings = split_css_values<15>(
+    inline constexpr auto color_space_strings = split_css_values<15>(
         "srgb;srgb-linear;display-p3;a98-rgb;prophoto-rgb;rec2020;lab;oklab;xyz;xyz-d50;xyz-d65;hsl;hwb;lch;oklch");
 
     enum color_space_t
@@ -757,7 +760,7 @@ namespace litehtml
     // ==========================================================
     // CSS Property: hue-interpolation
     // ==========================================================
-    inline auto hue_interpolation_strings = split_css_values<4>("shorter;longer;increasing;decreasing");
+    inline constexpr auto hue_interpolation_strings = split_css_values<4>("shorter;longer;increasing;decreasing");
 
     enum hue_interpolation_t
     {

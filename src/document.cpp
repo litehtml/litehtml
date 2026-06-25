@@ -49,10 +49,10 @@ namespace litehtml
     }
 
     document::ptr document::createFromString(const estring& str, document_container* container,
-                                             const string& master_styles, const string& user_styles)
+                                             const std::string& master_styles, const std::string& user_styles)
     {
         // Create litehtml::document
-        document::ptr doc = make_shared<document>(container);
+        document::ptr doc = std::make_shared<document>(container);
 
         // Parse document into GumboOutput
         GumboOutput* output = doc->parse_html(str);
@@ -113,7 +113,7 @@ namespace litehtml
                 if(css.media != "")
                 {
                     auto mq_list = parse_media_query_list(css.media, doc);
-                    media        = make_shared<media_query_list_list>();
+                    media        = std::make_shared<media_query_list_list>();
                     media->add(mq_list);
                 }
                 doc->m_styles.parse_css_stylesheet(css.text, css.baseurl, doc, media);
@@ -184,7 +184,7 @@ namespace litehtml
         GumboNode* head = nullptr;
         for(size_t i = 0; i < root->v.element.children.length; i++)
         {
-            GumboNode* node = static_cast<GumboNode*>(root->v.element.children.data[i]);
+            auto* node = static_cast<GumboNode*>(root->v.element.children.data[i]);
             if(node->type == GUMBO_NODE_ELEMENT && node->v.element.tag == GUMBO_TAG_HEAD)
             {
                 head = node;
@@ -311,7 +311,7 @@ namespace litehtml
                     {
                         if(node->v.element.original_tag.data && node->v.element.original_tag.length)
                         {
-                            string str;
+                            std::string str;
                             gumbo_tag_from_original_text(&node->v.element.original_tag);
                             str.append(node->v.element.original_tag.data, node->v.element.original_tag.length);
                             ret = create_element(str.c_str(), attrs);
@@ -378,7 +378,7 @@ namespace litehtml
             break;
         case GUMBO_NODE_WHITESPACE:
             {
-                string str = node->v.text.text;
+                std::string str = node->v.text.text;
                 for(size_t i = 0; i < str.length(); i++)
                 {
                     elements.push_back(std::make_shared<el_space>(str.substr(i, 1).c_str(), shared_from_this()));
@@ -664,7 +664,7 @@ namespace litehtml
             m_over_element = over_el;
         }
 
-        string cursor;
+        std::string cursor;
 
         if(m_over_element)
         {
@@ -700,14 +700,14 @@ namespace litehtml
         {
             vscroll_el = m_root_render->get_element_by_point(
                 x, y, client_x, client_y,
-                [dy](const shared_ptr<render_item>& el) -> bool { return el->is_v_scrollable(dy); });
+                [dy](const std::shared_ptr<render_item>& el) -> bool { return el->is_v_scrollable(dy); });
         }
 
         if(dx != 0_px)
         {
             hscroll_el = m_root_render->get_element_by_point(
                 x, y, client_x, client_y,
-                [dx](const shared_ptr<render_item>& el) -> bool { return el->is_h_scrollable(dx); });
+                [dx](const std::shared_ptr<render_item>& el) -> bool { return el->is_h_scrollable(dx); });
         }
 
         if(!vscroll_el && !hscroll_el)
@@ -798,7 +798,7 @@ namespace litehtml
             }
         }
 
-        string cursor;
+        std::string cursor;
 
         if(m_over_element)
         {
@@ -880,7 +880,7 @@ namespace litehtml
     {
         if(!m_media_lists.empty())
         {
-            string culture;
+            std::string culture;
             container()->get_language(m_lang, culture);
             if(!culture.empty())
             {
@@ -910,7 +910,7 @@ namespace litehtml
         return update_styles;
     }
 
-    void document::add_media_list(media_query_list_list::ptr list)
+    void document::add_media_list(const media_query_list_list::ptr& list)
     {
         if(list && !contains(m_media_lists, list))
         {
@@ -968,7 +968,7 @@ namespace litehtml
         auto                                    cur_iter   = el_ptr->children().begin();
 
         auto flush_elements = [&]() {
-            element::ptr annon_tag = std::make_shared<html_tag>(el_ptr->src_el(), string("display:") + disp_str);
+            element::ptr annon_tag = std::make_shared<html_tag>(el_ptr->src_el(), std::string("display:") + disp_str);
             std::shared_ptr<render_item> annon_ri;
             if(annon_tag->css().get_display() == display_table_cell)
             {
@@ -1037,13 +1037,7 @@ namespace litehtml
         if(parent->src_el()->css().get_display() != disp)
         {
             auto this_element = std::find_if(parent->children().begin(), parent->children().end(),
-                                             [&](const std::shared_ptr<render_item>& el) {
-                                                 if(el == el_ptr)
-                                                 {
-                                                     return true;
-                                                 }
-                                                 return false;
-                                             });
+                                             [&](const std::shared_ptr<render_item>& el) { return el == el_ptr; });
             if(this_element != parent->children().end())
             {
                 style_display el_disp = el_ptr->src_el()->css().get_display();
@@ -1088,7 +1082,8 @@ namespace litehtml
                 }
 
                 // extract elements with the same display and wrap them with anonymous object
-                element::ptr annon_tag = std::make_shared<html_tag>(parent->src_el(), string("display:") + disp_str);
+                element::ptr annon_tag =
+                    std::make_shared<html_tag>(parent->src_el(), std::string("display:") + disp_str);
                 std::shared_ptr<render_item> annon_ri;
                 if(annon_tag->css().get_display() == display_table ||
                    annon_tag->css().get_display() == display_inline_table)

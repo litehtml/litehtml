@@ -3,6 +3,7 @@
 #include "utf8_strings.h"
 #include "encodings.h"
 #include <cassert>
+#include <utility>
 
 #define out
 #define inout
@@ -21,7 +22,7 @@ namespace litehtml
 
     struct decoder
     {
-        using ptr = shared_ptr<decoder>;
+        using ptr = std::shared_ptr<decoder>;
 
         virtual ~decoder() = default;
 
@@ -60,15 +61,15 @@ namespace litehtml
             result_codepoint
         };
 
-        result process_a_queue(string& input, string& output, error_mode mode);
-        result process_an_item(string& input, int& input_index, string& output, error_mode mode);
+        result process_a_queue(std::string& input, std::string& output, error_mode mode);
+        result process_an_item(std::string& input, int& input_index, std::string& output, error_mode mode);
 
         // NOTE: input can be modified by GB18030, ISO-2022-JP and UTF-16 decoders (search for "input.insert")
-        virtual result handler(inout string& input, inout int& index, out int ch[2]) = 0;
+        virtual result handler(inout std::string& input, inout int& index, out int ch[2]) = 0;
     };
 
     // https://encoding.spec.whatwg.org/#concept-encoding-run
-    decoder::result decoder::process_a_queue(string& input, string& output, error_mode mode)
+    decoder::result decoder::process_a_queue(std::string& input, std::string& output, error_mode mode)
     {
         int index = 0;
         while(true)
@@ -86,7 +87,7 @@ namespace litehtml
     // ioQueue is represented by the pair {input, index}, index points to the head of the queue.
     // Some decoders may modify input (so they're not just incrementing the index).
     // "item" is the current input byte, input[index].
-    decoder::result decoder::process_an_item(string& input, int& index, string& output, error_mode mode)
+    decoder::result decoder::process_an_item(std::string& input, int& index, std::string& output, error_mode mode)
     {
         // 1. Assert: if encoderDecoder is an encoder instance, mode is not "replacement".
 
@@ -105,7 +106,7 @@ namespace litehtml
             return result;
         }
         // 6. Otherwise, if result is one or more items:
-        else if(result == result_codepoint)
+        if(result == result_codepoint)
         {
             // 1. Assert: if encoderDecoder is a decoder instance, result does not contain any surrogates.
             assert(!is_surrogate(*ch) && !is_surrogate(ch[1]));
@@ -143,7 +144,7 @@ namespace litehtml
     }
 
     // https://encoding.spec.whatwg.org/#bom-sniff
-    encoding bom_sniff(const string& str)
+    encoding bom_sniff(const std::string& str)
     {
         if(str.substr(0, 3) == "\xEF\xBB\xBF")
         {
@@ -164,7 +165,7 @@ namespace litehtml
 
     // https://encoding.spec.whatwg.org/#decode
     // input is copied because it can be modified by GB18030, ISO-2022-JP and UTF-16 decoders
-    void decode(string input, encoding _encoding, string& output)
+    void decode(std::string input, encoding _encoding, std::string& output)
     {
         // 1.
         encoding bom_encoding = bom_sniff(input);
@@ -182,10 +183,10 @@ namespace litehtml
         decoder->process_a_queue(input, output, error_mode::replacement);
     }
 
-    string decode(string input, encoding encoding)
+    std::string decode(std::string input, encoding encoding)
     {
-        string output;
-        decode(input, encoding, output);
+        std::string output;
+        decode(std::move(input), encoding, output);
         return output;
     }
 
@@ -200,11 +201,11 @@ namespace litehtml
         int m_lower_boundary = 0x80;
         int m_upper_boundary = 0xBF;
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
     };
 
     // https://encoding.spec.whatwg.org/#utf-8-decoder
-    decoder::result utf_8_decoder::handler(inout string& input, inout int& index, out int ch[2])
+    decoder::result utf_8_decoder::handler(inout std::string& input, inout int& index, out int ch[2])
     {
         int b =
             index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read byte from input
@@ -230,7 +231,8 @@ namespace litehtml
                 // Return a code point whose value is byte.
                 *ch = b;
                 return result_codepoint;
-            } else if(b >= 0xC2 && b <= 0xDF)
+            }
+            if(b >= 0xC2 && b <= 0xDF)
             {
                 m_bytes_needed = 1;
                 m_code_point   = b & 0x1F;
@@ -267,7 +269,7 @@ namespace litehtml
         }
 
         // 4.
-        if(!(b >= m_lower_boundary && b <= m_upper_boundary))
+        if(b < m_lower_boundary || b > m_upper_boundary)
         {
             // 1.
             m_code_point     = 0;
@@ -323,7 +325,7 @@ namespace litehtml
             m_index = m_indexes[static_cast<int>(_encoding) - static_cast<int>(encoding::ibm866)];
         }
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
 
         static int* m_indexes[static_cast<int>(encoding::x_mac_cyrillic) - static_cast<int>(encoding::ibm866) + 1];
 
@@ -594,7 +596,7 @@ namespace litehtml
     };
 
     // https://encoding.spec.whatwg.org/#single-byte-decoder
-    decoder::result single_byte_decoder::handler(string& input, int& index, int ch[2])
+    decoder::result single_byte_decoder::handler(std::string& input, int& index, int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -633,7 +635,7 @@ namespace litehtml
         int m_second = 0;
         int m_third  = 0;
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
 
         static int ranges_code_point(int pointer);
 
@@ -2386,7 +2388,7 @@ namespace litehtml
     }
 
     // https://encoding.spec.whatwg.org/#gb18030-decoder
-    decoder::result gb18030_decoder::handler(string& input, int& index, int ch[2])
+    decoder::result gb18030_decoder::handler(std::string& input, int& index, int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -2409,7 +2411,7 @@ namespace litehtml
         if(m_third != 0)
         {
             // 1. If byte is not in the range 0x30 to 0x39, inclusive, then:
-            if(!(b >= 0x30 && b <= 0x39))
+            if(b < 0x30 || b > 0x39)
             {
                 // 1. Restore « gb18030 second, gb18030 third, byte » to ioQueue.
                 input.insert(index, {static_cast<char>(m_second), static_cast<char>(m_third), static_cast<char>(b)});
@@ -2535,7 +2537,7 @@ namespace litehtml
     {
         int m_lead = 0;
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
 
         static int m_index[19782];
     };
@@ -3957,7 +3959,7 @@ namespace litehtml
         35072,  26882,  31104,  153687, 31133,  162617, 31036,  31145,  28202,  160038, 16040,  31174,  168205, 31188};
 
     // https://encoding.spec.whatwg.org/#big5-decoder
-    decoder::result big5_decoder::handler(inout string& input, inout int& index, out int ch[2])
+    decoder::result big5_decoder::handler(inout std::string& input, inout int& index, out int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -3995,15 +3997,18 @@ namespace litehtml
             {
                 *ch = 0xCA, ch[1] = 0x304;
                 return result_codepoint;
-            } else if(pointer == 1135)
+            }
+            if(pointer == 1135)
             {
                 *ch = 0xCA, ch[1] = 0x30C;
                 return result_codepoint;
-            } else if(pointer == 1164)
+            }
+            if(pointer == 1164)
             {
                 *ch = 0xEA, ch[1] = 0x304;
                 return result_codepoint;
-            } else if(pointer == 1166)
+            }
+            if(pointer == 1166)
             {
                 *ch = 0xEA, ch[1] = 0x30C;
                 return result_codepoint;
@@ -5322,11 +5327,11 @@ namespace litehtml
         int  m_lead    = 0;
         bool m_jis0212 = false;
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
     };
 
     // https://encoding.spec.whatwg.org/#euc-jp-decoder
-    decoder::result euc_jp_decoder::handler(inout string& input, inout int& index, out int ch[2])
+    decoder::result euc_jp_decoder::handler(inout std::string& input, inout int& index, out int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -5436,11 +5441,11 @@ namespace litehtml
         state m_output_state = ASCII;
         bool  m_output       = false;
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
     };
 
     // https://encoding.spec.whatwg.org/#iso-2022-jp-decoder
-    decoder::result iso_2022_jp_decoder::handler(inout string& input, inout int& index, out int ch[2])
+    decoder::result iso_2022_jp_decoder::handler(inout std::string& input, inout int& index, out int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -5608,7 +5613,7 @@ namespace litehtml
                     m_state = m_output_state = state;
                     bool output              = m_output;
                     m_output                 = true;
-                    return output == false ? result_continue : result_error;
+                    return !output ? result_continue : result_error;
                 }
                 // 8. If byte is end-of-queue, then restore lead to ioQueue; otherwise, restore « lead, byte » to
                 // ioQueue.
@@ -5639,11 +5644,11 @@ namespace litehtml
     {
         int m_lead = 0;
 
-        result handler(string& input, int& index, int ch[2]) override;
+        decoder::result handler(std::string& input, int& index, int ch[2]) override;
     };
 
     // https://encoding.spec.whatwg.org/#shift_jis-decoder
-    decoder::result shift_jis_decoder::handler(inout string& input, inout int& index, out int ch[2])
+    decoder::result shift_jis_decoder::handler(inout std::string& input, inout int& index, out int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -5735,7 +5740,7 @@ namespace litehtml
     {
         int m_lead = 0;
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
 
         static int m_index[23940];
     };
@@ -7241,7 +7246,7 @@ namespace litehtml
         null,  null,  null,  null};
 
     // https://encoding.spec.whatwg.org/#euc-kr-decoder
-    decoder::result euc_kr_decoder::handler(inout string& input, inout int& index, out int ch[2])
+    decoder::result euc_kr_decoder::handler(inout std::string& input, inout int& index, out int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -7315,11 +7320,11 @@ namespace litehtml
     {
         bool error_returned = false;
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
     };
 
     // https://encoding.spec.whatwg.org/#replacement-decoder
-    decoder::result replacement_decoder::handler(inout string& input, inout int& index, int[2])
+    decoder::result replacement_decoder::handler(inout std::string& input, inout int& index, int[2])
     {
         // 1. If byte is end-of-queue, return finished.
         if(index == static_cast<int>(input.size()))
@@ -7351,11 +7356,11 @@ namespace litehtml
         {
         }
 
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
     };
 
     // https://encoding.spec.whatwg.org/#shared-utf-16-decoder
-    decoder::result utf_16_decoder::handler(inout string& input, inout int& index, out int ch[2])
+    decoder::result utf_16_decoder::handler(inout std::string& input, inout int& index, out int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -7405,7 +7410,7 @@ namespace litehtml
 
             // 4. Let bytes be two bytes whose values are byte1 and byte2, if is UTF-16BE decoder is true, and byte2 and
             // byte1 otherwise.
-            string bytes = m_utf_16be ? string{b1, b2} : string{b2, b1};
+            std::string bytes = m_utf_16be ? std::string{b1, b2} : std::string{b2, b1};
 
             // 5. Restore bytes to ioQueue and return error.
             input.insert(index, bytes);
@@ -7434,11 +7439,11 @@ namespace litehtml
 
     struct x_user_defined_decoder final : decoder
     {
-        result handler(string& input, int& index, int ch[2]) override;
+        result handler(std::string& input, int& index, int ch[2]) override;
     };
 
     // https://encoding.spec.whatwg.org/#x-user-defined-decoder
-    decoder::result x_user_defined_decoder::handler(inout string& input, inout int& index, out int ch[2])
+    decoder::result x_user_defined_decoder::handler(inout std::string& input, inout int& index, out int ch[2])
     {
         int b = index == static_cast<int>(input.size()) ? EOF : static_cast<byte>(input[index++]); // read input byte
 
@@ -7467,42 +7472,42 @@ namespace litehtml
         switch(_encoding)
         {
         case encoding::utf_8:
-            return make_shared<utf_8_decoder>();
+            return std::make_shared<utf_8_decoder>();
 
         case encoding::gbk: // https://encoding.spec.whatwg.org/#gbk-decoder
         case encoding::gb18030:
-            return make_shared<gb18030_decoder>();
+            return std::make_shared<gb18030_decoder>();
 
         case encoding::big5:
-            return make_shared<big5_decoder>();
+            return std::make_shared<big5_decoder>();
 
         case encoding::euc_jp:
-            return make_shared<euc_jp_decoder>();
+            return std::make_shared<euc_jp_decoder>();
 
         case encoding::iso_2022_jp:
-            return make_shared<iso_2022_jp_decoder>();
+            return std::make_shared<iso_2022_jp_decoder>();
 
         case encoding::shift_jis:
-            return make_shared<shift_jis_decoder>();
+            return std::make_shared<shift_jis_decoder>();
 
         case encoding::euc_kr:
-            return make_shared<euc_kr_decoder>();
+            return std::make_shared<euc_kr_decoder>();
 
         case encoding::replacement:
-            return make_shared<replacement_decoder>();
+            return std::make_shared<replacement_decoder>();
 
         case encoding::utf_16be:
         case encoding::utf_16le:
-            return make_shared<utf_16_decoder>(_encoding);
+            return std::make_shared<utf_16_decoder>(_encoding);
 
         case encoding::x_user_defined:
-            return make_shared<x_user_defined_decoder>();
+            return std::make_shared<x_user_defined_decoder>();
 
         default:
             // single-byte encoding
             if(_encoding >= encoding::ibm866 && _encoding <= encoding::x_mac_cyrillic)
             {
-                return make_shared<single_byte_decoder>(_encoding);
+                return std::make_shared<single_byte_decoder>(_encoding);
             }
         }
 
@@ -7789,7 +7794,7 @@ namespace litehtml
     };
 
     // https://encoding.spec.whatwg.org/#concept-encoding-get
-    encoding get_encoding(string label)
+    encoding get_encoding(std::string label)
     {
         lcase(trim(label));
         for(const auto& l : labels)
@@ -7802,10 +7807,10 @@ namespace litehtml
         return encoding::null;
     }
 
-    const size_t EOL = string::npos;
+    const size_t EOL = std::string::npos;
 
     // https://html.spec.whatwg.org/multipage/urls-and-fetching.html#algorithm-for-extracting-a-character-encoding-from-a-meta-element
-    encoding extract_encoding_from_meta_element(string s)
+    encoding extract_encoding_from_meta_element(std::string s)
     {
         lcase(s); // for step 2.
 
@@ -7882,7 +7887,7 @@ namespace litehtml
         }
     };
 
-    void increment(int& index, const string& str)
+    void increment(int& index, const std::string& str)
     {
         index++;
         if(index >= static_cast<int>(str.size()) || end_condition(index))
@@ -7892,7 +7897,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/parsing.html#concept-get-attributes-when-sniffing
-    bool prescan_get_attribute(const string& str, inout int& index, out string& name, out string& value)
+    bool prescan_get_attribute(const std::string& str, inout int& index, out std::string& name, out std::string& value)
     {
         // 1.
         while(is_whitespace(str[index]) || str[index] == '/')
@@ -8000,7 +8005,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/parsing.html#prescan-a-byte-stream-to-determine-its-encoding
-    encoding prescan_a_byte_stream_to_determine_its_encoding(const string& str)
+    encoding prescan_a_byte_stream_to_determine_its_encoding(const std::string& str)
     {
         // 1. Let fallback encoding be null. - bogus, never used
         // 2. Let position be a pointer to a byte in the input byte stream, initially pointing at the first byte.
@@ -8040,7 +8045,7 @@ namespace litehtml
 
             // 6.
         attributes:
-            string attr_name, attr_value;
+            std::string attr_name, attr_value;
             if(!prescan_get_attribute(str, index, attr_name, attr_value))
             {
                 goto processing;
@@ -8122,7 +8127,7 @@ namespace litehtml
             }
 
             // 2.
-            string tmp;
+            std::string tmp;
             while(prescan_get_attribute(str, index, tmp, tmp))
             {
             }
@@ -8143,7 +8148,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/parsing.html#concept-get-xml-encoding-when-sniffing
-    encoding get_xml_encoding(const string& str)
+    encoding get_xml_encoding(const std::string& str)
     {
         // 1. Let encodingPosition be a pointer to the start of the stream.
         int index = 0;
@@ -8213,7 +8218,7 @@ namespace litehtml
         }
 
         // 14.
-        string potentialEncoding = str.substr(index, end - index);
+        std::string potentialEncoding = str.substr(index, end - index);
 
         // 15.
         for(byte ch : potentialEncoding)
@@ -8239,7 +8244,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/parsing.html#prescan-a-byte-stream-to-determine-its-encoding
-    encoding prescan_for_encoding(const string& str)
+    encoding prescan_for_encoding(const std::string& str)
     {
         try
         {

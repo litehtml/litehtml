@@ -1,5 +1,5 @@
-#ifndef LH_EL_BEFORE_AFTER_H
-#define LH_EL_BEFORE_AFTER_H
+#ifndef LITEHTML_EL_BEFORE_AFTER_H
+#define LITEHTML_EL_BEFORE_AFTER_H
 
 #include "html_tag.h"
 
@@ -13,9 +13,9 @@ namespace litehtml
         void add_style(const style& style) override;
 
       private:
-        void          add_text(const string& txt);
-        void          add_function(const string& fnc, const string& params);
-        static string convert_escape(const char* txt);
+        void               add_text(const std::string& txt);
+        void               add_function(const std::string& fnc, const std::string& params);
+        static std::string convert_escape(const char* txt);
     };
 
     class el_before : public el_before_after_base
@@ -37,4 +37,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_EL_BEFORE_AFTER_H
+#endif // LITEHTML_EL_BEFORE_AFTER_H

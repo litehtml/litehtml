@@ -5,18 +5,18 @@
 namespace litehtml
 {
 
-    void css_parse_error(string /*msg*/)
+    void css_parse_error(const std::string& /*msg*/)
     {
         // printf("%s\n", msg.c_str());
     }
 
-    string css_token::ident() const
+    std::string css_token::ident() const
     {
         if(type != IDENT)
         {
             return "";
         }
-        return name.substr(0, 2) == "--" ? name : lowcase(name);
+        return name().substr(0, 2) == "--" ? name() : lowcase(name());
     }
 
     char mirror(char c)
@@ -36,7 +36,7 @@ namespace litehtml
         return c;
     }
 
-    string css_token::get_repr(bool insert_spaces) const
+    std::string css_token::get_repr(bool insert_spaces) const
     {
         if(!is_component_value())
         {
@@ -46,7 +46,7 @@ namespace litehtml
         using litehtml::get_repr;
         if(type == CV_FUNCTION)
         {
-            return name + '(' + get_repr(value, 0, -1, insert_spaces) + ')';
+            return name() + '(' + get_repr(value, 0, -1, insert_spaces) + ')';
         }
 
         char opening_bracket = static_cast<char>(-type - 100);
@@ -55,14 +55,14 @@ namespace litehtml
     }
 
     // concatenate string representations of tokens
-    string get_repr(const css_token_vector& tokens, int index, int count, bool insert_spaces)
+    std::string get_repr(const css_token_vector& tokens, int index, int count, bool insert_spaces)
     {
         if(count == -1)
         {
             count = static_cast<int>(tokens.size()) - index;
         }
-        string str;
-        string space = insert_spaces ? " " : "";
+        std::string str;
+        std::string space = insert_spaces ? " " : "";
         for(int i = index; i < index + count; i++)
         {
             str += tokens[i].get_repr(insert_spaces) + space;
@@ -244,7 +244,7 @@ namespace litehtml
                 // append the returned code point to the <string-token>’s value.
                 else
                 {
-                    append_char(token.str, consume_escaped_code_point());
+                    append_char(token.str(), consume_escaped_code_point());
                 }
                 break;
             default:
@@ -254,7 +254,7 @@ namespace litehtml
                 } else // anything else
                 {
                     // Append the current input code point to the <string-token>’s value.
-                    append_char(token.str, ch);
+                    append_char(token.str(), ch);
                 }
                 break;
             }
@@ -287,9 +287,9 @@ namespace litehtml
     }
 
     // https://www.w3.org/TR/css-syntax-3/#consume-name
-    string css_tokenizer::consume_ident_sequence()
+    std::string css_tokenizer::consume_ident_sequence()
     {
-        string result;
+        std::string result;
 
         while(true)
         {
@@ -345,7 +345,7 @@ namespace litehtml
     }
 
     // https://www.w3.org/TR/css-syntax-3/#convert-string-to-number
-    double css_tokenizer::convert_string_to_number(const string& str)
+    double css_tokenizer::convert_string_to_number(const std::string& str)
     {
         const char* p = str.c_str();
 
@@ -420,7 +420,7 @@ namespace litehtml
     {
         // 1. Initially set type to "integer". Let repr be the empty string.
         type = css_number_integer;
-        string repr;
+        std::string repr;
 
         // 2. If the next input code point is U+002B (+) or U+002D (-), consume it and append it to repr.
         if(is_one_of(str[index], '+', '-'))
@@ -487,7 +487,7 @@ namespace litehtml
         // Consume a number and let number be the result.
         css_number_type type;
 
-        float number = static_cast<float>(consume_number(type));
+        auto number = static_cast<float>(consume_number(type));
 
         // If the next 3 input code points would start an ident sequence, then:
         if(would_start_ident_sequence(peek_chars()))
@@ -497,7 +497,7 @@ namespace litehtml
             css_token token(DIMENSION, number, type);
 
             // 2. Consume an ident sequence. Set the <dimension-token>’s unit to the returned value.
-            token.unit = consume_ident_sequence();
+            token.unit() = consume_ident_sequence();
 
             // 3. Return the <dimension-token>.
             return token;
@@ -602,7 +602,7 @@ namespace litehtml
                 // append the returned code point to the <url-token>’s value.
                 if(str[index] != '\n')
                 {
-                    append_char(token.str, consume_escaped_code_point());
+                    append_char(token.str(), consume_escaped_code_point());
                 }
                 // Otherwise, this is a parse error. Consume the remnants of a bad url, create a <bad-url-token>, and
                 // return it.
@@ -621,7 +621,7 @@ namespace litehtml
                 } else // anything else
                 {
                     // Append the current input code point to the <url-token>’s value.
-                    append_char(token.str, ch);
+                    append_char(token.str(), ch);
                 }
                 break;
             }
@@ -713,7 +713,7 @@ namespace litehtml
                 // "id".
                 token.hash_type = would_start_ident_sequence(peek_chars()) ? css_hash_id : css_hash_unrestricted;
                 // 3. Consume an ident sequence, and set the <hash-token>’s value to the returned string.
-                token.name = consume_ident_sequence();
+                token.name() = consume_ident_sequence();
                 // 4. Return the <hash-token>.
             } else
             {
@@ -784,8 +784,8 @@ namespace litehtml
             // create an <at-keyword-token> with its value set to the returned value, and return it.
             if(would_start_ident_sequence(peek_chars()))
             {
-                token.type = AT_KEYWORD;
-                token.name = consume_ident_sequence();
+                token.type   = AT_KEYWORD;
+                token.name() = consume_ident_sequence();
             } else
             {
                 // Otherwise, return a <delim-token> with its value set to the current input code point.

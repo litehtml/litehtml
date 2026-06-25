@@ -8,7 +8,7 @@ litehtml::el_style::el_style(const std::shared_ptr<document>& doc) :
 
 void litehtml::el_style::parse_attributes()
 {
-    string text;
+    std::string text;
 
     for(auto& el : m_children)
     {

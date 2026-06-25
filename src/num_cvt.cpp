@@ -10,54 +10,54 @@ static std::vector<std::u32string> greek_lower = {U"α", U"β", U"γ", U"δ", U"
                                                   U"ι", U"κ", U"λ", U"μ", U"ν", U"ξ", U"ο", U"π",
                                                   U"ρ", U"σ", U"τ", U"υ", U"φ", U"χ", U"ψ", U"ω"};
 
-static litehtml::string to_mapped_alpha(int num, const std::vector<char>& map)
+static std::string to_mapped_alpha(int num, const std::vector<char>& map)
 {
-    int              dividend = num;
-    litehtml::string out;
-    int              modulo;
+    int         dividend = num;
+    std::string out;
+    int         modulo;
 
     while(dividend > 0)
     {
-        modulo   = (dividend - 1) % map.size();
-        out      = map[modulo] + out;
+        modulo = (dividend - 1) % map.size();
+        out.insert(out.begin(), map[modulo]);
         dividend = static_cast<int>((dividend - modulo) / map.size());
     }
 
     return out;
 }
 
-static litehtml::string to_mapped_alpha(int num, const std::vector<std::u32string>& map)
+static std::string to_mapped_alpha(int num, const std::vector<std::u32string>& map)
 {
-    int              dividend = num;
-    litehtml::string out;
-    int              modulo;
+    int         dividend = num;
+    std::string out;
+    int         modulo;
 
     while(dividend > 0)
     {
-        modulo   = (dividend - 1) % map.size();
-        out      = litehtml_from_utf32(map[modulo]).c_str() + out;
+        modulo = (dividend - 1) % map.size();
+        out.insert(0, litehtml_from_utf32(map[modulo]));
         dividend = static_cast<int>((dividend - modulo) / map.size());
     }
 
     return out;
 }
 
-litehtml::string litehtml::num_cvt::to_latin_lower(int val)
+std::string litehtml::num_cvt::to_latin_lower(int val)
 {
     return to_mapped_alpha(val, latin_lower);
 }
 
-litehtml::string litehtml::num_cvt::to_latin_upper(int val)
+std::string litehtml::num_cvt::to_latin_upper(int val)
 {
     return to_mapped_alpha(val, latin_upper);
 }
 
-litehtml::string litehtml::num_cvt::to_greek_lower(int val)
+std::string litehtml::num_cvt::to_greek_lower(int val)
 {
     return to_mapped_alpha(val, greek_lower);
 }
 
-litehtml::string litehtml::num_cvt::to_roman_lower(int value)
+std::string litehtml::num_cvt::to_roman_lower(int value)
 {
     struct romandata_t
     {
@@ -81,7 +81,7 @@ litehtml::string litehtml::num_cvt::to_roman_lower(int value)
         {0,    nullptr}  // end marker
     };
 
-    litehtml::string result;
+    std::string result;
     for(const romandata_t* current = romandata; current->value > 0; ++current)
     {
         while(value >= current->value)
@@ -93,7 +93,7 @@ litehtml::string litehtml::num_cvt::to_roman_lower(int value)
     return result;
 }
 
-litehtml::string litehtml::num_cvt::to_roman_upper(int value)
+std::string litehtml::num_cvt::to_roman_upper(int value)
 {
     struct romandata_t
     {
@@ -117,7 +117,7 @@ litehtml::string litehtml::num_cvt::to_roman_upper(int value)
         {0,    nullptr}  // end marker
     };
 
-    litehtml::string result;
+    std::string result;
     for(const romandata_t* current = romandata; current->value > 0; ++current)
     {
         while(value >= current->value)

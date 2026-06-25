@@ -1,5 +1,5 @@
-#ifndef LH_TABLE_H
-#define LH_TABLE_H
+#ifndef LITEHTML_TABLE_H
+#define LITEHTML_TABLE_H
 
 #include <vector>
 #include <memory>
@@ -200,24 +200,17 @@ namespace litehtml
         using rows = std::vector<std::vector<table_cell>>;
 
       private:
-        int                                       m_rows_count;
-        int                                       m_cols_count;
-        rows                                      m_cells;
-        table_column::vector                      m_columns;
-        table_row::vector                         m_rows;
+        int                  m_rows_count = 0;
+        int                  m_cols_count = 0;
+        rows                 m_cells;
+        table_column::vector m_columns;
+        table_row::vector    m_rows;
+        pixel_t              m_top_captions_height    = 0_px;
+        pixel_t              m_bottom_captions_height = 0_px;
+
         std::vector<std::shared_ptr<render_item>> m_captions;
-        pixel_t                                   m_top_captions_height;
-        pixel_t                                   m_bottom_captions_height;
 
       public:
-        table_grid() :
-            m_rows_count(0),
-            m_cols_count(0),
-            m_top_captions_height(0),
-            m_bottom_captions_height(0)
-        {
-        }
-
         void          clear();
         void          begin_row(const std::shared_ptr<render_item>& row);
         void          add_cell(const std::shared_ptr<render_item>& el);
@@ -274,4 +267,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_TABLE_H
+#endif // LITEHTML_TABLE_H

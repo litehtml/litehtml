@@ -20,7 +20,7 @@ void litehtml::el_text::get_content_size(size& sz, pixel_t /*max_width*/)
     sz = m_size;
 }
 
-void litehtml::el_text::get_text(string& text) const
+void litehtml::el_text::get_text(std::string& text) const
 {
     text += m_text;
 }
@@ -134,12 +134,12 @@ void litehtml::el_text::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position*
     }
 }
 
-litehtml::string litehtml::el_text::dump_get_name()
+std::string litehtml::el_text::dump_get_name()
 {
     return "text: \"" + get_escaped_string(m_text) + "\"";
 }
 
-std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::el_text::dump_get_attrs()
+std::vector<std::tuple<std::string, std::string>> litehtml::el_text::dump_get_attrs()
 {
     return {};
 }

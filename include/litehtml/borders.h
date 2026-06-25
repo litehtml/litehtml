@@ -1,7 +1,8 @@
-#ifndef LH_BORDERS_H
-#define LH_BORDERS_H
+#ifndef LITEHTML_BORDERS_H
+#define LITEHTML_BORDERS_H
 
 #include <algorithm>
+#include <string>
 
 #include "css_length.h"
 #include "types.h"
@@ -19,7 +20,7 @@ namespace litehtml
         css_border(const css_border& val)            = default;
         css_border& operator=(const css_border& val) = default;
 
-        string to_string() const;
+        std::string to_string() const;
     };
 
     struct border
@@ -172,7 +173,7 @@ namespace litehtml
                    pixel_t(top.width.val()) != 0_px || pixel_t(bottom.width.val()) != 0_px;
         }
 
-        string to_string() const
+        std::string to_string() const
         {
             return "left: " + left.to_string() + ", top: " + top.to_string() + ", right: " + top.to_string() +
                    ", bottom: " + bottom.to_string();
@@ -216,4 +217,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_BORDERS_H
+#endif // LITEHTML_BORDERS_H

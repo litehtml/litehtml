@@ -6,13 +6,13 @@ namespace litehtml
 {
 
     // https://www.w3.org/TR/css-syntax-3/#css-filter-code-points
-    void filter_code_points(string& input)
+    void filter_code_points(std::string& input)
     {
         const char* xFFFD = "\xEF\xBF\xBD";
 
         size_t null_count = std::count(input.begin(), input.end(), 0);
 
-        string result(input.size() + 2 * null_count, 0);
+        std::string result(input.size() + 2 * null_count, 0);
 
         for(int i = 0, j = 0; i < static_cast<int>(input.size()); i++)
         {
@@ -43,10 +43,10 @@ namespace litehtml
     }
 
     static const size_t kLargeSize = 50;
-    static void         remove_whitespace_large(css_token_vector& tokens, keep_whitespace_fn keep_whitespace);
-    static void         remove_whitespace_small(css_token_vector& tokens, keep_whitespace_fn keep_whitespace);
+    static void         remove_whitespace_large(css_token_vector& tokens, const keep_whitespace_fn& keep_whitespace);
+    static void         remove_whitespace_small(css_token_vector& tokens, const keep_whitespace_fn& keep_whitespace);
 
-    void remove_whitespace_large(css_token_vector& tokens, keep_whitespace_fn keep_whitespace)
+    void remove_whitespace_large(css_token_vector& tokens, const keep_whitespace_fn& keep_whitespace)
     {
         std::vector<int> keep_idx;
         keep_idx.reserve(tokens.size());
@@ -78,19 +78,17 @@ namespace litehtml
         if(keep_idx.size() == tokens.size())
         {
             return;
-        } else
-        {
-            css_token_vector tmp;
-            tmp.reserve(keep_idx.size());
-            for(auto idx : keep_idx)
-            {
-                tmp.push_back(tokens[idx]);
-            }
-            tokens.swap(tmp);
         }
+        css_token_vector tmp;
+        tmp.reserve(keep_idx.size());
+        for(auto idx : keep_idx)
+        {
+            tmp.push_back(tokens[idx]);
+        }
+        tokens.swap(tmp);
     }
 
-    void remove_whitespace_small(css_token_vector& tokens, keep_whitespace_fn keep_whitespace)
+    void remove_whitespace_small(css_token_vector& tokens, const keep_whitespace_fn& keep_whitespace)
     {
         for(int i = 0; i < static_cast<int>(tokens.size()); i++)
         {
@@ -117,7 +115,7 @@ namespace litehtml
         }
     }
 
-    void remove_whitespace(css_token_vector& tokens, keep_whitespace_fn keep_whitespace)
+    void remove_whitespace(css_token_vector& tokens, const keep_whitespace_fn& keep_whitespace)
     {
         if(tokens.size() > kLargeSize)
         {
@@ -145,7 +143,8 @@ namespace litehtml
     }
 
     // https://www.w3.org/TR/css-syntax-3/#normalize-into-a-token-stream
-    template <> css_token_vector normalize(css_token_vector input, int options, keep_whitespace_fn keep_whitespace)
+    template <>
+    css_token_vector normalize(css_token_vector input, int options, const keep_whitespace_fn& keep_whitespace)
     {
         if(options & f_componentize)
         {
@@ -157,7 +156,7 @@ namespace litehtml
         }
         return input;
     }
-    template <> css_token_vector normalize(string input, int options, keep_whitespace_fn keep_whitespace)
+    template <> css_token_vector normalize(std::string input, int options, const keep_whitespace_fn& keep_whitespace)
     {
         filter_code_points(input);
         auto tokens = tokenize(input);
@@ -167,11 +166,11 @@ namespace litehtml
     // https://www.w3.org/TR/css-syntax-3/#parse-stylesheet
     // I don't create a stylesheet because its only purpose is to pass a list of rules to
     // parse_css_stylesheet. I just return the list of rules directly instead.
-    raw_rule::vector css_parser::parse_stylesheet(const string& input, bool top_level)
+    raw_rule::vector css_parser::parse_stylesheet(const std::string& input, bool top_level)
     {
         // 1. If input is a byte stream for stylesheet, decode bytes from input, and set input to the result.
         // not implemented, utf-8 is always assumed
-        string str = decode(input, encoding::utf_8); // decoding potentially broken UTF-8 into valid UTF-8
+        std::string str = decode(input, encoding::utf_8); // decoding potentially broken UTF-8 into valid UTF-8
 
         // 2. Normalize input, and set input to the result.
         auto tokens = normalize(str);
@@ -193,10 +192,8 @@ namespace litehtml
         if(m_index == static_cast<int>(m_tokens.size()))
         {
             return css_token_type(EOF);
-        } else
-        {
-            return m_tokens[m_index++];
         }
+        return m_tokens[m_index++];
     }
 
     css_token css_parser::peek_token()
@@ -275,7 +272,7 @@ namespace litehtml
     {
         // Create a new qualified rule with its prelude initially set to an empty list, and its value initially set to
         // nothing.
-        raw_rule::ptr rule = make_shared<raw_rule>(raw_rule::qualified);
+        raw_rule::ptr rule = std::make_shared<raw_rule>(raw_rule::qualified);
 
         while(true)
         {
@@ -312,7 +309,7 @@ namespace litehtml
         // Consume the next input token. Create a new at-rule with its name set to the value of the current input token,
         // its prelude initially set to an empty list, and its value initially set to nothing.
         css_token     token = next_token();
-        raw_rule::ptr rule  = make_shared<raw_rule>(raw_rule::at, token.str);
+        raw_rule::ptr rule  = std::make_shared<raw_rule>(raw_rule::at, token.str());
 
         while(true)
         {
@@ -365,17 +362,16 @@ namespace litehtml
             if(token.type == closing_bracket)
             {
                 return block;
-            } else if(token.type == EOF)
+            }
+            if(token.type == EOF)
             {
                 css_parse_error("eof in simple block");
                 return block;
-            } else
-            {
-                // Reconsume the current input token. Consume a component value and append it to the value of the block.
-                m_index--;
-                css_token val = consume_component_value();
-                block.value.push_back(val);
             }
+            // Reconsume the current input token. Consume a component value and append it to the value of the block.
+            m_index--;
+            css_token val = consume_component_value();
+            block.value.push_back(val);
         }
     }
 
@@ -395,7 +391,7 @@ namespace litehtml
 
             // Otherwise, if the current input token is a <function-token>, consume a function and return it.
         case FUNCTION:
-            return consume_function(token.name);
+            return consume_function(token.name());
 
             // Otherwise, return the current input token.
         default:
@@ -404,7 +400,7 @@ namespace litehtml
     }
 
     // https://www.w3.org/TR/css-syntax-3/#consume-function
-    css_token css_parser::consume_function(const string& name)
+    css_token css_parser::consume_function(const std::string& name)
     {
         // Create a function with its name equal to the value of the current input token and with its value initially
         // set to an empty list.
@@ -455,7 +451,7 @@ namespace litehtml
         // Consume the next input token. Create a new declaration with its name set to the value of
         // the current input token and its value initially set to an empty list.
         css_token       token = next_token();
-        raw_declaration decl  = {token.name, {}};
+        raw_declaration decl  = {token.name(), {}};
         auto&           value = decl.value;
 
         // 1. While the next input token is a <whitespace-token>, consume the next input token.
@@ -585,9 +581,9 @@ namespace litehtml
 
     // https://www.w3.org/TR/css-syntax-3/#parse-comma-separated-list-of-component-values
     // Note: result is never empty. If input is empty result is {{}}.
-    vector<css_token_vector> parse_comma_separated_list(const css_token_vector& tokens)
+    std::vector<css_token_vector> parse_comma_separated_list(const css_token_vector& tokens)
     {
-        vector<css_token_vector> result;
+        std::vector<css_token_vector> result;
 
         css_token_vector list;
         for(auto& tok : tokens)
@@ -618,7 +614,8 @@ namespace litehtml
             if(is_one_of(tok.type, BAD_STRING, BAD_URL, ')', ']', '}'))
             {
                 return false;
-            } else if(tok.is_component_value() && !is_any_value(tok.value))
+            }
+            if(tok.is_component_value() && !is_any_value(tok.value))
             {
                 return false;
             }

@@ -1,5 +1,5 @@
-#ifndef LH_BACKGROUND_H
-#define LH_BACKGROUND_H
+#ifndef LITEHTML_BACKGROUND_H
+#define LITEHTML_BACKGROUND_H
 
 #include "types.h"
 #include "borders.h"
@@ -31,15 +31,15 @@ namespace litehtml
         class image
         {
           public:
-            string url;
-            string base_url;
+            std::string url;
+            std::string base_url;
         };
 
         struct color_point
         {
-            float           offset;
-            web_color       color;
-            optional<float> hint;
+            float                offset;
+            web_color            color;
+            std::optional<float> hint;
             color_point() :
                 offset(0.0)
             {
@@ -60,12 +60,12 @@ namespace litehtml
         class gradient_base
         {
           public:
-            vector<color_point> color_points;
-            color_space_t       color_space       = color_space_none;
-            hue_interpolation_t hue_interpolation = hue_interpolation_none;
+            std::vector<color_point> color_points;
+            color_space_t            color_space       = color_space_none;
+            hue_interpolation_t      hue_interpolation = hue_interpolation_none;
 
             void color_points_transparent_fix();
-            bool prepare_color_points(float len, string_id grad_type, const vector<gradient::color_stop>& colors);
+            bool prepare_color_points(float len, string_id grad_type, const std::vector<gradient::color_stop>& colors);
         };
 
         class linear_gradient : public gradient_base
@@ -105,16 +105,16 @@ namespace litehtml
             type_conic_gradient,
         };
 
-        vector<image> m_image;
-        string        m_baseurl;
-        web_color     m_color;
-        int_vector    m_attachment;
-        length_vector m_position_x;
-        length_vector m_position_y;
-        size_vector   m_size;
-        int_vector    m_repeat;
-        int_vector    m_clip;
-        int_vector    m_origin;
+        std::vector<image> m_image;
+        std::string        m_baseurl;
+        web_color          m_color;
+        int_vector         m_attachment;
+        length_vector      m_position_x;
+        length_vector      m_position_y;
+        size_vector        m_size;
+        int_vector         m_repeat;
+        int_vector         m_clip;
+        int_vector         m_origin;
 
         bool is_empty() const
         {
@@ -158,4 +158,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_BACKGROUND_H
+#endif // LITEHTML_BACKGROUND_H

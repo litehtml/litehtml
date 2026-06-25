@@ -253,7 +253,7 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
     double           get_dpi() override;
     int              get_screen_width() override;
     int              get_screen_height() override;
-    void             open_page(const litehtml::string& url, const litehtml::string& fragment);
+    void             open_page(const std::string& url, const std::string& fragment);
     void             update_cursor() override;
     void             redraw_boxes(const litehtml::position::vector& boxes) override;
     int              get_render_width() override;

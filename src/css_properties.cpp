@@ -247,8 +247,8 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     doc->cvt_units(m_css_offsets.bottom, m_font_metrics, 0_px);
 
     m_z_index = el->get_property<css_length>(_z_index_, false, _auto, offset(m_z_index));
-    m_content = el->get_property<string>(_content_, false, "", offset(m_content));
-    m_cursor  = el->get_property<string>(_cursor_, true, "auto", offset(m_cursor));
+    m_content = el->get_property<std::string>(_content_, false, "", offset(m_content));
+    m_cursor  = el->get_property<std::string>(_cursor_, true, "auto", offset(m_cursor));
 
     m_css_text_indent = el->get_property<css_length>(_text_indent_, true, 0, offset(m_css_text_indent));
     doc->cvt_units(m_css_text_indent, m_font_metrics, 0_px);
@@ -273,11 +273,11 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     m_list_style_position = static_cast<list_style_position>(
         el->get_property<int>(_list_style_position_, true, list_style_position_outside, offset(m_list_style_position)));
 
-    m_list_style_image = el->get_property<string>(_list_style_image_, true, "", offset(m_list_style_image));
+    m_list_style_image = el->get_property<std::string>(_list_style_image_, true, "", offset(m_list_style_image));
     if(!m_list_style_image.empty())
     {
         m_list_style_image_baseurl =
-            el->get_property<string>(_list_style_image_baseurl_, true, "", offset(m_list_style_image_baseurl));
+            el->get_property<std::string>(_list_style_image_baseurl_, true, "", offset(m_list_style_image_baseurl));
         doc->container()->load_image(m_list_style_image.c_str(), m_list_style_image_baseurl.c_str(), true);
     }
 
@@ -399,8 +399,8 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
     m_font_size = static_cast<float>(font_size);
 
     // initialize font
-    m_font_family =
-        el->get_property<string>(_font_family_, true, doc->container()->get_default_font_name(), offset(m_font_family));
+    m_font_family = el->get_property<std::string>(_font_family_, true, doc->container()->get_default_font_name(),
+                                                  offset(m_font_family));
     m_font_weight = el->get_property<css_length>(_font_weight_, true, css_length::predef_value(font_weight_normal),
                                                  offset(m_font_weight));
     m_font_style =
@@ -435,7 +435,8 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
     }
 
     // text-emphasis
-    m_text_emphasis_style    = el->get_property<string>(_text_emphasis_style_, true, "", offset(m_text_emphasis_style));
+    m_text_emphasis_style =
+        el->get_property<std::string>(_text_emphasis_style_, true, "", offset(m_text_emphasis_style));
     m_text_emphasis_position = el->get_property<int>(_text_emphasis_position_, true, text_emphasis_position_over,
                                                      offset(m_text_emphasis_position));
     m_text_emphasis_color =
@@ -547,8 +548,8 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
     m_bg.m_origin =
         el->get_property<int_vector>(_background_origin_, false, {background_box_padding}, offset(m_bg.m_origin));
 
-    m_bg.m_image   = el->get_property<vector<image>>(_background_image_, false, {{}}, offset(m_bg.m_image));
-    m_bg.m_baseurl = el->get_property<string>(_background_image_baseurl_, false, "", offset(m_bg.m_baseurl));
+    m_bg.m_image   = el->get_property<std::vector<image>>(_background_image_, false, {image()}, offset(m_bg.m_image));
+    m_bg.m_baseurl = el->get_property<std::string>(_background_image_baseurl_, false, "", offset(m_bg.m_baseurl));
 
     for(auto& image : m_bg.m_image)
     {
@@ -642,9 +643,9 @@ void litehtml::css_properties::snap_border_width(css_length& width, const std::s
     width.set_value(px.value(), css_units_px);
 }
 
-std::vector<std::tuple<litehtml::string, litehtml::string>> litehtml::css_properties::dump_get_attrs()
+std::vector<std::tuple<std::string, std::string>> litehtml::css_properties::dump_get_attrs()
 {
-    std::vector<std::tuple<string, string>> ret;
+    std::vector<std::tuple<std::string, std::string>> ret;
 
     ret.emplace_back("display", css_values(style_display_strings).value_by_index(m_display));
     ret.emplace_back("el_position", css_values(element_position_strings).value_by_index(m_el_position));

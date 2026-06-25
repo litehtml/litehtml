@@ -27,10 +27,10 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef LITEHTML_URL_H__
-#define LITEHTML_URL_H__
+#ifndef LITEHTML_URL_H
+#define LITEHTML_URL_H
 
-#include "types.h"
+#include <string>
 
 // https://datatracker.ietf.org/doc/html/rfc3986
 
@@ -42,17 +42,17 @@ namespace litehtml
       public:
         url() = default;
 
-        explicit url(const string& str);
+        explicit url(const std::string& str);
 
-        url(const string& scheme, const string& authority, const string& path, const string& query,
-            const string& fragment);
+        url(const std::string& scheme, const std::string& authority, const std::string& path, const std::string& query,
+            const std::string& fragment);
 
-        const string& str() const
+        const std::string& str() const
         {
             return str_;
         }
 
-        const string& scheme() const
+        const std::string& scheme() const
         {
             return scheme_;
         }
@@ -62,7 +62,7 @@ namespace litehtml
             return !scheme_.empty();
         }
 
-        const string& authority() const
+        const std::string& authority() const
         {
             return authority_;
         }
@@ -72,7 +72,7 @@ namespace litehtml
             return !authority_.empty();
         }
 
-        const string& path() const
+        const std::string& path() const
         {
             return path_;
         }
@@ -82,7 +82,7 @@ namespace litehtml
             return !path_.empty();
         }
 
-        const string& query() const
+        const std::string& query() const
         {
             return query_;
         }
@@ -92,7 +92,7 @@ namespace litehtml
             return !query_.empty();
         }
 
-        const string& fragment() const
+        const std::string& fragment() const
         {
             return fragment_;
         }
@@ -102,11 +102,11 @@ namespace litehtml
             return !fragment_.empty();
         }
 
-        static string encode(const string& str);
-        static string decode(const string& str);
+        static std::string encode(const std::string& str);
+        static std::string decode(const std::string& str);
 
       protected:
-        string str_;
+        std::string str_;
 
         // Assume URLs are relative by default.  See RFC 3986 Section 4.3 for
         // information on which URLs are considered relative and which URLs are
@@ -116,15 +116,15 @@ namespace litehtml
 
         bool absolute_ = false;
 
-        string scheme_;
+        std::string scheme_;
 
-        string authority_;
+        std::string authority_;
 
-        string path_;
+        std::string path_;
 
-        string query_;
+        std::string query_;
 
-        string fragment_;
+        std::string fragment_;
     };
 
     // Returns a URL that is resolved from the reference URL that might be
@@ -136,4 +136,4 @@ namespace litehtml
 
 } // namespace litehtml
 
-#endif // LITEHTML_URL_H__
+#endif // LITEHTML_URL_H

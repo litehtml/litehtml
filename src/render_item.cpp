@@ -6,8 +6,7 @@
 #include <typeinfo>
 
 litehtml::render_item::render_item(std::shared_ptr<element> _src_el) :
-    m_element(std::move(_src_el)),
-    m_skip(false)
+    m_element(std::move(_src_el))
 {
     document::ptr doc = src_el()->get_document();
     auto          fm  = css().get_font_metrics();
@@ -1356,7 +1355,7 @@ void litehtml::render_item::get_rendering_boxes(const std::function<void(const p
 
 void litehtml::render_item::dump(litehtml::dumper& cout)
 {
-    cout.begin_node(src_el()->dump_get_name() + "{" + string(typeid(*this).name()) + "}");
+    cout.begin_node(src_el()->dump_get_name() + "{" + std::string(typeid(*this).name()) + "}");
 
     auto attrs = src_el()->dump_get_attrs();
     if(!attrs.empty())
