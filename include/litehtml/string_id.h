@@ -1,5 +1,5 @@
-#ifndef LH_STRING_ID_H
-#define LH_STRING_ID_H
+#ifndef LITEHTML_STRING_ID_H
+#define LITEHTML_STRING_ID_H
 
 #include <string>
 
@@ -114,4 +114,4 @@ namespace litehtml
 
 } // namespace litehtml
 
-#endif // LH_STRING_ID_H
+#endif // LITEHTML_STRING_ID_H

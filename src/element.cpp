@@ -55,23 +55,15 @@ namespace litehtml
 
     bool element::is_inline() const
     {
-        if(css().get_display() == display_inline || css().get_display() == display_inline_table ||
-           css().get_display() == display_inline_block || css().get_display() == display_inline_text ||
-           css().get_display() == display_inline_flex)
-        {
-            return true;
-        }
-        return false;
+        return css().get_display() == display_inline || css().get_display() == display_inline_table ||
+               css().get_display() == display_inline_block || css().get_display() == display_inline_text ||
+               css().get_display() == display_inline_flex;
     }
 
     bool element::is_inline_box() const
     {
-        if(css().get_display() == display_inline_table || css().get_display() == display_inline_block ||
-           css().get_display() == display_inline_flex)
-        {
-            return true;
-        }
-        return false;
+        return css().get_display() == display_inline_table || css().get_display() == display_inline_block ||
+               css().get_display() == display_inline_flex;
     }
 
     bool element::is_ancestor(const ptr& el) const
@@ -81,11 +73,7 @@ namespace litehtml
         {
             el_parent = el_parent->parent();
         }
-        if(el_parent)
-        {
-            return true;
-        }
-        return false;
+        return static_cast<bool>(el_parent);
     }
 
     bool element::is_table_skip() const
@@ -93,12 +81,12 @@ namespace litehtml
         return is_space() || is_comment() || css().get_display() == display_none;
     }
 
-    string element::dump_get_name()
+    std::string element::dump_get_name()
     {
         return "element";
     }
 
-    std::vector<std::tuple<string, string>> element::dump_get_attrs()
+    std::vector<std::tuple<std::string, std::string>> element::dump_get_attrs()
     {
         return m_css.dump_get_attrs();
     }
@@ -284,7 +272,7 @@ namespace litehtml
         return false;
     }
 
-    litehtml::string litehtml::element::get_counter_value(const string& counter_name)
+    std::string litehtml::element::get_counter_value(const std::string& counter_name)
     {
         std::map<string_id, int>::iterator i;
         if(find_counter(_id(counter_name), i))
@@ -294,13 +282,13 @@ namespace litehtml
         return "0";
     }
 
-    string litehtml::element::get_counters_value(const string_vector& parameters)
+    std::string litehtml::element::get_counters_value(const string_vector& parameters)
     {
-        string result;
+        std::string result;
         if(parameters.size() >= 2)
         {
             const string_id counter_name_id = _id(parameters[0]);
-            string          delims          = parameters[1];
+            std::string     delims          = parameters[1];
             litehtml::trim(delims, "\"'");
 
             string_vector values;
@@ -329,8 +317,7 @@ namespace litehtml
         return result;
     }
 
-    bool litehtml::element::find_counter(const string_id&                    counter_name_id,
-                                         std::map<string_id, int>::iterator& map_iterator)
+    bool litehtml::element::find_counter(string_id counter_name_id, std::map<string_id, int>::iterator& map_iterator)
     {
         element::ptr current = shared_from_this();
 
@@ -376,14 +363,14 @@ namespace litehtml
         return siblings;
     }
 
-    void litehtml::element::parse_counter_tokens(const string_vector& tokens, const int default_value,
-                                                 std::function<void(const string_id&, const int)> handler) const
+    void litehtml::element::parse_counter_tokens(const string_vector& tokens, int default_value,
+                                                 const std::function<void(string_id, int)>& handler) const
     {
         int pos = 0;
         while(pos < static_cast<int>(tokens.size()))
         {
-            const string& name  = tokens[pos];
-            int           value = default_value;
+            const std::string& name  = tokens[pos];
+            int                value = default_value;
             if(pos < static_cast<int>(tokens.size()) - 1 && litehtml::is_number(tokens[pos + 1], false))
             {
                 value  = atoi(tokens[pos + 1].c_str());
@@ -396,7 +383,7 @@ namespace litehtml
         }
     }
 
-    void litehtml::element::increment_counter(const string_id& counter_name_id, const int increment)
+    void litehtml::element::increment_counter(const string_id& counter_name_id, int increment)
     {
         std::map<string_id, int>::iterator i;
         if(find_counter(counter_name_id, i))
@@ -409,7 +396,7 @@ namespace litehtml
         }
     }
 
-    void litehtml::element::reset_counter(const string_id& counter_name_id, const int value)
+    void litehtml::element::reset_counter(const string_id& counter_name_id, int value)
     {
         m_counter_values[counter_name_id] = value;
     }
@@ -462,9 +449,9 @@ namespace litehtml
     void          element::add_style(const style& /*style*/) LITEHTML_EMPTY_FUNC;
     void          element::select_all(const css_selector& /*selector*/, elements_list& /*res*/) LITEHTML_EMPTY_FUNC;
     elements_list element::select_all(const css_selector& /*selector*/) LITEHTML_RETURN_FUNC(elements_list());
-    elements_list element::select_all(const string& /*selector*/) LITEHTML_RETURN_FUNC(elements_list());
+    elements_list element::select_all(const std::string& /*selector*/) LITEHTML_RETURN_FUNC(elements_list());
     element::ptr  element::select_one(const css_selector& /*selector*/) LITEHTML_RETURN_FUNC(nullptr);
-    element::ptr  element::select_one(const string& /*selector*/) LITEHTML_RETURN_FUNC(nullptr);
+    element::ptr  element::select_one(const std::string& /*selector*/) LITEHTML_RETURN_FUNC(nullptr);
     element::ptr  element::find_adjacent_sibling(const element::ptr& /*el*/, const css_selector& /*selector*/,
                                                  bool /*apply_pseudo*/ /*= true*/, bool* /*is_pseudo*/ /*= 0*/)
         LITEHTML_RETURN_FUNC(nullptr);
@@ -509,11 +496,11 @@ namespace litehtml
                        const std::shared_ptr<render_item>& /*ri*/) LITEHTML_EMPTY_FUNC;
     void element::draw_background(uint_ptr /*hdc*/, pixel_t /*x*/, pixel_t /*y*/, const position* /*clip*/,
                                   const std::shared_ptr<render_item>& /*ri*/) LITEHTML_EMPTY_FUNC;
-    void element::get_text(string& /*text*/) const LITEHTML_EMPTY_FUNC;
+    void element::get_text(std::string& /*text*/) const LITEHTML_EMPTY_FUNC;
     void element::parse_attributes() LITEHTML_EMPTY_FUNC;
     int  element::select(const css_selector::vector& /*selector_list*/, bool /*apply_pseudo*/)
         LITEHTML_RETURN_FUNC(select_no_match);
-    int element::select(const string& /*selector*/) LITEHTML_RETURN_FUNC(select_no_match);
+    int element::select(const std::string& /*selector*/) LITEHTML_RETURN_FUNC(select_no_match);
     int element::select(const css_selector& /*selector*/, bool /*apply_pseudo*/) LITEHTML_RETURN_FUNC(select_no_match);
     int element::select(const css_element_selector& /*selector*/, bool /*apply_pseudo*/)
         LITEHTML_RETURN_FUNC(select_no_match);

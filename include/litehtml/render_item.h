@@ -1,5 +1,5 @@
-#ifndef LH_RENDER_ITEM_H
-#define LH_RENDER_ITEM_H
+#ifndef LITEHTML_RENDER_ITEM_H
+#define LITEHTML_RENDER_ITEM_H
 
 #include <memory>
 #include <list>
@@ -26,7 +26,7 @@ namespace litehtml
         margins                                   m_padding;
         margins                                   m_borders;
         position                                  m_pos;
-        bool                                      m_skip;
+        bool                                      m_skip = false;
         std::vector<std::shared_ptr<render_item>> m_positioned;
         std::shared_ptr<scroll_view>              m_scroll_view;
 
@@ -413,18 +413,14 @@ namespace litehtml
 
         bool is_visible() const
         {
-            return !(m_skip || src_el()->css().get_display() == display_none ||
-                     src_el()->css().get_visibility() != visibility_visible);
+            return !m_skip && src_el()->css().get_display() != display_none &&
+                   src_el()->css().get_visibility() == visibility_visible;
         }
 
         bool is_flex_item() const
         {
             auto par = parent();
-            if(par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex))
-            {
-                return true;
-            }
-            return false;
+            return par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex);
         }
 
         rendered_width render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
@@ -510,4 +506,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_RENDER_ITEM_H
+#endif // LITEHTML_RENDER_ITEM_H

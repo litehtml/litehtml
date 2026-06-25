@@ -403,7 +403,6 @@ namespace litehtml
         {
             ret.x = static_cast<float>(box.left());
             ret.y = static_cast<float>(box.bottom());
-            dist  = next_dist;
         }
 
         ret.x -= center.x;

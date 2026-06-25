@@ -1,5 +1,5 @@
-#ifndef LH_EL_LINK_H
-#define LH_EL_LINK_H
+#ifndef LITEHTML_EL_LINK_H
+#define LITEHTML_EL_LINK_H
 
 #include "html_tag.h"
 
@@ -15,4 +15,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_EL_LINK_H
+#endif // LITEHTML_EL_LINK_H

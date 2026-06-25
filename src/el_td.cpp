@@ -4,7 +4,7 @@
 namespace litehtml
 {
 
-    el_td::el_td(const shared_ptr<document>& doc) :
+    el_td::el_td(const std::shared_ptr<document>& doc) :
         html_tag(doc)
     {
     }
@@ -29,9 +29,9 @@ namespace litehtml
         str = get_attr("background");
         if(str)
         {
-            string url  = "url('";
-            url        += str;
-            url        += "')";
+            std::string url  = "url('";
+            url             += str;
+            url             += "')";
             m_style.add_property(_background_image_, url);
         }
 

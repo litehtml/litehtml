@@ -31,9 +31,9 @@ class windows_container : public container_cairo
                                    litehtml::font_metrics* fm) override;
     void               delete_font(litehtml::uint_ptr hFont) override;
     litehtml::pixel_t  text_width(const char* text, litehtml::uint_ptr hFont) override;
-    void draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color,
-                   const litehtml::position& pos) override;
-    litehtml::string resolve_color(const litehtml::string& color) const override;
+    void        draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color,
+                          const litehtml::position& pos) override;
+    std::string resolve_color(const std::string& color) const override;
 
     cairo_surface_t* get_image(const std::string& url) override;
     double           get_screen_dpi() const override;

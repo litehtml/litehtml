@@ -2,11 +2,11 @@
 #define LITEHTML_CSS_PROPERTIES_H
 
 #include "string_id.h"
-#include "types.h"
-#include "css_margins.h"
-#include "borders.h"
-#include "css_offsets.h"
 #include "background.h"
+#include "borders.h"
+#include "css_margins.h"
+#include "css_offsets.h"
+#include "types.h"
 
 namespace litehtml
 {
@@ -59,26 +59,26 @@ namespace litehtml
         css_line_height_t     m_line_height{{}, 0_px};
         list_style_type       m_list_style_type     = list_style_type_none;
         list_style_position   m_list_style_position = list_style_position_outside;
-        string                m_list_style_image;
-        string                m_list_style_image_baseurl;
+        std::string           m_list_style_image;
+        std::string           m_list_style_image_baseurl;
         background            m_bg;
         uint_ptr              m_font      = 0;
         css_length            m_font_size = 0;
-        string                m_font_family;
+        std::string           m_font_family;
         css_length            m_font_weight;
         font_style            m_font_style;
         int                   m_text_decoration_line  = text_decoration_line_none;
         text_decoration_style m_text_decoration_style = text_decoration_style_solid;
         css_length            m_text_decoration_thickness;
         web_color             m_text_decoration_color;
-        string                m_text_emphasis_style;
+        std::string           m_text_emphasis_style;
         web_color             m_text_emphasis_color;
         int                   m_text_emphasis_position = 0;
         font_metrics          m_font_metrics;
         text_transform        m_text_transform = text_transform_none;
         web_color             m_color;
-        string                m_cursor;
-        string                m_content;
+        std::string           m_cursor;
+        std::string           m_content;
         border_collapse       m_border_collapse = border_collapse_separate;
         css_length            m_css_border_spacing_x;
         css_length            m_css_border_spacing_y;
@@ -107,7 +107,7 @@ namespace litehtml
       public:
         void compute(const html_tag* el, const std::shared_ptr<document>& doc);
 
-        std::vector<std::tuple<string, string>> dump_get_attrs();
+        std::vector<std::tuple<std::string, std::string>> dump_get_attrs();
 
         element_position get_position() const;
         void             set_position(element_position mElPosition);
@@ -187,11 +187,11 @@ namespace litehtml
         list_style_position get_list_style_position() const;
         void                set_list_style_position(list_style_position mListStylePosition);
 
-        const string& get_list_style_image() const;
-        void          set_list_style_image(const string& url);
+        const std::string& get_list_style_image() const;
+        void               set_list_style_image(const std::string& url);
 
-        const string& get_list_style_image_baseurl() const;
-        void          set_list_style_image_baseurl(const string& url);
+        const std::string& get_list_style_image_baseurl() const;
+        void               set_list_style_image_baseurl(const std::string& url);
 
         const background& get_bg() const;
         void              set_bg(const background& mBg);
@@ -211,11 +211,11 @@ namespace litehtml
         web_color get_color() const;
         void      set_color(web_color color);
 
-        const string& get_cursor() const;
-        void          set_cursor(const string& cursor);
+        const std::string& get_cursor() const;
+        void               set_cursor(const std::string& cursor);
 
-        const string& get_content() const;
-        void          set_content(const string& content);
+        const std::string& get_content() const;
+        void               set_content(const std::string& content);
 
         border_collapse get_border_collapse() const;
         void            set_border_collapse(border_collapse mBorderCollapse);
@@ -247,9 +247,9 @@ namespace litehtml
         const css_length&     get_text_decoration_thickness() const;
         const web_color&      get_text_decoration_color() const;
 
-        string    get_text_emphasis_style() const;
-        web_color get_text_emphasis_color() const;
-        int       get_text_emphasis_position() const;
+        const std::string& get_text_emphasis_style() const;
+        web_color          get_text_emphasis_color() const;
+        int                get_text_emphasis_position() const;
     };
 
     inline element_position css_properties::get_position() const
@@ -512,20 +512,20 @@ namespace litehtml
         m_list_style_position = mListStylePosition;
     }
 
-    inline const string& css_properties::get_list_style_image() const
+    inline const std::string& css_properties::get_list_style_image() const
     {
         return m_list_style_image;
     }
-    inline void css_properties::set_list_style_image(const string& url)
+    inline void css_properties::set_list_style_image(const std::string& url)
     {
         m_list_style_image = url;
     }
 
-    inline const string& css_properties::get_list_style_image_baseurl() const
+    inline const std::string& css_properties::get_list_style_image_baseurl() const
     {
         return m_list_style_image_baseurl;
     }
-    inline void css_properties::set_list_style_image_baseurl(const string& url)
+    inline void css_properties::set_list_style_image_baseurl(const std::string& url)
     {
         m_list_style_image_baseurl = url;
     }
@@ -589,20 +589,20 @@ namespace litehtml
         m_color = color;
     }
 
-    inline const string& css_properties::get_cursor() const
+    inline const std::string& css_properties::get_cursor() const
     {
         return m_cursor;
     }
-    inline void css_properties::set_cursor(const string& cursor)
+    inline void css_properties::set_cursor(const std::string& cursor)
     {
         m_cursor = cursor;
     }
 
-    inline const string& css_properties::get_content() const
+    inline const std::string& css_properties::get_content() const
     {
         return m_content;
     }
-    inline void css_properties::set_content(const string& content)
+    inline void css_properties::set_content(const std::string& content)
     {
         m_content = content;
     }
@@ -721,7 +721,7 @@ namespace litehtml
         return m_text_decoration_color;
     }
 
-    inline string css_properties::get_text_emphasis_style() const
+    inline const std::string& css_properties::get_text_emphasis_style() const
     {
         return m_text_emphasis_style;
     }

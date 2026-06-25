@@ -348,7 +348,7 @@ void LiteHtmlView::load_image(const char* src, const char* baseurl, bool redraw_
     }
 }
 
-void LiteHtmlView::make_url(const char* url, const char* basepath, litehtml::string& out)
+void LiteHtmlView::make_url(const char* url, const char* basepath, std::string& out)
 {
     std::cout << "make_url" << std::endl;
     std::cout << "    url: " << url << std::endl;
@@ -476,7 +476,7 @@ void LiteHtmlView::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders&
     }
 }
 
-void LiteHtmlView::transform_text(litehtml::string& text, litehtml::text_transform tt)
+void LiteHtmlView::transform_text(std::string& text, litehtml::text_transform tt)
 {
     std::cout << "transform_text" << std::endl;
 }
@@ -491,8 +491,7 @@ void LiteHtmlView::del_clip()
     std::cout << "del_clip" << std::endl;
 }
 
-std::shared_ptr<litehtml::element> LiteHtmlView::create_element(const char*                                tag_name,
-                                                                const litehtml::string_map&                attributes,
+std::shared_ptr<litehtml::element> LiteHtmlView::create_element(const char* tag_name, const std::string& attributes,
                                                                 const std::shared_ptr<litehtml::document>& doc)
 {
     // std::cout << "create_element" << std::endl;
@@ -547,12 +546,12 @@ void LiteHtmlView::set_cursor(const char* cursor)
     std::cout << "set_cursor" << std::endl;
 }
 
-void LiteHtmlView::import_css(litehtml::string& s1, const litehtml::string& s2, litehtml::string& s3)
+void LiteHtmlView::import_css(std::string& s1, const std::string& s2, std::string& s3)
 {
     std::cout << "import_css" << std::endl;
 }
 
-void LiteHtmlView::get_language(litehtml::string& s1, litehtml::string& s2) const
+void LiteHtmlView::get_language(std::string& s1, std::string& s2) const
 {
     std::cout << "get_language" << std::endl;
 }

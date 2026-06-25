@@ -77,7 +77,7 @@ void litebrowser::web_page::set_cursor(const char* cursor)
     }
 }
 
-void litebrowser::web_page::import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl)
+void litebrowser::web_page::import_css(std::string& text, const std::string& url, std::string& baseurl)
 {
     std::string css_url;
     make_url(url.c_str(), baseurl.c_str(), css_url);
@@ -120,7 +120,7 @@ cairo_surface_t* litebrowser::web_page::get_image(const std::string& url)
     return m_images.get_image(url);
 }
 
-void litebrowser::web_page::show_fragment(const litehtml::string& fragment)
+void litebrowser::web_page::show_fragment(const std::string& fragment)
 {
     std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
     if(fragment.empty() || !m_html)
@@ -139,7 +139,7 @@ void litebrowser::web_page::show_fragment(const litehtml::string& fragment)
     }
 }
 
-void litebrowser::web_page::make_url(const char* url, const char* basepath, litehtml::string& out)
+void litebrowser::web_page::make_url(const char* url, const char* basepath, std::string& out)
 {
     if(!basepath || !basepath[0])
     {

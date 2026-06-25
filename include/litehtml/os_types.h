@@ -1,5 +1,5 @@
-#ifndef LH_OS_TYPES_H
-#define LH_OS_TYPES_H
+#ifndef LITEHTML_OS_TYPES_H
+#define LITEHTML_OS_TYPES_H
 
 #if defined(WIN32) || defined(_WIN32) || defined(WINCE)
 
@@ -13,4 +13,4 @@
 
 #endif
 
-#endif // LH_OS_TYPES_H
+#endif // LITEHTML_OS_TYPES_H

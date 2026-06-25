@@ -11,7 +11,7 @@ namespace litehtml
     bool eval_op(float x, short op, float value)
     {
         const float epsilon = 0.00001f;
-        if(abs(x - value) < epsilon)
+        if(std::abs(x - value) < epsilon)
         {
             if(is_one_of(op, '=', u'⩾', u'⩽'))
             {
@@ -72,9 +72,11 @@ namespace litehtml
             // example when both width and height are nonzero (aspect-ratio < 1/0) evaluates to true. But they behave
             // the same for 0/0, which is unexpected (0/0 is NaN, so any comparisons should evaluate to false). 0/1 is
             // also degenerate according to the standard.
-            return feat.height != 0_px ? compare(float(feat.width) / feat.height.value()) : false;
+            return feat.height != 0_px ? compare(static_cast<float>(feat.width) / feat.height.value()) : false;
         case _device_aspect_ratio_:
-            return feat.device_height != 0_px ? compare(float(feat.device_width) / feat.device_height.value()) : false;
+            return feat.device_height != 0_px
+                       ? compare(static_cast<float>(feat.device_width) / feat.device_height.value())
+                       : false;
         case _color_:
             return compare(feat.color);
         case _color_index_:
@@ -229,12 +231,12 @@ namespace litehtml
         return ret;
     }
 
-    bool parse_media_query(const css_token_vector& tokens, media_query& mquery, document::ptr doc);
+    bool parse_media_query(const css_token_vector& tokens, media_query& mquery, const std::shared_ptr<document>& doc);
 
     // https://drafts.csswg.org/mediaqueries-5/#typedef-media-query-list
-    media_query_list parse_media_query_list(const css_token_vector& _tokens, document::ptr doc)
+    media_query_list parse_media_query_list(const css_token_vector& _tokens, const std::shared_ptr<document>& doc)
     {
-        auto keep_whitespace = [](auto left_token, auto right_token) {
+        auto keep_whitespace = [](const auto& left_token, const auto& right_token) {
             return is_one_of(left_token.ch, '<', '>') && right_token.ch == '=';
         };
         css_token_vector tokens = normalize(_tokens, f_componentize | f_remove_whitespace, keep_whitespace);
@@ -256,17 +258,17 @@ namespace litehtml
         return result;
     }
 
-    media_query_list parse_media_query_list(const string& str, shared_ptr<document> doc)
+    media_query_list parse_media_query_list(const std::string& str, const std::shared_ptr<document>& doc)
     {
         auto tokens = normalize(str);
         return parse_media_query_list(tokens, doc);
     }
 
     bool parse_media_condition(const css_token_vector& tokens, int& index, bool or_allowed, media_condition& condition,
-                               document::ptr doc);
+                               const std::shared_ptr<document>& doc);
 
     // <media-query> = <media-condition> | [ not | only ]? <media-type> [ and <media-condition-without-or> ]?
-    bool parse_media_query(const css_token_vector& tokens, media_query& mquery, document::ptr doc)
+    bool parse_media_query(const css_token_vector& tokens, media_query& mquery, const std::shared_ptr<document>& doc)
     {
         if(tokens.empty())
         {
@@ -284,8 +286,8 @@ namespace litehtml
             return true;
         }
 
-        string ident = tokens[0].ident();
-        bool   _not  = false;
+        std::string ident = tokens[0].ident();
+        bool        _not  = false;
         if(ident == "not")
         {
             index++, _not = true;
@@ -322,13 +324,14 @@ namespace litehtml
         return true;
     }
 
-    bool parse_media_in_parens(const css_token& token, media_in_parens& media_in_parens, document::ptr doc);
+    bool parse_media_in_parens(const css_token& token, media_in_parens& media_in_parens,
+                               const std::shared_ptr<document>& doc);
 
     // <media-condition>            = <media-not> | <media-in-parens> [ <media-and>* | <media-or>* ]
     // <media-condition-without-or> = <media-not> | <media-in-parens> <media-and>*
     // <media-not> = not <media-in-parens>
     bool parse_media_condition(const css_token_vector& tokens, int& index, bool _or_allowed, media_condition& condition,
-                               document::ptr doc)
+                               const std::shared_ptr<document>& doc)
     {
         media_in_parens media_in_parens;
         if(at(tokens, index).ident() == "not")
@@ -354,7 +357,7 @@ namespace litehtml
         bool and_allowed = true;
         while(true)
         {
-            string ident = at(tokens, index).ident();
+            std::string ident = at(tokens, index).ident();
             if(ident == "and" && and_allowed)
             {
                 condition.op = _and_, or_allowed = false;
@@ -376,12 +379,14 @@ namespace litehtml
         }
     }
 
-    bool parse_media_feature(const css_token& token, media_feature& media_feature, document::ptr doc);
+    bool parse_media_feature(const css_token& token, media_feature& media_feature,
+                             const std::shared_ptr<document>& doc);
 
     // https://drafts.csswg.org/mediaqueries-5/#typedef-media-in-parens
     // <media-in-parens> = ( <media-condition> ) | <media-feature> | <general-enclosed>
     // <general-enclosed> = [ <function-token> <any-value>? ) ] | [ ( <any-value>? ) ]
-    bool parse_media_in_parens(const css_token& token, media_in_parens& media_in_parens, document::ptr doc)
+    bool parse_media_in_parens(const css_token& token, media_in_parens& media_in_parens,
+                               const std::shared_ptr<document>& doc)
     {
         if(token.type == CV_FUNCTION)
         {
@@ -419,7 +424,8 @@ namespace litehtml
     }
 
     bool parse_mf_value(const css_token_vector& tokens, int& index, css_token val[2]);
-    bool parse_mf_range(const css_token_vector& tokens, media_feature& media_feature, document::ptr doc);
+    bool parse_mf_range(const css_token_vector& tokens, media_feature& media_feature,
+                        const std::shared_ptr<document>& doc);
 
     // https://drafts.csswg.org/mediaqueries/#mq-ranges
     // Every media feature defines its “type” as either “range” or “discrete” in its definition table.
@@ -434,18 +440,18 @@ namespace litehtml
 
     struct mf_info
     {
-        string_id         type       = empty_id; // range, discrete
-        string_id         value_type = empty_id; // length, ratio, resolution, integer, keyword
-        vector<string_id> keywords =
+        string_id              type       = empty_id; // range, discrete
+        string_id              value_type = empty_id; // length, ratio, resolution, integer, keyword
+        std::vector<string_id> keywords =
             {}; // default value is specified here to get rid of gcc warning "missing initializer for member"
 
-        operator bool()
+        operator bool() const
         {
             return type != empty_id;
         }
     };
 
-    std::map<string, mf_info> supported_media_features = {
+    std::map<std::string, mf_info> supported_media_features = {
         ////////////////////////////////////////////////
         // 4. Viewport/Page Dimensions Media Features
         ////////////////////////////////////////////////
@@ -495,7 +501,7 @@ namespace litehtml
         {"device-aspect-ratio", {_range_, _ratio_}                                },
     };
 
-    bool convert_units(mf_info mfi, css_token val[2], document::ptr doc)
+    bool convert_units(const mf_info& mfi, css_token val[2], const std::shared_ptr<document>& doc)
     {
         switch(mfi.value_type)
         {
@@ -528,7 +534,7 @@ namespace litehtml
             }
             if(val[0].type == DIMENSION)
             {
-                string         unit          = lowcase(val[0].unit);
+                std::string    unit          = lowcase(val[0].unit());
                 constexpr auto allowed_units = split_css_values<4>("dpi;dpcm;dppx;x"); // x == dppx
                 // The allowed range of <resolution> values always excludes negative values
                 if(css_values(allowed_units).has(unit) || val[0].n.number < 0)
@@ -548,7 +554,7 @@ namespace litehtml
                 return true;
             }
             // https://drafts.csswg.org/mediaqueries/#resolution
-            else if(val[0].ident() == "infinite")
+            if(val[0].ident() == "infinite")
             {
                 val[0] = css_token(NUMBER, INFINITY, css_number_number);
                 return true;
@@ -589,7 +595,7 @@ namespace litehtml
     }
 
     bool media_feature::verify_and_convert_units(string_id syntax, css_token val[2], css_token val2[2],
-                                                 document::ptr doc)
+                                                 const std::shared_ptr<document>& doc)
     {
         // https://drafts.csswg.org/mediaqueries/#mq-boolean-context
         if(syntax == _boolean_) // (name)
@@ -604,12 +610,13 @@ namespace litehtml
             value = mf_info.value_type == _keyword_ ? static_cast<float>(_none_) : 0;
             op    = u'≠';
             return true;
-        } else if(syntax == _plain_) // ({min-,max-,}name: value)
+        }
+        if(syntax == _plain_) // ({min-,max-,}name: value)
         {
             if(is_one_of(name.substr(0, 4), "min-", "max-"))
             {
-                string real_name = name.substr(4);
-                auto   mf_info   = at(supported_media_features, real_name);
+                std::string real_name = name.substr(4);
+                auto        mf_info   = at(supported_media_features, real_name);
                 if(!mf_info || mf_info.type == _discrete_)
                 {
                     return false;
@@ -622,50 +629,47 @@ namespace litehtml
                 op    = name.substr(0, 4) == "min-" ? u'⩾' : u'⩽';
                 name  = real_name;
                 return true;
-            } else
-            {
-                auto mf_info = at(supported_media_features, name);
-                if(!mf_info)
-                {
-                    return false;
-                }
-                if(!convert_units(mf_info, val, doc))
-                {
-                    return false;
-                }
-                value = val[0].n.number;
-                op    = '=';
-                return true;
             }
-        } else // range syntax
-        {
             auto mf_info = at(supported_media_features, name);
-            if(!mf_info || mf_info.type == _discrete_)
+            if(!mf_info)
             {
                 return false;
             }
-            // if (val)
+            if(!convert_units(mf_info, val, doc))
             {
-                if(!convert_units(mf_info, val, doc))
-                {
-                    return false;
-                }
-                value = val[0].n.number;
+                return false;
             }
-            if(val2)
-            {
-                if(!convert_units(mf_info, val2, doc))
-                {
-                    return false;
-                }
-                value2 = val2[0].n.number;
-            }
+            value = val[0].n.number;
+            op    = '=';
             return true;
+
+        } // range syntax
+        auto mf_info = at(supported_media_features, name);
+        if(!mf_info || mf_info.type == _discrete_)
+        {
+            return false;
         }
+        // if (val)
+        {
+            if(!convert_units(mf_info, val, doc))
+            {
+                return false;
+            }
+            value = val[0].n.number;
+        }
+        if(val2)
+        {
+            if(!convert_units(mf_info, val2, doc))
+            {
+                return false;
+            }
+            value2 = val2[0].n.number;
+        }
+        return true;
     }
 
     // <media-feature> = ( [ <mf-plain> | <mf-boolean> | <mf-range> ] )
-    bool parse_media_feature(const css_token& token, media_feature& result, document::ptr doc)
+    bool parse_media_feature(const css_token& token, media_feature& result, const std::shared_ptr<document>& doc)
     {
         if(token.type != ROUND_BLOCK || token.value.empty())
         {
@@ -760,16 +764,16 @@ namespace litehtml
     // <mf-gt> = '>' '='?
     // <mf-eq> = '='
     // <mf-comparison> = <mf-lt> | <mf-gt> | <mf-eq>
-    bool parse_mf_range(const css_token_vector& tokens, media_feature& result, document::ptr doc)
+    bool parse_mf_range(const css_token_vector& tokens, media_feature& result, const std::shared_ptr<document>& doc)
     {
         if(tokens.size() < 3)
         {
             return false;
         }
 
-        int    index;
-        string name;
-        auto   mf_name = [&]() {
+        int         index;
+        std::string name;
+        auto        mf_name = [&]() {
             if(at(tokens, index).type != IDENT)
             {
                 return false;

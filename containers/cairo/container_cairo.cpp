@@ -25,7 +25,7 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
 {
     if(!marker.image.empty())
     {
-        litehtml::string url;
+        std::string url;
         make_url(marker.image.c_str(), marker.baseurl, url);
 
         auto img = get_image(url);
@@ -74,7 +74,7 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
 
 void container_cairo::get_image_size(const char* src, const char* baseurl, litehtml::size& sz)
 {
-    litehtml::string url;
+    std::string url;
     make_url(src, baseurl, url);
 
     auto img = get_image(url);
@@ -309,7 +309,7 @@ void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtm
     cairo_restore(cr);
 }
 
-void container_cairo::make_url(const char* url, const char* /*basepath*/, litehtml::string& out)
+void container_cairo::make_url(const char* url, const char* /*basepath*/, std::string& out)
 {
     out = url;
 }
@@ -466,7 +466,7 @@ void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
     cairo_restore(cr);
 }
 
-void container_cairo::transform_text(litehtml::string& /*text*/, litehtml::text_transform /*tt*/) {}
+void container_cairo::transform_text(std::string& /*text*/, litehtml::text_transform /*tt*/) {}
 
 void container_cairo::set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius)
 {
@@ -660,7 +660,7 @@ void container_cairo::get_media_features(litehtml::media_features& media) const
     media.resolution    = 96;
 }
 
-void container_cairo::get_language(litehtml::string& language, litehtml::string& culture) const
+void container_cairo::get_language(std::string& language, std::string& culture) const
 {
     language = "en";
     culture  = "";

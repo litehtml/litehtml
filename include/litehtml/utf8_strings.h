@@ -1,21 +1,21 @@
-#ifndef LH_UTF8_STRINGS_H
-#define LH_UTF8_STRINGS_H
+#ifndef LITEHTML_UTF8_STRINGS_H
+#define LITEHTML_UTF8_STRINGS_H
 
-#include "types.h"
+#include <string>
 
 namespace litehtml
 {
     // converts UTF-32 ch to UTF-8 and appends it to str
-    void     append_char(string& str, char32_t ch);
-    char32_t read_utf8_char(const string& str, int& index);
-    void     prev_utf8_char(const string& str, int& index);
+    void     append_char(std::string& str, char32_t ch);
+    char32_t read_utf8_char(const std::string& str, int& index);
+    void     prev_utf8_char(const std::string& str, int& index);
 
     class utf8_to_utf32
     {
         std::u32string m_str;
 
       public:
-        utf8_to_utf32(const string& val);
+        utf8_to_utf32(const std::string& val);
         operator const char32_t*() const
         {
             return m_str.c_str();
@@ -24,7 +24,7 @@ namespace litehtml
 
     class utf32_to_utf8
     {
-        string m_str;
+        std::string m_str;
 
       public:
         utf32_to_utf8(const std::u32string& val);
@@ -42,4 +42,4 @@ namespace litehtml
 #define litehtml_to_utf32(str)   litehtml::utf8_to_utf32(str)
 } // namespace litehtml
 
-#endif // LH_UTF8_STRINGS_H
+#endif // LITEHTML_UTF8_STRINGS_H

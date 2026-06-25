@@ -13,7 +13,8 @@ namespace litehtml
     bool parse_radial_gradient_shape_size_position_interpolation(const css_token_vector& tokens, gradient& result);
     bool parse_conic_gradient_angle_position_interpolation(const css_token_vector& tokens, gradient& gradient);
     template <class T>
-    bool parse_color_stop_list(const vector<css_token_vector>& list, gradient& grad, document_container* container);
+    bool parse_color_stop_list(const std::vector<css_token_vector>& list, gradient& grad,
+                               document_container* container);
 
     ////////////////////////////////////////////////////////////////////////////////////////////
     // These combinators are currently used only in one place because the code is usually shorter without them.
@@ -21,7 +22,7 @@ namespace litehtml
     using parse_fn = std::function<bool(const css_token_vector& tokens, int& index)>;
 
     // a?
-    parse_fn opt(parse_fn a)
+    parse_fn opt(const parse_fn& a)
     {
         return [=](auto&... x) {
             a(x...);
@@ -30,7 +31,7 @@ namespace litehtml
     }
 
     // a b
-    parse_fn seq(parse_fn a, parse_fn b)
+    parse_fn seq(const parse_fn& a, const parse_fn& b)
     {
         return [=](auto& t, auto& i) {
             auto save   = i;
@@ -46,14 +47,15 @@ namespace litehtml
     // Not overloading operator|| because it is easier to get a bug: a || b || c does the wrong thing,
     // see the note at https://www.w3.org/TR/css-values-4/#component-combinators.
     // a || b
-    parse_fn oror(parse_fn a, parse_fn b)
+    parse_fn oror(const parse_fn& a, const parse_fn& b)
     {
         return [=](auto&... x) {
             if(a(x...))
             {
                 b(x...);
                 return true;
-            } else if(b(x...))
+            }
+            if(b(x...))
             {
                 a(x...);
                 return true;
@@ -65,7 +67,7 @@ namespace litehtml
     parse_fn operator""_x(const char* str, size_t len)
     {
         return [=](const css_token_vector& tokens, int& index) {
-            if(at(tokens, index).ident() == string(str, len))
+            if(at(tokens, index).ident() == std::string(str, len))
             {
                 index++;
                 return true;
@@ -95,7 +97,7 @@ namespace litehtml
             return false;
         }
 
-        auto type = _id(lowcase(token.name));
+        auto type = _id(lowcase(token.name()));
 
         if(!is_one_of(type, _linear_gradient_, _repeating_linear_gradient_, _radial_gradient_,
                       _repeating_radial_gradient_, _conic_gradient_, _repeating_conic_gradient_))
@@ -166,7 +168,7 @@ namespace litehtml
 
     // <color-hint> = <length-percentage> | <angle-percentage>
     template <class T> // T == css_length or float
-    bool parse_color_hint(const css_token_vector& tokens, vector<gradient::color_stop>& color_stops)
+    bool parse_color_hint(const css_token_vector& tokens, std::vector<gradient::color_stop>& color_stops)
     {
         T lenang;
         if(tokens.size() == 1 && parse_lenang(tokens[0], lenang))
@@ -180,7 +182,7 @@ namespace litehtml
     // <linear-color-stop> = <color> <length-percentage>{1,2}?
     // <angular-color-stop> = <color> <angle-percentage>{1,2}?
     template <class T> // T == css_length or float
-    bool parse_color_stop(const css_token_vector& tokens, vector<gradient::color_stop>& color_stops,
+    bool parse_color_stop(const css_token_vector& tokens, std::vector<gradient::color_stop>& color_stops,
                           document_container* container)
     {
         if(tokens.empty() || tokens.size() > 3)
@@ -198,7 +200,8 @@ namespace litehtml
         {
             color_stops.emplace_back(color);
             return true;
-        } else if(tokens.size() == 2) // <color> <length-angle-percentage>
+        }
+        if(tokens.size() == 2) // <color> <length-angle-percentage>
         {
             T lenang;
             if(parse_lenang(tokens[1], lenang))
@@ -221,7 +224,7 @@ namespace litehtml
 
     // <color-stop-list> = <color-stop> , [ <color-hint>? , <color-stop> ]#
     template <class T> // T == css_length or float
-    bool parse_color_stop_list(const vector<css_token_vector>& list, gradient& grad, document_container* container)
+    bool parse_color_stop_list(const std::vector<css_token_vector>& list, gradient& grad, document_container* container)
     {
         if(list.size() < 2) // at least two color-stops must be present
         {
@@ -301,8 +304,8 @@ namespace litehtml
             return false;
         }
 
-        string a = at(tokens, index + 1).ident();
-        string b = at(tokens, index + 2).ident();
+        std::string a = at(tokens, index + 1).ident();
+        std::string b = at(tokens, index + 2).ident();
 
         if(is_one_of(a, "left", "right", "top", "bottom"))
         {
@@ -327,25 +330,23 @@ namespace litehtml
                 }
                 index += 2;
                 return true;
-            } else
-            {
-                // fix order
-                if(is_one_of(a, "top", "bottom"))
-                {
-                    swap(a, b);
-                }
-
-                // check order
-                if(!is_one_of(a, "left", "right") || !is_one_of(b, "top", "bottom"))
-                {
-                    return false;
-                }
-
-                side   = a == "left" ? gradient_side_left : gradient_side_right;
-                side  |= b == "top" ? gradient_side_top : gradient_side_bottom;
-                index += 3;
-                return true;
             }
+            // fix order
+            if(is_one_of(a, "top", "bottom"))
+            {
+                swap(a, b);
+            }
+
+            // check order
+            if(!is_one_of(a, "left", "right") || !is_one_of(b, "top", "bottom"))
+            {
+                return false;
+            }
+
+            side   = a == "left" ? gradient_side_left : gradient_side_right;
+            side  |= b == "top" ? gradient_side_top : gradient_side_bottom;
+            index += 3;
+            return true;
         }
         return false;
     }
@@ -423,7 +424,7 @@ namespace litehtml
 
         if(tok.type == DIMENSION)
         {
-            switch(_id(lowcase(tok.unit)))
+            switch(_id(lowcase(tok.unit())))
             {
             case _deg_:
                 angle = tok.n.number;

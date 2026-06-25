@@ -1,5 +1,4 @@
 #include "render_item.h"
-#include "string_id.h"
 #include "types.h"
 #include <optional>
 #include "formatting_context.h"
@@ -30,6 +29,7 @@ void litehtml::formatting_context::add_float(const std::shared_ptr<render_item>&
                 if(fb.pos.right() > i->pos.right())
                 {
                     m_floats_left.insert(i, std::move(fb));
+                    fb       = {};
                     inserted = true;
                     break;
                 }
@@ -53,6 +53,7 @@ void litehtml::formatting_context::add_float(const std::shared_ptr<render_item>&
                 if(fb.pos.left() < i->pos.left())
                 {
                     m_floats_right.insert(i, std::move(fb));
+                    fb       = {};
                     inserted = true;
                     break;
                 }
@@ -208,15 +209,13 @@ litehtml::pixel_t litehtml::formatting_context::get_line_right(pixel_t y, pixel_
         if(m_cache_line_right.is_default)
         {
             return def_right - m_current_left;
-        } else
-        {
-            pixel_t w = std::min(m_cache_line_right.val, def_right) - m_current_left;
-            if(w < 0_px)
-            {
-                return 0_px;
-            }
-            return w;
         }
+        pixel_t w = std::min(m_cache_line_right.val, def_right) - m_current_left;
+        if(w < 0_px)
+        {
+            return 0_px;
+        }
+        return w;
     }
 
     pixel_t w                     = def_right;
@@ -361,7 +360,6 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
             next_line = true;
             pos_el.x  = m_current_left + el_pos.el_margins.left;
             pos_el.y  = max_left_pos->bottom();
-            left_side = false;
         } else
         {
             found             = false;
@@ -464,10 +462,9 @@ litehtml::formatting_context::new_position litehtml::formatting_context::place_t
         if(pos_el.left() < m_current_left && found)
         {
             // move to next line
-            right_side = false;
-            next_line  = true;
-            pos_el.x   = max_right - pos_el.width - el_pos.el_margins.left;
-            pos_el.y   = min_right_pos->bottom();
+            next_line = true;
+            pos_el.x  = max_right - pos_el.width - el_pos.el_margins.left;
+            pos_el.y  = min_right_pos->bottom();
         } else
         {
             found            = false;

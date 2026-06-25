@@ -21,8 +21,8 @@ void litehtml::el_link::parse_attributes()
         const char* href  = get_attr("href");
         if(href && href[0])
         {
-            string css_text;
-            string css_baseurl;
+            std::string css_text;
+            std::string css_baseurl;
             doc->container()->import_css(css_text, href, css_baseurl);
             if(!css_text.empty())
             {

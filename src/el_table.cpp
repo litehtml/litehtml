@@ -4,7 +4,7 @@
 namespace litehtml
 {
 
-    el_table::el_table(const shared_ptr<document>& doc) :
+    el_table::el_table(const std::shared_ptr<document>& doc) :
         html_tag(doc)
     {
     }

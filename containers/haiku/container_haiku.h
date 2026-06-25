@@ -47,8 +47,7 @@ class LiteHtmlView : public BView, public litehtml::document_container
     virtual void               draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders,
                                             const litehtml::position& draw_pos, bool root) override;
     virtual void               draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) override;
-    virtual std::shared_ptr<litehtml::element> create_element(const char*                                tag_name,
-                                                              const litehtml::string_map&                attributes,
+    virtual std::shared_ptr<litehtml::element> create_element(const char* tag_name, const std::string& attributes,
                                                               const std::shared_ptr<litehtml::document>& doc) override;
     virtual void                               get_media_features(litehtml::media_features& media) const override;
     // virtual void						get_language(litehtml::tstring& language, litehtml::tstring & culture) const
@@ -59,7 +58,7 @@ class LiteHtmlView : public BView, public litehtml::document_container
     virtual void draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
                                  const litehtml::web_color& color) override;
 
-    virtual void transform_text(litehtml::string& text, litehtml::text_transform tt) override;
+    virtual void transform_text(std::string& text, litehtml::text_transform tt) override;
     virtual void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
     virtual void del_clip() override;
 
@@ -69,8 +68,8 @@ class LiteHtmlView : public BView, public litehtml::document_container
     virtual void set_base_url(const char*) override;
     virtual void on_anchor_click(const char*, const litehtml::element::ptr&) override;
     virtual void set_cursor(const char*) override;
-    virtual void import_css(litehtml::string&, const litehtml::string&, litehtml::string&) override;
-    virtual void get_language(litehtml::string&, litehtml::string&) const override;
+    virtual void import_css(std::string&, const std::string&, std::string&) override;
+    virtual void get_language(std::string&, std::string&) const override;
     virtual void draw_linear_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
                                       const litehtml::background_layer::linear_gradient& gradient) override
     {
@@ -90,7 +89,7 @@ class LiteHtmlView : public BView, public litehtml::document_container
     virtual void GetPreferredSize(float* width, float* height) override;
 
   protected:
-    void         make_url(const char* url, const char* basepath, litehtml::string& out);
+    void         make_url(const char* url, const char* basepath, std::string& out);
     virtual void draw_image(litehtml::uint_ptr hdc, const char* src, const char* baseurl,
                             const litehtml::position& pos);
 

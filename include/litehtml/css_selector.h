@@ -1,10 +1,12 @@
-#ifndef LH_CSS_SELECTOR_H
-#define LH_CSS_SELECTOR_H
+#ifndef LITEHTML_CSS_SELECTOR_H
+#define LITEHTML_CSS_SELECTOR_H
+
+#include <utility>
 
 #include "string_id.h"
-#include "style.h"
-#include "media_query.h"
 #include "css_tokenizer.h"
+#include "media_query.h"
+#include "style.h"
 
 namespace litehtml
 {
@@ -17,12 +19,12 @@ namespace litehtml
         int c;
         int d;
 
-        explicit selector_specificity(int va = 0, int vb = 0, int vc = 0, int vd = 0)
+        explicit selector_specificity(int va = 0, int vb = 0, int vc = 0, int vd = 0) :
+            a(va),
+            b(vb),
+            c(vc),
+            d(vd)
         {
-            a = va;
-            b = vb;
-            c = vc;
-            d = vd;
         }
 
         void operator+=(const selector_specificity& val)
@@ -35,20 +37,12 @@ namespace litehtml
 
         bool operator==(const selector_specificity& val) const
         {
-            if(a == val.a && b == val.b && c == val.c && d == val.d)
-            {
-                return true;
-            }
-            return false;
+            return a == val.a && b == val.b && c == val.c && d == val.d;
         }
 
         bool operator!=(const selector_specificity& val) const
         {
-            if(a != val.a || b != val.b || c != val.c || d != val.d)
-            {
-                return true;
-            }
-            return false;
+            return a != val.a || b != val.b || c != val.c || d != val.d;
         }
 
         bool operator>(const selector_specificity& val) const
@@ -56,37 +50,36 @@ namespace litehtml
             if(a > val.a)
             {
                 return true;
-            } else if(a < val.a)
+            }
+            if(a < val.a)
             {
                 return false;
-            } else
-            {
-                if(b > val.b)
-                {
-                    return true;
-                } else if(b < val.b)
-                {
-                    return false;
-                } else
-                {
-                    if(c > val.c)
-                    {
-                        return true;
-                    } else if(c < val.c)
-                    {
-                        return false;
-                    } else
-                    {
-                        if(d > val.d)
-                        {
-                            return true;
-                        } else if(d < val.d)
-                        {
-                            return false;
-                        }
-                    }
-                }
             }
+            if(b > val.b)
+            {
+                return true;
+            }
+            if(b < val.b)
+            {
+                return false;
+            }
+            if(c > val.c)
+            {
+                return true;
+            }
+            if(c < val.c)
+            {
+                return false;
+            }
+            if(d > val.d)
+            {
+                return true;
+            }
+            if(d < val.d)
+            {
+                return false;
+            }
+
             return false;
         }
 
@@ -105,20 +98,12 @@ namespace litehtml
 
         bool operator<=(const selector_specificity& val) const
         {
-            if((*this) > val)
-            {
-                return false;
-            }
-            return true;
+            return !((*this) > val);
         }
 
         bool operator<(const selector_specificity& val) const
         {
-            if((*this) <= val && (*this) != val)
-            {
-                return true;
-            }
-            return false;
+            return (*this) <= val && (*this) != val;
         }
     };
 
@@ -157,24 +142,22 @@ namespace litehtml
         using vector = std::vector<css_attribute_selector>;
 
         attr_select_type type;
-        string_id        prefix; // [prefix|name]
-        string_id        name;   // .name, #name, [name], :name
-        string           value;  // [name=value], :lang(value)
+        string_id        prefix = empty_id; // [prefix|name]
+        string_id        name   = empty_id; // .name, #name, [name], :name
+        std::string      value;             // [name=value], :lang(value)
 
-        attr_matcher matcher;        // <attr-matcher>   = ~= |= ^= $= *=
-        bool         caseless_match; // value is matched ASCII case-insensitively
+        attr_matcher matcher        = attribute_exists; // <attr-matcher>   = ~= |= ^= $= *=
+        bool         caseless_match = false;            // value is matched ASCII case-insensitively
 
-        std::vector<shared_ptr<css_selector>> selector_list; // :not(selector_list)
-        int                                   a, b;          // :nth-child(an+b of selector_list)
+        std::vector<std::shared_ptr<css_selector>> selector_list; // :not(selector_list)
+                                                                  //
+        int a = 0;
+        int b = 0; // :nth-child(an+b of selector_list)
 
-        css_attribute_selector(attr_select_type type = select_class, string name = "") :
+        css_attribute_selector(attr_select_type type = select_class, const std::string& name = "") :
             type(type),
             prefix(empty_id),
-            name(_id(name)),
-            matcher(),
-            caseless_match(0),
-            a(0),
-            b(0)
+            name(_id(name))
         {
         }
 
@@ -189,9 +172,8 @@ namespace litehtml
     class css_element_selector // compound selector: div.class:hover
     {
       public:
-        using ptr = shared_ptr<css_element_selector>;
+        using ptr = std::shared_ptr<css_element_selector>;
 
-      public:
         string_id                      m_prefix;
         string_id                      m_tag;
         css_attribute_selector::vector m_attrs; // subclass and pseudo-element selectors
@@ -212,10 +194,9 @@ namespace litehtml
     class css_selector // complex selector: div + p
     {
       public:
-        using ptr    = shared_ptr<css_selector>;
+        using ptr    = std::shared_ptr<css_selector>;
         using vector = std::vector<css_selector::ptr>;
 
-      public:
         selector_specificity       m_specificity;
         int                        m_order = 0;
         css_selector::ptr          m_left;
@@ -224,8 +205,7 @@ namespace litehtml
         media_query_list_list::ptr m_media_query;
         style::ptr                 m_style;
 
-      public:
-        bool parse(const string& text, document_mode mode);
+        bool parse(const std::string& text, document_mode mode);
         void calc_specificity();
         bool is_media_valid() const;
         void add_media_to_doc(document* doc) const;
@@ -275,16 +255,16 @@ namespace litehtml
     class used_selector
     {
       public:
-        typedef std::unique_ptr<used_selector>  ptr;
-        typedef std::vector<used_selector::ptr> vector;
+        using ptr    = std::unique_ptr<used_selector>;
+        using vector = std::vector<used_selector::ptr>;
 
         css_selector::ptr m_selector;
         bool              m_used;
 
-        used_selector(const css_selector::ptr& selector, bool used)
+        used_selector(css_selector::ptr selector, bool used) :
+            m_selector(std::move(selector)),
+            m_used(used)
         {
-            m_used     = used;
-            m_selector = selector;
         }
     };
 
@@ -292,10 +272,10 @@ namespace litehtml
     {
         strict_mode            = 0,
         forgiving_mode         = 1,
-        forbid_pseudo_elements = 1 << 1,
+        forbid_pseudo_elements = 1u << 1u,
     };
 
     css_selector::vector parse_selector_list(const css_token_vector& tokens, int options, document_mode mode);
 } // namespace litehtml
 
-#endif // LH_CSS_SELECTOR_H
+#endif // LITEHTML_CSS_SELECTOR_H

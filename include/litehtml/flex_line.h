@@ -11,26 +11,18 @@ namespace litehtml
     {
       public:
         std::list<std::shared_ptr<flex_item>> items;
-        pixel_t                               cross_start; // for row direction: top. for column direction: left
-        pixel_t  main_size;  // sum of all items main size, initially the sum of hypothetical main sizes
-        pixel_t  cross_size; // sum of all items cross size
-        pixel_t  base_size;
-        int      num_auto_margin_main_start; // number of items with auto margin left/top
-        int      num_auto_margin_main_end;   // number of items with auto margin right/bottom
+        pixel_t                               cross_start = 0; // for row direction: top. for column direction: left
+        pixel_t  main_size  = 0; // sum of all items main size, initially the sum of hypothetical main sizes
+        pixel_t  cross_size = 0; // sum of all items cross size
+        pixel_t  base_size  = 0;
+        int      num_auto_margin_main_start = 0; // number of items with auto margin left/top
+        int      num_auto_margin_main_end   = 0; // number of items with auto margin right/bottom
         baseline first_baseline;
         baseline last_baseline;
         bool     reverse_main;
         bool     reverse_cross;
 
         flex_line(bool _reverse_main, bool _reverse_cross) :
-            cross_start(0),
-            main_size(0),
-            cross_size(0),
-            base_size(0),
-            num_auto_margin_main_start(0),
-            num_auto_margin_main_end(0),
-            first_baseline(),
-            last_baseline(),
             reverse_main(_reverse_main),
             reverse_cross(_reverse_cross)
         {

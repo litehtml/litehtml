@@ -1,12 +1,12 @@
-#ifndef LH_HTML_TAG_H
-#define LH_HTML_TAG_H
+#ifndef LITEHTML_HTML_TAG_H
+#define LITEHTML_HTML_TAG_H
 
 #include "element.h"
-#include "style.h"
 #include "background.h"
 #include "css_selector.h"
-#include "stylesheet.h"
 #include "line_box.h"
+#include "style.h"
+#include "stylesheet.h"
 #include "table.h"
 
 namespace litehtml
@@ -20,33 +20,33 @@ namespace litehtml
         friend class line_box;
 
       public:
-        typedef shared_ptr<html_tag> ptr;
+        using ptr = std::shared_ptr<html_tag>;
 
       protected:
-        string_id         m_tag;
-        string_id         m_id;
-        string_vector     m_str_classes;
-        vector<string_id> m_classes;
-        style             m_style;
-        string_map        m_attrs;
-        vector<string_id> m_pseudo_classes;
+        string_id              m_tag = empty_id;
+        string_id              m_id  = empty_id;
+        string_vector          m_str_classes;
+        std::vector<string_id> m_classes;
+        style                  m_style;
+        string_map             m_attrs;
+        std::vector<string_id> m_pseudo_classes;
 
         void select_all(const css_selector& selector, elements_list& res) override;
 
       public:
-        explicit html_tag(const shared_ptr<document>& doc);
+        explicit html_tag(const std::shared_ptr<document>& doc);
         // constructor for anonymous wrapper boxes
-        explicit html_tag(const element::ptr& parent, const string& style = "display: block");
+        explicit html_tag(const std::shared_ptr<element>& parent, const std::string& style = "display: block");
 
-        bool                     appendChild(const element::ptr& el) override;
-        bool                     removeChild(const element::ptr& el) override;
-        void                     clearRecursive() override;
-        string_id                tag() const override;
-        string_id                id() const override;
-        const char*              get_tagName() const override;
-        void                     set_tagName(const char* tag) override;
-        void                     set_data(const char* data) override;
-        const vector<string_id>& classes() const
+        bool                          appendChild(const element::ptr& el) override;
+        bool                          removeChild(const element::ptr& el) override;
+        void                          clearRecursive() override;
+        string_id                     tag() const override;
+        string_id                     id() const override;
+        const char*                   get_tagName() const override;
+        void                          set_tagName(const char* tag) override;
+        void                          set_data(const char* data) override;
+        const std::vector<string_id>& classes() const
         {
             return m_classes;
         }
@@ -86,16 +86,16 @@ namespace litehtml
         elements_list& children();
 
         int select(const css_selector::vector& selector_list, bool apply_pseudo = true) override;
-        int select(const string& selector) override;
+        int select(const std::string& selector) override;
         int select(const css_selector& selector, bool apply_pseudo = true) override;
         int select(const css_element_selector& selector, bool apply_pseudo = true) override;
         int select_pseudoclass(const css_attribute_selector& sel);
-        int select_attribute(const css_attribute_selector& sel);
+        int select_attribute(const css_attribute_selector& sel) const;
 
-        elements_list select_all(const string& selector) override;
+        elements_list select_all(const std::string& selector) override;
         elements_list select_all(const css_selector& selector) override;
 
-        element::ptr select_one(const string& selector) override;
+        element::ptr select_one(const std::string& selector) override;
         element::ptr select_one(const css_selector& selector) override;
 
         element::ptr find_ancestor(const css_selector& selector, bool apply_pseudo = true,
@@ -104,7 +104,7 @@ namespace litehtml
                                            bool apply_pseudo = true, bool* is_pseudo = nullptr) override;
         element::ptr find_sibling(const element::ptr& el, const css_selector& selector, bool apply_pseudo = true,
                                   bool* is_pseudo = nullptr) override;
-        void         get_text(string& text) const override;
+        void         get_text(std::string& text) const override;
         void         parse_attributes() override;
 
         void get_content_size(size& sz, pixel_t max_width) override;
@@ -117,18 +117,19 @@ namespace litehtml
         bool              is_only_child(const element::ptr& el, bool of_type) const override;
         const background* get_background(bool own_only = false) override;
 
-        string dump_get_name() override;
+        std::string dump_get_name() override;
 
       protected:
         void         draw_list_marker(uint_ptr hdc, const position& pos, const std::shared_ptr<render_item>& ri);
-        string       get_list_marker_text(int index);
+        std::string  get_list_marker_text(int index);
         element::ptr get_element_before(const style& style, bool create);
         element::ptr get_element_after(const style& style, bool create);
 
-        void map_to_pixel_length_property(string_id prop_name, string attr_value);
-        void map_to_pixel_length_property_with_default_value(string_id prop_name, string attr_value, int default_value);
-        void map_to_dimension_property(string_id prop_name, string attr_value);
-        void map_to_dimension_property_ignoring_zero(string_id prop_name, string attr_value);
+        void map_to_pixel_length_property(string_id prop_name, const std::string& attr_value);
+        void map_to_pixel_length_property_with_default_value(string_id prop_name, const std::string& attr_value,
+                                                             int default_value);
+        void map_to_dimension_property(string_id prop_name, const std::string& attr_value);
+        void map_to_dimension_property_ignoring_zero(string_id prop_name, const std::string& attr_value);
 
       private:
         void handle_counter_properties();
@@ -169,4 +170,4 @@ namespace litehtml
 
 } // namespace litehtml
 
-#endif // LH_HTML_TAG_H
+#endif // LITEHTML_HTML_TAG_H

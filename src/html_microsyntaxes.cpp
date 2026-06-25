@@ -5,7 +5,7 @@ namespace litehtml
 {
 
     // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-integers
-    bool html_parse_integer(const string& str, int& val)
+    bool html_parse_integer(const std::string& str, int& val)
     {
         const char* ptr = str.c_str();
         char*       end;
@@ -20,7 +20,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-non-negative-integers
-    bool html_parse_non_negative_integer(const string& str, int& val)
+    bool html_parse_non_negative_integer(const std::string& str, int& val)
     {
         int n = 0;
         if(!html_parse_integer(str, n) || n < 0)
@@ -32,7 +32,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-dimension-values
-    bool html_parse_dimension_value(const string& str, float& result, html_dimension_type& type)
+    bool html_parse_dimension_value(const std::string& str, float& result, html_dimension_type& type)
     {
         // 1. Let input be the string being parsed.
         // 2. Let position be a position variable for input, initially pointing at the start of input.
@@ -51,7 +51,7 @@ namespace litehtml
         // 5. Collect a sequence of code points that are ASCII digits from input given position, and interpret the
         // resulting sequence as a base-ten integer. Let value be that number.
         char* end;
-        float value = static_cast<float>(strtol(position, &end, 10));
+        auto  value = static_cast<float>(strtol(position, &end, 10));
         position    = end;
         // 6. If position is past the end of input, then return value as a length.
         if(!*position)
@@ -107,7 +107,7 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/common-microsyntaxes.html#rules-for-parsing-non-zero-dimension-values
-    bool html_parse_nonzero_dimension_value(const string& str, float& val, html_dimension_type& type)
+    bool html_parse_nonzero_dimension_value(const std::string& str, float& val, html_dimension_type& type)
     {
         float               x;
         html_dimension_type t;

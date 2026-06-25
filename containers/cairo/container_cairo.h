@@ -8,9 +8,9 @@
 
 struct cairo_clip_box
 {
-    typedef std::vector<cairo_clip_box> vector;
-    litehtml::position                  box;
-    litehtml::border_radiuses           radius;
+    using vector = std::vector<cairo_clip_box>;
+    litehtml::position        box;
+    litehtml::border_radiuses radius;
 
     cairo_clip_box(const litehtml::position& vBox, const litehtml::border_radiuses& vRad)
     {
@@ -23,12 +23,7 @@ struct cairo_clip_box
         box    = val.box;
         radius = val.radius;
     }
-    cairo_clip_box& operator=(const cairo_clip_box& val)
-    {
-        box    = val.box;
-        radius = val.radius;
-        return *this;
-    }
+    cairo_clip_box& operator=(const cairo_clip_box& val) = default;
 };
 
 class container_cairo : public litehtml::document_container
@@ -60,14 +55,14 @@ class container_cairo : public litehtml::document_container
     std::shared_ptr<litehtml::element> create_element(const char* tag_name, const litehtml::string_map& attributes,
                                                       const std::shared_ptr<litehtml::document>& doc) override;
     void                               get_media_features(litehtml::media_features& media) const override;
-    void get_language(litehtml::string& language, litehtml::string& culture) const override;
+    void                               get_language(std::string& language, std::string& culture) const override;
     void link(const std::shared_ptr<litehtml::document>& ptr, const litehtml::element::ptr& el) override;
 
-    void transform_text(litehtml::string& text, litehtml::text_transform tt) override;
+    void transform_text(std::string& text, litehtml::text_transform tt) override;
     void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
     void del_clip() override;
 
-    virtual void             make_url(const char* url, const char* basepath, litehtml::string& out);
+    virtual void             make_url(const char* url, const char* basepath, std::string& out);
     virtual cairo_surface_t* get_image(const std::string& url) = 0;
     virtual double           get_screen_dpi() const            = 0;
     virtual int              get_screen_width() const          = 0;

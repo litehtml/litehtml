@@ -1,5 +1,5 @@
-#ifndef LH_MEDIA_QUERY_H
-#define LH_MEDIA_QUERY_H
+#ifndef LITEHTML_MEDIA_QUERY_H
+#define LITEHTML_MEDIA_QUERY_H
 
 #include "css_tokenizer.h"
 #include "string_id.h"
@@ -14,7 +14,7 @@ namespace litehtml
         True,
         Unknown
     };
-    static_assert(False == false && True == true); // for casting bool to trilean
+    // static_assert(False == false && True == true); // for casting bool to trilean
 
     inline trilean operator!(trilean x)
     {
@@ -60,9 +60,9 @@ namespace litehtml
     // <media-query> = <media-condition> | [ not | only ]? <media-type> [ and <media-condition-without-or> ]?
     struct media_query
     {
-        bool                    m_not        = true;
-        media_type              m_media_type = media_type_all;
-        vector<media_condition> m_conditions;
+        bool                         m_not        = true;
+        media_type                   m_media_type = media_type_all;
+        std::vector<media_condition> m_conditions;
 
         trilean check(const media_features& features) const;
     };
@@ -73,8 +73,8 @@ namespace litehtml
     // <media-in-parens>]* ]
     struct media_condition
     {
-        string_id               op = _and_; // _not_ _and_ _or_
-        vector<media_in_parens> m_conditions;
+        string_id                    op = _and_; // _not_ _and_ _or_
+        std::vector<media_in_parens> m_conditions;
 
         trilean check(const media_features& features) const;
     };
@@ -83,14 +83,14 @@ namespace litehtml
     // <mf-plain> = <mf-name> : <mf-value>
     struct media_feature
     {
-        string   name;
-        float    value  = 0;
-        float    value2 = 0;
-        uint16_t op     = 0;
-        uint16_t op2    = 0;
+        std::string name;
+        float       value  = 0;
+        float       value2 = 0;
+        uint16_t    op     = 0;
+        uint16_t    op2    = 0;
 
         bool verify_and_convert_units(string_id syntax, css_token val[2] = nullptr, css_token val2[2] = nullptr,
-                                      shared_ptr<document> doc = nullptr);
+                                      const std::shared_ptr<document>& doc = nullptr);
 
         bool compare(int x) const
         {
@@ -113,20 +113,21 @@ namespace litehtml
 
     struct media_query_list
     {
-        vector<media_query> m_queries;
-        bool                empty() const
+        std::vector<media_query> m_queries;
+
+        bool empty() const
         {
             return m_queries.empty();
         }
         bool check(const media_features& features) const;
     };
-    media_query_list parse_media_query_list(const css_token_vector& tokens, shared_ptr<document> doc);
-    media_query_list parse_media_query_list(const string& str, shared_ptr<document> doc);
+    media_query_list parse_media_query_list(const css_token_vector& tokens, const std::shared_ptr<document>& doc);
+    media_query_list parse_media_query_list(const std::string& str, const std::shared_ptr<document>& doc);
 
     class media_query_list_list
     {
       public:
-        using ptr    = shared_ptr<media_query_list_list>;
+        using ptr    = std::shared_ptr<media_query_list_list>;
         using vector = std::vector<ptr>;
 
       private:
@@ -148,4 +149,4 @@ namespace litehtml
 
 } // namespace litehtml
 
-#endif // LH_MEDIA_QUERY_H
+#endif // LITEHTML_MEDIA_QUERY_H

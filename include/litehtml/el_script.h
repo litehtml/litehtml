@@ -1,5 +1,5 @@
-#ifndef LH_EL_SCRIPT_H
-#define LH_EL_SCRIPT_H
+#ifndef LITEHTML_EL_SCRIPT_H
+#define LITEHTML_EL_SCRIPT_H
 
 #include "element.h"
 
@@ -7,7 +7,7 @@ namespace litehtml
 {
     class el_script : public element
     {
-        string m_text;
+        std::string m_text;
 
       public:
         explicit el_script(const std::shared_ptr<document>& doc);
@@ -19,4 +19,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_EL_SCRIPT_H
+#endif // LITEHTML_EL_SCRIPT_H

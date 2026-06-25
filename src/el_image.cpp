@@ -80,7 +80,7 @@ void litehtml::el_image::compute_styles(bool recursive)
     }
 }
 
-litehtml::string litehtml::el_image::dump_get_name()
+std::string litehtml::el_image::dump_get_name()
 {
     return "img src=\"" + m_src + "\"";
 }

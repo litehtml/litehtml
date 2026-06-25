@@ -1,5 +1,5 @@
-#ifndef LH_ITERATORS_H
-#define LH_ITERATORS_H
+#ifndef LITEHTML_ITERATORS_H
+#define LITEHTML_ITERATORS_H
 
 #include "types.h"
 #include <functional>
@@ -81,4 +81,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_ITERATORS_H
+#endif // LITEHTML_ITERATORS_H

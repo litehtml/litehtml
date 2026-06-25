@@ -1,8 +1,10 @@
-#ifndef LH_CSS_LENGTH_H
-#define LH_CSS_LENGTH_H
+#ifndef LITEHTML_CSS_LENGTH_H
+#define LITEHTML_CSS_LENGTH_H
 
-#include "types.h"
+#include <string>
 #include "css_tokenizer.h"
+#include "css_values.h"
+#include "pixel_type.h"
 
 namespace litehtml
 {
@@ -42,16 +44,15 @@ namespace litehtml
         css_units         units() const;
         pixel_t           calc_percent(pixel_t width) const;
         bool              from_token(const css_token& token, int options, css_values predefined_keywords = {});
-        string            to_string() const;
+        std::string       to_string() const;
     };
 
-    using length_vector = vector<css_length>;
+    using length_vector = std::vector<css_length>;
 
-    inline css_length::css_length(float val, css_units units)
+    inline css_length::css_length(float val, css_units units) :
+        m_value(val),
+        m_units(units)
     {
-        m_value         = val;
-        m_units         = units;
-        m_is_predefined = false;
     }
 
     inline css_length& css_length::operator=(float val)
@@ -117,4 +118,4 @@ namespace litehtml
     }
 } // namespace litehtml
 
-#endif // LH_CSS_LENGTH_H
+#endif // LITEHTML_CSS_LENGTH_H

@@ -1,7 +1,7 @@
-#ifndef LH_ENCODINGS_H
-#define LH_ENCODINGS_H
+#ifndef LITEHTML_ENCODINGS_H
+#define LITEHTML_ENCODINGS_H
 
-#include "types.h"
+#include <string>
 namespace litehtml
 {
 
@@ -66,36 +66,36 @@ namespace litehtml
     };
 
     // Used as argument for document::createFromString, parse_html and encoding_sniffing_algorithm.
-    struct estring : string // string with encoding
+    struct estring : std::string // string with encoding
     {
         litehtml::encoding   encoding;
         litehtml::confidence confidence;
 
-        estring(const string& str, litehtml::encoding encoding = encoding::null,
+        estring(const std::string& str, litehtml::encoding encoding = encoding::null,
                 litehtml::confidence confidence = confidence::certain) :
-            string(str),
+            std::string(str),
             encoding(encoding),
             confidence(confidence)
         {
         }
 
         estring(const char* str) :
-            string(str),
+            std::string(str),
             encoding(encoding::null),
             confidence(confidence::certain)
         {
         }
     };
 
-    encoding bom_sniff(const string& str);
+    encoding bom_sniff(const std::string& str);
     void     encoding_sniffing_algorithm(estring& str);
 
-    encoding get_encoding(string label);
-    encoding extract_encoding_from_meta_element(string str);
+    encoding get_encoding(std::string label);
+    encoding extract_encoding_from_meta_element(std::string str);
 
-    void   decode(string input, encoding coding, string& output);
-    string decode(string input, encoding coding);
+    void        decode(std::string input, encoding coding, std::string& output);
+    std::string decode(std::string input, encoding coding);
 
 } // namespace litehtml
 
-#endif // LH_ENCODINGS_H
+#endif // LITEHTML_ENCODINGS_H

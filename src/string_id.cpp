@@ -13,8 +13,8 @@ static std::mutex mutex;
 namespace litehtml
 {
 
-    static std::map<string, string_id> map;
-    static std::vector<string>         array;
+    static std::map<std::string, string_id> map;
+    static std::vector<std::string>         array;
 
     static int init()
     {
@@ -35,7 +35,7 @@ namespace litehtml
     const string_id empty_id = _id("");
     const string_id star_id  = _id("*");
 
-    string_id _id(const string& str)
+    string_id _id(const std::string& str)
     {
         lock_guard;
         auto it = map.find(str);
@@ -48,7 +48,7 @@ namespace litehtml
         return map[str] = static_cast<string_id>(array.size() - 1);
     }
 
-    const string& _s(string_id id)
+    const std::string& _s(string_id id)
     {
         lock_guard;
         return array[id];

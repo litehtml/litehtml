@@ -1,5 +1,5 @@
-#ifndef LH_STYLESHEET_H
-#define LH_STYLESHEET_H
+#ifndef LITEHTML_STYLESHEET_H
+#define LITEHTML_STYLESHEET_H
 
 #include <utility>
 
@@ -15,7 +15,7 @@ namespace litehtml
         using vector = std::vector<raw_declaration>;
 
         // property name
-        string name;
+        std::string name;
         // default value is specified here to get rid of gcc warning "missing initializer for member"
         css_token_vector value;
 
@@ -31,7 +31,7 @@ namespace litehtml
     class raw_rule
     {
       public:
-        using ptr    = shared_ptr<raw_rule>;
+        using ptr    = std::shared_ptr<raw_rule>;
         using vector = std::vector<ptr>;
 
         enum rule_type
@@ -40,7 +40,7 @@ namespace litehtml
             at
         };
 
-        raw_rule(rule_type type, string name = {}) :
+        raw_rule(rule_type type, std::string name = {}) :
             type(type),
             name(std::move(name))
         {
@@ -49,7 +49,7 @@ namespace litehtml
         rule_type type;
         // An at-rule has a name, a prelude consisting of a list of component values, and an optional block consisting
         // of a simple {} block.
-        string name;
+        std::string name;
         // https://www.w3.org/TR/css-syntax-3/#qualified-rule
         // A qualified rule has a prelude consisting of a list of component values, and a block consisting of a simple
         // {} block. Note: Most qualified rules will be style rules, where the prelude is a selector and the block a
@@ -69,16 +69,16 @@ namespace litehtml
         }
 
         template <class Input>
-        void parse_css_stylesheet(const Input& input, string baseurl, shared_ptr<document> doc,
-                                  media_query_list_list::ptr media = nullptr, bool top_level = true);
+        void parse_css_stylesheet(const Input& input, const std::string& baseurl, const std::shared_ptr<document>& doc,
+                                  const media_query_list_list::ptr& media = nullptr, bool top_level = true);
 
         void sort_selectors();
 
       private:
-        bool parse_style_rule(raw_rule::ptr rule, string baseurl, shared_ptr<document> doc,
-                              media_query_list_list::ptr media);
-        void parse_import_rule(raw_rule::ptr rule, string baseurl, shared_ptr<document> doc,
-                               media_query_list_list::ptr media);
+        bool parse_style_rule(const raw_rule::ptr& rule, const std::string& baseurl,
+                              const std::shared_ptr<document>& doc, const media_query_list_list::ptr& media);
+        void parse_import_rule(const raw_rule::ptr& rule, const std::string& baseurl,
+                               const std::shared_ptr<document>& doc, const media_query_list_list::ptr& media);
         void add_selector(const css_selector::ptr& selector);
     };
 
@@ -90,4 +90,4 @@ namespace litehtml
 
 } // namespace litehtml
 
-#endif // LH_STYLESHEET_H
+#endif // LITEHTML_STYLESHEET_H

@@ -1,5 +1,5 @@
-#ifndef LH_DOCUMENT_H
-#define LH_DOCUMENT_H
+#ifndef LITEHTML_DOCUMENT_H
+#define LITEHTML_DOCUMENT_H
 
 #include "stylesheet.h"
 #include "encodings.h"
@@ -18,9 +18,9 @@ namespace litehtml
     {
         using vector = std::vector<css_text>;
 
-        string text;
-        string baseurl;
-        string media;
+        std::string text;
+        std::string baseurl;
+        std::string media;
 
         css_text() = default;
 
@@ -35,12 +35,12 @@ namespace litehtml
     class dumper
     {
       public:
-        virtual ~dumper()                                              = default;
-        virtual void begin_node(const string& descr)                   = 0;
-        virtual void end_node()                                        = 0;
-        virtual void begin_attrs_group(const string& descr)            = 0;
-        virtual void end_attrs_group()                                 = 0;
-        virtual void add_attr(const string& name, const string& value) = 0;
+        virtual ~dumper()                                                        = default;
+        virtual void begin_node(const std::string& descr)                        = 0;
+        virtual void end_node()                                                  = 0;
+        virtual void begin_attrs_group(const std::string& descr)                 = 0;
+        virtual void end_attrs_group()                                           = 0;
+        virtual void add_attr(const std::string& name, const std::string& value) = 0;
     };
 
     class html_tag;
@@ -53,26 +53,26 @@ namespace litehtml
         using weak_ptr = std::weak_ptr<document>;
 
       private:
-        std::shared_ptr<element>           m_root;
-        std::shared_ptr<render_item>       m_root_render;
-        document_container*                m_container;
-        fonts_map                          m_fonts;
-        css_text::vector                   m_css;
-        litehtml::css                      m_styles;
-        litehtml::web_color                m_def_color;
-        litehtml::css                      m_master_css;
-        litehtml::css                      m_user_css;
-        litehtml::size                     m_size;
-        position::vector                   m_fixed_boxes;
-        std::shared_ptr<element>           m_over_element;
-        std::shared_ptr<element>           m_active_element;
-        std::list<shared_ptr<render_item>> m_tabular_elements;
-        media_query_list_list::vector      m_media_lists;
-        media_features                     m_media;
-        string                             m_lang;
-        string                             m_culture;
-        string                             m_text;
-        document_mode                      m_mode = no_quirks_mode;
+        std::shared_ptr<element>                m_root;
+        std::shared_ptr<render_item>            m_root_render;
+        document_container*                     m_container;
+        fonts_map                               m_fonts;
+        css_text::vector                        m_css;
+        litehtml::css                           m_styles;
+        litehtml::web_color                     m_def_color;
+        litehtml::css                           m_master_css;
+        litehtml::css                           m_user_css;
+        litehtml::size                          m_size;
+        position::vector                        m_fixed_boxes;
+        std::shared_ptr<element>                m_over_element;
+        std::shared_ptr<element>                m_active_element;
+        std::list<std::shared_ptr<render_item>> m_tabular_elements;
+        media_query_list_list::vector           m_media_lists;
+        media_features                          m_media;
+        std::string                             m_lang;
+        std::string                             m_culture;
+        std::string                             m_text;
+        document_mode                           m_mode = no_quirks_mode;
 
       public:
         document(document_container* objContainer);
@@ -115,10 +115,10 @@ namespace litehtml
         std::shared_ptr<render_item> root_render();
         void                         get_fixed_boxes(position::vector& fixed_boxes);
         void                         add_fixed_box(const position& pos);
-        void                         add_media_list(media_query_list_list::ptr list);
+        void                         add_media_list(const media_query_list_list::ptr& list);
         bool                         media_changed();
         bool                         lang_changed();
-        bool                         match_lang(const string& lang);
+        bool                         match_lang(const std::string& lang);
         void                         add_tabular(const std::shared_ptr<render_item>& el);
         std::shared_ptr<const element> get_over_element() const
         {
@@ -130,8 +130,8 @@ namespace litehtml
 
         // see doc/document_createFromString.txt
         static document::ptr createFromString(const estring& str, document_container* container,
-                                              const string& master_styles = litehtml::master_css,
-                                              const string& user_styles   = {});
+                                              const std::string& master_styles = litehtml::master_css,
+                                              const std::string& user_styles   = {});
 
       private:
         uint_ptr add_font(const font_description& descr, font_metrics* fm);
@@ -159,10 +159,10 @@ namespace litehtml
         m_tabular_elements.push_back(el);
     }
 
-    inline bool document::match_lang(const string& lang)
+    inline bool document::match_lang(const std::string& lang)
     {
         return lang == m_lang || lang == m_culture;
     }
 } // namespace litehtml
 
-#endif // LH_DOCUMENT_H
+#endif // LITEHTML_DOCUMENT_H

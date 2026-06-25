@@ -1,5 +1,5 @@
-#ifndef LH_CSS_POSITION_H
-#define LH_CSS_POSITION_H
+#ifndef LITEHTML_CSS_POSITION_H
+#define LITEHTML_CSS_POSITION_H
 
 #include "css_length.h"
 
@@ -29,4 +29,4 @@ namespace litehtml
     using size_vector = std::vector<css_size>;
 } // namespace litehtml
 
-#endif // LH_CSS_POSITION_H
+#endif // LITEHTML_CSS_POSITION_H

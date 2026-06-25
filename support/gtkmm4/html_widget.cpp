@@ -189,7 +189,7 @@ cairo_surface_t* html_widget::load_image(const std::string& path)
     return ret;
 }
 
-void html_widget::open_page(const litehtml::string& url, const litehtml::string& fragment)
+void html_widget::open_page(const std::string& url, const std::string& fragment)
 {
     {
         std::lock_guard<std::mutex> lock(m_page_mutex);

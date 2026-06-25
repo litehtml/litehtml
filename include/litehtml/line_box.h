@@ -1,5 +1,5 @@
-#ifndef LH_LINE_BOX_H
-#define LH_LINE_BOX_H
+#ifndef LITEHTML_LINE_BOX_H
+#define LITEHTML_LINE_BOX_H
 
 #include <memory>
 #include "css_properties.h"
@@ -138,7 +138,7 @@ namespace litehtml
     {
       public:
         explicit lbi_end(const std::shared_ptr<render_item>& element);
-        virtual ~lbi_end() override;
+        ~lbi_end() override;
 
         void         place_to(pixel_t x, pixel_t y) override;
         pixel_t      right() const override;
@@ -263,4 +263,4 @@ namespace litehtml
     };
 } // namespace litehtml
 
-#endif // LH_LINE_BOX_H
+#endif // LITEHTML_LINE_BOX_H

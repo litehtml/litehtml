@@ -324,11 +324,11 @@ litehtml::rendered_width litehtml::render_item_block::_render(pixel_t x, pixel_t
 
     if(src_el()->css().get_display() == display_list_item)
     {
-        string list_image = src_el()->css().get_list_style_image();
+        std::string list_image = src_el()->css().get_list_style_image();
         if(!list_image.empty())
         {
-            size   sz;
-            string list_image_baseurl = src_el()->css().get_list_style_image_baseurl();
+            size        sz;
+            std::string list_image_baseurl = src_el()->css().get_list_style_image_baseurl();
             src_el()->get_document()->container()->get_image_size(list_image.c_str(), list_image_baseurl.c_str(), sz);
             m_pos.height = std::max(m_pos.height, sz.height);
         }

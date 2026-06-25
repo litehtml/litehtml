@@ -1,5 +1,7 @@
 #include "html.h"
 #include "web_color.h"
+
+#include <cmath>
 #include "css_parser.h"
 #include "os_types.h"
 #include "document_container.h"
@@ -177,8 +179,8 @@ namespace litehtml
             return false;
         }
 
-        string s   = tok.str;
-        int    len = static_cast<int>(s.size());
+        std::string s   = tok.str();
+        int         len = static_cast<int>(s.size());
         if(!is_one_of(len, 3, 4, 6, 8))
         {
             return false;
@@ -191,7 +193,7 @@ namespace litehtml
             }
         }
 
-        string r, g, b, a = "ff";
+        std::string r, g, b, a = "ff";
         if(len == 3 || len == 4)
         {
             r = {s[0], s[0]};
@@ -237,7 +239,7 @@ namespace litehtml
     {
         auto           n        = tokens.size();
         constexpr auto none_val = split_css_values<1>("none");
-        if(!(n == 3 || n == 5))
+        if(n != 3 && n != 5)
         {
             return false;
         }
@@ -301,13 +303,13 @@ namespace litehtml
             x = (x / 100) * max;
         }
         x = clamp(x, 0, max);
-        return static_cast<byte>(round(pixel_t(max) == 1_px ? x * 255 : x));
+        return static_cast<byte>(std::round(pixel_t(max) == 1_px ? x * 255 : x));
     }
 
     // https://drafts.csswg.org/css-color-4/#rgb-functions
     bool parse_rgb_func(const css_token& tok, web_color& color)
     {
-        if(tok.type != CV_FUNCTION || !is_one_of(lowcase(tok.name), "rgb", "rgba"))
+        if(tok.type != CV_FUNCTION || !is_one_of(lowcase(tok.name()), "rgb", "rgba"))
         {
             return false;
         }
@@ -368,7 +370,7 @@ namespace litehtml
     // https://drafts.csswg.org/css-color-4/#hsl-to-rgb
     void hsl_to_rgb(float hue, float sat, float light, float& r, float& g, float& b)
     {
-        hue = static_cast<float>(fmod(hue, 360.f));
+        hue = static_cast<float>(std::fmod(hue, 360.f));
 
         if(hue < 0)
         {
@@ -379,9 +381,9 @@ namespace litehtml
         light /= 100;
 
         auto f = [=](float n) {
-            float k = static_cast<float>(fmod(n + hue / 30, 12.f));
-            float a = sat * min(light, 1 - light);
-            return light - a * max(-1.f, min({k - 3, 9 - k, 1.f}));
+            auto  k = static_cast<float>(std::fmod(n + hue / 30, 12.f));
+            float a = sat * std::min(light, 1 - light);
+            return light - a * std::max(-1.f, std::min({k - 3, 9 - k, 1.f}));
         };
 
         r = f(0);
@@ -392,7 +394,7 @@ namespace litehtml
     // https://drafts.csswg.org/css-color-4/#the-hsl-notation
     bool parse_hsl_func(const css_token& tok, web_color& color)
     {
-        if(tok.type != CV_FUNCTION || !is_one_of(lowcase(tok.name), "hsl", "hsla"))
+        if(tok.type != CV_FUNCTION || !is_one_of(lowcase(tok.name()), "hsl", "hsla"))
         {
             return false;
         }
@@ -469,8 +471,8 @@ namespace litehtml
         g = clamp(g, 0, 1);
         b = clamp(b, 0, 1);
 
-        color = web_color(static_cast<byte>(round(r * 255)), static_cast<byte>(round(g * 255)),
-                          static_cast<byte>(round(b * 255)), calc_percent_and_clamp(a, 1));
+        color = web_color(static_cast<byte>(std::round(r * 255)), static_cast<byte>(std::round(g * 255)),
+                          static_cast<byte>(std::round(b * 255)), calc_percent_and_clamp(a, 1));
         return true;
     }
 
@@ -480,7 +482,7 @@ namespace litehtml
         return parse_rgb_func(tok, color) || parse_hsl_func(tok, color);
     }
 
-    string resolve_name(const string& name, document_container* container)
+    std::string resolve_name(const std::string& name, document_container* container)
     {
         for(auto clr : g_def_colors)
         {
@@ -509,8 +511,8 @@ namespace litehtml
             color = web_color::current_color;
             return true;
         }
-        string str    = resolve_name(tok.name, container);
-        auto   tokens = normalize(str, f_componentize | f_remove_whitespace);
+        std::string str    = resolve_name(tok.name(), container);
+        auto        tokens = normalize(str, f_componentize | f_remove_whitespace);
         if(tokens.size() != 1)
         {
             return false;
@@ -529,13 +531,13 @@ namespace litehtml
         int v_red   = static_cast<int>(red);
         int v_blue  = static_cast<int>(blue);
         int v_green = static_cast<int>(green);
-        v_red       = static_cast<int>(max(v_red - (v_red * fraction), 0.0));
-        v_blue      = static_cast<int>(max(v_blue - (v_blue * fraction), 0.0));
-        v_green     = static_cast<int>(max(v_green - (v_green * fraction), 0.0));
+        v_red       = static_cast<int>(std::max(v_red - (v_red * fraction), 0.0));
+        v_blue      = static_cast<int>(std::max(v_blue - (v_blue * fraction), 0.0));
+        v_green     = static_cast<int>(std::max(v_green - (v_green * fraction), 0.0));
         return {static_cast<byte>(v_red), static_cast<byte>(v_green), static_cast<byte>(v_blue), alpha};
     }
 
-    string web_color::to_string() const
+    std::string web_color::to_string() const
     {
         char str[9];
         if(alpha)

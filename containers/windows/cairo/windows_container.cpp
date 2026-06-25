@@ -117,7 +117,7 @@ void windows_container::draw_text(litehtml::uint_ptr hdc, const char* text, lite
     }
 }
 
-litehtml::string windows_container::resolve_color(const litehtml::string& color) const
+std::string windows_container::resolve_color(const std::string& color) const
 {
     struct custom_color
     {
@@ -164,10 +164,10 @@ litehtml::string windows_container::resolve_color(const litehtml::string& color)
             DWORD rgb_color = GetSysColor(clr.color_index);
             StringCchPrintfA(str_clr, 20, "#%02X%02X%02X", GetRValue(rgb_color), GetGValue(rgb_color),
                              GetBValue(rgb_color));
-            return std::move(litehtml::string(str_clr));
+            return std::move(std::string(str_clr));
         }
     }
-    return std::move(litehtml::string());
+    return std::move(std::string());
 }
 
 cairo_surface_t* windows_container::get_image(const std::string& url)

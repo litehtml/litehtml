@@ -13,7 +13,7 @@ namespace litehtml
 
         if(token.type == IDENT)
         {
-            auto idx = keywords.value_index(lowcase(token.name));
+            auto idx = keywords.value_index(lowcase(token.name()));
             if(!idx.has_value())
             {
                 return false;
@@ -21,14 +21,15 @@ namespace litehtml
             m_predef        = idx.value();
             m_is_predefined = true;
             return true;
-        } else if(token.type == DIMENSION)
+        }
+        if(token.type == DIMENSION)
         {
             if(!(options & f_length))
             {
                 return false;
             }
 
-            auto idx = css_values(css_units_strings).value_index(lowcase(token.unit));
+            auto idx = css_values(css_units_strings).value_index(lowcase(token.unit()));
             // note: 1none and 1\% are invalid
             if(!idx.has_value() || idx.value() == css_units_none || idx.value() == css_units_percentage)
             {
@@ -39,7 +40,8 @@ namespace litehtml
             m_units         = static_cast<css_units>(idx.value());
             m_is_predefined = false;
             return true;
-        } else if(token.type == PERCENTAGE)
+        }
+        if(token.type == PERCENTAGE)
         {
             if(!(options & f_percentage))
             {
@@ -50,7 +52,8 @@ namespace litehtml
             m_units         = css_units_percentage;
             m_is_predefined = false;
             return true;
-        } else if(token.type == NUMBER)
+        }
+        if(token.type == NUMBER)
         {
             // if token is a nonzero number and neither f_number nor f_integer is specified in the options
             if(!(options & (f_number | f_integer)) && pixel_t(token.n.number) != 0_px)
@@ -75,7 +78,7 @@ namespace litehtml
         return false;
     }
 
-    string css_length::to_string() const
+    std::string css_length::to_string() const
     {
         if(m_is_predefined)
         {

@@ -41,7 +41,7 @@ namespace litehtml
 
     // https://www.w3.org/TR/selectors-4/#type-nmsp
     // <ns-prefix> = [ <ident-token> | '*' ]? '|'     https://www.w3.org/TR/selectors-4/#typedef-ns-prefix
-    string parse_ns_prefix(const css_token_vector& tokens, int& index)
+    std::string parse_ns_prefix(const css_token_vector& tokens, int& index)
     {
         const auto& a = at(tokens, index);
         const auto& b = at(tokens, index + 1);
@@ -55,7 +55,7 @@ namespace litehtml
         if((a.type == IDENT || a.ch == '*') && b.ch == '|')
         {
             index += 2;
-            return a.type == IDENT ? a.name : "*";
+            return a.type == IDENT ? a.name() : "*";
         }
 
         return "";
@@ -63,22 +63,22 @@ namespace litehtml
 
     struct wq_name
     {
-        string prefix;
-        string name;
+        std::string prefix;
+        std::string name;
     };
 
     // <wq-name> = <ns-prefix>? <ident-token>
     // Whitespace is forbidden between any of the components of a <wq-name>.
     wq_name parse_wq_name(const css_token_vector& tokens, int& index)
     {
-        int    start  = index;
-        string prefix = parse_ns_prefix(tokens, index);
+        int         start  = index;
+        std::string prefix = parse_ns_prefix(tokens, index);
 
         auto tok = at(tokens, index);
         if(tok.type == IDENT)
         {
             index++;
-            return {prefix, tok.name};
+            return {prefix, tok.name()};
         }
         // restore index to before <ns-prefix> if failed to parse <ident-token>
         index = start;
@@ -88,7 +88,7 @@ namespace litehtml
         if(tok.type == IDENT)
         {
             index++;
-            return {"", tok.name};
+            return {"", tok.name()};
         }
 
         return {};
@@ -101,14 +101,14 @@ namespace litehtml
     // <type-selector> = <ns-prefix>? [ <ident-token> | '*' ]
     wq_name parse_type_selector(const css_token_vector& tokens, int& index)
     {
-        int    start  = index;
-        string prefix = parse_ns_prefix(tokens, index);
+        int         start  = index;
+        std::string prefix = parse_ns_prefix(tokens, index);
 
         const auto& tok = at(tokens, index);
         if(tok.type == IDENT || tok.ch == '*')
         {
             index++;
-            string name = tok.type == IDENT ? tok.name : "*";
+            std::string name = tok.type == IDENT ? tok.name() : "*";
             // type selector is always ASCII-case-insensitive for HTML documents, regardless of document mode (quirks/no
             // quirks)
             return {lowcase(prefix), lowcase(name)};
@@ -131,7 +131,7 @@ namespace litehtml
             return true;
         }
 
-        if(!(is_one_of(a.ch, '~', '|', '^', '$', '*') && b.ch == '='))
+        if(!is_one_of(a.ch, '~', '|', '^', '$', '*') || b.ch != '=')
         {
             return false;
         }
@@ -236,7 +236,7 @@ namespace litehtml
         selector.name           = _id(name);
         selector.matcher        = matcher;
         selector.caseless_match = modifier == 'i' || (!modifier && name in special_attributes);
-        selector.value          = selector.caseless_match ? lowcase(value.str) : value.str;
+        selector.value          = selector.caseless_match ? lowcase(value.str()) : value.str();
         return selector;
     }
 
@@ -259,7 +259,7 @@ namespace litehtml
     };
 
     // NOTE: "+ 5" is not valid, and strtol correctly fails to parse it
-    bool to_int(string s, int& number)
+    bool to_int(const std::string& s, int& number)
     {
         if(s == "")
         {
@@ -284,7 +284,7 @@ namespace litehtml
     // Deviations from the standard:
     // * escapes are not allowed
     // * comments are allowed inside numbers and identifiers: ev/**/en
-    an_b parse_an_b(string s)
+    an_b parse_an_b(std::string s)
     {
         lcase(trim(s));
         if(s == "even")
@@ -366,7 +366,7 @@ namespace litehtml
     //
     css_attribute_selector parse_nth_child(const css_token& token, bool of_keyword, document_mode mode)
     {
-        css_attribute_selector selector(select_pseudo_class, lowcase(token.name));
+        css_attribute_selector selector(select_pseudo_class, lowcase(token.name()));
 
         const auto& tokens = token.value;
 
@@ -393,7 +393,7 @@ namespace litehtml
         }
 
         // get string representation of everything between "nth-child(" and "of" or ")", except for comments
-        string str = get_repr(tokens, 0, i); // Note: i == -1 works as expected
+        std::string str = get_repr(tokens, 0, i); // Note: i == -1 works as expected
 
         an_b x = parse_an_b(str);
         if(!x.valid)
@@ -409,21 +409,24 @@ namespace litehtml
 
     css_attribute_selector parse_function_pseudo_class(const css_token& token, document_mode mode)
     {
-        string name = lowcase(token.name);
+        std::string name = lowcase(token.name());
         if(name == "nth-child" || name == "nth-last-child")
         {
             return parse_nth_child(token, true, mode);
-        } else if(name == "nth-of-type" || name == "nth-last-of-type")
+        }
+        if(name == "nth-of-type" || name == "nth-last-of-type")
         {
             return parse_nth_child(token, false, mode);
-        } else if(name == "is") // https://www.w3.org/TR/selectors-4/#matches
+        }
+        if(name == "is") // https://www.w3.org/TR/selectors-4/#matches
         {
             css_attribute_selector selector(select_pseudo_class, name);
             // "taking a <forgiving-selector-list> as its sole argument"
             // "Pseudo-elements... are not valid within :is()."
             selector.selector_list = parse_selector_list(token.value, forgiving_mode + forbid_pseudo_elements, mode);
             return selector;
-        } else if(name == "not") // https://www.w3.org/TR/selectors-4/#negation
+        }
+        if(name == "not") // https://www.w3.org/TR/selectors-4/#negation
         {
             css_attribute_selector selector(select_pseudo_class, name);
             // "taking a selector list as an argument"
@@ -434,7 +437,8 @@ namespace litehtml
                 return {};
             }
             return selector;
-        } else if(name == "lang") // https://www.w3.org/TR/selectors-4/#the-lang-pseudo
+        }
+        if(name == "lang") // https://www.w3.org/TR/selectors-4/#the-lang-pseudo
         {
             css_attribute_selector selector(select_pseudo_class, name);
             selector.value = get_repr(token.value);
@@ -444,9 +448,9 @@ namespace litehtml
     }
 
     // simple = non-functional (without parentheses)
-    bool is_supported_simple_pseudo_class(const string& name)
+    bool is_supported_simple_pseudo_class(const std::string& name)
     {
-        static std::set<string> supported_simple_pseudo_classes = {
+        static std::set<std::string> supported_simple_pseudo_classes = {
             // Location Pseudo-classes  https://www.w3.org/TR/selectors-4/#location
             "any-link",
             "link",
@@ -528,8 +532,8 @@ namespace litehtml
             if(tok0.hash_type == css_hash_id)
             {
                 index++;
-                selector.type = select_id;
-                string name   = tok0.name;
+                selector.type    = select_id;
+                std::string name = tok0.name();
                 // ids are matched ASCII case-insensitively in quirks mode
                 if(mode == quirks_mode)
                 {
@@ -543,9 +547,9 @@ namespace litehtml
         case '.':
             if(tok1.type == IDENT)
             {
-                index         += 2;
-                selector.type  = select_class;
-                string name    = tok1.name;
+                index            += 2;
+                selector.type     = select_class;
+                std::string name  = tok1.name();
                 // class names are matched ASCII case-insensitively in quirks mode
                 if(mode == quirks_mode)
                 {
@@ -570,7 +574,7 @@ namespace litehtml
     }
 
     // simple = non-functional (without parentheses)
-    bool is_supported_simple_pseudo_element(const string& name)
+    bool is_supported_simple_pseudo_element(const std::string& name)
     {
         return is_one_of(lowcase(name),
                          // Typographic Pseudo-elements  https://www.w3.org/TR/css-pseudo-4/#typographic-pseudos
@@ -630,7 +634,7 @@ namespace litehtml
     // * Between any of the top-level components of a <compound-selector>
     css_element_selector::ptr parse_compound_selector(const css_token_vector& tokens, int& index, document_mode mode)
     {
-        auto selector = make_shared<css_element_selector>();
+        auto selector = std::make_shared<css_element_selector>();
 
         // <type-selector>?
         wq_name wq_name    = parse_type_selector(tokens, index);
@@ -704,7 +708,7 @@ namespace litehtml
             return nullptr;
         }
 
-        auto selector     = make_shared<css_selector>();
+        auto selector     = std::make_shared<css_selector>();
         selector->m_right = *sel;
 
         // NOTE: all the whitespace is handled by parse_combinator, that's why skip_whitespace is never called in the
@@ -731,7 +735,7 @@ namespace litehtml
                 return nullptr;
             }
 
-            auto new_selector          = make_shared<css_selector>();
+            auto new_selector          = std::make_shared<css_selector>();
             new_selector->m_left       = selector;
             new_selector->m_right      = *sel;
             new_selector->m_combinator = static_cast<css_combinator>(combinator);
@@ -741,7 +745,7 @@ namespace litehtml
 
     // Return true if `selector` has (in any of its css_element_selector's) a css_attribute_selector
     // of type `type` and name `name`. name == "" matches any name.
-    bool has_selector(const css_selector& selector, attr_select_type type, const string& name = "")
+    bool has_selector(const css_selector& selector, attr_select_type type, const std::string& name = "")
     {
         for(const auto& sel : selector.m_right.m_attrs)
         {
@@ -767,8 +771,8 @@ namespace litehtml
     {
         // NOTE: this is unnecessary: "If input contains only <whitespace-token>s, return an empty list."
 
-        vector<css_token_vector> list_of_lists = parse_comma_separated_list(tokens);
-        css_selector::vector     result;
+        std::vector<css_token_vector> list_of_lists = parse_comma_separated_list(tokens);
+        css_selector::vector          result;
 
         for(const auto& list : list_of_lists)
         {
@@ -793,7 +797,7 @@ namespace litehtml
         return result;
     }
 
-    bool css_selector::parse(const string& text, document_mode mode)
+    bool css_selector::parse(const std::string& text, document_mode mode)
     {
         auto tokens = normalize(text, f_componentize);
         auto ptr    = parse_complex_selector(tokens, mode);

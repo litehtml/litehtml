@@ -38,15 +38,15 @@
 namespace litehtml
 {
 
-    url::url(const string& str) :
+    url::url(const std::string& str) :
         str_(str)
     {
         // TODO: Rewrite using tstring_view to avoid unnecessary allocations.
-        string tmp = str_;
+        std::string tmp = str_;
 
         // Does the URL include a scheme?
         size_t offset = tmp.find(':');
-        if(offset != string::npos)
+        if(offset != std::string::npos)
         {
             bool valid_scheme = true;
             for(size_t i = 0; i < offset; i++)
@@ -83,7 +83,7 @@ namespace litehtml
 
         // Does the URL include a fragment?
         offset = tmp.find('#');
-        if(offset != string::npos)
+        if(offset != std::string::npos)
         {
             fragment_ = tmp.substr(offset + 1);
             tmp       = tmp.substr(0, offset);
@@ -91,7 +91,7 @@ namespace litehtml
 
         // Does the URL include a query?
         offset = tmp.find('?');
-        if(offset != string::npos)
+        if(offset != std::string::npos)
         {
             query_ = tmp.substr(offset + 1);
             tmp    = tmp.substr(0, offset);
@@ -102,8 +102,8 @@ namespace litehtml
         path_ = tmp;
     }
 
-    url::url(const string& scheme, const string& authority, const string& path, const string& query,
-             const string& fragment) :
+    url::url(const std::string& scheme, const std::string& authority, const std::string& path, const std::string& query,
+             const std::string& fragment) :
         scheme_(scheme),
         authority_(authority),
         path_(path),
@@ -135,7 +135,7 @@ namespace litehtml
         str_ = tss.str();
     }
 
-    string url::encode(const string& str)
+    std::string url::encode(const std::string& str)
     {
         std::ostringstream encoded;
         encoded << std::hex << std::uppercase;
@@ -154,10 +154,10 @@ namespace litehtml
         return encoded.str();
     }
 
-    string url::decode(const string& str)
+    std::string url::decode(const std::string& str)
     {
-        string decoded;
-        size_t i = 0;
+        std::string decoded;
+        size_t      i = 0;
 
         while(i < str.size())
         {
@@ -195,10 +195,12 @@ namespace litehtml
         if(r.has_scheme())
         {
             return r;
-        } else if(r.has_authority())
+        }
+        if(r.has_authority())
         {
             return {b.scheme(), r.authority(), r.path(), r.query(), r.fragment()};
-        } else if(r.has_path())
+        }
+        if(r.has_path())
         {
 
             // The relative URL path is either an absolute path or a relative
@@ -209,21 +211,17 @@ namespace litehtml
             if(is_url_path_absolute(r.path()))
             {
                 return {b.scheme(), b.authority(), r.path(), r.query(), r.fragment()};
-            } else
-            {
-                string path = url_path_resolve(b.path(), r.path());
-                return {b.scheme(), b.authority(), path, r.query(), r.fragment()};
             }
-
-        } else if(r.has_query())
+            std::string path = url_path_resolve(b.path(), r.path());
+            return {b.scheme(), b.authority(), path, r.query(), r.fragment()};
+        }
+        if(r.has_query())
         {
             return {b.scheme(), b.authority(), b.path(), r.query(), r.fragment()};
-        } else
-        {
-            // The resolved URL never includes the base URL fragment (i.e., it
-            // always includes the reference URL fragment).
-            return {b.scheme(), b.authority(), b.path(), b.query(), r.fragment()};
         }
+        // The resolved URL never includes the base URL fragment (i.e., it
+        // always includes the reference URL fragment).
+        return {b.scheme(), b.authority(), b.path(), b.query(), r.fragment()};
     }
 
 } // namespace litehtml

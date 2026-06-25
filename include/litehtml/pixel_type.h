@@ -1,5 +1,5 @@
-#ifndef PIXEL_TYPE_H
-#define PIXEL_TYPE_H
+#ifndef LITEHTML_PIXEL_TYPE_H
+#define LITEHTML_PIXEL_TYPE_H
 
 #include <cstdlib>
 namespace litehtml
@@ -275,4 +275,4 @@ namespace litehtml
     using pixel_t = pixel_float_t;
 
 } // namespace litehtml
-#endif // PIXEL_TYPE_H
+#endif // LITEHTML_PIXEL_TYPE_H

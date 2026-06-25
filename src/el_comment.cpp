@@ -11,7 +11,7 @@ bool litehtml::el_comment::is_comment() const
     return true;
 }
 
-void litehtml::el_comment::get_text(string& text) const
+void litehtml::el_comment::get_text(std::string& text) const
 {
     text += m_text;
 }

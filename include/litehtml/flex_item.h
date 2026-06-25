@@ -25,47 +25,31 @@ namespace litehtml
         std::shared_ptr<render_item> el;
 
         // All sizes should be interpreted as outer/margin-box sizes.
-        pixel_t            base_size;
-        pixel_t            min_size;
-        def_value<pixel_t> max_size;
-        pixel_t main_size; // Holds the outer hypothetical main size before distribute_free_space, and the used outer
-                           // main size after.
+        pixel_t            base_size = 0_px;
+        pixel_t            min_size  = 0_px;
+        def_value<pixel_t> max_size  = 0_px;
+        pixel_t main_size = 0_px; // Holds the outer hypothetical main size before distribute_free_space, and the used
+                                  // outer main size after.
 
-        int     grow;
-        int     shrink;
-        pixel_t scaled_flex_shrink_factor;
+        int     grow                      = 0;
+        int     shrink                    = 0;
+        pixel_t scaled_flex_shrink_factor = 0;
 
-        bool             frozen;
-        flex_clamp_state clamp_state;
+        bool             frozen      = false;
+        flex_clamp_state clamp_state = flex_clamp_state_unclamped;
 
-        int order;
-        int src_order;
+        int order     = 0;
+        int src_order = 0;
 
-        def_value<pixel_t> auto_margin_main_start;
-        def_value<pixel_t> auto_margin_main_end;
-        bool               auto_margin_cross_start;
-        bool               auto_margin_cross_end;
+        def_value<pixel_t> auto_margin_main_start  = 0_px;
+        def_value<pixel_t> auto_margin_main_end    = 0_px;
+        bool               auto_margin_cross_start = false;
+        bool               auto_margin_cross_end   = false;
 
-        flex_align_items align;
+        flex_align_items align = flex_align_items_auto;
 
         explicit flex_item(std::shared_ptr<render_item>& _el) :
-            el(_el),
-            base_size(0),
-            min_size(0),
-            max_size(0_px),
-            main_size(0),
-            grow(0),
-            shrink(0),
-            scaled_flex_shrink_factor(0),
-            frozen(false),
-            clamp_state(flex_clamp_state_unclamped),
-            order(0),
-            src_order(0),
-            auto_margin_main_start(0_px),
-            auto_margin_main_end(0_px),
-            auto_margin_cross_start(false),
-            auto_margin_cross_end(false),
-            align(flex_align_items_auto)
+            el(_el)
         {
         }
 
