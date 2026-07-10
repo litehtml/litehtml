@@ -18,20 +18,25 @@ namespace litehtml
          * @param fmt_ctx formatting context
          * @return rendered_width value with calculated widths
          */
-        virtual rendered_width _render_content([[maybe_unused]] pixel_t x, [[maybe_unused]] pixel_t y,
-                                               [[maybe_unused]] bool                            second_pass,
-                                               [[maybe_unused]] const containing_block_context& self_size,
-                                               [[maybe_unused]] formatting_context*             fmt_ctx)
+        virtual pixel_t _render_content([[maybe_unused]] pixel_t x, [[maybe_unused]] pixel_t y,
+                                        [[maybe_unused]] bool                            second_pass,
+                                        [[maybe_unused]] const containing_block_context& self_size,
+                                        [[maybe_unused]] formatting_context*             fmt_ctx)
         {
-            return {0_px, 0_px};
+            return 0_px;
         }
-        rendered_width _render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
-                               formatting_context* fmt_ctx, bool second_pass) override;
-        rendered_width place_float(const std::shared_ptr<render_item>& el, pixel_t top,
-                                   const containing_block_context& self_size, formatting_context* fmt_ctx);
-        virtual void   fix_line_width([[maybe_unused]] element_float                   flt,
-                                      [[maybe_unused]] const containing_block_context& containing_block_size,
-                                      [[maybe_unused]] formatting_context*             fmt_ctx)
+
+        void calc_intrinsic_size() override {}
+
+        pixel_t _render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
+                        formatting_context* fmt_ctx, bool second_pass) override;
+
+        pixel_t place_float(const std::shared_ptr<render_item>& el, pixel_t top,
+                            const containing_block_context& self_size, formatting_context* fmt_ctx);
+
+        virtual void fix_line_width([[maybe_unused]] element_float                   flt,
+                                    [[maybe_unused]] const containing_block_context& containing_block_size,
+                                    [[maybe_unused]] formatting_context*             fmt_ctx)
         {
         }
 

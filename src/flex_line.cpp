@@ -246,7 +246,7 @@ bool litehtml::flex_line::fix_min_max_violations()
 
     // 4.e Freeze over-flexed items. The total violation is the sum of the adjustments from the
     // previous step ∑(clamped size - unclamped size). If the total violation is:
-    // Zero: Freeze all items.
+    // Zero: Freeze all items.·
     // Positive: Freeze all the items with min violations.
     // Negative: Freeze all the items with max violations.
 
@@ -464,7 +464,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
 
         for(auto& item : items)
         {
-            pixel_t el_ret_width = item->el->render(0_px, 0_px, self_size, fmt_ctx, false).natural_width;
+            pixel_t el_ret_width = item->el->render(0_px, 0_px, self_size, fmt_ctx, false);
             item->el->render(0_px, 0_px,
                              self_size.new_width_height(el_ret_width - item->el->content_offset_width(),
                                                         item->main_size - item->el->content_offset_height(),
