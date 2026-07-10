@@ -5,6 +5,7 @@
 #include <list>
 #include <tuple>
 #include "html.h"
+#include "pixel_type.h"
 #include "types.h"
 #include "line_box.h"
 #include "table.h"
@@ -22,22 +23,25 @@ namespace litehtml
         std::shared_ptr<element>                  m_element;
         std::weak_ptr<render_item>                m_parent;
         std::list<std::shared_ptr<render_item>>   m_children;
-        margins                                   m_margins;
-        margins                                   m_padding;
-        margins                                   m_borders;
-        position                                  m_pos;
-        bool                                      m_skip = false;
         std::vector<std::shared_ptr<render_item>> m_positioned;
         std::shared_ptr<scroll_view>              m_scroll_view;
 
-        containing_block_context calculate_containing_block_context(const containing_block_context& cb_context);
+        margins  m_margins;
+        margins  m_padding;
+        margins  m_borders;
+        position m_pos;
+        size     m_intrinsic_min_size;
+        size     m_intrinsic_max_size;
+        bool     m_skip = false;
+
+        containing_block_context calculate_containing_block_context(const containing_block_context& cb_context) const;
         void                     calc_cb_length(const css_length& len, pixel_t percent_base,
                                                 containing_block_context::typed_pixel& out_value) const;
-        virtual rendered_width   _render(pixel_t /*x*/, pixel_t /*y*/,
-                                         const containing_block_context& /*containing_block_size*/,
-                                         formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
+        virtual void             calc_intrinsic_size() = 0;
+        virtual pixel_t _render(pixel_t /*x*/, pixel_t /*y*/, const containing_block_context& /*containing_block_size*/,
+                                formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
         {
-            return {0_px, 0_px};
+            return 0_px;
         }
 
       public:
@@ -63,6 +67,18 @@ namespace litehtml
                 box.y -= m_scroll_view->get_top();
             }
         }
+
+        const size& get_intrinsic_max_size() const
+        {
+            return m_intrinsic_max_size;
+        }
+
+        const size& get_intrinsic_min_size() const
+        {
+            return m_intrinsic_min_size;
+        }
+
+        void update_intrinsic_size();
 
         pixel_t h_scroll(pixel_t dx)
         {
@@ -423,11 +439,11 @@ namespace litehtml
             return par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex);
         }
 
-        rendered_width render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
-                              formatting_context* fmt_ctx, bool second_pass = false);
-        void           apply_relative_shift(const containing_block_context& containing_block_size);
-        void           calc_outlines(pixel_t parent_width);
-        pixel_t        calc_auto_margins(pixel_t parent_width); // returns left margin
+        pixel_t render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
+                       formatting_context* fmt_ctx, bool second_pass = false);
+        void    apply_relative_shift(const containing_block_context& containing_block_size);
+        void    calc_outlines(pixel_t parent_width);
+        pixel_t calc_auto_margins(pixel_t parent_width); // returns left margin
 
         virtual std::shared_ptr<render_item> init();
         virtual void                         apply_vertical_align() {}
@@ -448,10 +464,8 @@ namespace litehtml
             return height() - margin_bottom();
         }
 
-        virtual std::shared_ptr<render_item> clone()
-        {
-            return std::make_shared<render_item>(src_el());
-        }
+        virtual std::shared_ptr<render_item> clone() = 0;
+
         std::tuple<std::shared_ptr<litehtml::render_item>, std::shared_ptr<litehtml::render_item>,
                    std::shared_ptr<litehtml::render_item>>
              split_inlines();

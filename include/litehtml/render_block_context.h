@@ -13,8 +13,9 @@ namespace litehtml
     class render_item_block_context : public render_item_block
     {
       protected:
-        rendered_width _render_content(pixel_t x, pixel_t y, bool second_pass,
-                                       const containing_block_context& self_size, formatting_context* fmt_ctx) override;
+        void    calc_intrinsic_size() override;
+        pixel_t _render_content(pixel_t x, pixel_t y, bool second_pass, const containing_block_context& self_size,
+                                formatting_context* fmt_ctx) override;
 
       public:
         explicit render_item_block_context(std::shared_ptr<element> src_el) :

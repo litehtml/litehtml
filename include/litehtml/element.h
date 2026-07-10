@@ -1,6 +1,7 @@
 #ifndef LITEHTML_ELEMENT_H
 #define LITEHTML_ELEMENT_H
 
+#include "html.h"
 #include "types.h"
 #include "css_properties.h"
 #include "stylesheet.h"
@@ -46,7 +47,7 @@ namespace litehtml
         virtual ~element() = default;
 
         const css_properties& css() const;
-        css_properties&       css_w();
+        css_properties&       css();
 
         bool     in_normal_flow() const;
         bool     is_inline() const;     // returns true if element is inline
@@ -56,6 +57,7 @@ namespace litehtml
         bool     is_positioned() const;
         bool     is_float() const;
         bool     is_block_formatting_context() const;
+        bool     is_flex_item() const;
 
         pixel_t v_scroll(pixel_t dy) const;
         pixel_t h_scroll(pixel_t dx) const;
@@ -203,6 +205,16 @@ namespace litehtml
         return (css().get_float() != float_none);
     }
 
+    inline bool litehtml::element::is_flex_item() const
+    {
+        auto par = parent();
+        if(par)
+        {
+            return is_one_of(par->css().get_display(), display_flex, display_inline_flex);
+        }
+        return false;
+    }
+
     inline std::shared_ptr<document> element::get_document() const
     {
         return m_doc.lock();
@@ -213,7 +225,7 @@ namespace litehtml
         return m_css;
     }
 
-    inline css_properties& element::css_w()
+    inline css_properties& element::css()
     {
         return m_css;
     }

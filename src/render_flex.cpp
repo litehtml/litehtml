@@ -2,9 +2,9 @@
 #include "render_flex.h"
 #include "html_tag.h"
 
-litehtml::rendered_width litehtml::render_item_flex::_render_content(pixel_t x, pixel_t y, bool /*second_pass*/,
-                                                                     const containing_block_context& self_size,
-                                                                     formatting_context*             fmt_ctx)
+litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t y, bool /*second_pass*/,
+                                                              const containing_block_context& self_size,
+                                                              formatting_context*             fmt_ctx)
 {
     bool    is_row_direction    = true;
     bool    reverse             = false;
@@ -61,7 +61,7 @@ litehtml::rendered_width litehtml::render_item_flex::_render_content(pixel_t x, 
     /////////////////////////////////////////////////////////////////
     /// Split flex items to lines
     /////////////////////////////////////////////////////////////////
-    m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
+    m_lines = get_lines(self_size, is_row_direction, container_main_size, single_line);
 
     pixel_t sum_cross_size = 0_px;
     pixel_t sum_main_size  = 0_px;
@@ -235,12 +235,14 @@ litehtml::rendered_width litehtml::render_item_flex::_render_content(pixel_t x, 
     m_pos.x += content_offset_left();
     m_pos.y += content_offset_top();
 
-    return {ret_width, ret_width};
+    m_pos.width = self_size.render_width;
+
+    return ret_width;
 }
 
 std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
-    const litehtml::containing_block_context& self_size, litehtml::formatting_context* fmt_ctx, bool is_row_direction,
-    pixel_t container_main_size, bool single_line)
+    const litehtml::containing_block_context& self_size, bool is_row_direction, pixel_t container_main_size,
+    bool single_line)
 {
     bool reverse_main;
     bool reverse_cross = css().get_flex_wrap() == flex_wrap_wrap_reverse;
@@ -270,7 +272,7 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
         {
             item = std::make_shared<flex_item_column_direction>(el);
         }
-        item->init(self_size, fmt_ctx, css().get_flex_align_items());
+        item->init(self_size, css().get_flex_align_items());
         item->src_order = src_order++;
 
         if(prev_order.is_default())
@@ -454,4 +456,41 @@ litehtml::pixel_t litehtml::render_item_flex::get_last_baseline()
         }
     }
     return height();
+}
+
+void litehtml::render_item_flex::calc_intrinsic_size()
+{
+    bool is_row_direction = is_one_of(css().get_flex_direction(), flex_direction_row, flex_direction_row_reverse);
+
+    for(const auto& el : m_children)
+    {
+        auto child_min = el->get_intrinsic_min_size();
+        auto child_max = el->get_intrinsic_max_size();
+
+        if(is_row_direction)
+        {
+            // Row direction: items are laid out horizontally
+            // Width accumulates (sum of all items)
+            m_intrinsic_min_size.width += child_min.width;
+            m_intrinsic_max_size.width += child_max.width;
+            // Height is the maximum of all items
+            m_intrinsic_min_size.height = std::max(m_intrinsic_min_size.height, child_min.height);
+            m_intrinsic_max_size.height = std::max(m_intrinsic_max_size.height, child_max.height);
+        } else
+        {
+            // Column direction: items are laid out vertically
+            // Width is the maximum of all items
+            m_intrinsic_min_size.width = std::max(m_intrinsic_min_size.width, child_min.width);
+            m_intrinsic_max_size.width = std::max(m_intrinsic_max_size.width, child_max.width);
+            // Height accumulates (sum of all items)
+            m_intrinsic_min_size.height += child_min.height;
+            m_intrinsic_max_size.height += child_max.height;
+        }
+    }
+
+    // Add the container's own offsets (padding, borders, margins)
+    m_intrinsic_min_size.width  += content_offset_width();
+    m_intrinsic_max_size.width  += content_offset_width();
+    m_intrinsic_min_size.height += content_offset_height();
+    m_intrinsic_max_size.height += content_offset_height();
 }

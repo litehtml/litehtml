@@ -12,7 +12,7 @@ litehtml::el_text::el_text(const char* text, const document::ptr& doc) :
     }
     m_use_transformed = false;
     m_draw_spaces     = true;
-    css_w().set_display(display_inline_text);
+    css().set_display(display_inline_text);
 }
 
 void litehtml::el_text::get_content_size(size& sz, pixel_t /*max_width*/)
@@ -30,14 +30,14 @@ void litehtml::el_text::compute_styles(bool /*recursive*/)
     element::ptr el_parent = parent();
     if(el_parent)
     {
-        css_w().line_height_w() = el_parent->css().line_height();
-        css_w().set_font(el_parent->css().get_font());
-        css_w().set_font_metrics(el_parent->css().get_font_metrics());
-        css_w().set_white_space(el_parent->css().get_white_space());
-        css_w().set_text_transform(el_parent->css().get_text_transform());
+        css().line_height() = el_parent->css().line_height();
+        css().set_font(el_parent->css().get_font());
+        css().set_font_metrics(el_parent->css().get_font_metrics());
+        css().set_white_space(el_parent->css().get_white_space());
+        css().set_text_transform(el_parent->css().get_text_transform());
     }
-    css_w().set_display(display_inline_text);
-    css_w().set_float(float_none);
+    css().set_display(display_inline_text);
+    css().set_float(float_none);
 
     if(m_css.get_text_transform() != text_transform_none)
     {
@@ -54,15 +54,15 @@ void litehtml::el_text::compute_styles(bool /*recursive*/)
     {
         if(p->css().get_position() == element_position_relative)
         {
-            css_w().set_offsets(p->css().get_offsets());
-            css_w().set_position(element_position_relative);
+            css().set_offsets(p->css().get_offsets());
+            css().set_position(element_position_relative);
             break;
         }
         p = p->parent();
     }
     if(p)
     {
-        css_w().set_position(element_position_static);
+        css().set_position(element_position_static);
     }
 
     if(is_white_space())

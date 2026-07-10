@@ -1,4 +1,5 @@
 #include "render_item.h"
+#include "css_values.h"
 #include "document.h"
 #include "document_container.h"
 #include "types.h"
@@ -27,9 +28,99 @@ litehtml::render_item::render_item(std::shared_ptr<element> _src_el) :
     m_borders.bottom = doc->to_pixels(src_el()->css().get_borders().bottom.width, fm, 0_px);
 }
 
-litehtml::rendered_width litehtml::render_item::render(pixel_t x, pixel_t y,
-                                                       const containing_block_context& containing_block_size,
-                                                       formatting_context* fmt_ctx, bool second_pass)
+void litehtml::render_item::update_intrinsic_size()
+{
+    m_intrinsic_max_size.width  = 0_px;
+    m_intrinsic_max_size.height = 0_px;
+    m_intrinsic_min_size.width  = 0_px;
+    m_intrinsic_min_size.height = 0_px;
+
+    // Update intrisict size for all children first
+    std::for_each(m_children.begin(), m_children.end(),
+                  [](const std::shared_ptr<render_item>& el) { el->update_intrinsic_size(); });
+
+    document::ptr doc = src_el()->get_document();
+    auto          fm  = css().get_font_metrics();
+
+    // Calculate outlines for this element first, because it is needed for intrisict size calculation
+    // Percent based outlines should be calculated to the zero
+    calc_outlines(0_px);
+    calc_intrinsic_size();
+
+    // Flex items have their intrisict size calculated based on the flex container, so we skip this step for them
+    // We also skip this step for text elements, because they have their intrisict size calculated based on the text
+    // content
+    if(!src_el()->is_text() && !src_el()->is_flex_item())
+    {
+        if(!css().get_width().is_predefined() && css().get_width().units() != css_units_percentage)
+        {
+            auto w = doc->to_pixels(css().get_width(), fm, 0_px) + content_offset_width();
+            if(css().get_display() == display_table_cell)
+            {
+                m_intrinsic_max_size.width = m_intrinsic_min_size.width = std::max(w, m_intrinsic_min_size.width);
+            } else
+            {
+                // If width is defined and not percentage, then we can set the intrisict size to that value
+                m_intrinsic_max_size.width = m_intrinsic_min_size.width = w;
+            }
+        } else if(css().get_overflow() > overflow_visible)
+        {
+            m_intrinsic_min_size.width = content_offset_width();
+        }
+
+        if(!css().get_height().is_predefined() && css().get_height().units() != css_units_percentage)
+        {
+            auto h = doc->to_pixels(css().get_height(), fm, 0_px) + content_offset_height();
+            if(css().get_display() == display_table_cell)
+            {
+                m_intrinsic_max_size.height = m_intrinsic_min_size.height = std::max(h, m_intrinsic_min_size.height);
+            } else
+            {
+                // If height is defined and not percentage, then we can set the intrisict size to that value
+                m_intrinsic_max_size.height = m_intrinsic_min_size.height = h;
+            }
+        }
+    }
+
+    // Clamp the intrisict size to the min/max width properties if they are defined and not percentage
+    // Skipping this for inline elements, because they are not affected by min/max width properties
+    if(!is_one_of(css().get_display(), display_inline_text, display_inline))
+    {
+        if(!css().get_max_width().is_predefined() && css().get_max_width().units() != css_units_percentage)
+        {
+            m_intrinsic_max_size.width = std::min(
+                m_intrinsic_max_size.width, doc->to_pixels(css().get_max_width(), fm, 0_px) + content_offset_width());
+        }
+        if(!css().get_max_height().is_predefined() && css().get_max_height().units() != css_units_percentage)
+        {
+            m_intrinsic_max_size.height =
+                std::min(m_intrinsic_max_size.height,
+                         doc->to_pixels(css().get_max_height(), fm, 0_px) + content_offset_height());
+        }
+
+        if(!css().get_min_width().is_predefined() && css().get_min_width().units() != css_units_percentage)
+        {
+            m_intrinsic_min_size.width = std::max(
+                m_intrinsic_min_size.width, doc->to_pixels(css().get_min_width(), fm, 0_px) + content_offset_width());
+        }
+        if(!css().get_min_height().is_predefined() && css().get_min_height().units() != css_units_percentage)
+        {
+            m_intrinsic_min_size.height =
+                std::max(m_intrinsic_min_size.height,
+                         doc->to_pixels(css().get_min_height(), fm, 0_px) + content_offset_height());
+        }
+    }
+
+    // Finally, make sure that the min width is not greater than the max width
+    if(m_intrinsic_min_size.width > m_intrinsic_max_size.width)
+    {
+        m_intrinsic_min_size.width = m_intrinsic_max_size.width;
+    }
+}
+
+litehtml::pixel_t litehtml::render_item::render(pixel_t x, pixel_t y,
+                                                const containing_block_context& containing_block_size,
+                                                formatting_context* fmt_ctx, bool second_pass)
 {
     calc_outlines(containing_block_size.width);
 
@@ -1443,15 +1534,34 @@ void litehtml::render_item::calc_cb_length(const css_length& len, pixel_t percen
 }
 
 litehtml::containing_block_context litehtml::render_item::calculate_containing_block_context(
-    const containing_block_context& cb_context)
+    const containing_block_context& cb_context) const
 {
     containing_block_context ret;
     ret.context_idx = cb_context.context_idx + 1;
-    ret.width.value = ret.max_width.value = cb_context.width.value - content_offset_width();
-    if(src_el()->css().get_position() != element_position_absolute &&
-       src_el()->css().get_position() != element_position_fixed)
+    ret.width.value = ret.max_width.value = cb_context.width.value;
+    if(!is_one_of(src_el()->css().get_position(), element_position_absolute, element_position_fixed))
     {
         ret.height.value = cb_context.height.value - content_offset_height();
+        if(ret.height.value < 0_px)
+        {
+            ret.height.value = 0_px;
+        }
+    }
+    if(src_el()->is_float() || src_el()->is_inline_box() ||
+       is_one_of(src_el()->css().get_position(), element_position_absolute, element_position_fixed))
+    {
+        ret.width.value =
+            std::max(std::min(cb_context.width.value, get_intrinsic_max_size().width), get_intrinsic_min_size().width);
+    }
+    ret.max_width.value -= content_offset_width();
+    ret.width.value     -= content_offset_width();
+    if(ret.max_width.value < 0_px)
+    {
+        ret.max_width.value = 0_px;
+    }
+    if(ret.width.value < 0_px)
+    {
+        ret.width.value = 0_px;
     }
 
     // Calculate width if css property is not auto
@@ -1465,21 +1575,20 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
             ret.width.type  = containing_block_context::cbc_value_type_absolute;
         } else
         {
-            const auto* width = &css().get_width();
-            if(par && (par->css().get_display() == display_flex || par->css().get_display() == display_inline_flex))
+            std::optional<css_length> width = css().get_width();
+            if(par && is_one_of(par->css().get_display(), display_flex, display_inline_flex))
             {
                 if(!css().get_flex_basis().is_predefined() && css().get_flex_basis().val() >= 0)
                 {
-                    if(par->css().get_flex_direction() == flex_direction_row ||
-                       par->css().get_flex_direction() == flex_direction_row_reverse)
+                    if(is_one_of(par->css().get_flex_direction(), flex_direction_row, flex_direction_row_reverse))
                     {
                         ret.width.type  = containing_block_context::cbc_value_type_auto;
                         ret.width.value = 0;
-                        width           = nullptr;
+                        width           = std::nullopt;
                     }
                 }
             }
-            if(width != nullptr)
+            if(width.has_value())
             {
                 calc_cb_length(*width, cb_context.width, ret.width);
             }
@@ -1490,21 +1599,20 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
             ret.height.type  = containing_block_context::cbc_value_type_absolute;
         } else
         {
-            const auto* height = &css().get_height();
-            if(par && (par->css().get_display() == display_flex || par->css().get_display() == display_inline_flex))
+            std::optional<css_length> height = css().get_height();
+            if(par && is_one_of(par->css().get_display(), display_flex, display_inline_flex))
             {
                 if(!css().get_flex_basis().is_predefined() && css().get_flex_basis().val() >= 0)
                 {
-                    if(par->css().get_flex_direction() == flex_direction_column ||
-                       par->css().get_flex_direction() == flex_direction_column_reverse)
+                    if(is_one_of(par->css().get_flex_direction(), flex_direction_column, flex_direction_column_reverse))
                     {
                         ret.height.type  = containing_block_context::cbc_value_type_auto;
                         ret.height.value = 0;
-                        height           = nullptr;
+                        height           = std::nullopt;
                     }
                 }
             }
-            if(height != nullptr)
+            if(height.has_value())
             {
                 calc_cb_length(*height, cb_context.height, ret.height);
             }
@@ -1527,6 +1635,17 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
 
     calc_cb_length(src_el()->css().get_min_height(), cb_context.height, ret.min_height);
     calc_cb_length(src_el()->css().get_max_height(), cb_context.height, ret.max_height);
+
+    if(is_one_of(ret.min_width.type, containing_block_context::cbc_value_type_percentage,
+                 containing_block_context::cbc_value_type_absolute))
+    {
+        ret.width.value = ret.render_width.value = std::max(ret.render_width.value, ret.min_width.value);
+    }
+    if(is_one_of(ret.max_width.type, containing_block_context::cbc_value_type_percentage,
+                 containing_block_context::cbc_value_type_absolute))
+    {
+        ret.width.value = ret.render_width.value = std::min(ret.render_width.value, ret.max_width.value);
+    }
 
     // Fix box sizing
     if(ret.width.type != containing_block_context::cbc_value_type_auto)
@@ -1563,9 +1682,8 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
     if((cb_context.size_mode & containing_block_context::size_mode_exact_width) != 0)
     {
         auto par = parent();
-        if(par && (par->css().get_display() == display_flex || par->css().get_display() == display_inline_flex) &&
-           (par->css().get_flex_direction() == flex_direction_row ||
-            par->css().get_flex_direction() == flex_direction_row_reverse))
+        if(par && is_one_of(par->css().get_display(), display_flex, display_inline_flex) &&
+           is_one_of(par->css().get_flex_direction(), flex_direction_row, flex_direction_row_reverse))
         {
             ret.min_width.type = containing_block_context::cbc_value_type_none;
             ret.max_width.type = containing_block_context::cbc_value_type_none;

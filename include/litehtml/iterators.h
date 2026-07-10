@@ -37,14 +37,14 @@ namespace litehtml
          * @param el element to check
          * @return true to go inside
          */
-        bool go_inside(const std::shared_ptr<render_item>& el);
+        bool go_inside(const std::shared_ptr<render_item>& el) const;
 
       public:
         elements_iterator(bool return_parents, iterator_selector* go_inside, iterator_selector* select);
         ~elements_iterator() = default;
 
         void process(const std::shared_ptr<render_item>&                                           container,
-                     const std::function<void(std::shared_ptr<render_item>&, iterator_item_type)>& func);
+                     const std::function<void(std::shared_ptr<render_item>&, iterator_item_type)>& func) const;
 
       private:
         void next_idx();

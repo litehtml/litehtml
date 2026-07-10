@@ -130,7 +130,7 @@ void litehtml::table_grid::finish()
         {
             if(cell(col, row)->el && cell(col, row)->colspan == 1)
             {
-                cell(col, row)->el->src_el()->css_w().set_width(m_columns[col].css_width);
+                cell(col, row)->el->src_el()->css().set_width(m_columns[col].css_width);
             }
         }
     }
@@ -284,10 +284,80 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
     }
 }
 
-litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bool is_auto, pixel_t& min_table_width,
-                                                         pixel_t& max_table_width)
+litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> block_width, bool is_auto,
+                                                         pixel_t& min_table_width, pixel_t& max_table_width)
 {
-    // pixel_t table_width = 0;
+    // Calculate the minimum content width (MCW) of each cell: the formatted content may span any number of lines but
+    // may not overflow the cell box. If the specified 'width' (W) of the cell is greater than MCW, W is the minimum
+    // cell width. A value of 'auto' means that MCW is the minimum cell width.
+    //
+    // Also, calculate the "maximum" cell width of each cell: formatting the content without breaking lines other than
+    // where explicit line breaks occur.
+
+    for(int row = 0; row < rows_count(); row++)
+    {
+        for(int col = 0; col < cols_count(); col++)
+        {
+            table_cell* cell = this->cell(col, row);
+            if(cell && cell->el)
+            {
+                cell->min_width = cell->el->get_intrinsic_min_size().width;
+                cell->max_width = cell->el->get_intrinsic_max_size().width;
+            }
+        }
+    }
+
+    // For each column, determine a maximum and minimum column width from the cells that span only that column.
+    // The minimum is that required by the cell with the largest minimum cell width (or the column 'width', whichever is
+    // larger).
+    // The maximum is that required by the cell with the largest maximum cell width (or the column 'width', whichever is
+    // larger).
+
+    for(int col = 0; col < cols_count(); col++)
+    {
+        column(col).max_width = 0;
+        column(col).min_width = 0;
+        for(int row = 0; row < rows_count(); row++)
+        {
+            if(cell(col, row)->colspan <= 1)
+            {
+                column(col).max_width = std::max(column(col).max_width, cell(col, row)->max_width);
+                column(col).min_width = std::max(column(col).min_width, cell(col, row)->min_width);
+            }
+        }
+    }
+
+    // For each cell that spans more than one column, increase the minimum widths of the columns it spans so that
+    // together,
+    // they are at least as wide as the cell. Do the same for the maximum widths.
+    // If possible, widen all spanned columns by approximately the same amount.
+
+    for(int col = 0; col < cols_count(); col++)
+    {
+        for(int row = 0; row < rows_count(); row++)
+        {
+            if(cell(col, row)->colspan > 1)
+            {
+                pixel_t max_total_width = column(col).max_width;
+                pixel_t min_total_width = column(col).min_width;
+                for(int col2 = col + 1; col2 < col + cell(col, row)->colspan; col2++)
+                {
+                    max_total_width += column(col2).max_width;
+                    min_total_width += column(col2).min_width;
+                }
+                if(min_total_width < cell(col, row)->min_width)
+                {
+                    distribute_min_width(cell(col, row)->min_width - min_total_width, col,
+                                         col + cell(col, row)->colspan - 1);
+                }
+                if(max_total_width < cell(col, row)->max_width)
+                {
+                    distribute_max_width(cell(col, row)->max_width - max_total_width, col,
+                                         col + cell(col, row)->colspan - 1);
+                }
+            }
+        }
+    }
 
     min_table_width = 0; // MIN
     max_table_width = 0; // MAX
@@ -301,9 +371,9 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
         min_table_width += m_columns[col].min_width;
         max_table_width += m_columns[col].max_width;
 
-        if(!m_columns[col].css_width.is_predefined())
+        if(!m_columns[col].css_width.is_predefined() && block_width.has_value())
         {
-            m_columns[col].width = m_columns[col].css_width.calc_percent(block_width);
+            m_columns[col].width = m_columns[col].css_width.calc_percent(block_width.value());
             m_columns[col].width = std::max(m_columns[col].width, m_columns[col].min_width);
         } else
         {
@@ -315,7 +385,7 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
         cur_width += m_columns[col].width;
     }
 
-    if(cur_width == block_width)
+    if(!block_width.has_value() || cur_width == block_width)
     {
         return cur_width;
     }
@@ -338,7 +408,7 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
                 return cur_width;
             }
         }
-        distribute_width(block_width - cur_width, 0, m_cols_count - 1);
+        distribute_width(block_width.value() - cur_width, 0, m_cols_count - 1);
         cur_width = 0;
         for(int col = 0; col < m_cols_count; col++)
         {
@@ -369,7 +439,7 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
                 {
                     css_length w;
                     w.set_value(m_columns[col].css_width.val() * scale, css_units_percentage);
-                    m_columns[col].width = w.calc_percent(block_width - fixed_width);
+                    m_columns[col].width = w.calc_percent(block_width->value() - fixed_width);
                     if(m_columns[col].width < m_columns[col].min_width)
                     {
                         m_columns[col].width = m_columns[col].min_width;

@@ -2,71 +2,122 @@
 #include "document.h"
 #include "iterators.h"
 #include "types.h"
+#include <algorithm>
 
-litehtml::rendered_width litehtml::render_item_inline_context::_render_content(
-    pixel_t /*x*/, pixel_t /*y*/, bool /*second_pass*/, const containing_block_context& self_size,
-    formatting_context* fmt_ctx)
+void litehtml::render_item_inline_context::for_each_inline(
+    const std::function<void(const std::shared_ptr<render_item>& el, iterator_item_type item_type)>& callback,
+    bool const_process) const
 {
-    m_line_boxes.clear();
-    m_rendered_width.reset();
+    white_space ws = src_el()->css().get_white_space();
 
-    white_space ws          = src_el()->css().get_white_space();
-    bool        skip_spaces = false;
+    bool skip_spaces = false;
+
+    std::shared_ptr<render_item> last_space;
+
     if(ws == white_space_normal || ws == white_space_nowrap || ws == white_space_pre_line)
     {
         skip_spaces = true;
     }
 
-    bool was_space = false;
+    bool was_space = true;
 
     go_inside_inline  go_inside_inlines_selector;
     inline_selector   select_inlines;
     elements_iterator inlines_iter(true, &go_inside_inlines_selector, &select_inlines);
 
-    inlines_iter.process(shared_from_this(), [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
-        switch(item_type)
-        {
-        case iterator_item_type_child:
+    inlines_iter.process(std::const_pointer_cast<render_item>(shared_from_this()),
+                         [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
+                             switch(item_type)
+                             {
+                             case iterator_item_type_child:
+                                 {
+                                     // skip spaces to make rendering a bit faster
+                                     if(skip_spaces)
+                                     {
+                                         if(el->src_el()->is_white_space())
+                                         {
+                                             if(was_space)
+                                             {
+                                                 if(!const_process)
+                                                 {
+                                                     el->skip(true);
+                                                 }
+                                                 return;
+                                             }
+                                             last_space = el;
+                                             was_space  = true;
+                                             return;
+                                         }
+                                         // skip all spaces after line break
+                                         was_space = el->src_el()->is_break();
+                                     }
+                                     if(last_space && !el->src_el()->is_float())
+                                     {
+                                         callback(last_space, iterator_item_type_child);
+                                         last_space = nullptr;
+                                     }
+                                     // place element into rendering flow
+                                     callback(el, item_type);
+                                 }
+                                 break;
+
+                             case iterator_item_type_start_parent:
+                             case iterator_item_type_end_parent:
+                                 {
+                                     if(last_space)
+                                     {
+                                         callback(last_space, iterator_item_type_child);
+                                         last_space = nullptr;
+                                     }
+                                     callback(el, item_type);
+                                 }
+                                 break;
+                             }
+                         });
+    if(last_space && !const_process)
+    {
+        last_space->skip(true);
+    }
+}
+
+litehtml::pixel_t litehtml::render_item_inline_context::_render_content(pixel_t /*x*/, pixel_t /*y*/,
+                                                                        bool /*second_pass*/,
+                                                                        const containing_block_context& self_size,
+                                                                        formatting_context*             fmt_ctx)
+{
+    m_line_boxes.clear();
+    m_max_line_width = 0;
+
+    for_each_inline(
+        [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
+            switch(item_type)
             {
-                // skip spaces to make rendering a bit faster
-                if(skip_spaces)
+            case iterator_item_type_child:
                 {
-                    if(el->src_el()->is_white_space())
-                    {
-                        if(was_space)
-                        {
-                            el->skip(true);
-                            return;
-                        }
-                        was_space = true;
-                    } else
-                    {
-                        // skip all spaces after line break
-                        was_space = el->src_el()->is_break();
-                    }
+                    // place element into rendering flow
+                    place_inline(std::make_unique<line_box_item>(el), self_size, fmt_ctx);
                 }
-                // place element into rendering flow
-                place_inline(std::make_unique<line_box_item>(el), self_size, fmt_ctx);
-            }
-            break;
+                break;
 
-        case iterator_item_type_start_parent:
-            {
-                el->clear_inline_boxes();
-                place_inline(std::make_unique<lbi_start>(el), self_size, fmt_ctx);
-            }
-            break;
+            case iterator_item_type_start_parent:
+                {
+                    el->clear_inline_boxes();
+                    place_inline(std::make_unique<lbi_start>(el), self_size, fmt_ctx);
+                }
+                break;
 
-        case iterator_item_type_end_parent:
-            {
-                place_inline(std::make_unique<lbi_end>(el), self_size, fmt_ctx);
+            case iterator_item_type_end_parent:
+                {
+                    place_inline(std::make_unique<lbi_end>(el), self_size, fmt_ctx);
+                }
+                break;
             }
-            break;
-        }
-    });
+        },
+        /*const_process=*/false);
 
     finish_last_box(true, self_size);
 
+    m_pos.width = self_size.render_width;
     if(!m_line_boxes.empty())
     {
         if(collapse_top_margin())
@@ -88,7 +139,7 @@ litehtml::rendered_width litehtml::render_item_inline_context::_render_content(
         }
     }
 
-    return m_rendered_width;
+    return m_max_line_width;
 }
 
 void litehtml::render_item_inline_context::fix_line_width(element_float flt, const containing_block_context& self_size,
@@ -172,7 +223,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::render_item_inline
             m_line_boxes.pop_back();
         } else
         {
-            m_rendered_width.merge(m_line_boxes.back()->get_rendered_width());
+            m_max_line_width = std::max(m_max_line_width, m_line_boxes.back()->min_width());
         }
     }
     return ret;
@@ -242,8 +293,8 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
         {
             line_top = m_line_boxes.back()->top();
         }
-        auto rw = place_float(item->get_el(), line_top, self_size, fmt_ctx);
-        m_rendered_width.merge(rw);
+        auto rw          = place_float(item->get_el(), line_top, self_size, fmt_ctx);
+        m_max_line_width = std::max(m_max_line_width, rw);
         return;
     }
 
@@ -251,12 +302,7 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
     {
         if(item->get_el()->src_el()->is_inline_box())
         {
-            pixel_t min_rendered_width = item->get_el()->render(0_px, 0_px, self_size, fmt_ctx).natural_width;
-            if(min_rendered_width < item->get_el()->width() &&
-               item->get_el()->src_el()->css().get_width().is_predefined())
-            {
-                item->get_el()->render(0_px, 0_px, self_size.new_width(min_rendered_width), fmt_ctx);
-            }
+            auto min_rendered_width = item->get_el()->render(0_px, 0_px, self_size, fmt_ctx);
             item->set_rendered_min_width(min_rendered_width);
         } else if(item->get_el()->src_el()->css().get_display() == display_inline_text)
         {
@@ -376,4 +422,71 @@ litehtml::pixel_t litehtml::render_item_inline_context::get_last_baseline()
         bl = height();
     }
     return bl;
+}
+
+void litehtml::render_item_inline_context::calc_intrinsic_size()
+{
+    pixel_t line_max_width = 0_px;
+    pixel_t line_height    = 0_px;
+    pixel_t spaces_width   = 0_px;
+
+    white_space ws = src_el()->css().get_white_space();
+
+    bool skip_spaces = ws == white_space_normal || ws == white_space_nowrap || ws == white_space_pre_line;
+
+    for_each_inline(
+        [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
+            switch(item_type)
+            {
+            case iterator_item_type_child:
+                {
+                    if(skip_spaces)
+                    {
+                        if(el->src_el()->is_white_space())
+                        {
+                            if(spaces_width == 0_px)
+                            {
+                                spaces_width += el->get_intrinsic_max_size().width;
+                            }
+                            return;
+                        }
+                    }
+                    line_max_width += el->get_intrinsic_max_size().width;
+                    line_height     = std::max(line_height, el->get_intrinsic_max_size().height);
+
+                    if(el->src_el()->is_break())
+                    {
+                        m_intrinsic_max_size.width  = std::max(m_intrinsic_max_size.width, line_max_width);
+                        m_intrinsic_min_size.height = std::max(m_intrinsic_min_size.height, line_height);
+
+                        line_max_width = 0_px;
+                        line_height    = 0_px;
+                    } else
+                    {
+                        line_max_width += spaces_width;
+                    }
+                    spaces_width = 0_px;
+                    m_intrinsic_min_size.width =
+                        std::max(m_intrinsic_min_size.width, el->get_intrinsic_min_size().width);
+                    m_intrinsic_max_size.height =
+                        std::max(m_intrinsic_max_size.height, el->get_intrinsic_max_size().height);
+                }
+                break;
+            case iterator_item_type_start_parent:
+                line_max_width += el->get_intrinsic_max_size().width;
+                line_height     = std::max(line_height, el->get_intrinsic_max_size().height);
+
+                m_intrinsic_min_size.width = std::max(m_intrinsic_min_size.width, el->get_intrinsic_min_size().width);
+                m_intrinsic_max_size.height =
+                    std::max(m_intrinsic_max_size.height, el->get_intrinsic_max_size().height);
+                break;
+            default:
+                break;
+            }
+        },
+        /*const_process=*/true);
+    m_intrinsic_max_size.width   = std::max(m_intrinsic_max_size.width, line_max_width) + content_offset_width();
+    m_intrinsic_min_size.height  = std::max(m_intrinsic_min_size.height, line_height) + content_offset_height();
+    m_intrinsic_min_size.width  += content_offset_width();
+    m_intrinsic_max_size.height += content_offset_height();
 }

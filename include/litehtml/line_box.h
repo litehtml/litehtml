@@ -3,6 +3,7 @@
 
 #include <memory>
 #include "css_properties.h"
+#include "pixel_type.h"
 #include "types.h"
 
 namespace litehtml
@@ -185,7 +186,7 @@ namespace litehtml
         font_metrics      m_font_metrics;
         pixel_t           m_baseline;
         text_align        m_text_align;
-        rendered_width    m_rendered_width;
+        pixel_t           m_min_width;
 
         std::list<std::unique_ptr<line_box_item>> m_items;
 
@@ -232,9 +233,9 @@ namespace litehtml
         {
             return m_right;
         }
-        rendered_width get_rendered_width() const
+        pixel_t min_width() const
         {
-            return m_rendered_width;
+            return m_min_width;
         }
 
         void    add_item(std::unique_ptr<line_box_item> item);

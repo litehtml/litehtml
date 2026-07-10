@@ -4,8 +4,7 @@
 #include "flex_line.h"
 #include "types.h"
 
-void litehtml::flex_item::init(const litehtml::containing_block_context& self_size,
-                               litehtml::formatting_context* fmt_ctx, flex_align_items align_items)
+void litehtml::flex_item::init(const litehtml::containing_block_context& self_size, flex_align_items align_items)
 {
     grow = static_cast<int>(std::nearbyint(el->css().get_flex_grow() * 1000.0));
     // Negative numbers are invalid.
@@ -23,7 +22,7 @@ void litehtml::flex_item::init(const litehtml::containing_block_context& self_si
     el->calc_outlines(self_size.render_width);
     order = el->css().get_order();
 
-    direction_specific_init(self_size, fmt_ctx);
+    direction_specific_init(self_size);
 
     if(el->css().get_flex_align_self() == flex_align_items_auto)
     {
@@ -122,8 +121,7 @@ litehtml::pixel_t litehtml::flex_item::get_first_baseline(litehtml::baseline::_b
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::containing_block_context& self_size,
-                                                                litehtml::formatting_context*             fmt_ctx)
+void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::containing_block_context& self_size)
 {
     if(el->css().get_margins().left.is_predefined())
     {
@@ -141,23 +139,12 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
     {
         auto_margin_cross_end = true;
     }
-    def_value<pixel_t> content_size(0_px);
-    if(el->css().get_min_width().is_predefined())
-    {
-        min_size =
-            el->render(0_px, 0_px,
-                       self_size.new_width(el->content_offset_width(), containing_block_context::size_mode_content),
-                       fmt_ctx)
-                .natural_width;
-        content_size = min_size;
-    } else
-    {
-        min_size = el->css().get_min_width().calc_percent(self_size.render_width) + el->render_offset_width();
-    }
+    min_size = el->get_intrinsic_min_size().width;
     if(!el->css().get_max_width().is_predefined())
     {
-        max_size = el->css().get_max_width().calc_percent(self_size.render_width) + el->render_offset_width();
+        max_size = el->get_intrinsic_max_size().width;
     }
+
     bool flex_basis_predefined = el->css().get_flex_basis().is_predefined();
     int  predef                = flex_basis_auto;
     if(flex_basis_predefined)
@@ -186,27 +173,13 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
             break;
         case flex_basis_fit_content:
         case flex_basis_content:
-            base_size = el->render(0_px, 0_px,
-                                   self_size.new_width(self_size.render_width.value + el->content_offset_width(),
-                                                       containing_block_context::size_mode_content |
-                                                           containing_block_context::size_mode_exact_width),
-                                   fmt_ctx)
-                            .natural_width;
+            base_size = std::min(el->get_intrinsic_max_size().width, self_size.render_width.value);
             break;
         case flex_basis_min_content:
-            if(content_size.is_default())
-            {
-                content_size = el->render(0_px, 0_px,
-                                          self_size.new_width(el->content_offset_width(),
-                                                              containing_block_context::size_mode_content),
-                                          fmt_ctx)
-                                   .natural_width;
-            }
-            base_size = content_size;
+            base_size = el->get_intrinsic_min_size().width;
             break;
         case flex_basis_max_content:
-            el->render(0_px, 0_px, self_size, fmt_ctx);
-            base_size = el->width();
+            base_size = el->get_intrinsic_max_size().width;
             break;
         default:
             base_size = 0;
@@ -315,8 +288,7 @@ litehtml::pixel_t litehtml::flex_item_row_direction::get_el_cross_size()
 
 ////////////////////////////////////////////////////////////////////////////////////
 
-void litehtml::flex_item_column_direction::direction_specific_init(const litehtml::containing_block_context& self_size,
-                                                                   litehtml::formatting_context*             fmt_ctx)
+void litehtml::flex_item_column_direction::direction_specific_init(const litehtml::containing_block_context& self_size)
 {
     if(el->css().get_margins().top.is_predefined())
     {
@@ -334,19 +306,8 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
     {
         auto_margin_cross_end = true;
     }
-    if(el->css().get_min_height().is_predefined())
-    {
-        el->render(0_px, 0_px, self_size.new_width(self_size.render_width, containing_block_context::size_mode_content),
-                   fmt_ctx);
-        min_size = el->height();
-    } else
-    {
-        min_size = el->css().get_min_height().calc_percent(self_size.height) + el->render_offset_height();
-    }
-    if(!el->css().get_max_height().is_predefined())
-    {
-        max_size = el->css().get_max_height().calc_percent(self_size.height) + el->render_offset_height();
-    }
+    min_size = el->get_intrinsic_min_size().height;
+    max_size = el->get_intrinsic_max_size().height;
 
     bool flex_basis_predefined = el->css().get_flex_basis().is_predefined();
     int  predef                = flex_basis_auto;
@@ -374,8 +335,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
             break;
         case flex_basis_max_content:
         case flex_basis_fit_content:
-            el->render(0_px, 0_px, self_size, fmt_ctx);
-            base_size = el->height();
+            base_size = el->get_intrinsic_max_size().height;
             break;
         case flex_basis_min_content:
             base_size = min_size;

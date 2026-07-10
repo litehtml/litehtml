@@ -2,9 +2,9 @@
 #include "document.h"
 #include "types.h"
 
-litehtml::rendered_width litehtml::render_item_image::_render(pixel_t x, pixel_t y,
-                                                              const containing_block_context& containing_block_size,
-                                                              formatting_context* /*fmt_ctx*/, bool /*second_pass*/)
+litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y,
+                                                       const containing_block_context& containing_block_size,
+                                                       formatting_context* /*fmt_ctx*/, bool /*second_pass*/)
 {
     pixel_t                  parent_width = containing_block_size.width;
     containing_block_context self_size    = calculate_containing_block_context(containing_block_size);
@@ -21,7 +21,7 @@ litehtml::rendered_width litehtml::render_item_image::_render(pixel_t x, pixel_t
     m_pos.width  = sz.width;
     m_pos.height = sz.height;
 
-    src_el()->css_w().line_height_w().computed_value = height();
+    src_el()->css().line_height().computed_value = height();
 
     if(src_el()->css().get_height().is_predefined() && src_el()->css().get_width().is_predefined())
     {
@@ -139,10 +139,7 @@ litehtml::rendered_width litehtml::render_item_image::_render(pixel_t x, pixel_t
     m_pos.x += content_offset_left();
     m_pos.y += content_offset_top();
 
-    rendered_width ret;
-    ret.natural_width = ret.min_width = m_pos.width + content_offset_left() + content_offset_right();
-
-    return ret;
+    return m_pos.width + content_offset_width();
 }
 
 litehtml::pixel_t litehtml::render_item_image::calc_max_height(pixel_t image_height, pixel_t containing_block_height)
@@ -150,4 +147,14 @@ litehtml::pixel_t litehtml::render_item_image::calc_max_height(pixel_t image_hei
     document::ptr doc = src_el()->get_document();
     return doc->to_pixels(css().get_max_height(), css().get_font_metrics(),
                           containing_block_height == 0_px ? image_height : containing_block_height);
+}
+
+void litehtml::render_item_image::calc_intrinsic_size()
+{
+    litehtml::size sz;
+
+    src_el()->get_content_size(sz, 0_px);
+
+    m_intrinsic_min_size.width = m_intrinsic_max_size.width = sz.width;
+    m_intrinsic_min_size.height = m_intrinsic_max_size.height = sz.height;
 }

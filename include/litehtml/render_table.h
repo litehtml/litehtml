@@ -2,6 +2,7 @@
 #define LITEHTML_RENDER_TABLE_H
 
 #include "render_item.h"
+#include <tuple>
 
 namespace litehtml
 {
@@ -13,8 +14,11 @@ namespace litehtml
         pixel_t                     m_border_spacing_x;
         pixel_t                     m_border_spacing_y;
 
-        rendered_width _render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
-                               formatting_context* fmt_ctx, bool second_pass) override;
+        std::tuple<pixel_t, pixel_t> calc_table_spacings() const;
+
+        void    calc_intrinsic_size() override;
+        pixel_t _render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
+                        formatting_context* fmt_ctx, bool second_pass) override;
 
       public:
         explicit render_item_table(std::shared_ptr<element> src_el);
@@ -31,6 +35,9 @@ namespace litehtml
 
     class render_item_table_part : public render_item
     {
+      protected:
+        void calc_intrinsic_size() override {}
+
       public:
         explicit render_item_table_part(std::shared_ptr<element> src_el) :
             render_item(std::move(src_el))
@@ -45,6 +52,9 @@ namespace litehtml
 
     class render_item_table_row : public render_item
     {
+      protected:
+        void calc_intrinsic_size() override {}
+
       public:
         explicit render_item_table_row(std::shared_ptr<element> src_el) :
             render_item(std::move(src_el))

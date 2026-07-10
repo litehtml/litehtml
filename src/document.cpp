@@ -514,10 +514,13 @@ namespace litehtml
             position viewport;
             m_container->get_viewport(viewport);
             containing_block_context cb_context;
-            cb_context.width       = max_width;
-            cb_context.width.type  = containing_block_context::cbc_value_type_absolute;
-            cb_context.height      = viewport.height;
-            cb_context.height.type = containing_block_context::cbc_value_type_absolute;
+            cb_context.width        = max_width;
+            cb_context.width.type   = containing_block_context::cbc_value_type_absolute;
+            cb_context.height       = viewport.height;
+            cb_context.height.type  = containing_block_context::cbc_value_type_absolute;
+            cb_context.render_width = cb_context.width;
+
+            m_root_render->update_intrinsic_size();
 
             if(rt == render_fixed_only)
             {
@@ -525,7 +528,7 @@ namespace litehtml
                 m_root_render->render_positioned(rt);
             } else
             {
-                ret = m_root_render->render(0_px, 0_px, cb_context, nullptr).natural_width;
+                ret = m_root_render->render(0_px, 0_px, cb_context, nullptr);
                 if(m_root_render->fetch_positioned())
                 {
                     m_fixed_boxes.clear();

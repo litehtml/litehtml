@@ -9,6 +9,11 @@ namespace litehtml
     class render_item_inline : public render_item
     {
       protected:
+        void calc_intrinsic_size() override
+        {
+            m_intrinsic_min_size.width = m_intrinsic_max_size.width = content_offset_width();
+        }
+
         position::vector m_boxes;
 
       public:
@@ -75,21 +80,6 @@ namespace litehtml
                     return true;
                 }
             }
-            return false;
-        }
-    };
-
-    class render_text : public render_item_inline
-    {
-      public:
-        explicit render_text(std::shared_ptr<element> src_el) :
-            render_item_inline(std::move(src_el))
-        {
-        }
-
-        bool for_inline_boxes([[maybe_unused]] const std::function<bool(const position& box, bool first, bool last)>&
-                                  process) const override
-        {
             return false;
         }
     };

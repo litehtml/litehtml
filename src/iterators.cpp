@@ -9,14 +9,14 @@ litehtml::elements_iterator::elements_iterator(bool return_parents, iterator_sel
 {
 }
 
-bool litehtml::elements_iterator::go_inside(const std::shared_ptr<render_item>& el)
+bool litehtml::elements_iterator::go_inside(const std::shared_ptr<render_item>& el) const
 {
     return /*!el->children().empty() &&*/ m_go_inside && m_go_inside->select(el);
 }
 
 void litehtml::elements_iterator::process(
     const std::shared_ptr<render_item>&                                           container,
-    const std::function<void(std::shared_ptr<render_item>&, iterator_item_type)>& func)
+    const std::function<void(std::shared_ptr<render_item>&, iterator_item_type)>& func) const
 {
     for(auto& el : container->children())
     {
