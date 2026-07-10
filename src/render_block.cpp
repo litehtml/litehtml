@@ -9,18 +9,14 @@
 #include "types.h"
 #include <algorithm>
 
-litehtml::rendered_width litehtml::render_item_block::place_float(const std::shared_ptr<render_item>& el, pixel_t top,
-                                                                  const containing_block_context& self_size,
-                                                                  formatting_context*             fmt_ctx)
+litehtml::pixel_t litehtml::render_item_block::place_float(const std::shared_ptr<render_item>& el, pixel_t top,
+                                                           const containing_block_context& self_size,
+                                                           formatting_context*             fmt_ctx)
 {
     pixel_t line_top  = fmt_ctx->get_cleared_top(el, top);
     pixel_t line_left = 0_px;
 
-    auto nv = el->render(line_left, line_top, self_size.new_width(self_size.render_width), fmt_ctx);
-    if(nv.natural_width < el->width() && el->src_el()->css().get_width().is_predefined())
-    {
-        el->render(line_left, line_top, self_size.new_width(nv.natural_width), fmt_ctx);
-    }
+    auto ret_width = el->render(line_left, line_top, self_size, fmt_ctx);
 
     formatting_context::new_position new_pos;
     formatting_context::el_position  el_pos;
@@ -38,17 +34,16 @@ litehtml::rendered_width litehtml::render_item_block::place_float(const std::sha
         el_pos.el_pos.x = self_size.render_width.value - el_pos.el_pos.width;
         new_pos         = fmt_ctx->place_to_right(el_pos);
     }
-    nv.min_width = nv.natural_width;
     if(new_pos.found)
     {
         el->pos().x = new_pos.left + el->content_offset_left();
         el->pos().y = new_pos.top + el->content_offset_top();
     }
-    nv.natural_width = self_size.render_width.value - new_pos.width + nv.natural_width;
-    fmt_ctx->add_float(el, nv.min_width, self_size.context_idx);
+    ret_width += self_size.render_width.value - new_pos.width;
+    fmt_ctx->add_float(el, self_size.context_idx);
     fix_line_width(el->src_el()->css().get_float(), self_size, fmt_ctx);
 
-    return nv;
+    return ret_width;
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
@@ -193,16 +188,16 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_block::init()
     return ret;
 }
 
-litehtml::rendered_width litehtml::render_item_block::_render(pixel_t x, pixel_t y,
-                                                              const containing_block_context& containing_block_size,
-                                                              formatting_context* fmt_ctx, bool second_pass)
+litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y,
+                                                       const containing_block_context& containing_block_size,
+                                                       formatting_context* fmt_ctx, bool second_pass)
 {
     containing_block_context self_size = calculate_containing_block_context(containing_block_size);
 
     //*****************************************
     // Render content
     //*****************************************
-    auto [ret_width, ret_min_width] = _render_content(x, y, second_pass, self_size, fmt_ctx);
+    auto ret_width = _render_content(x, y, second_pass, self_size, fmt_ctx);
     //*****************************************
 
     if(src_el()->css().get_display() == display_list_item)
@@ -213,62 +208,9 @@ litehtml::rendered_width litehtml::render_item_block::_render(pixel_t x, pixel_t
         }
     }
 
-    bool requires_rerender = false; // when true, the second pass for content rendering is required
-
-    // Set block width
-    if((containing_block_size.size_mode & containing_block_context::size_mode_content) == 0)
+    if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {
-        if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
-        {
-            ret_width = m_pos.width = self_size.render_width;
-        } else
-        {
-            m_pos.width = self_size.render_width;
-        }
-    } else
-    {
-        m_pos.width = ret_width;
-        if(self_size.width.type == containing_block_context::cbc_value_type_absolute && ret_width > self_size.width)
-        {
-            ret_width = self_size.width;
-        }
-    }
-
-    // Fix width with max-width attribute
-    if(self_size.max_width.type != containing_block_context::cbc_value_type_none)
-    {
-        if(m_pos.width > self_size.max_width)
-        {
-            m_pos.width       = self_size.max_width;
-            requires_rerender = true;
-        }
-    }
-
-    // Fix width with min-width attribute
-    if(self_size.min_width.type != containing_block_context::cbc_value_type_none)
-    {
-        if(m_pos.width < self_size.min_width)
-        {
-            m_pos.width       = self_size.min_width;
-            requires_rerender = true;
-        }
-    } else if(m_pos.width < 0_px)
-    {
-        m_pos.width = 0_px;
-    }
-
-    // re-render content with new width if required
-    if(requires_rerender && !second_pass && !is_root())
-    {
-        if(src_el()->is_block_formatting_context())
-        {
-            fmt_ctx->clear_floats(-1);
-        } else
-        {
-            fmt_ctx->clear_floats(self_size.context_idx);
-        }
-
-        _render_content(x, y, true, self_size.new_width(m_pos.width), fmt_ctx);
+        ret_width = m_pos.width = self_size.render_width;
     }
 
     // Set block height
@@ -334,22 +276,7 @@ litehtml::rendered_width litehtml::render_item_block::_render(pixel_t x, pixel_t
         }
     }
 
-    rendered_width ret;
-    ret.natural_width = ret_width + content_offset_width();
-    if(css().get_overflow() > overflow_visible && css().get_width().is_predefined() &&
-       css().get_display() != display_table_cell)
-    {
-        ret.min_width = content_offset_left() + content_offset_right();
-    } else
-    {
-        if(css().get_width().is_predefined())
-        {
-            ret.min_width = ret_min_width + content_offset_width();
-        } else
-        {
-            ret.min_width = width();
-        }
-    }
+    ret_width += content_offset_width();
 
-    return ret;
+    return ret_width;
 }

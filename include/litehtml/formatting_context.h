@@ -51,7 +51,7 @@ namespace litehtml
             m_current_top  -= y;
         }
 
-        void         add_float(const std::shared_ptr<render_item>& el, pixel_t min_width, int context);
+        void         add_float(const std::shared_ptr<render_item>& el, int context);
         void         clear_floats(int context);
         new_position place_to_left(const el_position& el_pos) const;
         new_position place_to_right(const el_position& el_pos) const;
@@ -68,8 +68,6 @@ namespace litehtml
         pixel_t get_cleared_top(const std::shared_ptr<render_item>& el, pixel_t line_top) const;
         void    update_floats(pixel_t dy, const std::shared_ptr<render_item>& parent);
         void    apply_relative_shift(const containing_block_context& containing_block_size);
-        pixel_t find_min_left(pixel_t y, int context_idx);
-        pixel_t find_min_right(pixel_t y, pixel_t right, int context_idx);
     };
 } // namespace litehtml
 

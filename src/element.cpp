@@ -6,6 +6,7 @@
 #include "render_inline.h"
 #include "render_table.h"
 #include "el_before_after.h"
+#include "render_text.h"
 
 namespace litehtml
 {
@@ -55,15 +56,13 @@ namespace litehtml
 
     bool element::is_inline() const
     {
-        return css().get_display() == display_inline || css().get_display() == display_inline_table ||
-               css().get_display() == display_inline_block || css().get_display() == display_inline_text ||
-               css().get_display() == display_inline_flex;
+        return is_one_of(css().get_display(), display_inline, display_inline_table, display_inline_block,
+                         display_inline_text, display_inline_flex);
     }
 
     bool element::is_inline_box() const
     {
-        return css().get_display() == display_inline_table || css().get_display() == display_inline_block ||
-               css().get_display() == display_inline_flex;
+        return is_one_of(css().get_display(), display_inline_table, display_inline_block, display_inline_flex);
     }
 
     bool element::is_ancestor(const ptr& el) const
@@ -123,39 +122,42 @@ namespace litehtml
     {
         std::shared_ptr<render_item> ret;
 
-        if(css().get_display() == display_table_column || css().get_display() == display_table_column_group ||
-           css().get_display() == display_table_footer_group || css().get_display() == display_table_header_group ||
-           css().get_display() == display_table_row_group)
+        if(is_one_of(css().get_display(), display_table_column, display_table_column_group, display_table_footer_group,
+                     display_table_header_group, display_table_row_group))
         {
             ret = std::make_shared<render_item_table_part>(shared_from_this());
+
         } else if(css().get_display() == display_table_row)
         {
             ret = std::make_shared<render_item_table_row>(shared_from_this());
-        } else if(css().get_display() == display_block || css().get_display() == display_table_cell ||
-                  css().get_display() == display_table_caption || css().get_display() == display_list_item ||
-                  css().get_display() == display_inline_block)
+
+        } else if(is_one_of(css().get_display(), display_block, display_table_cell, display_table_caption,
+                            display_list_item, display_inline_block))
         {
             ret = std::make_shared<render_item_block>(shared_from_this());
-        } else if(css().get_display() == display_table || css().get_display() == display_inline_table)
+
+        } else if(is_one_of(css().get_display(), display_table, display_inline_table))
         {
             ret = std::make_shared<render_item_table>(shared_from_this());
+
         } else if(css().get_display() == display_inline)
         {
             ret = std::make_shared<render_item_inline>(shared_from_this());
+
         } else if(css().get_display() == display_inline_text)
         {
             ret = std::make_shared<render_text>(shared_from_this());
-        } else if(css().get_display() == display_flex || css().get_display() == display_inline_flex)
+
+        } else if(is_one_of(css().get_display(), display_flex, display_inline_flex))
         {
             ret = std::make_shared<render_item_flex>(shared_from_this());
         }
         if(ret)
         {
-            if(css().get_display() == display_table || css().get_display() == display_inline_table ||
-               css().get_display() == display_table_caption || css().get_display() == display_table_cell ||
-               css().get_display() == display_table_column || css().get_display() == display_table_column_group ||
-               css().get_display() == display_table_footer_group || css().get_display() == display_table_header_group ||
-               css().get_display() == display_table_row || css().get_display() == display_table_row_group)
+            if(is_one_of(css().get_display(), display_table, display_inline_table, display_table_caption,
+                         display_table_cell, display_table_column, display_table_column_group,
+                         display_table_footer_group, display_table_header_group, display_table_row,
+                         display_table_row_group))
             {
                 get_document()->add_tabular(ret);
             }
