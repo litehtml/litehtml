@@ -61,7 +61,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     /////////////////////////////////////////////////////////////////
     /// Split flex items to lines
     /////////////////////////////////////////////////////////////////
-    m_lines = get_lines(self_size, is_row_direction, container_main_size, single_line);
+    m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
 
     pixel_t sum_cross_size = 0_px;
     pixel_t sum_main_size  = 0_px;
@@ -77,13 +77,13 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
         {
             ret_width += ln.base_size;
         }
-        ln.init(container_main_size, fit_container, is_row_direction, self_size, fmt_ctx);
-        sum_cross_size += ln.cross_size;
-        sum_main_size   = std::max(sum_main_size, ln.main_size);
         if(reverse)
         {
             ln.items.reverse();
         }
+        ln.init(container_main_size, fit_container, is_row_direction, self_size, fmt_ctx);
+        sum_cross_size += ln.cross_size;
+        sum_main_size   = std::max(sum_main_size, ln.main_size);
     }
 
     pixel_t free_cross_size = 0_px;
@@ -241,8 +241,8 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
 }
 
 std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
-    const litehtml::containing_block_context& self_size, bool is_row_direction, pixel_t container_main_size,
-    bool single_line)
+    const litehtml::containing_block_context& self_size, formatting_context* fmt_ctx, bool is_row_direction,
+    pixel_t container_main_size, bool single_line)
 {
     bool reverse_main;
     bool reverse_cross = css().get_flex_wrap() == flex_wrap_wrap_reverse;
@@ -272,7 +272,7 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
         {
             item = std::make_shared<flex_item_column_direction>(el);
         }
-        item->init(self_size, css().get_flex_align_items());
+        item->init(self_size, css().get_flex_align_items(), fmt_ctx);
         item->src_order = src_order++;
 
         if(prev_order.is_default())
@@ -466,6 +466,15 @@ void litehtml::render_item_flex::calc_intrinsic_size()
     {
         auto child_min = el->get_intrinsic_min_size();
         auto child_max = el->get_intrinsic_max_size();
+
+        if(!el->css().get_width().is_predefined())
+        {
+            child_min.width = child_max.width = el->css().get_width().calc_percent(0) + el->content_offset_width();
+        }
+        if(!el->css().get_height().is_predefined())
+        {
+            child_min.height = child_max.height = el->css().get_height().calc_percent(0) + el->content_offset_height();
+        }
 
         if(is_row_direction)
         {

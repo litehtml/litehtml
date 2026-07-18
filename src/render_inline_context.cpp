@@ -452,7 +452,7 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
                         }
                     }
                     line_max_width += el->get_intrinsic_max_size().width;
-                    line_height     = std::max(line_height, el->get_intrinsic_max_size().height);
+                    line_height     = std::max(line_height, el->get_intrinsic_min_size().height);
 
                     if(el->src_el()->is_break())
                     {
@@ -474,7 +474,7 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
                 break;
             case iterator_item_type_start_parent:
                 line_max_width += el->get_intrinsic_max_size().width;
-                line_height     = std::max(line_height, el->get_intrinsic_max_size().height);
+                line_height     = std::max(line_height, el->get_intrinsic_min_size().height);
 
                 m_intrinsic_min_size.width = std::max(m_intrinsic_min_size.width, el->get_intrinsic_min_size().width);
                 m_intrinsic_max_size.height =

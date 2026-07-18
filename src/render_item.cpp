@@ -1597,47 +1597,18 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
             ret.width.type  = containing_block_context::cbc_value_type_absolute;
         } else
         {
-            std::optional<css_length> width = css().get_width();
-            if(par && is_one_of(par->css().get_display(), display_flex, display_inline_flex))
-            {
-                if(!css().get_flex_basis().is_predefined() && css().get_flex_basis().val() >= 0)
-                {
-                    if(is_one_of(par->css().get_flex_direction(), flex_direction_row, flex_direction_row_reverse))
-                    {
-                        ret.width.type  = containing_block_context::cbc_value_type_auto;
-                        ret.width.value = 0;
-                        width           = std::nullopt;
-                    }
-                }
-            }
-            if(width.has_value())
-            {
-                calc_cb_length(*width, cb_context.width, ret.width);
-            }
+            calc_cb_length(css().get_width(), cb_context.width, ret.width);
         }
         if((cb_context.size_mode & containing_block_context::size_mode_exact_height) != 0)
         {
             ret.height.value = cb_context.height;
             ret.height.type  = containing_block_context::cbc_value_type_absolute;
+        } else if((cb_context.size_mode & containing_block_context::size_mode_ignore_css_height) == 0)
+        {
+            calc_cb_length(css().get_height(), cb_context.height, ret.height);
         } else
         {
-            std::optional<css_length> height = css().get_height();
-            if(par && is_one_of(par->css().get_display(), display_flex, display_inline_flex))
-            {
-                if(!css().get_flex_basis().is_predefined() && css().get_flex_basis().val() >= 0)
-                {
-                    if(is_one_of(par->css().get_flex_direction(), flex_direction_column, flex_direction_column_reverse))
-                    {
-                        ret.height.type  = containing_block_context::cbc_value_type_auto;
-                        ret.height.value = 0;
-                        height           = std::nullopt;
-                    }
-                }
-            }
-            if(height.has_value())
-            {
-                calc_cb_length(*height, cb_context.height, ret.height);
-            }
+            ret.height.type = containing_block_context::cbc_value_type_auto;
         }
         if(ret.width.type != containing_block_context::cbc_value_type_auto &&
            (src_el()->css().get_display() == display_table || src_el()->is_root()))
