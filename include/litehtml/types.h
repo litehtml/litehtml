@@ -329,10 +329,11 @@ namespace litehtml
 
         enum cbc_size_mode
         {
-            size_mode_normal       = 0x00,
-            size_mode_exact_width  = 0x01,
-            size_mode_exact_height = 0x02,
-            size_mode_content      = 0x04,
+            size_mode_normal            = 0x00,
+            size_mode_exact_width       = 0x01,
+            size_mode_exact_height      = 0x02,
+            size_mode_content           = 0x04,
+            size_mode_ignore_css_height = 0x08,
         };
 
         struct typed_pixel

@@ -1,3 +1,4 @@
+#include "css_values.h"
 #include "gradient.h"
 #include "html.h"
 #include "style.h"
@@ -1625,7 +1626,7 @@ namespace litehtml
         {
             float      m_grow   = 1; // flex-grow is set to 1 when omitted
             float      m_shrink = 1;
-            css_length m_basis  = 0;
+            css_length m_basis{0, css_units_percentage}; // flex-basis is set to 0% when omitted
 
             bool grow(const css_token& tok)
             {

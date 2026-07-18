@@ -67,7 +67,8 @@ namespace litehtml
             }
             return false;
         }
-        void            init(const litehtml::containing_block_context& self_size, flex_align_items align_items);
+        void            init(const litehtml::containing_block_context& self_size, flex_align_items align_items,
+                             litehtml::formatting_context* fmt_ctx);
         virtual void    apply_main_auto_margins()                    = 0;
         virtual bool    apply_cross_auto_margins(pixel_t cross_size) = 0;
         virtual void    set_main_position(pixel_t pos)               = 0;
@@ -81,11 +82,13 @@ namespace litehtml
         pixel_t get_first_baseline(baseline::_baseline_type type) const;
 
       protected:
-        virtual void direction_specific_init(const litehtml::containing_block_context& self_size) = 0;
+        virtual void direction_specific_init(const litehtml::containing_block_context& self_size,
+                                             litehtml::formatting_context*             fmt_ctx) = 0;
+        virtual void apply_main_size(const containing_block_context& /*self_size*/, formatting_context* /*fmt_ctx*/) {}
         virtual void align_stretch(flex_line& ln, const containing_block_context& self_size,
-                                   formatting_context* fmt_ctx)                                   = 0;
+                                   formatting_context* fmt_ctx)  = 0;
         virtual void align_baseline(flex_line& ln, const containing_block_context& self_size,
-                                    formatting_context* fmt_ctx)                                  = 0;
+                                    formatting_context* fmt_ctx) = 0;
     };
 
     /**
@@ -107,7 +110,8 @@ namespace litehtml
         pixel_t get_el_cross_size() override;
 
       protected:
-        void direction_specific_init(const litehtml::containing_block_context& self_size) override;
+        void direction_specific_init(const litehtml::containing_block_context& self_size,
+                                     litehtml::formatting_context*             fmt_ctx) override;
         void align_stretch(flex_line& ln, const containing_block_context& self_size,
                            formatting_context* fmt_ctx) override;
         void align_baseline(flex_line& ln, const containing_block_context& self_size,
@@ -133,7 +137,9 @@ namespace litehtml
         pixel_t get_el_cross_size() override;
 
       protected:
-        void direction_specific_init(const litehtml::containing_block_context& self_size) override;
+        void direction_specific_init(const litehtml::containing_block_context& self_size,
+                                     litehtml::formatting_context*             fmt_ctx) override;
+        void apply_main_size(const containing_block_context& self_size, formatting_context* fmt_ctx) override;
         void align_stretch(flex_line& ln, const containing_block_context& self_size,
                            formatting_context* fmt_ctx) override;
         void align_baseline(flex_line& ln, const containing_block_context& self_size,
