@@ -752,8 +752,18 @@ void litehtml::render_item::render_positioned(render_type rt)
 
             if(need_render)
             {
+                // The width of the element is already resolved against its containing block, so it is
+                // passed as an exact width. Passing it as a normal containing block width would make
+                // the element resolve its own percentage width against itself, and its percentage
+                // sized children would then be laid out into that wrong containing block.
+                // An exact width is specified in the box sizing of the element, like the css width is,
+                // because calculate_containing_block_context() subtracts the paddings and the borders
+                // from it for a border-box element.
                 position pos = el->m_pos;
-                el->render(el->left(), el->top(), containing_block_size.new_width(el->width()), nullptr, true);
+                el->render(el->left(), el->top(),
+                           containing_block_size.new_width(el->m_pos.width + el->box_sizing_width(),
+                                                           containing_block_context::size_mode_exact_width),
+                           nullptr, true);
                 el->m_pos = pos;
             }
 
