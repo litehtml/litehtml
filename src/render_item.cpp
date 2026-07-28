@@ -282,9 +282,11 @@ void litehtml::render_item::render_positioned(render_type rt)
             css_length el_width  = el->src_el()->css().get_width();
             css_length el_height = el->src_el()->css().get_height();
 
+            // The height is a css height, so it is specified in the box sizing of the element and
+            // the paddings and the borders are added to it only for a content-box element.
             auto fix_height_min_max = [&](pixel_t height) {
                 auto max_height = el->css().get_max_height();
-                auto min_height = el->css().get_max_height();
+                auto min_height = el->css().get_min_height();
                 if(!max_height.is_predefined())
                 {
                     pixel_t max_height_value = max_height.calc_percent(containing_block_size.height);
@@ -295,10 +297,11 @@ void litehtml::render_item::render_positioned(render_type rt)
                     pixel_t min_height_value = min_height.calc_percent(containing_block_size.height);
                     height                   = std::max(height, min_height_value);
                 }
-                height += el->content_offset_height();
+                height += el->content_offset_height() - el->box_sizing_height();
                 return height;
             };
 
+            // see fix_height_min_max
             auto fix_width_min_max = [&](pixel_t width) {
                 auto max_width = el->css().get_max_width();
                 auto min_width = el->css().get_min_width();
@@ -312,7 +315,7 @@ void litehtml::render_item::render_positioned(render_type rt)
                     pixel_t min_width_value = min_width.calc_percent(containing_block_size.width);
                     width                   = std::max(width, min_width_value);
                 }
-                width += el->content_offset_width();
+                width += el->content_offset_width() - el->box_sizing_width();
                 return width;
             };
 
