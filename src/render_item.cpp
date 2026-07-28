@@ -31,7 +31,10 @@ litehtml::rendered_width litehtml::render_item::render(pixel_t x, pixel_t y,
                                                        const containing_block_context& containing_block_size,
                                                        formatting_context* fmt_ctx, bool second_pass)
 {
-    calc_outlines(containing_block_size.width);
+    if((containing_block_size.size_mode & containing_block_context::size_mode_keep_outlines) == 0)
+    {
+        calc_outlines(containing_block_size.width);
+    }
 
     m_pos.clear();
     m_pos.move_to(x, y);
@@ -757,17 +760,12 @@ void litehtml::render_item::render_positioned(render_type rt)
 
             if(need_render)
             {
-                position pos     = el->m_pos;
-                margins  padding = el->m_padding;
-                margins  borders = el->m_borders;
-                margins  margin  = el->m_margins;
-                el->render(el->left(), el->top(), containing_block_size.new_width(el->width()), nullptr, true);
-                // render() re-resolves the outlines against the width it is given, which here is the width of
-                // the element itself. Restore the values computed against the containing block.
-                el->m_pos     = pos;
-                el->m_padding = padding;
-                el->m_borders = borders;
-                el->m_margins = margin;
+                position pos = el->m_pos;
+                el->render(
+                    el->left(), el->top(),
+                    containing_block_size.new_width(el->width(), containing_block_context::size_mode_keep_outlines),
+                    nullptr, true);
+                el->m_pos = pos;
             }
 
             if(el_position == element_position_fixed)
