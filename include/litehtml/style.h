@@ -60,6 +60,11 @@ namespace litehtml
 
         const property_value& get_property(string_id name) const;
 
+        bool empty() const
+        {
+            return m_properties.empty();
+        }
+
         void combine(const style& src);
         void clear()
         {

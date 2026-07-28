@@ -36,7 +36,7 @@ namespace litehtml
 
         // CSS pseudo-classes
         _root_, _only_child_, _only_of_type_, _first_child_, _first_of_type_, _last_child_, _last_of_type_, _nth_child_,
-        _nth_of_type_, _nth_last_child_, _nth_last_of_type_, _is_, _not_, _lang_,
+        _nth_of_type_, _nth_last_child_, _nth_last_of_type_, _is_, _where_, _not_, _lang_,
 
         _active_, _hover_,
 
@@ -102,8 +102,8 @@ namespace litehtml
         _repeating_radial_gradient_, _conic_gradient_, _repeating_conic_gradient_,
 
         // at-rules and their components
-        _charset_, _layer_, _import_, _media_, _and_, _or_, _boolean_, _plain_, _range_, _discrete_, _integer_,
-        _length_, _resolution_, _ratio_, _keyword_, _orientation_, _portrait_, _landscape_, _device_width_,
+        _charset_, _layer_, _supports_, _import_, _media_, _and_, _or_, _boolean_, _plain_, _range_, _discrete_,
+        _integer_, _length_, _resolution_, _ratio_, _keyword_, _orientation_, _portrait_, _landscape_, _device_width_,
         _device_height_, _aspect_ratio_, _device_aspect_ratio_, _color_index_, _monochrome_, )
 #undef STRING_ID
     extern const string_id empty_id; // _id("")

@@ -636,6 +636,7 @@ namespace litehtml
             }
             break;
         case _is_:
+        case _where_: // :where() matches like :is(), it only differs in specificity
             if(!select(sel.selector_list, true))
             {
                 return select_no_match;
