@@ -717,6 +717,18 @@ namespace litehtml
         return ws ? ' ' : 0;
     }
 
+    bool has_pseudo_element(const css_element_selector& selector)
+    {
+        for(const auto& attr : selector.m_attrs)
+        {
+            if(attr.type == select_pseudo_element)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     css_selector::ptr parse_complex_selector(const css_token_vector& tokens, document_mode mode)
     {
         int index = 0;
@@ -742,6 +754,13 @@ namespace litehtml
                 return !combinator || combinator == ' ' ? selector : nullptr;
             }
             if(!combinator) // not the end and combinator failed to parse
+            {
+                return nullptr;
+            }
+
+            // "Only the last compound selector of a complex selector may contain a pseudo-element"
+            // https://www.w3.org/TR/selectors-4/#typedef-complex-selector
+            if(has_pseudo_element(selector->m_right))
             {
                 return nullptr;
             }
