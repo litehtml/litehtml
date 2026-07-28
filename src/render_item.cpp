@@ -272,6 +272,11 @@ void litehtml::render_item::render_positioned(render_type rt)
                 containing_block_size.width  = m_pos.width + m_padding.width();
             }
 
+            // Percentage paddings, borders and margins resolve against the width of the containing block.
+            // The in-flow pass sized them against the parent the element was laid out in, which for a
+            // positioned element is not its containing block.
+            el->calc_outlines(containing_block_size.width);
+
             css_length css_left   = el->src_el()->css().get_offsets().left;
             css_length css_right  = el->src_el()->css().get_offsets().right;
             css_length css_top    = el->src_el()->css().get_offsets().top;
@@ -640,7 +645,7 @@ void litehtml::render_item::render_positioned(render_type rt)
                 }
                 if(!el->css().get_max_width().is_predefined())
                 {
-                    pixel_t max_width = el->css().get_max_width().calc_percent(containing_block_size.height);
+                    pixel_t max_width = el->css().get_max_width().calc_percent(containing_block_size.width);
                     if(width - el->content_offset_width() > max_width)
                     {
                         pixel_t reminded = width - el->content_offset_width() - max_width;
@@ -752,9 +757,17 @@ void litehtml::render_item::render_positioned(render_type rt)
 
             if(need_render)
             {
-                position pos = el->m_pos;
+                position pos     = el->m_pos;
+                margins  padding = el->m_padding;
+                margins  borders = el->m_borders;
+                margins  margin  = el->m_margins;
                 el->render(el->left(), el->top(), containing_block_size.new_width(el->width()), nullptr, true);
-                el->m_pos = pos;
+                // render() re-resolves the outlines against the width it is given, which here is the width of
+                // the element itself. Restore the values computed against the containing block.
+                el->m_pos     = pos;
+                el->m_padding = padding;
+                el->m_borders = borders;
+                el->m_margins = margin;
             }
 
             if(el_position == element_position_fixed)
