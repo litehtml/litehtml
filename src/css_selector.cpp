@@ -16,6 +16,11 @@ namespace litehtml
         }
         for(const auto& attr : m_right.m_attrs)
         {
+            // :where() and its arguments add nothing  https://www.w3.org/TR/selectors-4/#zero-matches
+            if(attr.type == select_pseudo_class && attr.name == _where_)
+            {
+                continue;
+            }
             if(attr.type == select_id)
             {
                 m_specificity.b++;
@@ -418,7 +423,10 @@ namespace litehtml
         {
             return parse_nth_child(token, false, mode);
         }
-        if(name == "is") // https://www.w3.org/TR/selectors-4/#matches
+        // https://www.w3.org/TR/selectors-4/#matches
+        // https://www.w3.org/TR/selectors-4/#zero-matches
+        // :is() and :where() differ only in specificity, see css_selector::calc_specificity.
+        if(name == "is" || name == "where")
         {
             css_attribute_selector selector(select_pseudo_class, name);
             // "taking a <forgiving-selector-list> as its sole argument"
@@ -474,6 +482,11 @@ namespace litehtml
             "first-of-type",
             "last-of-type",
             "only-of-type",
+            // Shadow-tree pseudo-class  https://www.w3.org/TR/css-scoping-1/#host-selector
+            // Shadow trees are not implemented, so :host never matches, which is what a browser does
+            // for :host outside a shadow tree. Listed here so that a rule such as `:root, :host { ... }`
+            // keeps its other selectors instead of being dropped entirely.
+            "host",
         };
         return supported_simple_pseudo_classes.count(lowcase(name)) == 1;
     }
@@ -574,16 +587,21 @@ namespace litehtml
     }
 
     // simple = non-functional (without parentheses)
+    // Only ::before and ::after generate a box, see html_tag::select. The rest are parsed and never
+    // match, so that a rule like `.btn, ::file-selector-button { ... }` keeps its other selectors
+    // instead of being dropped because of one selector the engine cannot render.
     bool is_supported_simple_pseudo_element(const std::string& name)
     {
-        return is_one_of(lowcase(name),
-                         // Typographic Pseudo-elements  https://www.w3.org/TR/css-pseudo-4/#typographic-pseudos
-                         //"first-line", "first-letter",
-                         // Highlight Pseudo-elements  https://www.w3.org/TR/css-pseudo-4/#highlight-pseudos
-                         //"selection",
-                         // Tree-Abiding Pseudo-elements  https://www.w3.org/TR/css-pseudo-4/#treelike
-                         "before", "after" //"marker", "placeholder",
-        );
+        return is_one_of(
+            lowcase(name),
+            // Typographic Pseudo-elements  https://www.w3.org/TR/css-pseudo-4/#typographic-pseudos
+            "first-line", "first-letter",
+            // Highlight Pseudo-elements  https://www.w3.org/TR/css-pseudo-4/#highlight-pseudos
+            "selection",
+            // Tree-Abiding Pseudo-elements  https://www.w3.org/TR/css-pseudo-4/#treelike
+            "before", "after", "marker", "placeholder", "backdrop",
+            // https://html.spec.whatwg.org/multipage/rendering.html#the-file-selector-button-pseudo-element
+            "file-selector-button");
     }
 
     css_attribute_selector parse_pseudo_element(const css_token_vector& tokens, int& index)
@@ -603,7 +621,8 @@ namespace litehtml
 
         if(b.type == IDENT) // legacy syntax with one ':'  https://www.w3.org/TR/selectors-4/#single-colon-pseudos
         {
-            if(!is_one_of(b.ident(), "before", "after")) // first-line/letter are not supported
+            // only these four pseudo-elements may be written with a single colon
+            if(!is_one_of(b.ident(), "before", "after", "first-line", "first-letter"))
             {
                 return {};
             }
