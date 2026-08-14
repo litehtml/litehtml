@@ -169,19 +169,14 @@ litehtml::rendered_width litehtml::render_item_table::_render(pixel_t x, pixel_t
     pixel_t min_table_width = 0_px;
     pixel_t max_table_width = 0_px;
 
-    // Assignable width is the used table width that columns are distributed
-    // into. Honor max-width and the definite containing block so a specified
-    // table width (e.g. 900px) can shrink to the page instead of overflowing.
+    // Honor max-width when distributing columns. Do not clamp a specified
+    // table width to the containing block: CSS 2.1 used width is max(W, MIN)
+    // and may overflow. GRIDMIN still wins over max-width (css-tables-3).
     pixel_t assignable_width = self_size.render_width.value - table_width_spacing;
     if(self_size.max_width.type != containing_block_context::cbc_value_type_none &&
        self_size.max_width.value > 0_px)
     {
         assignable_width = std::min(assignable_width, self_size.max_width.value - table_width_spacing);
-    }
-    if(containing_block_size.width.type != containing_block_context::cbc_value_type_auto &&
-       containing_block_size.render_width.value > 0_px)
-    {
-        assignable_width = std::min(assignable_width, containing_block_size.render_width.value - table_width_spacing);
     }
     if(assignable_width < 0_px)
     {
