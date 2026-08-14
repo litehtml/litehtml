@@ -358,25 +358,31 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
                 fixed_width += m_columns[col].width;
             }
         }
-        auto scale = static_cast<float>(100.0 / percent);
-        if(pixel_t(scale) != 1_px)
+        if(percent > 0)
         {
-            cur_width = 0;
-            for(int col = 0; col < m_cols_count; col++)
+            auto scale = static_cast<float>(100.0 / percent);
+            if(pixel_t(scale) != 1_px)
             {
-                if(!m_columns[col].css_width.is_predefined() &&
-                   m_columns[col].css_width.units() == css_units_percentage)
+                for(int col = 0; col < m_cols_count; col++)
                 {
-                    css_length w;
-                    w.set_value(m_columns[col].css_width.val() * scale, css_units_percentage);
-                    m_columns[col].width = w.calc_percent(block_width - fixed_width);
-                    if(m_columns[col].width < m_columns[col].min_width)
+                    if(!m_columns[col].css_width.is_predefined() &&
+                       m_columns[col].css_width.units() == css_units_percentage)
                     {
-                        m_columns[col].width = m_columns[col].min_width;
+                        css_length w;
+                        w.set_value(m_columns[col].css_width.val() * scale, css_units_percentage);
+                        m_columns[col].width = w.calc_percent(block_width - fixed_width);
+                        if(m_columns[col].width < m_columns[col].min_width)
+                        {
+                            m_columns[col].width = m_columns[col].min_width;
+                        }
                     }
                 }
-                cur_width += m_columns[col].width;
             }
+        }
+        cur_width = 0;
+        for(int col = 0; col < m_cols_count; col++)
+        {
+            cur_width += m_columns[col].width;
         }
         // If the table is still too wide shrink columns with % widths
         if(cur_width > block_width)
@@ -406,6 +412,25 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
                     break;
                 }
             }
+        }
+        // Scale specified (and remaining) columns when they still overflow.
+        // Matches Chromium LayoutNG:
+        // SynchronizeAssignableTableInlineSizeAndColumnsFixed scale_down.
+        if(cur_width > block_width && cur_width > 0_px)
+        {
+            pixel_t assigned = 0_px;
+            for(int col = 0; col < m_cols_count; col++)
+            {
+                if(col == m_cols_count - 1)
+                {
+                    m_columns[col].width = std::max(1_px, block_width - assigned);
+                } else
+                {
+                    m_columns[col].width = std::max(1_px, (m_columns[col].width * block_width) / cur_width);
+                    assigned += m_columns[col].width;
+                }
+            }
+            cur_width = block_width;
         }
     }
     return cur_width;

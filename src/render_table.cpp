@@ -74,8 +74,14 @@ litehtml::rendered_width litehtml::render_item_table::_render(pixel_t x, pixel_t
                        m_grid->column(col).css_width.units() != css_units_percentage)
                     {
                         pixel_t css_w = m_grid->column(col).css_width.calc_percent(self_size.width);
-                        pixel_t el_w  = cell->el->render(0_px, 0_px, self_size.new_width(css_w), fmt_ctx).natural_width;
-                        cell->min_width = cell->max_width = std::max(css_w, el_w);
+                        // Specified width is preferred (max), not a floor. That
+                        // lets calc_table_width scale columns when they exceed
+                        // the assignable table width (see Chromium LayoutNG
+                        // SynchronizeAssignableTableInlineSizeAndColumnsFixed).
+                        cell->min_width =
+                            cell->el->render(0_px, 0_px, self_size.new_width(cell->el->content_offset_width()), fmt_ctx)
+                                .natural_width;
+                        cell->max_width = std::max(css_w, cell->min_width);
                         cell->el->pos().width =
                             cell->min_width - cell->el->content_offset_left() - cell->el->content_offset_right();
                     } else
@@ -163,13 +169,31 @@ litehtml::rendered_width litehtml::render_item_table::_render(pixel_t x, pixel_t
     pixel_t min_table_width = 0_px;
     pixel_t max_table_width = 0_px;
 
+    // Assignable width is the used table width that columns are distributed
+    // into. Honor max-width and the definite containing block so a specified
+    // table width (e.g. 900px) can shrink to the page instead of overflowing.
+    pixel_t assignable_width = self_size.render_width.value - table_width_spacing;
+    if(self_size.max_width.type != containing_block_context::cbc_value_type_none &&
+       self_size.max_width.value > 0_px)
+    {
+        assignable_width = std::min(assignable_width, self_size.max_width.value - table_width_spacing);
+    }
+    if(containing_block_size.width.type != containing_block_context::cbc_value_type_auto &&
+       containing_block_size.render_width.value > 0_px)
+    {
+        assignable_width = std::min(assignable_width, containing_block_size.render_width.value - table_width_spacing);
+    }
+    if(assignable_width < 0_px)
+    {
+        assignable_width = 0_px;
+    }
+
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {
-        table_width = m_grid->calc_table_width(self_size.render_width.value - table_width_spacing, false,
-                                               min_table_width, max_table_width);
+        table_width = m_grid->calc_table_width(assignable_width, false, min_table_width, max_table_width);
     } else
     {
-        table_width = m_grid->calc_table_width(self_size.render_width.value - table_width_spacing,
+        table_width = m_grid->calc_table_width(assignable_width,
                                                self_size.width.type == containing_block_context::cbc_value_type_auto,
                                                min_table_width, max_table_width);
     }
