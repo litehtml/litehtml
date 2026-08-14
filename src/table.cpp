@@ -413,24 +413,27 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
                 }
             }
         }
-        // Scale specified (and remaining) columns when they still overflow.
-        // Matches Chromium LayoutNG:
-        // SynchronizeAssignableTableInlineSizeAndColumnsFixed scale_down.
+        // Scale columns that still overflow, but never below min_width.
+        // CSS 2.1 §17.5.2: used table width is at least MIN (GRIDMIN).
+        // Chromium LayoutNG scale_down is the same ratio, floored at min.
         if(cur_width > block_width && cur_width > 0_px)
         {
             pixel_t assigned = 0_px;
             for(int col = 0; col < m_cols_count; col++)
             {
-                if(col == m_cols_count - 1)
+                pixel_t scaled = (m_columns[col].width * block_width) / cur_width;
+                if(scaled < m_columns[col].min_width)
                 {
-                    m_columns[col].width = std::max(1_px, block_width - assigned);
-                } else
-                {
-                    m_columns[col].width = std::max(1_px, (m_columns[col].width * block_width) / cur_width);
-                    assigned += m_columns[col].width;
+                    scaled = m_columns[col].min_width;
                 }
+                if(scaled < 1_px)
+                {
+                    scaled = 1_px;
+                }
+                m_columns[col].width = scaled;
+                assigned += scaled;
             }
-            cur_width = block_width;
+            cur_width = assigned;
         }
     }
     return cur_width;
