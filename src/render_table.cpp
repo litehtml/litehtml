@@ -184,28 +184,25 @@ litehtml::rendered_width litehtml::render_item_table::_render(pixel_t x, pixel_t
     pixel_t min_table_width = 0_px;
     pixel_t max_table_width = 0_px;
 
-    // Honor max-width when distributing columns. Do not clamp a specified
-    // table width to the containing block: CSS 2.1 used width is max(W, MIN)
-    // and may overflow. GRIDMIN still wins over max-width (css-tables-3).
     pixel_t assignable_width = self_size.render_width.value - table_width_spacing;
-    if(self_size.max_width.type != containing_block_context::cbc_value_type_none &&
-       self_size.max_width.value > 0_px)
+    if(max_width_constrains)
     {
         assignable_width = std::min(assignable_width, self_size.max_width.value - table_width_spacing);
-    }
-    if(assignable_width < 0_px)
-    {
-        assignable_width = 0_px;
+        if(assignable_width < 0_px)
+        {
+            assignable_width = 0_px;
+        }
     }
 
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {
-        table_width = m_grid->calc_table_width(assignable_width, false, min_table_width, max_table_width);
+        table_width =
+            m_grid->calc_table_width(assignable_width, false, min_table_width, max_table_width, max_width_constrains);
     } else
     {
         table_width = m_grid->calc_table_width(assignable_width,
                                                self_size.width.type == containing_block_context::cbc_value_type_auto,
-                                               min_table_width, max_table_width);
+                                               min_table_width, max_table_width, max_width_constrains);
     }
 
     min_table_width += table_width_spacing;
