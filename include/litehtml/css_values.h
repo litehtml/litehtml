@@ -45,7 +45,7 @@ namespace litehtml
             {
                 if(data[i] == str)
                 {
-                    return (int)i;
+                    return static_cast<int>(i);
                 }
             }
             return std::nullopt;
