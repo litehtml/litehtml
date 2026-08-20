@@ -116,11 +116,11 @@ namespace litehtml
         }
 
         // Comparison operators
-        constexpr bool operator==(pixel_float_t other) const
+        bool operator==(pixel_float_t other) const
         {
             return std::abs(m_value - other.m_value) < epsilon;
         }
-        constexpr bool operator!=(pixel_float_t other) const
+        bool operator!=(pixel_float_t other) const
         {
             return !(*this == other);
         }
