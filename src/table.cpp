@@ -271,7 +271,25 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
                 }
             } else
             {
-                distribute_columns.back()->width += width;
+                // Every candidate column has zero elasticity here (max_width
+                // == min_width for all of them, e.g. table-layout:fixed, or
+                // columns that already hit their minimum). Previously the
+                // whole remaining width was dumped onto distribute_columns
+                // .back() alone, so whichever column happens to be last in
+                // this (possibly reordered, e.g. by script/RTL-aware
+                // preprocessing) column list absorbed 100% of a fixed
+                // table's leftover width while its siblings kept their
+                // correct fixed widths. Split the leftover evenly across all
+                // candidate columns instead, matching the browser behavior
+                // of not privileging one arbitrary column.
+                const pixel_t share = width / pixel_t(static_cast<int>(distribute_columns.size()));
+                pixel_t distributed;
+                for(const auto& column : distribute_columns)
+                {
+                    column->width += share;
+                    distributed   += share;
+                }
+                distribute_columns.back()->width += width - distributed;
                 added_width                       = width;
             }
         }
