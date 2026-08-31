@@ -3,6 +3,13 @@
 
 container_cairo_pango::container_cairo_pango()
 {
+    PangoFontMap* fontmap = pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT);
+    if(fontmap)
+    {
+        pango_cairo_font_map_set_default(PANGO_CAIRO_FONT_MAP(fontmap));
+        g_object_unref(fontmap);
+    }
+
     m_temp_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 2, 2);
     m_temp_cr      = cairo_create(m_temp_surface);
     cairo_save(m_temp_cr);
