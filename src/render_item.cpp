@@ -1051,6 +1051,23 @@ void litehtml::render_item::calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y)
     m_abs_top            = abs_y + m_pos.top();
     m_subtree_bottom_abs = abs_y + m_pos.bottom() + m_margins.bottom + m_padding.bottom + m_borders.bottom;
 
+    // Same invariant as calc_document_size: all children of tables and of
+    // elements with overflow other than visible paint inside the element
+    // box. Their stored positions are not relative to this element (table
+    // rows and cells are positioned relative to the table), so accumulating
+    // offsets would place them wrong. Such descendants get this element's
+    // bounds instead: values that can only overstate their extent, which
+    // keeps the draw-time pruning from skipping visible content.
+    if(src_el()->css().get_display() == display_table ||
+       src_el()->css().get_overflow() != overflow_visible)
+    {
+        for(const auto& el : m_children)
+        {
+            el->set_subtree_bounds(m_abs_top, m_subtree_bottom_abs);
+        }
+        return;
+    }
+
     for(const auto& el : m_children)
     {
         el->calc_subtree_bounds(abs_x + m_pos.left(), abs_y + m_pos.top());
@@ -1058,6 +1075,16 @@ void litehtml::render_item::calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y)
         {
             m_subtree_bottom_abs = el->m_subtree_bottom_abs;
         }
+    }
+}
+
+void litehtml::render_item::set_subtree_bounds(pixel_t abs_top, pixel_t subtree_bottom_abs)
+{
+    m_abs_top            = abs_top;
+    m_subtree_bottom_abs = subtree_bottom_abs;
+    for(const auto& el : m_children)
+    {
+        el->set_subtree_bounds(abs_top, subtree_bottom_abs);
     }
 }
 

@@ -118,6 +118,7 @@ namespace litehtml
         // Absolute (document-space) bounds for draw-time subtree pruning.
         // calc_subtree_bounds must be called after the final layout.
         void    calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y);
+        void    set_subtree_bounds(pixel_t abs_top, pixel_t subtree_bottom_abs);
         pixel_t abs_top() const
         {
             return m_abs_top;
