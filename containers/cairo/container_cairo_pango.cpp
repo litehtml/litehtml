@@ -39,6 +39,22 @@ container_cairo_pango::~container_cairo_pango()
     clear_images();
     cairo_surface_destroy(m_temp_surface);
     cairo_destroy(m_temp_cr);
+    if(m_font_options)
+    {
+        cairo_font_options_destroy(m_font_options);
+    }
+}
+
+void container_cairo_pango::set_font_options(cairo_antialias_t antialias, cairo_hint_style_t hint_style,
+                                             cairo_subpixel_order_t subpixel_order)
+{
+    if(!m_font_options)
+    {
+        m_font_options = cairo_font_options_create();
+    }
+    cairo_font_options_set_antialias(m_font_options, antialias);
+    cairo_font_options_set_hint_style(m_font_options, hint_style);
+    cairo_font_options_set_subpixel_order(m_font_options, subpixel_order);
 }
 
 litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_description& descr,
