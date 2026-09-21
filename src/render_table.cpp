@@ -20,6 +20,15 @@ litehtml::rendered_width litehtml::render_item_table::_render(pixel_t x, pixel_t
 
     containing_block_context self_size = calculate_containing_block_context(containing_block_size);
 
+    // max-width smaller than the specified table width: specified cell widths
+    // become preferred, not GRIDMIN, so columns can scale. Otherwise CSS 2.1
+    // keeps W as the cell minimum (see floats-038).
+    const bool max_width_constrains =
+        self_size.max_width.type != containing_block_context::cbc_value_type_none &&
+        self_size.max_width.value > 0_px &&
+        (self_size.width.type != containing_block_context::cbc_value_type_absolute ||
+         self_size.max_width.value < self_size.width.value);
+
     // Calculate table spacing
     pixel_t table_width_spacing = 0_px;
     if(src_el()->css().get_border_collapse() == border_collapse_separate)
@@ -74,8 +83,20 @@ litehtml::rendered_width litehtml::render_item_table::_render(pixel_t x, pixel_t
                        m_grid->column(col).css_width.units() != css_units_percentage)
                     {
                         pixel_t css_w = m_grid->column(col).css_width.calc_percent(self_size.width);
-                        pixel_t el_w  = cell->el->render(0_px, 0_px, self_size.new_width(css_w), fmt_ctx).natural_width;
-                        cell->min_width = cell->max_width = std::max(css_w, el_w);
+                        if(max_width_constrains)
+                        {
+                            cell->min_width = cell->el
+                                                  ->render(0_px, 0_px,
+                                                           self_size.new_width(cell->el->content_offset_width()),
+                                                           fmt_ctx)
+                                                  .natural_width;
+                            cell->max_width = std::max(css_w, cell->min_width);
+                        } else
+                        {
+                            pixel_t el_w =
+                                cell->el->render(0_px, 0_px, self_size.new_width(css_w), fmt_ctx).natural_width;
+                            cell->min_width = cell->max_width = std::max(css_w, el_w);
+                        }
                         cell->el->pos().width =
                             cell->min_width - cell->el->content_offset_left() - cell->el->content_offset_right();
                     } else
@@ -163,15 +184,25 @@ litehtml::rendered_width litehtml::render_item_table::_render(pixel_t x, pixel_t
     pixel_t min_table_width = 0_px;
     pixel_t max_table_width = 0_px;
 
+    pixel_t assignable_width = self_size.render_width.value - table_width_spacing;
+    if(max_width_constrains)
+    {
+        assignable_width = std::min(assignable_width, self_size.max_width.value - table_width_spacing);
+        if(assignable_width < 0_px)
+        {
+            assignable_width = 0_px;
+        }
+    }
+
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {
-        table_width = m_grid->calc_table_width(self_size.render_width.value - table_width_spacing, false,
-                                               min_table_width, max_table_width);
+        table_width =
+            m_grid->calc_table_width(assignable_width, false, min_table_width, max_table_width, max_width_constrains);
     } else
     {
-        table_width = m_grid->calc_table_width(self_size.render_width.value - table_width_spacing,
+        table_width = m_grid->calc_table_width(assignable_width,
                                                self_size.width.type == containing_block_context::cbc_value_type_auto,
-                                               min_table_width, max_table_width);
+                                               min_table_width, max_table_width, max_width_constrains);
     }
 
     min_table_width += table_width_spacing;

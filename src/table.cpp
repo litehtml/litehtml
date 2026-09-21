@@ -292,7 +292,7 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
 }
 
 litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bool is_auto, pixel_t& min_table_width,
-                                                         pixel_t& max_table_width)
+                                                         pixel_t& max_table_width, bool scale_specified)
 {
     // pixel_t table_width = 0;
 
@@ -365,25 +365,31 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
                 fixed_width += m_columns[col].width;
             }
         }
-        auto scale = static_cast<float>(100.0 / percent);
-        if(pixel_t(scale) != 1_px)
+        if(percent > 0)
         {
-            cur_width = 0;
-            for(int col = 0; col < m_cols_count; col++)
+            auto scale = static_cast<float>(100.0 / percent);
+            if(pixel_t(scale) != 1_px)
             {
-                if(!m_columns[col].css_width.is_predefined() &&
-                   m_columns[col].css_width.units() == css_units_percentage)
+                for(int col = 0; col < m_cols_count; col++)
                 {
-                    css_length w;
-                    w.set_value(m_columns[col].css_width.val() * scale, css_units_percentage);
-                    m_columns[col].width = w.calc_percent(block_width - fixed_width);
-                    if(m_columns[col].width < m_columns[col].min_width)
+                    if(!m_columns[col].css_width.is_predefined() &&
+                       m_columns[col].css_width.units() == css_units_percentage)
                     {
-                        m_columns[col].width = m_columns[col].min_width;
+                        css_length w;
+                        w.set_value(m_columns[col].css_width.val() * scale, css_units_percentage);
+                        m_columns[col].width = w.calc_percent(block_width - fixed_width);
+                        if(m_columns[col].width < m_columns[col].min_width)
+                        {
+                            m_columns[col].width = m_columns[col].min_width;
+                        }
                     }
                 }
-                cur_width += m_columns[col].width;
             }
+        }
+        cur_width = 0;
+        for(int col = 0; col < m_cols_count; col++)
+        {
+            cur_width += m_columns[col].width;
         }
         // If the table is still too wide shrink columns with % widths
         if(cur_width > block_width)
@@ -413,6 +419,25 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(pixel_t block_width, bo
                     break;
                 }
             }
+        }
+        // Only when max-width (or equivalent) actually constrains the table.
+        // Unconditional scale-down shrinks specified cells after the table's
+        // own borders are subtracted (floats-038: 0.5in cell on a 0.5in table).
+        // Floor at min_width so used width stays at least GRIDMIN.
+        if(scale_specified && cur_width > block_width && cur_width > 0_px)
+        {
+            pixel_t assigned = 0_px;
+            for(int col = 0; col < m_cols_count; col++)
+            {
+                pixel_t scaled = (m_columns[col].width * block_width) / cur_width;
+                if(scaled < m_columns[col].min_width)
+                {
+                    scaled = m_columns[col].min_width;
+                }
+                m_columns[col].width = scaled;
+                assigned += scaled;
+            }
+            cur_width = assigned;
         }
     }
     return cur_width;
