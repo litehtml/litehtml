@@ -19,14 +19,18 @@ namespace litehtml
     class render_item : public std::enable_shared_from_this<render_item>
     {
       protected:
-        std::shared_ptr<element>                  m_element;
-        std::weak_ptr<render_item>                m_parent;
-        std::list<std::shared_ptr<render_item>>   m_children;
-        margins                                   m_margins;
-        margins                                   m_padding;
-        margins                                   m_borders;
-        position                                  m_pos;
-        bool                                      m_skip = false;
+        std::shared_ptr<element>                m_element;
+        std::weak_ptr<render_item>              m_parent;
+        std::list<std::shared_ptr<render_item>> m_children;
+        margins                                 m_margins;
+        margins                                 m_padding;
+        margins                                 m_borders;
+        position                                m_pos;
+        // Absolute document-space bounds for draw-time pruning, filled by
+        // calc_subtree_bounds after the final layout.
+        pixel_t                                   m_abs_top            = 0_px;
+        pixel_t                                   m_subtree_bottom_abs = 0_px;
+        bool                                      m_skip               = false;
         std::vector<std::shared_ptr<render_item>> m_positioned;
         std::shared_ptr<scroll_view>              m_scroll_view;
 
@@ -93,6 +97,19 @@ namespace litehtml
         position& pos()
         {
             return m_pos;
+        }
+
+        // Absolute (document-space) bounds for draw-time subtree pruning.
+        // calc_subtree_bounds must be called after the final layout.
+        void    calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y);
+        void    set_subtree_bounds(pixel_t abs_top, pixel_t subtree_bottom_abs);
+        pixel_t abs_top() const
+        {
+            return m_abs_top;
+        }
+        pixel_t subtree_bottom_abs() const
+        {
+            return m_subtree_bottom_abs;
         }
 
         // Calculates the position of the element in the document

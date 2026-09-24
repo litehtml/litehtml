@@ -924,6 +924,53 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
     }
 }
 
+// Compute absolute document-space bounds for this subtree: each item
+// stores the absolute top of its box and the absolute bottom of its
+// whole subtree (including margins and overflowing children). The
+// accumulation mirrors draw_children: a child's absolute position is
+// its m_pos plus the parent's absolute position.
+void litehtml::render_item::calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y)
+{
+    m_abs_top            = abs_y + m_pos.top();
+    m_subtree_bottom_abs = abs_y + m_pos.bottom() + m_margins.bottom + m_padding.bottom + m_borders.bottom;
+
+    // Same invariant as calc_document_size: all children of tables and of
+    // elements with overflow other than visible paint inside the element
+    // box. Their stored positions are not relative to this element (table
+    // rows and cells are positioned relative to the table), so accumulating
+    // offsets would place them wrong. Such descendants get this element's
+    // bounds instead: values that can only overstate their extent, which
+    // keeps the draw-time pruning from skipping visible content.
+    if(src_el()->css().get_display() == display_table ||
+       src_el()->css().get_overflow() != overflow_visible)
+    {
+        for(const auto& el : m_children)
+        {
+            el->set_subtree_bounds(m_abs_top, m_subtree_bottom_abs);
+        }
+        return;
+    }
+
+    for(const auto& el : m_children)
+    {
+        el->calc_subtree_bounds(abs_x + m_pos.left(), abs_y + m_pos.top());
+        if(el->m_subtree_bottom_abs > m_subtree_bottom_abs)
+        {
+            m_subtree_bottom_abs = el->m_subtree_bottom_abs;
+        }
+    }
+}
+
+void litehtml::render_item::set_subtree_bounds(pixel_t abs_top, pixel_t subtree_bottom_abs)
+{
+    m_abs_top            = abs_top;
+    m_subtree_bottom_abs = subtree_bottom_abs;
+    for(const auto& el : m_children)
+    {
+        el->set_subtree_bounds(abs_top, subtree_bottom_abs);
+    }
+}
+
 void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag,
                                           int zindex)
 {
@@ -959,6 +1006,24 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
     {
         if(el->is_visible())
         {
+            // Prune subtrees that cannot intersect the clip. In-flow
+            // children are in document order, so once a subtree starts
+            // below the clip the remaining ones are below too and the
+            // pass can stop. Fixed elements ignore the accumulated
+            // position, so they are never pruned this way.
+            if(clip)
+            {
+                bool fixed_el = el->src_el()->css().get_position() == element_position_fixed;
+                if(!fixed_el && el->subtree_bottom_abs() < clip->top())
+                {
+                    continue;
+                }
+                if((flag == draw_block || flag == draw_inlines || flag == draw_floats) && !fixed_el &&
+                   el->abs_top() > clip->bottom())
+                {
+                    break;
+                }
+            }
             bool process = true;
             switch(flag)
             {
