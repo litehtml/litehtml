@@ -473,6 +473,11 @@ namespace litehtml
             "focus",
             "focus-visible",
             "focus-within",
+            // Form state pseudo-classes: matched against the checked/disabled
+            // ATTRIBUTES kept in sync by the embedding application (litehtml
+            // has no UI state of its own).
+            "checked",
+            "disabled",
             // Tree-Structural pseudo-classes  https://www.w3.org/TR/selectors-4/#structural-pseudos
             "root",
             "empty",

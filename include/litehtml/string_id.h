@@ -38,7 +38,7 @@ namespace litehtml
         _root_, _only_child_, _only_of_type_, _first_child_, _first_of_type_, _last_child_, _last_of_type_, _nth_child_,
         _nth_of_type_, _nth_last_child_, _nth_last_of_type_, _is_, _where_, _not_, _lang_,
 
-        _active_, _hover_,
+        _active_, _hover_, _checked_, _disabled_,
 
         // CSS property names
         // Side properties must go in this order: top, right, bottom, left (clockwise starting from the top).
