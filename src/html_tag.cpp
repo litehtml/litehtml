@@ -121,6 +121,24 @@ namespace litehtml
         }
     }
 
+    void html_tag::remove_attr(const char* _name)
+    {
+        if(!_name)
+        {
+            return;
+        }
+        std::string name = lowcase(_name);
+        m_attrs.erase(name);
+        if(name == "class")
+        {
+            m_str_classes.clear();
+            m_classes.clear();
+        } else if(name == "id")
+        {
+            m_id = empty_id;
+        }
+    }
+
     const char* html_tag::get_attr(const char* name, const char* def) const
     {
         auto attr = m_attrs.find(name);
@@ -650,6 +668,20 @@ namespace litehtml
             break;
         case _lang_:
             if(!get_document()->match_lang(sel.value))
+            {
+                return select_no_match;
+            }
+            break;
+        case _checked_:
+            // Form state: matches either the dynamic pseudo-class (set_pseudo_class)
+            // or the standard HTML checked attribute.
+            if(!(sel.name in m_pseudo_classes) && !get_attr("checked"))
+            {
+                return select_no_match;
+            }
+            break;
+        case _disabled_:
+            if(!(sel.name in m_pseudo_classes) && !get_attr("disabled"))
             {
                 return select_no_match;
             }
