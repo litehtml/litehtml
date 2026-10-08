@@ -31,7 +31,10 @@ litehtml::rendered_width litehtml::render_item::render(pixel_t x, pixel_t y,
                                                        const containing_block_context& containing_block_size,
                                                        formatting_context* fmt_ctx, bool second_pass)
 {
-    calc_outlines(containing_block_size.width);
+    if((containing_block_size.size_mode & containing_block_context::size_mode_keep_outlines) == 0)
+    {
+        calc_outlines(containing_block_size.width);
+    }
 
     m_pos.clear();
     m_pos.move_to(x, y);
@@ -271,6 +274,11 @@ void litehtml::render_item::render_positioned(render_type rt)
                 containing_block_size.height = m_pos.height + m_padding.height();
                 containing_block_size.width  = m_pos.width + m_padding.width();
             }
+
+            // Percentage paddings, borders and margins resolve against the width of the containing block.
+            // The in-flow pass sized them against the parent the element was laid out in, which for a
+            // positioned element is not its containing block.
+            el->calc_outlines(containing_block_size.width);
 
             css_length css_left   = el->src_el()->css().get_offsets().left;
             css_length css_right  = el->src_el()->css().get_offsets().right;
@@ -643,7 +651,7 @@ void litehtml::render_item::render_positioned(render_type rt)
                 }
                 if(!el->css().get_max_width().is_predefined())
                 {
-                    pixel_t max_width = el->css().get_max_width().calc_percent(containing_block_size.height);
+                    pixel_t max_width = el->css().get_max_width().calc_percent(containing_block_size.width);
                     if(width - el->content_offset_width() > max_width)
                     {
                         pixel_t reminded = width - el->content_offset_width() - max_width;
@@ -756,7 +764,10 @@ void litehtml::render_item::render_positioned(render_type rt)
             if(need_render)
             {
                 position pos = el->m_pos;
-                el->render(el->left(), el->top(), containing_block_size.new_width(el->width()), nullptr, true);
+                el->render(
+                    el->left(), el->top(),
+                    containing_block_size.new_width(el->width(), containing_block_context::size_mode_keep_outlines),
+                    nullptr, true);
                 el->m_pos = pos;
             }
 
