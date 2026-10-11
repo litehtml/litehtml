@@ -111,6 +111,7 @@ label
 input
 button
 select
+selectedcontent
 datalist
 optgroup
 option
@@ -148,5 +149,6 @@ multicol
 nobr
 spacer
 dialog
+search
 tt
 rtc

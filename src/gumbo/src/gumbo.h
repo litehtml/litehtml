@@ -155,7 +155,7 @@ int gumbo_vector_index_of(GumboVector* vector, const void* element);
  */
 typedef enum {
 // Load all the tags from an external source, generated from tag.in.
-#include "gumbo/tag_enum.h"
+#include "tag_enum.h"
   // Used for all tags that don't have special handling in HTML.  Add new tags
   // to the end of tag.in so as to preserve backwards-compatibility.
   GUMBO_TAG_UNKNOWN,
@@ -163,6 +163,14 @@ typedef enum {
   // Also used as the terminator for varargs functions that take tags.
   GUMBO_TAG_LAST,
 } GumboTag;
+
+/**
+ * Returns true if the tag corresponds to a void element, false otherwise.
+ * Void elements only have a start tag; end tags must not be specified for void
+ * elements. Void elements can't have any contents (since there's no end tag, no
+ * content can be put between the start tag and the end tag).
+ */
+bool gumbo_tag_is_void(GumboTag tag);
 
 /**
  * Returns the normalized (usually all-lowercased, except for foreign content)
@@ -306,7 +314,8 @@ typedef enum {
    * the spec suggests.  Recursing on GUMBO_NODE_ELEMENT will do the right thing
    * here, while clients that want to include template contents should also
    * check for GUMBO_NODE_TEMPLATE.  v will be a GumboElement.  */
-  GUMBO_NODE_TEMPLATE
+  GUMBO_NODE_TEMPLATE,
+  GUMBO_NODE_PROCESSING_INSTRUCTION,
 } GumboNodeType;
 
 /**
