@@ -2498,7 +2498,7 @@ static bool consume_named_ref(
       bool matched = utf8iterator_maybe_consume_match(input, start, len, true);
       assert(matched);
       return true;
-    } else if (is_in_attribute && (*te == '=' || isalnum(*te))) {
+    } else if (is_in_attribute && te != pe && (*te == '=' || isalnum(*te))) {
       output->first = kGumboNoChar;
       output->second = kGumboNoChar;
       utf8iterator_reset(input);
