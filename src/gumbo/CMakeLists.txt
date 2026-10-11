@@ -11,6 +11,7 @@ set(PROJECT_MINOR 0)
 set(SOURCE_GUMBO
     attribute.c
     char_ref.c
+    char_ref_gperf.c
     error.c
     parser.c
     string_buffer.c
@@ -23,24 +24,8 @@ set(SOURCE_GUMBO
 )
 
 set(HEADER_GUMBO
-        include/gumbo/attribute.h
-        include/gumbo/char_ref.h
-        include/gumbo/error.h
-        include/gumbo.h
-        include/gumbo/insertion_mode.h
-        include/gumbo/parser.h
-        include/gumbo/string_buffer.h
-        include/gumbo/string_piece.h
-        include/gumbo/tag_enum.h
-        include/gumbo/tag_gperf.h
-        include/gumbo/tag_sizes.h
-        include/gumbo/tag_strings.h
-        include/gumbo/token_type.h
-        include/gumbo/tokenizer.h
-        include/gumbo/tokenizer_states.h
-        include/gumbo/utf8.h
-        include/gumbo/util.h
-        include/gumbo/vector.h
+    gumbo.h
+    tag_enum.h
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
@@ -64,9 +49,8 @@ endif()
 
 # Export gumbo includes.
 target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
     $<INSTALL_INTERFACE:include>)
-target_include_directories(${PROJECT_NAME} PRIVATE include/gumbo)
 
 # install and export
 install(TARGETS ${PROJECT_NAME}

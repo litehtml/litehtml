@@ -1,6 +1,4 @@
-// Generated via `gentags.py src/tag.in`.
-// Do not edit; edit src/tag.in instead.
-// clang-format off
+// Do not edit! Modify src/tag.in instead. Generated via gentags.sh
 GUMBO_TAG_HTML,
 GUMBO_TAG_HEAD,
 GUMBO_TAG_TITLE,
@@ -114,6 +112,7 @@ GUMBO_TAG_LABEL,
 GUMBO_TAG_INPUT,
 GUMBO_TAG_BUTTON,
 GUMBO_TAG_SELECT,
+GUMBO_TAG_SELECTEDCONTENT,
 GUMBO_TAG_DATALIST,
 GUMBO_TAG_OPTGROUP,
 GUMBO_TAG_OPTION,

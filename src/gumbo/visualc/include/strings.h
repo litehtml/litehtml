@@ -1,4 +1,5 @@
-/*Dummy file to satisfy source file dependencies on Windows platform*/
+#ifndef MICROSOFT_WINDOWS_STRINGS_H_WORKAROUND
+#define MICROSOFT_WINDOWS_STRINGS_H_WORKAROUND
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp
-#define inline __inline
+#endif // MICROSOFT_WINDOWS_STRINGS_H_WORKAROUND
