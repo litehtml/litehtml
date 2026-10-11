@@ -6,26 +6,26 @@ project(gumbo C)
 # MAJOR is incremented when symbols are removed or changed in an incompatible way
 # MINOR is incremented when new symbols are added
 set(PROJECT_MAJOR 0)
-set(PROJECT_MINOR 0)
+set(PROJECT_MINOR 14.1)
 
 set(SOURCE_GUMBO
-    attribute.c
-    char_ref.c
-    char_ref_gperf.c
-    error.c
-    parser.c
-    string_buffer.c
-    string_piece.c
-    tag.c
-    tokenizer.c
-    utf8.c
-    util.c
-    vector.c
+    src/attribute.c
+    src/char_ref.c
+    src/char_ref_gperf.c
+    src/error.c
+    src/parser.c
+    src/string_buffer.c
+    src/string_piece.c
+    src/tag.c
+    src/tokenizer.c
+    src/utf8.c
+    src/util.c
+    src/vector.c
 )
 
 set(HEADER_GUMBO
-    gumbo.h
-    tag_enum.h
+    src/gumbo.h
+    src/tag_enum.h
 )
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
@@ -49,7 +49,7 @@ endif()
 
 # Export gumbo includes.
 target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/src
     $<INSTALL_INTERFACE:include>)
 
 # install and export
