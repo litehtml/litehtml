@@ -170,7 +170,9 @@ if (MSVC)
 	# warning level 4
 	add_compile_options(/W4)
 	add_compile_options(/permissive- /utf-8)
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/EHsc>)
 else()
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fexceptions>)
 	# additional warnings
 	add_compile_options(-Wall
 	                    -Wextra
