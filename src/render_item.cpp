@@ -114,24 +114,33 @@ litehtml::pixel_t litehtml::render_item::calc_auto_margins(pixel_t parent_width)
 
 void litehtml::render_item::apply_relative_shift(const containing_block_context& containing_block_size)
 {
+    const position shift = relative_shift(containing_block_size);
+    m_pos.x += shift.x;
+    m_pos.y += shift.y;
+}
+
+litehtml::position litehtml::render_item::relative_shift(const containing_block_context& containing_block_size) const
+{
+    position shift;
     if(src_el()->css().get_position() == element_position_relative)
     {
         css_offsets offsets = src_el()->css().get_offsets();
         if(!offsets.left.is_predefined())
         {
-            m_pos.x += offsets.left.calc_percent(containing_block_size.width);
+            shift.x = offsets.left.calc_percent(containing_block_size.width);
         } else if(!offsets.right.is_predefined())
         {
-            m_pos.x -= offsets.right.calc_percent(containing_block_size.width);
+            shift.x = 0_px - offsets.right.calc_percent(containing_block_size.width);
         }
         if(!offsets.top.is_predefined())
         {
-            m_pos.y += offsets.top.calc_percent(containing_block_size.height);
+            shift.y = offsets.top.calc_percent(containing_block_size.height);
         } else if(!offsets.bottom.is_predefined())
         {
-            m_pos.y -= offsets.bottom.calc_percent(containing_block_size.height);
+            shift.y = 0_px - offsets.bottom.calc_percent(containing_block_size.height);
         }
     }
+    return shift;
 }
 
 std::tuple<std::shared_ptr<litehtml::render_item>, std::shared_ptr<litehtml::render_item>,
