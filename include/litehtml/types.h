@@ -363,10 +363,11 @@ namespace litehtml
             typed_pixel& operator=(const typed_pixel& v) = default;
         };
 
-        typed_pixel width        = {0_px, cbc_value_type_auto}; // width of the containing block
-        typed_pixel render_width = {0_px, cbc_value_type_auto};
-        typed_pixel min_width    = {0_px, cbc_value_type_none};
-        typed_pixel max_width    = {0_px, cbc_value_type_none};
+        typed_pixel width                  = {0_px, cbc_value_type_auto}; // width of the containing block
+        typed_pixel render_width           = {0_px, cbc_value_type_auto};
+        pixel_t     unclamped_render_width = 0_px; // render_width before min/max-width are applied
+        typed_pixel min_width              = {0_px, cbc_value_type_none};
+        typed_pixel max_width              = {0_px, cbc_value_type_none};
 
         typed_pixel height     = {0_px, cbc_value_type_auto}; // height of the containing block
         typed_pixel min_height = {0_px, cbc_value_type_none};

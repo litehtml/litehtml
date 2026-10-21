@@ -481,6 +481,9 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
             if(!item->el->css().get_width().is_predefined())
             {
                 render_width = item->el->css().get_width().calc_percent(self_size.width);
+            } else if(item->stretch_full_width)
+            {
+                render_width = item->stretch_render_width;
             } else
             {
                 render_width = std::min(self_size.width.value, item->el->get_intrinsic_max_size().width) -
@@ -494,9 +497,12 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                                                         containing_block_context::size_mode_exact_width |
                                                             containing_block_context::size_mode_exact_height),
                              fmt_ctx, false);
-            main_size       += item->el->height();
-            item->main_size  = item->el->height();
-            cross_size       = std::max(cross_size, item->el->width());
+            main_size += item->el->height();
+            if(item->el->css().get_display() != display_table)
+            {
+                item->main_size = item->el->height();
+            }
+            cross_size = std::max(cross_size, item->el->width());
         }
 
         if(!fit_container)
