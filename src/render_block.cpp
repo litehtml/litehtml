@@ -197,7 +197,22 @@ litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y,
     //*****************************************
     // Render content
     //*****************************************
+    // A width clamped by min/max-width still reports the width its content takes without the clamp
+    bool    clamped       = self_size.width.type != containing_block_context::cbc_value_type_absolute && !second_pass &&
+                            !is_root() && self_size.unclamped_render_width != self_size.render_width.value;
+    pixel_t natural_width = 0_px;
+    if(clamped)
+    {
+        containing_block_context natural_size    = self_size;
+        formatting_context       natural_fmt_ctx = *fmt_ctx; // keep the measuring pass from leaving floats behind
+        natural_size.width.value = natural_size.render_width.value = self_size.unclamped_render_width;
+        natural_width = _render_content(x, y, second_pass, natural_size, &natural_fmt_ctx);
+    }
     auto ret_width = _render_content(x, y, second_pass, self_size, fmt_ctx);
+    if(clamped)
+    {
+        ret_width = natural_width;
+    }
     //*****************************************
 
     if(src_el()->css().get_display() == display_list_item)
@@ -210,7 +225,8 @@ litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y,
 
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {
-        ret_width = m_pos.width = self_size.render_width;
+        m_pos.width = self_size.render_width;
+        ret_width   = m_pos.width;
     }
 
     // Set block height

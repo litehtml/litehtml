@@ -19,7 +19,11 @@ void litehtml::render_item_inline_context::for_each_inline(
         skip_spaces = true;
     }
 
-    bool was_space = true;
+    // Rendering keeps a leading space: it stops a lone clearing <br> from making the line empty
+    bool was_space = const_process;
+
+    // Whether the last non-space element was a float
+    bool after_float = false;
 
     go_inside_inline  go_inside_inlines_selector;
     inline_selector   select_inlines;
@@ -51,11 +55,12 @@ void litehtml::render_item_inline_context::for_each_inline(
                                          // skip all spaces after line break
                                          was_space = el->src_el()->is_break();
                                      }
-                                     if(last_space && !el->src_el()->is_float())
+                                     if(last_space && (!el->src_el()->is_float() || !after_float))
                                      {
                                          callback(last_space, iterator_item_type_child);
                                          last_space = nullptr;
                                      }
+                                     after_float = el->src_el()->is_float();
                                      // place element into rendering flow
                                      callback(el, item_type);
                                  }
@@ -303,6 +308,12 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
         if(item->get_el()->src_el()->is_inline_box())
         {
             auto min_rendered_width = item->get_el()->render(0_px, 0_px, self_size, fmt_ctx);
+            if(min_rendered_width < item->get_el()->width() &&
+               item->get_el()->src_el()->css().get_width().is_predefined())
+            {
+                // Shrink an auto-width inline box to the width its wrapped content actually uses
+                item->get_el()->render(0_px, 0_px, self_size.new_width(min_rendered_width), fmt_ctx);
+            }
             item->set_rendered_min_width(min_rendered_width);
         } else if(item->get_el()->src_el()->css().get_display() == display_inline_text)
         {
@@ -489,4 +500,8 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
     m_intrinsic_min_size.height  = std::max(m_intrinsic_min_size.height, line_height) + content_offset_height();
     m_intrinsic_min_size.width  += content_offset_width();
     m_intrinsic_max_size.height += content_offset_height();
+    if(ws == white_space_nowrap)
+    {
+        m_intrinsic_min_size = m_intrinsic_max_size;
+    }
 }

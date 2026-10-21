@@ -54,16 +54,18 @@ void litehtml::render_item::update_intrinsic_size()
     {
         if(!css().get_width().is_predefined() && css().get_width().units() != css_units_percentage)
         {
-            auto w = doc->to_pixels(css().get_width(), fm, 0_px) + content_offset_width();
+            auto w = doc->to_pixels(css().get_width(), fm, 0_px);
             if(css().get_display() == display_table_cell)
             {
+                // Table column width is applied to the whole cell box, including padding and borders.
                 m_intrinsic_max_size.width = m_intrinsic_min_size.width = std::max(w, m_intrinsic_min_size.width);
             } else
             {
                 // If width is defined and not percentage, then we can set the intrisict size to that value
-                m_intrinsic_max_size.width = m_intrinsic_min_size.width = w;
+                m_intrinsic_max_size.width = m_intrinsic_min_size.width = w + content_offset_width();
             }
-        } else if(css().get_overflow() > overflow_visible)
+        } else if(css().get_overflow() > overflow_visible &&
+                  !is_one_of(css().get_display(), display_table_cell, display_table))
         {
             m_intrinsic_min_size.width = content_offset_width();
         }
@@ -90,6 +92,11 @@ void litehtml::render_item::update_intrinsic_size()
         {
             m_intrinsic_max_size.width = std::min(
                 m_intrinsic_max_size.width, doc->to_pixels(css().get_max_width(), fm, 0_px) + content_offset_width());
+            // A table can't be narrower than its minimum content width.
+            if(css().get_display() == display_table)
+            {
+                m_intrinsic_max_size.width = std::max(m_intrinsic_max_size.width, m_intrinsic_min_size.width);
+            }
         }
         if(!css().get_max_height().is_predefined() && css().get_max_height().units() != css_units_percentage)
         {
@@ -1569,11 +1576,15 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
             ret.height.value = 0_px;
         }
     }
-    if(src_el()->is_float() || src_el()->is_inline_box() ||
-       is_one_of(src_el()->css().get_position(), element_position_absolute, element_position_fixed))
+    bool abs_fills_width =
+        is_one_of(src_el()->css().get_position(), element_position_absolute, element_position_fixed) &&
+        !src_el()->css().get_offsets().left.is_predefined() && !src_el()->css().get_offsets().right.is_predefined();
+    if(!abs_fills_width &&
+       (src_el()->is_float() || src_el()->is_inline_box() ||
+        is_one_of(src_el()->css().get_position(), element_position_absolute, element_position_fixed)))
     {
-        ret.width.value =
-            std::max(std::min(cb_context.width.value, get_intrinsic_max_size().width), get_intrinsic_min_size().width);
+        ret.width.value = std::min(cb_context.width.value, get_intrinsic_max_size().width);
+        ret.width.value = std::max(ret.width.value, get_intrinsic_min_size().width);
     }
     ret.max_width.value -= content_offset_width();
     ret.width.value     -= content_offset_width();
@@ -1629,39 +1640,6 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
     calc_cb_length(src_el()->css().get_min_height(), cb_context.height, ret.min_height);
     calc_cb_length(src_el()->css().get_max_height(), cb_context.height, ret.max_height);
 
-    if(is_one_of(ret.min_width.type, containing_block_context::cbc_value_type_percentage,
-                 containing_block_context::cbc_value_type_absolute))
-    {
-        ret.width.value = ret.render_width.value = std::max(ret.render_width.value, ret.min_width.value);
-    }
-    if(is_one_of(ret.max_width.type, containing_block_context::cbc_value_type_percentage,
-                 containing_block_context::cbc_value_type_absolute))
-    {
-        ret.width.value = ret.render_width.value = std::min(ret.render_width.value, ret.max_width.value);
-    }
-
-    // Fix box sizing
-    if(ret.width.type != containing_block_context::cbc_value_type_auto)
-    {
-        ret.render_width = ret.width.value - box_sizing_width();
-    }
-    if(ret.min_width.type != containing_block_context::cbc_value_type_none)
-    {
-        ret.min_width.value -= box_sizing_width();
-    }
-    if(ret.max_width.type != containing_block_context::cbc_value_type_none)
-    {
-        ret.max_width.value -= box_sizing_width();
-    }
-    if(ret.min_height.type != containing_block_context::cbc_value_type_none)
-    {
-        ret.min_height.value -= box_sizing_height();
-    }
-    if(ret.max_height.type != containing_block_context::cbc_value_type_none)
-    {
-        ret.max_height.value -= box_sizing_height();
-    }
-
     // Issue #459: a flex item is rendered to its resolved main size via
     // size_mode_exact_width. For a row-direction flex container the flex algorithm
     // has already clamped the item's main size by its min/max-width, resolved
@@ -1681,6 +1659,42 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
             ret.min_width.type = containing_block_context::cbc_value_type_none;
             ret.max_width.type = containing_block_context::cbc_value_type_none;
         }
+    }
+
+    ret.unclamped_render_width = ret.render_width.value;
+
+    if(is_one_of(ret.min_width.type, containing_block_context::cbc_value_type_percentage,
+                 containing_block_context::cbc_value_type_absolute))
+    {
+        ret.width.value = ret.render_width.value = std::max(ret.render_width.value, ret.min_width.value);
+    }
+    if(is_one_of(ret.max_width.type, containing_block_context::cbc_value_type_percentage,
+                 containing_block_context::cbc_value_type_absolute))
+    {
+        ret.width.value = ret.render_width.value = std::min(ret.render_width.value, ret.max_width.value);
+    }
+
+    // Fix box sizing
+    if(ret.width.type != containing_block_context::cbc_value_type_auto)
+    {
+        ret.render_width            = ret.width.value - box_sizing_width();
+        ret.unclamped_render_width -= box_sizing_width();
+    }
+    if(ret.min_width.type != containing_block_context::cbc_value_type_none)
+    {
+        ret.min_width.value -= box_sizing_width();
+    }
+    if(ret.max_width.type != containing_block_context::cbc_value_type_none)
+    {
+        ret.max_width.value -= box_sizing_width();
+    }
+    if(ret.min_height.type != containing_block_context::cbc_value_type_none)
+    {
+        ret.min_height.value -= box_sizing_height();
+    }
+    if(ret.max_height.type != containing_block_context::cbc_value_type_none)
+    {
+        ret.max_height.value -= box_sizing_height();
     }
 
     return ret;

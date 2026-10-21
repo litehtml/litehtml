@@ -100,10 +100,15 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
 
     bool row_span_found = false;
 
+    // Widest row of rendered cell contents, used to report the table's real extent
+    pixel_t used_content_width = 0_px;
+    bool    has_floats         = false;
+
     // render cells with computed width
     for(int row = 0; row < m_grid->rows_count(); row++)
     {
-        m_grid->row(row).height = 0;
+        m_grid->row(row).height   = 0;
+        pixel_t row_content_width = 0_px;
         for(int col = 0; col < m_grid->cols_count(); col++)
         {
             table_cell* cell = m_grid->cell(col, row);
@@ -116,7 +121,13 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
                 }
                 pixel_t cell_width = m_grid->column(span_col).right - m_grid->column(col).left;
 
-                cell->el->render(m_grid->column(col).left, 0_px, self_size.new_width(cell_width), fmt_ctx, true);
+                pixel_t cell_ret =
+                    cell->el->render(m_grid->column(col).left, 0_px, self_size.new_width(cell_width), fmt_ctx, true);
+                row_content_width += std::min(cell_width, cell_ret);
+                has_floats         = has_floats || std::any_of(cell->el->children().begin(), cell->el->children().end(),
+                                                               [](const std::shared_ptr<render_item>& child) {
+                                                           return child->src_el()->is_float();
+                                                               });
                 cell->el->pos().width = cell_width - cell->el->content_offset_width();
 
                 if(cell->rowspan <= 1)
@@ -128,6 +139,7 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
                 }
             }
         }
+        used_content_width = std::max(used_content_width, row_content_width);
     }
 
     if(row_span_found)
@@ -275,6 +287,11 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {
         return table_width + content_offset_width();
+    }
+    // Content is wider than the available width and wraps (e.g. floats): report the extent actually used
+    if(has_floats && max_table_width > table_width)
+    {
+        return std::min(used_content_width + table_width_spacing, table_width) + content_offset_width();
     }
     return std::min(max_table_width + content_offset_width(), table_width + content_offset_width());
 }
