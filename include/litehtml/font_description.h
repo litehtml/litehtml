@@ -10,7 +10,7 @@ namespace litehtml
     struct font_description
     {
         std::string family;                    // Font Family
-        pixel_t     size;                      // Font size
+        pixel_t     size;                      // Font size in pixels, not rounded (14pt is 18.67px)
         font_style  style = font_style_normal; // Font stype, see the enum font_style
         int         weight;                    // Font weight.
         int         decoration_line =

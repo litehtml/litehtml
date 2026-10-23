@@ -1,6 +1,7 @@
 #include "test_container.h"
 #include "Font.h"
 #include "litehtml/types.h"
+#include <cmath>
 #include <fstream>
 #include <sstream>
 #define CANVAS_ITY_IMPLEMENTATION
@@ -98,8 +99,12 @@ void fill_polygon(canvas& cvs, vector<xy> points, color color)
 //  test_container implementation
 //
 
-uint_ptr test_container::create_font(const font_description& descr, const document*, litehtml::font_metrics* fm)
+uint_ptr test_container::create_font(const font_description& exact_descr, const document*, litehtml::font_metrics* fm)
 {
+    // This container renders whole-pixel font sizes.
+    litehtml::font_description descr = exact_descr;
+    descr.size                       = std::round(descr.size.value());
+
     Font*         font  = 0;
     string_vector fonts = split_string(descr.family, ",", "", "");
     for(auto name : fonts)
