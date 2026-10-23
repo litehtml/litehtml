@@ -207,6 +207,9 @@ namespace litehtml
         table_row::vector    m_rows;
         pixel_t              m_top_captions_height    = 0_px;
         pixel_t              m_bottom_captions_height = 0_px;
+        std::vector<margins> m_collapsed_borders;       // per grid slot: the cell's borders after collapsing
+        pixel_t              m_collapsed_top    = 0_px; // the widest collapsed border on the table's top edge
+        pixel_t              m_collapsed_bottom = 0_px; // the widest collapsed border on the table's bottom edge
 
         std::vector<std::shared_ptr<render_item>> m_captions;
 
@@ -255,6 +258,18 @@ namespace litehtml
         {
             return m_bottom_captions_height;
         }
+        const margins& collapsed_borders(int col, int row) const
+        {
+            return m_collapsed_borders[row * m_cols_count + col];
+        }
+        pixel_t collapsed_top() const
+        {
+            return m_collapsed_top;
+        }
+        pixel_t collapsed_bottom() const
+        {
+            return m_collapsed_bottom;
+        }
 
         void    distribute_max_width(pixel_t width, int start, int end);
         void    distribute_min_width(pixel_t width, int start, int end);
@@ -263,6 +278,7 @@ namespace litehtml
         pixel_t calc_table_width(pixel_t block_width, bool is_auto, pixel_t& min_table_width, pixel_t& max_table_width);
         void    calc_horizontal_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_x);
         void    calc_vertical_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_y);
+        void    calc_collapsed_borders(const margins& table_borders);
         void    calc_rows_height(pixel_t blockHeight, pixel_t borderSpacingY);
     };
 } // namespace litehtml
