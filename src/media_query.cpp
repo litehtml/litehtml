@@ -7,17 +7,23 @@
 
 namespace litehtml
 {
+    namespace
+    {
+        constexpr auto less_than_or_equal_to    = u'\u2A7D';
+        constexpr auto greater_than_or_equal_to = u'\u2A7E';
+        constexpr auto not_equal_to             = u'\u2260';
+    } // namespace
 
     bool eval_op(float x, short op, float value)
     {
         const float epsilon = 0.00001f;
         if(std::abs(x - value) < epsilon)
         {
-            if(is_one_of(op, '=', u'⩾', u'⩽'))
+            if(is_one_of(op, '=', greater_than_or_equal_to, less_than_or_equal_to))
             {
                 return true;
             }
-            if(op == u'≠')
+            if(op == not_equal_to)
             {
                 return false;
             }
@@ -27,15 +33,15 @@ namespace litehtml
         {
         case '<':
             return pixel_t(x) < pixel_t(value);
-        case u'⩽':
+        case less_than_or_equal_to:
             return pixel_t(x) <= pixel_t(value);
         case '>':
             return pixel_t(x) > pixel_t(value);
-        case u'⩾':
+        case greater_than_or_equal_to:
             return pixel_t(x) >= pixel_t(value);
         case '=':
             return pixel_t(x) == pixel_t(value);
-        case u'≠':
+        case not_equal_to:
             return pixel_t(x) != pixel_t(value);
         default:
             return false;
@@ -608,7 +614,7 @@ namespace litehtml
                 return false;
             }
             value = mf_info.value_type == _keyword_ ? static_cast<float>(_none_) : 0;
-            op    = u'≠';
+            op    = not_equal_to;
             return true;
         }
         if(syntax == _plain_) // ({min-,max-,}name: value)
@@ -626,7 +632,7 @@ namespace litehtml
                     return false;
                 }
                 value = val[0].n.number;
-                op    = name.substr(0, 4) == "min-" ? u'⩾' : u'⩽';
+                op    = name.substr(0, 4) == "min-" ? greater_than_or_equal_to : less_than_or_equal_to;
                 name  = real_name;
                 return true;
             }
@@ -745,13 +751,13 @@ namespace litehtml
         {
             return '<';
         }
-        if(op == u'⩽')
+        if(op == less_than_or_equal_to)
         {
-            return u'⩾';
+            return greater_than_or_equal_to;
         }
-        if(op == u'⩾')
+        if(op == greater_than_or_equal_to)
         {
-            return u'⩽';
+            return less_than_or_equal_to;
         }
         return op;
     }
@@ -800,7 +806,7 @@ namespace litehtml
 
             if(tok1.ch == '=')
             {
-                index += 2, _op = lg == '<' ? u'⩽' : u'⩾';
+                index += 2, _op = lg == '<' ? less_than_or_equal_to : greater_than_or_equal_to;
             } else
             {
                 index++, _op = lg;
