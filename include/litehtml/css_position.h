@@ -19,9 +19,9 @@ namespace litehtml
         css_length height;
 
         css_size() = default;
-        css_size(css_length width, css_length height) :
-            width(width),
-            height(height)
+        css_size(css_length _width, css_length _height) :
+            width(_width),
+            height(_height)
         {
         }
     };

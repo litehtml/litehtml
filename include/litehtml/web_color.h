@@ -29,8 +29,8 @@ namespace litehtml
             alpha(a)
         {
         }
-        web_color(bool is_current_color) :
-            is_current_color(is_current_color)
+        web_color(bool _is_current_color) :
+            is_current_color(_is_current_color)
         {
         }
 
