@@ -40,9 +40,9 @@ namespace litehtml
             at
         };
 
-        raw_rule(rule_type type, std::string name = {}) :
-            type(type),
-            name(std::move(name))
+        raw_rule(rule_type _type, std::string _name = {}) :
+            type(_type),
+            name(std::move(_name))
         {
         }
 
