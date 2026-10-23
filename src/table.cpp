@@ -271,12 +271,21 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
                 }
             } else
             {
-                const pixel_t share       = width / pixel_t(static_cast<int>(distribute_columns.size()));
+                // No column is more elastic than another: grow them in proportion to
+                // their widths, as browsers do. Columns that are all zero wide split
+                // the width evenly.
+                pixel_t total_width;
+                for(const auto& column : distribute_columns)
+                {
+                    total_width += column->width;
+                }
+                const pixel_t even_share  = width / pixel_t(static_cast<int>(distribute_columns.size()));
                 pixel_t       distributed = 0_px;
                 for(const auto& column : distribute_columns)
                 {
-                    column->width += share;
-                    distributed   += share;
+                    const pixel_t share  = total_width != 0_px ? width * (column->width / total_width) : even_share;
+                    column->width       += share;
+                    distributed         += share;
                 }
                 distribute_columns.back()->width += width - distributed;
                 added_width                       = width;
