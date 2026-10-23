@@ -6,6 +6,7 @@
  */
 #include "container_haiku.h"
 
+#include <cmath>
 #include <string>
 #include <iostream>
 #include <fstream>
@@ -117,9 +118,13 @@ void LiteHtmlView::GetPreferredSize(float* width, float* height)
     }
 }
 
-litehtml::uint_ptr LiteHtmlView::create_font(const litehtml::font_description& descr, const litehtml::document* doc,
-                                             litehtml::font_metrics* fm)
+litehtml::uint_ptr LiteHtmlView::create_font(const litehtml::font_description& exact_descr,
+                                             const litehtml::document* doc, litehtml::font_metrics* fm)
 {
+    // This container renders whole-pixel font sizes.
+    litehtml::font_description descr = exact_descr;
+    descr.size                       = std::round(descr.size.value());
+
     // std::cout << "create_font" << std::endl;
     litehtml::string_vector fonts;
     litehtml::split_string(descr.family, fonts, ",");

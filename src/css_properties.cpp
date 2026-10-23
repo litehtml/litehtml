@@ -500,7 +500,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
 
     font_description descr;
     descr.family               = m_font_family;
-    descr.size                 = std::round(font_size.value());
+    descr.size                 = font_size;
     descr.style                = m_font_style;
     descr.weight               = static_cast<int>(m_font_weight.val());
     descr.decoration_line      = m_text_decoration_line;

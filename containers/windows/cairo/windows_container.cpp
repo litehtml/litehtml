@@ -1,6 +1,7 @@
 #include "windows_container.h"
 #define _USE_MATH_DEFINES
 #include <math.h>
+#include <cmath>
 #include "cairo_font.h"
 #include <strsafe.h>
 
@@ -23,9 +24,13 @@ windows_container::~windows_container(void)
     cairo_destroy(m_temp_cr);
 }
 
-litehtml::uint_ptr windows_container::create_font(const litehtml::font_description& descr,
+litehtml::uint_ptr windows_container::create_font(const litehtml::font_description& exact_descr,
                                                   const litehtml::document* doc, litehtml::font_metrics* fm)
 {
+    // This container renders whole-pixel font sizes.
+    litehtml::font_description descr = exact_descr;
+    descr.size                       = std::round(descr.size.value());
+
     std::wstring fnt_name = L"sans-serif";
 
     litehtml::string_vector fonts;

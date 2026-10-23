@@ -1,4 +1,5 @@
 #include <array>
+#include <cmath>
 #include "container_cairo_pango.h"
 
 container_cairo_pango::container_cairo_pango()
@@ -57,9 +58,13 @@ void container_cairo_pango::set_font_options(cairo_antialias_t antialias, cairo_
     cairo_font_options_set_subpixel_order(m_font_options, subpixel_order);
 }
 
-litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_description& descr,
+litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_description& exact_descr,
                                                       const litehtml::document* doc, litehtml::font_metrics* fm)
 {
+    // This container renders whole-pixel font sizes.
+    litehtml::font_description descr = exact_descr;
+    descr.size                       = std::round(descr.size.value());
+
     litehtml::string_vector tokens;
     litehtml::split_string(descr.family, tokens, ",");
     std::string fonts;

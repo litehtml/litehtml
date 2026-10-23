@@ -1,5 +1,6 @@
 #include "win32_container.h"
 #include "litehtml/os_types.h"
+#include <cmath>
 
 using namespace std;
 using namespace litehtml;
@@ -112,9 +113,13 @@ static void trim_quotes(string& str)
     }
 }
 
-uint_ptr win32_container::create_font(const litehtml::font_description& descr, const litehtml::document* doc,
+uint_ptr win32_container::create_font(const litehtml::font_description& exact_descr, const litehtml::document* doc,
                                       litehtml::font_metrics* fm)
 {
+    // This container renders whole-pixel font sizes.
+    litehtml::font_description descr = exact_descr;
+    descr.size                       = std::round(descr.size.value());
+
     wstring       font_name;
     string_vector fonts;
     split_string(descr.family, fonts, ",");
