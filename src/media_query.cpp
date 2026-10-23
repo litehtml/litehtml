@@ -95,7 +95,7 @@ namespace litehtml
     {
         if(op == _not_)
         {
-            return not m_conditions[0].check(features);
+            return !m_conditions[0].check(features);
         }
 
         if(op == _and_)
@@ -181,7 +181,7 @@ namespace litehtml
 
         if(m_not)
         {
-            result = not result;
+            result = !result;
         }
 
         return result;
