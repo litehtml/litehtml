@@ -558,6 +558,7 @@ namespace litehtml
                 m_size.width  = 0;
                 m_size.height = 0;
                 m_root_render->calc_document_size(m_size);
+                m_root_render->calc_subtree_bounds(0_px, 0_px);
             }
         }
         return ret;
