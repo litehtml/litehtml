@@ -1,8 +1,16 @@
 #include <array>
+#include <cmath>
 #include "container_cairo_pango.h"
 
 container_cairo_pango::container_cairo_pango()
 {
+    PangoFontMap* fontmap = pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT);
+    if(fontmap)
+    {
+        pango_cairo_font_map_set_default(PANGO_CAIRO_FONT_MAP(fontmap));
+        g_object_unref(fontmap);
+    }
+
     m_temp_surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, 2, 2);
     m_temp_cr      = cairo_create(m_temp_surface);
     cairo_save(m_temp_cr);
@@ -32,11 +40,31 @@ container_cairo_pango::~container_cairo_pango()
     clear_images();
     cairo_surface_destroy(m_temp_surface);
     cairo_destroy(m_temp_cr);
+    if(m_font_options)
+    {
+        cairo_font_options_destroy(m_font_options);
+    }
 }
 
-litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_description& descr,
+void container_cairo_pango::set_font_options(cairo_antialias_t antialias, cairo_hint_style_t hint_style,
+                                             cairo_subpixel_order_t subpixel_order)
+{
+    if(!m_font_options)
+    {
+        m_font_options = cairo_font_options_create();
+    }
+    cairo_font_options_set_antialias(m_font_options, antialias);
+    cairo_font_options_set_hint_style(m_font_options, hint_style);
+    cairo_font_options_set_subpixel_order(m_font_options, subpixel_order);
+}
+
+litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_description& exact_descr,
                                                       const litehtml::document* doc, litehtml::font_metrics* fm)
 {
+    // This container renders whole-pixel font sizes.
+    litehtml::font_description descr = exact_descr;
+    descr.size                       = std::round(descr.size.value());
+
     litehtml::string_vector tokens;
     litehtml::split_string(descr.family, tokens, ",");
     std::string fonts;

@@ -117,24 +117,33 @@ litehtml::pixel_t litehtml::render_item::calc_auto_margins(pixel_t parent_width)
 
 void litehtml::render_item::apply_relative_shift(const containing_block_context& containing_block_size)
 {
+    const position shift = relative_shift(containing_block_size);
+    m_pos.x += shift.x;
+    m_pos.y += shift.y;
+}
+
+litehtml::position litehtml::render_item::relative_shift(const containing_block_context& containing_block_size) const
+{
+    position shift;
     if(src_el()->css().get_position() == element_position_relative)
     {
         css_offsets offsets = src_el()->css().get_offsets();
         if(!offsets.left.is_predefined())
         {
-            m_pos.x += offsets.left.calc_percent(containing_block_size.width);
+            shift.x = offsets.left.calc_percent(containing_block_size.width);
         } else if(!offsets.right.is_predefined())
         {
-            m_pos.x -= offsets.right.calc_percent(containing_block_size.width);
+            shift.x = 0_px - offsets.right.calc_percent(containing_block_size.width);
         }
         if(!offsets.top.is_predefined())
         {
-            m_pos.y += offsets.top.calc_percent(containing_block_size.height);
+            shift.y = offsets.top.calc_percent(containing_block_size.height);
         } else if(!offsets.bottom.is_predefined())
         {
-            m_pos.y -= offsets.bottom.calc_percent(containing_block_size.height);
+            shift.y = 0_px - offsets.bottom.calc_percent(containing_block_size.height);
         }
     }
+    return shift;
 }
 
 std::tuple<std::shared_ptr<litehtml::render_item>, std::shared_ptr<litehtml::render_item>,
@@ -290,9 +299,11 @@ void litehtml::render_item::render_positioned(render_type rt)
             css_length el_width  = el->src_el()->css().get_width();
             css_length el_height = el->src_el()->css().get_height();
 
+            // The height is a css height, so it is specified in the box sizing of the element and
+            // the paddings and the borders are added to it only for a content-box element.
             auto fix_height_min_max = [&](pixel_t height) {
                 auto max_height = el->css().get_max_height();
-                auto min_height = el->css().get_max_height();
+                auto min_height = el->css().get_min_height();
                 if(!max_height.is_predefined())
                 {
                     pixel_t max_height_value = max_height.calc_percent(containing_block_size.height);
@@ -303,10 +314,11 @@ void litehtml::render_item::render_positioned(render_type rt)
                     pixel_t min_height_value = min_height.calc_percent(containing_block_size.height);
                     height                   = std::max(height, min_height_value);
                 }
-                height += el->content_offset_height();
+                height += el->content_offset_height() - el->box_sizing_height();
                 return height;
             };
 
+            // see fix_height_min_max
             auto fix_width_min_max = [&](pixel_t width) {
                 auto max_width = el->css().get_max_width();
                 auto min_width = el->css().get_min_width();
@@ -320,7 +332,7 @@ void litehtml::render_item::render_positioned(render_type rt)
                     pixel_t min_width_value = min_width.calc_percent(containing_block_size.width);
                     width                   = std::max(width, min_width_value);
                 }
-                width += el->content_offset_width();
+                width += el->content_offset_width() - el->box_sizing_width();
                 return width;
             };
 
@@ -760,11 +772,19 @@ void litehtml::render_item::render_positioned(render_type rt)
 
             if(need_render)
             {
+                // The width of the element is already resolved against its containing block, so it is
+                // passed as an exact width. Passing it as a normal containing block width would make
+                // the element resolve its own percentage width against itself, and its percentage
+                // sized children would then be laid out into that wrong containing block.
+                // An exact width is specified in the box sizing of the element, like the css width is,
+                // because calculate_containing_block_context() subtracts the paddings and the borders
+                // from it for a border-box element.
                 position pos = el->m_pos;
-                el->render(
-                    el->left(), el->top(),
-                    containing_block_size.new_width(el->width(), containing_block_context::size_mode_keep_outlines),
-                    nullptr, true);
+                el->render(el->left(), el->top(),
+                           containing_block_size.new_width(el->m_pos.width + el->box_sizing_width(),
+                                                           containing_block_context::size_mode_exact_width |
+                                                           containing_block_context::size_mode_keep_outlines),
+                           nullptr, true);
                 el->m_pos = pos;
             }
 

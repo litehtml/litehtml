@@ -88,6 +88,7 @@ namespace litehtml
         virtual void        set_data(const char* data);
 
         virtual void        set_attr(const char* name, const char* val);
+        virtual void        remove_attr(const char* name);
         virtual const char* get_attr(const char* name, const char* def = nullptr) const;
         virtual void        apply_stylesheet(const litehtml::css& stylesheet);
         virtual void        refresh_styles();

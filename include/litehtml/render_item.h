@@ -426,6 +426,8 @@ namespace litehtml
         rendered_width render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
                               formatting_context* fmt_ctx, bool second_pass = false);
         void           apply_relative_shift(const containing_block_context& containing_block_size);
+        // How far position: relative moves this element (0, 0 when it isn't relatively positioned)
+        position       relative_shift(const containing_block_context& containing_block_size) const;
         void           calc_outlines(pixel_t parent_width);
         pixel_t        calc_auto_margins(pixel_t parent_width); // returns left margin
 

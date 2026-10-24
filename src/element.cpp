@@ -473,6 +473,7 @@ namespace litehtml
     void        element::set_tagName(const char* /*tag*/) LITEHTML_EMPTY_FUNC;
     void        element::set_data(const char* /*data*/) LITEHTML_EMPTY_FUNC;
     void        element::set_attr(const char* /*name*/, const char* /*val*/) LITEHTML_EMPTY_FUNC;
+    void        element::remove_attr(const char* /*name*/) LITEHTML_EMPTY_FUNC;
     void        element::apply_stylesheet(const litehtml::css& /*stylesheet*/) LITEHTML_EMPTY_FUNC;
     void        element::refresh_styles() LITEHTML_EMPTY_FUNC;
     void        element::on_click() LITEHTML_EMPTY_FUNC;

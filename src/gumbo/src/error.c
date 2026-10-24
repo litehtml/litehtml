@@ -79,7 +79,7 @@ static void print_tag_stack(GumboParser* parser, const GumboParserError* error,
     if (i) {
       print_message(parser, output, ", ");
     }
-    GumboTag tag = (GumboTag) error->tag_stack.data[i];
+    GumboTag tag = (GumboTag)(intptr_t) error->tag_stack.data[i];
     print_message(parser, output, gumbo_normalized_tagname(tag));
   }
   gumbo_string_buffer_append_codepoint(parser, '.', output);
@@ -99,6 +99,7 @@ static void handle_parser_error(GumboParser* parser,
       print_message(parser, output, "This is not a legal doctype");
       return;
     case GUMBO_TOKEN_COMMENT:
+    case GUMBO_TOKEN_PROCESSING_INSTRUCTION:
       // Should never happen; comments are always legal.
       assert(0);
       // But just in case...

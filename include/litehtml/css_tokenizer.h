@@ -77,17 +77,17 @@ namespace litehtml
         std::string m_str;
 
       public:
-        css_token(css_token_type type = css_token_type(), float number = 0,
+        css_token(css_token_type _type = css_token_type(), float _number = 0,
                   css_number_type number_type = css_number_integer, std::string str = "") :
             m_str(std::move(str)),
-            type(type),
-            n{number, number_type}
+            type(_type),
+            n{_number, number_type}
         {
         }
 
-        css_token(css_token_type type, const std::string& str) :
+        css_token(css_token_type _type, const std::string& str) :
             m_str(str),
-            type(type),
+            type(_type),
             n()
         {
         }

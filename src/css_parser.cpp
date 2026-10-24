@@ -143,7 +143,6 @@ namespace litehtml
     }
 
     // https://www.w3.org/TR/css-syntax-3/#normalize-into-a-token-stream
-    template <>
     css_token_vector normalize(css_token_vector input, int options, const keep_whitespace_fn& keep_whitespace)
     {
         if(options & f_componentize)
@@ -156,7 +155,7 @@ namespace litehtml
         }
         return input;
     }
-    template <> css_token_vector normalize(std::string input, int options, const keep_whitespace_fn& keep_whitespace)
+    css_token_vector normalize(std::string input, int options, const keep_whitespace_fn& keep_whitespace)
     {
         filter_code_points(input);
         auto tokens = tokenize(input);

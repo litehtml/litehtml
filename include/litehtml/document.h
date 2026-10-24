@@ -72,7 +72,8 @@ namespace litehtml
         std::string                             m_lang;
         std::string                             m_culture;
         std::string                             m_text;
-        document_mode                           m_mode = no_quirks_mode;
+        document_mode                           m_mode      = no_quirks_mode;
+        bool                                    m_finalized = false;
 
       public:
         document(document_container* objContainer);
@@ -132,6 +133,16 @@ namespace litehtml
         static document::ptr createFromString(const estring& str, document_container* container,
                                               const std::string& master_styles = litehtml::master_css,
                                               const std::string& user_styles   = {});
+
+        // The mode must be set before any element is created, because it is used in html_tag::set_attr.
+        void set_document_mode(document_mode mode);
+        // Finish a document whose element tree was built by the caller with create_element() and
+        // element::appendChild() instead of being parsed from an HTML string. Runs the same
+        // finalization sequence createFromString() runs after parsing. A document is finalized
+        // once, when its tree is complete; any further call does nothing.
+        void finalize_from_external_root(const std::shared_ptr<element>& root,
+                                         const std::string&              master_styles = litehtml::master_css,
+                                         const std::string&              user_styles   = {});
 
       private:
         uint_ptr add_font(const font_description& descr, font_metrics* fm);

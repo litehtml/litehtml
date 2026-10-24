@@ -71,11 +71,11 @@ namespace litehtml
         litehtml::encoding   encoding;
         litehtml::confidence confidence;
 
-        estring(const std::string& str, litehtml::encoding encoding = encoding::null,
-                litehtml::confidence confidence = confidence::certain) :
+        estring(const std::string& str, litehtml::encoding _encoding = encoding::null,
+                litehtml::confidence _confidence = confidence::certain) :
             std::string(str),
-            encoding(encoding),
-            confidence(confidence)
+            encoding(_encoding),
+            confidence(_confidence)
         {
         }
 

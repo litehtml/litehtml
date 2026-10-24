@@ -32,6 +32,37 @@ static const unsigned char kGumboTagSizes[] = {
     0,  // TAG_LAST
 };
 
+bool gumbo_tag_is_void(GumboTag tag) {
+  // https://html.spec.whatwg.org/multipage/syntax.html#void-elements
+  switch (tag) {
+    case GUMBO_TAG_AREA:
+    case GUMBO_TAG_BASE:
+    case GUMBO_TAG_BR:
+    case GUMBO_TAG_COL:
+    case GUMBO_TAG_EMBED:
+    case GUMBO_TAG_HR:
+    case GUMBO_TAG_IMG:
+    case GUMBO_TAG_INPUT:
+    case GUMBO_TAG_LINK:
+    case GUMBO_TAG_META:
+    case GUMBO_TAG_SOURCE:
+    case GUMBO_TAG_TRACK:
+    case GUMBO_TAG_WBR:
+
+    // These tags are not listed in the spec as "void" because they are
+    // deprecated, but they are kept here for compatibility purposes.
+    case GUMBO_TAG_BASEFONT:
+    case GUMBO_TAG_BGSOUND:
+    case GUMBO_TAG_FRAME:
+    case GUMBO_TAG_KEYGEN:
+    case GUMBO_TAG_PARAM:
+      return true;
+
+    default:
+      return false;
+  }
+}
+
 const char* gumbo_normalized_tagname(GumboTag tag) {
   assert(tag <= GUMBO_TAG_LAST);
   return kGumboTagNames[tag];

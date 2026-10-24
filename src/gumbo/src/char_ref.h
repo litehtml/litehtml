@@ -22,6 +22,7 @@
 #define GUMBO_CHAR_REF_H_
 
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -52,6 +53,15 @@ typedef struct {
 bool consume_char_ref(struct GumboInternalParser* parser,
     struct GumboInternalUtf8Iterator* input, int additional_allowed_char,
     bool is_in_attribute, OneOrTwoCodepoints* output);
+
+struct GumboNamedCharRef {
+  int name;
+  int first;
+  int second;
+};
+
+const struct GumboNamedCharRef* gumbo_named_char_ref_find(
+    const char* str, size_t len);
 
 #ifdef __cplusplus
 }

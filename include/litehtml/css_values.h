@@ -31,9 +31,9 @@ namespace litehtml
         std::size_t             size = 0;
 
         template <std::size_t N>
-        css_values(const std::array<std::string_view, N>& data) :
-            data(data.data()),
-            size(data.size())
+        css_values(const std::array<std::string_view, N>& _data) :
+            data(_data.data()),
+            size(_data.size())
         {
         }
 
@@ -45,7 +45,7 @@ namespace litehtml
             {
                 if(data[i] == str)
                 {
-                    return i;
+                    return static_cast<int>(i);
                 }
             }
             return std::nullopt;

@@ -170,7 +170,9 @@ if (MSVC)
 	# warning level 4
 	add_compile_options(/W4)
 	add_compile_options(/permissive- /utf-8)
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/EHsc>)
 else()
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fexceptions>)
 	# additional warnings
 	add_compile_options(-Wall
 	                    -Wextra
@@ -229,7 +231,7 @@ else ()
 	ExternalProject_Add(
 			litehtml-tests
 			GIT_REPOSITORY      https://github.com/litehtml/litehtml-tests.git
-			GIT_TAG             2bb4d22d7d2a0916e4ec69e30d71b39bfe3b7b8a
+			GIT_TAG             e75a366e92a65d4bb2938525c05b8ba0defe7353
 			SOURCE_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-src"
 			BINARY_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-build"
 			CMAKE_ARGS          -DLITEHTML_PATH=${CMAKE_CURRENT_SOURCE_DIR}

@@ -457,6 +457,10 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t
     pos.y        += y;
     for(auto& caption : m_grid->captions())
     {
+        if(!caption->is_visible())
+        {
+            continue;
+        }
         if(flag == draw_block)
         {
             caption->src_el()->draw(hdc, pos.x, pos.y, clip, caption);
@@ -465,14 +469,15 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t
     }
     for(int row = 0; row < m_grid->rows_count(); row++)
     {
-        if(flag == draw_block)
+        const bool row_visible = m_grid->row(row).el_row->is_visible();
+        if(row_visible && flag == draw_block)
         {
             m_grid->row(row).el_row->src_el()->draw_background(hdc, pos.x, pos.y, clip, m_grid->row(row).el_row);
         }
         for(int col = 0; col < m_grid->cols_count(); col++)
         {
             table_cell* cell = m_grid->cell(col, row);
-            if(cell->el)
+            if(cell->el && row_visible && cell->el->is_visible())
             {
                 if(flag == draw_block)
                 {

@@ -7,6 +7,129 @@
 namespace litehtml
 {
 
+    // ( <declaration> )  https://drafts.csswg.org/css-conditional-3/#typedef-supports-decl
+    static bool eval_supports_declaration(const css_token_vector& tokens, document_container* container)
+    {
+        // a <supports-decl> holds exactly one declaration
+        for(const auto& token : tokens)
+        {
+            if(token.ch == ';')
+            {
+                return false;
+            }
+        }
+        // the declaration is supported if litehtml was able to parse it
+        style st;
+        st.add(tokens, "", container);
+        return !st.empty();
+    }
+
+    // These return false when the syntax is invalid, which is not the same as a condition that is
+    // false: an @supports rule with an invalid condition is invalid and its block is never applied.
+    static bool parse_supports_condition(const css_token_vector& tokens, int& index, bool& result,
+                                         document_container* container);
+
+    // <supports-in-parens> = ( <supports-condition> ) | <supports-feature> | <general-enclosed>
+    static bool parse_supports_in_parens(const css_token& token, bool& result, document_container* container)
+    {
+        // <general-enclosed> = <function-token> <any-value>? )
+        // Any such function is unsupported, so it evaluates to false.
+        if(token.type == CV_FUNCTION)
+        {
+            result = false;
+            return true;
+        }
+        // everything but a block is not a <supports-in-parens> at all
+        if(token.type != ROUND_BLOCK)
+        {
+            return false;
+        }
+
+        // ( <supports-condition> )
+        int  index = 0;
+        bool value = false;
+        if(parse_supports_condition(token.value, index, value, container))
+        {
+            skip_whitespace(token.value, index);
+            if(index == static_cast<int>(token.value.size()))
+            {
+                result = value;
+                return true;
+            }
+        }
+        // ( <declaration> ), or <general-enclosed> = ( <any-value>? ) which evaluates to false
+        result = eval_supports_declaration(token.value, container);
+        return true;
+    }
+
+    // https://drafts.csswg.org/css-conditional-3/#typedef-supports-condition
+    // <supports-condition> = not <supports-in-parens>
+    //                      | <supports-in-parens> [ and <supports-in-parens> ]*
+    //                      | <supports-in-parens> [ or <supports-in-parens> ]*
+    static bool parse_supports_condition(const css_token_vector& tokens, int& index, bool& result,
+                                         document_container* container)
+    {
+        auto parse_operand = [&](bool& value) {
+            skip_whitespace(tokens, index);
+            if(!parse_supports_in_parens(at(tokens, index), value, container))
+            {
+                return false;
+            }
+            index++;
+            return true;
+        };
+        auto next_ident = [&]() {
+            skip_whitespace(tokens, index);
+            return lowcase(at(tokens, index).ident());
+        };
+
+        if(next_ident() == "not")
+        {
+            index++;
+            if(!parse_operand(result))
+            {
+                return false;
+            }
+            result = !result;
+            return true;
+        }
+
+        if(!parse_operand(result))
+        {
+            return false;
+        }
+
+        std::string op = next_ident();
+        if(op != "and" && op != "or")
+        {
+            return true; // a single <supports-in-parens>, the caller checks what follows it
+        }
+        // mixing `and` and `or` without parentheses is invalid, so the operator cannot change
+        while(next_ident() == op)
+        {
+            index++;
+            bool operand = false;
+            if(!parse_operand(operand))
+            {
+                return false;
+            }
+            result = op == "and" ? result && operand : result || operand;
+        }
+        return true;
+    }
+
+    static bool eval_supports_condition(const css_token_vector& tokens, document_container* container)
+    {
+        int  index  = 0;
+        bool result = false;
+        if(!parse_supports_condition(tokens, index, result, container))
+        {
+            return false;
+        }
+        skip_whitespace(tokens, index);
+        return index == static_cast<int>(tokens.size()) && result;
+    }
+
     // https://www.w3.org/TR/css-syntax-3/#parse-a-css-stylesheet
     template <class Input> // Input == string or css_token_vector
     void css::parse_css_stylesheet(const Input& input, const std::string& baseurl, const std::shared_ptr<document>& doc,
@@ -70,6 +193,39 @@ namespace litehtml
                     }
                     parse_css_stylesheet(rule->block.value, baseurl, doc, new_media, false);
                     import_allowed = false;
+                    break;
+                }
+
+            // https://drafts.csswg.org/css-conditional-3/#at-supports
+            // @supports <supports-condition> { <stylesheet> }
+            case _supports_:
+                {
+                    if(rule->block.type != CURLY_BLOCK)
+                    {
+                        break;
+                    }
+                    auto condition = normalize(rule->prelude, f_componentize);
+                    if(eval_supports_condition(condition, doc->container()))
+                    {
+                        parse_css_stylesheet(rule->block.value, baseurl, doc, media, false);
+                    }
+                    import_allowed = false;
+                    break;
+                }
+
+            // https://drafts.csswg.org/css-cascade-5/#at-layer
+            // @layer <layer-name># ;
+            // @layer <layer-name>? { <stylesheet> }
+            case _layer_:
+                {
+                    // Cascade layers are not implemented: a layer statement only declares layer order, so it
+                    // is ignored, and the rules of a layer block are used as if they were not layered.
+                    if(rule->block.type == CURLY_BLOCK)
+                    {
+                        parse_css_stylesheet(rule->block.value, baseurl, doc, media, false);
+                        import_allowed = false;
+                    }
+                    // a layer statement rule is allowed before @import and does not disallow it
                     break;
                 }
 

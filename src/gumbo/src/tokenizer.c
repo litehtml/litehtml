@@ -83,7 +83,7 @@ typedef struct GumboInternalTagState {
   const char* _original_text;
 
   // The current tag enum, computed once the tag name state has finished so that
-  // the buffer can be reused for building up attributes.
+  // the buffer can be re-used for building up attributes.
   GumboTag _tag;
 
   // The starting location of the text in the buffer.
@@ -275,6 +275,7 @@ static void tokenizer_add_parse_error(
       error->v.tokenizer.state = GUMBO_ERR_TOKENIZER_ATTR_VALUE;
       break;
     case GUMBO_LEX_BOGUS_COMMENT:
+    case GUMBO_LEX_PROCESSING_INSTRUCTION:
     case GUMBO_LEX_COMMENT_START:
     case GUMBO_LEX_COMMENT_START_DASH:
     case GUMBO_LEX_COMMENT:
@@ -409,7 +410,7 @@ static void reset_token_start_point(GumboTokenizerState* tokenizer) {
 
 // Sets the tag buffer original text and start point to the current iterator
 // position.  This is necessary because attribute names & values may have
-// whitespace preceding them, and so we can't assume that the actual token
+// whitespace preceeding them, and so we can't assume that the actual token
 // starting point was the end of the last tag buffer usage.
 static void reset_tag_buffer_start_point(GumboParser* parser) {
   GumboTokenizerState* tokenizer = parser->_tokenizer_state;
@@ -1000,6 +1001,87 @@ static StateResult handle_plaintext_state(GumboParser* parser,
   }
 }
 
+// Target must not be an ASCII case-insensitive match for "xml" or
+// "xml-stylesheet"; those parse as bogus comments instead, as per spec:
+//
+// > In HTML, "<?xml ...?>" and "<?xml-stylesheet ...?>" specifically
+// > are not parsed as processing instructions but instead treated as
+// > bogus comments. This is for compatibility with existing HTML
+// > content, where such syntax is relatively common.
+static bool pi_target_is_xml_reserved(const GumboStringBuffer* t) {
+  const GumboStringPiece target = {t->data, t->length};
+  return gumbo_string_equals_ignore_case(&target, &(GumboStringPiece){"xml", 3})
+      || gumbo_string_equals_ignore_case(&target, &(GumboStringPiece){"xml-stylesheet", 14});
+}
+
+// https://html.spec.whatwg.org/multipage/syntax.html#processing-instructions
+static StateResult handle_processing_instruction_state(GumboParser* parser,
+    GumboTokenizerState* tokenizer, int c, GumboToken* output) {
+  gumbo_tokenizer_set_state(parser, GUMBO_LEX_DATA);
+
+  GumboStringBuffer pi;
+  gumbo_string_buffer_init(parser, &pi);
+  while (is_alpha(c) || (c >= '0' && c <= '9') || c == '-' || c == '_') {
+    gumbo_string_buffer_append_codepoint(parser, c, &pi);
+    utf8iterator_next(&tokenizer->_input);
+    c = utf8iterator_current(&tokenizer->_input);
+  }
+
+  bool has_separator = get_char_token_type(false, c) == GUMBO_TOKEN_WHITESPACE || c == '?' || c == '>';
+  bool valid_target = pi.length > 0
+      && (is_alpha(pi.data[0]) || pi.data[0] == '_')
+      && !pi_target_is_xml_reserved(&pi);
+
+  if (c == -1 && (pi.length == 0 || (valid_target && !has_separator))) {
+    gumbo_string_buffer_destroy(parser, &pi);
+    return emit_eof(parser, output);
+  }
+
+  if (!valid_target || !has_separator) {
+    clear_temporary_buffer(parser);
+    append_char_to_temporary_buffer(parser, '?');
+    for (size_t i = 0; i < pi.length; ++i) {
+      append_char_to_temporary_buffer(parser, pi.data[i]);
+    }
+    gumbo_string_buffer_destroy(parser, &pi);
+    gumbo_tokenizer_set_state(parser, GUMBO_LEX_BOGUS_COMMENT);
+    tokenizer->_reconsume_current_input = true;
+    return NEXT_CHAR;
+  }
+
+  gumbo_string_buffer_append_codepoint(parser, ' ', &pi);
+  while (get_char_token_type(false, c) == GUMBO_TOKEN_WHITESPACE) {
+    utf8iterator_next(&tokenizer->_input);
+    c = utf8iterator_current(&tokenizer->_input);
+  }
+
+  while (c != '>') {
+    if (c == -1) {
+      gumbo_string_buffer_destroy(parser, &pi);
+      return emit_eof(parser, output);
+    }
+    if (c == '?') {
+      utf8iterator_next(&tokenizer->_input);
+      c = utf8iterator_current(&tokenizer->_input);
+      if (c != '>' && c != -1) {
+        gumbo_string_buffer_append_codepoint(parser, '?', &pi);
+      }
+      continue;
+    }
+    gumbo_string_buffer_append_codepoint(
+        parser, c == '\0' ? kUtf8ReplacementChar : c, &pi);
+    utf8iterator_next(&tokenizer->_input);
+    c = utf8iterator_current(&tokenizer->_input);
+  }
+
+  assert(c == '>');
+  output->type = GUMBO_TOKEN_PROCESSING_INSTRUCTION;
+  output->v.text = gumbo_string_buffer_to_string(parser, &pi);
+  gumbo_string_buffer_destroy(parser, &pi);
+  finish_token(parser, output);
+  return RETURN_SUCCESS;
+}
+
 // http://www.whatwg.org/specs/web-apps/current-work/complete5/tokenization.html#tag-open-state
 static StateResult handle_tag_open_state(GumboParser* parser,
     GumboTokenizerState* tokenizer, int c, GumboToken* output) {
@@ -1014,10 +1096,8 @@ static StateResult handle_tag_open_state(GumboParser* parser,
       append_char_to_temporary_buffer(parser, '/');
       return NEXT_CHAR;
     case '?':
-      gumbo_tokenizer_set_state(parser, GUMBO_LEX_BOGUS_COMMENT);
+      gumbo_tokenizer_set_state(parser, GUMBO_LEX_PROCESSING_INSTRUCTION);
       clear_temporary_buffer(parser);
-      append_char_to_temporary_buffer(parser, '?');
-      tokenizer_add_parse_error(parser, GUMBO_ERR_TAG_STARTS_WITH_QUESTION);
       return NEXT_CHAR;
     default:
       if (is_alpha(c)) {
@@ -2768,36 +2848,63 @@ static StateResult handle_cdata_state(GumboParser* parser,
 typedef StateResult (*GumboLexerStateFunction)(
     GumboParser*, GumboTokenizerState*, int, GumboToken*);
 
-static GumboLexerStateFunction dispatch_table[] = {handle_data_state,
-    handle_char_ref_in_data_state, handle_rcdata_state,
-    handle_char_ref_in_rcdata_state, handle_rawtext_state, handle_script_state,
-    handle_plaintext_state, handle_tag_open_state, handle_end_tag_open_state,
-    handle_tag_name_state, handle_rcdata_lt_state,
-    handle_rcdata_end_tag_open_state, handle_rcdata_end_tag_name_state,
-    handle_rawtext_lt_state, handle_rawtext_end_tag_open_state,
-    handle_rawtext_end_tag_name_state, handle_script_lt_state,
-    handle_script_end_tag_open_state, handle_script_end_tag_name_state,
-    handle_script_escaped_start_state, handle_script_escaped_start_dash_state,
-    handle_script_escaped_state, handle_script_escaped_dash_state,
-    handle_script_escaped_dash_dash_state, handle_script_escaped_lt_state,
+static GumboLexerStateFunction dispatch_table[] = {
+    handle_data_state,
+    handle_char_ref_in_data_state,
+    handle_rcdata_state,
+    handle_char_ref_in_rcdata_state,
+    handle_rawtext_state,
+    handle_script_state,
+    handle_plaintext_state,
+    handle_tag_open_state,
+    handle_end_tag_open_state,
+    handle_tag_name_state,
+    handle_rcdata_lt_state,
+    handle_rcdata_end_tag_open_state,
+    handle_rcdata_end_tag_name_state,
+    handle_rawtext_lt_state,
+    handle_rawtext_end_tag_open_state,
+    handle_rawtext_end_tag_name_state,
+    handle_script_lt_state,
+    handle_script_end_tag_open_state,
+    handle_script_end_tag_name_state,
+    handle_script_escaped_start_state,
+    handle_script_escaped_start_dash_state,
+    handle_script_escaped_state,
+    handle_script_escaped_dash_state,
+    handle_script_escaped_dash_dash_state,
+    handle_script_escaped_lt_state,
     handle_script_escaped_end_tag_open_state,
     handle_script_escaped_end_tag_name_state,
     handle_script_double_escaped_start_state,
-    handle_script_double_escaped_state, handle_script_double_escaped_dash_state,
+    handle_script_double_escaped_state,
+    handle_script_double_escaped_dash_state,
     handle_script_double_escaped_dash_dash_state,
     handle_script_double_escaped_lt_state,
-    handle_script_double_escaped_end_state, handle_before_attr_name_state,
-    handle_attr_name_state, handle_after_attr_name_state,
-    handle_before_attr_value_state, handle_attr_value_double_quoted_state,
-    handle_attr_value_single_quoted_state, handle_attr_value_unquoted_state,
-    handle_char_ref_in_attr_value_state, handle_after_attr_value_quoted_state,
-    handle_self_closing_start_tag_state, handle_bogus_comment_state,
-    handle_markup_declaration_state, handle_comment_start_state,
-    handle_comment_start_dash_state, handle_comment_state,
-    handle_comment_end_dash_state, handle_comment_end_state,
-    handle_comment_end_bang_state, handle_doctype_state,
-    handle_before_doctype_name_state, handle_doctype_name_state,
-    handle_after_doctype_name_state, handle_after_doctype_public_keyword_state,
+    handle_script_double_escaped_end_state,
+    handle_before_attr_name_state,
+    handle_attr_name_state,
+    handle_after_attr_name_state,
+    handle_before_attr_value_state,
+    handle_attr_value_double_quoted_state,
+    handle_attr_value_single_quoted_state,
+    handle_attr_value_unquoted_state,
+    handle_char_ref_in_attr_value_state,
+    handle_after_attr_value_quoted_state,
+    handle_self_closing_start_tag_state,
+    handle_bogus_comment_state,
+    handle_markup_declaration_state,
+    handle_comment_start_state,
+    handle_comment_start_dash_state,
+    handle_comment_state,
+    handle_comment_end_dash_state,
+    handle_comment_end_state,
+    handle_comment_end_bang_state,
+    handle_doctype_state,
+    handle_before_doctype_name_state,
+    handle_doctype_name_state,
+    handle_after_doctype_name_state,
+    handle_after_doctype_public_keyword_state,
     handle_before_doctype_public_id_state,
     handle_doctype_public_id_double_quoted_state,
     handle_doctype_public_id_single_quoted_state,
@@ -2807,8 +2914,11 @@ static GumboLexerStateFunction dispatch_table[] = {handle_data_state,
     handle_before_doctype_system_id_state,
     handle_doctype_system_id_double_quoted_state,
     handle_doctype_system_id_single_quoted_state,
-    handle_after_doctype_system_id_state, handle_bogus_doctype_state,
-    handle_cdata_state};
+    handle_after_doctype_system_id_state,
+    handle_bogus_doctype_state,
+    handle_cdata_state,
+    handle_processing_instruction_state,
+};
 
 bool gumbo_lex(GumboParser* parser, GumboToken* output) {
   // Because of the spec requirements that...
@@ -2890,6 +3000,7 @@ void gumbo_token_destroy(GumboParser* parser, GumboToken* token) {
           parser, (void*) token->v.start_tag.attributes.data);
       return;
     case GUMBO_TOKEN_COMMENT:
+    case GUMBO_TOKEN_PROCESSING_INSTRUCTION:
       gumbo_parser_deallocate(parser, (void*) token->v.text);
       return;
     default:

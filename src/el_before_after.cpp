@@ -216,5 +216,5 @@ std::string litehtml::el_before_after_base::convert_escape(const char* txt)
     char32_t u_str[2];
     u_str[0] = static_cast<char32_t>(strtol(txt, &str_end, 16));
     u_str[1] = 0;
-    return {litehtml_from_utf32(u_str)};
+    return litehtml_from_utf32(u_str).c_str();
 }

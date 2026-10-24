@@ -154,10 +154,10 @@ namespace litehtml
         int a = 0;
         int b = 0; // :nth-child(an+b of selector_list)
 
-        css_attribute_selector(attr_select_type type = select_class, const std::string& name = "") :
-            type(type),
+        css_attribute_selector(attr_select_type _type = select_class, const std::string& _name = "") :
+            type(_type),
             prefix(empty_id),
-            name(_id(name))
+            name(_id(_name))
         {
         }
 

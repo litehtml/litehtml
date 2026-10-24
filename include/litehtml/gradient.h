@@ -48,28 +48,28 @@ namespace litehtml
             std::optional<float>      angle;
 
             color_stop() = default;
-            color_stop(web_color color) :
-                color(color)
+            color_stop(web_color _color) :
+                color(_color)
             {
             }
-            color_stop(web_color color, css_length length) :
-                color(color),
-                length(length)
+            color_stop(web_color _color, css_length _length) :
+                color(_color),
+                length(_length)
             {
             }
-            color_stop(web_color color, float angle) :
-                color(color),
-                angle(angle)
+            color_stop(web_color _color, float _angle) :
+                color(_color),
+                angle(_angle)
             {
             }
-            color_stop(css_length length) :
+            color_stop(css_length _length) :
                 is_color_hint(true),
-                length(length)
+                length(_length)
             {
             }
-            color_stop(float angle) :
+            color_stop(float _angle) :
                 is_color_hint(true),
-                angle(angle)
+                angle(_angle)
             {
             }
         };

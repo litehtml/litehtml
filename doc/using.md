@@ -23,6 +23,40 @@ static document::ptr  document::createFromString(
 
 Please refer to the [document::createFromString](document_createFromString.md) document for more details.
 
+## Building the element tree yourself
+
+If your application already has its own HTML tree (for example one built by another parser, or a UI
+tree that is not HTML at all), you can build the litehtml element tree directly instead of serializing
+it back to an HTML string for **createFromString** to parse again:
+
+```cpp
+auto doc = std::make_shared<litehtml::document>(container);
+// must be done before any element is created
+doc->set_document_mode(litehtml::no_quirks_mode);
+
+auto html = doc->create_element("html", {});
+auto body = doc->create_element("body", {});
+html->appendChild(body);
+
+auto div = doc->create_element("div", {{"class", "hello"}});
+body->appendChild(div);
+container->split_text("Hello world",
+    [&](const char* word)  { div->appendChild(std::make_shared<litehtml::el_text>(word, doc)); },
+    [&](const char* space) { div->appendChild(std::make_shared<litehtml::el_space>(space, doc)); });
+
+doc->finalize_from_external_root(html);
+```
+
+**finalize_from_external_root** takes the same ```master_styles``` and ```user_styles``` arguments as
+**createFromString** and performs the same finalization: it applies the stylesheets, computes the
+styles and builds the render tree. After that the document is used exactly like a parsed one
+(```render```, ```draw```, and so on).
+
+A document is finalized once, when its tree is complete - just like a parsed document is built once.
+Finalization accumulates state (parsed stylesheets, media lists, tabular elements, the render tree
+and the used selectors of every element), so a second call would duplicate it and is ignored. Build
+a new document if you need to rebuild.
+
 **createFromString** returns the ```litehtml::document``` pointer. Call ```litehtml::document::render(max_width)``` to render HTML elements:
 ```cpp
 m_doc->render(max_width);

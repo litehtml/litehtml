@@ -74,82 +74,106 @@ namespace litehtml
         // Create litehtml::elements.
         elements_list root_elements;
         doc->create_node(output->root, root_elements, true, true);
+        element::ptr root;
         if(!root_elements.empty())
         {
-            doc->m_root = root_elements.back();
+            root = root_elements.back();
         }
 
         // Destroy GumboOutput
         gumbo_destroy_output(&kGumboDefaultOptions, output);
 
+        doc->finalize_from_external_root(root, master_styles, user_styles);
+
+        return doc;
+    }
+
+    void document::set_document_mode(document_mode mode)
+    {
+        m_mode = mode;
+    }
+
+    void document::finalize_from_external_root(const std::shared_ptr<element>& root, const std::string& master_styles,
+                                               const std::string& user_styles)
+    {
+        // Finalization accumulates state that is never rolled back: the parsed stylesheets, the media
+        // lists, the tabular elements, the render tree, and the used selectors of every element. A
+        // second run would duplicate all of it, so a document is finalized once, exactly like a parsed
+        // one. Build a new document to rebuild.
+        if(m_finalized)
+        {
+            return;
+        }
+        m_finalized = true;
+
+        m_root = root;
+
         if(master_styles != "")
         {
-            doc->m_master_css.parse_css_stylesheet(master_styles, "", doc);
-            doc->m_master_css.sort_selectors();
+            m_master_css.parse_css_stylesheet(master_styles, "", shared_from_this());
+            m_master_css.sort_selectors();
         }
         if(user_styles != "")
         {
-            doc->m_user_css.parse_css_stylesheet(user_styles, "", doc);
-            doc->m_user_css.sort_selectors();
+            m_user_css.parse_css_stylesheet(user_styles, "", shared_from_this());
+            m_user_css.sort_selectors();
         }
 
         // Let's process created elements tree
-        if(doc->m_root)
+        if(m_root)
         {
-            doc->container()->get_media_features(doc->m_media);
+            container()->get_media_features(m_media);
 
-            doc->m_root->set_pseudo_class(_root_, true);
+            m_root->set_pseudo_class(_root_, true);
 
             // apply master CSS
-            doc->m_root->apply_stylesheet(doc->m_master_css);
+            m_root->apply_stylesheet(m_master_css);
 
             // parse elements attributes
-            doc->m_root->parse_attributes();
+            m_root->parse_attributes();
 
             // parse style sheets linked in document
-            for(const auto& css : doc->m_css)
+            for(const auto& css : m_css)
             {
                 media_query_list_list::ptr media;
                 if(css.media != "")
                 {
-                    auto mq_list = parse_media_query_list(css.media, doc);
+                    auto mq_list = parse_media_query_list(css.media, shared_from_this());
                     media        = std::make_shared<media_query_list_list>();
                     media->add(mq_list);
                 }
-                doc->m_styles.parse_css_stylesheet(css.text, css.baseurl, doc, media);
+                m_styles.parse_css_stylesheet(css.text, css.baseurl, shared_from_this(), media);
             }
             // Sort css selectors using CSS rules.
-            doc->m_styles.sort_selectors();
+            m_styles.sort_selectors();
 
             // Apply media features.
-            doc->update_media_lists(doc->m_media);
+            update_media_lists(m_media);
 
             // Apply parsed styles.
-            doc->m_root->apply_stylesheet(doc->m_styles);
+            m_root->apply_stylesheet(m_styles);
 
             // Apply user styles if any
-            doc->m_root->apply_stylesheet(doc->m_user_css);
+            m_root->apply_stylesheet(m_user_css);
 
             // Initialize element::m_css
-            doc->m_root->compute_styles();
+            m_root->compute_styles();
 
             // Create rendering tree
-            doc->m_root_render = doc->m_root->create_render_item(nullptr);
+            m_root_render = m_root->create_render_item(nullptr);
 
             // Now the m_tabular_elements is filled with tabular elements.
             // We have to check the tabular elements for missing table elements
             // and create the anonymous boxes in visual table layout
-            doc->fix_tables_layout();
+            fix_tables_layout();
 
             // Finally initialize elements
             // init() returns pointer to the render_init element because it can change its type
-            if(doc->m_root_render)
+            if(m_root_render)
             {
-                doc->m_root_render = doc->m_root_render->init();
+                m_root_render = m_root_render->init();
             }
         }
-
-        return doc;
     }
 
     // https://html.spec.whatwg.org/multipage/parsing.html#change-the-encoding
