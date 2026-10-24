@@ -1128,17 +1128,35 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
             // below the clip the remaining ones are below too and the
             // pass can stop. Fixed elements ignore the accumulated
             // position, so they are never pruned this way.
+            //
+            // The stored bounds are in document space, but the clip is in
+            // the caller's draw space: scrolled views draw the document
+            // at a negative origin with a positive clip, and scrolled
+            // containers shift their children on top of that. Compare in
+            // draw space instead: the subtree top is the child's actual
+            // draw position (pos.y already carries the accumulated origin
+            // and scroll offsets), and the stored top/bottom pair yields
+            // the subtree height, which the shift does not change.
+            // Children of tables and of clipped containers share the
+            // container's bounds; combined with the child's own draw top
+            // the interval can only overstate their extent, so they are
+            // never pruned when visible.
             if(clip)
             {
                 bool fixed_el = el->src_el()->css().get_position() == element_position_fixed;
-                if(!fixed_el && el->subtree_bottom_abs() < clip->top())
+                if(!fixed_el)
                 {
-                    continue;
-                }
-                if((flag == draw_block || flag == draw_inlines || flag == draw_floats) && !fixed_el &&
-                   el->abs_top() > clip->bottom())
-                {
-                    break;
+                    pixel_t subtree_top    = pos.y + el->m_pos.top();
+                    pixel_t subtree_bottom = subtree_top + el->subtree_bottom_abs() - el->abs_top();
+                    if(subtree_bottom < clip->top())
+                    {
+                        continue;
+                    }
+                    if((flag == draw_block || flag == draw_inlines || flag == draw_floats) &&
+                       subtree_top > clip->bottom())
+                    {
+                        break;
+                    }
                 }
             }
             bool process = true;
