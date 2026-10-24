@@ -1,4 +1,5 @@
 #include "render_inline_context.h"
+#include "css_values.h"
 #include "document.h"
 #include "iterators.h"
 #include "types.h"
@@ -465,7 +466,8 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
                     line_max_width += el->get_intrinsic_max_size().width;
                     line_height     = std::max(line_height, el->get_intrinsic_min_size().height);
 
-                    if(el->src_el()->is_break())
+                    if(el->src_el()->is_break() ||
+                       (el->src_el()->is_float() && el->src_el()->css().get_clear() != clear_none))
                     {
                         m_intrinsic_max_size.width  = std::max(m_intrinsic_max_size.width, line_max_width);
                         m_intrinsic_min_size.height = std::max(m_intrinsic_min_size.height, line_height);
