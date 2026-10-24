@@ -395,9 +395,6 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
             {
                 stretch_full_width   = true;
                 stretch_render_width = full_width;
-            } else
-            {
-                el->render(0_px, 0_px, self_size.new_width(render_width, size_mode), fmt_ctx, false);
             }
         }
     }
@@ -541,6 +538,12 @@ void litehtml::flex_item_column_direction::align_stretch(flex_line& ln, const co
 {
     /// MAIN:  Y
     /// CROSS: X
+    // Already rendered at the final size by the line or apply_main_size.
+    if(el->width() == ln.cross_size && el->height() == main_size)
+    {
+        set_cross_position(ln.cross_start);
+        return;
+    }
     if(!el->css().get_width().is_predefined())
     {
         el->render(ln.cross_start, el->pos().y - el->content_offset_top(),
