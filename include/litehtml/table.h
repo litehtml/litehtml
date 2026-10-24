@@ -260,7 +260,8 @@ namespace litehtml
         void    distribute_min_width(pixel_t width, int start, int end);
         void    distribute_width(pixel_t width, int start, int end);
         void    distribute_width(pixel_t width, int start, int end, table_column_accessor* acc);
-        pixel_t calc_table_width(pixel_t block_width, bool is_auto, pixel_t& min_table_width, pixel_t& max_table_width);
+        pixel_t calc_table_width(pixel_t block_width, bool is_auto, pixel_t& min_table_width, pixel_t& max_table_width,
+                                 bool scale_specified = false);
         void    calc_horizontal_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_x);
         void    calc_vertical_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_y);
         void    calc_rows_height(pixel_t blockHeight, pixel_t borderSpacingY);
