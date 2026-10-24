@@ -262,6 +262,11 @@ namespace html2png
         width  = cfg.get_int("width", doc->width() > 0_px ? doc->width() : 1_px);
         height = cfg.get_int("height", doc->height() > 0_px ? doc->height() : 1_px);
 
+        // Draw the document at an offset (drawx/drawy config keys), the way a
+        // scrolled view renders it: negative coordinates with a positive clip.
+        int draw_x = cfg.get_int("drawx", 0);
+        int draw_y = cfg.get_int("drawy", 0);
+
         auto* surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
         if(surface)
         {
@@ -276,7 +281,7 @@ namespace html2png
 
             // Draw document
             litehtml::position clip(0, 0, width, height);
-            doc->draw(reinterpret_cast<litehtml::uint_ptr>(cr), 0, 0, &clip);
+            doc->draw(reinterpret_cast<litehtml::uint_ptr>(cr), draw_x, draw_y, &clip);
 
             cairo_surface_flush(surface);
             cairo_destroy(cr);
