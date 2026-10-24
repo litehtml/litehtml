@@ -249,7 +249,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
                 // remove trailing empty inline_start markers
                 // these markers will be added at the beginning of the next line box
                 m_width -= m_items.back()->width();
-                ret_items.emplace_back(std::move(m_items.back()));
+                ret_items.emplace_front(std::move(m_items.back()));
                 m_items.pop_back();
             } else
             {
