@@ -180,7 +180,7 @@ const std::string& get_html_source() const;
 Returns source code of the page.
 
 ```c++
-void open(const litehtml::string& url, const litehtml::string& hash);
+void open(const std::string& url, const std::string& hash);
 ```
 Open url.
 * **url** - page url

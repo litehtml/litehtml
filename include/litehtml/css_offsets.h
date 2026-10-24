@@ -1,37 +1,23 @@
-#ifndef LH_CSS_OFFSETS_H
-#define LH_CSS_OFFSETS_H
+#ifndef LITEHTML_CSS_OFFSETS_H
+#define LITEHTML_CSS_OFFSETS_H
 
 #include "css_length.h"
 
 namespace litehtml
 {
-	struct css_offsets
-	{
-		css_length	left;
-		css_length	top;
-		css_length	right;
-		css_length	bottom;
+    struct css_offsets
+    {
+        css_length left;
+        css_length top;
+        css_length right;
+        css_length bottom;
 
-		css_offsets() = default;
+        std::string to_string() const
+        {
+            return "left: " + left.to_string() + ", top: " + top.to_string() + ", right: " + right.to_string() +
+                   ", bottom: " + bottom.to_string();
+        }
+    };
+} // namespace litehtml
 
-		css_offsets(const css_offsets& val)
-		{
-			left	= val.left;
-			top		= val.top;
-			right	= val.right;
-			bottom	= val.bottom;
-		}
-
-		css_offsets& operator=(const css_offsets& val) = default;
-
-		string to_string() const
-		{
-			return	"left: " + left.to_string() +
-					", top: " + top.to_string() +
-					", right: " + right.to_string() +
-					", bottom: " + bottom.to_string();
-		}
-	};
-}
-
-#endif  // LH_CSS_OFFSETS_H
+#endif // LITEHTML_CSS_OFFSETS_H

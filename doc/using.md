@@ -23,6 +23,40 @@ static document::ptr  document::createFromString(
 
 Please refer to the [document::createFromString](document_createFromString.md) document for more details.
 
+## Building the element tree yourself
+
+If your application already has its own HTML tree (for example one built by another parser, or a UI
+tree that is not HTML at all), you can build the litehtml element tree directly instead of serializing
+it back to an HTML string for **createFromString** to parse again:
+
+```cpp
+auto doc = std::make_shared<litehtml::document>(container);
+// must be done before any element is created
+doc->set_document_mode(litehtml::no_quirks_mode);
+
+auto html = doc->create_element("html", {});
+auto body = doc->create_element("body", {});
+html->appendChild(body);
+
+auto div = doc->create_element("div", {{"class", "hello"}});
+body->appendChild(div);
+container->split_text("Hello world",
+    [&](const char* word)  { div->appendChild(std::make_shared<litehtml::el_text>(word, doc)); },
+    [&](const char* space) { div->appendChild(std::make_shared<litehtml::el_space>(space, doc)); });
+
+doc->finalize_from_external_root(html);
+```
+
+**finalize_from_external_root** takes the same ```master_styles``` and ```user_styles``` arguments as
+**createFromString** and performs the same finalization: it applies the stylesheets, computes the
+styles and builds the render tree. After that the document is used exactly like a parsed one
+(```render```, ```draw```, and so on).
+
+A document is finalized once, when its tree is complete - just like a parsed document is built once.
+Finalization accumulates state (parsed stylesheets, media lists, tabular elements, the render tree
+and the used selectors of every element), so a second call would duplicate it and is ignored. Build
+a new document if you need to rebuild.
+
 **createFromString** returns the ```litehtml::document``` pointer. Call ```litehtml::document::render(max_width)``` to render HTML elements:
 ```cpp
 m_doc->render(max_width);
@@ -102,14 +136,42 @@ Members:
 ## Handling the mouse
 If you want to handle the mouse you have call some functions from ```litehtml::document```:
 ```cpp
-bool litehtml::document::on_mouse_over( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
-bool litehtml::document::on_mouse_leave( position::vector& redraw_boxes );
-bool litehtml::document::on_lbutton_down( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
-bool litehtml::document::on_lbutton_up( pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, position::vector& redraw_boxes );
-bool on_mouse_leave(position::vector& redraw_boxes);
+bool litehtml::document::on_mouse_over( pixel_t x,
+                                        pixel_t y,
+                                        pixel_t client_x,
+                                        pixel_t client_y,
+                                        const std::function<void(const litehtml::position&)>& redraw_box );
+bool litehtml::document::on_mouse_leave( pixel_t x, 
+                                         pixel_t y,
+                                         pixel_t client_x,
+                                         pixel_t client_y,
+                                         const std::function<void(const litehtml::position&)>& redraw_box );
+bool litehtml::document::on_lbutton_down( pixel_t x, 
+                                         pixel_t y,
+                                         pixel_t client_x,
+                                         pixel_t client_y,
+                                         const std::function<void(const litehtml::position&)>& redraw_box );
+bool litehtml::document::on_lbutton_up( pixel_t x, 
+                                        pixel_t y,
+                                        pixel_t client_x,
+                                        pixel_t client_y,
+                                        const std::function<void(const litehtml::position&)>& redraw_box );
+bool litehtml::document::on_mouse_leave( pixel_t x, 
+                                         pixel_t y,
+                                         pixel_t client_x,
+                                         pixel_t client_y,
+                                         const std::function<void(const litehtml::position&)>& redraw_box );
 ```
-All functions returns the ```bool``` to indicate that you have to redraw the rectangles from *redraw_boxes* vector. Also note the ```x``` and ```y``` are relative to the HTML layout. So ```0,0``` is the top-left corner.
-The parameters ```client_x``` and ```client_y``` are the mouse position in the client area (draw area). These parameters are used to handle the elements with **fixed** position.
+
+All these functions accept the ```redraw_box``` function to be called when you need to redraw some part of the document.
+The parameter of the ```redraw_box``` is the rectangle that you need to redraw. Functions call ```redraw_box``` multiple
+times if you need to redraw several rectangles. Please note, you should queue the redraw of the rectangles and call the
+actual redraw after functions are called.
+
+All functions returns the ```bool``` to indicate that you have to redraw something. Also note the ```x``` and ```y```
+are relative to the HTML layout. So ```0,0``` is the top-left corner.
+The parameters ```client_x``` and ```client_y``` are the mouse position in the client area (draw area). These parameters
+are used to handle the elements with **fixed** position.
 
 ## Processing anchor click
 

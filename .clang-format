@@ -5,11 +5,12 @@ Language: Cpp
 BasedOnStyle: Microsoft
 Standard: c++17
 TabWidth: 4
-UseTab: Always
+UseTab: Never
 IndentWidth: 4
 PointerAlignment: Left
 SpaceAfterCStyleCast: true
 SpaceBeforeParens: false
+InsertBraces: true
 BraceWrapping:
   AfterCaseLabel: false
   AfterClass: true
@@ -55,6 +56,6 @@ BreakConstructorInitializers: AfterColon
 PackConstructorInitializers: Never
 AllowShortLambdasOnASingleLine: true
 AllowShortIfStatementsOnASingleLine: Never
-AllowShortFunctionsOnASingleLine: Inline
+AllowShortFunctionsOnASingleLine: Empty
 AlignArrayOfStructures: Left
-AllowShortBlocksOnASingleLine: true
+AllowShortBlocksOnASingleLine: Empty

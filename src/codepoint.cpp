@@ -31,52 +31,51 @@
 
 #include <cstdint>
 
-namespace {
-
-bool lookup(const uint32_t* table, char c)
+namespace
 {
-    return table[c >> 5] & (1 << (c & 0x1f));
-}
+
+    bool lookup(const uint32_t* table, char c)
+    {
+        return table[c >> 5] & (1 << (c & 0x1f));
+    }
 
 } // namespace
 
-namespace litehtml {
-
-bool is_ascii_codepoint(char c)
+namespace litehtml
 {
-    return ((unsigned char) c < 128);
-}
 
-// https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
-bool is_url_reserved_codepoint(char c)
-{
-    static const uint32_t reserved_lookup[] = {
-        0x00000000,
-        0xac009fda,
-        0x28000001,
-        0x00000000
-    };
-
-    if (!is_ascii_codepoint(c)) {
-        return false;
+    bool is_ascii_codepoint(char c)
+    {
+        return (static_cast<unsigned char>(c) < 128);
     }
-    return lookup(reserved_lookup, c);
-}
 
-// https://datatracker.ietf.org/doc/html/rfc3986#section-3.1
-bool is_url_scheme_codepoint(char c)
-{
-    static const uint32_t scheme_lookup[] = {
-        0x00000000,
-        0x03ff6800,
-        0x07fffffe,
-        0x07fffffe,
-    };
+    // https://datatracker.ietf.org/doc/html/rfc3986#section-2.2
+    bool is_url_reserved_codepoint(char c)
+    {
+        static const uint32_t reserved_lookup[] = {0x00000000, 0xac009fda, 0x28000001, 0x00000000};
 
-    if (!is_ascii_codepoint(c)) {
-        return false;
+        if(!is_ascii_codepoint(c))
+        {
+            return false;
+        }
+        return lookup(reserved_lookup, c);
     }
-    return lookup(scheme_lookup, c);
-}
+
+    // https://datatracker.ietf.org/doc/html/rfc3986#section-3.1
+    bool is_url_scheme_codepoint(char c)
+    {
+        static const uint32_t scheme_lookup[] = {
+            0x00000000,
+            0x03ff6800,
+            0x07fffffe,
+            0x07fffffe,
+        };
+
+        if(!is_ascii_codepoint(c))
+        {
+            return false;
+        }
+        return lookup(scheme_lookup, c);
+    }
 
 } // namespace litehtml

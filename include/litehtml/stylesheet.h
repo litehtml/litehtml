@@ -1,5 +1,7 @@
-#ifndef LH_STYLESHEET_H
-#define LH_STYLESHEET_H
+#ifndef LITEHTML_STYLESHEET_H
+#define LITEHTML_STYLESHEET_H
+
+#include <utility>
 
 #include "css_selector.h"
 #include "css_tokenizer.h"
@@ -7,67 +9,85 @@
 namespace litehtml
 {
 
-// https://www.w3.org/TR/cssom-1/#css-declarations
-struct raw_declaration
-{
-	using vector = std::vector<raw_declaration>;
+    // https://www.w3.org/TR/cssom-1/#css-declarations
+    struct raw_declaration
+    {
+        using vector = std::vector<raw_declaration>;
 
-	string name; // property name
-	css_token_vector value = {}; // default value is specified here to get rid of gcc warning "missing initializer for member"
-	bool important = false;
+        // property name
+        std::string name;
+        // default value is specified here to get rid of gcc warning "missing initializer for member"
+        css_token_vector value;
 
-	operator bool() const { return name != ""; }
-};
+        bool important = false;
 
-// intermediate half-parsed rule that is used internally by the parser
-class raw_rule
-{
-public:
-	using ptr = shared_ptr<raw_rule>;
-	using vector = std::vector<ptr>;
+        operator bool() const
+        {
+            return name != "";
+        }
+    };
 
-	enum rule_type { qualified, at };
+    // intermediate half-parsed rule that is used internally by the parser
+    class raw_rule
+    {
+      public:
+        using ptr    = std::shared_ptr<raw_rule>;
+        using vector = std::vector<ptr>;
 
-	raw_rule(rule_type type, string name = "") : type(type), name(name) {}
+        enum rule_type
+        {
+            qualified,
+            at
+        };
 
-	rule_type type;
-	// An at-rule has a name, a prelude consisting of a list of component values, and an optional block consisting of a simple {} block.
-	string name;
-	// https://www.w3.org/TR/css-syntax-3/#qualified-rule
-	// A qualified rule has a prelude consisting of a list of component values, and a block consisting of a simple {} block.
-	// Note: Most qualified rules will be style rules, where the prelude is a selector and the block a list of declarations.
-	css_token_vector prelude;
-	css_token block;
-};
+        raw_rule(rule_type _type, std::string _name = {}) :
+            type(_type),
+            name(std::move(_name))
+        {
+        }
 
-class css
-{
-	css_selector::vector	m_selectors;
-public:
+        rule_type type;
+        // An at-rule has a name, a prelude consisting of a list of component values, and an optional block consisting
+        // of a simple {} block.
+        std::string name;
+        // https://www.w3.org/TR/css-syntax-3/#qualified-rule
+        // A qualified rule has a prelude consisting of a list of component values, and a block consisting of a simple
+        // {} block. Note: Most qualified rules will be style rules, where the prelude is a selector and the block a
+        // list of declarations.
+        css_token_vector prelude;
+        css_token        block;
+    };
 
-	const css_selector::vector& selectors() const
-	{
-		return m_selectors;
-	}
+    class css
+    {
+        css_selector::vector m_selectors;
 
-	template<class Input>
-	void	parse_css_stylesheet(const Input& input, string baseurl, shared_ptr<document> doc, media_query_list_list::ptr media = nullptr, bool top_level = true);
+      public:
+        const css_selector::vector& selectors() const
+        {
+            return m_selectors;
+        }
 
-	void	sort_selectors();
+        template <class Input>
+        void parse_css_stylesheet(const Input& input, const std::string& baseurl, const std::shared_ptr<document>& doc,
+                                  const media_query_list_list::ptr& media = nullptr, bool top_level = true);
 
-private:
-	bool	parse_style_rule(raw_rule::ptr rule, string baseurl, shared_ptr<document> doc, media_query_list_list::ptr media);
-	void	parse_import_rule(raw_rule::ptr rule, string baseurl, shared_ptr<document> doc, media_query_list_list::ptr media);
-	void	add_selector(const css_selector::ptr& selector);
-};
+        void sort_selectors();
 
-inline void css::add_selector(const css_selector::ptr& selector)
-{
-	selector->m_order = (int)m_selectors.size();
-	m_selectors.push_back(selector);
-}
+      private:
+        bool parse_style_rule(const raw_rule::ptr& rule, const std::string& baseurl,
+                              const std::shared_ptr<document>& doc, const media_query_list_list::ptr& media);
+        void parse_import_rule(const raw_rule::ptr& rule, const std::string& baseurl,
+                               const std::shared_ptr<document>& doc, const media_query_list_list::ptr& media);
+        void add_selector(const css_selector::ptr& selector);
+    };
 
+    inline void css::add_selector(const css_selector::ptr& selector)
+    {
+        selector->m_order = static_cast<int>(m_selectors.size());
+        m_selectors.push_back(selector);
+    }
 
 } // namespace litehtml
 
-#endif  // LH_STYLESHEET_H
+#endif // LITEHTML_STYLESHEET_H

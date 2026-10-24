@@ -31,6 +31,9 @@ struct GumboInternalParser;
 void gumbo_vector_init(struct GumboInternalParser* parser,
     size_t initial_capacity, GumboVector* vector);
 
+void gumbo_vector_clear(
+    struct GumboInternalParser* parser, GumboVector* vector);
+
 // Frees the memory used by an GumboVector.  Does not free the contained
 // pointers.
 void gumbo_vector_destroy(

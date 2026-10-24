@@ -1,6 +1,8 @@
-#ifndef LH_MASTER_CSS_H
-#define LH_MASTER_CSS_H
-namespace litehtml{ const char* const master_css = R"##(
+#ifndef LITEHTML_MASTER_CSS_H
+#define LITEHTML_MASTER_CSS_H
+namespace litehtml
+{
+    const char* const master_css = R"##(
 
 
 html {
@@ -32,23 +34,23 @@ script {
 }
 
 body {
-	display:block; 
-	margin:8px; 
+	display:block;
+	margin:8px;
 }
 
 p {
-	display:block; 
-	margin-top:1em; 
+	display:block;
+	margin-top:1em;
 	margin-bottom:1em;
 }
 
 b, strong {
-	display:inline; 
+	display:inline;
 	font-weight:bold;
 }
 
 i, em, cite {
-	display:inline; 
+	display:inline;
 	font-style:italic;
 }
 
@@ -60,7 +62,7 @@ del, s, strike {
 	text-decoration:line-through
 }
 
-center 
+center
 {
 	text-align:center;
 	display:block;
@@ -78,45 +80,45 @@ h1, h2, h3, h4, h5, h6, div {
 }
 
 h1 {
-	font-weight:bold; 
-	margin-top:0.67em; 
-	margin-bottom:0.67em; 
+	font-weight:bold;
+	margin-top:0.67em;
+	margin-bottom:0.67em;
 	font-size: 2em;
 }
 
 h2 {
-	font-weight:bold; 
-	margin-top:0.83em; 
-	margin-bottom:0.83em; 
+	font-weight:bold;
+	margin-top:0.83em;
+	margin-bottom:0.83em;
 	font-size: 1.5em;
 }
 
 h3 {
-	font-weight:bold; 
-	margin-top:1em; 
-	margin-bottom:1em; 
+	font-weight:bold;
+	margin-top:1em;
+	margin-bottom:1em;
 	font-size:1.17em;
 }
 
 h4 {
-	font-weight:bold; 
-	margin-top:1.33em; 
+	font-weight:bold;
+	margin-top:1.33em;
 	margin-bottom:1.33em
 }
 
 h5 {
-	font-weight:bold; 
-	margin-top:1.67em; 
+	font-weight:bold;
+	margin-top:1.67em;
 	margin-bottom:1.67em;
 	font-size:.83em;
 }
 
 h6 {
-	font-weight:bold; 
-	margin-top:2.33em; 
+	font-weight:bold;
+	margin-top:2.33em;
 	margin-bottom:2.33em;
 	font-size:.67em;
-} 
+}
 
 br {
 	display:inline-block;
@@ -344,7 +346,7 @@ input[type="hidden"] {
 }
 
 
-article, aside, footer, header, hgroup, nav, section 
+article, aside, footer, header, hgroup, nav, section
 {
 	display: block;
 }
@@ -371,5 +373,6 @@ figcaption {
 	display: block;
 }
 
-)##"; }
-#endif  // LH_MASTER_CSS_H
+)##";
+}
+#endif // LITEHTML_MASTER_CSS_H

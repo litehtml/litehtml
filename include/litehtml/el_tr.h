@@ -1,17 +1,17 @@
-#ifndef LH_EL_TR_H
-#define LH_EL_TR_H
+#ifndef LITEHTML_EL_TR_H
+#define LITEHTML_EL_TR_H
 
 #include "html_tag.h"
 
 namespace litehtml
 {
-	class el_tr : public html_tag
-	{
-	public:
-		explicit el_tr(const std::shared_ptr<litehtml::document>& doc);
+    class el_tr : public html_tag
+    {
+      public:
+        explicit el_tr(const std::shared_ptr<litehtml::document>& doc);
 
-		void parse_attributes() override;
-	};
-}
+        void parse_attributes() override;
+    };
+} // namespace litehtml
 
-#endif  // LH_EL_TR_H
+#endif // LITEHTML_EL_TR_H

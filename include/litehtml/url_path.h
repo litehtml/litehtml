@@ -27,23 +27,23 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef LITEHTML_URL_PATH_H__
-#define LITEHTML_URL_PATH_H__
+#ifndef LITEHTML_URL_PATH_H
+#define LITEHTML_URL_PATH_H
 
-#include "types.h"
+#include <string>
+namespace litehtml
+{
 
-namespace litehtml {
+    bool is_url_path_absolute(const std::string& path);
 
-bool is_url_path_absolute(const string& path);
+    std::string url_path_directory_name(const std::string& path);
 
-string url_path_directory_name(const string& path);
+    std::string url_path_base_name(const std::string& path);
 
-string url_path_base_name(const string& path);
+    std::string url_path_append(const std::string& base, const std::string& path);
 
-string url_path_append(const string& base, const string& path);
-
-string url_path_resolve(const string& base, const string& path);
+    std::string url_path_resolve(const std::string& base, const std::string& path);
 
 } // namespace litehtml
 
-#endif // LITEHTML_URL_PATH_H__
+#endif // LITEHTML_URL_PATH_H

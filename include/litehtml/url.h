@@ -27,114 +27,113 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef LITEHTML_URL_H__
-#define LITEHTML_URL_H__
+#ifndef LITEHTML_URL_H
+#define LITEHTML_URL_H
 
-#include "types.h"
+#include <string>
 
 // https://datatracker.ietf.org/doc/html/rfc3986
 
-namespace litehtml {
+namespace litehtml
+{
 
-class url {
-public:
-    url() = default;
-
-    explicit url(const string& str);
-
-    url(const string& scheme,
-        const string& authority,
-        const string& path,
-        const string& query,
-        const string& fragment);
-
-    const string& str() const
+    class url
     {
-        return str_;
-    }
+      public:
+        url() = default;
 
-    const string& scheme() const
-    {
-        return scheme_;
-    }
+        explicit url(const std::string& str);
 
-    bool has_scheme() const
-    {
-        return !scheme_.empty();
-    }
+        url(const std::string& scheme, const std::string& authority, const std::string& path, const std::string& query,
+            const std::string& fragment);
 
-    const string& authority() const
-    {
-        return authority_;
-    }
+        const std::string& str() const
+        {
+            return str_;
+        }
 
-    bool has_authority() const
-    {
-        return !authority_.empty();
-    }
+        const std::string& scheme() const
+        {
+            return scheme_;
+        }
 
-    const string& path() const
-    {
-        return path_;
-    }
+        bool has_scheme() const
+        {
+            return !scheme_.empty();
+        }
 
-    bool has_path() const
-    {
-        return !path_.empty();
-    }
+        const std::string& authority() const
+        {
+            return authority_;
+        }
 
-    const string& query() const
-    {
-        return query_;
-    }
+        bool has_authority() const
+        {
+            return !authority_.empty();
+        }
 
-    bool has_query() const
-    {
-        return !query_.empty();
-    }
+        const std::string& path() const
+        {
+            return path_;
+        }
 
-    const string& fragment() const
-    {
-        return fragment_;
-    }
+        bool has_path() const
+        {
+            return !path_.empty();
+        }
 
-    bool has_fragment() const
-    {
-        return !fragment_.empty();
-    }
+        const std::string& query() const
+        {
+            return query_;
+        }
 
-	static string encode(const string& str);
-	static string decode(const string& str);
+        bool has_query() const
+        {
+            return !query_.empty();
+        }
 
-protected:
-    string str_;
+        const std::string& fragment() const
+        {
+            return fragment_;
+        }
 
-    // Assume URLs are relative by default.  See RFC 3986 Section 4.3 for
-    // information on which URLs are considered relative and which URLs are
-    // considered absolute:
-    //
-    //   https://datatracker.ietf.org/doc/html/rfc3986#section-4.3
+        bool has_fragment() const
+        {
+            return !fragment_.empty();
+        }
 
-    bool absolute_ = false;
+        static std::string encode(const std::string& str);
+        static std::string decode(const std::string& str);
 
-    string scheme_;
+      protected:
+        std::string str_;
 
-    string authority_;
+        // Assume URLs are relative by default.  See RFC 3986 Section 4.3 for
+        // information on which URLs are considered relative and which URLs are
+        // considered absolute:
+        //
+        //   https://datatracker.ietf.org/doc/html/rfc3986#section-4.3
 
-    string path_;
+        bool absolute_ = false;
 
-    string query_;
+        std::string scheme_;
 
-    string fragment_;
-};
+        std::string authority_;
 
-// Returns a URL that is resolved from the reference URL that might be
-// relative to the base URL.  For example, given <https://www.twitter.com/> as
-// the base URL and </foo> as the relative URL, resolve() will return the URL
-// <https://www.twitter.com/foo>.
+        std::string path_;
 
-url resolve(const url& base, const url& reference);
+        std::string query_;
+
+        std::string fragment_;
+    };
+
+    // Returns a URL that is resolved from the reference URL that might be
+    // relative to the base URL.  For example, given <https://www.twitter.com/> as
+    // the base URL and </foo> as the relative URL, resolve() will return the URL
+    // <https://www.twitter.com/foo>.
+
+    url resolve(const url& base, const url& reference);
 
 } // namespace litehtml
 
-#endif // LITEHTML_URL_H__
+#endif // LITEHTML_URL_H

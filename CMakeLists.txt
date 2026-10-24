@@ -3,6 +3,9 @@ cmake_minimum_required(VERSION 3.11)
 project(litehtml LANGUAGES C CXX)
 
 option(LITEHTML_BUILD_TESTING "enable testing for litehtml" OFF)
+option(LITEHTML_ENABLE_LINT "enable linting for litehtml" ON)
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 if (NOT LITEHTML_BUILD_TESTING)
 # Soname
@@ -55,7 +58,7 @@ set(SOURCE_LITEHTML
 	src/style.cpp
 	src/stylesheet.cpp
 	src/table.cpp
-		src/url.cpp
+	src/url.cpp
 	src/url_path.cpp
 	src/utf8_strings.cpp
 	src/web_color.cpp
@@ -124,7 +127,8 @@ set(HEADER_LITEHTML
 	include/litehtml/style.h
 	include/litehtml/stylesheet.h
 	include/litehtml/table.h
-		include/litehtml/types.h
+	include/litehtml/types.h
+	include/litehtml/pixel_type.h
 	include/litehtml/url.h
 	include/litehtml/url_path.h
 	include/litehtml/utf8_strings.h
@@ -148,7 +152,16 @@ set(HEADER_LITEHTML
 	include/litehtml/gradient.h
 	include/litehtml/font_description.h
 	include/litehtml/scroll_view.h
+	include/litehtml/css_values.h
 )
+
+find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+
+if(CLANG_TIDY_EXE AND LITEHTML_ENABLE_LINT)
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-warnings-as-errors=*")
+else()
+    message(WARNING "Clang-Tidy not found or linting disabled. Static analysis skipped.")
+endif()
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)
 set(PROJECT_SO_VERSION ${PROJECT_MAJOR})
@@ -157,13 +170,32 @@ if (MSVC)
 	# warning level 4
 	add_compile_options(/W4)
 	add_compile_options(/permissive- /utf-8)
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:/EHsc>)
 else()
+	add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-fexceptions>)
 	# additional warnings
-	add_compile_options(-Wall -Wextra -Wpedantic -Wfloat-conversion)
+	add_compile_options(-Wall
+	                    -Wextra
+						-Wpedantic
+						-Wfloat-conversion
+						-Wnon-virtual-dtor
+						-Wold-style-cast
+						-Wredundant-move
+						-Woverloaded-virtual
+						-Wsign-promo
+						-Wfloat-equal
+						-Wcast-qual
+						-Wzero-as-null-pointer-constant
+						-Woverloaded-virtual
+						-Wredundant-decls
+						)
 endif()
 
 add_library(${PROJECT_NAME} ${HEADER_LITEHTML} ${SOURCE_LITEHTML})
-set_target_properties(${PROJECT_NAME} PROPERTIES VERSION ${PROJECT_LIB_VERSION} SOVERSION ${PROJECT_SO_VERSION})
+set_target_properties(${PROJECT_NAME} PROPERTIES
+	VERSION ${PROJECT_LIB_VERSION}
+	SOVERSION ${PROJECT_SO_VERSION}
+	)
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
 	CXX_STANDARD 17
@@ -199,7 +231,7 @@ else ()
 	ExternalProject_Add(
 			litehtml-tests
 			GIT_REPOSITORY      https://github.com/litehtml/litehtml-tests.git
-			GIT_TAG             2bb4d22d7d2a0916e4ec69e30d71b39bfe3b7b8a
+			GIT_TAG             e75a366e92a65d4bb2938525c05b8ba0defe7353
 			SOURCE_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-src"
 			BINARY_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-build"
 			CMAKE_ARGS          -DLITEHTML_PATH=${CMAKE_CURRENT_SOURCE_DIR}

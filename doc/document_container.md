@@ -30,18 +30,18 @@ public:
     virtual bool                on_element_click(const litehtml::element::ptr& /*el*/) { return false; };
     virtual void                on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event) = 0;
     virtual void                set_cursor(const char* cursor) = 0;
-    virtual void                transform_text(litehtml::string& text, litehtml::text_transform tt) = 0;
-    virtual void                import_css(litehtml::string& text, const litehtml::string& url, litehtml::string& baseurl) = 0;
+    virtual void                transform_text(std::string& text, litehtml::text_transform tt) = 0;
+    virtual void                import_css(std::string& text, const std::string& url, std::string& baseurl) = 0;
     virtual void                set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) = 0;
     virtual void                del_clip() = 0;
     virtual void                get_viewport(litehtml::position& viewport) const = 0;
     virtual litehtml::element::ptr create_element( const char* tag_name,
-                                                   const litehtml::string_map& attributes,
+                                                   const std::string& attributes,
                                                    const std::shared_ptr<litehtml::document>& doc) = 0;
 
     virtual void                get_media_features(litehtml::media_features& media) const = 0;
-    virtual void                get_language(litehtml::string& language, litehtml::string& culture) const = 0;
-    virtual litehtml::string    resolve_color(const litehtml::string& /*color*/) const { return litehtml::string(); }
+    virtual void                get_language(std::string& language, std::string& culture) const = 0;
+    virtual std::string    resolve_color(const std::string& /*color*/) const { return std::string(); }
     virtual void                split_text(const char* text, const std::function<void(const char*)>& on_word, const std::function<void(const char*)>& on_space);
 
 protected:
@@ -115,7 +115,7 @@ virtual litehtml::uint_ptr create_font(const font_description& descr, const docu
 This function called by litehtml to create the font. ```create_font``` returns ```uint_ptr``` that must identify the created font.
 Parameters:
 * ```const font_description& descr``` - the description of the font. This structure contains the font face name, size, weight and decoration.
-  
+
 ```font_description``` definition:
 ```cpp
 struct font_description
@@ -459,7 +459,7 @@ Fill the parameter **viewport** with the viewport position and size. Usually thi
 
 ### create_element
 ```cpp
-virtual litehtml::element::ptr create_element( const char* tag_name, const litehtml::string_map& attributes, const std::shared_ptr<litehtml::document>& doc);
+virtual litehtml::element::ptr create_element( const char* tag_name, const std::string& attributes, const std::shared_ptr<litehtml::document>& doc);
 ```
 
 Using this function, you can process custom tags. Just make your own ```litehtml::element``` and return is from this function. Parameter ```tag_name``` is the HTML tag (a, p, table etc.).
@@ -498,14 +498,14 @@ struct media_features
 
 ### get_language
 ```cpp
-virtual void get_language(litehtml::string& language, litehtml::string& culture) const;
+virtual void get_language(std::string& language, std::string& culture) const;
 ```
 
 Fill the **language** and **culture** parameters with the language and culture of the user. This is used to process the ```lang``` attribute of the HTML tags.
 
 ### resolve_color
 ```cpp
-virtual litehtml::string resolve_color(const litehtml::string& color) const;
+virtual std::string resolve_color(const std::string& color) const;
 ```
 Resolve the color name to the color value. For example, ```red``` will be resolved to ```#FF0000```. If you don't need this, just return the empty string.
 

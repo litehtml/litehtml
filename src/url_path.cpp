@@ -29,58 +29,61 @@
 
 #include "url_path.h"
 
-namespace litehtml {
-
-bool is_url_path_absolute(const string& path)
+namespace litehtml
 {
-    return path.length() > 0 && path[0] == '/';
-}
 
-string url_path_directory_name(const string& path)
-{
-    size_t offset = path.find_last_of('/');
-    if (offset == string::npos) {
-        return ".";
-    } else {
+    bool is_url_path_absolute(const std::string& path)
+    {
+        return path.length() > 0 && path[0] == '/';
+    }
+
+    std::string url_path_directory_name(const std::string& path)
+    {
+        size_t offset = path.find_last_of('/');
+        if(offset == std::string::npos)
+        {
+            return ".";
+        }
         return path.substr(0, offset + 1);
     }
-}
 
-string url_path_base_name(const string& path)
-{
-    size_t offset = path.find_last_of('/');
-    if (offset == string::npos) {
-        return path;
-    } else {
+    std::string url_path_base_name(const std::string& path)
+    {
+        size_t offset = path.find_last_of('/');
+        if(offset == std::string::npos)
+        {
+            return path;
+        }
         return path.substr(offset + 1);
     }
-}
 
-string url_path_append(const string& base, const string& path)
-{
-    string result(base);
+    std::string url_path_append(const std::string& base, const std::string& path)
+    {
+        std::string result(base);
 
-    // Only append a separator if both base and path are not empty and if the
-    // last character of base is not already a separator.
-    if (!result.empty() && !path.empty() && result.back() != '/') {
-        result.append(1, '/');
+        // Only append a separator if both base and path are not empty and if the
+        // last character of base is not already a separator.
+        if(!result.empty() && !path.empty() && result.back() != '/')
+        {
+            result.append(1, '/');
+        }
+
+        result.append(path);
+
+        return result;
     }
 
-    result.append(path);
+    std::string url_path_resolve(const std::string& base, const std::string& path)
+    {
 
-    return result;
-}
+        // If the possibly relative path is an absolute path then it is not
+        // relative and the base path is irrelevant.
+        if(is_url_path_absolute(path))
+        {
+            return path;
+        }
 
-string url_path_resolve(const string& base, const string& path)
-{
-
-    // If the possibly relative path is an absolute path then it is not
-    // relative and the base path is irrelevant.
-    if (is_url_path_absolute(path)) {
-        return path;
+        return url_path_append(url_path_directory_name(base), path);
     }
-
-    return url_path_append(url_path_directory_name(base), path);
-}
 
 } // namespace litehtml
