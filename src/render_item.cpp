@@ -1123,10 +1123,11 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
     {
         if(el->is_visible())
         {
-            // Prune subtrees that cannot intersect the clip. In-flow
-            // children are in document order, so once a subtree starts
-            // below the clip the remaining ones are below too and the
-            // pass can stop. Fixed elements ignore the accumulated
+            // Prune subtrees that cannot intersect the clip. Subtrees
+            // entirely above the clip are skipped. In the in-flow passes,
+            // children this pass draws come in document order, so once one
+            // starts below the clip the remaining ones are below too and
+            // the pass can stop. Fixed elements ignore the accumulated
             // position, so they are never pruned this way.
             //
             // The stored bounds are in document space, but the clip is in
@@ -1141,6 +1142,14 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
             // container's bounds; combined with the child's own draw top
             // the interval can only overstate their extent, so they are
             // never pruned when visible.
+            //
+            // The early stop applies only to children that this pass
+            // actually draws: the children list is shared by all passes,
+            // and a float (or a positioned element) sitting low in the
+            // document must not terminate the block pass before the
+            // in-flow blocks after it are drawn. Floats themselves are
+            // not guaranteed to be vertically ordered, so the floats
+            // pass never stops early.
             if(clip)
             {
                 bool fixed_el = el->src_el()->css().get_position() == element_position_fixed;
@@ -1152,8 +1161,23 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                     {
                         continue;
                     }
-                    if((flag == draw_block || flag == draw_inlines || flag == draw_floats) &&
-                       subtree_top > clip->bottom())
+                    bool drawn_by_pass = false;
+                    switch(flag)
+                    {
+                    case draw_block:
+                        drawn_by_pass = !el->src_el()->is_inline() &&
+                                        el->src_el()->css().get_float() == float_none &&
+                                        !el->src_el()->is_positioned();
+                        break;
+                    case draw_inlines:
+                        drawn_by_pass = el->src_el()->is_inline() &&
+                                        el->src_el()->css().get_float() == float_none &&
+                                        !el->src_el()->is_positioned();
+                        break;
+                    default:
+                        break;
+                    }
+                    if(drawn_by_pass && subtree_top > clip->bottom())
                     {
                         break;
                     }
