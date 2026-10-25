@@ -1,6 +1,7 @@
 #include "flex_line.h"
 #include "flex_item.h"
 #include "types.h"
+#include <algorithm>
 
 void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
 {
@@ -177,6 +178,11 @@ void litehtml::flex_line::distribute_free_space_shrink(pixel_t container_main_si
             }
         }
 
+        if(sum_scaled_flex_shrink_factor == 0_px)
+        {
+            break;
+        }
+
         if(sum_flex_shrink_factor < 1000)
         {
             pixel_t adjusted_free_space = initial_free_space * pixel_t(sum_flex_shrink_factor) / 1000_px;
@@ -215,6 +221,8 @@ void litehtml::flex_line::distribute_free_space_shrink(pixel_t container_main_si
             break;
         }
     }
+    main_size = 0_px;
+    std::for_each(items.begin(), items.end(), [&](std::shared_ptr<flex_item>& item) { main_size += item->main_size; });
 }
 
 bool litehtml::flex_line::fix_min_max_violations()
@@ -246,7 +254,7 @@ bool litehtml::flex_line::fix_min_max_violations()
 
     // 4.e Freeze over-flexed items. The total violation is the sum of the adjustments from the
     // previous step ∑(clamped size - unclamped size). If the total violation is:
-    // Zero: Freeze all items.
+    // Zero: Freeze all items.·
     // Positive: Freeze all the items with min violations.
     // Negative: Freeze all the items with max violations.
 
@@ -335,18 +343,18 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                                const litehtml::containing_block_context& self_size,
                                litehtml::formatting_context*             fmt_ctx)
 {
-    if(!fit_container)
-    {
-        distribute_free_space(container_main_size);
-    }
-
-    cross_size = 0;
-    main_size  = 0;
     first_baseline.set(0_px, baseline::baseline_type_none);
     last_baseline.set(0_px, baseline::baseline_type_none);
 
     if(is_row_direction)
     {
+        if(!fit_container)
+        {
+            distribute_free_space(container_main_size);
+        }
+        cross_size = 0;
+        main_size  = 0;
+
         def_value<pixel_t> first_baseline_top    = 0_px;
         def_value<pixel_t> first_baseline_bottom = 0_px;
         def_value<pixel_t> last_baseline_top     = 0_px;
@@ -379,6 +387,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                              self_size.new_width(item->main_size - item->el->render_offset_width(),
                                                  containing_block_context::size_mode_exact_width),
                              fmt_ctx, false);
+            item->el->pos().width = item->main_size - item->el->content_offset_width();
 
             if((item->align & 0xFF) == flex_align_items_baseline)
             {
@@ -445,6 +454,9 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
         last_baseline.calc(last_baseline_top, last_baseline_bottom);
     } else
     {
+        cross_size = 0;
+        main_size  = 0;
+
         // Calculate maximum cross size
         def_value<pixel_t> max_cross_size(0_px);
         if(self_size.width.type != containing_block_context::cbc_value_type_auto)
@@ -464,16 +476,40 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
 
         for(auto& item : items)
         {
-            pixel_t el_ret_width = item->el->render(0_px, 0_px, self_size, fmt_ctx, false).natural_width;
+            pixel_t render_width;
+            // intrinsic size doesn't include width property processing, so we need to check it here
+            if(!item->el->css().get_width().is_predefined())
+            {
+                render_width = item->el->css().get_width().calc_percent(self_size.width);
+            } else if(item->stretch_full_width)
+            {
+                render_width = item->stretch_render_width;
+            } else
+            {
+                render_width = std::min(self_size.width.value, item->el->get_intrinsic_max_size().width) -
+                               item->el->render_offset_width();
+                render_width =
+                    std::max(render_width, item->el->get_intrinsic_min_size().width - item->el->render_offset_width());
+            }
             item->el->render(0_px, 0_px,
-                             self_size.new_width_height(el_ret_width - item->el->content_offset_width(),
+                             self_size.new_width_height(render_width,
                                                         item->main_size - item->el->content_offset_height(),
                                                         containing_block_context::size_mode_exact_width |
                                                             containing_block_context::size_mode_exact_height),
                              fmt_ctx, false);
-            main_size  += item->el->height();
-            cross_size  = std::max(cross_size, item->el->width());
+            main_size += item->el->height();
+            if(item->el->css().get_display() != display_table)
+            {
+                item->main_size = item->el->height();
+            }
+            cross_size = std::max(cross_size, item->el->width());
         }
+
+        if(!fit_container)
+        {
+            distribute_free_space(container_main_size);
+        }
+
         if(!max_cross_size.is_default() && cross_size > max_cross_size)
         {
             cross_size = max_cross_size;

@@ -51,24 +51,6 @@ namespace litehtml
         limited_quirks_mode
     };
 
-    struct rendered_width
-    {
-        pixel_t natural_width = 0_px; // The width required to render the element without additional word wrapping.
-        pixel_t min_width     = 0_px; // The minimum width the element can be rendered
-
-        void merge(const rendered_width& other)
-        {
-            natural_width = std::max(natural_width, other.natural_width);
-            min_width     = std::max(min_width, other.min_width);
-        }
-
-        void reset()
-        {
-            natural_width = 0_px;
-            min_width     = 0_px;
-        }
-    };
-
     using byte    = unsigned char;
     using ucode_t = unsigned int;
 
@@ -347,10 +329,11 @@ namespace litehtml
 
         enum cbc_size_mode
         {
-            size_mode_normal       = 0x00,
-            size_mode_exact_width  = 0x01,
-            size_mode_exact_height = 0x02,
-            size_mode_content      = 0x04,
+            size_mode_normal            = 0x00,
+            size_mode_exact_width       = 0x01,
+            size_mode_exact_height      = 0x02,
+            size_mode_content           = 0x04,
+            size_mode_ignore_css_height = 0x08,
         };
 
         struct typed_pixel
@@ -380,10 +363,11 @@ namespace litehtml
             typed_pixel& operator=(const typed_pixel& v) = default;
         };
 
-        typed_pixel width        = {0_px, cbc_value_type_auto}; // width of the containing block
-        typed_pixel render_width = {0_px, cbc_value_type_auto};
-        typed_pixel min_width    = {0_px, cbc_value_type_none};
-        typed_pixel max_width    = {0_px, cbc_value_type_none};
+        typed_pixel width                  = {0_px, cbc_value_type_auto}; // width of the containing block
+        typed_pixel render_width           = {0_px, cbc_value_type_auto};
+        pixel_t     unclamped_render_width = 0_px; // render_width before min/max-width are applied
+        typed_pixel min_width              = {0_px, cbc_value_type_none};
+        typed_pixel max_width              = {0_px, cbc_value_type_none};
 
         typed_pixel height     = {0_px, cbc_value_type_auto}; // height of the containing block
         typed_pixel min_height = {0_px, cbc_value_type_none};
@@ -420,7 +404,6 @@ namespace litehtml
         element_float                float_side   = float_none;
         element_clear                clear_floats = clear_none;
         int                          context      = 0;
-        pixel_t                      min_width;
         std::shared_ptr<render_item> el;
     };
 

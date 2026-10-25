@@ -3,7 +3,7 @@
 #include <optional>
 #include "formatting_context.h"
 
-void litehtml::formatting_context::add_float(const std::shared_ptr<render_item>& el, pixel_t min_width, int context)
+void litehtml::formatting_context::add_float(const std::shared_ptr<render_item>& el, int context)
 {
     floated_box fb;
     fb.pos.x        = el->left() + m_current_left;
@@ -14,7 +14,6 @@ void litehtml::formatting_context::add_float(const std::shared_ptr<render_item>&
     fb.clear_floats = el->src_el()->css().get_clear();
     fb.el           = el;
     fb.context      = context;
-    fb.min_width    = min_width;
 
     if(fb.float_side == float_left)
     {
@@ -561,40 +560,4 @@ void litehtml::formatting_context::apply_relative_shift(const containing_block_c
     {
         fb.el->apply_relative_shift(containing_block_size);
     }
-}
-
-litehtml::pixel_t litehtml::formatting_context::find_min_left(pixel_t y, int context_idx)
-{
-    y                += m_current_top;
-    pixel_t min_left  = m_current_left;
-    for(const auto& fb : m_floats_left)
-    {
-        if(y >= fb.pos.top() && y < fb.pos.bottom() && fb.context == context_idx)
-        {
-            min_left += fb.min_width;
-        }
-    }
-    if(min_left < m_current_left)
-    {
-        return 0_px;
-    }
-    return min_left - m_current_left;
-}
-
-litehtml::pixel_t litehtml::formatting_context::find_min_right(pixel_t y, pixel_t right, int context_idx)
-{
-    y                 += m_current_top;
-    pixel_t min_right  = right + m_current_left;
-    for(const auto& fb : m_floats_right)
-    {
-        if(y >= fb.pos.top() && y < fb.pos.bottom() && fb.context == context_idx)
-        {
-            min_right -= fb.min_width;
-        }
-    }
-    if(min_right < m_current_left)
-    {
-        return 0_px;
-    }
-    return min_right - m_current_left;
 }

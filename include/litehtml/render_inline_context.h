@@ -1,6 +1,7 @@
 #ifndef LITEHTML_RENDER_INLINE_CONTEXT_H
 #define LITEHTML_RENDER_INLINE_CONTEXT_H
 
+#include "iterators.h"
 #include "render_block.h"
 
 namespace litehtml
@@ -31,14 +32,19 @@ namespace litehtml
             }
         };
 
+        void for_each_inline(
+            const std::function<void(const std::shared_ptr<render_item>& el, iterator_item_type item_type)>& callback,
+            bool const_process) const;
+
       protected:
         std::vector<std::unique_ptr<litehtml::line_box>> m_line_boxes;
-        rendered_width                                   m_rendered_width;
+        pixel_t                                          m_max_line_width;
 
-        rendered_width _render_content(pixel_t x, pixel_t y, bool second_pass,
-                                       const containing_block_context& self_size, formatting_context* fmt_ctx) override;
-        void           fix_line_width(element_float flt, const containing_block_context& self_size,
-                                      formatting_context* fmt_ctx) override;
+        void    calc_intrinsic_size() override;
+        pixel_t _render_content(pixel_t x, pixel_t y, bool second_pass, const containing_block_context& self_size,
+                                formatting_context* fmt_ctx) override;
+        void    fix_line_width(element_float flt, const containing_block_context& self_size,
+                               formatting_context* fmt_ctx) override;
 
         std::list<std::unique_ptr<line_box_item>> finish_last_box(bool                            end_of_render,
                                                                   const containing_block_context& self_size);

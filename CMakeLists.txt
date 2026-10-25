@@ -80,6 +80,7 @@ set(SOURCE_LITEHTML
 	src/flex_line.cpp
 	src/background.cpp
 	src/gradient.cpp
+	src/render_text.cpp
 )
 
 set(HEADER_LITEHTML
@@ -153,6 +154,7 @@ set(HEADER_LITEHTML
 	include/litehtml/font_description.h
 	include/litehtml/scroll_view.h
 	include/litehtml/css_values.h
+	include/litehtml/render_text.h
 )
 
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy")

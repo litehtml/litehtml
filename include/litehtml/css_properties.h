@@ -179,7 +179,7 @@ namespace litehtml
         void              set_text_indent(const css_length& mCssTextIndent);
 
         const css_line_height_t& line_height() const;
-        css_line_height_t&       line_height_w();
+        css_line_height_t&       line_height();
 
         list_style_type get_list_style_type() const;
         void            set_list_style_type(list_style_type mListStyleType);
@@ -487,7 +487,7 @@ namespace litehtml
         return m_line_height;
     }
 
-    inline css_line_height_t& css_properties::line_height_w()
+    inline css_line_height_t& css_properties::line_height()
     {
         return m_line_height;
     }

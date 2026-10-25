@@ -13,8 +13,10 @@ namespace litehtml
 
         std::list<flex_line> get_lines(const containing_block_context& self_size, formatting_context* fmt_ctx,
                                        bool is_row_direction, pixel_t container_main_size, bool single_line);
-        rendered_width _render_content(pixel_t x, pixel_t y, bool second_pass,
-                                       const containing_block_context& self_size, formatting_context* fmt_ctx) override;
+
+        void    calc_intrinsic_size() override;
+        pixel_t _render_content(pixel_t x, pixel_t y, bool second_pass, const containing_block_context& self_size,
+                                formatting_context* fmt_ctx) override;
 
       public:
         explicit render_item_flex(std::shared_ptr<element> src_el) :
