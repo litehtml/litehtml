@@ -1128,7 +1128,9 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
             // children this pass draws come in document order, so once one
             // starts below the clip the remaining ones are below too and
             // the pass can stop. Fixed elements ignore the accumulated
-            // position, so they are never pruned this way.
+            // position, and their subtrees are drawn without the clip
+            // altogether (see draw_positioned): their stored bounds are in
+            // the static layout frame, not the pinned draw frame.
             //
             // The stored bounds are in document space, but the clip is in
             // the caller's draw space: scrolled views draw the document
@@ -1191,9 +1193,16 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                 {
                     if(el->src_el()->css().get_position() == element_position_fixed)
                     {
-                        // Fixed elements position is always relative to the (0,0)
-                        el->src_el()->draw(hdc, 0_px, 0_px, clip, el);
-                        el->draw_stacking_context(hdc, 0_px, 0_px, clip, true);
+                        // Fixed elements position is always relative to the (0,0).
+                        // Draw their subtrees without the clip: the stored
+                        // subtree bounds describe the element's static layout
+                        // position, which has nothing to do with where a fixed
+                        // element is pinned at draw time, so pruning against
+                        // the clip would compare unrelated frames. The surface
+                        // clip still applies: a null clip draws everything and
+                        // lets the container clip cull it.
+                        el->src_el()->draw(hdc, 0_px, 0_px, nullptr, el);
+                        el->draw_stacking_context(hdc, 0_px, 0_px, nullptr, true);
                     } else
                     {
                         el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
