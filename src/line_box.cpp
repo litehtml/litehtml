@@ -918,14 +918,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::new_widt
             }
             i++;
         }
-        if(remove_begin != m_items.end())
-        {
-            while(remove_begin != m_items.end())
-            {
-                ret_items.emplace_back(std::move(*remove_begin));
-            }
-            m_items.erase(remove_begin, m_items.end());
-        }
+        ret_items.splice(ret_items.end(), m_items, remove_begin, m_items.end());
     }
     return ret_items;
 }
