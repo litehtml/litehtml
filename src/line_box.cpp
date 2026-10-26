@@ -4,6 +4,7 @@
 #include "render_item.h"
 #include "types.h"
 #include <algorithm>
+#include <iterator>
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -186,6 +187,7 @@ void litehtml::line_box::add_item(std::unique_ptr<line_box_item> item)
         item->place_to(m_left + m_width, m_top);
         m_width  += item->width();
         m_height  = std::max(m_height, item->get_el()->height());
+        update_inline_context_stack(*item, true);
         m_items.emplace_back(std::move(item));
     } else
     {
@@ -214,6 +216,37 @@ litehtml::pixel_t litehtml::line_box::calc_va_baseline(const va_context& current
         return top + new_font.height - new_font.base_line();
     default:
         return current.baseline;
+    }
+}
+
+void litehtml::line_box::pop_inline_context()
+{
+    if(m_inline_context_stack.empty())
+    {
+        return;
+    }
+    const auto& ctx       = m_inline_context_stack.top();
+    m_default_line_height = ctx.line_height;
+    m_font_metrics        = ctx.fm;
+    m_inline_context_stack.pop();
+}
+
+void litehtml::line_box::update_inline_context_stack(const line_box_item& item, const bool is_add)
+{
+    auto item_type = item.get_type();
+    if(item_type == line_box_item::type_text_part)
+    {
+        return;
+    }
+    if((item_type == line_box_item::type_inline_end) == is_add)
+    {
+        pop_inline_context();
+    } else
+    {
+        const auto& css = item.get_el()->css();
+        m_inline_context_stack.emplace(m_default_line_height, m_font_metrics);
+        m_default_line_height = css.line_height();
+        m_font_metrics        = css.get_font_metrics();
     }
 }
 
@@ -251,6 +284,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
                 m_width -= m_items.back()->width();
                 ret_items.emplace_front(std::move(m_items.back()));
                 m_items.pop_back();
+                pop_inline_context();
             } else
             {
                 break;
@@ -917,6 +951,10 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::new_widt
                 m_width       += (*i)->get_el()->width();
             }
             i++;
+        }
+        for(auto it = m_items.rbegin(); it != std::make_reverse_iterator(remove_begin); ++it)
+        {
+            update_inline_context_stack(**it, false);
         }
         ret_items.splice(ret_items.end(), m_items, remove_begin, m_items.end());
     }

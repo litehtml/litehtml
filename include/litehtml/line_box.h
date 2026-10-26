@@ -2,6 +2,7 @@
 #define LITEHTML_LINE_BOX_H
 
 #include <memory>
+#include <stack>
 #include "css_properties.h"
 #include "pixel_type.h"
 #include "types.h"
@@ -177,6 +178,19 @@ namespace litehtml
             line_box_item* start_lbi = nullptr;
         };
 
+        struct inline_context
+        {
+            css_line_height_t line_height;
+            font_metrics      fm;
+
+            inline_context() = default;
+            inline_context(const css_line_height_t& _line_height, const font_metrics& _fm) :
+                line_height(_line_height),
+                fm(_fm)
+            {
+            }
+        };
+
         pixel_t           m_top;
         pixel_t           m_left;
         pixel_t           m_right;
@@ -189,6 +203,7 @@ namespace litehtml
         pixel_t           m_min_width;
 
         std::list<std::unique_ptr<line_box_item>> m_items;
+        std::stack<inline_context>                m_inline_context_stack;
 
       public:
         line_box(pixel_t top, pixel_t left, pixel_t right, const css_line_height_t& line_height, const font_metrics& fm,
@@ -261,6 +276,8 @@ namespace litehtml
         bool           is_break_only() const;
         static pixel_t calc_va_baseline(const va_context& current, vertical_align va, const font_metrics& new_font,
                                         pixel_t top, pixel_t bottom);
+        void           pop_inline_context();
+        void           update_inline_context_stack(const line_box_item& item, const bool is_add);
     };
 } // namespace litehtml
 
