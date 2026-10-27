@@ -1050,6 +1050,7 @@ void litehtml::render_item::calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y)
 {
     m_abs_top            = abs_y + m_pos.top();
     m_subtree_bottom_abs = abs_y + m_pos.bottom() + m_margins.bottom + m_padding.bottom + m_borders.bottom;
+    m_subtree_has_fixed  = src_el()->css().get_position() == element_position_fixed;
 
     // Same invariant as calc_document_size: all children of tables and of
     // elements with overflow other than visible paint inside the element
@@ -1061,9 +1062,21 @@ void litehtml::render_item::calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y)
     if(src_el()->css().get_display() == display_table ||
        src_el()->css().get_overflow() != overflow_visible)
     {
+        pixel_t bottom = m_subtree_bottom_abs;
+        // A scrolled container's children paint anywhere in its scrollable
+        // content, which can be far taller than the element box itself
+        // (e.g. a fixed sidebar pinned to the viewport while its static
+        // layout box is much shorter). Extend the bounds the children
+        // carry to the whole scrollable extent so pruning cannot
+        // underestimate where they may be drawn.
+        if(m_scroll_view)
+        {
+            bottom = std::max(bottom, m_abs_top + m_scroll_view->get_viewport().height +
+                                           m_scroll_view->get_max_v_scroll());
+        }
         for(const auto& el : m_children)
         {
-            el->set_subtree_bounds(m_abs_top, m_subtree_bottom_abs);
+            el->set_subtree_bounds(m_abs_top, bottom);
         }
         return;
     }
@@ -1075,6 +1088,10 @@ void litehtml::render_item::calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y)
         {
             m_subtree_bottom_abs = el->m_subtree_bottom_abs;
         }
+        if(el->m_subtree_has_fixed)
+        {
+            m_subtree_has_fixed = true;
+        }
     }
 }
 
@@ -1082,9 +1099,14 @@ void litehtml::render_item::set_subtree_bounds(pixel_t abs_top, pixel_t subtree_
 {
     m_abs_top            = abs_top;
     m_subtree_bottom_abs = subtree_bottom_abs;
+    m_subtree_has_fixed  = src_el()->css().get_position() == element_position_fixed;
     for(const auto& el : m_children)
     {
         el->set_subtree_bounds(abs_top, subtree_bottom_abs);
+        if(el->m_subtree_has_fixed)
+        {
+            m_subtree_has_fixed = true;
+        }
     }
 }
 
@@ -1128,9 +1150,9 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
             // children this pass draws come in document order, so once one
             // starts below the clip the remaining ones are below too and
             // the pass can stop. Fixed elements ignore the accumulated
-            // position, and their subtrees are drawn without the clip
-            // altogether (see draw_positioned): their stored bounds are in
-            // the static layout frame, not the pinned draw frame.
+            // position — and can sit anywhere in the viewport regardless
+            // of where their ancestors are — so subtrees containing one
+            // are never pruned.
             //
             // The stored bounds are in document space, but the clip is in
             // the caller's draw space: scrolled views draw the document
@@ -1154,8 +1176,9 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
             // pass never stops early.
             if(clip)
             {
-                bool fixed_el = el->src_el()->css().get_position() == element_position_fixed;
-                if(!fixed_el)
+                bool prunable = el->src_el()->css().get_position() != element_position_fixed &&
+                                !el->subtree_has_fixed();
+                if(prunable)
                 {
                     pixel_t subtree_top    = pos.y + el->m_pos.top();
                     pixel_t subtree_bottom = subtree_top + el->subtree_bottom_abs() - el->abs_top();
@@ -1193,16 +1216,9 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                 {
                     if(el->src_el()->css().get_position() == element_position_fixed)
                     {
-                        // Fixed elements position is always relative to the (0,0).
-                        // Draw their subtrees without the clip: the stored
-                        // subtree bounds describe the element's static layout
-                        // position, which has nothing to do with where a fixed
-                        // element is pinned at draw time, so pruning against
-                        // the clip would compare unrelated frames. The surface
-                        // clip still applies: a null clip draws everything and
-                        // lets the container clip cull it.
-                        el->src_el()->draw(hdc, 0_px, 0_px, nullptr, el);
-                        el->draw_stacking_context(hdc, 0_px, 0_px, nullptr, true);
+                        // Fixed elements position is always relative to the (0,0)
+                        el->src_el()->draw(hdc, 0_px, 0_px, clip, el);
+                        el->draw_stacking_context(hdc, 0_px, 0_px, clip, true);
                     } else
                     {
                         el->src_el()->draw(hdc, pos.x, pos.y, clip, el);

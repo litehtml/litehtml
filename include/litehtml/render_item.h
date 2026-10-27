@@ -34,6 +34,7 @@ namespace litehtml
         // calc_subtree_bounds after the final layout.
         pixel_t m_abs_top            = 0_px;
         pixel_t m_subtree_bottom_abs = 0_px;
+        bool    m_subtree_has_fixed  = false;
         size    m_intrinsic_min_size;
         size    m_intrinsic_max_size;
         bool    m_skip = false;
@@ -130,6 +131,13 @@ namespace litehtml
         pixel_t subtree_bottom_abs() const
         {
             return m_subtree_bottom_abs;
+        }
+        // True when the subtree contains a fixed-position element. Such
+        // subtrees are never pruned: a fixed element is pinned to the
+        // viewport and can be visible no matter where its ancestors sit.
+        bool subtree_has_fixed() const
+        {
+            return m_subtree_has_fixed;
         }
 
         // Calculates the position of the element in the document
