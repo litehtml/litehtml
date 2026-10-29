@@ -29,6 +29,7 @@ namespace litehtml
         }
         pixel_t get_first_baseline() override;
         pixel_t get_last_baseline() override;
+        void    apply_vertical_align() override;
     };
 } // namespace litehtml
 
