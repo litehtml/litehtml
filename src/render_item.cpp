@@ -1041,6 +1041,75 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
     }
 }
 
+// Compute absolute document-space bounds for this subtree: each item
+// stores the absolute top of its box and the absolute bottom of its
+// whole subtree (including margins and overflowing children). The
+// accumulation mirrors draw_children: a child's absolute position is
+// its m_pos plus the parent's absolute position.
+void litehtml::render_item::calc_subtree_bounds(pixel_t abs_x, pixel_t abs_y)
+{
+    m_abs_top            = abs_y + m_pos.top();
+    m_subtree_bottom_abs = abs_y + m_pos.bottom() + m_margins.bottom + m_padding.bottom + m_borders.bottom;
+    m_subtree_has_fixed  = src_el()->css().get_position() == element_position_fixed;
+
+    // Same invariant as calc_document_size: all children of tables and of
+    // elements with overflow other than visible paint inside the element
+    // box. Their stored positions are not relative to this element (table
+    // rows and cells are positioned relative to the table), so accumulating
+    // offsets would place them wrong. Such descendants get this element's
+    // bounds instead: values that can only overstate their extent, which
+    // keeps the draw-time pruning from skipping visible content.
+    if(src_el()->css().get_display() == display_table ||
+       src_el()->css().get_overflow() != overflow_visible)
+    {
+        pixel_t bottom = m_subtree_bottom_abs;
+        // A scrolled container's children paint anywhere in its scrollable
+        // content, which can be far taller than the element box itself
+        // (e.g. a fixed sidebar pinned to the viewport while its static
+        // layout box is much shorter). Extend the bounds the children
+        // carry to the whole scrollable extent so pruning cannot
+        // underestimate where they may be drawn.
+        if(m_scroll_view)
+        {
+            bottom = std::max(bottom, m_abs_top + m_scroll_view->get_viewport().height +
+                                           m_scroll_view->get_max_v_scroll());
+        }
+        for(const auto& el : m_children)
+        {
+            el->set_subtree_bounds(m_abs_top, bottom);
+        }
+        return;
+    }
+
+    for(const auto& el : m_children)
+    {
+        el->calc_subtree_bounds(abs_x + m_pos.left(), abs_y + m_pos.top());
+        if(el->m_subtree_bottom_abs > m_subtree_bottom_abs)
+        {
+            m_subtree_bottom_abs = el->m_subtree_bottom_abs;
+        }
+        if(el->m_subtree_has_fixed)
+        {
+            m_subtree_has_fixed = true;
+        }
+    }
+}
+
+void litehtml::render_item::set_subtree_bounds(pixel_t abs_top, pixel_t subtree_bottom_abs)
+{
+    m_abs_top            = abs_top;
+    m_subtree_bottom_abs = subtree_bottom_abs;
+    m_subtree_has_fixed  = src_el()->css().get_position() == element_position_fixed;
+    for(const auto& el : m_children)
+    {
+        el->set_subtree_bounds(abs_top, subtree_bottom_abs);
+        if(el->m_subtree_has_fixed)
+        {
+            m_subtree_has_fixed = true;
+        }
+    }
+}
+
 void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag,
                                           int zindex)
 {
@@ -1076,6 +1145,69 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
     {
         if(el->is_visible())
         {
+            // Prune subtrees that cannot intersect the clip. Subtrees
+            // entirely above the clip are skipped. In the in-flow passes,
+            // children this pass draws come in document order, so once one
+            // starts below the clip the remaining ones are below too and
+            // the pass can stop. Fixed elements ignore the accumulated
+            // position — and can sit anywhere in the viewport regardless
+            // of where their ancestors are — so subtrees containing one
+            // are never pruned.
+            //
+            // The stored bounds are in document space, but the clip is in
+            // the caller's draw space: scrolled views draw the document
+            // at a negative origin with a positive clip, and scrolled
+            // containers shift their children on top of that. Compare in
+            // draw space instead: the subtree top is the child's actual
+            // draw position (pos.y already carries the accumulated origin
+            // and scroll offsets), and the stored top/bottom pair yields
+            // the subtree height, which the shift does not change.
+            // Children of tables and of clipped containers share the
+            // container's bounds; combined with the child's own draw top
+            // the interval can only overstate their extent, so they are
+            // never pruned when visible.
+            //
+            // The early stop applies only to children that this pass
+            // actually draws: the children list is shared by all passes,
+            // and a float (or a positioned element) sitting low in the
+            // document must not terminate the block pass before the
+            // in-flow blocks after it are drawn. Floats themselves are
+            // not guaranteed to be vertically ordered, so the floats
+            // pass never stops early.
+            if(clip)
+            {
+                bool prunable = el->src_el()->css().get_position() != element_position_fixed &&
+                                !el->subtree_has_fixed();
+                if(prunable)
+                {
+                    pixel_t subtree_top    = pos.y + el->m_pos.top();
+                    pixel_t subtree_bottom = subtree_top + el->subtree_bottom_abs() - el->abs_top();
+                    if(subtree_bottom < clip->top())
+                    {
+                        continue;
+                    }
+                    bool drawn_by_pass = false;
+                    switch(flag)
+                    {
+                    case draw_block:
+                        drawn_by_pass = !el->src_el()->is_inline() &&
+                                        el->src_el()->css().get_float() == float_none &&
+                                        !el->src_el()->is_positioned();
+                        break;
+                    case draw_inlines:
+                        drawn_by_pass = el->src_el()->is_inline() &&
+                                        el->src_el()->css().get_float() == float_none &&
+                                        !el->src_el()->is_positioned();
+                        break;
+                    default:
+                        break;
+                    }
+                    if(drawn_by_pass && subtree_top > clip->bottom())
+                    {
+                        break;
+                    }
+                }
+            }
             bool process = true;
             switch(flag)
             {

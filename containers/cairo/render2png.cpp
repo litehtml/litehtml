@@ -262,6 +262,16 @@ namespace html2png
         width  = cfg.get_int("width", doc->width() > 0_px ? doc->width() : 1_px);
         height = cfg.get_int("height", doc->height() > 0_px ? doc->height() : 1_px);
 
+        // Draw the document at an offset (drawx/drawy config keys), the way a
+        // scrolled view renders it: negative coordinates with a positive clip.
+        int draw_x = cfg.get_int("drawx", 0);
+        int draw_y = cfg.get_int("drawy", 0);
+        // Pre-scroll an inner overflow container (wheel at point keys): the
+        // pixels are applied through document::on_scroll at the given point.
+        int wheel_at_x = cfg.get_int("wheelatx", 0);
+        int wheel_at_y = cfg.get_int("wheelaty", 0);
+        int wheel_dy   = cfg.get_int("wheely", 0);
+
         auto* surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
         if(surface)
         {
@@ -275,8 +285,12 @@ namespace html2png
             cairo_restore(cr);
 
             // Draw document
+            if(wheel_dy != 0)
+            {
+                doc->on_scroll(0, wheel_dy, wheel_at_x - draw_x, wheel_at_y - draw_y, wheel_at_x, wheel_at_y);
+            }
             litehtml::position clip(0, 0, width, height);
-            doc->draw(reinterpret_cast<litehtml::uint_ptr>(cr), 0, 0, &clip);
+            doc->draw(reinterpret_cast<litehtml::uint_ptr>(cr), draw_x, draw_y, &clip);
 
             cairo_surface_flush(surface);
             cairo_destroy(cr);
