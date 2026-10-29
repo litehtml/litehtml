@@ -233,3 +233,46 @@ void litehtml::render_item_block_context::calc_intrinsic_size()
     m_intrinsic_min_size.height += content_offset_height();
     m_intrinsic_max_size.height += content_offset_height();
 }
+
+void litehtml::render_item_block_context::apply_vertical_align()
+{
+    auto va = src_el()->css().get_vertical_align();
+    if(va != va_middle && va != va_bottom)
+    {
+        return;
+    }
+
+    auto is_out_of_flow = [](const std::shared_ptr<render_item>& el)
+    {
+        auto position = el->src_el()->css().get_position();
+        return position == element_position_absolute || position == element_position_fixed;
+    };
+
+    pixel_t content_height = 0_px;
+    for(const auto& el : m_children)
+    {
+        if(el->src_el()->css().get_display() != display_none && !is_out_of_flow(el))
+        {
+            content_height = std::max(content_height, el->bottom());
+        }
+    }
+
+    if(m_pos.height <= content_height)
+    {
+        return;
+    }
+
+    pixel_t add = m_pos.height - content_height;
+    if(va == va_middle)
+    {
+        add = add / 2;
+    }
+
+    for(const auto& el : m_children)
+    {
+        if(el->src_el()->css().get_display() != display_none && !is_out_of_flow(el))
+        {
+            el->pos().y += add;
+        }
+    }
+}
