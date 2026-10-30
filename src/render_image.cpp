@@ -156,5 +156,10 @@ void litehtml::render_item_image::calc_intrinsic_size()
     src_el()->get_content_size(sz, 0_px);
 
     m_intrinsic_min_size.width = m_intrinsic_max_size.width = sz.width;
+    // Compressible replaced element: a percentage width contributes 0 to the min-content size
+    if(!css().get_width().is_predefined() && css().get_width().units() == css_units_percentage)
+    {
+        m_intrinsic_min_size.width = 0_px;
+    }
     m_intrinsic_min_size.height = m_intrinsic_max_size.height = sz.height;
 }
