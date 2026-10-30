@@ -258,6 +258,25 @@ namespace litehtml
         {
             return (_x >= left() && _x < right() && _y >= top() && _y < bottom());
         }
+
+        void add_bounds(const position& box)
+        {
+            if(empty())
+            {
+                x      = box.x;
+                y      = box.y;
+                width  = box.width;
+                height = box.height;
+            } else
+            {
+                pixel_t x2 = std::max(right(), box.right());
+                pixel_t y2 = std::max(bottom(), box.bottom());
+                x          = std::min(x, box.x);
+                y          = std::min(y, box.y);
+                width      = x2 - x;
+                height     = y2 - y;
+            }
+        }
     };
 
     struct scroll_values
