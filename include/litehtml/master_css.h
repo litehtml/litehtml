@@ -188,6 +188,14 @@ tbody, tfoot, thead {
 	vertical-align:middle;
 }
 
+colgroup {
+	display: table-column-group;
+}
+
+col {
+	display: table-column;
+}
+
 tr {
 	display: table-row;
 	vertical-align: inherit;
