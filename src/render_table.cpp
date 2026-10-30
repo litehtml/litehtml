@@ -372,6 +372,35 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
         }
     }
 
+    std::vector<css_length> column_widths;
+    auto                    add_columns = [&](const std::shared_ptr<render_item>& el, const css_length& width) {
+        const int span = std::max(1, atoi(el->src_el()->get_attr("span", "1")));
+        column_widths.insert(column_widths.end(), span, width);
+    };
+    for(const auto& el : m_children)
+    {
+        if(el->src_el()->css().get_display() == display_table_column)
+        {
+            add_columns(el, el->src_el()->css().get_width());
+        } else if(el->src_el()->css().get_display() == display_table_column_group)
+        {
+            bool has_columns = false;
+            for(const auto& col : el->children())
+            {
+                if(col->src_el()->css().get_display() == display_table_column)
+                {
+                    has_columns = true;
+                    add_columns(col, col->src_el()->css().get_width());
+                }
+            }
+            if(!has_columns)
+            {
+                add_columns(el, el->src_el()->css().get_width());
+            }
+        }
+    }
+    m_grid->set_column_widths(std::move(column_widths));
+
     m_grid->finish();
 
     if(src_el()->css().get_border_collapse() == border_collapse_separate)
