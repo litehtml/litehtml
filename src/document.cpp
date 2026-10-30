@@ -1032,7 +1032,8 @@ namespace litehtml
                 if(!(*cur_iter)->src_el()->is_table_skip() || ((*cur_iter)->src_el()->is_table_skip() && !tmp.empty()))
                 {
                     if(disp != display_table_row_group ||
-                       (*cur_iter)->src_el()->css().get_display() != display_table_caption)
+                       !is_one_of((*cur_iter)->src_el()->css().get_display(), display_table_caption,
+                                  display_table_column, display_table_column_group))
                     {
                         if(tmp.empty())
                         {

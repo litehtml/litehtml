@@ -124,6 +124,15 @@ void litehtml::table_grid::finish()
         }
     }
 
+    // The width of a <col> is used when none of the cells in its column specifies one
+    for(int col = 0; col < m_cols_count && col < static_cast<int>(m_column_widths.size()); col++)
+    {
+        if(m_columns[col].css_width.is_predefined())
+        {
+            m_columns[col].css_width = m_column_widths[col];
+        }
+    }
+
     for(int col = 0; col < m_cols_count; col++)
     {
         for(int row = 0; row < m_rows_count; row++)
