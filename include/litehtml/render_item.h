@@ -32,6 +32,7 @@ namespace litehtml
         position m_pos;
         size     m_intrinsic_min_size;
         size     m_intrinsic_max_size;
+        position m_bounds; // bounding box of the element
         bool     m_skip = false;
 
         containing_block_context calculate_containing_block_context(const containing_block_context& cb_context) const;
