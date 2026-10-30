@@ -32,6 +32,7 @@ namespace litehtml
         position m_pos;
         size     m_intrinsic_min_size;
         size     m_intrinsic_max_size;
+        position m_bounds; // bounding box of the element
         bool     m_skip = false;
 
         containing_block_context calculate_containing_block_context(const containing_block_context& cb_context) const;
@@ -132,34 +133,76 @@ namespace litehtml
             m_skip = val;
         }
 
+        // Element right (including margins, padding, and borders)
         pixel_t right() const
         {
             return left() + width();
         }
 
+        // Element right (excluding margins, but including padding and borders)
+        pixel_t content_right() const
+        {
+            return content_left() + content_width();
+        }
+
+        // Element left (including margins, padding, and borders)
         pixel_t left() const
         {
             return m_pos.left() - m_margins.left - m_padding.left - m_borders.left;
         }
 
+        // Element left (excluding margins, but including padding and borders)
+        pixel_t content_left() const
+        {
+            return m_pos.left() - m_padding.left - m_borders.left;
+        }
+
+        // Element top (including margins, padding, and borders)
         pixel_t top() const
         {
             return m_pos.top() - m_margins.top - m_padding.top - m_borders.top;
         }
 
+        // Element top (excluding margins, but including padding and borders)
+        pixel_t content_top() const
+        {
+            return m_pos.top() - m_padding.top - m_borders.top;
+        }
+
+        // Element bottom (including margins, padding, and borders)
         pixel_t bottom() const
         {
             return top() + height();
         }
 
+        // Element bottom (excluding margins, but including padding and borders)
+        pixel_t content_bottom() const
+        {
+            return content_top() + content_height();
+        }
+
+        // Element height (including margins, padding, and borders)
         pixel_t height() const
         {
             return m_pos.height + m_margins.height() + m_padding.height() + m_borders.height();
         }
 
+        // Element height (excluding margins, but including padding and borders)
+        pixel_t content_height() const
+        {
+            return m_pos.height + m_padding.height() + m_borders.height();
+        }
+
+        // Element width (including margins, padding, and borders)
         pixel_t width() const
         {
             return m_pos.width + m_margins.width() + m_padding.width() + m_borders.width();
+        }
+
+        // Element width (excluding margins, but including padding and borders)
+        pixel_t content_width() const
+        {
+            return m_pos.width + m_padding.width() + m_borders.width();
         }
 
         pixel_t padding_top() const
@@ -477,7 +520,8 @@ namespace litehtml
         std::tuple<pixel_t, pixel_t> element_static_offset(const std::shared_ptr<litehtml::render_item>& el);
 
         void add_positioned(const std::shared_ptr<litehtml::render_item>& el);
-        void get_redraw_box(litehtml::position& pos, pixel_t x = 0_px, pixel_t y = 0_px);
+        // Calculate the bounding box of the element, including its children.
+        void calc_bounds();
         void calc_document_size(litehtml::size& sz, pixel_t x = 0_px, pixel_t y = 0_px);
 
         /**
