@@ -761,11 +761,23 @@ namespace litehtml
 
     static void repeat_color_points(std::vector<litehtml::background_layer::color_point>& color_points)
     {
+        if(color_points.size() < 2)
+        {
+            return;
+        }
+
         auto old_points = color_points;
+
         if(color_points.back().offset < 1)
         {
             float gd_size = color_points.back().offset - old_points.front().offset;
-            auto  iter    = old_points.begin();
+            if(!(gd_size > 0.f) || !std::isfinite(gd_size))
+            {
+                return; // zero / negative / NaN period — do not expand
+            }
+
+            auto iter = old_points.begin();
+            // optional: hard cap on iterations
             while(color_points.back().offset < 1)
             {
                 color_points.emplace_back(iter->offset + gd_size, iter->color);
@@ -774,13 +786,23 @@ namespace litehtml
                 {
                     iter    = old_points.begin();
                     gd_size = color_points.back().offset - old_points.front().offset;
+                    if(!(gd_size > 0.f) || !std::isfinite(gd_size))
+                    {
+                        return;
+                    }
                 }
             }
         }
+
         if(color_points.front().offset > 0)
         {
             float gd_size = color_points.front().offset;
-            auto  iter    = old_points.rbegin();
+            if(!(gd_size > 0.f) || !std::isfinite(gd_size))
+            {
+                return;
+            }
+
+            auto iter = old_points.rbegin();
             while(color_points.front().offset > 0)
             {
                 color_points.emplace(color_points.begin(), gd_size - (old_points.back().offset - iter->offset),
@@ -790,6 +812,10 @@ namespace litehtml
                 {
                     iter    = old_points.rbegin();
                     gd_size = color_points.front().offset;
+                    if(!(gd_size > 0.f) || !std::isfinite(gd_size))
+                    {
+                        return;
+                    }
                 }
             }
         }
