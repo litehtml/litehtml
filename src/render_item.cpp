@@ -876,9 +876,10 @@ void litehtml::render_item::render_positioned(render_type rt)
                                                            containing_block_context::size_mode_exact_width),
                            nullptr, true);
                 el->m_pos = pos;
-                // Calculate element bounds
-                el->calc_bounds();
             }
+
+            // Calculate element bounds
+            el->calc_bounds();
 
             if(el_position == element_position_fixed)
             {
@@ -1023,17 +1024,6 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
         return;
     }
 
-    if(clip)
-    {
-        auto bounds  = m_bounds;
-        bounds.x    += x - get_scroll_left();
-        bounds.y    += y - get_scroll_top();
-        if(!clip->does_intersect(&bounds))
-        {
-            return;
-        }
-    }
-
     std::map<int, bool> z_indexes;
     if(with_positioned)
     {
@@ -1050,9 +1040,26 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
             }
         }
     }
-    draw_children(hdc, x, y, clip, draw_block, 0);
-    draw_children(hdc, x, y, clip, draw_floats, 0);
-    draw_children(hdc, x, y, clip, draw_inlines, 0);
+
+    bool process = true;
+    if(clip)
+    {
+        auto bounds  = m_bounds;
+        bounds.x    += x - get_scroll_left();
+        bounds.y    += y - get_scroll_top();
+        if(!clip->does_intersect(&bounds))
+        {
+            process = false;
+        }
+    }
+
+    if(process)
+    {
+        draw_children(hdc, x, y, clip, draw_block, 0);
+        draw_children(hdc, x, y, clip, draw_floats, 0);
+        draw_children(hdc, x, y, clip, draw_inlines, 0);
+    }
+
     if(with_positioned)
     {
         for(auto& z_index : z_indexes)
@@ -1076,7 +1083,7 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
 void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag,
                                           int zindex)
 {
-    if(clip)
+    if(clip && flag != draw_positioned)
     {
         auto bounds  = m_bounds;
         bounds.x    += x - get_scroll_left();
