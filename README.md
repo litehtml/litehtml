@@ -1,38 +1,163 @@
-# What is litehtml?
+# litehtml
 
-**litehtml** is the lightweight HTML rendering engine with CSS2/CSS3 support. Note that **litehtml** itself does not draw any text, pictures or other graphics and that **litehtml** does not depend on any image/draw/font library. You are free to use any library to draw images, fonts and any other graphics. **litehtml** just parses HTML/CSS and places the HTML elements into the correct positions (renders HTML). To draw the HTML elements you have to implement the simple callback interface [document_container](https://github.com/litehtml/litehtml/wiki/document_container). This interface is really simple, check it out! The [document_container](https://github.com/litehtml/litehtml/wiki/document_container) implementation is required to render HTML correctly.
+**litehtml** is a lightweight HTML rendering engine with CSS2/CSS3 support.
 
-# Where litehtml can be used
+Note that **litehtml** itself does not draw any text, images, or other graphics, and it
+does not depend on any image, drawing, or font library. You are free to use any library
+to draw images, fonts, and other graphics. **litehtml** only parses HTML/CSS and computes
+the layout (that is, it places the HTML elements in the correct positions).
 
-**litehtml** can be used when you need to show HTML formatted text or even to create a mini-browser, but using it as a full-featured HTML engine is not recommended. Usually you don't need something like WebKit to show simple HTML tooltips or HTML-formatted text, **litehtml** is much better for these as it's more lightweight and easier to integrate into your application.
+To draw the rendered elements you have to implement the simple
+[document_container](doc/document_container.md) callback interface. This interface is
+deliberately small and easy to implement, and it is required to render HTML correctly.
+
+## Table of contents
+
+- [Where litehtml can be used](#where-litehtml-can-be-used)
+- [Requirements](#requirements)
+- [Building](#building)
+- [Directory structure](#directory-structure)
+- [Quick example](#quick-example)
+- [Testing](#testing)
+- [HTML Parser](#html-parser)
+- [Supported standards](#supported-standards)
+- [Documentation](#documentation)
+- [License](#license)
+- [Links](#links)
+
+## Where litehtml can be used
+
+**litehtml** is a good fit when you need to display HTML-formatted text or even build a
+mini-browser. Using it as a full-featured browser engine is not recommended.
+
+For simple HTML tooltips or HTML-formatted text you usually don't need something as heavy
+as WebKit. **litehtml** is much lighter and easier to integrate into your application.
+
+## Requirements
+
+- A C++17 compiler.
+- [CMake](https://cmake.org/) 3.11 or newer (to build with CMake).
+- No third-party dependencies: the HTML parser (gumbo) is bundled.
+
+**litehtml** is compatible with any platform supported by C++ and the STL. On Windows, a
+recent version of Visual Studio (MSVC) is recommended. **litehtml** works with UTF-8
+strings only.
+
+## Building
+
+Configure and build the library with CMake:
+
+```sh
+cmake -B build
+cmake --build build
+```
+
+This builds the `litehtml` library together with the bundled gumbo parser.
+
+To install the library, headers, and CMake package:
+
+```sh
+cmake --install build
+```
+
+### CMake options
+
+| Option                   | Default | Description                                                        |
+| ------------------------ | ------- | ------------------------------------------------------------------ |
+| `LITEHTML_BUILD_TESTING` | `OFF`   | Download and build the litehtml test suite.                        |
+| `LITEHTML_ENABLE_LINT`   | `ON`    | Run clang-tidy during the build.                                   |
+| `EXTERNAL_GUMBO`         | `OFF`   | Link against a system-installed gumbo instead of the bundled copy. |
+
+> **Note:** `LITEHTML_BUILD_TESTING` does not simply enable CTest. It fetches and builds
+> the separate [litehtml-tests](https://github.com/litehtml/litehtml-tests) project.
+
+## Directory structure
+
+```
+litehtml/
+├── cmake/          CMake package configuration (litehtmlConfig.cmake)
+├── containers/     Reference document_container implementations (cairo, haiku, test, windows)
+├── doc/            Documentation and integration guide
+├── include/
+│   ├── litehtml.h  Umbrella public header
+│   └── litehtml/   Public API headers
+├── src/            Library implementation (.cpp files)
+│   └── gumbo/      Vendored gumbo HTML parser (C99)
+└── support/        Integration helpers (draw_buffer, gtkmm4, webpage)
+```
+
+The `containers/` and `support/` directories are not part of the library build; they serve
+as integration examples and helpers.
+
+## Quick example
+
+Integrating litehtml means implementing `litehtml::document_container` and creating a
+document:
+
+```cpp
+#include "litehtml.h"
+
+// Implement litehtml::document_container to draw text and images and to load resources.
+class my_container : public litehtml::document_container
+{
+    // ...
+};
+
+int main()
+{
+    my_container container;
+
+    auto doc = litehtml::document::createFromString(
+        "<html><body>Hello, <b>world</b>!</body></html>", &container);
+
+    doc->render(800); // returns the optimal document width
+    doc->draw(nullptr, 0, 0, nullptr);
+
+    return 0;
+}
+```
+
+For a complete walkthrough of the document lifecycle (render → width/height → draw →
+mouse/scroll/anchors), see [doc/using.md](doc/using.md).
+
+## Testing
+
+The rendering tests live in a separate repository,
+[litehtml-tests](https://github.com/litehtml/litehtml-tests). Refer to that repository for
+instructions on running the test suite.
 
 ## HTML Parser
 
-**litehtml** uses the [gumbo-parser](https://codeberg.org/gumbo-parser/gumbo-parser) to parse HTML. Gumbo is an implementation of the HTML5 parsing algorithm implemented as a pure C99 library with no outside dependencies. It's designed to serve as a building block for other tools and libraries such as linters, validators, templating languages, and refactoring and analysis tools.
+**litehtml** uses [gumbo-parser](https://codeberg.org/gumbo-parser/gumbo-parser) to parse
+HTML. Gumbo is an implementation of the HTML5 parsing algorithm written as a pure C99
+library with no outside dependencies. It is designed to serve as a building block for
+other tools and libraries such as linters, validators, templating languages, and
+refactoring and analysis tools.
 
-## Compatibility
+## Supported standards
 
-**litehtml** is compatible with any platform supported by C++ and STL. For Windows MS Visual Studio 2013 is recommended. **litehtml** supports only UTF-8 strings.
+**litehtml** is not yet fully compatible with the HTML/CSS standards. There is still a lot
+of work to do to match modern browsers, but **litehtml** supports most HTML tags and CSS
+properties. See [doc/css_support.md](doc/css_support.md) for the list of supported CSS
+properties and selectors.
 
-## Support for HTML and CSS standards
+## Documentation
 
-Unfortunately **litehtml** is not fully compatible with HTML/CSS standards. There is lots of work to do to make **litehtml** work as well as modern browsers. But **litehtml** supports most HTML tags and CSS properties. You can find the list of supported CSS properties in  [this table](https://docs.google.com/spreadsheet/ccc?key=0AvHXl5n24PuhdHdELUdhaUl4OGlncXhDcDJuM1JpMnc&usp=sharing). For most simple usecases the HTML/CSS features supported by **litehtml** are enough. Right now **litehtml** supports even some pages with very complex HTML/CSS designs. As an example the pages created with [bootstrap framework](http://getbootstrap.com/) are usually well formatted by **litehtml**.
-
-## Testing litehtml
-
-You can [download the simple browser](http://www.litehtml.com/download.html) (**litebrowser**) to test the **litehtml** rendering engine.
-
-The litebrowser source codes are available on GitHub:
-  * [For Windows](https://github.com/litehtml/litebrowser)
-  * [For Linux](https://github.com/litehtml/litebrowser-linux)
-  * [For Haiku](https://github.com/adamfowleruk/litebrowser-haiku)
+- [How to use litehtml](doc/using.md)
+- [document_container interface](doc/document_container.md)
+- [document::createFromString](doc/document_createFromString.md)
+- [Supported CSS properties and selectors](doc/css_support.md)
 
 ## License
 
-**litehtml** is distributed under [New BSD License](https://opensource.org/licenses/BSD-3-Clause).
-The **gumbo-parser** is distributed under [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0)
+**litehtml** is distributed under the [New BSD License](https://opensource.org/licenses/BSD-3-Clause).
+
+**gumbo-parser** is distributed under the [Apache License, Version 2.0](http://www.apache.org/licenses/LICENSE-2.0).
 
 ## Links
 
-  * [source code](https://github.com/litehtml/litehtml)
-  * [website](http://www.litehtml.com/)
+- [Source code](https://github.com/litehtml/litehtml)
+- [Website](http://www.litehtml.com/)
+- [litebrowser for Windows](https://github.com/litehtml/litebrowser)
+- [litebrowser for Linux](https://github.com/litehtml/litebrowser-linux)
+- [litebrowser for Haiku](https://github.com/adamfowleruk/litebrowser-haiku)
