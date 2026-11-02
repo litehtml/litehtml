@@ -48,9 +48,9 @@ if (MSVC OR CMAKE_CXX_SIMULATE_ID STREQUAL "MSVC")
 endif()
 
 # Export gumbo includes.
-target_include_directories(${PROJECT_NAME} PUBLIC
-    $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}>/src
-    $<INSTALL_INTERFACE:include>)
+target_include_directories(${PROJECT_NAME}
+    PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/src>
+    INTERFACE $<INSTALL_INTERFACE:include>)
 
 # install and export
 install(TARGETS ${PROJECT_NAME}
