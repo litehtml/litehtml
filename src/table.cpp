@@ -309,7 +309,8 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
 }
 
 litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> block_width, bool is_auto,
-                                                         pixel_t& min_table_width, pixel_t& max_table_width)
+                                                         pixel_t& min_table_width, pixel_t& max_table_width,
+                                                         bool scale_specified)
 {
     // Calculate the minimum content width (MCW) of each cell: the formatted content may span any number of lines but
     // may not overflow the cell box. If the specified 'width' (W) of the cell is greater than MCW, W is the minimum
@@ -325,8 +326,12 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
             table_cell* cell = this->cell(col, row);
             if(cell && cell->el)
             {
-                cell->min_width = cell->el->get_intrinsic_min_size().width;
-                cell->max_width = cell->el->get_intrinsic_max_size().width;
+                // natural_min_width overrides the generic intrinsic minimum with a
+                // content-only measurement when the table's max-width constrains
+                // it below the specified column width -- see its declaration.
+                cell->min_width = cell->natural_min_width.has_value() ? cell->natural_min_width.value()
+                                                                       : cell->el->get_intrinsic_min_size().width;
+                cell->max_width = std::max(cell->el->get_intrinsic_max_size().width, cell->min_width);
             }
         }
     }
@@ -515,6 +520,35 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
                 if(cur_width <= block_width || !shrunk)
                 {
                     break;
+                }
+            }
+        }
+        // Only when the table is actually constrained by something beyond its own
+        // specified column widths (see table_cell::natural_min_width and the
+        // scale_specified gate in render_item_table::_render). Unconditional
+        // scale-down would shrink specified cells after the table's own borders
+        // are subtracted even when nothing external constrains it (floats-038:
+        // 0.5in cell on a 0.5in table). As CSS Tables 3 sizes a table between its
+        // minimum and preferred widths: every column keeps its min_width and gives
+        // up the same share of what it has above it. Below GRIDMIN all columns
+        // stay at min_width.
+        if(scale_specified && cur_width > block_width)
+        {
+            pixel_t min_width;
+            for(int col = 0; col < m_cols_count; col++)
+            {
+                min_width += m_columns[col].min_width;
+            }
+            const pixel_t excess = cur_width - min_width;
+            if(excess > 0_px)
+            {
+                const pixel_t keep = std::max(block_width.value() - min_width, 0_px) / excess;
+                cur_width          = 0;
+                for(int col = 0; col < m_cols_count; col++)
+                {
+                    m_columns[col].width =
+                        m_columns[col].min_width + (m_columns[col].width - m_columns[col].min_width) * keep;
+                    cur_width += m_columns[col].width;
                 }
             }
         }
