@@ -153,6 +153,13 @@ namespace litehtml
         pixel_t                      width;
         pixel_t                      height;
         margins                      borders;
+        // Content-only minimum width for a cell with a specified (non-percentage)
+        // column width, measured by actually rendering it at its narrowest
+        // possible width. Set only when the table's max-width constrains it below
+        // the specified width (see table_grid::calc_table_width's scale_specified
+        // parameter); unset otherwise, in which case the specified width is used
+        // as both the minimum and the maximum, per CSS 2.1 table layout.
+        std::optional<pixel_t>       natural_min_width;
 
         table_cell()
         {
@@ -169,30 +176,32 @@ namespace litehtml
 
         table_cell(const table_cell& val)
         {
-            el         = val.el;
-            colspan    = val.colspan;
-            rowspan    = val.rowspan;
-            width      = val.width;
-            height     = val.height;
-            min_width  = val.min_width;
-            min_height = val.min_height;
-            max_width  = val.max_width;
-            max_height = val.max_height;
-            borders    = val.borders;
+            el                = val.el;
+            colspan           = val.colspan;
+            rowspan           = val.rowspan;
+            width             = val.width;
+            height            = val.height;
+            min_width         = val.min_width;
+            min_height        = val.min_height;
+            max_width         = val.max_width;
+            max_height        = val.max_height;
+            borders           = val.borders;
+            natural_min_width = val.natural_min_width;
         }
 
         table_cell(table_cell&& val) noexcept
         {
-            el         = std::move(val.el);
-            colspan    = val.colspan;
-            rowspan    = val.rowspan;
-            width      = val.width;
-            height     = val.height;
-            min_width  = val.min_width;
-            min_height = val.min_height;
-            max_width  = val.max_width;
-            max_height = val.max_height;
-            borders    = val.borders;
+            el                = std::move(val.el);
+            colspan           = val.colspan;
+            rowspan           = val.rowspan;
+            width             = val.width;
+            height            = val.height;
+            min_width         = val.min_width;
+            min_height        = val.min_height;
+            max_width         = val.max_width;
+            max_height        = val.max_height;
+            borders           = val.borders;
+            natural_min_width = std::move(val.natural_min_width);
         }
     };
 
@@ -269,7 +278,7 @@ namespace litehtml
         void    distribute_width(pixel_t width, int start, int end);
         void    distribute_width(pixel_t width, int start, int end, table_column_accessor* acc);
         pixel_t calc_table_width(std::optional<pixel_t> block_width, bool is_auto, pixel_t& min_table_width,
-                                 pixel_t& max_table_width);
+                                 pixel_t& max_table_width, bool scale_specified = false);
         void    calc_horizontal_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_x);
         void    calc_vertical_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_y);
         void    calc_rows_height(pixel_t blockHeight, pixel_t borderSpacingY);
