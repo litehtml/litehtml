@@ -58,7 +58,7 @@ Checks: >
   modernize-use-override,
   modernize-use-transparent-functors,
   modernize-use-using,
-  performance-faster-string-find,
+  performance-prefer-single-char-overloads,
   performance-for-range-copy,
   performance-implicit-conversion-in-loop,
   performance-inefficient-algorithm,

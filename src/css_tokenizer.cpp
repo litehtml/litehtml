@@ -236,7 +236,7 @@ namespace litehtml
                     break;
                 }
                 // Otherwise, if the next input code point is a newline, consume it.
-                else if(str[index] == '\n')
+                if(str[index] == '\n')
                 {
                     index++;
                 }
@@ -251,11 +251,11 @@ namespace litehtml
                 if(ch == ending_code_point)
                 {
                     return token;
-                } else // anything else
-                {
-                    // Append the current input code point to the <string-token>’s value.
-                    append_char(token.str(), ch);
                 }
+                // anything else
+                // Append the current input code point to the <string-token>’s value.
+                append_char(token.str(), ch);
+
                 break;
             }
         }

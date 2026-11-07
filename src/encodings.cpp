@@ -5456,98 +5456,97 @@ namespace litehtml
             {
                 m_state = ESCAPE_START;
                 return result_continue;
-            } else if(b >= 0 && b <= 0x7F && b != 0x0E && b != 0x0F && b != 0x1B)
+            }
+            if(b >= 0 && b <= 0x7F && b != 0x0E && b != 0x0F && b != 0x1B)
             {
                 m_output = false;
                 *ch      = b;
                 return result_codepoint;
-            } else if(b == EOF)
+            }
+            if(b == EOF)
             {
                 return result_finished;
-            } else
-            {
-                m_output = false;
-                return result_error;
             }
-            break;
+            m_output = false;
+            return result_error;
 
         case ROMAN:
             if(b == 0x1B)
             {
                 m_state = ESCAPE_START;
                 return result_continue;
-            } else if(b == 0x5C)
+            }
+            if(b == 0x5C)
             {
                 m_output = false;
                 *ch      = 0xA5;
                 return result_codepoint;
-            } else if(b == 0x7E)
+            }
+            if(b == 0x7E)
             {
                 m_output = false;
                 *ch      = 0x203E;
                 return result_codepoint;
-            } else if(b >= 0 && b <= 0x7F && b != 0x0E && b != 0x0F && b != 0x1B && b != 0x5C && b != 0x7E)
+            }
+            if(b >= 0 && b <= 0x7F && b != 0x0E && b != 0x0F && b != 0x1B && b != 0x5C && b != 0x7E)
             {
                 m_output = false;
                 *ch      = b;
                 return result_codepoint;
-            } else if(b == EOF)
+            }
+            if(b == EOF)
             {
                 return result_finished;
-            } else
-            {
-                m_output = false;
-                return result_error;
             }
-            break;
+            m_output = false;
+            return result_error;
 
         case KATAKANA:
             if(b == 0x1B)
             {
                 m_state = ESCAPE_START;
                 return result_continue;
-            } else if(b >= 0x21 && b <= 0x5F)
+            }
+            if(b >= 0x21 && b <= 0x5F)
             {
                 m_output = false;
                 *ch      = 0xFF61 - 0x21 + b;
                 return result_codepoint;
-            } else if(b == EOF)
+            }
+            if(b == EOF)
             {
                 return result_finished;
-            } else
-            {
-                m_output = false;
-                return result_error;
             }
-            break;
+            m_output = false;
+            return result_error;
 
         case LEAD_BYTE:
             if(b == 0x1B)
             {
                 m_state = ESCAPE_START;
                 return result_continue;
-            } else if(b >= 0x21 && b <= 0x7E)
+            }
+            if(b >= 0x21 && b <= 0x7E)
             {
                 m_output = false;
                 m_lead   = b;
                 m_state  = TRAIL_BYTE;
                 return result_continue;
-            } else if(b == EOF)
+            }
+            if(b == EOF)
             {
                 return result_finished;
-            } else
-            {
-                m_output = false;
-                return result_error;
             }
-            break;
+            m_output = false;
+            return result_error;
 
         case TRAIL_BYTE:
             if(b == 0x1B)
             {
                 m_state = ESCAPE_START;
                 return result_error;
-            } else if(b >= 0x21 && b <= 0x7E)
+            }
+            if(b >= 0x21 && b <= 0x7E)
             {
                 m_state        = LEAD_BYTE;
                 int pointer    = (m_lead - 0x21) * 94 + b - 0x21;
@@ -5558,16 +5557,14 @@ namespace litehtml
                 }
                 *ch = code_point;
                 return result_codepoint;
-            } else if(b == EOF) // same as last else
-            {
-                m_state = LEAD_BYTE;
-                return result_error;
-            } else
+            }
+            if(b == EOF) // same as last else
             {
                 m_state = LEAD_BYTE;
                 return result_error;
             }
-            break;
+            m_state = LEAD_BYTE;
+            return result_error;
 
         case ESCAPE_START:
             // 1.
@@ -7994,10 +7991,9 @@ namespace litehtml
         if(is_whitespace(str[index]) || str[index] == '>')
         {
             return true;
-        } else // A..Z or anything else
-        {
-            value += static_cast<char>(lowcase(str[index]));
         }
+        // A..Z or anything else
+        value += static_cast<char>(lowcase(str[index]));
 
         // 12.
         increment(index, str);

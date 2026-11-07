@@ -1190,7 +1190,7 @@ namespace litehtml
             {
                 if(lm.font)
                 {
-                    marker_text   += ".";
+                    marker_text   += '.';
                     auto tw        = get_document()->container()->text_width(marker_text.c_str(), lm.font);
                     auto text_pos  = lm.pos;
                     text_pos.move_to(text_pos.right() - tw, text_pos.y);

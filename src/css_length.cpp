@@ -86,7 +86,7 @@ namespace litehtml
         }
         std::string res  = std::to_string(m_value) + "{";
         res             += css_values(css_units_strings).value_by_index(m_units);
-        res             += "}";
+        res             += '}';
         return res;
     }
 
