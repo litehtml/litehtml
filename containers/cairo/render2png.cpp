@@ -271,6 +271,7 @@ namespace html2png
         int wheel_at_x = cfg.get_int("wheelatx", 0);
         int wheel_at_y = cfg.get_int("wheelaty", 0);
         int wheel_dy   = cfg.get_int("wheely", 0);
+        int wheel_dx   = cfg.get_int("wheelx", 0);
 
         auto* surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
         if(surface)
@@ -285,9 +286,9 @@ namespace html2png
             cairo_restore(cr);
 
             // Draw document
-            if(wheel_dy != 0)
+            if(wheel_dy != 0 || wheel_dx != 0)
             {
-                doc->on_scroll(0, wheel_dy, wheel_at_x - draw_x, wheel_at_y - draw_y, wheel_at_x, wheel_at_y);
+                doc->on_scroll(wheel_dx, wheel_dy, wheel_at_x - draw_x, wheel_at_y - draw_y, wheel_at_x, wheel_at_y);
             }
             litehtml::position clip(0, 0, width, height);
             doc->draw(reinterpret_cast<litehtml::uint_ptr>(cr), draw_x, draw_y, &clip);
