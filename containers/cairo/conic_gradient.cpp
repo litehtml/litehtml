@@ -2,6 +2,11 @@
 
 #define INTERPOLATE_COLOR(C1, C2, t) (((C2) - (C1)) * (t) + (C1))
 
+static double interpolate_channel(litehtml::byte color_A, litehtml::byte color_B, double weight)
+{
+    return (color_A + (color_B - color_A) * weight) / 255.0;
+}
+
 static void sector_patch(cairo_pattern_t* pattern, double radius, double angle_A, double A_r, double A_g, double A_b,
                          double A_a, double angle_B, double B_r, double B_g, double B_b, double B_a)
 {
@@ -49,7 +54,7 @@ cairo_pattern_t* create_conic_gradient_pattern(double angle, double radius,
         return nullptr;
     }
 
-    if(color_points.size() == 2)
+    if(color_points.size() == 2 && !color_points[0].hint)
     {
         std::vector<bg_color_point> points;
         points.push_back(color_points[0]);
@@ -71,24 +76,70 @@ cairo_pattern_t* create_conic_gradient_pattern(double angle, double radius,
 
     cairo_pattern_t* pattern = cairo_pattern_create_mesh();
 
+    constexpr size_t hint_subdivisions = 64;
+
     for(size_t i = 0; i < color_points.size() - 1; ++i)
     {
-        const bg_color_point& cp_A    = color_points[i];
-        const bg_color_point& cp_B    = color_points[i + 1];
-        double                angle_A = cp_A.offset * two_pi + angle;
-        double                angle_B = color_points[i + 1].offset * two_pi + angle;
+        const bg_color_point& cp_A     = color_points[i];
+        const bg_color_point& cp_B     = color_points[i + 1];
+        const double          offset_A = cp_A.offset;
+        const double          offset_B = cp_B.offset;
 
-        double A_r = cp_A.color.red / 255.0;
-        double A_g = cp_A.color.green / 255.0;
-        double A_b = cp_A.color.blue / 255.0;
-        double A_a = cp_A.color.alpha / 255.0;
+        auto add_sector = [&](double start_offset, double start_weight, double end_offset, double end_weight) {
+            double angle_A = start_offset * two_pi + angle;
+            double angle_B = end_offset * two_pi + angle;
 
-        double B_r = cp_B.color.red / 255.0;
-        double B_g = cp_B.color.green / 255.0;
-        double B_b = cp_B.color.blue / 255.0;
-        double B_a = cp_B.color.alpha / 255.0;
+            sector_patch(pattern, radius, angle_A, interpolate_channel(cp_A.color.red, cp_B.color.red, start_weight),
+                         interpolate_channel(cp_A.color.green, cp_B.color.green, start_weight),
+                         interpolate_channel(cp_A.color.blue, cp_B.color.blue, start_weight),
+                         interpolate_channel(cp_A.color.alpha, cp_B.color.alpha, start_weight), angle_B,
+                         interpolate_channel(cp_A.color.red, cp_B.color.red, end_weight),
+                         interpolate_channel(cp_A.color.green, cp_B.color.green, end_weight),
+                         interpolate_channel(cp_A.color.blue, cp_B.color.blue, end_weight),
+                         interpolate_channel(cp_A.color.alpha, cp_B.color.alpha, end_weight));
+        };
 
-        sector_patch(pattern, radius, angle_A, A_r, A_g, A_b, A_a, angle_B, B_r, B_g, B_b, B_a);
+        const double offset_span = offset_B - offset_A;
+        if(cp_A.hint && offset_span > 0.0)
+        {
+            const double hint_fraction = (*cp_A.hint - offset_A) / offset_span;
+            if(hint_fraction > 0.0 && hint_fraction < 1.0)
+            {
+                const double exponent    = log(0.5) / log(hint_fraction);
+                size_t       before_hint = static_cast<size_t>(hint_fraction * hint_subdivisions);
+                if(before_hint == 0)
+                {
+                    before_hint = 1;
+                } else if(before_hint >= hint_subdivisions)
+                {
+                    before_hint = hint_subdivisions - 1;
+                }
+
+                double previous_offset = offset_A;
+                double previous_weight = 0.0;
+                for(size_t step = 1; step <= hint_subdivisions; ++step)
+                {
+                    double fraction;
+                    if(step <= before_hint)
+                    {
+                        fraction = hint_fraction * step / before_hint;
+                    } else
+                    {
+                        fraction = hint_fraction +
+                                   (1.0 - hint_fraction) * (step - before_hint) / (hint_subdivisions - before_hint);
+                    }
+
+                    double next_offset = offset_A + offset_span * fraction;
+                    double next_weight = pow(fraction, exponent);
+                    add_sector(previous_offset, previous_weight, next_offset, next_weight);
+                    previous_offset = next_offset;
+                    previous_weight = next_weight;
+                }
+                continue;
+            }
+        }
+
+        add_sector(offset_A, 0.0, offset_B, 1.0);
     }
 
     return pattern;
