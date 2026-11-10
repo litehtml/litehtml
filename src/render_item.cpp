@@ -1215,6 +1215,17 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
         }
     }
 
+    if(flag != draw_positioned)
+    {
+        auto bounds  = m_bounds;
+        bounds.x    -= get_scroll_left();
+        bounds.y    -= get_scroll_top();
+        if(!bounds.is_point_inside(x, y))
+        {
+            return nullptr;
+        }
+    }
+
     element::ptr ret = nullptr;
 
     position el_pos = m_pos;
@@ -1410,22 +1421,35 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(
         }
     }
 
-    ret = get_child_by_point(x, y, client_x, client_y, draw_inlines, 0, check);
-    if(ret)
+    bool process  = true;
+    auto bounds   = m_bounds;
+    bounds.x     -= get_scroll_left();
+    bounds.y     -= get_scroll_top();
+    if(!bounds.is_point_inside(x, y))
     {
-        return ret;
+        process = false;
     }
 
-    ret = get_child_by_point(x, y, client_x, client_y, draw_floats, 0, check);
-    if(ret)
+    if(process)
     {
-        return ret;
-    }
 
-    ret = get_child_by_point(x, y, client_x, client_y, draw_block, 0, check);
-    if(ret)
-    {
-        return ret;
+        ret = get_child_by_point(x, y, client_x, client_y, draw_inlines, 0, check);
+        if(ret)
+        {
+            return ret;
+        }
+
+        ret = get_child_by_point(x, y, client_x, client_y, draw_floats, 0, check);
+        if(ret)
+        {
+            return ret;
+        }
+
+        ret = get_child_by_point(x, y, client_x, client_y, draw_block, 0, check);
+        if(ret)
+        {
+            return ret;
+        }
     }
 
     for(auto iter = z_indexes.rbegin(); iter != z_indexes.rend(); ++iter)
