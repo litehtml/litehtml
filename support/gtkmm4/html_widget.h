@@ -203,11 +203,14 @@ class html_widget_notifier : public litebrowser::browser_notify_interface
 
 class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
 {
-    int                                    m_rendered_width                = 0;
-    int                                    m_rendered_height               = 0;
-    double                                 m_mouse_x                       = 0;
-    double                                 m_mouse_y                       = 0;
-    bool                                   m_do_force_redraw_on_adjustment = true;
+    int    m_rendered_width        = 0;
+    int    m_rendered_height       = 0;
+    double m_mouse_x               = 0;
+    double m_mouse_y               = 0;
+    double m_accumulated_scroll_dx = 0;
+    double m_accumulated_scroll_dy = 0;
+    guint  m_tick_id               = 0;
+
     std::mutex                             m_page_mutex;
     std::shared_ptr<litebrowser::web_page> m_current_page;
     std::shared_ptr<litebrowser::web_page> m_next_page;
@@ -218,6 +221,8 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
     Gtk::Scrollbar*               m_hscrollbar;
     Glib::RefPtr<Gtk::Adjustment> m_vadjustment;
     Glib::RefPtr<Gtk::Adjustment> m_hadjustment;
+
+    Glib::RefPtr<Gtk::EventControllerScroll> m_scroll_controller;
 
     sigc::connection m_scrollbar_timer;
 
@@ -290,13 +295,8 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
 
     void update_view_port(std::shared_ptr<litebrowser::web_page> page);
     void restart_scrollbar_timer();
-    void force_redraw()
-    {
-        queue_draw();
-        while(g_main_context_iteration(nullptr, false))
-        {
-        }
-    }
+    bool on_frame_tick(const Glib::RefPtr<Gdk::FrameClock>& frame_clock);
+
     litebrowser::draw_buffer::draw_page_function_t get_draw_function(const std::shared_ptr<litebrowser::web_page>& page)
     {
         return [page](cairo_t* cr, int x, int y, const litehtml::position* clip) {

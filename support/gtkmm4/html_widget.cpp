@@ -35,10 +35,10 @@ html_widget::html_widget()
     m_hscrollbar->add_css_class("bottom");
     m_hscrollbar->add_css_class("overlay-indicator");
 
-    auto controller = Gtk::EventControllerScroll::create();
-    controller->set_flags(Gtk::EventControllerScroll::Flags::BOTH_AXES);
-    controller->signal_scroll().connect(sigc::mem_fun(*this, &html_widget::on_scroll), false);
-    add_controller(controller);
+    m_scroll_controller = Gtk::EventControllerScroll::create();
+    m_scroll_controller->set_flags(Gtk::EventControllerScroll::Flags::BOTH_AXES);
+    m_scroll_controller->signal_scroll().connect(sigc::mem_fun(*this, &html_widget::on_scroll), false);
+    add_controller(m_scroll_controller);
 
     auto click_gesture = Gtk::GestureClick::create();
     click_gesture->set_button(GDK_BUTTON_PRIMARY);
@@ -408,7 +408,6 @@ void html_widget::size_allocate_vfunc(int width, int height, int /* baseline */)
 
 void html_widget::allocate_scrollbars(int width, int height)
 {
-    m_do_force_redraw_on_adjustment = false;
     m_hadjustment->set_page_size(width);
     m_vadjustment->set_page_size(height);
     if(m_vadjustment->get_value() > m_vadjustment->get_upper() - m_vadjustment->get_page_size())
@@ -419,7 +418,6 @@ void html_widget::allocate_scrollbars(int width, int height)
     {
         m_hadjustment->set_value(m_hadjustment->get_upper() - m_hadjustment->get_page_size());
     }
-    m_do_force_redraw_on_adjustment = true;
 
     int minimum = 0, natural = 0, m_baseline = 0, n_baseline = 0;
 
@@ -439,13 +437,7 @@ void html_widget::on_vadjustment_changed()
     m_draw_buffer.on_scroll(get_draw_function(page), (int) m_hadjustment->get_value(), (int) m_vadjustment->get_value(),
                             page ? page->get_fixed_boxes() : litehtml::position::vector{});
 
-    if(m_do_force_redraw_on_adjustment)
-    {
-        force_redraw();
-    } else
-    {
-        queue_draw();
-    }
+    queue_draw();
 }
 
 void html_widget::on_hadjustment_changed()
@@ -454,13 +446,7 @@ void html_widget::on_hadjustment_changed()
     m_draw_buffer.on_scroll(get_draw_function(page), (int) m_hadjustment->get_value(), (int) m_vadjustment->get_value(),
                             page ? page->get_fixed_boxes() : litehtml::position::vector{});
 
-    if(m_do_force_redraw_on_adjustment)
-    {
-        force_redraw();
-    } else
-    {
-        queue_draw();
-    }
+    queue_draw();
 }
 
 void html_widget::on_adjustments_changed()
@@ -471,13 +457,34 @@ void html_widget::on_adjustments_changed()
 
 bool html_widget::on_scroll(double dx, double dy)
 {
+    m_accumulated_scroll_dx += dx;
+    m_accumulated_scroll_dy += dy;
+    if(m_tick_id == 0)
+    {
+        m_tick_id = add_tick_callback(sigc::mem_fun(*this, &html_widget::on_frame_tick));
+    }
+    return true;
+}
+
+bool html_widget::on_frame_tick(const Glib::RefPtr<Gdk::FrameClock>& /* frame_clock */)
+{
+    auto   unit     = m_scroll_controller->get_unit();
+    double final_dx = m_accumulated_scroll_dx;
+    double final_dy = m_accumulated_scroll_dy;
+
+    if(unit == Gdk::ScrollUnit::WHEEL)
+    {
+        final_dx *= 60.0;
+        final_dy *= 60.0;
+    }
+
     auto page = current_page();
     if(page)
     {
-        auto values  = page->on_scroll((float) dx * 60, (float) dy * 60, (int) (m_mouse_x + m_draw_buffer.get_left()),
-                                       (int) (m_mouse_y + m_draw_buffer.get_top()), (int) m_mouse_x, (int) m_mouse_y);
         bool dx_used = false;
         bool dy_used = false;
+        auto values  = page->on_scroll((float) final_dx, (float) final_dy, (int) (m_mouse_x + m_draw_buffer.get_left()),
+                                       (int) (m_mouse_y + m_draw_buffer.get_top()), (int) m_mouse_x, (int) m_mouse_y);
         if(!values.empty())
         {
             for(const auto& val : values)
@@ -497,14 +504,17 @@ bool html_widget::on_scroll(double dx, double dy)
         }
         if(!dx_used)
         {
-            m_hadjustment->set_value(m_hadjustment->get_value() + dx * 60);
+            m_hadjustment->set_value(m_hadjustment->get_value() + final_dx);
         }
         if(!dy_used)
         {
-            m_vadjustment->set_value(m_vadjustment->get_value() + dy * 60);
+            m_vadjustment->set_value(m_vadjustment->get_value() + final_dy);
         }
     }
-    return true;
+    m_accumulated_scroll_dx = 0;
+    m_accumulated_scroll_dy = 0;
+    m_tick_id               = 0;
+    return false;
 }
 
 bool html_widget::on_scrollbar_timeout()
