@@ -25,11 +25,17 @@
   - [Recognized by the parser but never match](#recognized-by-the-parser-but-never-match)
   - [Pseudo-elements](#pseudo-elements)
   - [Test coverage](#test-coverage-1)
+- [Media queries](#media-queries)
+  - [Media types](#media-types)
+  - [Media features](#media-features)
+  - [Syntax](#syntax)
+  - [Not supported](#not-supported)
+  - [Test coverage](#test-coverage-2)
 
 ---
 
-This document describes litehtml's CSS support: which CSS properties and selectors are
-recognized, and how well each one is *actually* supported at render time. "Recognized" (the parser
+This document describes litehtml's CSS support: which CSS properties, selectors, and media
+queries are recognized, and how well each one is *actually* supported at render time. "Recognized" (the parser
 reads and stores a value) is **not** the same as "supported" (the value changes the rendered
 output). Each entry was checked by rendering a probe document and confirming the value actually
 changes the output — rather than merely being accepted by the parser.
@@ -600,3 +606,51 @@ their own:
 No dedicated active tests exist for `:root`, `:empty`, `:visited`, `:checked`, `:disabled`,
 `:where()`, `:nth-last-child()`, `:nth-last-of-type()`, `:only-child`, `:first-of-type`,
 `:last-of-type`, or `:only-of-type`.
+
+---
+
+## Media queries
+
+`@media` at-rules are supported. Media features are evaluated against the viewport/media values
+supplied by the container (width, height, media type, resolution, color depth, …).
+
+### Media types
+
+- ✅ `all`, `print`, `screen` — matched against the container's media type.
+- ⚠️ Deprecated types `tty`, `tv`, `projection`, `handheld`, `braille`, `embossed`, `aural`,
+  `speech` — recognized but always match nothing (per spec).
+- ❌ Unknown media types never match.
+
+### Media features
+
+| Feature | Type | Value |
+|---|---|---|
+| `width`, `height` | range | `<length>` |
+| `aspect-ratio` | range | `<ratio>` (e.g. `16/9`) |
+| `orientation` | discrete | `portrait` \| `landscape` |
+| `resolution` | range | `dpi` / `dpcm` / `dppx` / `x`, or `infinite` |
+| `color`, `color-index`, `monochrome` | range | `<integer>` |
+| `device-width`, `device-height`, `device-aspect-ratio` | range | `<length>` / `<ratio>` (deprecated) |
+
+### Syntax
+
+- ✅ `not` / `only` prefixes (e.g. `@media not screen`, `@media only screen`).
+- ✅ `and` / `or` combinators, including nested parenthesized conditions.
+- ✅ Boolean features — `(width)`, `(color)`.
+- ✅ Plain features — `(width: 800px)`, `(min-width: 10px)`, `(max-width: 1000px)`.
+- ✅ Range syntax — `(width > 600px)`, `(400px <= width <= 800px)`, `(width >= 600px)`.
+- ✅ An empty media query list evaluates to true.
+
+### Not supported
+
+Unknown media features are treated as "general-enclosed" and never match, so modern features such
+as `prefers-*` (`prefers-color-scheme`, `prefers-reduced-motion`, …), `hover`, `pointer`,
+`any-hover`, `any-pointer`, `grid`, `update`, `scripting`, `display-mode`, `scan`, and
+`overflow-block`/`overflow-inline` are **not** supported.
+
+### Test coverage
+
+| Feature | Active tests |
+|---|---|
+| Media queries | [media.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/media.htm) |
+| Media dependencies | [css21/media-dependency-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/media-dependency-001.htm) … `media-dependency-017.htm` (17 files) |
