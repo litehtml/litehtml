@@ -104,7 +104,7 @@ namespace litehtml
         // at-rules and their components
         _charset_, _layer_, _supports_, _import_, _media_, _and_, _or_, _boolean_, _plain_, _range_, _discrete_,
         _integer_, _length_, _resolution_, _ratio_, _keyword_, _orientation_, _portrait_, _landscape_, _device_width_,
-        _device_height_, _aspect_ratio_, _device_aspect_ratio_, _color_index_, _monochrome_, )
+        _device_height_, _aspect_ratio_, _device_aspect_ratio_, _color_index_, _monochrome_, _has_, )
 #undef STRING_ID
     extern const string_id empty_id; // _id("")
     extern const string_id star_id;  // _id("*")

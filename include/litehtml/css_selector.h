@@ -151,8 +151,8 @@ namespace litehtml
 
         std::vector<std::shared_ptr<css_selector>> selector_list; // :not(selector_list)
                                                                   //
-        int a = 0;
-        int b = 0; // :nth-child(an+b of selector_list)
+        int                                        a = 0;
+        int                                        b = 0; // :nth-child(an+b of selector_list)
 
         css_attribute_selector(attr_select_type _type = select_class, const std::string& _name = "") :
             type(_type),
