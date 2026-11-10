@@ -666,6 +666,118 @@ namespace litehtml
                 return select_no_match;
             }
             break;
+        case _has_:
+            {
+                std::function<void(const element::ptr&, std::vector<element::ptr>&)> append_descendants;
+                append_descendants = [&](const element::ptr& source, std::vector<element::ptr>& result) {
+                    for(const auto& child : source->children())
+                    {
+                        if(child->css().get_display() == display_inline_text)
+                        {
+                            continue;
+                        }
+                        result.push_back(child);
+                        append_descendants(child, result);
+                    }
+                };
+
+                auto related_elements = [&](const element::ptr& source, css_combinator combinator) {
+                    std::vector<element::ptr> result;
+                    if(combinator == combinator_descendant)
+                    {
+                        append_descendants(source, result);
+                    } else if(combinator == combinator_child)
+                    {
+                        for(const auto& child : source->children())
+                        {
+                            if(child->css().get_display() != display_inline_text)
+                            {
+                                result.push_back(child);
+                            }
+                        }
+                    } else if(combinator == combinator_adjacent_sibling || combinator == combinator_general_sibling)
+                    {
+                        auto sibling_parent = source->parent();
+                        if(!sibling_parent)
+                        {
+                            return result;
+                        }
+
+                        bool found_source = false;
+                        for(const auto& sibling : sibling_parent->children())
+                        {
+                            if(sibling->css().get_display() == display_inline_text)
+                            {
+                                continue;
+                            }
+                            if(found_source)
+                            {
+                                result.push_back(sibling);
+                                if(combinator == combinator_adjacent_sibling)
+                                {
+                                    break;
+                                }
+                            } else if(sibling == source)
+                            {
+                                found_source = true;
+                            }
+                        }
+                    }
+                    return result;
+                };
+
+                bool matches = false;
+                for(const auto& relative_selector : sel.selector_list)
+                {
+                    std::vector<const css_selector*>         selector_chain;
+                    std::function<void(const css_selector&)> append_selector_chain;
+                    append_selector_chain = [&](const css_selector& selector) {
+                        if(selector.m_left)
+                        {
+                            append_selector_chain(*selector.m_left);
+                        }
+                        selector_chain.push_back(&selector);
+                    };
+                    append_selector_chain(*relative_selector);
+
+                    std::vector<element::ptr> candidates =
+                        related_elements(shared_from_this(), selector_chain.front()->m_combinator);
+                    candidates.erase(std::remove_if(candidates.begin(), candidates.end(),
+                                                    [&](const element::ptr& el) {
+                                                        return el->select(selector_chain.front()->m_right) ==
+                                                               select_no_match;
+                                                    }),
+                                     candidates.end());
+
+                    for(size_t i = 1; i < selector_chain.size() && !candidates.empty(); i++)
+                    {
+                        std::vector<element::ptr> next_candidates;
+                        for(const auto& candidate : candidates)
+                        {
+                            auto related = related_elements(candidate, selector_chain[i]->m_combinator);
+                            for(const auto& related_candidate : related)
+                            {
+                                if(related_candidate->select(selector_chain[i]->m_right) != select_no_match)
+                                {
+                                    next_candidates.push_back(related_candidate);
+                                }
+                            }
+                        }
+                        candidates = std::move(next_candidates);
+                    }
+
+                    if(!candidates.empty())
+                    {
+                        matches = true;
+                        break;
+                    }
+                }
+                if(!matches)
+                {
+                    return select_no_match;
+                }
+            }
+            break;
         case _lang_:
             if(!get_document()->match_lang(sel.value))
             {

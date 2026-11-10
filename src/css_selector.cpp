@@ -21,6 +21,20 @@ namespace litehtml
             {
                 continue;
             }
+            if(attr.type == select_pseudo_class && is_one_of(attr.name, _is_, _not_, _has_))
+            {
+                selector_specificity max_specificity;
+                for(const auto& argument : attr.selector_list)
+                {
+                    argument->calc_specificity();
+                    if(argument->m_specificity > max_specificity)
+                    {
+                        max_specificity = argument->m_specificity;
+                    }
+                }
+                m_specificity += max_specificity;
+                continue;
+            }
             if(attr.type == select_id)
             {
                 m_specificity.b++;
@@ -412,6 +426,8 @@ namespace litehtml
         return selector;
     }
 
+    css_selector::vector parse_relative_selector_list(const css_token_vector& tokens, document_mode mode);
+
     css_attribute_selector parse_function_pseudo_class(const css_token& token, document_mode mode)
     {
         std::string name = lowcase(token.name());
@@ -440,6 +456,16 @@ namespace litehtml
             // "taking a selector list as an argument"
             // "Pseudo-elements... are not valid within :not()."
             selector.selector_list = parse_selector_list(token.value, strict_mode + forbid_pseudo_elements, mode);
+            if(selector.selector_list.empty())
+            {
+                return {};
+            }
+            return selector;
+        }
+        if(name == "has") // https://www.w3.org/TR/selectors-4/#relational
+        {
+            css_attribute_selector selector(select_pseudo_class, name);
+            selector.selector_list = parse_relative_selector_list(token.value, mode);
             if(selector.selector_list.empty())
             {
                 return {};
@@ -837,6 +863,67 @@ namespace litehtml
             result.push_back(selector);
         }
 
+        return result;
+    }
+
+    bool contains_has_function(const css_token_vector& tokens)
+    {
+        for(const auto& token : tokens)
+        {
+            if(token.type == CV_FUNCTION && lowcase(token.name()) == "has")
+            {
+                return true;
+            }
+            if(contains_has_function(token.value))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    css_selector::vector parse_relative_selector_list(const css_token_vector& tokens, document_mode mode)
+    {
+        css_selector::vector result;
+        for(const auto& relative_tokens : parse_comma_separated_list(tokens))
+        {
+            if(contains_has_function(relative_tokens))
+            {
+                return {};
+            }
+
+            int index = 0;
+            skip_whitespace(relative_tokens, index);
+            if(index == static_cast<int>(relative_tokens.size()))
+            {
+                return {};
+            }
+
+            css_combinator leading_combinator = combinator_descendant;
+            const auto&    first              = at(relative_tokens, index);
+            if(is_one_of(first.ch, '>', '+', '~'))
+            {
+                leading_combinator = static_cast<css_combinator>(first.ch);
+                index++;
+                skip_whitespace(relative_tokens, index);
+            }
+
+            css_token_vector selector_tokens(relative_tokens.begin() + index, relative_tokens.end());
+            auto             selector = parse_complex_selector(selector_tokens, mode);
+            if(!selector || has_selector(*selector, select_pseudo_element))
+            {
+                return {};
+            }
+
+            // The leftmost node has no preceding selector, so its combinator stores the anchor relation.
+            css_selector* first_selector = selector.get();
+            while(first_selector->m_left)
+            {
+                first_selector = first_selector->m_left.get();
+            }
+            first_selector->m_combinator = leading_combinator;
+            result.push_back(selector);
+        }
         return result;
     }
 

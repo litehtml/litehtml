@@ -557,6 +557,7 @@ Supported selector types are listed below. See the next section for pseudo-class
 | `:is(<forgiving-selector-list>)` | |
 | `:where(<forgiving-selector-list>)` | matches like `:is()`, but zero specificity |
 | `:not(<selector-list>)` | |
+| `:has(<relative-selector-list>)` | unforgiving; descendants and relative `>`, `+`, `~` selectors; nested `:has()` and pseudo-elements are invalid |
 | `:lang(<language-range>)` | |
 
 **Link / user action / form state**
@@ -597,6 +598,7 @@ their own:
 | `:first-child` | [selectors.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/selectors.htm), [css21/first-child-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/first-child-001.htm) |
 | `:nth-of-type()`, `:is()` | [selectors.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/selectors.htm) |
 | `:not()` | [class-selector.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/class-selector.htm), [selectors.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/selectors.htm) |
+| `:has()` | [has-selector.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/has-selector.htm) |
 | `:lang()` | [css21/lang-selector-003.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/lang-selector-003.htm) |
 | `:link` | [css21/c21-pseud-link-000.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/c21-pseud-link-000.htm) |
 | `:active` | [css21/active-selector-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/active-selector-001.htm) |
