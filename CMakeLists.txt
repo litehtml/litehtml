@@ -4,6 +4,7 @@ project(litehtml LANGUAGES C CXX)
 
 option(LITEHTML_BUILD_TESTING "enable testing for litehtml" OFF)
 option(LITEHTML_ENABLE_LINT "enable linting for litehtml" ON)
+option(LITEHTML_BUILD_GRID_TESTS "build CSS Grid regression tests" OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -23,6 +24,9 @@ endif()
 set(SOURCE_LITEHTML
 	src/codepoint.cpp
 	src/css_length.cpp
+	src/css_grid.cpp
+	src/grid_placement.cpp
+	src/grid_sizing.cpp
 	src/css_selector.cpp
 	src/css_tokenizer.cpp
 	src/css_parser.cpp
@@ -74,6 +78,7 @@ set(SOURCE_LITEHTML
 	src/render_inline_context.cpp
 	src/render_table.cpp
 	src/render_flex.cpp
+	src/render_grid.cpp
 	src/render_image.cpp
 	src/formatting_context.cpp
 	src/flex_item.cpp
@@ -89,6 +94,7 @@ set(HEADER_LITEHTML
 	include/litehtml/borders.h
 	include/litehtml/codepoint.h
 	include/litehtml/css_length.h
+	include/litehtml/css_grid.h
 	include/litehtml/css_margins.h
 	include/litehtml/css_offsets.h
 	include/litehtml/css_position.h
@@ -139,6 +145,7 @@ set(HEADER_LITEHTML
 	include/litehtml/line_box.h
 	include/litehtml/render_item.h
 	include/litehtml/render_flex.h
+	include/litehtml/render_grid.h
 	include/litehtml/render_image.h
 	include/litehtml/render_inline.h
 	include/litehtml/render_table.h
@@ -214,6 +221,13 @@ target_include_directories(${PROJECT_NAME} PRIVATE include/${PROJECT_NAME})
 
 # Gumbo
 target_link_libraries(${PROJECT_NAME} PUBLIC gumbo)
+
+if(LITEHTML_BUILD_GRID_TESTS)
+	enable_testing()
+	add_executable(litehtml-grid-tests tests/css_grid_test.cpp)
+	target_link_libraries(litehtml-grid-tests PRIVATE litehtml)
+	add_test(NAME litehtml-grid-tests COMMAND litehtml-grid-tests)
+endif()
 
 # install and export
 install(TARGETS ${PROJECT_NAME}

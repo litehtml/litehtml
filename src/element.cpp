@@ -3,6 +3,7 @@
 #include "document.h"
 #include "render_item.h"
 #include "render_flex.h"
+#include "render_grid.h"
 #include "render_inline.h"
 #include "render_table.h"
 #include "el_before_after.h"
@@ -57,12 +58,13 @@ namespace litehtml
     bool element::is_inline() const
     {
         return is_one_of(css().get_display(), display_inline, display_inline_table, display_inline_block,
-                         display_inline_text, display_inline_flex);
+                         display_inline_text, display_inline_flex, display_inline_grid);
     }
 
     bool element::is_inline_box() const
     {
-        return is_one_of(css().get_display(), display_inline_table, display_inline_block, display_inline_flex);
+        return is_one_of(css().get_display(), display_inline_table, display_inline_block, display_inline_flex,
+                         display_inline_grid);
     }
 
     bool element::is_ancestor(const ptr& el) const
@@ -151,6 +153,9 @@ namespace litehtml
         } else if(is_one_of(css().get_display(), display_flex, display_inline_flex))
         {
             ret = std::make_shared<render_item_flex>(shared_from_this());
+        } else if(is_one_of(css().get_display(), display_grid, display_inline_grid))
+        {
+            ret = std::make_shared<render_item_grid>(shared_from_this());
         }
         if(ret)
         {
@@ -258,13 +263,15 @@ namespace litehtml
         if(m_css.get_display() == display_block)
         {
             auto par = parent();
-            if(par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex))
+            if(par && is_one_of(par->css().get_display(), display_inline_flex, display_flex, display_grid,
+                                display_inline_grid))
             {
                 return true;
             }
         }
         if(m_css.get_display() == display_inline_block || m_css.get_display() == display_table_cell ||
            m_css.get_display() == display_inline_flex || m_css.get_display() == display_flex ||
+           m_css.get_display() == display_grid || m_css.get_display() == display_inline_grid ||
            m_css.get_display() == display_table_caption || is_root() || m_css.get_float() != float_none ||
            m_css.get_position() == element_position_absolute || m_css.get_position() == element_position_fixed ||
            m_css.get_overflow() > overflow_visible)

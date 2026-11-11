@@ -62,6 +62,7 @@ namespace litehtml
 
         {_flex_direction_,         flex_direction_strings              },
         {_flex_wrap_,              flex_wrap_strings                   },
+        {_grid_auto_flow_,         grid_auto_flow_strings              },
         {_justify_content_,        flex_justify_content_strings        },
         {_align_content_,          flex_align_content_strings          },
         {_align_items_,            flex_align_items_strings            },
@@ -100,6 +101,15 @@ namespace litehtml
 
         {_flex_,            {_flex_grow_, _flex_shrink_, _flex_basis_}                                                },
         {_flex_flow_,       {_flex_direction_, _flex_wrap_}                                                           },
+
+        {_grid_,
+         {_grid_template_rows_, _grid_template_columns_, _grid_template_areas_, _grid_auto_rows_, _grid_auto_columns_,
+          _grid_auto_flow_}                                                                                           },
+        {_grid_template_,   {_grid_template_rows_, _grid_template_columns_, _grid_template_areas_}                    },
+        {_grid_area_,       {_grid_row_start_, _grid_column_start_, _grid_row_end_, _grid_column_end_}                },
+        {_grid_column_,     {_grid_column_start_, _grid_column_end_}                                                  },
+        {_grid_row_,        {_grid_row_start_, _grid_row_end_}                                                        },
+        {_gap_,             {_row_gap_, _column_gap_}                                                                 },
 
         {_text_decoration_,
          {_text_decoration_color_, _text_decoration_line_, _text_decoration_style_, _text_decoration_thickness_}      },
@@ -182,6 +192,16 @@ namespace litehtml
     void style::add_property(string_id name, const css_token_vector& value, const std::string& baseurl, bool important,
                              document_container* container)
     {
+        if(name == _grid_gap_)
+        {
+            name = _gap_;
+        } else if(name == _grid_row_gap_)
+        {
+            name = _row_gap_;
+        } else if(name == _grid_column_gap_)
+        {
+            name = _column_gap_;
+        }
         // Note: empty value is a valid value for a custom property.
         if(value.empty() && _s(name).substr(0, 2) != "--")
         {
@@ -190,6 +210,16 @@ namespace litehtml
 
         if(has_var(value))
         {
+            if(is_one_of(name, _grid_, _grid_template_, _grid_area_, _grid_column_, _grid_row_, _gap_))
+            {
+                property_value pending(value, important, true);
+                pending.m_var_shorthand = name;
+                for(auto longhand : shorthands.at(name))
+                {
+                    add_parsed_property(longhand, pending);
+                }
+                return;
+            }
             return add_parsed_property(name, property_value(value, important, true));
         }
 
@@ -252,7 +282,38 @@ namespace litehtml
             }
             break;
 
-        //  =============================  LENGTH  =============================
+            //  =============================  LENGTH  =============================
+
+        case _grid_auto_flow_:
+            {
+                bool has_direction = false;
+                bool dense         = false;
+                bool column        = false;
+                bool valid         = true;
+                for(const auto& token : value)
+                {
+                    const auto keyword = token.ident();
+                    if(keyword == "dense" && !dense)
+                    {
+                        dense = true;
+                    } else if((keyword == "row" || keyword == "column") && !has_direction)
+                    {
+                        has_direction = true;
+                        column        = keyword == "column";
+                    } else
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+                if(valid)
+                {
+                    const auto flow = dense ? (column ? grid_auto_flow_column_dense : grid_auto_flow_row_dense)
+                                            : (column ? grid_auto_flow_column : grid_auto_flow_row);
+                    add_parsed_property(name, property_value(static_cast<int>(flow), important));
+                }
+            }
+            break;
 
         // auto | <integer>  https://developer.mozilla.org/en-US/docs/Web/CSS/z-index#formal_syntax
         case _z_index_:
@@ -558,10 +619,296 @@ namespace litehtml
             parse_align_self(name, value, important);
             break;
 
+        case _justify_items_:
+        case _justify_self_:
+            if(is_one_of(ident, "normal", "stretch", "start", "end", "center") ||
+               (name == _justify_self_ && ident == "auto"))
+            {
+                auto index = css_values(flex_align_items_strings).value_index(ident);
+                add_parsed_property(name, property_value(*index, important));
+            }
+            break;
+
         case _order_: // <integer>
             if(val.type == NUMBER && val.n.number_type == css_number_integer)
             {
                 add_parsed_property(name, property_value(static_cast<int>(val.n.number), important));
+            }
+            break;
+
+        case _grid_:
+        case _grid_template_:
+            {
+                grid_track_list     rows;
+                grid_track_list     columns;
+                grid_track_list     auto_rows;
+                grid_track_list     auto_columns;
+                grid_template_areas template_areas;
+                auto_rows.append({grid_track_size{}});
+                auto_columns.append({grid_track_size{}});
+                grid_auto_flow flow  = grid_auto_flow_row;
+                bool           valid = is_one_of(ident, "none", "initial", "unset");
+                if(!valid)
+                {
+                    auto             slash = std::find_if(value.begin(), value.end(),
+                                                          [](const css_token& token) { return token.ch == '/'; });
+                    css_token_vector first(value.begin(), slash);
+                    css_token_vector second(slash == value.end() ? slash : slash + 1, value.end());
+                    const bool       has_area_strings = std::any_of(
+                        first.begin(), first.end(), [](const css_token& token) { return token.type == STRING; });
+                    if(has_area_strings)
+                    {
+                        css_token_vector area_tokens;
+                        css_token_vector row_tokens;
+                        auto             append_names = [&](const css_token& token) {
+                            if(!row_tokens.empty() && row_tokens.back().type == SQUARE_BLOCK)
+                            {
+                                row_tokens.back().value.insert(row_tokens.back().value.end(), token.value.begin(),
+                                                               token.value.end());
+                            } else
+                            {
+                                row_tokens.push_back(token);
+                            }
+                        };
+                        size_t index = 0;
+                        valid        = true;
+                        while(index < first.size())
+                        {
+                            if(first[index].type == SQUARE_BLOCK)
+                            {
+                                append_names(first[index++]);
+                            }
+                            if(index == first.size() || first[index].type != STRING)
+                            {
+                                valid = false;
+                                break;
+                            }
+                            area_tokens.push_back(first[index++]);
+                            if(index < first.size() && first[index].type != STRING && first[index].type != SQUARE_BLOCK)
+                            {
+                                if(first[index].type == CV_FUNCTION && lowcase(first[index].name()) == "repeat")
+                                {
+                                    valid = false;
+                                    break;
+                                }
+                                row_tokens.push_back(first[index++]);
+                            } else
+                            {
+                                row_tokens.emplace_back(IDENT, "auto");
+                            }
+                            if(index < first.size() && first[index].type == SQUARE_BLOCK)
+                            {
+                                append_names(first[index++]);
+                            }
+                        }
+                        if(valid)
+                        {
+                            valid = parse_grid_template_areas(area_tokens, template_areas) &&
+                                    parse_grid_track_list(row_tokens, rows) && rows.size() <= 1024;
+                        }
+                        if(valid && slash != value.end())
+                        {
+                            const bool has_repeat =
+                                std::any_of(second.begin(), second.end(), [](const css_token& token) {
+                                    return token.type == CV_FUNCTION && lowcase(token.name()) == "repeat";
+                                });
+                            valid = !has_repeat && parse_grid_track_list(second, columns) && !columns.empty() &&
+                                    columns.size() <= 1024;
+                        }
+                    } else if(slash != value.end())
+                    {
+                        auto parse_auto = [](const css_token_vector& tokens, grid_track_list& tracks, bool& dense) {
+                            size_t index    = 0;
+                            bool   has_flow = false;
+                            dense           = false;
+                            while(index < tokens.size())
+                            {
+                                const auto keyword = tokens[index].ident();
+                                if(keyword == "auto-flow" && !has_flow)
+                                {
+                                    has_flow = true;
+                                } else if(keyword == "dense" && !dense)
+                                {
+                                    dense = true;
+                                } else
+                                {
+                                    break;
+                                }
+                                ++index;
+                            }
+                            if(!has_flow)
+                            {
+                                return false;
+                            }
+                            if(index == tokens.size())
+                            {
+                                return true;
+                            }
+                            css_token_vector sizes(tokens.begin() + static_cast<ptrdiff_t>(index), tokens.end());
+                            if(std::any_of(sizes.begin(), sizes.end(), [](const css_token& token) {
+                                   return token.type == SQUARE_BLOCK ||
+                                          (token.type == CV_FUNCTION && lowcase(token.name()) == "repeat");
+                               }))
+                            {
+                                return false;
+                            }
+                            return parse_grid_track_list(sizes, tracks) && !tracks.empty();
+                        };
+                        bool dense = false;
+                        if(name == _grid_ && parse_auto(first, auto_rows, dense))
+                        {
+                            valid = parse_grid_track_list(second, columns) && columns.size() <= 1024;
+                            flow  = dense ? grid_auto_flow_row_dense : grid_auto_flow_row;
+                        } else if(name == _grid_ && parse_auto(second, auto_columns, dense))
+                        {
+                            valid = parse_grid_track_list(first, rows) && rows.size() <= 1024;
+                            flow  = dense ? grid_auto_flow_column_dense : grid_auto_flow_column;
+                        } else
+                        {
+                            valid = parse_grid_track_list(first, rows) && rows.size() <= 1024 &&
+                                    parse_grid_track_list(second, columns) && columns.size() <= 1024;
+                        }
+                    }
+                }
+                if(valid)
+                {
+                    add_parsed_property(_grid_template_rows_, property_value(rows, important));
+                    add_parsed_property(_grid_template_columns_, property_value(columns, important));
+                    add_parsed_property(_grid_template_areas_, property_value(template_areas, important));
+                    if(name == _grid_)
+                    {
+                        add_parsed_property(_grid_auto_rows_, property_value(auto_rows, important));
+                        add_parsed_property(_grid_auto_columns_, property_value(auto_columns, important));
+                        add_parsed_property(_grid_auto_flow_, property_value(static_cast<int>(flow), important));
+                    }
+                }
+            }
+            break;
+
+        case _grid_template_areas_:
+            {
+                grid_template_areas areas;
+                if(is_one_of(ident, "initial", "unset") || parse_grid_template_areas(value, areas))
+                {
+                    add_parsed_property(name, property_value(areas, important));
+                }
+            }
+            break;
+
+        case _grid_template_columns_:
+        case _grid_template_rows_:
+            {
+                grid_track_list tracks;
+                if(parse_grid_track_list(value, tracks) && tracks.size() <= 1024)
+                {
+                    add_parsed_property(name, property_value(tracks, important));
+                }
+            }
+            break;
+
+        case _grid_auto_columns_:
+        case _grid_auto_rows_:
+            {
+                grid_track_list tracks;
+                const bool      has_repeat = std::any_of(value.begin(), value.end(), [](const css_token& token) {
+                    return token.type == SQUARE_BLOCK ||
+                           (token.type == CV_FUNCTION && lowcase(token.name()) == "repeat");
+                });
+                if(!has_repeat && parse_grid_track_list(value, tracks) && !tracks.empty())
+                {
+                    add_parsed_property(name, property_value(tracks, important));
+                }
+            }
+            break;
+
+        case _grid_column_start_:
+        case _grid_column_end_:
+        case _grid_row_start_:
+        case _grid_row_end_:
+            {
+                grid_line line;
+                if(parse_grid_line(value, line))
+                {
+                    add_parsed_property(name, property_value(line, important));
+                }
+            }
+            break;
+
+        case _grid_area_:
+            {
+                grid_line lines[4];
+                size_t    count = 0;
+                auto      first = value.begin();
+                bool      valid = true;
+                for(auto token = value.begin(); token != value.end(); ++token)
+                {
+                    if(token->ch == '/')
+                    {
+                        if(count == 3 || !parse_grid_line(css_token_vector(first, token), lines[count]))
+                        {
+                            valid = false;
+                            break;
+                        }
+                        ++count;
+                        first = token + 1;
+                    }
+                }
+                if(valid && parse_grid_line(css_token_vector(first, value.end()), lines[count]))
+                {
+                    ++count;
+                    if(count < 2 && lines[0].name_only)
+                    {
+                        lines[1] = lines[0];
+                    }
+                    if(count < 3 && lines[0].name_only)
+                    {
+                        lines[2] = lines[0];
+                    }
+                    if(count < 4 && lines[1].name_only)
+                    {
+                        lines[3] = lines[1];
+                    }
+                    add_parsed_property(_grid_row_start_, property_value(lines[0], important));
+                    add_parsed_property(_grid_column_start_, property_value(lines[1], important));
+                    add_parsed_property(_grid_row_end_, property_value(lines[2], important));
+                    add_parsed_property(_grid_column_end_, property_value(lines[3], important));
+                }
+            }
+            break;
+
+        case _grid_column_:
+        case _grid_row_:
+            {
+                grid_placement placement;
+                if(parse_grid_placement(value, placement))
+                {
+                    const auto start = name == _grid_column_ ? _grid_column_start_ : _grid_row_start_;
+                    const auto end   = name == _grid_column_ ? _grid_column_end_ : _grid_row_end_;
+                    add_parsed_property(start, property_value(placement.start, important));
+                    add_parsed_property(end, property_value(placement.end, important));
+                }
+            }
+            break;
+
+        case _row_gap_:
+        case _column_gap_:
+            {
+                constexpr auto gap_keywords = split_css_values<1>("normal");
+                add_length_property(name, val, gap_keywords, f_length_percentage | f_positive, important);
+            }
+            break;
+
+        case _gap_:
+            {
+                constexpr auto gap_keywords = split_css_values<1>("normal");
+                css_length     gaps[2];
+                if(!value.empty() && value.size() <= 2 &&
+                   gaps[0].from_token(value[0], f_length_percentage | f_positive, gap_keywords) &&
+                   (value.size() == 1 || gaps[1].from_token(value[1], f_length_percentage | f_positive, gap_keywords)))
+                {
+                    add_parsed_property(_row_gap_, property_value(gaps[0], important));
+                    add_parsed_property(_column_gap_, property_value(value.size() == 1 ? gaps[0] : gaps[1], important));
+                }
             }
             break;
 
@@ -1938,6 +2285,19 @@ namespace litehtml
             {
                 auto& value = prop.second.get<css_token_vector>();
                 subst_vars_(prop.first, value, el);
+                if(prop.second.m_var_shorthand)
+                {
+                    style expanded;
+                    expanded.add_property(*prop.second.m_var_shorthand, value, "", prop.second.m_important,
+                                          el->get_document()->container());
+                    auto parsed = expanded.get_property(prop.first);
+                    if(parsed.m_has_var || parsed.is<invalid>())
+                    {
+                        parsed = property_value(invalid(), prop.second.m_important);
+                    }
+                    prop.second = parsed;
+                    continue;
+                }
                 // re-adding the same property
                 // if it is a custom property it will be re-added as a css_token_vector
                 // if it is a standard css property it will be parsed and properly added as typed property

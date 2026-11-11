@@ -5,6 +5,7 @@
 #include "background.h"
 #include "borders.h"
 #include "css_margins.h"
+#include "css_grid.h"
 #include "css_offsets.h"
 #include "types.h"
 
@@ -93,6 +94,21 @@ namespace litehtml
         flex_align_items     m_flex_align_self      = flex_align_items_auto;
         flex_align_content   m_flex_align_content   = flex_align_content_stretch;
 
+        grid_track_list     m_grid_template_columns;
+        grid_track_list     m_grid_template_rows;
+        grid_template_areas m_grid_template_areas;
+        grid_track_list     m_grid_auto_columns;
+        grid_track_list     m_grid_auto_rows;
+        grid_line           m_grid_column_start;
+        grid_line           m_grid_column_end;
+        grid_line           m_grid_row_start;
+        grid_line           m_grid_row_end;
+        grid_auto_flow      m_grid_auto_flow     = grid_auto_flow_row;
+        flex_align_items    m_grid_justify_items = flex_align_items_normal;
+        flex_align_items    m_grid_justify_self  = flex_align_items_auto;
+        css_length          m_row_gap;
+        css_length          m_column_gap;
+
         caption_side m_caption_side = caption_side_top;
 
         int m_order = 0;
@@ -100,6 +116,7 @@ namespace litehtml
         void      compute_font(const html_tag* el, const std::shared_ptr<document>& doc);
         void      compute_background(const html_tag* el, const std::shared_ptr<document>& doc);
         void      compute_flex(const html_tag* el, const std::shared_ptr<document>& doc);
+        void      compute_grid(const html_tag* el, const std::shared_ptr<document>& doc);
         web_color get_color_property(const html_tag* el, string_id name, bool inherited, web_color default_value,
                                      uint_ptr member_offset) const;
         void      snap_border_width(css_length& width, const std::shared_ptr<document>& doc);
@@ -238,6 +255,73 @@ namespace litehtml
         flex_align_items     get_flex_align_items() const;
         flex_align_items     get_flex_align_self() const;
         flex_align_content   get_flex_align_content() const;
+
+        const grid_track_list& get_grid_template_columns() const
+        {
+            return m_grid_template_columns;
+        }
+        const grid_track_list& get_grid_template_rows() const
+        {
+            return m_grid_template_rows;
+        }
+        const grid_template_areas& get_grid_template_areas() const
+        {
+            return m_grid_template_areas;
+        }
+        const grid_track_size& get_grid_auto_columns() const
+        {
+            static const grid_track_size auto_track;
+            return m_grid_auto_columns.empty() ? auto_track : m_grid_auto_columns[0];
+        }
+        const grid_track_size& get_grid_auto_rows() const
+        {
+            static const grid_track_size auto_track;
+            return m_grid_auto_rows.empty() ? auto_track : m_grid_auto_rows[0];
+        }
+        const grid_track_list& get_grid_auto_column_pattern() const
+        {
+            return m_grid_auto_columns;
+        }
+        const grid_track_list& get_grid_auto_row_pattern() const
+        {
+            return m_grid_auto_rows;
+        }
+        const grid_line& get_grid_column_start() const
+        {
+            return m_grid_column_start;
+        }
+        const grid_line& get_grid_column_end() const
+        {
+            return m_grid_column_end;
+        }
+        const grid_line& get_grid_row_start() const
+        {
+            return m_grid_row_start;
+        }
+        const grid_line& get_grid_row_end() const
+        {
+            return m_grid_row_end;
+        }
+        grid_auto_flow get_grid_auto_flow() const
+        {
+            return m_grid_auto_flow;
+        }
+        const css_length& get_row_gap() const
+        {
+            return m_row_gap;
+        }
+        const css_length& get_column_gap() const
+        {
+            return m_column_gap;
+        }
+        flex_align_items get_grid_justify_items() const
+        {
+            return m_grid_justify_items;
+        }
+        flex_align_items get_grid_justify_self() const
+        {
+            return m_grid_justify_self;
+        }
 
         int  get_order() const;
         void set_order(int order);

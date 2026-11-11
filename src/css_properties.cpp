@@ -103,6 +103,32 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     }
     // 5. Otherwise, the remaining 'display' property values apply as specified.
 
+    if(m_display == display_inline_grid &&
+       (m_float != float_none || is_one_of(m_el_position, element_position_absolute, element_position_fixed) ||
+        el->is_root()))
+    {
+        m_display = display_grid;
+    }
+    if(auto parent = el->parent())
+    {
+        if(is_one_of(parent->css().get_display(), display_grid, display_inline_grid))
+        {
+            m_float = float_none;
+            if(m_display == display_inline || m_display == display_inline_block)
+            {
+                m_display = display_block;
+            } else if(m_display == display_inline_table)
+            {
+                m_display = display_table;
+            } else if(m_display == display_inline_flex)
+            {
+                m_display = display_flex;
+            } else if(m_display == display_inline_grid)
+            {
+                m_display = display_grid;
+            }
+        }
+    }
     compute_font(el, doc);
     pixel_t font_size = get_font_size();
 
@@ -285,6 +311,7 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 
     compute_background(el, doc);
     compute_flex(el, doc);
+    compute_grid(el, doc);
 }
 
 // used for all color properties except `color` (color:currentcolor is converted to color:inherit during parsing)
@@ -406,7 +433,7 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
     m_font_style =
         static_cast<font_style>(el->get_property<int>(_font_style_, true, font_style_normal, offset(m_font_style)));
     bool propagate_decoration =
-        !is_one_of(m_display, display_inline_block, display_inline_table, display_inline_flex) &&
+        !is_one_of(m_display, display_inline_block, display_inline_table, display_inline_flex, display_inline_grid) &&
         m_float == float_none && !is_one_of(m_el_position, element_position_absolute, element_position_fixed);
 
     m_text_decoration_line = el->get_property<int>(_text_decoration_line_, propagate_decoration,
@@ -577,6 +604,64 @@ void litehtml::css_properties::compute_background(const html_tag* el, const docu
     }
 }
 
+void litehtml::css_properties::compute_grid(const html_tag* el, const document::ptr& doc)
+{
+    const grid_track_list empty_tracks;
+    grid_track_list       auto_tracks;
+    auto_tracks.append({grid_track_size{}});
+    const grid_line auto_line;
+    m_grid_template_columns = el->get_property<grid_track_list>(_grid_template_columns_, false, empty_tracks,
+                                                                offset(m_grid_template_columns));
+    m_grid_template_rows =
+        el->get_property<grid_track_list>(_grid_template_rows_, false, empty_tracks, offset(m_grid_template_rows));
+    m_grid_template_areas = el->get_property<grid_template_areas>(_grid_template_areas_, false, grid_template_areas{},
+                                                                  offset(m_grid_template_areas));
+    m_grid_auto_columns =
+        el->get_property<grid_track_list>(_grid_auto_columns_, false, auto_tracks, offset(m_grid_auto_columns));
+    m_grid_auto_rows =
+        el->get_property<grid_track_list>(_grid_auto_rows_, false, auto_tracks, offset(m_grid_auto_rows));
+    m_grid_column_start =
+        el->get_property<grid_line>(_grid_column_start_, false, auto_line, offset(m_grid_column_start));
+    m_grid_column_end = el->get_property<grid_line>(_grid_column_end_, false, auto_line, offset(m_grid_column_end));
+    m_grid_row_start  = el->get_property<grid_line>(_grid_row_start_, false, auto_line, offset(m_grid_row_start));
+    m_grid_row_end    = el->get_property<grid_line>(_grid_row_end_, false, auto_line, offset(m_grid_row_end));
+    m_grid_auto_flow  = static_cast<grid_auto_flow>(
+        el->get_property<int>(_grid_auto_flow_, false, grid_auto_flow_row, offset(m_grid_auto_flow)));
+    m_grid_justify_items = static_cast<flex_align_items>(
+        el->get_property<int>(_justify_items_, false, flex_align_items_normal, offset(m_grid_justify_items)));
+    m_grid_justify_self = static_cast<flex_align_items>(
+        el->get_property<int>(_justify_self_, false, flex_align_items_auto, offset(m_grid_justify_self)));
+    if(is_one_of(m_display, display_grid, display_inline_grid))
+    {
+        m_flex_align_items = static_cast<flex_align_items>(
+            el->get_property<int>(_align_items_, false, flex_align_items_normal, offset(m_flex_align_items)));
+        m_flex_justify_content = static_cast<flex_justify_content>(el->get_property<int>(
+            _justify_content_, false, flex_justify_content_normal, offset(m_flex_justify_content)));
+        m_flex_align_content   = static_cast<flex_align_content>(
+            el->get_property<int>(_align_content_, false, flex_align_content_normal, offset(m_flex_align_content)));
+    }
+    const auto normal_gap = css_length::predef_value(0);
+    m_row_gap             = el->get_property<css_length>(_row_gap_, false, normal_gap, offset(m_row_gap));
+    m_column_gap          = el->get_property<css_length>(_column_gap_, false, normal_gap, offset(m_column_gap));
+    doc->cvt_units(m_row_gap, m_font_metrics, 0_px);
+    doc->cvt_units(m_column_gap, m_font_metrics, 0_px);
+
+    auto convert_track = [&](grid_track_size& track) {
+        if(track.min.type == grid_breadth_type::length)
+        {
+            doc->cvt_units(track.min.length, m_font_metrics, 0_px);
+        }
+        if(track.max.type == grid_breadth_type::length || track.max.type == grid_breadth_type::fit_content)
+        {
+            doc->cvt_units(track.max.length, m_font_metrics, 0_px);
+        }
+    };
+    for(auto* tracks : {&m_grid_template_columns, &m_grid_template_rows, &m_grid_auto_columns, &m_grid_auto_rows})
+    {
+        tracks->for_each_definition(convert_track);
+    }
+}
+
 void litehtml::css_properties::compute_flex(const html_tag* el, const document::ptr& doc)
 {
     if(m_display == display_flex || m_display == display_inline_flex)
@@ -592,6 +677,10 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
             el->get_property<int>(_align_items_, false, flex_align_items_normal, offset(m_flex_align_items)));
         m_flex_align_content = static_cast<flex_align_content>(
             el->get_property<int>(_align_content_, false, flex_align_content_stretch, offset(m_flex_align_content)));
+        if(m_flex_align_content == flex_align_content_normal)
+        {
+            m_flex_align_content = flex_align_content_stretch;
+        }
     }
     m_flex_align_self = static_cast<flex_align_items>(
         el->get_property<int>(_align_self_, false, flex_align_items_auto, offset(m_flex_align_self)));
@@ -618,6 +707,9 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
         } else if(m_display == display_inline_flex)
         {
             m_display = display_flex;
+        } else if(m_display == display_inline_grid)
+        {
+            m_display = display_grid;
         }
     }
 }

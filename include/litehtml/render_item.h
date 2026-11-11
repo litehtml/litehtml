@@ -460,14 +460,15 @@ namespace litehtml
         {
             return m_borders.top == 0_px && m_padding.top == 0_px && m_element->in_normal_flow() &&
                    m_element->css().get_float() == float_none && m_margins.top >= 0_px && !is_flex_item() &&
-                   !is_root() && !is_one_of(css().get_overflow(), overflow_hidden, overflow_scroll, overflow_auto);
+                   !is_grid_item() && !is_root() &&
+                   !is_one_of(css().get_overflow(), overflow_hidden, overflow_scroll, overflow_auto);
         }
 
         bool collapse_bottom_margin() const
         {
             return m_borders.bottom == 0_px && m_padding.bottom == 0_px && m_element->in_normal_flow() &&
-                   m_element->css().get_float() == float_none && m_margins.bottom >= 0_px && !is_root() &&
-                   !is_one_of(css().get_overflow(), overflow_hidden, overflow_scroll, overflow_auto);
+                   m_element->css().get_float() == float_none && m_margins.bottom >= 0_px && !is_grid_item() &&
+                   !is_root() && !is_one_of(css().get_overflow(), overflow_hidden, overflow_scroll, overflow_auto);
         }
 
         bool is_visible() const
@@ -480,6 +481,12 @@ namespace litehtml
         {
             auto par = parent();
             return par && (par->css().get_display() == display_inline_flex || par->css().get_display() == display_flex);
+        }
+
+        bool is_grid_item() const
+        {
+            auto par = parent();
+            return par && is_one_of(par->css().get_display(), display_grid, display_inline_grid);
         }
 
         pixel_t render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
