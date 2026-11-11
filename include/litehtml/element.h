@@ -234,7 +234,8 @@ namespace litehtml
     inline bool element::is_block_box() const
     {
         return css().get_display() == display_block || css().get_display() == display_flex ||
-               css().get_display() == display_table || css().get_display() == display_list_item;
+               css().get_display() == display_grid || css().get_display() == display_table ||
+               css().get_display() == display_list_item;
     }
 
     inline const std::list<std::shared_ptr<element>>& element::children() const

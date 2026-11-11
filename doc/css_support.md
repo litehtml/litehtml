@@ -59,7 +59,7 @@ Status legend used throughout:
 
 | Property | Status | Values (supported count) | Tests |
 |---|---|---|---|
-| `display` | ⚠️ | 18 (no `grid`) | ~45 |
+| `display` | ⚠️ | includes `grid` and `inline-grid` | ~45 |
 | `position` | ✅ | 4 | ~290 |
 | `float` | ✅ | 3 | ~170 |
 | `clear` | ✅ | 4 | ~35 |
@@ -91,6 +91,8 @@ Status legend used throughout:
 | `text-emphasis` (+ longhands) | ❌ | — | 0 |
 | `list-style` (+ longhands) | ✅ | see below | ~72 |
 | `flex` (+ longhands) | ✅ | see below | ~350 |
+| `grid` (+ longhands) | ⚠️ | partial; see [README](../README.md#supported-standards) | Grid tests |
+| `gap` / `row-gap` / `column-gap` | ⚠️ | Grid only | Grid tests |
 | `caption-side` | ✅ | 2 | ~6 |
 | `content` | ✅ | see below | ~240 |
 | `counter-reset` / `counter-increment` | ✅ | — | ~240 |
@@ -99,25 +101,24 @@ Status legend used throughout:
 
 Properties **not recognized at all** (silently ignored by the parser): `letter-spacing`, `word-spacing`, `table-layout`, `empty-cells`, `direction`,
 `unicode-bidi`, `quotes`, `text-shadow`, `box-shadow`, `outline`, `opacity`, `transform`,
-`transition`, `animation`, `columns`, `column-*`, `grid`/`grid-*`, `filter`, `clip-path`,
-`gap`/`row-gap`/`column-gap`, `object-fit` … (everything else not listed above).
+`transition`, `animation`, `columns`, `column-*`, `filter`, `clip-path`,
+`object-fit` … (everything else not listed above).
 
 ---
 
 ### Box model & layout
 
 #### `display`
-⚠️ Partial — all 18 parsed values work, but modern layout values are not recognized.
+⚠️ Partial — Grid and Flexbox are supported, but some modern layout values are not recognized.
 
 Supported values: `none`, `block`, `inline`, `inline-block`, `inline-table`, `list-item`,
 `table`, `table-caption`, `table-cell`, `table-column`, `table-column-group`,
 `table-footer-group`, `table-header-group`, `table-row`, `table-row-group`, `inline-text`,
-`flex`, `inline-flex`.
+`flex`, `inline-flex`, `grid`, `inline-grid`.
 
 - `inline-text` is an internal value used for text nodes.
-- **Not supported:** `grid`, `inline-grid`, `ruby`, `inline ruby`, `flow-root`, `contents`.
-  An unrecognized value is silently dropped, so the element falls back to its default display
-  (verified: `display:grid` renders identically to `display:block`).
+- **Not supported:** `ruby`, `inline ruby`, `flow-root`, `contents`.
+  An unrecognized value is silently dropped, so the element falls back to its default display.
 
 Tests: [flex/display-flex-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/display-flex-001.htm),
 [flex/flexbox_display.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/flexbox_display.htm),

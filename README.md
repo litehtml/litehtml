@@ -65,6 +65,7 @@ cmake --install build
 | Option                   | Default | Description                                                        |
 | ------------------------ | ------- | ------------------------------------------------------------------ |
 | `LITEHTML_BUILD_TESTING` | `OFF`   | Download and build the litehtml test suite.                        |
+| `LITEHTML_BUILD_GRID_TESTS` | `OFF` | Build the local CSS Grid regression tests.                       |
 | `LITEHTML_ENABLE_LINT`   | `ON`    | Run clang-tidy during the build.                                   |
 | `EXTERNAL_GUMBO`         | `OFF`   | Link against a system-installed gumbo instead of the bundled copy. |
 
@@ -126,6 +127,14 @@ The rendering tests live in a separate repository,
 [litehtml-tests](https://github.com/litehtml/litehtml-tests). Refer to that repository for
 instructions on running the test suite.
 
+To run the local Grid tests:
+
+```sh
+cmake -S . -B build-grid -DLITEHTML_BUILD_GRID_TESTS=ON
+cmake --build build-grid --target litehtml-grid-tests
+ctest --test-dir build-grid -R litehtml-grid-tests --output-on-failure
+```
+
 ## HTML Parser
 
 **litehtml** uses [gumbo-parser](https://codeberg.org/gumbo-parser/gumbo-parser) to parse
@@ -140,6 +149,25 @@ refactoring and analysis tools.
 of work to do to match modern browsers, but **litehtml** supports most HTML tags and CSS
 properties. See [doc/css_support.md](doc/css_support.md) for the list of supported CSS
 properties and selectors.
+
+CSS Grid has partial support: `grid` and `inline-grid`, explicit and implicit tracks,
+numeric and named line placement, named grid areas, `grid-area`, sparse and dense row/column
+auto-placement, gaps, and common item and content alignment. Gap properties currently affect
+Grid, not Flexbox.
+Track sizes include lengths, percentages, `auto`, intrinsic
+keywords, `fr`, `repeat()` (including `auto-fill` and `auto-fit`), `fit-content()` and
+`minmax()` for supported track sizes.
+Implicit track sizes can use repeating patterns. Intrinsic
+and spanning track sizing is an approximation and may differ from browsers in complex cases.
+The `grid` and `grid-template` shorthands support track lists, named-area strings, and, for
+`grid`, auto-flow forms. `auto-fill`/`auto-fit` support fixed-size repeat patterns; `auto-fit`
+collapses empty repeated tracks, though their gutters are not removed. Subgrid has partial
+support for inherited tracks, line names, gaps, and basic descendant contributions on both
+axes. Complex intrinsic sizing, automatic spans, box-edge adjustments, and inherited named
+areas may differ from browsers. Masonry is not supported. Grid baseline and safe/unsafe
+alignment are not implemented. Explicit and
+implicit grids are limited to 1024 tracks per axis; oversized explicit track declarations are
+ignored, and oversized implicit grids fall back to laying items out vertically.
 
 ## Documentation
 

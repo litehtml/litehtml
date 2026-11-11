@@ -3,10 +3,12 @@
 
 #include "background.h"
 #include "css_length.h"
+#include "css_grid.h"
 #include "css_position.h"
 #include "css_tokenizer.h"
 #include "gradient.h"
 #include "web_color.h"
+#include <optional>
 
 namespace litehtml
 {
@@ -17,12 +19,13 @@ namespace litehtml
     {
     }; // "inherit" was specified as the value of this property
 
-    struct property_value
-        : variant<invalid, inherit, int, int_vector, css_length, length_vector, float, web_color, std::vector<image>,
-                  std::string, std::vector<std::string>, size_vector, css_token_vector>
+    struct property_value : variant<invalid, inherit, int, int_vector, css_length, length_vector, float, web_color,
+                                    std::vector<image>, std::string, std::vector<std::string>, size_vector,
+                                    css_token_vector, grid_track_list, grid_track_size, grid_line, grid_template_areas>
     {
-        bool m_important = false;
-        bool m_has_var   = false; // css_token_vector, parsing is delayed because of var()
+        bool                     m_important = false;
+        bool                     m_has_var   = false; // css_token_vector, parsing is delayed because of var()
+        std::optional<string_id> m_var_shorthand;
 
         property_value() = default;
         template <class T>

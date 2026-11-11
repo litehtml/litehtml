@@ -198,6 +198,16 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     case flex_align_content_space_around:
         add_before_line = add_after_line = free_cross_size / pixel_t(static_cast<int>(m_lines.size() * 2));
         break;
+    case flex_align_content_space_evenly:
+        if(free_cross_size > 0_px)
+        {
+            add_before_line = free_cross_size / pixel_t(static_cast<int>(m_lines.size() + 1));
+            add_after_line  = 0_px;
+        } else
+        {
+            line_pos = free_cross_size / 2_px;
+        }
+        break;
     default:
         if(is_wrap_reverse)
         {
