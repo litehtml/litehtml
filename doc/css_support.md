@@ -59,7 +59,7 @@ Status legend used throughout:
 
 | Property | Status | Values (supported count) | Tests |
 |---|---|---|---|
-| `display` | ⚠️ | includes `grid` and `inline-grid` | ~45 |
+| `display` | ⚠️ | includes `contents`, `grid` and `inline-grid` | ~45 |
 | `position` | ✅ | 4 | ~290 |
 | `float` | ✅ | 3 | ~170 |
 | `clear` | ✅ | 4 | ~35 |
@@ -114,10 +114,12 @@ Properties **not recognized at all** (silently ignored by the parser): `letter-s
 Supported values: `none`, `block`, `inline`, `inline-block`, `inline-table`, `list-item`,
 `table`, `table-caption`, `table-cell`, `table-column`, `table-column-group`,
 `table-footer-group`, `table-header-group`, `table-row`, `table-row-group`, `inline-text`,
-`flex`, `inline-flex`, `grid`, `inline-grid`.
+`flex`, `inline-flex`, `grid`, `inline-grid`, `contents`.
 
 - `inline-text` is an internal value used for text nodes.
-- **Not supported:** `ruby`, `inline ruby`, `flow-root`, `contents`.
+- `contents` removes the element's box while preserving DOM ancestry and inherited styles. On the
+  root it computes to `block`; on replaced and certain unusual elements it computes to `none`.
+- **Not supported:** `ruby`, `inline ruby`, `flow-root`.
   An unrecognized value is silently dropped, so the element falls back to its default display.
 
 Tests: [flex/display-flex-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/display-flex-001.htm),

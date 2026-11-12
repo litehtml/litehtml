@@ -1237,7 +1237,15 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
     {
         const auto& el = *i;
 
-        if(el->is_visible() && el->src_el()->css().get_display() != display_inline_text)
+        if(el->is_visible() && el->src_el()->css().get_display() == display_inline_text)
+        {
+            auto text_parent = el->src_el()->parent();
+            if(flag == draw_inlines && !check && text_parent && text_parent->css().get_display() == display_contents &&
+               el->pos().is_point_inside(el_pos.x, el_pos.y))
+            {
+                ret = text_parent;
+            }
+        } else if(el->is_visible())
         {
             bool process = true;
             switch(flag)

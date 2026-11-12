@@ -35,6 +35,7 @@ void litehtml::el_text::compute_styles(bool /*recursive*/)
         css().set_font_metrics(el_parent->css().get_font_metrics());
         css().set_white_space(el_parent->css().get_white_space());
         css().set_text_transform(el_parent->css().get_text_transform());
+        css().set_visibility(el_parent->css().get_visibility());
     }
     css().set_display(display_inline_text);
     css().set_float(float_none);

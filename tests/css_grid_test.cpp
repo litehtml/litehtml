@@ -1074,5 +1074,200 @@ int main()
     ok                &= check(flex_a && flex_b && std::abs(flex_a->get_placement().y.value() - 26.6667f) < 0.01f &&
                                    std::abs(flex_b->get_placement().y.value() - 63.3333f) < 0.01f,
                                "shared space-evenly parsing should preserve flex content alignment");
+
+    const auto contents_doc = document::createFromString(
+        "<style>body{margin:0}#grid{display:grid;width:100px;grid-template-columns:50px 50px;"
+        "grid-auto-rows:20px}.item{height:20px}</style>"
+        "<div id='grid'><div id='wrapper' style='display:contents'><div class='item' id='first'></div></div>"
+        "<div class='item' id='after'></div><div id='hidden' style='display:none'></div></div>"
+        "<div id='scroller' style='height:20px;overflow:auto'><div style='height:100px'></div></div>",
+        &container);
+    contents_doc->render(800);
+    const auto wrapper   = contents_doc->root()->select_one("#wrapper");
+    const auto after     = contents_doc->root()->select_one("#after");
+    const auto hidden    = contents_doc->root()->select_one("#hidden");
+    const auto scroller  = contents_doc->root()->select_one("#scroller");
+    ok                  &= check(wrapper && after && hidden && scroller && !wrapper->get_render_item() &&
+                                     after->get_placement().x == 50_px,
+                                 "a contents wrapper should have no box and its child should participate in the grid");
+    if(wrapper && after && hidden && scroller)
+    {
+        ok &= check(scroller->v_scroll(15_px) == 15_px, "the overflow box should be scrollable");
+        contents_doc->append_children_from_string(*wrapper, "<div class='item' id='inserted'></div>", false);
+        contents_doc->render(800);
+        const auto inserted = contents_doc->root()->select_one("#inserted");
+        ok &= check(inserted && inserted->get_placement().x == 50_px && after->get_placement().x == 0_px &&
+                        after->get_placement().y == 20_px,
+                    "appending to a contents wrapper should preserve grid item order");
+        ok &= check(scroller->v_scroll(-100_px) == -15_px,
+                    "rebuilding the render tree should preserve unrelated scroll positions");
+
+        contents_doc->append_children_from_string(*wrapper, "<div class='item' id='replacement'></div>", true);
+        contents_doc->render(800);
+        const auto replacement = contents_doc->root()->select_one("#replacement");
+        ok &= check(replacement && replacement->get_render_item() && !contents_doc->root()->select_one("#first") &&
+                        after->get_placement().x == 50_px && after->get_placement().y == 0_px,
+                    "replacing the children of a contents wrapper should rebuild its grid items");
+
+        contents_doc->append_children_from_string(*hidden, "<div class='item' id='hidden-child'></div>", true);
+        contents_doc->render(800);
+        const auto hidden_child = contents_doc->root()->select_one("#hidden-child");
+        ok &= check(hidden_child && !hidden_child->get_render_item() && after->get_placement().x == 50_px,
+                    "updating a boxless hidden subtree should not introduce render items");
+
+        ok &= check(scroller->v_scroll(75_px) == 75_px, "the overflow box should scroll before replacing its content");
+        contents_doc->append_children_from_string(*scroller, "<div style='height:30px'></div>", true);
+        contents_doc->render(800);
+        ok &= check(scroller->v_scroll(-100_px) == -10_px,
+                    "preserved scroll positions should be clamped to the rebuilt content size");
+    }
+
+    const auto hover_doc = document::createFromString(
+        "<style>body{margin:0}#grid{display:grid;width:100px;grid-template-columns:50px 50px;"
+        "grid-auto-rows:20px}#wrapper{height:20px}#wrapper:hover{display:contents}.item{height:20px}</style>"
+        "<div id='grid'><div id='wrapper'><div class='item' id='first'></div><div class='item' id='second'></div>"
+        "</div><div class='item' id='after'></div></div>",
+        &container);
+    hover_doc->render(800);
+    const auto hover_wrapper = hover_doc->root()->select_one("#wrapper");
+    const auto hover_second  = hover_doc->root()->select_one("#second");
+    const auto hover_after   = hover_doc->root()->select_one("#after");
+    int        redraws       = 0;
+    const auto redraw        = [&](const position&) { ++redraws; };
+    if(hover_wrapper && hover_second && hover_after)
+    {
+        const bool changed = hover_doc->on_mouse_over(10, 10, 10, 10, redraw);
+        ok &= check(changed && redraws > 0 && !hover_wrapper->get_render_item() &&
+                        hover_second->get_placement().x == 50_px && hover_after->get_placement().y == 20_px,
+                    "hovering should rebuild and lay out a wrapper changed to display:contents");
+        hover_doc->on_mouse_leave(redraw);
+        ok &= check(hover_wrapper->get_render_item() && hover_after->get_placement().x == 50_px &&
+                        hover_after->get_placement().y == 0_px,
+                    "leaving hover should restore the wrapper box and grid layout");
+    } else
+    {
+        ok &= check(false, "hover display-contents test elements should exist");
+    }
+
+    const auto ancestor_hover_doc = document::createFromString(
+        "<style>body{margin:0}#outer{width:50px}#outer:hover{color:red}"
+        "#nested{padding:5px}#outer:hover #nested{display:contents}#child{width:20px;height:20px}</style>"
+        "<div id='outer'><div id='nested'><div id='child'></div></div></div>",
+        &container);
+    ancestor_hover_doc->render(800);
+    const auto ancestor_nested  = ancestor_hover_doc->root()->select_one("#nested");
+    const auto ancestor_child   = ancestor_hover_doc->root()->select_one("#child");
+    ok                         &= check(ancestor_nested && ancestor_child && ancestor_nested->get_render_item() &&
+                                            ancestor_child->get_placement().x == 5_px,
+                                        "the nested wrapper should initially generate a box");
+    if(ancestor_nested && ancestor_child)
+    {
+        ancestor_hover_doc->on_mouse_over(10, 10, 10, 10, redraw);
+        ok &= check(!ancestor_nested->get_render_item() && ancestor_child->get_placement().x == 0_px,
+                    "an ancestor hover should rebuild a descendant changed to display:contents");
+        ancestor_hover_doc->on_mouse_leave(redraw);
+        ok &= check(ancestor_nested->get_render_item() && ancestor_child->get_placement().x == 5_px,
+                    "leaving an ancestor hover should restore the descendant's box");
+    }
+
+    class resizable_container : public grid_test_container
+    {
+      public:
+        int  width = 800;
+        void get_media_features(media_features& media) const override
+        {
+            grid_test_container::get_media_features(media);
+            media.width = width;
+        }
+    } resizable;
+    const auto media_doc = document::createFromString(
+        "<style>body{margin:0}.table{display:table}.cell{display:table-cell}"
+        ".size{width:40px;height:20px}#wrapper{display:none}"
+        "@media(max-width:500px){#wrapper{display:contents}}</style>"
+        "<div class='table'><div id='wrapper'><div class='cell' id='cell'><div class='size'></div></div></div></div>",
+        &resizable);
+    media_doc->render(800);
+    const auto media_wrapper = media_doc->root()->select_one("#wrapper");
+    const auto cell          = media_doc->root()->select_one("#cell");
+    ok &= check(media_wrapper && cell && !cell->get_render_item(), "initial media query should hide the table cell");
+    if(media_wrapper && cell)
+    {
+        resizable.width    = 400;
+        const bool changed = media_doc->media_changed();
+        media_doc->render(400);
+        ok &= check(changed && !media_wrapper->get_render_item() && cell->get_render_item() &&
+                        cell->get_placement().height == 20_px,
+                    "media changes should flatten contents and recreate anonymous table boxes");
+
+        resizable.width = 800;
+        media_doc->media_changed();
+        media_doc->render(800);
+        ok &= check(!cell->get_render_item(), "media changes should remove previously rendered hidden descendants");
+    }
+
+    class language_container : public grid_test_container
+    {
+      public:
+        std::string language = "fr";
+        void        get_language(std::string& lang, std::string&) const override
+        {
+            lang = language;
+        }
+    } localized;
+    const auto language_doc = document::createFromString(
+        "<style>body{margin:0}#wrapper{padding:5px}#wrapper:lang(fr){display:contents}"
+        "#child{width:20px;height:20px}</style><div id='wrapper'><div id='child'></div></div>",
+        &localized);
+    language_doc->render(800);
+    const auto language_wrapper = language_doc->root()->select_one("#wrapper");
+    const auto language_child   = language_doc->root()->select_one("#child");
+    const bool language_changed = language_doc->lang_changed();
+    language_doc->render(800);
+    ok &= check(language_changed && language_wrapper && language_child && !language_wrapper->get_render_item() &&
+                    language_child->get_placement().x == 0_px,
+                "language changes should rebuild elements changed to display:contents without media queries");
+
+    class anchor_container : public grid_test_container
+    {
+      public:
+        std::string clicked_url;
+        void        on_anchor_click(const char* url, const element::ptr&) override
+        {
+            clicked_url = url;
+        }
+    } anchors;
+    const auto anchor_doc =
+        document::createFromString("<style>body{margin:0;font-size:16px;line-height:20px}"
+                                   "a:hover{color:red}</style><a id='anchor' href='/target' style='display:contents'>"
+                                   "<span id='inner' style='display:contents'>link</span></a>outside",
+                                   &anchors);
+    anchor_doc->render(800);
+    const auto anchor   = anchor_doc->root()->select_one("#anchor");
+    const auto inner    = anchor_doc->root()->select_one("#inner");
+    redraws             = 0;
+    const bool hovered  = anchor_doc->on_mouse_over(5, 5, 5, 5, redraw);
+    ok                 &= check(anchor && inner && hovered && redraws > 0 && anchor_doc->get_over_element() == inner,
+                                "hovering text in nested contents elements should target its DOM parent and redraw it");
+    anchor_doc->on_lbutton_down(5, 5, 5, 5, redraw);
+    anchor_doc->on_lbutton_up(5, 5, 5, 5, redraw);
+    ok &= check(anchors.clicked_url == "/target", "clicking text in a contents link should activate the link");
+    anchors.clicked_url.clear();
+    anchor_doc->on_lbutton_down(40, 5, 40, 5, redraw);
+    anchor_doc->on_lbutton_up(40, 5, 40, 5, redraw);
+    ok &= check(anchors.clicked_url.empty(), "text outside a contents link should not activate it");
+
+    for(const auto* layout : {"flex", "grid"})
+    {
+        anchors.clicked_url.clear();
+        const auto layout_doc = document::createFromString(
+            std::string("<style>body{margin:0;font-size:16px;line-height:20px}#container{display:") + layout +
+                "}</style><div id='container'><a href='/target' style='display:contents'>link</a></div>",
+            &anchors);
+        layout_doc->render(800);
+        layout_doc->on_lbutton_down(5, 5, 5, 5, redraw);
+        layout_doc->on_lbutton_up(5, 5, 5, 5, redraw);
+        ok &=
+            check(anchors.clicked_url == "/target", std::string("contents links should remain clickable in ") + layout);
+    }
     return ok ? 0 : 1;
 }

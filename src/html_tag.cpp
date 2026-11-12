@@ -1675,7 +1675,7 @@ namespace litehtml
             {
                 for(const auto& el : m_children)
                 {
-                    if(el->is_body())
+                    if(el->is_body() && !is_one_of(el->css().get_display(), display_none, display_contents))
                     {
                         // return own body background
                         return el->get_background(true);
