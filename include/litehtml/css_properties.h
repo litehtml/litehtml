@@ -270,12 +270,12 @@ namespace litehtml
         }
         const grid_track_size& get_grid_auto_columns() const
         {
-            static const grid_track_size auto_track;
+            static const grid_track_size auto_track{};
             return m_grid_auto_columns.empty() ? auto_track : m_grid_auto_columns[0];
         }
         const grid_track_size& get_grid_auto_rows() const
         {
-            static const grid_track_size auto_track;
+            static const grid_track_size auto_track{};
             return m_grid_auto_rows.empty() ? auto_track : m_grid_auto_rows[0];
         }
         const grid_track_list& get_grid_auto_column_pattern() const

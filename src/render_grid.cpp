@@ -70,7 +70,7 @@ namespace litehtml
                                              int first, int last, pixel_t available, bool definite)
         {
             std::vector<track_state> tracks;
-            const grid_track_size    auto_track;
+            const grid_track_size    auto_track{};
             for(int index = first; index < last; ++index)
             {
                 const grid_track_size* definition = &auto_track;
