@@ -233,18 +233,7 @@ litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y,
     if(self_size.height.type != containing_block_context::cbc_value_type_auto &&
        ((containing_block_size.size_mode & containing_block_context::size_mode_content) == 0))
     {
-        // TODO: Something wrong here
-        // Percentage height from undefined containing block height is usually <= 0
-        if(self_size.height.type == containing_block_context::cbc_value_type_percentage)
-        {
-            if(self_size.height.value > 0_px)
-            {
-                m_pos.height = self_size.height;
-            }
-        } else
-        {
-            m_pos.height = self_size.height;
-        }
+        m_pos.height  = self_size.height;
         m_pos.height -= box_sizing_height();
     } else if(src_el()->is_block_formatting_context())
     {

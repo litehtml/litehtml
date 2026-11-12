@@ -151,9 +151,14 @@ Tests: [css21/clear-001.htm](https://github.com/litehtml/litehtml-tests/blob/mai
 ✅ Supported — `auto` | `<length-percentage>`. `min-content`/`max-content`/`fit-content` are
 **not** accepted for `width`/`height` (they are only supported on `flex-basis`).
 
+Percentage heights of in-flow boxes use automatic sizing when their containing block's height is
+indefinite. In quirks mode, eligible auto-height blocks can be skipped, but flex containers remain
+boundaries. Definite percentage heights, including zero, are applied.
+
 Tests: [table-1-width.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-1-width.htm),
 [table-2-width.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-2-width.htm),
-[css21/width-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/width-001.htm).
+[css21/width-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/width-001.htm),
+[flex/percentage-heights-004.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/percentage-heights-004.htm).
 
 #### `min-width`, `min-height`
 ✅ Supported — `auto` | `<length-percentage>`.

@@ -379,6 +379,8 @@ void litehtml::render_item::render_positioned(render_type rt)
                 containing_block_size.height = m_pos.height + m_padding.height();
                 containing_block_size.width  = m_pos.width + m_padding.width();
             }
+            containing_block_size.height.type   = containing_block_context::cbc_value_type_absolute;
+            containing_block_size.quirks_height = containing_block_size.height;
 
             css_length css_left   = el->src_el()->css().get_offsets().left;
             css_length css_right  = el->src_el()->css().get_offsets().right;
@@ -1651,7 +1653,9 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
     const containing_block_context& cb_context) const
 {
     containing_block_context ret;
-    ret.context_idx = cb_context.context_idx + 1;
+    const auto               doc_mode = src_el()->get_document()->mode();
+    ret.context_idx                   = cb_context.context_idx + 1;
+    ret.quirks_height                 = cb_context.quirks_height;
     ret.width.value = ret.max_width.value = cb_context.width.value;
     if(!is_one_of(src_el()->css().get_position(), element_position_absolute, element_position_fixed))
     {
@@ -1701,7 +1705,16 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
             ret.height.type  = containing_block_context::cbc_value_type_absolute;
         } else if((cb_context.size_mode & containing_block_context::size_mode_ignore_css_height) == 0)
         {
-            calc_cb_length(css().get_height(), cb_context.height, ret.height);
+            const auto& height     = css().get_height();
+            const bool out_of_flow = is_one_of(css().get_position(), element_position_absolute, element_position_fixed);
+            const auto& percentage_base = out_of_flow ? cb_context.height : cb_context.height_for_percentages(doc_mode);
+            const bool  unresolved_percentage = !height.is_predefined() && height.units() == css_units_percentage &&
+                                                percentage_base.type == containing_block_context::cbc_value_type_auto &&
+                                                !out_of_flow;
+            if(!unresolved_percentage)
+            {
+                calc_cb_length(height, percentage_base.value, ret.height);
+            }
         } else
         {
             ret.height.type = containing_block_context::cbc_value_type_auto;
@@ -1780,6 +1793,29 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
     if(ret.max_height.type != containing_block_context::cbc_value_type_none)
     {
         ret.max_height.value -= box_sizing_height();
+    }
+
+    if(doc_mode == quirks_mode)
+    {
+        if(ret.height.type != containing_block_context::cbc_value_type_auto)
+        {
+            ret.quirks_height = ret.height;
+        } else
+        {
+            const bool out_of_flow = is_one_of(css().get_position(), element_position_absolute, element_position_fixed);
+            const bool auto_height = css().get_height().is_predefined();
+            // Auto-height html and body boxes can fill the viewport in quirks mode.
+            if(auto_height && !out_of_flow && css().get_float() == float_none &&
+               (src_el()->is_root() || src_el()->is_body()))
+            {
+                ret.quirks_height = {ret.height.value, containing_block_context::cbc_value_type_absolute};
+            } else if(!auto_height || out_of_flow ||
+                      !is_one_of(css().get_display(), display_block, display_inline_block, display_list_item,
+                                 display_table_caption))
+            {
+                ret.quirks_height.type = containing_block_context::cbc_value_type_auto;
+            }
+        }
     }
 
     return ret;

@@ -530,11 +530,12 @@ namespace litehtml
             position viewport;
             m_container->get_viewport(viewport);
             containing_block_context cb_context;
-            cb_context.width        = max_width;
-            cb_context.width.type   = containing_block_context::cbc_value_type_absolute;
-            cb_context.height       = viewport.height;
-            cb_context.height.type  = containing_block_context::cbc_value_type_absolute;
-            cb_context.render_width = cb_context.width;
+            cb_context.width         = max_width;
+            cb_context.width.type    = containing_block_context::cbc_value_type_absolute;
+            cb_context.height        = viewport.height;
+            cb_context.height.type   = containing_block_context::cbc_value_type_absolute;
+            cb_context.quirks_height = cb_context.height;
+            cb_context.render_width  = cb_context.width;
 
             m_root_render->update_intrinsic_size();
 

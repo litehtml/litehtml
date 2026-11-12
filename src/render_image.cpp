@@ -23,7 +23,10 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y,
 
     src_el()->css().line_height().computed_value = height();
 
-    if(src_el()->css().get_height().is_predefined() && src_el()->css().get_width().is_predefined())
+    const bool height_is_auto = src_el()->css().get_height().is_predefined() ||
+                                self_size.height.type == containing_block_context::cbc_value_type_auto;
+
+    if(height_is_auto && src_el()->css().get_width().is_predefined())
     {
         m_pos.height = sz.height;
         m_pos.width  = sz.width;
@@ -61,12 +64,9 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y,
                 m_pos.width = sz.width;
             }
         }
-    } else if(!src_el()->css().get_height().is_predefined() && src_el()->css().get_width().is_predefined())
+    } else if(!height_is_auto && src_el()->css().get_width().is_predefined())
     {
-        if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height.value > 0_px)
-        {
-            m_pos.height = self_size.height;
-        }
+        m_pos.height = self_size.height;
 
         // check for max-height
         if(!src_el()->css().get_max_height().is_predefined())
@@ -85,7 +85,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y,
         {
             m_pos.width = sz.width;
         }
-    } else if(src_el()->css().get_height().is_predefined() && !src_el()->css().get_width().is_predefined())
+    } else if(height_is_auto && !src_el()->css().get_width().is_predefined())
     {
         m_pos.width = src_el()->css().get_width().calc_percent(parent_width);
 
@@ -109,11 +109,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y,
     } else
     {
         m_pos.width  = src_el()->css().get_width().calc_percent(parent_width);
-        m_pos.height = 0_px;
-        if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height.value > 0_px)
-        {
-            m_pos.height = self_size.height;
-        }
+        m_pos.height = self_size.height;
 
         // check for max-height
         if(!src_el()->css().get_max_height().is_predefined())
