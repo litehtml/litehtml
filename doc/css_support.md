@@ -2,6 +2,7 @@
 
 ## Table of contents
 
+- [CSS math values](#css-math-values)
 - [Properties](#properties)
   - [Summary](#summary)
   - [Box model & layout](#box-model--layout)
@@ -51,6 +52,51 @@ Status legend used throughout:
 > leading `-` and the `support/` directories are ignored by the test runner. Links point to the
 > [`litehtml/litehtml-tests`](https://github.com/litehtml/litehtml-tests) repository,
 > branch `main`.
+
+---
+
+## CSS math values
+
+`calc()`, `min()`, `max()`, and `clamp()` are supported in the engine's existing
+length/percentage properties, including shorthands, font size, line height,
+background positions/sizes, length-valued gradient stops, Flexbox basis, and
+Grid track sizes/gaps. Functions can nest and use existing `var()` substitution
+and fallbacks.
+
+- Arithmetic supports `+`, `-`, `*`, `/`, parentheses, and typed unit
+  cancellation: for example, `calc(100vw / 20px * 1em)`. The final type must
+  match the property; `width: calc(10px / 2px)` and `width: calc(0)` are invalid.
+- Supported length units remain `px`, `in`, `cm`, `mm`, `pt`, `pc`, `em`, `rem`,
+  `ex`, `ch`, `vw`, `vh`, `vmin`, and `vmax`, plus percentages and numbers where
+  allowed (for example, unitless `line-height`).
+- Binary `+` and `-` require whitespace on both sides. Comments alone do not
+  satisfy that requirement.
+- Percentages remain deferred until their property's reference size is
+  available. This includes percentage-dependent comparisons and ratios.
+  Percentage-dependent sizing retains the engine's existing intrinsic-size
+  and indefinite containing-block behavior.
+- Non-negative property restrictions apply to the final calculation, not its
+  individual operands. Negative margins and offsets remain allowed.
+- `min()` and `max()` require at least one compatible argument. `clamp()` has
+  three arguments, allows `none` for either bound, and gives the minimum bound
+  priority if it exceeds the maximum.
+- Calculation constants `e`, `pi`, `infinity`, `-infinity`, and `NaN` are
+  recognized. IEEE arithmetic is retained inside expressions. At the outer
+  calculation boundary, NaN becomes zero and infinities are range-clamped.
+  Calculated pixel values are limited to +/-16,777,215 pixels so they remain
+  finite and within integer geometry limits; non-negative properties use zero
+  as the lower bound.
+- Math expression nesting/tree depth is limited to 128.
+
+This support does not add new CSS units or properties, calculations in colors
+or angles, or calculations in numeric-only properties such as `z-index`,
+`flex-grow`, and `font-weight`. Media-query feature values retain their
+existing literal-only parsing. Other math functions are not supported.
+
+Local coverage is provided by `tests/css_math_test.cpp`, enabled with
+`LITEHTML_BUILD_MATH_TESTS`. It checks parsing and measured output across
+multiple percentage bases, fonts, backgrounds/gradients, Flexbox, Grid, and
+tables. The separate rendering suite remains the golden-image regression check.
 
 ---
 

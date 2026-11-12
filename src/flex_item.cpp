@@ -218,7 +218,7 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
         }
     } else
     {
-        if(el->css().get_flex_basis().units() == css_units_percentage)
+        if(el->css().get_flex_basis().has_percentage())
         {
             if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
             {
@@ -337,8 +337,8 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
     const auto& height          = el->css().get_height();
     const auto& percentage_base = self_size.height_for_percentages(el->src_el()->get_document()->mode());
     const bool  height_is_auto =
-        height.is_predefined() || (height.units() == css_units_percentage &&
-                                   percentage_base.type == containing_block_context::cbc_value_type_auto);
+        height.is_predefined() ||
+        (height.has_percentage() && percentage_base.type == containing_block_context::cbc_value_type_auto);
 
     if(el->css().get_margins().top.is_predefined())
     {
@@ -456,7 +456,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
         }
     } else
     {
-        if(el->css().get_flex_basis().units() == css_units_percentage)
+        if(el->css().get_flex_basis().has_percentage())
         {
             if(self_size.height.type == containing_block_context::cbc_value_type_absolute)
             {

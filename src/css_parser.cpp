@@ -52,8 +52,10 @@ namespace litehtml
         keep_idx.reserve(tokens.size());
         for(int i = 0; i < static_cast<int>(tokens.size()); ++i)
         {
-            auto& tok  = tokens[i];
-            bool  keep = true;
+            auto& tok             = tokens[i];
+            tok.whitespace_before = tok.whitespace_before || (i > 0 && tokens[i - 1].type == WHITESPACE);
+            tok.whitespace_after  = tok.whitespace_after || at(tokens, i + 1).type == WHITESPACE;
+            bool keep             = true;
             if(tok.type == ' ')
             {
                 const auto& left  = i > 0 ? tokens[i - 1] : css_token();
@@ -92,7 +94,9 @@ namespace litehtml
     {
         for(int i = 0; i < static_cast<int>(tokens.size()); i++)
         {
-            auto& tok = tokens[i];
+            auto& tok             = tokens[i];
+            tok.whitespace_before = tok.whitespace_before || (i > 0 && tokens[i - 1].type == WHITESPACE);
+            tok.whitespace_after  = tok.whitespace_after || at(tokens, i + 1).type == WHITESPACE;
             if(tok.type == ' ')
             {
                 const auto& left  = i > 0 ? tokens[i - 1] : css_token();
@@ -100,6 +104,10 @@ namespace litehtml
                 bool        keep  = keep_whitespace && keep_whitespace(left, right);
                 if(!keep)
                 {
+                    if(i + 1 < static_cast<int>(tokens.size()))
+                    {
+                        tokens[i + 1].whitespace_before = true;
+                    }
                     remove(tokens, i), i--;
                 }
             } else if(tok.is_component_value())

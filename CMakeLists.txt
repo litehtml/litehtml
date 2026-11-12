@@ -5,6 +5,7 @@ project(litehtml LANGUAGES C CXX)
 option(LITEHTML_BUILD_TESTING "enable testing for litehtml" OFF)
 option(LITEHTML_ENABLE_LINT "enable linting for litehtml" ON)
 option(LITEHTML_BUILD_GRID_TESTS "build CSS Grid regression tests" OFF)
+option(LITEHTML_BUILD_MATH_TESTS "build CSS math regression tests" OFF)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -227,6 +228,13 @@ if(LITEHTML_BUILD_GRID_TESTS)
 	add_executable(litehtml-grid-tests tests/css_grid_test.cpp)
 	target_link_libraries(litehtml-grid-tests PRIVATE litehtml)
 	add_test(NAME litehtml-grid-tests COMMAND litehtml-grid-tests)
+endif()
+
+if(LITEHTML_BUILD_MATH_TESTS)
+	enable_testing()
+	add_executable(litehtml-math-tests tests/css_math_test.cpp)
+	target_link_libraries(litehtml-math-tests PRIVATE litehtml)
+	add_test(NAME litehtml-math-tests COMMAND litehtml-math-tests)
 endif()
 
 # install and export

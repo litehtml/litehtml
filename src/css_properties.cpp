@@ -145,8 +145,9 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     compute_font(el, doc);
     pixel_t font_size = get_font_size();
 
-    const css_length _auto = css_length::predef_value(0);
-    const css_length none = _auto, normal = _auto;
+    const css_length  _auto  = css_length::predef_value(0);
+    const css_length& none   = _auto;
+    const css_length& normal = _auto;
 
     m_css_width  = el->get_property<css_length>(_width_, false, _auto, offset(m_css_width));
     m_css_height = el->get_property<css_length>(_height_, false, _auto, offset(m_css_height));
@@ -299,7 +300,14 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
         m_line_height.computed_value = m_font_metrics.height;
     } else if(m_line_height.css_value.units() == css_units_none)
     {
-        m_line_height.computed_value = pixel_t(m_line_height.css_value.val() * font_size.value());
+        if(m_line_height.css_value.is_expression())
+        {
+            const auto number = doc->to_pixels(m_line_height.css_value, m_font_metrics, m_font_metrics.font_size);
+            m_line_height.css_value.set_value(number.value(), css_units_none);
+        }
+        m_line_height.computed_value = pixel_t(
+            static_cast<float>(std::min(static_cast<double>(css_length::max_math_pixels),
+                                        static_cast<double>(m_line_height.css_value.val()) * font_size.value())));
     } else
     {
         m_line_height.computed_value =
@@ -425,15 +433,28 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
         }
     } else
     {
-        if(sz.units() == css_units_percentage)
+        font_metrics fm;
+        fm.x_height = fm.font_size = parent_sz;
+        if(sz.is_expression())
         {
-            font_size = sz.calc_percent(parent_sz);
-        } else
-        {
-            font_metrics fm;
-            fm.x_height = fm.font_size = parent_sz;
-            font_size                  = doc->to_pixels(sz, fm, 0_px);
+            if(el_parent)
+            {
+                fm = el_parent->css().get_font_metrics();
+            } else
+            {
+                font_description initial;
+                initial.family = doc->container()->get_default_font_name();
+                initial.size   = doc_font_size;
+                initial.weight = 400;
+                doc->get_font(initial, &fm);
+            }
+            sz.resolve_units([&](float value, css_units unit) {
+                return !el_parent && unit == css_units_rem
+                           ? (doc_font_size * value).value()
+                           : doc->to_pixels(css_length(value, unit), fm, parent_sz).value();
+            });
         }
+        font_size = doc->to_pixels(sz, fm, parent_sz);
     }
 
     m_font_size = static_cast<float>(font_size);
