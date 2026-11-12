@@ -37,6 +37,19 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     m_caption_side = static_cast<caption_side>(
         el->get_property<int>(_caption_side_, true, caption_side_top, offset(m_caption_side)));
 
+    if(m_display == display_contents)
+    {
+        if(el->is_root())
+        {
+            m_display = display_block;
+        } else if(el->is_replaced() ||
+                  is_one_of(el->tag(), _br_, _wbr_, _meter_, _progress_, _canvas_, _embed_, _object_, _audio_, _iframe_,
+                            _img_, _video_, _frame_, _frameset_, _input_, _textarea_, _select_, _svg_))
+        {
+            m_display = display_none;
+        }
+    }
+
     // https://www.w3.org/TR/CSS22/visuren.html#dis-pos-flo
     if(m_display == display_none)
     {
@@ -109,7 +122,7 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     {
         m_display = display_grid;
     }
-    if(auto parent = el->parent())
+    if(auto parent = el->layout_parent())
     {
         if(is_one_of(parent->css().get_display(), display_grid, display_inline_grid))
         {
@@ -432,33 +445,42 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
                                                  offset(m_font_weight));
     m_font_style =
         static_cast<font_style>(el->get_property<int>(_font_style_, true, font_style_normal, offset(m_font_style)));
-    bool propagate_decoration =
-        !is_one_of(m_display, display_inline_block, display_inline_table, display_inline_flex, display_inline_grid) &&
-        m_float == float_none && !is_one_of(m_el_position, element_position_absolute, element_position_fixed);
-
-    m_text_decoration_line = el->get_property<int>(_text_decoration_line_, propagate_decoration,
-                                                   text_decoration_line_none, offset(m_text_decoration_line));
-
-    // Merge parent text decoration with child text decoration
-    if(propagate_decoration && el->parent())
+    if(m_display == display_contents && el_parent)
     {
-        m_text_decoration_line |= el->parent()->css().get_text_decoration_line();
-    }
-
-    if(m_text_decoration_line)
-    {
-        m_text_decoration_thickness = el->get_property<css_length>(
-            _text_decoration_thickness_, propagate_decoration, css_length::predef_value(text_decoration_thickness_auto),
-            offset(m_text_decoration_thickness));
-        m_text_decoration_style = static_cast<text_decoration_style>(
-            el->get_property<int>(_text_decoration_style_, propagate_decoration, text_decoration_style_solid,
-                                  offset(m_text_decoration_style)));
-        m_text_decoration_color = get_color_property(el, _text_decoration_color_, propagate_decoration,
-                                                     web_color::current_color, offset(m_text_decoration_color));
+        m_text_decoration_line      = el_parent->css().get_text_decoration_line();
+        m_text_decoration_thickness = el_parent->css().get_text_decoration_thickness();
+        m_text_decoration_style     = el_parent->css().get_text_decoration_style();
+        m_text_decoration_color     = el_parent->css().get_text_decoration_color();
     } else
     {
-        m_text_decoration_thickness = css_length::predef_value(text_decoration_thickness_auto);
-        m_text_decoration_color     = web_color::current_color;
+        bool propagate_decoration = !is_one_of(m_display, display_inline_block, display_inline_table,
+                                               display_inline_flex, display_inline_grid) &&
+                                    m_float == float_none &&
+                                    !is_one_of(m_el_position, element_position_absolute, element_position_fixed);
+
+        m_text_decoration_line = el->get_property<int>(_text_decoration_line_, propagate_decoration,
+                                                       text_decoration_line_none, offset(m_text_decoration_line));
+
+        if(propagate_decoration && el_parent)
+        {
+            m_text_decoration_line |= el_parent->css().get_text_decoration_line();
+        }
+
+        if(m_text_decoration_line)
+        {
+            m_text_decoration_thickness = el->get_property<css_length>(
+                _text_decoration_thickness_, propagate_decoration,
+                css_length::predef_value(text_decoration_thickness_auto), offset(m_text_decoration_thickness));
+            m_text_decoration_style = static_cast<text_decoration_style>(
+                el->get_property<int>(_text_decoration_style_, propagate_decoration, text_decoration_style_solid,
+                                      offset(m_text_decoration_style)));
+            m_text_decoration_color = get_color_property(el, _text_decoration_color_, propagate_decoration,
+                                                         web_color::current_color, offset(m_text_decoration_color));
+        } else
+        {
+            m_text_decoration_thickness = css_length::predef_value(text_decoration_thickness_auto);
+            m_text_decoration_color     = web_color::current_color;
+        }
     }
 
     // text-emphasis
@@ -684,7 +706,7 @@ void litehtml::css_properties::compute_flex(const html_tag* el, const document::
     }
     m_flex_align_self = static_cast<flex_align_items>(
         el->get_property<int>(_align_self_, false, flex_align_items_auto, offset(m_flex_align_self)));
-    auto parent = el->parent();
+    auto parent = el->layout_parent();
     if(parent && (parent->css().m_display == display_flex || parent->css().m_display == display_inline_flex))
     {
         m_flex_grow   = el->get_property<float>(_flex_grow_, false, 0, offset(m_flex_grow));

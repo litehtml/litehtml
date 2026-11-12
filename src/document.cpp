@@ -27,6 +27,7 @@
 #include "render_table.h"
 #include "stylesheet.h"
 #include "types.h"
+#include <map>
 
 namespace litehtml
 {
@@ -159,20 +160,7 @@ namespace litehtml
             // Initialize element::m_css
             m_root->compute_styles();
 
-            // Create rendering tree
-            m_root_render = m_root->create_render_item(nullptr);
-
-            // Now the m_tabular_elements is filled with tabular elements.
-            // We have to check the tabular elements for missing table elements
-            // and create the anonymous boxes in visual table layout
-            fix_tables_layout();
-
-            // Finally initialize elements
-            // init() returns pointer to the render_init element because it can change its type
-            if(m_root_render)
-            {
-                m_root_render = m_root_render->init();
-            }
+            rebuild_render_tree();
         }
     }
 
@@ -532,6 +520,10 @@ namespace litehtml
 
     pixel_t document::render(pixel_t max_width, render_type rt)
     {
+        if(rt != render_fixed_only)
+        {
+            m_render_width = max_width;
+        }
         pixel_t ret = 0_px;
         if(m_root && m_root_render)
         {
@@ -562,6 +554,10 @@ namespace litehtml
                 m_size.height = 0;
                 m_root_render->calc_document_size(m_size);
             }
+        } else if(rt != render_fixed_only)
+        {
+            m_size = {};
+            m_fixed_boxes.clear();
         }
         return ret;
     }
@@ -707,7 +703,7 @@ namespace litehtml
         if(state_was_changed)
         {
             m_container->on_mouse_event(m_over_element, mouse_event_enter);
-            return m_root->find_styles_changes(redraw_box);
+            return update_styles(redraw_box);
         }
         return false;
     }
@@ -786,7 +782,7 @@ namespace litehtml
             if(el->on_mouse_leave())
             {
                 m_container->on_mouse_event(el, mouse_event_leave);
-                return m_root->find_styles_changes(redraw_box);
+                return update_styles(redraw_box);
             }
         }
         return false;
@@ -841,7 +837,7 @@ namespace litehtml
         if(state_was_changed)
         {
             m_container->on_mouse_event(m_over_element, mouse_event_enter);
-            return m_root->find_styles_changes(redraw_box);
+            return update_styles(redraw_box);
         }
 
         return false;
@@ -858,7 +854,7 @@ namespace litehtml
         {
             if(m_over_element->on_lbutton_up(m_active_element == m_over_element))
             {
-                return m_root->find_styles_changes(redraw_box);
+                return update_styles(redraw_box);
             }
         }
         return false;
@@ -880,6 +876,76 @@ namespace litehtml
         m_fixed_boxes.push_back(pos);
     }
 
+    void document::rebuild_render_tree()
+    {
+        // Reuse scroll state for surviving boxes; layout will clamp it to their new sizes.
+        std::map<element::ptr, std::shared_ptr<scroll_view>> scroll_views;
+        const auto save_scroll_views = [&](const auto& self, const std::shared_ptr<render_item>& item) -> void {
+            if(item->m_scroll_view)
+            {
+                scroll_views.emplace(item->src_el(), item->m_scroll_view);
+            }
+            for(const auto& child : item->children())
+            {
+                self(self, child);
+            }
+        };
+        if(m_root_render)
+        {
+            save_scroll_views(save_scroll_views, m_root_render);
+        }
+        m_tabular_elements.clear();
+        m_root_render.reset();
+        if(!m_root)
+        {
+            return;
+        }
+        m_root->clear_renders();
+        m_root_render = m_root->create_render_item(nullptr);
+        fix_tables_layout();
+        if(m_root_render)
+        {
+            m_root_render = m_root_render->init();
+            if(!scroll_views.empty())
+            {
+                const auto restore_scroll_views = [&](const auto&                         self,
+                                                      const std::shared_ptr<render_item>& item) -> void {
+                    auto saved = scroll_views.find(item->src_el());
+                    if(saved != scroll_views.end() &&
+                       is_one_of(item->css().get_overflow(), overflow_scroll, overflow_auto))
+                    {
+                        item->m_scroll_view = saved->second;
+                    }
+                    for(const auto& child : item->children())
+                    {
+                        self(self, child);
+                    }
+                };
+                restore_scroll_views(restore_scroll_views, m_root_render);
+            }
+        }
+    }
+
+    bool document::update_styles(const std::function<void(const position&)>& redraw_box)
+    {
+        bool       render_tree_changed = false;
+        const bool changed             = m_root->find_styles_changes(redraw_box, &render_tree_changed);
+        if(render_tree_changed)
+        {
+            const auto old_size = m_size;
+            rebuild_render_tree();
+            if(m_render_width)
+            {
+                render(*m_render_width);
+                position viewport;
+                container()->get_viewport(viewport);
+                redraw_box(position(0_px, 0_px, std::max({old_size.width, m_size.width, viewport.right()}),
+                                    std::max({old_size.height, m_size.height, viewport.bottom()})));
+            }
+        }
+        return changed;
+    }
+
     bool document::media_changed()
     {
         container()->get_media_features(m_media);
@@ -887,17 +953,7 @@ namespace litehtml
         {
             m_root->refresh_styles();
             m_root->compute_styles();
-            // The set of rendered elements can change across a media breakpoint
-            // (e.g. display:none <-> block on responsive nav/hero blocks). The render
-            // tree is built once in createFromString() from the computed display values,
-            // so rebuild it here to add/remove render items for elements whose display
-            // just changed; otherwise a newly-shown element keeps no render item and
-            // never lays out (it collapses to zero).
-            m_root_render = m_root->create_render_item(nullptr);
-            if(m_root_render)
-            {
-                m_root_render = m_root_render->init();
-            }
+            rebuild_render_tree();
             return true;
         }
         return false;
@@ -905,7 +961,7 @@ namespace litehtml
 
     bool document::lang_changed()
     {
-        if(!m_media_lists.empty())
+        if(m_root)
         {
             std::string culture;
             container()->get_language(m_lang, culture);
@@ -918,6 +974,7 @@ namespace litehtml
             }
             m_root->refresh_styles();
             m_root->compute_styles();
+            rebuild_render_tree();
             return true;
         }
         return false;
@@ -1157,12 +1214,9 @@ namespace litehtml
         // Destroy GumboOutput
         gumbo_destroy_output(&kGumboDefaultOptions, output);
 
-        auto parent_render = parent.get_render_item();
-
         if(replace_existing)
         {
             parent.clearRecursive();
-            parent_render->children().clear();
         }
 
         // Let's process created elements tree
@@ -1185,22 +1239,8 @@ namespace litehtml
 
             // Initialize m_css
             child->compute_styles();
-
-            // Finally initialize elements
-            if(parent_render)
-            {
-                auto child_render = child->create_render_item(parent_render);
-                if(child_render)
-                {
-                    child_render = child_render->init();
-                    parent_render->add_child(child_render);
-                }
-            }
         }
-        // Now the m_tabular_elements is filled with tabular elements.
-        // We have to check the tabular elements for missing table elements
-        // and create the anonymous boxes in visual table layout
-        fix_tables_layout();
+        rebuild_render_tree();
     }
 
     void document::dump(dumper& cout)

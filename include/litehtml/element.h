@@ -64,6 +64,7 @@ namespace litehtml
 
         bool         is_root() const;
         element::ptr parent() const;
+        element::ptr layout_parent() const;
         void         parent(const element::ptr& par);
         // returns true for elements inside a table (but outside cells) that don't participate in table rendering
         bool is_table_skip() const;
@@ -146,7 +147,8 @@ namespace litehtml
 
         bool requires_styles_update();
         void add_render(const std::shared_ptr<render_item>& ri);
-        bool find_styles_changes(const std::function<void(const position&)>& redraw_box);
+        bool find_styles_changes(const std::function<void(const position&)>& redraw_box,
+                                 bool*                                       render_tree_changed = nullptr);
 
         element::ptr add_pseudo_before(const style& style)
         {
@@ -165,6 +167,8 @@ namespace litehtml
         void run_on_renderers(const std::function<bool(const std::shared_ptr<render_item>&)>& func);
 
       private:
+        void                      append_render_item(const std::shared_ptr<render_item>& parent_ri);
+        void                      clear_renders();
         std::vector<element::ptr> get_siblings_before() const;
         bool find_counter(string_id counter_name_id, std::map<string_id, int>::iterator& map_iterator);
         void parse_counter_tokens(const std::vector<std::string>& tokens, int default_value,
@@ -191,6 +195,16 @@ namespace litehtml
         return m_parent.lock();
     }
 
+    inline element::ptr litehtml::element::layout_parent() const
+    {
+        auto par = parent();
+        while(par && par->css().get_display() == display_contents)
+        {
+            par = par->parent();
+        }
+        return par;
+    }
+
     inline void litehtml::element::parent(const element::ptr& par)
     {
         m_parent = par;
@@ -208,7 +222,7 @@ namespace litehtml
 
     inline bool litehtml::element::is_flex_item() const
     {
-        auto par = parent();
+        auto par = layout_parent();
         if(par)
         {
             return is_one_of(par->css().get_display(), display_flex, display_inline_flex);

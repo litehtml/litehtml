@@ -8,6 +8,7 @@
 #include "types.h"
 
 #include <functional>
+#include <optional>
 #include <vector>
 
 using GumboOutput = struct GumboInternalOutput;
@@ -63,6 +64,7 @@ namespace litehtml
         litehtml::css                           m_master_css;
         litehtml::css                           m_user_css;
         litehtml::size                          m_size;
+        std::optional<pixel_t>                  m_render_width;
         position::vector                        m_fixed_boxes;
         std::shared_ptr<element>                m_over_element;
         std::shared_ptr<element>                m_active_element;
@@ -150,6 +152,8 @@ namespace litehtml
         GumboOutput* parse_html(estring str);
         void         create_node(void* gnode, elements_list& elements, bool parseTextNode, bool process_root);
         bool         update_media_lists(const media_features& features);
+        bool         update_styles(const std::function<void(const position&)>& redraw_box);
+        void         rebuild_render_tree();
         void         fix_tables_layout();
         void fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str);
         void fix_table_parent(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str);

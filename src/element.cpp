@@ -120,6 +120,24 @@ namespace litehtml
         cout.end_node();
     }
 
+    void element::append_render_item(const std::shared_ptr<render_item>& parent_ri)
+    {
+        if(css().get_display() == display_none)
+        {
+            return;
+        }
+        if(css().get_display() == display_contents)
+        {
+            for(const auto& child : m_children)
+            {
+                child->append_render_item(parent_ri);
+            }
+        } else if(auto ri = create_render_item(parent_ri))
+        {
+            parent_ri->add_child(ri);
+        }
+    }
+
     std::shared_ptr<render_item> element::create_render_item(const std::shared_ptr<render_item>& parent_ri)
     {
         std::shared_ptr<render_item> ret;
@@ -170,11 +188,7 @@ namespace litehtml
             ret->parent(parent_ri);
             for(const auto& el : m_children)
             {
-                auto ri = el->create_render_item(ret);
-                if(ri)
-                {
-                    ret->add_child(ri);
-                }
+                el->append_render_item(ret);
             }
         }
         return ret;
@@ -201,7 +215,16 @@ namespace litehtml
         m_renders.push_back(ri);
     }
 
-    bool element::find_styles_changes(const std::function<void(const position&)>& redraw_box)
+    void element::clear_renders()
+    {
+        m_renders.clear();
+        for(const auto& child : m_children)
+        {
+            child->clear_renders();
+        }
+    }
+
+    bool element::find_styles_changes(const std::function<void(const position&)>& redraw_box, bool* render_tree_changed)
     {
         if(css().get_display() == display_inline_text)
         {
@@ -212,7 +235,7 @@ namespace litehtml
 
         if(requires_styles_update())
         {
-            auto process_boxes = [&](const std::shared_ptr<element>& el) {
+            auto process_boxes = [&](const std::shared_ptr<element>& el, const auto& self) -> void {
                 for(const auto& weak_ri : el->m_renders)
                 {
                     auto ri = weak_ri.lock();
@@ -221,20 +244,53 @@ namespace litehtml
                         ri->get_rendering_boxes(redraw_box);
                     }
                 }
+                if(el->css().get_display() == display_contents)
+                {
+                    for(const auto& child : el->m_children)
+                    {
+                        self(child, self);
+                    }
+                }
             };
-            process_boxes(shared_from_this());
-            for(auto& el : m_children)
+            process_boxes(shared_from_this(), process_boxes);
+            if(css().get_display() != display_contents)
             {
-                process_boxes(el);
+                for(const auto& el : m_children)
+                {
+                    process_boxes(el, process_boxes);
+                }
             }
 
+            std::vector<std::pair<element::ptr, style_display>> old_displays;
+            if(render_tree_changed && !*render_tree_changed)
+            {
+                const auto save_displays = [&](const auto& self, const element::ptr& el) -> void {
+                    old_displays.emplace_back(el, el->css().get_display());
+                    for(const auto& child : el->m_children)
+                    {
+                        self(self, child);
+                    }
+                };
+                save_displays(save_displays, shared_from_this());
+            }
             refresh_styles();
             compute_styles();
+            if(render_tree_changed)
+            {
+                for(const auto& old_display : old_displays)
+                {
+                    if(old_display.first->css().get_display() != old_display.second)
+                    {
+                        *render_tree_changed = true;
+                        break;
+                    }
+                }
+            }
             ret = true;
         }
         for(auto& el : m_children)
         {
-            if(el->find_styles_changes(redraw_box))
+            if(el->find_styles_changes(redraw_box, render_tree_changed))
             {
                 ret = true;
             }
@@ -262,7 +318,7 @@ namespace litehtml
     {
         if(m_css.get_display() == display_block)
         {
-            auto par = parent();
+            auto par = layout_parent();
             if(par && is_one_of(par->css().get_display(), display_inline_flex, display_flex, display_grid,
                                 display_inline_grid))
             {

@@ -88,6 +88,10 @@ std::string litehtml::el_image::dump_get_name()
 std::shared_ptr<litehtml::render_item> litehtml::el_image::create_render_item(
     const std::shared_ptr<render_item>& parent_ri)
 {
+    if(css().get_display() == display_none)
+    {
+        return nullptr;
+    }
     auto ret = std::make_shared<render_item_image>(shared_from_this());
     ret->parent(parent_ri);
     return ret;

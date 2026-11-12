@@ -190,3 +190,4 @@ FakesAssemblies/
 # litehtml specific files
 test/visual-test.sh
 
+build-grid/

@@ -69,10 +69,10 @@ namespace litehtml
     // ==========================================================
     // CSS Property: display
     // ==========================================================
-    inline constexpr auto style_display_strings = split_css_values<20>(
+    inline constexpr auto style_display_strings = split_css_values<21>(
         "none;block;inline;inline-block;inline-table;list-item;table;table-caption;table-cell;table-column;"
         "table-column-group;table-footer-group;table-header-group;table-row;table-row-group;inline-text;flex;"
-        "inline-flex;grid;inline-grid");
+        "inline-flex;grid;inline-grid;contents");
 
     enum style_display
     {
@@ -96,6 +96,7 @@ namespace litehtml
         display_inline_flex,
         display_grid,
         display_inline_grid,
+        display_contents,
     };
 
     // ==========================================================
