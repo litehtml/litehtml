@@ -391,9 +391,16 @@ namespace litehtml
         typed_pixel height     = {0_px, cbc_value_type_auto}; // height of the containing block
         typed_pixel min_height = {0_px, cbc_value_type_none};
         typed_pixel max_height = {0_px, cbc_value_type_none};
+        // Percentage-height base after skipping eligible auto-height ancestors in quirks mode.
+        typed_pixel quirks_height = {0_px, cbc_value_type_auto};
 
         int      context_idx = 0;
         uint32_t size_mode   = size_mode_normal;
+
+        const typed_pixel& height_for_percentages(document_mode mode) const
+        {
+            return height.type == cbc_value_type_auto && mode == quirks_mode ? quirks_height : height;
+        }
 
         containing_block_context new_width(pixel_t w, uint32_t _size_mode = size_mode_normal) const
         {

@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include "document.h"
 #include "flex_item.h"
 #include "flex_line.h"
 #include "types.h"
@@ -333,6 +334,12 @@ litehtml::pixel_t litehtml::flex_item_row_direction::get_el_cross_size()
 void litehtml::flex_item_column_direction::direction_specific_init(const litehtml::containing_block_context& self_size,
                                                                    litehtml::formatting_context*             fmt_ctx)
 {
+    const auto& height          = el->css().get_height();
+    const auto& percentage_base = self_size.height_for_percentages(el->src_el()->get_document()->mode());
+    const bool  height_is_auto =
+        height.is_predefined() || (height.units() == css_units_percentage &&
+                                   percentage_base.type == containing_block_context::cbc_value_type_auto);
+
     if(el->css().get_margins().top.is_predefined())
     {
         auto_margin_main_start = 0_px;
@@ -408,10 +415,10 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 
     if(el->css().get_min_height().is_predefined())
     {
-        if(!el->css().get_height().is_predefined())
+        if(!height_is_auto)
         {
             min_size = std::min(el->get_intrinsic_min_size().height,
-                                el->css().get_height().calc_percent(self_size.height) + el->render_offset_height());
+                                height.calc_percent(percentage_base.value) + el->render_offset_height());
         } else
         {
             min_size = el->get_intrinsic_min_size().height;
@@ -424,14 +431,14 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 
     if(flex_basis_predefined)
     {
-        if(predef == flex_basis_auto && el->css().get_height().is_predefined())
+        if(predef == flex_basis_auto && height_is_auto)
         {
             predef = flex_basis_fit_content;
         }
         switch(predef)
         {
         case flex_basis_auto:
-            base_size = el->css().get_height().calc_percent(self_size.height) + el->render_offset_height();
+            base_size = height.calc_percent(percentage_base.value) + el->render_offset_height();
             if(base_size < content_height)
             {
                 base_size = content_height;
