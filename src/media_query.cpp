@@ -522,7 +522,7 @@ namespace litehtml
                     return false;
                 }
                 css_length length;
-                if(!length.from_token(val[0], f_length))
+                if(val[0].type == CV_FUNCTION || !length.from_token(val[0], f_length))
                 {
                     return false;
                 }

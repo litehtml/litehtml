@@ -184,18 +184,21 @@ namespace litehtml
         bool is_definite_breadth(const grid_breadth& breadth, bool definite_container)
         {
             return breadth.type == grid_breadth_type::length &&
-                   (breadth.length.units() != css_units_percentage || definite_container);
+                   (!breadth.length.has_percentage() || definite_container);
         }
 
         pixel_t track_fixed_size(const grid_track_size& track, pixel_t available, bool definite_container)
         {
             if(is_definite_breadth(track.max, definite_container))
             {
-                return std::max(0_px, track.max.length.calc_percent(available));
+                const auto minimum = is_definite_breadth(track.min, definite_container)
+                                         ? track.min.length.calc_percent(available)
+                                         : 0_px;
+                return std::max(minimum, std::max(0_px, track.max.length.calc_percent(available)));
             }
             if(track.min.type == grid_breadth_type::length)
             {
-                if(track.min.length.units() == css_units_percentage && !definite_container)
+                if(track.min.length.has_percentage() && !definite_container)
                 {
                     return 0_px;
                 }

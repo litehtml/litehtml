@@ -195,8 +195,7 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
 
     // calculate minimum height from m_css.get_min_height()
     pixel_t min_height = 0_px;
-    if(!src_el()->css().get_min_height().is_predefined() &&
-       src_el()->css().get_min_height().units() == css_units_percentage)
+    if(!src_el()->css().get_min_height().is_predefined() && src_el()->css().get_min_height().has_percentage())
     {
         min_height = src_el()->css().get_min_height().calc_percent(containing_block_size.height);
     } else
@@ -330,7 +329,7 @@ void litehtml::render_item_table::calc_intrinsic_size()
 
     pixel_t table_width = 0_px;
 
-    if(!css().get_width().is_predefined() && css().get_width().units() != css_units_percentage)
+    if(!css().get_width().is_predefined() && !css().get_width().has_percentage())
     {
         table_width = m_grid->calc_table_width({}, false, m_intrinsic_min_size.width, m_intrinsic_max_size.width);
     } else

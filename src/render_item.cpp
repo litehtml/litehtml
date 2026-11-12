@@ -53,7 +53,7 @@ void litehtml::render_item::update_intrinsic_size()
     // content
     if(!src_el()->is_text() && !src_el()->is_flex_item())
     {
-        if(!css().get_width().is_predefined() && css().get_width().units() != css_units_percentage)
+        if(!css().get_width().is_predefined() && !css().get_width().has_percentage())
         {
             auto w = doc->to_pixels(css().get_width(), fm, 0_px);
             if(css().get_display() == display_table_cell)
@@ -71,7 +71,7 @@ void litehtml::render_item::update_intrinsic_size()
             m_intrinsic_min_size.width = content_offset_width();
         }
 
-        if(!css().get_height().is_predefined() && css().get_height().units() != css_units_percentage)
+        if(!css().get_height().is_predefined() && !css().get_height().has_percentage())
         {
             auto h = doc->to_pixels(css().get_height(), fm, 0_px) + content_offset_height();
             if(css().get_display() == display_table_cell)
@@ -89,7 +89,7 @@ void litehtml::render_item::update_intrinsic_size()
     // Skipping this for inline elements, because they are not affected by min/max width properties
     if(!is_one_of(css().get_display(), display_inline_text, display_inline))
     {
-        if(!css().get_max_width().is_predefined() && css().get_max_width().units() != css_units_percentage)
+        if(!css().get_max_width().is_predefined() && !css().get_max_width().has_percentage())
         {
             m_intrinsic_max_size.width = std::min(
                 m_intrinsic_max_size.width, doc->to_pixels(css().get_max_width(), fm, 0_px) + content_offset_width());
@@ -99,19 +99,19 @@ void litehtml::render_item::update_intrinsic_size()
                 m_intrinsic_max_size.width = std::max(m_intrinsic_max_size.width, m_intrinsic_min_size.width);
             }
         }
-        if(!css().get_max_height().is_predefined() && css().get_max_height().units() != css_units_percentage)
+        if(!css().get_max_height().is_predefined() && !css().get_max_height().has_percentage())
         {
             m_intrinsic_max_size.height =
                 std::min(m_intrinsic_max_size.height,
                          doc->to_pixels(css().get_max_height(), fm, 0_px) + content_offset_height());
         }
 
-        if(!css().get_min_width().is_predefined() && css().get_min_width().units() != css_units_percentage)
+        if(!css().get_min_width().is_predefined() && !css().get_min_width().has_percentage())
         {
             m_intrinsic_min_size.width = std::max(
                 m_intrinsic_min_size.width, doc->to_pixels(css().get_min_width(), fm, 0_px) + content_offset_width());
         }
-        if(!css().get_min_height().is_predefined() && css().get_min_height().units() != css_units_percentage)
+        if(!css().get_min_height().is_predefined() && !css().get_min_height().has_percentage())
         {
             m_intrinsic_min_size.height =
                 std::max(m_intrinsic_min_size.height,
@@ -1637,7 +1637,7 @@ void litehtml::render_item::calc_cb_length(const css_length& len, pixel_t percen
 {
     if(!len.is_predefined())
     {
-        if(len.units() == litehtml::css_units_percentage)
+        if(len.has_percentage())
         {
             out_value.value = len.calc_percent(percent_base);
             out_value.type  = litehtml::containing_block_context::cbc_value_type_percentage;
@@ -1708,7 +1708,7 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
             const auto& height     = css().get_height();
             const bool out_of_flow = is_one_of(css().get_position(), element_position_absolute, element_position_fixed);
             const auto& percentage_base = out_of_flow ? cb_context.height : cb_context.height_for_percentages(doc_mode);
-            const bool  unresolved_percentage = !height.is_predefined() && height.units() == css_units_percentage &&
+            const bool  unresolved_percentage = !height.is_predefined() && height.has_percentage() &&
                                                 percentage_base.type == containing_block_context::cbc_value_type_auto &&
                                                 !out_of_flow;
             if(!unresolved_percentage)

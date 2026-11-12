@@ -2223,8 +2223,8 @@ namespace litehtml
 
     // https://drafts.csswg.org/css-variables/#using-variables
     // var( <custom-property-name> , <declaration-value>? )
-    // returns true if one var() was substituted
-    // returns true if there was error or var() was not found
+    // The active dependency path detects cycles without rejecting repeated
+    // references to the same variable in independent calculation operands.
     bool subst_var(css_token_vector& tokens, const html_tag* el, std::set<string_id>& used_vars)
     {
         for(int i = 0; i < static_cast<int>(tokens.size()); i++)
@@ -2233,6 +2233,7 @@ namespace litehtml
             if(tok.type == CV_FUNCTION && lowcase(tok.name()) == "var")
             {
                 auto args = tok.value; // copy is intentional
+                remove_whitespace(args);
                 if(!check_var_syntax(args))
                 {
                     return false;
@@ -2241,50 +2242,61 @@ namespace litehtml
                 auto name = _id(args[0].name());
                 if(name in used_vars)
                 {
-                    return false; // dependency cycle  https://drafts.csswg.org/css-variables/#cycles
+                    return false;
                 }
-                used_vars.insert(name);
-
                 css_token_vector value;
-                if(el->get_custom_property(name, value))
+                bool             available = el->get_custom_property(name, value);
+                if(available)
                 {
-                    remove(tokens, i);
-                    insert(tokens, i, value);
-                } else // custom property not defined
+                    used_vars.insert(name);
+                    available = subst_var(value, el, used_vars);
+                    used_vars.erase(name);
+                }
+                if(!available)
                 {
                     if(args.size() == 1)
                     {
                         return false; // default value not provided
                     }
                     remove(args, 0, 2);
-                    remove(tokens, i);
-                    insert(tokens, i, args);
+                    value = std::move(args);
+                    if(!subst_var(value, el, used_vars))
+                    {
+                        return false;
+                    }
                 }
-                return true;
+                remove(tokens, i);
+                insert(tokens, i, value);
+                i += static_cast<int>(value.size()) - 1;
+                continue;
             }
-            if(tok.is_component_value() && subst_var(tok.value, el, used_vars))
+            if(tok.is_component_value() && !subst_var(tok.value, el, used_vars))
             {
-                return true;
+                return false;
             }
         }
-        return false;
+        return true;
     }
 
-    void subst_vars_(string_id name, css_token_vector& tokens, const html_tag* el)
+    bool subst_vars_(string_id name, css_token_vector& tokens, const html_tag* el)
     {
         std::set<string_id> used_vars = {name};
-        while(subst_var(tokens, el, used_vars))
-            ;
+        return subst_var(tokens, el, used_vars);
     }
 
     void style::subst_vars(const html_tag* el)
     {
+        std::vector<style> expanded_shorthands;
         for(auto& prop : m_properties)
         {
             if(prop.second.m_has_var)
             {
                 auto& value = prop.second.get<css_token_vector>();
-                subst_vars_(prop.first, value, el);
+                if(!subst_vars_(prop.first, value, el))
+                {
+                    prop.second = property_value(invalid(), prop.second.m_important);
+                    continue;
+                }
                 if(prop.second.m_var_shorthand)
                 {
                     style expanded;
@@ -2298,10 +2310,30 @@ namespace litehtml
                     prop.second = parsed;
                     continue;
                 }
-                // re-adding the same property
-                // if it is a custom property it will be re-added as a css_token_vector
-                // if it is a standard css property it will be parsed and properly added as typed property
-                add_property(prop.first, value, "", prop.second.m_important, el->get_document()->container());
+                style resolved;
+                resolved.add_property(prop.first, value, "", prop.second.m_important, el->get_document()->container());
+                if(!resolved.m_properties.count(prop.first) && !resolved.m_properties.empty())
+                {
+                    // Shorthands such as margin are stored as their longhands.
+                    expanded_shorthands.push_back(std::move(resolved));
+                    continue;
+                }
+                auto parsed = resolved.get_property(prop.first);
+                if(parsed.is<invalid>() || parsed.m_has_var)
+                {
+                    parsed = property_value(invalid(), prop.second.m_important);
+                }
+                prop.second = parsed;
+            }
+        }
+        for(const auto& expanded : expanded_shorthands)
+        {
+            for(const auto& longhand : expanded.m_properties)
+            {
+                if(!longhand.second.m_has_var && !longhand.second.is<invalid>())
+                {
+                    add_parsed_property(longhand.first, longhand.second);
+                }
             }
         }
     }

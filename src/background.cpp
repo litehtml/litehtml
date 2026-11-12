@@ -857,15 +857,15 @@ namespace litehtml
     }
 
     // normalize length into value between 0 and 1
-    float normalize_length(css_length length, float line_len)
+    float normalize_length(const css_length& length, float line_len)
     {
-        if(length.units() == css_units_percentage)
+        if(length.units() == css_units_percentage && !length.is_expression())
         {
             return length.val() / 100.0f;
         }
         if(pixel_t(line_len) != 0_px)
         {
-            return length.val() / line_len;
+            return length.calc_percent(pixel_t(line_len)).value() / line_len;
         }
         return length.val();
     }

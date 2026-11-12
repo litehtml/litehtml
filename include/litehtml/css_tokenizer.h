@@ -95,7 +95,9 @@ namespace litehtml
         css_token(const css_token& token) :
             m_str(token.str()),
             type(token.type),
-            repr(token.repr)
+            repr(token.repr),
+            whitespace_before(token.whitespace_before),
+            whitespace_after(token.whitespace_after)
         {
             switch(type)
             {
@@ -175,6 +177,8 @@ namespace litehtml
         std::vector<css_token> value; // CV_FUNCTION, XXX_BLOCK
 
         std::string repr; // https://www.w3.org/TR/css-syntax-3/#representation
+        bool        whitespace_before = false;
+        bool        whitespace_after  = false;
     };
 
     using css_token_vector = std::vector<css_token>;

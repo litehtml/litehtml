@@ -66,6 +66,7 @@ cmake --install build
 | ------------------------ | ------- | ------------------------------------------------------------------ |
 | `LITEHTML_BUILD_TESTING` | `OFF`   | Download and build the litehtml test suite.                        |
 | `LITEHTML_BUILD_GRID_TESTS` | `OFF` | Build the local CSS Grid regression tests.                       |
+| `LITEHTML_BUILD_MATH_TESTS` | `OFF` | Build the local CSS calculation regression tests.                |
 | `LITEHTML_ENABLE_LINT`   | `ON`    | Run clang-tidy during the build.                                   |
 | `EXTERNAL_GUMBO`         | `OFF`   | Link against a system-installed gumbo instead of the bundled copy. |
 
@@ -135,6 +136,14 @@ cmake --build build-grid --target litehtml-grid-tests
 ctest --test-dir build-grid -R litehtml-grid-tests --output-on-failure
 ```
 
+To run the local CSS math tests, including headless layout checks:
+
+```sh
+cmake -S . -B build-math -DLITEHTML_BUILD_MATH_TESTS=ON
+cmake --build build-math --target litehtml-math-tests
+ctest --test-dir build-math -R litehtml-math-tests --output-on-failure
+```
+
 ## HTML Parser
 
 **litehtml** uses [gumbo-parser](https://codeberg.org/gumbo-parser/gumbo-parser) to parse
@@ -151,6 +160,8 @@ properties. See [doc/css_support.md](doc/css_support.md) for the list of support
 properties and selectors.
 
 CSS Grid has partial support; see [doc/css_support.md](doc/css_support.md#grid) for details.
+CSS length calculations support `calc()`, `min()`, `max()`, and `clamp()`;
+see [CSS math values](doc/css_support.md#css-math-values) for scope and limits.
 
 ## Documentation
 

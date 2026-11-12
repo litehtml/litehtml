@@ -59,7 +59,7 @@ namespace litehtml
         pixel_t breadth_length(const grid_breadth& breadth, pixel_t available, bool definite)
         {
             if((breadth.type != grid_breadth_type::length && breadth.type != grid_breadth_type::fit_content) ||
-               (breadth.length.units() == css_units_percentage && !definite))
+               (breadth.length.has_percentage() && !definite))
             {
                 return 0_px;
             }
@@ -105,13 +105,13 @@ namespace litehtml
                     current        += track.size;
                     auto type       = track.definition.min.type;
                     bool intrinsic  = type != grid_breadth_type::length ||
-                                      (track.definition.min.length.units() == css_units_percentage && !definite);
+                                      (track.definition.min.length.has_percentage() && !definite);
                     bool eligible   = intrinsic && (!max_content_only || type == grid_breadth_type::max_content) &&
                                       (!max_intrinsic || track.definition.max.type != grid_breadth_type::min_content);
                     bool capped = type == grid_breadth_type::automatic &&
                                   (track.definition.max.type == grid_breadth_type::length ||
                                    (max_intrinsic && track.definition.max.type == grid_breadth_type::fit_content)) &&
-                                  (track.definition.max.length.units() != css_units_percentage || definite) &&
+                                  (!track.definition.max.length.has_percentage() || definite) &&
                                   track.size >= breadth_length(track.definition.max, available, definite);
                     if(eligible && !capped)
                     {
@@ -128,7 +128,7 @@ namespace litehtml
                     auto& track     = tracks[static_cast<size_t>(index)];
                     auto  type      = track.definition.min.type;
                     bool  intrinsic = type != grid_breadth_type::length ||
-                                      (track.definition.min.length.units() == css_units_percentage && !definite);
+                                      (track.definition.min.length.has_percentage() && !definite);
                     if(!intrinsic || (max_content_only && type != grid_breadth_type::max_content) ||
                        (max_intrinsic && track.definition.max.type == grid_breadth_type::min_content))
                     {
@@ -137,7 +137,7 @@ namespace litehtml
                     if(type == grid_breadth_type::automatic &&
                        (track.definition.max.type == grid_breadth_type::length ||
                         (max_intrinsic && track.definition.max.type == grid_breadth_type::fit_content)) &&
-                       (track.definition.max.length.units() != css_units_percentage || definite))
+                       (!track.definition.max.length.has_percentage() || definite))
                     {
                         auto limit = breadth_length(track.definition.max, available, definite);
                         track.size = std::min(track.size + addition, std::max(track.size, limit));
@@ -167,7 +167,7 @@ namespace litehtml
                                      (!max_content_only && type == grid_breadth_type::min_content);
                     bool capped =
                         type == grid_breadth_type::fit_content &&
-                        (track.definition.max.length.units() != css_units_percentage || definite) &&
+                        (!track.definition.max.length.has_percentage() || definite) &&
                         track.target >= std::max(track.size, breadth_length(track.definition.max, available, definite));
                     if(eligible && !capped)
                     {
@@ -184,7 +184,7 @@ namespace litehtml
                     auto& track = tracks[static_cast<size_t>(index)];
                     auto  type  = track.definition.max.type;
                     if(type == grid_breadth_type::fit_content &&
-                       (track.definition.max.length.units() != css_units_percentage || definite))
+                       (!track.definition.max.length.has_percentage() || definite))
                     {
                         auto limit   = std::max(track.size, breadth_length(track.definition.max, available, definite));
                         track.target = std::min(track.target + addition, std::max(track.target, limit));
@@ -212,7 +212,7 @@ namespace litehtml
                 {
                     track.size = std::max(track.size, track.target);
                     if(track.definition.max.type == grid_breadth_type::length &&
-                       track.definition.max.length.units() != css_units_percentage)
+                       !track.definition.max.length.has_percentage())
                     {
                         track.size = std::max(track.size, breadth_length(track.definition.max, available, false));
                     } else if(track.definition.max.type == grid_breadth_type::fraction &&
@@ -403,12 +403,11 @@ namespace litehtml
                             std::max(static_cast<int>(row_names.size()), template_areas.rows),
                             css().get_grid_auto_flow(), areas, bounds, &column_names, &row_names))
         {
-            auto       min_tracks = make_tracks(css().get_grid_template_columns(), css().get_grid_auto_column_pattern(),
-                                                bounds.column_start, bounds.column_end, 0_px, false);
-            auto       max_tracks = min_tracks;
-            const auto gap        = css().get_column_gap().units() == css_units_percentage
-                                        ? 0_px
-                                        : css().get_column_gap().calc_percent(0_px);
+            auto min_tracks = make_tracks(css().get_grid_template_columns(), css().get_grid_auto_column_pattern(),
+                                          bounds.column_start, bounds.column_end, 0_px, false);
+            auto max_tracks = min_tracks;
+            // Percentages resolve against zero for intrinsic contributions.
+            const auto gap = css().get_column_gap().calc_percent(0_px);
             for(size_t index = 0; index < children.size(); ++index)
             {
                 int first = areas[index].column_start - bounds.column_start;
@@ -463,9 +462,7 @@ namespace litehtml
                                      self_size.height.type != containing_block_context::cbc_value_type_none;
         pixel_t    height     = definite_height ? std::max(0_px, self_size.height.value - box_sizing_height()) : 0_px;
         pixel_t    column_gap = css().get_column_gap().calc_percent(width);
-        pixel_t    row_gap    = css().get_row_gap().units() == css_units_percentage && !definite_height
-                                    ? 0_px
-                                    : css().get_row_gap().calc_percent(height);
+        pixel_t    row_gap    = css().get_row_gap().calc_percent(height);
         if(subgrid_columns && css().get_column_gap().is_predefined())
         {
             column_gap = m_inherited_columns->gap;
@@ -715,7 +712,7 @@ namespace litehtml
                           is_one_of(align, flex_align_content_normal, flex_align_content_stretch));
         }
         const auto intrinsic_height = track_extent(rows, 0, static_cast<int>(rows.size()), row_gap);
-        if(!definite_height && css().get_row_gap().units() == css_units_percentage)
+        if(!definite_height && css().get_row_gap().has_percentage())
         {
             row_gap = css().get_row_gap().calc_percent(intrinsic_height);
         }

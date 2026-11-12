@@ -19,7 +19,7 @@ namespace litehtml
         css_length height;
 
         css_size() = default;
-        css_size(css_length _width, css_length _height) :
+        css_size(const css_length& _width, const css_length& _height) :
             width(_width),
             height(_height)
         {

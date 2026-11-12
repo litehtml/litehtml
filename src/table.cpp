@@ -228,8 +228,7 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
                 // distribute between the columns with percents
                 for(int col = start; col <= end; col++)
                 {
-                    if(!m_columns[col].css_width.is_predefined() &&
-                       m_columns[col].css_width.units() == css_units_percentage)
+                    if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.has_percentage())
                     {
                         distribute_columns.push_back(&m_columns[col]);
                     }
@@ -441,29 +440,36 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
         }
     } else
     {
-        pixel_t fixed_width = 0_px;
-        float   percent     = 0;
+        pixel_t    fixed_width            = 0_px;
+        float      percent                = 0;
+        const auto percentage_coefficient = [&](const css_length& length) {
+            if(!length.is_expression())
+            {
+                return length.val();
+            }
+            return *block_width > 0_px ? length.calc_percent(*block_width).value() / block_width->value() * 100 : 0.0f;
+        };
         for(int col = 0; col < m_cols_count; col++)
         {
-            if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.units() == css_units_percentage)
+            if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.has_percentage())
             {
-                percent += m_columns[col].css_width.val();
+                percent += percentage_coefficient(m_columns[col].css_width);
             } else
             {
                 fixed_width += m_columns[col].width;
             }
         }
-        auto scale = static_cast<float>(100.0 / percent);
+        auto scale = percent > 0 ? static_cast<float>(100.0 / percent) : 1.0f;
         if(pixel_t(scale) != 1_px)
         {
             cur_width = 0;
             for(int col = 0; col < m_cols_count; col++)
             {
-                if(!m_columns[col].css_width.is_predefined() &&
-                   m_columns[col].css_width.units() == css_units_percentage)
+                if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.has_percentage())
                 {
-                    css_length w;
-                    w.set_value(m_columns[col].css_width.val() * scale, css_units_percentage);
+                    css_length  w;
+                    const float coefficient = percentage_coefficient(m_columns[col].css_width);
+                    w.set_value(coefficient * scale, css_units_percentage);
                     m_columns[col].width = w.calc_percent(block_width->value() - fixed_width);
                     if(m_columns[col].width < m_columns[col].min_width)
                     {
@@ -481,8 +487,7 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
                 bool shrunk = false;
                 for(int col = 0; col < m_cols_count; col++)
                 {
-                    if(!m_columns[col].css_width.is_predefined() &&
-                       m_columns[col].css_width.units() == css_units_percentage)
+                    if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.has_percentage())
                     {
                         if(m_columns[col].width > m_columns[col].min_width)
                         {
@@ -662,7 +667,7 @@ void litehtml::table_grid::calc_rows_height(pixel_t blockHeight, pixel_t /*borde
     {
         if(!row.css_height.is_predefined())
         {
-            if(row.css_height.units() != css_units_percentage)
+            if(!row.css_height.has_percentage())
             {
                 if(row.height < pixel_t(row.css_height.val()))
                 {
@@ -682,7 +687,7 @@ void litehtml::table_grid::calc_rows_height(pixel_t blockHeight, pixel_t /*borde
         int     auto_count   = 0; // number of rows with height=auto
         for(auto& row : m_rows)
         {
-            if(!row.css_height.is_predefined() && row.css_height.units() == css_units_percentage)
+            if(!row.css_height.is_predefined() && row.css_height.has_percentage())
             {
                 row.height = row.css_height.calc_percent(blockHeight);
                 if(row.height < row.min_height)

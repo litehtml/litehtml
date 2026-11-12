@@ -578,6 +578,13 @@ namespace litehtml
         {
             return 0_px;
         }
+        if(val.is_expression())
+        {
+            auto resolved = val;
+            resolved.resolve_units(
+                [&](float value, css_units unit) { return to_pixels(css_length(value, unit), metrics, size).value(); });
+            return resolved.calc_percent(size);
+        }
         pixel_t ret;
         switch(val.units())
         {
@@ -637,6 +644,12 @@ namespace litehtml
     {
         if(val.is_predefined())
         {
+            return;
+        }
+        if(val.is_expression())
+        {
+            val.resolve_units(
+                [&](float value, css_units unit) { return to_pixels(css_length(value, unit), metrics, size).value(); });
             return;
         }
         if(val.units() != css_units_percentage)
