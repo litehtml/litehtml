@@ -493,7 +493,8 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
             }
             item->el->render(0_px, 0_px,
                              self_size.new_width_height(render_width,
-                                                        item->main_size - item->el->content_offset_height(),
+                                                        item->main_size - item->el->content_offset_height() +
+                                                            item->el->box_sizing_height(),
                                                         containing_block_context::size_mode_exact_width |
                                                             containing_block_context::size_mode_exact_height),
                              fmt_ctx, false);
