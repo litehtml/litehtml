@@ -639,6 +639,18 @@ namespace litehtml
         flex_align_content_space_evenly
     };
 
+    inline constexpr auto sizing_auto_strings = split_css_values<4>("auto;min-content;max-content;fit-content");
+    inline constexpr auto sizing_none_strings = split_css_values<4>("none;min-content;max-content;fit-content");
+
+    enum sizing_value
+    {
+        sizing_auto,
+        sizing_min_content,
+        sizing_max_content,
+        sizing_fit_content,
+        sizing_fit_content_function
+    };
+
     // ==========================================================
     // CSS Property: flex-basis
     // ==========================================================

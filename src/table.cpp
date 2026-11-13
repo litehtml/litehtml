@@ -398,6 +398,17 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
         if(!m_columns[col].css_width.is_predefined() && block_width.has_value())
         {
             m_columns[col].width = m_columns[col].css_width.calc_percent(block_width.value());
+            for(int row = 0; row < rows_count(); ++row)
+            {
+                const auto* entry = cell(col, row);
+                if(entry && entry->el &&
+                   (entry->el->css().get_min_width().is_intrinsic_sizing() ||
+                    entry->el->css().get_max_width().is_intrinsic_sizing()))
+                {
+                    m_columns[col].width = std::min(m_columns[col].width, *block_width);
+                    break;
+                }
+            }
             m_columns[col].width = std::max(m_columns[col].width, m_columns[col].min_width);
         } else
         {

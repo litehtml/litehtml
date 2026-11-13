@@ -112,9 +112,9 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `position` | ✅ | 4 | ~290 |
 | `float` | ✅ | 3 | ~170 |
 | `clear` | ✅ | 4 | ~35 |
-| `width` / `height` | ✅ | `auto` + length/% | ~1100 |
-| `min-width` / `min-height` | ✅ | `auto` + length/% | ~170 |
-| `max-width` / `max-height` | ✅ | `none` + length/% | ~180 |
+| `width` / `height` | ✅ | `auto` + length/% + intrinsic sizes | ~1100 |
+| `min-width` / `min-height` | ✅ | `auto` + length/% + intrinsic sizes | ~170 |
+| `max-width` / `max-height` | ✅ | `none` + length/% + intrinsic sizes | ~180 |
 | `margin` (+ `-top/-right/-bottom/-left`) | ✅ | `auto` + length/% | ~250 |
 | `padding` (+ `-top/-right/-bottom/-left`) | ✅ | length/% | ~300 |
 | `box-sizing` | ✅ | 2 | 1 |
@@ -196,8 +196,15 @@ Tests: [css21/clear-001.htm](https://github.com/litehtml/litehtml-tests/blob/mai
 [flex/flexbox_item-clear.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/flexbox_item-clear.htm).
 
 #### `width`, `height`
-✅ Supported — `auto` | `<length-percentage>`. `min-content`/`max-content`/`fit-content` are
-**not** accepted for `width`/`height` (they are only supported on `flex-basis`).
+✅ Supported — `auto` | `<length-percentage>` | `min-content` | `max-content` |
+`fit-content` | `fit-content(<length-percentage>)`.
+
+Intrinsic widths use the box's minimum and maximum content contributions. The `fit-content`
+keyword uses the available width; `fit-content()` clamps its argument between those contributions
+and resolves percentages against the containing width. For horizontal block layout, intrinsic
+heights are content-based and measured at the used width. Intrinsic preferred heights remain
+indefinite for descendant percentage heights. Some browsers do not accept `fit-content()` on
+these properties, even though litehtml does.
 
 Percentage heights of in-flow boxes use automatic sizing when their containing block's height is
 indefinite. In quirks mode, eligible auto-height blocks can be skipped, but flex containers remain
@@ -206,17 +213,21 @@ boundaries. Definite percentage heights, including zero, are applied.
 Tests: [table-1-width.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-1-width.htm),
 [table-2-width.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-2-width.htm),
 [css21/width-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/width-001.htm),
-[flex/percentage-heights-004.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/percentage-heights-004.htm).
+[flex/percentage-heights-004.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/percentage-heights-004.htm),
+[intrinsic-sizing-width.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/intrinsic-sizing-width.htm),
+[intrinsic-sizing-height.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/intrinsic-sizing-height.htm).
 
 #### `min-width`, `min-height`
-✅ Supported — `auto` | `<length-percentage>`.
+✅ Supported — `auto` | `<length-percentage>` | `min-content` | `max-content` |
+`fit-content` | `fit-content(<length-percentage>)`.
 
 Tests: [floats-min-width-01.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/floats-min-width-01.htm),
 [css21/min-width-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/min-width-001.htm),
 [css21/min-height-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/min-height-001.htm).
 
 #### `max-width`, `max-height`
-✅ Supported — `none` | `<length-percentage>`.
+✅ Supported — `none` | `<length-percentage>` | `min-content` | `max-content` |
+`fit-content` | `fit-content(<length-percentage>)`.
 
 Tests: [css21/max-width-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/max-width-001.htm),
 [css21/max-height-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/max-height-001.htm).
@@ -481,8 +492,7 @@ Shorthands: `flex` (→ `flex-grow`, `flex-shrink`, `flex-basis`), `flex-flow` (
 
 #### `flex-basis`
 ✅ Supported — `auto`, `content`, `fit-content`, `min-content`, `max-content`, or
-`<length-percentage>`. (Note: the `min/max/fit-content` keywords are supported here but **not** on
-`width`/`height`.)
+`<length-percentage>`.
 
 Percentage bases use the flex container's inner main size: in column layouts,
 `border-box` container padding and borders are excluded from the height base.
@@ -544,7 +554,8 @@ The `grid` and `grid-template` shorthands support track lists, named-area string
 collapses empty repeated tracks, though their gutters are not removed. Subgrid has partial
 support for inherited tracks, line names, gaps, and basic descendant contributions on both
 axes. Complex intrinsic sizing, automatic spans, box-edge adjustments, and inherited named
-areas may differ from browsers. Masonry is not supported. Grid baseline and safe/unsafe
+areas may differ from browsers. Vertical writing modes are not supported; affected subgrid
+tests are disabled. Masonry is not supported. Grid baseline and safe/unsafe
 alignment are not implemented. Explicit and implicit grids are limited to 1024 tracks per
 axis; oversized explicit track declarations are ignored, and oversized implicit grids fall
 back to laying items out vertically.

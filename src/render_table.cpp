@@ -186,6 +186,12 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
         }
     }
 
+    pixel_t natural_table_height = table_height_spacing;
+    for(int row = 0; row < m_grid->rows_count(); row++)
+    {
+        natural_table_height += m_grid->row(row).height;
+    }
+
     // calculate block height
     pixel_t block_height = 0_px;
     if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height.value > 0_px)
@@ -305,6 +311,7 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     m_pos.move_to(x + content_offset_left(), y + content_offset_top());
     m_pos.width  = table_width;
     m_pos.height = table_height + top_captions + bottom_captions;
+    m_intrinsic_content_height = std::max(0_px, natural_table_height + top_captions + bottom_captions);
 
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {

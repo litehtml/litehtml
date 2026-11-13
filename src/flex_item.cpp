@@ -156,20 +156,29 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
     {
         auto_margin_cross_end = true;
     }
-    if(!el->css().get_max_width().is_predefined())
+    const auto& width       = el->css().get_width();
+    const auto  width_value = [&](const css_length& value) {
+        return value.is_intrinsic_sizing() ? el->resolve_intrinsic_width(value, self_size.width)
+                                           : value.calc_percent(self_size.width);
+    };
+    if(!el->css().get_max_width().is_auto_or_none())
     {
-        max_size = el->css().get_max_width().calc_percent(self_size.width) + el->render_offset_width();
+        max_size = width_value(el->css().get_max_width()) + el->render_offset_width();
     }
-    if(!el->css().get_min_width().is_predefined())
+    if(!el->css().get_min_width().is_auto_or_none())
     {
-        min_size = el->css().get_min_width().calc_percent(self_size.width) + el->render_offset_width();
-    } else if(el->css().get_width().is_predefined())
+        min_size = width_value(el->css().get_min_width()) + el->render_offset_width();
+    } else if(width.is_auto_or_none())
     {
         min_size = el->get_intrinsic_min_size().width;
     } else
     {
-        min_size = std::min(el->get_intrinsic_min_size().width,
-                            el->css().get_width().calc_percent(self_size.width) + el->render_offset_width());
+        min_size = std::min(el->get_intrinsic_min_size().width, width_value(width) + el->render_offset_width());
+    }
+    if((el->css().get_min_width().is_intrinsic_sizing() || el->css().get_max_width().is_intrinsic_sizing()) &&
+       !max_size.is_default() && pixel_t(max_size) < min_size)
+    {
+        max_size = min_size;
     }
     // A table can't be narrower than its minimum content width.
     if(el->css().get_display() == display_table)
@@ -196,7 +205,7 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
 
     if(flex_basis_predefined)
     {
-        if(predef == flex_basis_auto && el->css().get_width().is_predefined())
+        if(predef == flex_basis_auto && width.is_auto_or_none())
         {
             // if width is not predefined, use content size as base size
             predef = flex_basis_content;
@@ -205,7 +214,9 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
         switch(predef)
         {
         case flex_basis_auto:
-            base_size = el->css().get_width().calc_percent(self_size.render_width) + el->render_offset_width();
+            base_size = (width.is_intrinsic_sizing() ? el->resolve_intrinsic_width(width, self_size.render_width)
+                                                     : width.calc_percent(self_size.render_width)) +
+                        el->render_offset_width();
             break;
         case flex_basis_fit_content:
         case flex_basis_content:
@@ -297,7 +308,7 @@ void litehtml::flex_item_row_direction::align_stretch(flex_line& ln, const conta
                                                       formatting_context* fmt_ctx)
 {
     set_cross_position(ln.cross_start);
-    if(el->css().get_height().is_predefined())
+    if(el->css().get_height().is_auto_or_none())
     {
         el->render(el->left(), el->top(),
                    self_size.new_width_height(el->pos().width + el->box_sizing_width(),
@@ -377,7 +388,10 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 
     pixel_t render_width;
     // intrinsic size doesn't include width property processing, so we need to check it here
-    if(!el->css().get_width().is_predefined())
+    if(el->css().get_width().is_intrinsic_sizing())
+    {
+        render_width = el->resolve_intrinsic_width(el->css().get_width(), self_size.width);
+    } else if(!el->css().get_width().is_predefined())
     {
         render_width = el->css().get_width().calc_percent(self_size.width);
     } else
@@ -396,7 +410,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
 
     // A stretched item gets the full cross width, which can change its height (e.g. text wrapping).
     stretch_full_width = false;
-    if(el->css().get_width().is_predefined() && is_stretched_in_single_line())
+    if(el->css().get_width().is_auto_or_none() && is_stretched_in_single_line())
     {
         pixel_t full_width = self_size.width.value - el->content_offset_width() + el->box_sizing_width();
         if(full_width > render_width)
@@ -412,13 +426,22 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
     }
 
     auto content_height = el->height() - el->content_offset_height();
+    const bool intrinsic_min_height = el->css().get_min_height().is_intrinsic_sizing();
+    const bool intrinsic_max_height = el->css().get_max_height().is_intrinsic_sizing();
+    const auto intrinsic_height     = el->get_intrinsic_content_height() + el->content_offset_height();
 
-    if(!el->css().get_max_height().is_predefined())
+    if(intrinsic_max_height)
+    {
+        max_size = intrinsic_height;
+    } else if(!el->css().get_max_height().is_predefined())
     {
         max_size = el->css().get_max_height().calc_percent(self_size.height) + el->render_offset_height();
     }
 
-    if(el->css().get_min_height().is_predefined())
+    if(intrinsic_min_height)
+    {
+        min_size = intrinsic_height;
+    } else if(el->css().get_min_height().is_predefined())
     {
         if(!height_is_auto)
         {
@@ -428,10 +451,20 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
         {
             min_size = el->get_intrinsic_min_size().height;
         }
+    } else if(intrinsic_max_height)
+    {
+        min_size = el->css().get_min_height().calc_percent(self_size.height) + el->render_offset_height();
     } else
     {
         min_size = std::min(el->get_intrinsic_min_size().height,
                             el->css().get_min_height().calc_percent(self_size.height) + el->render_offset_height());
+    }
+    if(intrinsic_max_height && el->css().get_min_height().is_auto_or_none())
+    {
+        min_size = std::min(min_size, pixel_t(max_size));
+    } else if((intrinsic_min_height || intrinsic_max_height) && !max_size.is_default() && pixel_t(max_size) < min_size)
+    {
+        max_size = min_size;
     }
 
     if(flex_basis_predefined)
@@ -451,7 +484,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
             break;
         case flex_basis_max_content:
         case flex_basis_fit_content:
-            base_size = content_height;
+            base_size = content_height + (height.is_intrinsic_sizing() ? el->content_offset_height() : 0_px);
             break;
         case flex_basis_min_content:
             base_size = min_size;
@@ -556,7 +589,7 @@ void litehtml::flex_item_column_direction::align_stretch(flex_line& ln, const co
         set_cross_position(ln.cross_start);
         return;
     }
-    if(!el->css().get_width().is_predefined())
+    if(!el->css().get_width().is_auto_or_none())
     {
         el->render(ln.cross_start, el->pos().y - el->content_offset_top(),
                    self_size.new_width_height(ln.cross_size - el->content_offset_width() + el->box_sizing_width(),

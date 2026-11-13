@@ -188,6 +188,22 @@ namespace litehtml
         }
     }
 
+    void style::add_sizing_property(string_id name, const css_token& val, const css_values& keywords, bool important)
+    {
+        if(val.type == CV_FUNCTION && lowcase(val.name()) == "fit-content")
+        {
+            css_length argument;
+            if(val.value.size() == 1 && argument.from_token(val.value[0], f_length_percentage | f_positive))
+            {
+                css_length length;
+                length.set_fit_content(argument);
+                add_parsed_property(name, property_value(length, important));
+            }
+            return;
+        }
+        add_length_property(name, val, keywords, f_length_percentage | f_positive, important);
+    }
+
     // `value` is a list of component values with all whitespace tokens removed, including those inside component values
     void style::add_property(string_id name, const css_token_vector& value, const std::string& baseurl, bool important,
                              document_container* container)
@@ -347,24 +363,22 @@ namespace litehtml
                 return add_length_property(name, val, auto_val, f_length_percentage, important);
             }
 
-        // auto | min-content | max-content | fit-content | <length-percentage [0,∞]>
+        // auto | min-content | max-content | fit-content | fit-content() | <length-percentage [0,∞]>
         // https://developer.mozilla.org/en-US/docs/Web/CSS/width#formal_syntax
         case _width_:
         case _height_:
         case _min_width_:
         case _min_height_:
             {
-                constexpr auto auto_val = split_css_values<1>("auto");
-                return add_length_property(name, val, auto_val, f_length_percentage | f_positive, important);
+                return add_sizing_property(name, val, sizing_auto_strings, important);
             }
 
-        // none | min-content | max-content | fit-content | <length-percentage [0,∞]>
+        // none | min-content | max-content | fit-content | fit-content() | <length-percentage [0,∞]>
         // https://developer.mozilla.org/en-US/docs/Web/CSS/max-width#formal_syntax
         case _max_width_:
         case _max_height_:
             {
-                constexpr auto none_val = split_css_values<1>("none");
-                return add_length_property(name, val, none_val, f_length_percentage | f_positive, important);
+                return add_sizing_property(name, val, sizing_none_strings, important);
             }
 
         //  normal | <number [0,∞]> | <length-percentage [0,∞]>
