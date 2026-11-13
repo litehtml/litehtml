@@ -1,5 +1,6 @@
 #include "html.h"
 #include "css_length.h"
+#include <algorithm>
 #include <cmath>
 #include <limits>
 #include <iomanip>
@@ -29,6 +30,16 @@ namespace litehtml
         bool                                                    needs_conversion = false;
         int                                                     tree_depth       = 0;
         std::vector<std::shared_ptr<const css_math_expression>> args;
+
+        bool has_nonzero_percentage() const
+        {
+            if(op == literal)
+            {
+                return unit == css_units_percentage && std::fpclassify(value) != FP_ZERO;
+            }
+            return std::any_of(args.begin(), args.end(),
+                               [](const auto& arg) { return arg && arg->has_nonzero_percentage(); });
+        }
 
         std::string to_string() const
         {
@@ -429,6 +440,19 @@ namespace litehtml
     bool css_length::has_percentage() const
     {
         return !m_is_predefined && (m_units == css_units_percentage || (m_expression && m_expression->percentage));
+    }
+
+    bool css_length::has_nonzero_percentage() const
+    {
+        if(m_is_predefined)
+        {
+            return false;
+        }
+        if(m_expression)
+        {
+            return m_expression->has_nonzero_percentage();
+        }
+        return m_units == css_units_percentage && std::fpclassify(m_value) != FP_ZERO;
     }
 
     float css_length::val() const

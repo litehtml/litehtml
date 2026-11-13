@@ -21,11 +21,18 @@ namespace litehtml
         baseline last_baseline;
         bool     reverse_main;
         bool     reverse_cross;
+        pixel_t  main_gap;
 
-        flex_line(bool _reverse_main, bool _reverse_cross) :
+        flex_line(bool _reverse_main, bool _reverse_cross, pixel_t _main_gap) :
             reverse_main(_reverse_main),
-            reverse_cross(_reverse_cross)
+            reverse_cross(_reverse_cross),
+            main_gap(_main_gap)
         {
+        }
+
+        pixel_t gap_size() const
+        {
+            return items.size() > 1 ? main_gap * static_cast<int>(items.size() - 1) : 0_px;
         }
 
         void    init(pixel_t container_main_size, bool fit_container, bool is_row_direction,

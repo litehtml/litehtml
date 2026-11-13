@@ -16,6 +16,11 @@ void litehtml::flex_line::distribute_free_space(pixel_t container_main_size)
     {
         distribute_free_space_shrink(container_main_size);
     }
+    main_size = 0_px;
+    for(const auto& item : items)
+    {
+        main_size += item->main_size;
+    }
 }
 
 void litehtml::flex_line::distribute_free_space_grow(pixel_t container_main_size)
@@ -221,8 +226,6 @@ void litehtml::flex_line::distribute_free_space_shrink(pixel_t container_main_si
             break;
         }
     }
-    main_size = 0_px;
-    std::for_each(items.begin(), items.end(), [&](std::shared_ptr<flex_item>& item) { main_size += item->main_size; });
 }
 
 bool litehtml::flex_line::fix_min_max_violations()
@@ -290,7 +293,11 @@ bool litehtml::flex_line::distribute_main_auto_margins(pixel_t free_main_size)
 {
     if(free_main_size > 0_px && (num_auto_margin_main_start || num_auto_margin_main_end))
     {
-        pixel_t add = free_main_size / static_cast<int>(items.size() * 2);
+        // Keep the existing gap-free rounding; with gaps, divide space among the auto margins.
+        const bool has_gaps = gap_size() != 0_px;
+        const int  divisor =
+            has_gaps ? num_auto_margin_main_start + num_auto_margin_main_end : static_cast<int>(items.size() * 2);
+        pixel_t add = free_main_size / divisor;
         for(auto& item : items)
         {
             if(!item->auto_margin_main_start.is_default())
@@ -309,27 +316,30 @@ bool litehtml::flex_line::distribute_main_auto_margins(pixel_t free_main_size)
             }
         }
 
-        pixel_t ditribute_step = 1_px;
-        while(free_main_size > 0_px)
+        if(!has_gaps)
         {
-            for(auto& item : items)
+            pixel_t distribute_step = 1_px;
+            while(free_main_size > 0_px)
             {
-                if(!item->auto_margin_main_start.is_default())
+                for(auto& item : items)
                 {
-                    item->auto_margin_main_start  = pixel_t(item->auto_margin_main_start) + ditribute_step;
-                    free_main_size               -= ditribute_step;
-                    if(free_main_size < ditribute_step)
+                    if(!item->auto_margin_main_start.is_default())
                     {
-                        break;
+                        item->auto_margin_main_start  = pixel_t(item->auto_margin_main_start) + distribute_step;
+                        free_main_size               -= distribute_step;
+                        if(free_main_size < distribute_step)
+                        {
+                            break;
+                        }
                     }
-                }
-                if(!item->auto_margin_main_end.is_default())
-                {
-                    item->auto_margin_main_end  = pixel_t(item->auto_margin_main_end) + ditribute_step;
-                    free_main_size             -= ditribute_step;
-                    if(free_main_size < ditribute_step)
+                    if(!item->auto_margin_main_end.is_default())
                     {
-                        break;
+                        item->auto_margin_main_end  = pixel_t(item->auto_margin_main_end) + distribute_step;
+                        free_main_size             -= distribute_step;
+                        if(free_main_size < distribute_step)
+                        {
+                            break;
+                        }
                     }
                 }
             }
@@ -350,7 +360,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
     {
         if(!fit_container)
         {
-            distribute_free_space(container_main_size);
+            distribute_free_space(container_main_size - gap_size());
         }
         cross_size = 0;
         main_size  = 0;
@@ -508,7 +518,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
 
         if(!fit_container)
         {
-            distribute_free_space(container_main_size);
+            distribute_free_space(container_main_size - gap_size());
         }
 
         if(!max_cross_size.is_default() && cross_size > max_cross_size)
@@ -525,9 +535,9 @@ litehtml::pixel_t litehtml::flex_line::calculate_items_position(pixel_t         
                                                                 formatting_context*             fmt_ctx)
 {
     /// Distribute main axis free space for auto-margins
-    pixel_t free_main_size = container_main_size - main_size;
+    pixel_t free_main_size = container_main_size - main_size - gap_size();
     distribute_main_auto_margins(free_main_size);
-    free_main_size = container_main_size - main_size;
+    free_main_size = container_main_size - main_size - gap_size();
 
     /// Fix justify-content property
     switch(justify_content)
@@ -613,9 +623,15 @@ litehtml::pixel_t litehtml::flex_line::calculate_items_position(pixel_t         
     pixel_t height = 0_px;
 
     pixel_t distribute_step = 1_px;
+    bool    first_item      = true;
     for(auto& item : items)
     {
-        main_pos += add_before_item;
+        if(!first_item)
+        {
+            main_pos += main_gap;
+        }
+        first_item  = false;
+        main_pos   += add_before_item;
         if(add_before_item > 0_px && item_remainder > 0_px)
         {
             main_pos       += distribute_step;

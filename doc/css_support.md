@@ -61,8 +61,8 @@ Status legend used throughout:
 
 `calc()`, `min()`, `max()`, and `clamp()` are supported in the engine's existing
 length/percentage properties, including shorthands, font size, line height,
-background positions/sizes, length-valued gradient stops, Flexbox basis, and
-Grid track sizes/gaps. Functions can nest and use existing `var()` substitution
+background positions/sizes, length-valued gradient stops, Flexbox basis/gaps,
+and Grid track sizes/gaps. Functions can nest and use existing `var()` substitution
 and fallbacks.
 
 - Arithmetic supports `+`, `-`, `*`, `/`, parentheses, and typed unit
@@ -141,7 +141,7 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `list-style` (+ longhands) | ✅ | see below | ~72 |
 | `flex` (+ longhands) | ✅ | see below | ~350 |
 | `grid` (+ longhands) | ⚠️ | partial; see [Grid](#grid) | Grid tests |
-| `gap` / `row-gap` / `column-gap` | ⚠️ | [Grid](#grid) only | Grid tests |
+| `gap` / `row-gap` / `column-gap` | ⚠️ | [Flexbox](#flexbox) and [Grid](#grid); multi-column layout is not supported | Flex and Grid tests |
 | `caption-side` | ✅ | 2 | ~6 |
 | `content` | ✅ | see below | ~240 |
 | `counter-reset` / `counter-increment` | ✅ | — | ~240 |
@@ -496,6 +496,24 @@ Tests:
 #### `order`
 ✅ Supported — `<integer>`.
 
+#### `gap`, `row-gap`, `column-gap`
+✅ Supported for Flexbox — `normal` or a non-negative `<length-percentage>`, including
+CSS math and variables. In rows, column gaps separate items and row gaps separate
+lines; in columns, the axes are reversed. Gaps are included in wrapping, flex sizing,
+and alignment, and occur only between in-flow items or lines.
+
+Percentages use the flex container's content box. Percentage contributions are zero
+when calculating intrinsic sizes; the percentage part of a row gap is also zero when
+the container's height is auto.
+
+For compatibility, containers without a potentially nonzero gap retain the engine's
+legacy intrinsic sizing and handling of absolutely/fixed-positioned children.
+
+Tests:
+[flex/gap-axes-wrap.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/gap-axes-wrap.htm),
+[flex/gap-sizing-alignment.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/gap-sizing-alignment.htm),
+[flex/gap-percent-intrinsic.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/gap-percent-intrinsic.htm).
+
 Flexbox has the deepest test coverage (≈350 active files). Examples:
 [flex/flex-grow-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/flex-grow-001.htm),
 [flex/flex-shrink-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/flex-shrink-001.htm),
@@ -514,8 +532,7 @@ Flexbox has the deepest test coverage (≈350 active files). Examples:
 
 ⚠️ Partial — CSS Grid has partial support: `grid` and `inline-grid`, explicit and implicit
 tracks, numeric and named line placement, named grid areas, `grid-area`, sparse and dense
-row/column auto-placement, gaps, and common item and content alignment. Gap properties
-currently affect Grid, not Flexbox.
+row/column auto-placement, gaps, and common item and content alignment.
 
 Track sizes include lengths, percentages, `auto`, intrinsic keywords, `fr`, `repeat()`
 (including `auto-fill` and `auto-fit`), `fit-content()` and `minmax()` for supported track
