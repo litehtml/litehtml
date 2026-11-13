@@ -353,6 +353,7 @@ namespace litehtml
             size_mode_exact_height      = 0x02,
             size_mode_content           = 0x04,
             size_mode_ignore_css_height = 0x08,
+            size_mode_measure_height    = 0x10,
         };
 
         struct typed_pixel

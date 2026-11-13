@@ -2,6 +2,7 @@
 #include "document.h"
 #include "render_flex.h"
 #include "html_tag.h"
+#include <optional>
 
 namespace
 {
@@ -620,9 +621,54 @@ void litehtml::render_item_flex::calc_intrinsic_size()
         auto child_min = el->get_intrinsic_min_size();
         auto child_max = el->get_intrinsic_max_size();
 
-        if(!el->css().get_width().is_predefined())
+        const auto& width           = el->css().get_width();
+        const bool  intrinsic_width = width.is_intrinsic_sizing() || el->css().get_min_width().is_intrinsic_sizing() ||
+                                      el->css().get_max_width().is_intrinsic_sizing();
+        const auto& basis           = el->css().get_flex_basis();
+        const bool  fixed_basis =
+            intrinsic_width && is_row_direction && !basis.is_predefined() && !basis.has_percentage();
+        if(fixed_basis)
         {
-            child_min.width = child_max.width = el->css().get_width().calc_percent(0) + el->content_offset_width();
+            child_min.width = child_max.width = basis.calc_percent(0_px) + el->render_offset_width();
+        } else if(width.is_intrinsic_sizing() && width.predef() != sizing_fit_content && !width.has_percentage())
+        {
+            child_min.width = child_max.width = el->resolve_intrinsic_width(width, 0_px) + el->render_offset_width();
+        } else if(!width.is_predefined())
+        {
+            child_min.width = child_max.width =
+                width.calc_percent(0_px) + (intrinsic_width ? el->render_offset_width() : el->content_offset_width());
+        }
+        if(intrinsic_width)
+        {
+            const auto known_limit = [&](const css_length& value) -> std::optional<pixel_t> {
+                if(value.is_intrinsic_sizing())
+                {
+                    if(value.predef() == sizing_fit_content || value.has_percentage())
+                    {
+                        return std::nullopt;
+                    }
+                    return el->resolve_intrinsic_width(value, 0_px) + el->render_offset_width();
+                }
+                if(!value.is_predefined() && !value.has_percentage())
+                {
+                    return value.calc_percent(0_px) + el->render_offset_width();
+                }
+                return std::nullopt;
+            };
+            if(const auto maximum = known_limit(el->css().get_max_width()))
+            {
+                child_min.width = std::min(child_min.width, *maximum);
+                child_max.width = std::min(child_max.width, *maximum);
+            }
+            if(const auto minimum = known_limit(el->css().get_min_width()))
+            {
+                child_min.width = std::max(child_min.width, *minimum);
+                child_max.width = std::max(child_max.width, *minimum);
+            } else if(fixed_basis && el->css().get_min_width().is_auto_or_none())
+            {
+                child_min.width = std::max(child_min.width, el->get_intrinsic_min_size().width);
+                child_max.width = std::max(child_max.width, el->get_intrinsic_min_size().width);
+            }
         }
         if(!el->css().get_height().is_predefined())
         {

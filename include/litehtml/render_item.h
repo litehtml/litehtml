@@ -34,12 +34,17 @@ namespace litehtml
         position m_pos;
         size     m_intrinsic_min_size;
         size     m_intrinsic_max_size;
+        pixel_t  m_intrinsic_content_min_width = 0_px;
+        pixel_t  m_intrinsic_content_max_width = 0_px;
+        pixel_t  m_intrinsic_content_height    = 0_px;
         position m_bounds; // bounding box of the element
         bool     m_skip = false;
 
         containing_block_context calculate_containing_block_context(const containing_block_context& cb_context) const;
         void                     calc_cb_length(const css_length& len, pixel_t percent_base,
                                                 containing_block_context::typed_pixel& out_value) const;
+        void                     calc_cb_width(const css_length& len, pixel_t percent_base,
+                                               containing_block_context::typed_pixel& out_value) const;
         virtual void             calc_intrinsic_size() = 0;
         virtual pixel_t _render(pixel_t /*x*/, pixel_t /*y*/, const containing_block_context& /*containing_block_size*/,
                                 formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
@@ -81,7 +86,13 @@ namespace litehtml
             return m_intrinsic_min_size;
         }
 
+        pixel_t get_intrinsic_content_height() const
+        {
+            return m_intrinsic_content_height;
+        }
+
         void update_intrinsic_size();
+        pixel_t resolve_intrinsic_width(const css_length& value, pixel_t available_width) const;
 
         pixel_t h_scroll(pixel_t dx)
         {

@@ -461,6 +461,20 @@ namespace litehtml
         bool       definite_height = self_size.height.type != containing_block_context::cbc_value_type_auto &&
                                      self_size.height.type != containing_block_context::cbc_value_type_none;
         pixel_t    height     = definite_height ? std::max(0_px, self_size.height.value - box_sizing_height()) : 0_px;
+        const bool intrinsic_height_constraint =
+            css().get_min_height().is_intrinsic_sizing() || css().get_max_height().is_intrinsic_sizing();
+        if(definite_height && intrinsic_height_constraint &&
+           (self_size.size_mode & containing_block_context::size_mode_measure_height) == 0)
+        {
+            if(self_size.max_height.type != containing_block_context::cbc_value_type_none)
+            {
+                height = std::min(height, self_size.max_height.value);
+            }
+            if(self_size.min_height.type != containing_block_context::cbc_value_type_none)
+            {
+                height = std::max(height, self_size.min_height.value);
+            }
+        }
         pixel_t    column_gap = css().get_column_gap().calc_percent(width);
         pixel_t    row_gap    = css().get_row_gap().calc_percent(height);
         if(subgrid_columns && css().get_column_gap().is_predefined())
@@ -665,8 +679,8 @@ namespace litehtml
                 make_axis(rows, areas[index].row_start - bounds.row_start, areas[index].row_end - bounds.row_start,
                           row_gap, rows_resolved, bounds.row_start);
         };
-        std::function<void(const std::shared_ptr<render_item>&, int, int)> add_row_item;
-        add_row_item = [&](const std::shared_ptr<render_item>& item, int first, int last) {
+        std::function<void(const std::shared_ptr<render_item>&, int, int, pixel_t)> add_row_item;
+        add_row_item = [&](const std::shared_ptr<render_item>& item, int first, int last, pixel_t automatic_minimum) {
             auto grid = std::dynamic_pointer_cast<render_item_grid>(item);
             if(grid && item->css().get_grid_template_rows().is_subgrid())
             {
@@ -682,15 +696,16 @@ namespace litehtml
                         break;
                     }
                     const auto& nested_area = grid->m_placed_areas[nested_index++];
-                    add_row_item(child, first + nested_area.row_start, first + nested_area.row_end);
+                    add_row_item(child, first + nested_area.row_start, first + nested_area.row_end, 0_px);
                 }
                 if(nested_index == grid->m_placed_areas.size())
                 {
                     return;
                 }
             }
-            add_contribution(rows, first, last, item->height(), row_gap, height, definite_height);
-            add_max_contribution(rows, first, last, item->height(), row_gap, height, definite_height, false);
+            const auto contribution = std::max(item->height(), automatic_minimum);
+            add_contribution(rows, first, last, contribution, row_gap, height, definite_height);
+            add_max_contribution(rows, first, last, contribution, row_gap, height, definite_height, false);
         };
         for(size_t index = 0; index < children.size(); ++index)
         {
@@ -698,11 +713,22 @@ namespace litehtml
             int  last       = areas[index].column_end - bounds.column_start;
             auto area_width = track_extent(columns, first, last, column_gap);
             set_child_axes(index);
+            pixel_t automatic_minimum = 0_px;
+            if(intrinsic_height_constraint && children[index]->css().get_height().has_percentage() &&
+               children[index]->css().get_min_height().is_auto_or_none() &&
+               children[index]->css().get_overflow() == overflow_visible)
+            {
+                formatting_context measure_ctx = *fmt_ctx;
+                children[index]->render(
+                    0_px, 0_px, self_size.new_width(area_width, containing_block_context::size_mode_ignore_css_height),
+                    &measure_ctx);
+                automatic_minimum = children[index]->height();
+            }
             children[index]->render(0_px, 0_px, self_size.new_width(area_width), fmt_ctx);
             if(!subgrid_rows)
             {
                 add_row_item(children[index], areas[index].row_start - bounds.row_start,
-                             areas[index].row_end - bounds.row_start);
+                             areas[index].row_end - bounds.row_start, automatic_minimum);
             }
         }
         auto align = css().get_flex_align_content();
@@ -808,7 +834,7 @@ namespace litehtml
                 context.render_width.value  = context.width.value;
                 context.size_mode          |= containing_block_context::size_mode_exact_width;
             }
-            if(!stretch_width && children[index]->css().get_width().is_predefined() &&
+            if(!stretch_width && children[index]->css().get_width().is_auto_or_none() &&
                !children[index]->src_el()->is_replaced())
             {
                 auto natural                = std::min(area_width, children[index]->get_intrinsic_max_size().width);
@@ -818,7 +844,7 @@ namespace litehtml
                 context.render_width.value  = context.width.value;
                 context.size_mode          |= containing_block_context::size_mode_exact_width;
             }
-            if((child_subgrid_rows || (stretch_height && children[index]->css().get_height().is_predefined())) &&
+            if((child_subgrid_rows || (stretch_height && children[index]->css().get_height().is_auto_or_none())) &&
                !children[index]->src_el()->is_replaced())
             {
                 context.height.value  = std::max(0_px, area_height - children[index]->content_offset_height() +

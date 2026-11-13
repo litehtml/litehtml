@@ -2,9 +2,11 @@
 #include "litehtml/document.h"
 #include "litehtml/style.h"
 #include "grid_test_container.h"
+#include <algorithm>
 #include <cmath>
 #include <iostream>
 #include <limits>
+#include <utility>
 
 namespace
 {
@@ -37,6 +39,7 @@ namespace
     {
       public:
         int                                                  viewport_width = 800;
+        int                                                  image_size_calls = 0;
         litehtml::position                                   image_box;
         std::vector<litehtml::background_layer::color_point> stops;
         litehtml::uint_ptr create_font(const litehtml::font_description& description, const litehtml::document* doc,
@@ -59,6 +62,7 @@ namespace
         }
         void get_image_size(const char*, const char*, litehtml::size& size) override
         {
+            ++image_size_calls;
             size = {10, 10};
         }
         void draw_image(litehtml::uint_ptr, const litehtml::background_layer& layer, const std::string&,
@@ -145,6 +149,30 @@ int main()
         length.set_value(37, css_units_px);
         ok &= check(!parse(css, length) && near(length.val(), 37), std::string("reject atomically: ") + css);
     }
+    style sizing;
+    sizing.add("width:min-content; height:max-content; min-width:fit-content; "
+               "min-height:fit-content(calc(10px + 50%)); max-width:fit-content(2em); max-height:fit-content(20px)");
+    ok                  &= check(sizing.get_property(_width_).is<css_length>() &&
+                                     sizing.get_property(_width_).get<css_length>().predef() == sizing_min_content &&
+                                     sizing.get_property(_height_).get<css_length>().predef() == sizing_max_content &&
+                                     sizing.get_property(_min_width_).get<css_length>().predef() == sizing_fit_content,
+                                 "parse intrinsic sizing keywords");
+    auto calculated_fit  = sizing.get_property(_min_height_).get<css_length>();
+    auto relative_fit    = sizing.get_property(_max_width_).get<css_length>();
+    context->cvt_units(calculated_fit, metrics, 0_px);
+    context->cvt_units(relative_fit, metrics, 0_px);
+    ok &= check(calculated_fit.fit_content_argument() && calculated_fit.has_percentage() &&
+                    near(calculated_fit.fit_content_argument()->calc_percent(100_px).value(), 60) &&
+                    relative_fit.fit_content_argument() &&
+                    near(relative_fit.fit_content_argument()->calc_percent(0_px).value(), 40) &&
+                    sizing.get_property(_max_height_).get<css_length>().fit_content_argument(),
+                "preserve and resolve fit-content arguments");
+    style invalid_sizing;
+    invalid_sizing.add("width:17px; width:fit-content(-1px); width:fit-content(10px,20px); "
+                       "padding-left:3px; padding-left:fit-content(10px)");
+    ok                   &= check(near(invalid_sizing.get_property(_width_).get<css_length>().val(), 17) &&
+                                      near(invalid_sizing.get_property(_padding_left_).get<css_length>().val(), 3),
+                                  "reject invalid fit-content and keep it out of unrelated properties");
     std::string long_sum = "calc(1px";
     for(int i = 1; i < 32; i++)
     {
@@ -230,6 +258,59 @@ int main()
     ok &= check(cycle && near(cycle->get_placement().width.value(), 20), "cyclic variables use the consuming fallback");
     ok &= check(invalidvar && near(invalidvar->get_placement().width.value(), 400),
                 "invalid-at-computed-value math uses the property's initial value, not an earlier declaration");
+
+    struct nested_layout
+    {
+        const char* display;
+        int         depth;
+    };
+    const nested_layout nested_layouts[] = {
+        {"block",                      12},
+        {"flex;flex-direction:column", 7 },
+        {"grid",                       7 },
+    };
+    for(const auto& layout : nested_layouts)
+    {
+        const auto measure_nested = [&](const char* property) {
+            std::string markup  = "<!doctype html><style>body{margin:0}div{display:";
+            markup             += layout.display;
+            if(property)
+            {
+                markup += ';';
+                markup += property;
+                markup += ":max-content";
+            }
+            markup += "}img{display:block}</style><div id=outer>";
+            for(int i = 0; i < layout.depth; ++i)
+            {
+                markup += "<div>";
+            }
+            markup += "<img src=test>";
+            for(int i = 0; i < layout.depth; ++i)
+            {
+                markup += "</div>";
+            }
+            markup                     += "</div>";
+            const auto nested_doc       = document::createFromString(markup.c_str(), &container);
+            container.image_size_calls  = 0;
+            nested_doc->render(100);
+            const auto nested = nested_doc->root()->select_one("#outer");
+            return std::make_pair(container.image_size_calls, nested ? nested->get_placement().height.value() : -1.0f);
+        };
+        const auto control = measure_nested(nullptr);
+        for(const auto* property : {"min-height", "max-height"})
+        {
+            const auto feature = measure_nested(property);
+            const auto limit   = std::max(64, control.first * 4);
+            if(feature.first > limit)
+            {
+                std::cerr << "image measurements: " << feature.first << ", limit: " << limit << '\n';
+            }
+            ok &= check(control.second >= 0 && near(feature.second, control.second) && feature.first <= limit,
+                        std::string("nested intrinsic ") + property + " measurement: " + layout.display);
+        }
+    }
+
     doc->draw(0, 0, 0, nullptr);
     ok &= check(near(container.image_box.width.value(), 90) && near(container.image_box.height.value(), 20),
                 "background size uses the background positioning area");

@@ -488,7 +488,10 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
         {
             pixel_t render_width;
             // intrinsic size doesn't include width property processing, so we need to check it here
-            if(!item->el->css().get_width().is_predefined())
+            if(item->el->css().get_width().is_intrinsic_sizing())
+            {
+                render_width = item->el->resolve_intrinsic_width(item->el->css().get_width(), self_size.width);
+            } else if(!item->el->css().get_width().is_predefined())
             {
                 render_width = item->el->css().get_width().calc_percent(self_size.width);
             } else if(item->stretch_full_width)

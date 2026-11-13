@@ -439,11 +439,19 @@ namespace litehtml
 
     bool css_length::has_percentage() const
     {
+        if(m_fit_content_argument)
+        {
+            return m_fit_content_argument->has_percentage();
+        }
         return !m_is_predefined && (m_units == css_units_percentage || (m_expression && m_expression->percentage));
     }
 
     bool css_length::has_nonzero_percentage() const
     {
+        if(m_fit_content_argument)
+        {
+            return m_fit_content_argument->has_nonzero_percentage();
+        }
         if(m_is_predefined)
         {
             return false;
@@ -532,6 +540,7 @@ namespace litehtml
                 return false;
             }
             m_expression    = std::move(expr);
+            m_fit_content_argument.reset();
             m_is_predefined = false;
             m_units         = unit;
             m_value         = 0;
@@ -605,6 +614,10 @@ namespace litehtml
 
     std::string css_length::to_string() const
     {
+        if(m_fit_content_argument)
+        {
+            return "fit-content(" + m_fit_content_argument->to_string() + ")";
+        }
         if(m_is_predefined)
         {
             return "def(" + std::to_string(m_predef) + ")";

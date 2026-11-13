@@ -194,12 +194,61 @@ litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y,
 {
     containing_block_context self_size = calculate_containing_block_context(containing_block_size);
 
+    // A width clamped by min/max-width still reports the width its content takes without the clamp
+    const bool clamped = self_size.width.type != containing_block_context::cbc_value_type_absolute && !second_pass &&
+                         !is_root() && self_size.unclamped_render_width != self_size.render_width.value;
+    const bool intrinsic_min_height = css().get_min_height().is_intrinsic_sizing();
+    const bool intrinsic_max_height = css().get_max_height().is_intrinsic_sizing();
+    bool       content_measured     = false;
+    pixel_t    measured_width       = 0_px;
+    if(intrinsic_min_height || intrinsic_max_height)
+    {
+        auto               measure      = self_size;
+        auto               old_margins  = m_margins;
+        formatting_context measure_ctx  = *fmt_ctx;
+        measure.min_height              = {0_px, containing_block_context::cbc_value_type_none};
+        measure.max_height              = {0_px, containing_block_context::cbc_value_type_none};
+        measure.size_mode              |= containing_block_context::size_mode_measure_height;
+        m_pos.height                    = 0_px;
+        measured_width                  = _render_content(x, y, second_pass, measure, &measure_ctx);
+        auto natural_height             = m_pos.height;
+        if(src_el()->is_block_formatting_context())
+        {
+            natural_height = std::max(natural_height, measure_ctx.get_floats_height());
+        }
+        natural_height             = std::max(0_px, natural_height);
+        m_intrinsic_content_height = natural_height;
+
+        const bool flex_or_grid =
+            is_one_of(css().get_display(), display_flex, display_inline_flex, display_grid, display_inline_grid);
+        const bool intrinsic_bounds_only = (intrinsic_min_height || css().get_min_height().is_auto_or_none()) &&
+                                           (intrinsic_max_height || css().get_max_height().is_auto_or_none());
+        const bool same_container_height =
+            self_size.height.type == containing_block_context::cbc_value_type_auto ||
+            std::max(0_px, self_size.height.value - box_sizing_height()) == natural_height;
+        content_measured = !clamped && (!flex_or_grid || (intrinsic_bounds_only && same_container_height));
+        if(content_measured)
+        {
+            *fmt_ctx = std::move(measure_ctx);
+        } else
+        {
+            m_margins    = old_margins;
+            m_pos.height = 0_px;
+        }
+
+        if(intrinsic_min_height)
+        {
+            self_size.min_height = {natural_height, containing_block_context::cbc_value_type_absolute};
+        }
+        if(intrinsic_max_height)
+        {
+            self_size.max_height = {natural_height, containing_block_context::cbc_value_type_absolute};
+        }
+    }
+
     //*****************************************
     // Render content
     //*****************************************
-    // A width clamped by min/max-width still reports the width its content takes without the clamp
-    bool    clamped       = self_size.width.type != containing_block_context::cbc_value_type_absolute && !second_pass &&
-                            !is_root() && self_size.unclamped_render_width != self_size.render_width.value;
     pixel_t natural_width = 0_px;
     if(clamped)
     {
@@ -208,7 +257,7 @@ litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y,
         natural_size.width.value = natural_size.render_width.value = self_size.unclamped_render_width;
         natural_width = _render_content(x, y, second_pass, natural_size, &natural_fmt_ctx);
     }
-    auto ret_width = _render_content(x, y, second_pass, self_size, fmt_ctx);
+    auto ret_width = content_measured ? measured_width : _render_content(x, y, second_pass, self_size, fmt_ctx);
     if(clamped)
     {
         ret_width = natural_width;
@@ -249,19 +298,29 @@ litehtml::pixel_t litehtml::render_item_block::_render(pixel_t x, pixel_t y,
         }
     }
 
-    // Fix height with min-height attribute
-    if(self_size.min_height.type != containing_block_context::cbc_value_type_none)
+    const auto apply_min_height = [&]() {
+        if(self_size.min_height.type != containing_block_context::cbc_value_type_none)
+        {
+            m_pos.height = std::max<pixel_t>(m_pos.height, self_size.min_height);
+        } else if(m_pos.height < 0_px)
+        {
+            m_pos.height = 0;
+        }
+    };
+    const auto apply_max_height = [&]() {
+        if(self_size.max_height.type != containing_block_context::cbc_value_type_none)
+        {
+            m_pos.height = std::min<pixel_t>(m_pos.height, self_size.max_height);
+        }
+    };
+    if(css().get_height().is_intrinsic_sizing() || intrinsic_min_height || intrinsic_max_height)
     {
-        m_pos.height = std::max<pixel_t>(m_pos.height, self_size.min_height);
-    } else if(m_pos.height < 0_px)
+        apply_max_height();
+        apply_min_height();
+    } else
     {
-        m_pos.height = 0;
-    }
-
-    // Fix width with max-width attribute
-    if(self_size.max_height.type != containing_block_context::cbc_value_type_none)
-    {
-        m_pos.height = std::min<pixel_t>(m_pos.height, self_size.max_height);
+        apply_min_height();
+        apply_max_height();
     }
 
     // calculate the final position

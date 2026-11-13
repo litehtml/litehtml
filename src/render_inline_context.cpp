@@ -312,7 +312,7 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
         {
             auto min_rendered_width = item->get_el()->render(0_px, 0_px, self_size, fmt_ctx);
             if(min_rendered_width < item->get_el()->width() &&
-               item->get_el()->src_el()->css().get_width().is_predefined())
+               item->get_el()->src_el()->css().get_width().is_auto_or_none())
             {
                 // Shrink an auto-width inline box to the width its wrapped content actually uses
                 item->get_el()->render(0_px, 0_px, self_size.new_width(min_rendered_width), fmt_ctx);

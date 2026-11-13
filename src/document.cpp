@@ -642,6 +642,13 @@ namespace litehtml
 
     void document::cvt_units(css_length& val, const font_metrics& metrics, pixel_t size) const
     {
+        if(const auto* argument = val.fit_content_argument())
+        {
+            auto resolved = *argument;
+            cvt_units(resolved, metrics, size);
+            val.set_fit_content(resolved);
+            return;
+        }
         if(val.is_predefined())
         {
             return;

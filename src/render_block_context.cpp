@@ -131,7 +131,8 @@ litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /
     }
 
     m_pos.width = self_size.render_width;
-    if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height.value > 0_px)
+    if(self_size.height.type != containing_block_context::cbc_value_type_auto && self_size.height.value > 0_px &&
+       (self_size.size_mode & containing_block_context::size_mode_measure_height) == 0)
     {
         m_pos.height = self_size.height;
     } else
@@ -139,11 +140,16 @@ litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /
         m_pos.height = child_top;
         if(collapse_bottom_margin())
         {
-            m_pos.height     -= last_margin;
-            m_margins.bottom  = std::max(m_margins.bottom, last_margin);
-            if(last_margin_el)
+            m_pos.height -= last_margin;
+            // A definite-height parent needs the natural height without collapsing its final margins.
+            if((self_size.size_mode & containing_block_context::size_mode_measure_height) == 0 ||
+               self_size.height.type == containing_block_context::cbc_value_type_auto)
             {
-                last_margin_el->get_margins().bottom = 0_px;
+                m_margins.bottom = std::max(m_margins.bottom, last_margin);
+                if(last_margin_el)
+                {
+                    last_margin_el->get_margins().bottom = 0_px;
+                }
             }
         }
     }

@@ -33,6 +33,7 @@ namespace litehtml
         css_units                                  m_units         = css_units_none;
         bool                                       m_is_predefined = false;
         std::shared_ptr<const css_math_expression> m_expression;
+        std::shared_ptr<const css_length>          m_fit_content_argument;
         bool                                       m_non_negative = false;
 
       public:
@@ -51,6 +52,10 @@ namespace litehtml
         pixel_t           calc_percent(pixel_t width) const;
         bool              from_token(const css_token& token, int options, css_values predefined_keywords = {});
         std::string       to_string() const;
+        bool              is_intrinsic_sizing() const;
+        bool              is_auto_or_none() const;
+        void              set_fit_content(const css_length& argument);
+        const css_length* fit_content_argument() const;
         bool              is_expression() const
         {
             return m_expression != nullptr;
@@ -75,6 +80,7 @@ namespace litehtml
         m_units         = css_units_px;
         m_is_predefined = false;
         m_expression.reset();
+        m_fit_content_argument.reset();
         m_non_negative = false;
         return *this;
     }
@@ -89,6 +95,7 @@ namespace litehtml
         m_predef        = val;
         m_is_predefined = true;
         m_expression.reset();
+        m_fit_content_argument.reset();
         m_non_negative = false;
     }
 
@@ -107,7 +114,29 @@ namespace litehtml
         m_is_predefined = false;
         m_units         = units;
         m_expression.reset();
+        m_fit_content_argument.reset();
         m_non_negative = false;
+    }
+
+    inline bool css_length::is_intrinsic_sizing() const
+    {
+        return m_is_predefined && m_predef >= sizing_min_content && m_predef <= sizing_fit_content_function;
+    }
+
+    inline bool css_length::is_auto_or_none() const
+    {
+        return m_is_predefined && m_predef == sizing_auto;
+    }
+
+    inline void css_length::set_fit_content(const css_length& argument)
+    {
+        predef(sizing_fit_content_function);
+        m_fit_content_argument = std::make_shared<const css_length>(argument);
+    }
+
+    inline const css_length* css_length::fit_content_argument() const
+    {
+        return m_fit_content_argument.get();
     }
 
     inline css_units css_length::units() const
