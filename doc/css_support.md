@@ -27,6 +27,7 @@
   - [Recognized by the parser but never match](#recognized-by-the-parser-but-never-match)
   - [Pseudo-elements](#pseudo-elements)
   - [Test coverage](#test-coverage-1)
+- [At-rules](#at-rules)
 - [Media queries](#media-queries)
   - [Media types](#media-types)
   - [Media features](#media-features)
@@ -36,11 +37,12 @@
 
 ---
 
-This document describes litehtml's CSS support: which CSS properties, selectors, and media
-queries are recognized, and how well each one is *actually* supported at render time. "Recognized" (the parser
-reads and stores a value) is **not** the same as "supported" (the value changes the rendered
-output). Each entry was checked by rendering a probe document and confirming the value actually
-changes the output — rather than merely being accepted by the parser.
+This document describes litehtml's CSS support: which CSS properties, selectors, at-rules, and
+media queries are recognized, and how well each one is *actually* supported at render time.
+"Recognized" (the parser reads and stores a value) is **not** the same as "supported" (the value
+changes the rendered output). Support claims describe observable effects, not parser acceptance
+alone; they are based on rendering probes where appropriate and stylesheet-processing behavior for
+at-rules.
 
 Status legend used throughout:
 
@@ -687,6 +689,21 @@ their own:
 No dedicated active tests exist for `:root`, `:empty`, `:visited`, `:checked`, `:disabled`,
 `:where()`, `:nth-last-child()`, `:nth-last-of-type()`, `:only-child`, `:first-of-type`,
 `:last-of-type`, or `:only-of-type`.
+
+---
+
+## At-rules
+
+| At-rule | Support |
+|---|---|
+| `@charset` | ❌ Ignored. Stylesheet input is decoded as UTF-8 regardless of this rule. |
+| `@import` | ✅ Imports a URL or string through the container's CSS import callback; an optional media query list is applied to the imported stylesheet. Only top-level imports before style rules or grouping-rule blocks are handled; layer statements may precede them. `layer()` and `supports()` modifiers are not supported. |
+| `@media` | ✅ Applies its nested stylesheet when the media query list matches. See [Media queries](#media-queries) for supported media types, features, and syntax. |
+| `@supports` | ✅ Evaluates declaration conditions using litehtml's property parser and applies the nested stylesheet when the condition is true. Invalid conditions do not apply their block. |
+| `@layer` | ⚠️ Layer statements are ignored; layer blocks are parsed, but their rules are applied as if they were unlayered. Cascade layer ordering and precedence are not implemented. |
+
+Unknown at-rule names are ignored. Invalid `@import` rules and `@supports` conditions do not
+contribute styles. `@media`, `@supports`, and `@layer` blocks can contain nested stylesheet rules.
 
 ---
 
