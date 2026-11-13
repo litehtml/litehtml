@@ -1735,8 +1735,18 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
     calc_cb_length(src_el()->css().get_min_width(), cb_context.width, ret.min_width);
     calc_cb_length(src_el()->css().get_max_width(), cb_context.width, ret.max_width);
 
-    calc_cb_length(src_el()->css().get_min_height(), cb_context.height, ret.min_height);
-    calc_cb_length(src_el()->css().get_max_height(), cb_context.height, ret.max_height);
+    // In standards mode, an available height is not a definite percentage base.
+    const bool unresolved_height_base =
+        doc_mode != quirks_mode && cb_context.height.type == containing_block_context::cbc_value_type_auto &&
+        !is_one_of(css().get_position(), element_position_absolute, element_position_fixed);
+    if(!unresolved_height_base || !css().get_min_height().has_percentage())
+    {
+        calc_cb_length(css().get_min_height(), cb_context.height, ret.min_height);
+    }
+    if(!unresolved_height_base || !css().get_max_height().has_percentage())
+    {
+        calc_cb_length(css().get_max_height(), cb_context.height, ret.max_height);
+    }
 
     // Issue #459: a flex item is rendered to its resolved main size via
     // size_mode_exact_width. For a row-direction flex container the flex algorithm
