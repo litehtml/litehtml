@@ -1,11 +1,23 @@
 #include "types.h"
+#include "document.h"
 #include "render_flex.h"
 #include "html_tag.h"
 
 litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t y, bool /*second_pass*/,
-                                                              const containing_block_context& self_size,
+                                                              const containing_block_context& containing_block_size,
                                                               formatting_context*             fmt_ctx)
 {
+    containing_block_context self_size = containing_block_size;
+    if(self_size.height.type != containing_block_context::cbc_value_type_auto)
+    {
+        // Flex items resolve percentages against the container's content box.
+        self_size.height.value = std::max(0_px, self_size.height.value - box_sizing_height());
+        if(src_el()->get_document()->mode() == quirks_mode)
+        {
+            self_size.quirks_height = self_size.height;
+        }
+    }
+
     bool    is_row_direction    = true;
     bool    reverse             = false;
     pixel_t container_main_size = self_size.render_width;
@@ -37,7 +49,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     {
         if(self_size.height.type != containing_block_context::cbc_value_type_auto)
         {
-            container_main_size = self_size.height.value - box_sizing_height();
+            container_main_size = self_size.height.value;
         } else
         {
             // Direction columns, height is auto - always in single line
@@ -100,7 +112,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     {
         if(self_size.height.type != containing_block_context::cbc_value_type_auto)
         {
-            pixel_t height  = self_size.height.value - box_sizing_height();
+            pixel_t height  = self_size.height.value;
             free_cross_size = height - sum_cross_size;
         }
     } else

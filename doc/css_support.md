@@ -484,6 +484,15 @@ Shorthands: `flex` (→ `flex-grow`, `flex-shrink`, `flex-basis`), `flex-flow` (
 `<length-percentage>`. (Note: the `min/max/fit-content` keywords are supported here but **not** on
 `width`/`height`.)
 
+Percentage bases use the flex container's inner main size: in column layouts,
+`border-box` container padding and borders are excluded from the height base.
+An indefinite container height leaves percentage `flex-basis` content-sized,
+in both standards and quirks mode.
+
+Tests:
+[flex/percentage-basis-border-box-height-standards.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/percentage-basis-border-box-height-standards.htm),
+[flex/percentage-basis-border-box-height-quirks.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/flex/percentage-basis-border-box-height-quirks.htm).
+
 #### `order`
 ✅ Supported — `<integer>`.
 
