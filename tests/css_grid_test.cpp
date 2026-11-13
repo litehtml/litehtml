@@ -1052,6 +1052,54 @@ int main()
     const auto min_inline    = min_inline_doc->root()->select_one("#min-inline");
     ok                      &= check(min_inline && min_inline->get_placement().width == 32_px,
                                      "inline-grid min-content tracks should use the longest unbreakable segment");
+    const auto zero_minimum_doc  = document::createFromString(
+        "<style>body{margin:0}.ul{display:inline-block}.btn-content{justify-content:center;flex:1 0 auto;"
+        "grid-template-columns:min-content minmax(0,auto);align-content:center;align-items:center;display:grid}"
+        "</style><div class='ul' id='zero-wrapper'><div id='zero-background' style='background-color:chocolate'>"
+        "<div class='btn-content' id='zero-grid'>1.<span id='zero-text'>One</span></div></div></div>",
+        &container);
+    zero_minimum_doc->render(800);
+    const auto zero_wrapper    = zero_minimum_doc->root()->select_one("#zero-wrapper");
+    const auto zero_background = zero_minimum_doc->root()->select_one("#zero-background");
+    const auto zero_grid       = zero_minimum_doc->root()->select_one("#zero-grid");
+    const auto zero_text       = zero_minimum_doc->root()->select_one("#zero-text");
+    ok &= check(zero_wrapper && zero_background && zero_grid && zero_text &&
+                    zero_wrapper->get_placement().width == 40_px && zero_background->get_placement().width == 40_px &&
+                    zero_grid->get_placement().width == 40_px && zero_text->get_placement().x == 16_px &&
+                    zero_text->get_placement().width == 24_px &&
+                    zero_text->get_placement().right() <= zero_background->get_placement().right(),
+                "a shrink-to-fit ancestor should enclose text in a minmax(0,auto) grid track");
+    for(const auto* maximum : {"auto", "min-content", "max-content"})
+    {
+        struct intrinsic_case
+        {
+            const char* width;
+            pixel_t     expected;
+        };
+        const intrinsic_case cases[] = {
+            {"max-content", std::string(maximum) == "min-content" ? 48_px : 88_px},
+            {"min-content", 16_px                                                },
+            {"30px",        30_px                                                }
+        };
+        for(const auto& test : cases)
+        {
+            const auto doc = document::createFromString(
+                "<style>body{margin:0}.wrapper{display:inline-block;width:" + std::string(test.width) +
+                    "}.grid{display:grid;justify-content:center;grid-template-columns:min-content minmax(0," + maximum +
+                    ")}</style><div class='wrapper' id='wrapper'><div class='grid' id='grid'>"
+                    "1.<span id='text'>four four</span></div></div>",
+                &container);
+            doc->render(800);
+            const auto wrapper = doc->root()->select_one("#wrapper");
+            const auto grid    = doc->root()->select_one("#grid");
+            const auto text    = doc->root()->select_one("#text");
+            ok &= check(wrapper && grid && text && wrapper->get_placement().width == test.expected &&
+                            grid->get_placement().width == test.expected && text->get_placement().x == 16_px &&
+                            text->get_placement().width == test.expected - 16_px,
+                        "fixed-zero minimum with " + std::string(maximum) + " maximum at " + test.width +
+                            " width should respect intrinsic growth and constrained shrinking");
+        }
+    }
     const auto spanning_doc  = document::createFromString(
         "<style>body{margin:0}.grid{display:grid;width:120px;"
         "grid-template-columns:minmax(auto,50px) minmax(auto,200px)}.span{grid-column:span 2;width:200px}</style>"

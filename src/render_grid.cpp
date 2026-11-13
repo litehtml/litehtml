@@ -421,6 +421,15 @@ namespace litehtml
                 add_contribution(max_tracks, first, last, children[index]->get_intrinsic_max_size().width, gap, 0_px,
                                  false, false, true);
             }
+            for(size_t index = 0; index < children.size(); ++index)
+            {
+                int first = areas[index].column_start - bounds.column_start;
+                int last  = areas[index].column_end - bounds.column_start;
+                add_max_contribution(max_tracks, first, last, children[index]->get_intrinsic_min_size().width, gap,
+                                     0_px, false, false);
+                add_max_contribution(max_tracks, first, last, children[index]->get_intrinsic_max_size().width, gap,
+                                     0_px, false, true);
+            }
             finish_tracks(max_tracks, 0_px, gap, false, false);
             m_intrinsic_min_size.width = track_extent(min_tracks, 0, static_cast<int>(min_tracks.size()), gap);
             m_intrinsic_max_size.width = track_extent(max_tracks, 0, static_cast<int>(max_tracks.size()), gap);
