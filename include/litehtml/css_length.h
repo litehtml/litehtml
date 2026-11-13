@@ -56,6 +56,8 @@ namespace litehtml
             return m_expression != nullptr;
         }
         bool has_percentage() const;
+        // Conservatively includes percentages that may cancel within an expression.
+        bool has_nonzero_percentage() const;
         void resolve_units(const std::function<float(float, css_units)>& convert);
     };
 

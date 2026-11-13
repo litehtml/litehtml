@@ -3,7 +3,63 @@
 #include "render_flex.h"
 #include "html_tag.h"
 
-litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t y, bool /*second_pass*/,
+namespace
+{
+    using litehtml::operator""_px;
+
+    bool may_have_gap(const litehtml::css_length& gap)
+    {
+        return gap.calc_percent(0_px) != 0_px || gap.has_nonzero_percentage();
+    }
+
+    litehtml::pixel_t static_main_position(litehtml::flex_justify_content justify, litehtml::pixel_t free_space,
+                                           bool reverse, bool is_row)
+    {
+        using namespace litehtml;
+        switch(justify)
+        {
+        case flex_justify_content_center:
+        case flex_justify_content_space_around:
+        case flex_justify_content_space_evenly:
+            return free_space / 2_px;
+        case flex_justify_content_end:
+            return free_space;
+        case flex_justify_content_right:
+            return is_row ? free_space : 0_px;
+        case flex_justify_content_flex_end:
+            return reverse ? 0_px : free_space;
+        case flex_justify_content_start:
+        case flex_justify_content_left:
+            return 0_px;
+        default:
+            return reverse ? free_space : 0_px;
+        }
+    }
+
+    litehtml::pixel_t static_cross_position(litehtml::flex_align_items align, litehtml::pixel_t free_space,
+                                            bool reverse)
+    {
+        using namespace litehtml;
+        switch(align & 0xFF)
+        {
+        case flex_align_items_center:
+            return free_space / 2_px;
+        case flex_align_items_end:
+        case flex_align_items_self_end:
+            return free_space;
+        case flex_align_items_flex_end:
+            return reverse ? 0_px : free_space;
+        case flex_align_items_normal:
+        case flex_align_items_stretch:
+        case flex_align_items_flex_start:
+            return reverse ? free_space : 0_px;
+        default:
+            return 0_px;
+        }
+    }
+} // namespace
+
+litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t y, bool second_pass,
                                                               const containing_block_context& containing_block_size,
                                                               formatting_context*             fmt_ctx)
 {
@@ -45,6 +101,13 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     bool single_line   = css().get_flex_wrap() == flex_wrap_nowrap;
     bool fit_container = false;
 
+    const pixel_t column_gap = css().get_column_gap().calc_percent(self_size.render_width);
+    const pixel_t row_gap    = css().get_row_gap().calc_percent(
+        self_size.height.type == containing_block_context::cbc_value_type_auto ? 0_px : self_size.height.value);
+    const pixel_t main_gap          = is_row_direction ? column_gap : row_gap;
+    const pixel_t cross_gap         = is_row_direction ? row_gap : column_gap;
+    const bool    has_potential_gap = may_have_gap(css().get_row_gap()) || may_have_gap(css().get_column_gap());
+
     if(!is_row_direction)
     {
         if(self_size.height.type != containing_block_context::cbc_value_type_auto)
@@ -73,7 +136,8 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     /////////////////////////////////////////////////////////////////
     /// Split flex items to lines
     /////////////////////////////////////////////////////////////////
-    m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, single_line);
+    m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, main_gap, single_line, second_pass,
+                        has_potential_gap);
 
     pixel_t sum_cross_size = 0_px;
     pixel_t sum_main_size  = 0_px;
@@ -87,7 +151,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     {
         if(is_row_direction)
         {
-            ret_width += ln.base_size;
+            ret_width += ln.base_size + ln.gap_size();
         }
         if(reverse)
         {
@@ -95,12 +159,16 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
         }
         ln.init(container_main_size, fit_container, is_row_direction, self_size, fmt_ctx);
         sum_cross_size += ln.cross_size;
-        sum_main_size   = std::max(sum_main_size, ln.main_size);
+        sum_main_size   = std::max(sum_main_size, ln.main_size + ln.gap_size());
+    }
+    if(m_lines.size() > 1)
+    {
+        sum_cross_size += cross_gap * static_cast<int>(m_lines.size() - 1);
     }
 
     pixel_t free_cross_size = 0_px;
     bool    is_wrap_reverse = css().get_flex_wrap() == flex_wrap_wrap_reverse;
-    if(container_main_size == 0_px)
+    if(fit_container && container_main_size == 0_px)
     {
         container_main_size = sum_main_size;
     }
@@ -129,7 +197,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     {
         // If the leftover free-space is negative or there is only a single flex line in the flex
         // container, this value is identical to flex-start.
-        if(m_lines.size() == 1 || free_cross_size < 0_px)
+        if(m_lines.size() <= 1 || free_cross_size < 0_px)
         {
             align_content = flex_align_content_flex_start;
         }
@@ -138,7 +206,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     {
         // If the leftover free-space is negative or there is only a single flex line in the flex
         // container, this value is identical to flex-start.
-        if(m_lines.size() == 1 || free_cross_size < 0_px)
+        if(m_lines.size() <= 1 || free_cross_size < 0_px)
         {
             align_content = flex_align_content_center;
         }
@@ -147,7 +215,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     /////////////////////////////////////////////////////////////////
     /// Distribute free cross size for align-content: stretch
     /////////////////////////////////////////////////////////////////
-    if(css().get_flex_align_content() == flex_align_content_stretch && free_cross_size > 0_px)
+    if(!m_lines.empty() && css().get_flex_align_content() == flex_align_content_stretch && free_cross_size > 0_px)
     {
         pixel_t add = free_cross_size / pixel_t(static_cast<int>(m_lines.size()));
         if(add > 0_px)
@@ -227,8 +295,14 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
         }
         break;
     }
+    bool first_line = true;
     for(auto& ln : m_lines)
     {
+        if(!first_line)
+        {
+            line_pos += cross_gap;
+        }
+        first_line      = false;
         line_pos       += add_before_line;
         ln.cross_start  = line_pos;
         line_pos       += ln.cross_size + add_after_line;
@@ -252,6 +326,43 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
         m_pos.height = std::max(m_pos.height, height);
     }
 
+    if(has_potential_gap)
+    {
+        // Out-of-flow children align to the container, not to an in-flow flex line.
+        pixel_t content_height = self_size.height.type == containing_block_context::cbc_value_type_auto
+                                     ? m_pos.height
+                                     : self_size.height.value;
+        if(self_size.min_height.type != containing_block_context::cbc_value_type_none)
+        {
+            content_height = std::max(content_height, self_size.min_height.value);
+        }
+        if(self_size.max_height.type != containing_block_context::cbc_value_type_none)
+        {
+            content_height = std::min(content_height, self_size.max_height.value);
+        }
+
+        for(const auto& el : m_children)
+        {
+            if(!is_one_of(el->css().get_position(), element_position_absolute, element_position_fixed))
+            {
+                continue;
+            }
+            auto align = el->css().get_flex_align_self();
+            if(align == flex_align_items_auto)
+            {
+                align = css().get_flex_align_items();
+            }
+            pixel_t main_free  = (is_row_direction ? self_size.render_width.value : content_height) -
+                                 (is_row_direction ? el->width() : el->height());
+            pixel_t cross_free = (is_row_direction ? content_height : self_size.render_width.value) -
+                                 (is_row_direction ? el->height() : el->width());
+            pixel_t main_pos   = static_main_position(justify_content, main_free, reverse, is_row_direction);
+            pixel_t cross_pos  = static_cross_position(align, cross_free, is_wrap_reverse);
+            el->pos().x        = (is_row_direction ? main_pos : cross_pos) + el->content_offset_left();
+            el->pos().y        = (is_row_direction ? cross_pos : main_pos) + el->content_offset_top();
+        }
+    }
+
     // calculate the final position
     m_pos.move_to(x, y);
     m_pos.x += content_offset_left();
@@ -264,7 +375,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
 
 std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
     const litehtml::containing_block_context& self_size, formatting_context* fmt_ctx, bool is_row_direction,
-    pixel_t container_main_size, bool single_line)
+    pixel_t container_main_size, pixel_t main_gap, bool single_line, bool second_pass, bool has_potential_gap)
 {
     bool reverse_main;
     bool reverse_cross = css().get_flex_wrap() == flex_wrap_wrap_reverse;
@@ -278,7 +389,7 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
     }
 
     std::list<flex_line>                  lines;
-    flex_line                             line(reverse_main, reverse_cross);
+    flex_line                             line(reverse_main, reverse_cross, main_gap);
     std::list<std::shared_ptr<flex_item>> items;
     int                                   src_order     = 0;
     bool                                  sort_required = false;
@@ -286,6 +397,15 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
 
     for(auto& el : m_children)
     {
+        // Keep the existing gap-free positioned-child behavior.
+        if(has_potential_gap && is_one_of(el->css().get_position(), element_position_absolute, element_position_fixed))
+        {
+            if(!second_pass)
+            {
+                el->render(0_px, 0_px, self_size, fmt_ctx);
+            }
+            continue;
+        }
         std::shared_ptr<flex_item> item = nullptr;
         if(is_row_direction)
         {
@@ -326,10 +446,11 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
     // Add flex items to lines
     for(auto& item : items)
     {
-        if(!line.items.empty() && !single_line && line.main_size + item->main_size > container_main_size)
+        if(!line.items.empty() && !single_line &&
+           line.main_size + line.gap_size() + main_gap + item->main_size > container_main_size)
         {
             lines.emplace_back(line);
-            line = flex_line(reverse_main, reverse_cross);
+            line = flex_line(reverse_main, reverse_cross, main_gap);
         }
         line.base_size += item->base_size;
         line.main_size += item->main_size;
@@ -483,9 +604,19 @@ litehtml::pixel_t litehtml::render_item_flex::get_last_baseline()
 void litehtml::render_item_flex::calc_intrinsic_size()
 {
     bool is_row_direction = is_one_of(css().get_flex_direction(), flex_direction_row, flex_direction_row_reverse);
+    const auto& main_gap  = is_row_direction ? css().get_column_gap() : css().get_row_gap();
+    const bool  has_potential_gap = may_have_gap(css().get_row_gap()) || may_have_gap(css().get_column_gap());
+    bool   wraps = may_have_gap(main_gap) && css().get_flex_wrap() != flex_wrap_nowrap &&
+                   (is_row_direction || !css().get_height().is_predefined() || !css().get_max_height().is_predefined());
+    size_t item_count = 0;
 
     for(const auto& el : m_children)
     {
+        if(has_potential_gap && is_one_of(el->css().get_position(), element_position_absolute, element_position_fixed))
+        {
+            continue;
+        }
+        ++item_count;
         auto child_min = el->get_intrinsic_min_size();
         auto child_max = el->get_intrinsic_max_size();
 
@@ -502,7 +633,13 @@ void litehtml::render_item_flex::calc_intrinsic_size()
         {
             // Row direction: items are laid out horizontally
             // Width accumulates (sum of all items)
-            m_intrinsic_min_size.width += child_min.width;
+            if(wraps)
+            {
+                m_intrinsic_min_size.width = std::max(m_intrinsic_min_size.width, child_min.width);
+            } else
+            {
+                m_intrinsic_min_size.width += child_min.width;
+            }
             m_intrinsic_max_size.width += child_max.width;
             // Height is the maximum of all items
             m_intrinsic_min_size.height = std::max(m_intrinsic_min_size.height, child_min.height);
@@ -514,8 +651,34 @@ void litehtml::render_item_flex::calc_intrinsic_size()
             m_intrinsic_min_size.width = std::max(m_intrinsic_min_size.width, child_min.width);
             m_intrinsic_max_size.width = std::max(m_intrinsic_max_size.width, child_max.width);
             // Height accumulates (sum of all items)
-            m_intrinsic_min_size.height += child_min.height;
+            if(wraps)
+            {
+                m_intrinsic_min_size.height = std::max(m_intrinsic_min_size.height, child_min.height);
+            } else
+            {
+                m_intrinsic_min_size.height += child_min.height;
+            }
             m_intrinsic_max_size.height += child_max.height;
+        }
+    }
+
+    if(item_count > 1)
+    {
+        const auto total_gap = main_gap.calc_percent(0_px) * static_cast<int>(item_count - 1);
+        if(is_row_direction)
+        {
+            m_intrinsic_max_size.width += total_gap;
+            if(!wraps)
+            {
+                m_intrinsic_min_size.width += total_gap;
+            }
+        } else
+        {
+            m_intrinsic_max_size.height += total_gap;
+            if(!wraps)
+            {
+                m_intrinsic_min_size.height += total_gap;
+            }
         }
     }
 

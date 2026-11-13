@@ -59,6 +59,11 @@ bool litehtml::flex_item::is_stretched_in_single_line() const
 void litehtml::flex_item::place(flex_line& ln, pixel_t main_pos, const containing_block_context& self_size,
                                 formatting_context* fmt_ctx)
 {
+    if(ln.gap_size() != 0_px)
+    {
+        // Column sizing must subtract the allocated margins before rendering.
+        apply_main_auto_margins();
+    }
     apply_main_size(self_size, fmt_ctx);
     apply_main_auto_margins();
     set_main_position(main_pos);
