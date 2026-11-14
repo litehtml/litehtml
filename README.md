@@ -16,6 +16,8 @@ deliberately small and easy to implement, and it is required to render HTML corr
 - [Where litehtml can be used](#where-litehtml-can-be-used)
 - [Requirements](#requirements)
 - [Building](#building)
+  - [CMake options](#cmake-options)
+  - [Optional libraries](#optional-libraries)
 - [Directory structure](#directory-structure)
 - [Quick example](#quick-example)
 - [Testing](#testing)
@@ -35,61 +37,101 @@ as WebKit. **litehtml** is much lighter and easier to integrate into your applic
 
 ## Requirements
 
-- A C++17 compiler.
-- [CMake](https://cmake.org/) 3.11 or newer (to build with CMake).
-- No third-party dependencies: the HTML parser (gumbo) is bundled.
+- C++17 and C99 compilers.
+- [CMake](https://cmake.org/) 3.20 or newer (to build with CMake).
+- No external libraries for the default core build: the gumbo HTML parser is
+  bundled.
 
-**litehtml** is compatible with any platform supported by C++ and the STL. On Windows, a
-recent version of Visual Studio (MSVC) is recommended. **litehtml** works with UTF-8
-strings only.
+The core **litehtml** library is compatible with platforms supported by C++ and the STL.
+On Windows, a recent version of Visual Studio (MSVC) is recommended. **litehtml** works
+with UTF-8 strings only. The optional libraries have additional dependencies and may
+have platform-specific requirements.
 
 ## Building
 
-Configure and build the library with CMake:
+From the root of the litehtml source tree, configure and build with CMake:
 
 ```sh
-cmake -B build
+cmake -S . -B build
 cmake --build build
 ```
 
-This builds the `litehtml` library together with the bundled gumbo parser.
+With the default options, this builds the `litehtml` library together with the bundled
+gumbo parser, without any optional libraries.
 
-To install the library, headers, and CMake package:
+To install the core library, headers, and CMake package:
 
 ```sh
 cmake --install build
 ```
 
+The install rules include bundled gumbo when it is used, but do not install or export
+the optional library targets. See their guides below for source-tree integration.
+
 ### CMake options
 
-| Option                   | Default | Description                                                        |
-| ------------------------ | ------- | ------------------------------------------------------------------ |
-| `LITEHTML_BUILD_TESTING` | `OFF`   | Download and build the litehtml test suite.                        |
-| `LITEHTML_BUILD_GRID_TESTS` | `OFF` | Build the local CSS Grid regression tests.                       |
-| `LITEHTML_BUILD_MATH_TESTS` | `OFF` | Build the local CSS calculation regression tests.                |
-| `LITEHTML_ENABLE_LINT`   | `ON`    | Run clang-tidy during the build.                                   |
-| `EXTERNAL_GUMBO`         | `OFF`   | Link against a system-installed gumbo instead of the bundled copy. |
+| Option | Default | Description |
+| --- | --- | --- |
+| `LITEHTML_BUILD_TESTING` | `OFF` | Download and build the separate litehtml test project. |
+| `LITEHTML_BUILD_GRID_TESTS` | `OFF` | Build the local CSS Grid regression tests. |
+| `LITEHTML_BUILD_MATH_TESTS` | `OFF` | Build the local CSS calculation regression tests. |
+| `LITEHTML_ENABLE_LINT` | `ON` | Run clang-tidy for litehtml and local tests when it is available. |
+| `EXTERNAL_GUMBO` | `OFF` | Link against a system-installed gumbo instead of the bundled copy. |
 
-> **Note:** `LITEHTML_BUILD_TESTING` does not simply enable CTest. It fetches and builds
-> the separate [litehtml-tests](https://github.com/litehtml/litehtml-tests) project.
+`LITEHTML_BUILD_TESTING=ON` configures the separate
+[litehtml-tests](https://github.com/litehtml/litehtml-tests) project rather than the
+regular core, optional-library and local-test targets in that build tree. Use a separate
+build tree for the library and local tests. The external project is downloaded when it
+is built.
+
+### Optional libraries
+
+The following options default to `OFF`. They require pkg-config and the listed
+development libraries; the guides describe additional integration and platform
+requirements.
+
+| Option | Library and purpose | Dependencies |
+| --- | --- | --- |
+| `LITEHTML_BUILD_CONTAINER_CAIRO` | [`litehtml_container_cairo`](containers/cairo/README.md): Cairo reference container, without text drawing | Cairo |
+| `LITEHTML_BUILD_CONTAINER_PANGO` | [`litehtml_container_pango`](containers/cairo_pango/README.md): Cairo container with Pango text | Cairo, Pango, PangoCairo |
+| `LITEHTML_BUILD_RENDER2PNG` | [`litehtml_render2png`](containers/render2png/README.md): render local HTML to PNG or GdkPixbuf | Cairo, Pango, PangoCairo, GTK4, GdkPixbuf, fontconfig |
+| `LITEHTML_BUILD_DRAW_BUFFER` | [`litehtml_draw_buffer`](support/draw_buffer/README.md): Cairo-backed drawing buffer | Cairo |
+| `LITEHTML_BUILD_WEBPAGE` | [`litehtml_webpage`](support/webpage/README.md): page loading and history | Cairo, Pango, PangoCairo, libcurl, POSIX threads and APIs |
+| `LITEHTML_BUILD_GTKMM4` | [`litehtml_gtkmm4`](support/gtkmm4/README.md): GTKMM4 page widget | Cairo, Pango, PangoCairo, libcurl, gtkmm 4, POSIX threads and APIs |
+
+Pango-dependent libraries also need suitable fonts available at runtime. Enabling the
+Pango container also enables the Cairo container; enabling render2png or webpage enables
+both containers. GTKMM4 enables webpage and draw_buffer, including their required
+containers. These dependencies are enabled for the build even if their cached options
+still show `OFF`.
+
+For example, to build the Pango container and its dependencies:
+
+```sh
+cmake -S . -B build-pango -DLITEHTML_BUILD_CONTAINER_PANGO=ON
+cmake --build build-pango --target litehtml_container_pango
+```
+
+> **Security:** The webpage loader disables TLS peer certificate verification, including
+> when used through the GTKMM4 widget. See the [webpage guide](support/webpage/README.md).
 
 ## Directory structure
 
 ```
 litehtml/
 ├── cmake/          CMake package configuration (litehtmlConfig.cmake)
-├── containers/     Reference document_container implementations (cairo, haiku, test, windows)
+├── containers/     Reference containers and optional rendering libraries
 ├── doc/            Documentation and integration guide
 ├── include/
 │   ├── litehtml.h  Umbrella public header
 │   └── litehtml/   Public API headers
 ├── src/            Library implementation (.cpp files)
 │   └── gumbo/      Vendored gumbo HTML parser (C99)
-└── support/        Integration helpers (draw_buffer, gtkmm4, webpage)
+└── support/        Optional integration helpers (draw_buffer, gtkmm4, webpage)
 ```
 
-The `containers/` and `support/` directories are not part of the library build; they serve
-as integration examples and helpers.
+The `containers/` and `support/` directories contain reference code and optional
+libraries; their CMake targets are built when the corresponding options are enabled.
 
 ## Quick example
 
@@ -169,6 +211,7 @@ see [CSS math values](doc/css_support.md#css-math-values) for scope and limits.
 - [document_container interface](doc/document_container.md)
 - [document::createFromString](doc/document_createFromString.md)
 - [Supported CSS properties and selectors](doc/css_support.md)
+- [Optional library guides](#optional-libraries)
 
 ## License
 

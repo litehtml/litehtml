@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.20)
 
 project(litehtml LANGUAGES C CXX)
 
@@ -6,6 +6,24 @@ option(LITEHTML_BUILD_TESTING "enable testing for litehtml" OFF)
 option(LITEHTML_ENABLE_LINT "enable linting for litehtml" ON)
 option(LITEHTML_BUILD_GRID_TESTS "build CSS Grid regression tests" OFF)
 option(LITEHTML_BUILD_MATH_TESTS "build CSS math regression tests" OFF)
+option(LITEHTML_BUILD_CONTAINER_CAIRO "build litehtml_container_cairo library (requires cairo)" OFF)
+option(LITEHTML_BUILD_CONTAINER_PANGO "build litehtml_container_pango library (requires pango, pangocairo)" OFF)
+option(LITEHTML_BUILD_RENDER2PNG "build litehtml_render2png library (requires gtk4, gdk-pixbuf-2.0, fontconfig)" OFF)
+option(LITEHTML_BUILD_DRAW_BUFFER "build litehtml_draw_buffer library (requires cairo)" OFF)
+option(LITEHTML_BUILD_WEBPAGE "build litehtml_webpage library (requires libcurl)" OFF)
+option(LITEHTML_BUILD_GTKMM4 "build litehtml_gtkmm4 library (requires gtkmm-4.0)" OFF)
+
+# Enable libraries required by the selected ones
+if(LITEHTML_BUILD_GTKMM4)
+	set(LITEHTML_BUILD_WEBPAGE ON)
+	set(LITEHTML_BUILD_DRAW_BUFFER ON)
+endif()
+if(LITEHTML_BUILD_WEBPAGE OR LITEHTML_BUILD_RENDER2PNG)
+	set(LITEHTML_BUILD_CONTAINER_PANGO ON)
+endif()
+if(LITEHTML_BUILD_CONTAINER_PANGO)
+	set(LITEHTML_BUILD_CONTAINER_CAIRO ON)
+endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
@@ -165,6 +183,26 @@ set(HEADER_LITEHTML
 	include/litehtml/render_text.h
 )
 
+# Added before the clang-tidy and warning settings below so they don't apply to these targets
+if(LITEHTML_BUILD_CONTAINER_CAIRO)
+	add_subdirectory(containers/cairo)
+endif()
+if(LITEHTML_BUILD_CONTAINER_PANGO)
+	add_subdirectory(containers/cairo_pango)
+endif()
+if(LITEHTML_BUILD_RENDER2PNG)
+	add_subdirectory(containers/render2png)
+endif()
+if(LITEHTML_BUILD_DRAW_BUFFER)
+	add_subdirectory(support/draw_buffer)
+endif()
+if(LITEHTML_BUILD_WEBPAGE)
+	add_subdirectory(support/webpage)
+endif()
+if(LITEHTML_BUILD_GTKMM4)
+	add_subdirectory(support/gtkmm4)
+endif()
+
 find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
 
 if(CLANG_TIDY_EXE AND LITEHTML_ENABLE_LINT)
@@ -255,7 +293,7 @@ else ()
 	ExternalProject_Add(
 			litehtml-tests
 			GIT_REPOSITORY      https://github.com/litehtml/litehtml-tests.git
-			GIT_TAG             005fb41eea5850b000d46f017dcf1320ed7a0e2d
+			GIT_TAG             b75f5ce3c8fc36edbe4661710e40e2e63ac070eb
 			SOURCE_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-src"
 			BINARY_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-build"
 			CMAKE_ARGS          -DLITEHTML_PATH=${CMAKE_CURRENT_SOURCE_DIR}
