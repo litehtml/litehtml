@@ -69,6 +69,12 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
             if(m_display == display_inline_table)
             {
                 m_display = display_table;
+            } else if(m_display == display_inline_flex)
+            {
+                m_display = display_flex;
+            } else if(m_display == display_inline_grid)
+            {
+                m_display = display_grid;
             } else if(m_display == display_inline || m_display == display_table_row_group ||
                       m_display == display_table_column || m_display == display_table_column_group ||
                       m_display == display_table_header_group || m_display == display_table_footer_group ||
