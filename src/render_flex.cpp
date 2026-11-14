@@ -107,7 +107,6 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
         self_size.height.type == containing_block_context::cbc_value_type_auto ? 0_px : self_size.height.value);
     const pixel_t main_gap          = is_row_direction ? column_gap : row_gap;
     const pixel_t cross_gap         = is_row_direction ? row_gap : column_gap;
-    const bool    has_potential_gap = may_have_gap(css().get_row_gap()) || may_have_gap(css().get_column_gap());
 
     if(!is_row_direction)
     {
@@ -137,8 +136,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     /////////////////////////////////////////////////////////////////
     /// Split flex items to lines
     /////////////////////////////////////////////////////////////////
-    m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, main_gap, single_line, second_pass,
-                        has_potential_gap);
+    m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, main_gap, single_line, second_pass);
 
     pixel_t sum_cross_size = 0_px;
     pixel_t sum_main_size  = 0_px;
@@ -327,7 +325,6 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
         m_pos.height = std::max(m_pos.height, height);
     }
 
-    if(has_potential_gap)
     {
         // Out-of-flow children align to the container, not to an in-flow flex line.
         pixel_t content_height = self_size.height.type == containing_block_context::cbc_value_type_auto
@@ -376,7 +373,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
 
 std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
     const litehtml::containing_block_context& self_size, formatting_context* fmt_ctx, bool is_row_direction,
-    pixel_t container_main_size, pixel_t main_gap, bool single_line, bool second_pass, bool has_potential_gap)
+    pixel_t container_main_size, pixel_t main_gap, bool single_line, bool second_pass)
 {
     bool reverse_main;
     bool reverse_cross = css().get_flex_wrap() == flex_wrap_wrap_reverse;
@@ -398,8 +395,7 @@ std::list<litehtml::flex_line> litehtml::render_item_flex::get_lines(
 
     for(auto& el : m_children)
     {
-        // Keep the existing gap-free positioned-child behavior.
-        if(has_potential_gap && is_one_of(el->css().get_position(), element_position_absolute, element_position_fixed))
+        if(is_one_of(el->css().get_position(), element_position_absolute, element_position_fixed))
         {
             if(!second_pass)
             {
@@ -606,14 +602,13 @@ void litehtml::render_item_flex::calc_intrinsic_size()
 {
     bool is_row_direction = is_one_of(css().get_flex_direction(), flex_direction_row, flex_direction_row_reverse);
     const auto& main_gap  = is_row_direction ? css().get_column_gap() : css().get_row_gap();
-    const bool  has_potential_gap = may_have_gap(css().get_row_gap()) || may_have_gap(css().get_column_gap());
     bool   wraps = may_have_gap(main_gap) && css().get_flex_wrap() != flex_wrap_nowrap &&
                    (is_row_direction || !css().get_height().is_predefined() || !css().get_max_height().is_predefined());
     size_t item_count = 0;
 
     for(const auto& el : m_children)
     {
-        if(has_potential_gap && is_one_of(el->css().get_position(), element_position_absolute, element_position_fixed))
+        if(is_one_of(el->css().get_position(), element_position_absolute, element_position_fixed))
         {
             continue;
         }
