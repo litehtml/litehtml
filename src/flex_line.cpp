@@ -471,7 +471,7 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
         def_value<pixel_t> max_cross_size(0_px);
         if(self_size.width.type != containing_block_context::cbc_value_type_auto)
         {
-            max_cross_size = self_size.width;
+            max_cross_size = self_size.render_width;
         }
         if(self_size.max_width.type != containing_block_context::cbc_value_type_none)
         {

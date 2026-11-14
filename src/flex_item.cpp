@@ -175,8 +175,12 @@ void litehtml::flex_item_row_direction::direction_specific_init(const litehtml::
     {
         min_size = std::min(el->get_intrinsic_min_size().width, width_value(width) + el->render_offset_width());
     }
-    if((el->css().get_min_width().is_intrinsic_sizing() || el->css().get_max_width().is_intrinsic_sizing()) &&
-       !max_size.is_default() && pixel_t(max_size) < min_size)
+    // A definite maximum caps an automatic minimum, not an explicitly specified minimum.
+    if(el->css().get_min_width().is_auto_or_none() && !max_size.is_default())
+    {
+        min_size = std::min(min_size, pixel_t(max_size));
+    }
+    if(!max_size.is_default() && pixel_t(max_size) < min_size)
     {
         max_size = min_size;
     }
@@ -412,12 +416,12 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
     stretch_full_width = false;
     if(el->css().get_width().is_auto_or_none() && is_stretched_in_single_line())
     {
-        pixel_t full_width = self_size.width.value - el->content_offset_width() + el->box_sizing_width();
-        if(full_width > render_width)
+        pixel_t full_width = self_size.render_width.value - el->content_offset_width() + el->box_sizing_width();
+        if(full_width != render_width)
         {
-            auto narrow_height = el->height();
+            auto measured_height = el->height();
             el->render(0_px, 0_px, self_size.new_width(full_width, size_mode), fmt_ctx, false);
-            if(el->height() != narrow_height)
+            if(el->height() != measured_height)
             {
                 stretch_full_width   = true;
                 stretch_render_width = full_width;
@@ -484,7 +488,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
             break;
         case flex_basis_max_content:
         case flex_basis_fit_content:
-            base_size = content_height + (height.is_intrinsic_sizing() ? el->content_offset_height() : 0_px);
+            base_size = content_height + el->content_offset_height();
             break;
         case flex_basis_min_content:
             base_size = min_size;

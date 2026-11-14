@@ -631,7 +631,7 @@ void litehtml::render_item_flex::calc_intrinsic_size()
         } else if(!width.is_predefined())
         {
             child_min.width = child_max.width =
-                width.calc_percent(0_px) + (intrinsic_width ? el->render_offset_width() : el->content_offset_width());
+                std::max(width.calc_percent(0_px), el->box_sizing_width()) + el->render_offset_width();
         }
         if(intrinsic_width)
         {
@@ -667,7 +667,8 @@ void litehtml::render_item_flex::calc_intrinsic_size()
         }
         if(!el->css().get_height().is_predefined())
         {
-            child_min.height = child_max.height = el->css().get_height().calc_percent(0) + el->content_offset_height();
+            child_min.height = child_max.height =
+                std::max(el->css().get_height().calc_percent(0), el->box_sizing_height()) + el->render_offset_height();
         }
 
         if(is_row_direction)
