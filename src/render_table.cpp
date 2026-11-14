@@ -65,8 +65,40 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
 
     containing_block_context self_size = calculate_containing_block_context(containing_block_size);
 
+    // max-width smaller than the specified table width: specified cell widths
+    // become preferred, not GRIDMIN, so columns can scale. Otherwise CSS 2.1
+    // keeps W as the cell minimum (see floats-038).
+    const bool max_width_constrains =
+        self_size.max_width.type != containing_block_context::cbc_value_type_none &&
+        self_size.max_width.value > 0_px &&
+        (self_size.width.type != containing_block_context::cbc_value_type_absolute ||
+         self_size.max_width.value < self_size.width.value);
+
     // Calculate table spacing
     auto [table_width_spacing, table_height_spacing] = calc_table_spacings();
+
+    // Measure each specified-width column's true content-only minimum so
+    // calc_table_width can shrink it below its specified width when
+    // max_width_constrains -- the generic intrinsic size for a cell with a
+    // specified width is always min=max=W (see render_item::update_intrinsic_size),
+    // which doesn't know about this table's own max-width.
+    for(int row = 0; row < m_grid->rows_count(); row++)
+    {
+        for(int col = 0; col < m_grid->cols_count(); col++)
+        {
+            table_cell* cell = m_grid->cell(col, row);
+            if(cell && cell->el)
+            {
+                cell->natural_min_width.reset();
+                if(max_width_constrains && !m_grid->column(col).css_width.is_predefined() &&
+                   m_grid->column(col).css_width.units() != css_units_percentage)
+                {
+                    cell->natural_min_width =
+                        cell->el->render(0_px, 0_px, self_size.new_width(cell->el->content_offset_width()), fmt_ctx);
+                }
+            }
+        }
+    }
 
     // If the 'table' or 'inline-table' element's 'width' property has a computed value (W) other than 'auto', the used
     // width is the greater of W, CAPMIN, and the minimum width required by all the columns plus cell spacing or borders
@@ -83,12 +115,12 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {
         table_width = m_grid->calc_table_width(self_size.render_width.value - table_width_spacing, false,
-                                               min_table_width, max_table_width);
+                                               min_table_width, max_table_width, max_width_constrains);
     } else
     {
         table_width = m_grid->calc_table_width(self_size.render_width.value - table_width_spacing,
                                                self_size.width.type == containing_block_context::cbc_value_type_auto,
-                                               min_table_width, max_table_width);
+                                               min_table_width, max_table_width, max_width_constrains);
     }
 
     min_table_width += table_width_spacing;
