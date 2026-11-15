@@ -654,151 +654,7 @@ namespace litehtml
 
         case _grid_:
         case _grid_template_:
-            {
-                grid_track_list     rows;
-                grid_track_list     columns;
-                grid_track_list     auto_rows;
-                grid_track_list     auto_columns;
-                grid_template_areas template_areas;
-                auto_rows.append({grid_track_size{}});
-                auto_columns.append({grid_track_size{}});
-                grid_auto_flow flow  = grid_auto_flow_row;
-                bool           valid = is_one_of(ident, "none", "initial", "unset");
-                if(!valid)
-                {
-                    auto             slash = std::find_if(value.begin(), value.end(),
-                                                          [](const css_token& token) { return token.ch == '/'; });
-                    css_token_vector first(value.begin(), slash);
-                    css_token_vector second(slash == value.end() ? slash : slash + 1, value.end());
-                    const bool       has_area_strings = std::any_of(
-                        first.begin(), first.end(), [](const css_token& token) { return token.type == STRING; });
-                    if(has_area_strings)
-                    {
-                        css_token_vector area_tokens;
-                        css_token_vector row_tokens;
-                        auto             append_names = [&](const css_token& token) {
-                            if(!row_tokens.empty() && row_tokens.back().type == SQUARE_BLOCK)
-                            {
-                                row_tokens.back().value.insert(row_tokens.back().value.end(), token.value.begin(),
-                                                               token.value.end());
-                            } else
-                            {
-                                row_tokens.push_back(token);
-                            }
-                        };
-                        size_t index = 0;
-                        valid        = true;
-                        while(index < first.size())
-                        {
-                            if(first[index].type == SQUARE_BLOCK)
-                            {
-                                append_names(first[index++]);
-                            }
-                            if(index == first.size() || first[index].type != STRING)
-                            {
-                                valid = false;
-                                break;
-                            }
-                            area_tokens.push_back(first[index++]);
-                            if(index < first.size() && first[index].type != STRING && first[index].type != SQUARE_BLOCK)
-                            {
-                                if(first[index].type == CV_FUNCTION && lowcase(first[index].name()) == "repeat")
-                                {
-                                    valid = false;
-                                    break;
-                                }
-                                row_tokens.push_back(first[index++]);
-                            } else
-                            {
-                                row_tokens.emplace_back(IDENT, "auto");
-                            }
-                            if(index < first.size() && first[index].type == SQUARE_BLOCK)
-                            {
-                                append_names(first[index++]);
-                            }
-                        }
-                        if(valid)
-                        {
-                            valid = parse_grid_template_areas(area_tokens, template_areas) &&
-                                    parse_grid_track_list(row_tokens, rows) && rows.size() <= 1024;
-                        }
-                        if(valid && slash != value.end())
-                        {
-                            const bool has_repeat =
-                                std::any_of(second.begin(), second.end(), [](const css_token& token) {
-                                    return token.type == CV_FUNCTION && lowcase(token.name()) == "repeat";
-                                });
-                            valid = !has_repeat && parse_grid_track_list(second, columns) && !columns.empty() &&
-                                    columns.size() <= 1024;
-                        }
-                    } else if(slash != value.end())
-                    {
-                        auto parse_auto = [](const css_token_vector& tokens, grid_track_list& tracks, bool& dense) {
-                            size_t index    = 0;
-                            bool   has_flow = false;
-                            dense           = false;
-                            while(index < tokens.size())
-                            {
-                                const auto keyword = tokens[index].ident();
-                                if(keyword == "auto-flow" && !has_flow)
-                                {
-                                    has_flow = true;
-                                } else if(keyword == "dense" && !dense)
-                                {
-                                    dense = true;
-                                } else
-                                {
-                                    break;
-                                }
-                                ++index;
-                            }
-                            if(!has_flow)
-                            {
-                                return false;
-                            }
-                            if(index == tokens.size())
-                            {
-                                return true;
-                            }
-                            css_token_vector sizes(tokens.begin() + static_cast<ptrdiff_t>(index), tokens.end());
-                            if(std::any_of(sizes.begin(), sizes.end(), [](const css_token& token) {
-                                   return token.type == SQUARE_BLOCK ||
-                                          (token.type == CV_FUNCTION && lowcase(token.name()) == "repeat");
-                               }))
-                            {
-                                return false;
-                            }
-                            return parse_grid_track_list(sizes, tracks) && !tracks.empty();
-                        };
-                        bool dense = false;
-                        if(name == _grid_ && parse_auto(first, auto_rows, dense))
-                        {
-                            valid = parse_grid_track_list(second, columns) && columns.size() <= 1024;
-                            flow  = dense ? grid_auto_flow_row_dense : grid_auto_flow_row;
-                        } else if(name == _grid_ && parse_auto(second, auto_columns, dense))
-                        {
-                            valid = parse_grid_track_list(first, rows) && rows.size() <= 1024;
-                            flow  = dense ? grid_auto_flow_column_dense : grid_auto_flow_column;
-                        } else
-                        {
-                            valid = parse_grid_track_list(first, rows) && rows.size() <= 1024 &&
-                                    parse_grid_track_list(second, columns) && columns.size() <= 1024;
-                        }
-                    }
-                }
-                if(valid)
-                {
-                    add_parsed_property(_grid_template_rows_, property_value(rows, important));
-                    add_parsed_property(_grid_template_columns_, property_value(columns, important));
-                    add_parsed_property(_grid_template_areas_, property_value(template_areas, important));
-                    if(name == _grid_)
-                    {
-                        add_parsed_property(_grid_auto_rows_, property_value(auto_rows, important));
-                        add_parsed_property(_grid_auto_columns_, property_value(auto_columns, important));
-                        add_parsed_property(_grid_auto_flow_, property_value(static_cast<int>(flow), important));
-                    }
-                }
-            }
+            parse_grid(name, value, important);
             break;
 
         case _grid_template_areas_:
@@ -1968,6 +1824,152 @@ namespace litehtml
             }
         }
         add_parsed_property(_text_emphasis_position_, property_value(val, important));
+    }
+
+    void style::parse_grid(string_id name, const css_token_vector& value, bool important)
+    {
+        grid_track_list     rows;
+        grid_track_list     columns;
+        grid_track_list     auto_rows;
+        grid_track_list     auto_columns;
+        grid_template_areas template_areas;
+        auto_rows.append({grid_track_size{}});
+        auto_columns.append({grid_track_size{}});
+        grid_auto_flow flow  = grid_auto_flow_row;
+        bool           valid = value.size() == 1 && is_one_of(value[0].ident(), "none", "initial", "unset");
+        if(!valid)
+        {
+            auto             slash = std::find_if(value.begin(), value.end(),
+                                                  [](const css_token& token) { return token.ch == '/'; });
+            css_token_vector first(value.begin(), slash);
+            css_token_vector second(slash == value.end() ? slash : slash + 1, value.end());
+            const bool       has_area_strings = std::any_of(
+                first.begin(), first.end(), [](const css_token& token) { return token.type == STRING; });
+            if(has_area_strings)
+            {
+                css_token_vector area_tokens;
+                css_token_vector row_tokens;
+                auto             append_names = [&](const css_token& token) {
+                    if(!row_tokens.empty() && row_tokens.back().type == SQUARE_BLOCK)
+                    {
+                        row_tokens.back().value.insert(row_tokens.back().value.end(), token.value.begin(),
+                                                       token.value.end());
+                    } else
+                    {
+                        row_tokens.push_back(token);
+                    }
+                };
+                size_t index = 0;
+                valid        = true;
+                while(index < first.size())
+                {
+                    if(first[index].type == SQUARE_BLOCK)
+                    {
+                        append_names(first[index++]);
+                    }
+                    if(index == first.size() || first[index].type != STRING)
+                    {
+                        valid = false;
+                        break;
+                    }
+                    area_tokens.push_back(first[index++]);
+                    if(index < first.size() && first[index].type != STRING && first[index].type != SQUARE_BLOCK)
+                    {
+                        if(first[index].type == CV_FUNCTION && lowcase(first[index].name()) == "repeat")
+                        {
+                            valid = false;
+                            break;
+                        }
+                        row_tokens.push_back(first[index++]);
+                    } else
+                    {
+                        row_tokens.emplace_back(IDENT, "auto");
+                    }
+                    if(index < first.size() && first[index].type == SQUARE_BLOCK)
+                    {
+                        append_names(first[index++]);
+                    }
+                }
+                if(valid)
+                {
+                    valid = parse_grid_template_areas(area_tokens, template_areas) &&
+                            parse_grid_track_list(row_tokens, rows) && rows.size() <= 1024;
+                }
+                if(valid && slash != value.end())
+                {
+                    const bool has_repeat = std::any_of(second.begin(), second.end(), [](const css_token& token) {
+                        return token.type == CV_FUNCTION && lowcase(token.name()) == "repeat";
+                    });
+                    valid = !has_repeat && parse_grid_track_list(second, columns) && !columns.empty() &&
+                            columns.size() <= 1024;
+                }
+            } else if(slash != value.end())
+            {
+                auto parse_auto = [](const css_token_vector& tokens, grid_track_list& tracks, bool& dense) {
+                    size_t index    = 0;
+                    bool   has_flow = false;
+                    dense           = false;
+                    while(index < tokens.size())
+                    {
+                        const auto keyword = tokens[index].ident();
+                        if(keyword == "auto-flow" && !has_flow)
+                        {
+                            has_flow = true;
+                        } else if(keyword == "dense" && !dense)
+                        {
+                            dense = true;
+                        } else
+                        {
+                            break;
+                        }
+                        ++index;
+                    }
+                    if(!has_flow)
+                    {
+                        return false;
+                    }
+                    if(index == tokens.size())
+                    {
+                        return true;
+                    }
+                    css_token_vector sizes(tokens.begin() + static_cast<ptrdiff_t>(index), tokens.end());
+                    if(std::any_of(sizes.begin(), sizes.end(), [](const css_token& token) {
+                           return token.type == SQUARE_BLOCK ||
+                                  (token.type == CV_FUNCTION && lowcase(token.name()) == "repeat");
+                       }))
+                    {
+                        return false;
+                    }
+                    return parse_grid_track_list(sizes, tracks) && !tracks.empty();
+                };
+                bool dense = false;
+                if(name == _grid_ && parse_auto(first, auto_rows, dense))
+                {
+                    valid = parse_grid_track_list(second, columns) && columns.size() <= 1024;
+                    flow  = dense ? grid_auto_flow_row_dense : grid_auto_flow_row;
+                } else if(name == _grid_ && parse_auto(second, auto_columns, dense))
+                {
+                    valid = parse_grid_track_list(first, rows) && rows.size() <= 1024;
+                    flow  = dense ? grid_auto_flow_column_dense : grid_auto_flow_column;
+                } else
+                {
+                    valid = parse_grid_track_list(first, rows) && rows.size() <= 1024 &&
+                            parse_grid_track_list(second, columns) && columns.size() <= 1024;
+                }
+            }
+        }
+        if(valid)
+        {
+            add_parsed_property(_grid_template_rows_, property_value(rows, important));
+            add_parsed_property(_grid_template_columns_, property_value(columns, important));
+            add_parsed_property(_grid_template_areas_, property_value(template_areas, important));
+            if(name == _grid_)
+            {
+                add_parsed_property(_grid_auto_rows_, property_value(auto_rows, important));
+                add_parsed_property(_grid_auto_columns_, property_value(auto_columns, important));
+                add_parsed_property(_grid_auto_flow_, property_value(static_cast<int>(flow), important));
+            }
+        }
     }
 
     // https://developer.mozilla.org/en-US/docs/Web/CSS/flex
