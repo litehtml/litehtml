@@ -181,6 +181,7 @@ table {
 	font-size: medium;
 	font-weight: normal;
 	font-style: normal;
+	box-sizing: border-box;
 }
 
 tbody, tfoot, thead {
@@ -351,6 +352,18 @@ input, textarea, keygen, select, button, isindex {
 }
 input[type="hidden"] {
 	display: none;
+}
+
+button,
+select,
+input[type="radio"],
+input[type="checkbox"],
+input[type="reset"],
+input[type="submit"],
+input[type="button"],
+input[type="color"],
+input[type="search"] {
+	box-sizing: border-box;
 }
 
 

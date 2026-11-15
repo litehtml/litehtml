@@ -273,6 +273,8 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
 
     m_border_collapse = static_cast<border_collapse>(
         el->get_property<int>(_border_collapse_, true, border_collapse_separate, offset(m_border_collapse)));
+    m_table_layout = static_cast<table_layout>(
+        el->get_property<int>(_table_layout_, false, table_layout_auto, offset(m_table_layout)));
 
     m_css_border_spacing_x =
         el->get_property<css_length>(__litehtml_border_spacing_x_, true, 0, offset(m_css_border_spacing_x));

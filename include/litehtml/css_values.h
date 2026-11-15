@@ -476,6 +476,17 @@ namespace litehtml
     };
 
     // ==========================================================
+    // CSS Property: table-layout
+    // ==========================================================
+    inline constexpr auto table_layout_strings = split_css_values<2>("auto;fixed");
+
+    enum table_layout
+    {
+        table_layout_auto,
+        table_layout_fixed,
+    };
+
+    // ==========================================================
     // CSS Property: content
     // ==========================================================
     inline constexpr auto content_property_strings =
