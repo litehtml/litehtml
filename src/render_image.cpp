@@ -11,7 +11,7 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y,
     pixel_t                  parent_width = containing_block_size.width;
     containing_block_context self_size    = calculate_containing_block_context(containing_block_size);
 
-    calc_outlines(parent_width);
+    calc_outlines(containing_block_size.outline_width());
 
     m_pos.move_to(x, y);
 

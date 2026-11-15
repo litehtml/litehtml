@@ -4,6 +4,7 @@
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 #include <map>
@@ -395,8 +396,14 @@ namespace litehtml
         // Percentage-height base after skipping eligible auto-height ancestors in quirks mode.
         typed_pixel quirks_height = {0_px, cbc_value_type_auto};
 
-        int      context_idx = 0;
-        uint32_t size_mode   = size_mode_normal;
+        int                    context_idx = 0;
+        uint32_t               size_mode   = size_mode_normal;
+        std::optional<pixel_t> outline_percentage_width;
+
+        pixel_t outline_width() const
+        {
+            return outline_percentage_width.value_or(width.value);
+        }
 
         const typed_pixel& height_for_percentages(document_mode mode) const
         {
