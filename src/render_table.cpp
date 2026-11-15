@@ -83,12 +83,12 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
     {
         table_width = m_grid->calc_table_width(self_size.render_width.value - table_width_spacing, false,
-                                               min_table_width, max_table_width);
+                                               css().get_table_layout(), min_table_width, max_table_width);
     } else
     {
         table_width = m_grid->calc_table_width(self_size.render_width.value - table_width_spacing,
                                                self_size.width.type == containing_block_context::cbc_value_type_auto,
-                                               min_table_width, max_table_width);
+                                               css().get_table_layout(), min_table_width, max_table_width);
     }
 
     min_table_width += table_width_spacing;
@@ -136,6 +136,12 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
 
                 pixel_t cell_ret =
                     cell->el->render(m_grid->column(col).left, 0_px, self_size.new_width(cell_width), fmt_ctx, true);
+                // A pixel-width cell that was shrunk below its preferred width uses all of its width
+                const css_length& cell_css_width = cell->el->css().get_width();
+                if(!cell_css_width.is_predefined() && !cell_css_width.has_percentage())
+                {
+                    cell_ret = std::max(cell_ret, cell_css_width.calc_percent(0_px) + cell->el->render_offset_width());
+                }
                 row_content_width += std::min(cell_width, cell_ret);
                 has_floats         = has_floats || std::any_of(cell->el->children().begin(), cell->el->children().end(),
                                                                [](const std::shared_ptr<render_item>& child) {
@@ -309,8 +315,8 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     }
 
     m_pos.move_to(x + content_offset_left(), y + content_offset_top());
-    m_pos.width  = table_width;
-    m_pos.height = table_height + top_captions + bottom_captions;
+    m_pos.width                = table_width;
+    m_pos.height               = table_height + top_captions + bottom_captions;
     m_intrinsic_content_height = std::max(0_px, natural_table_height + top_captions + bottom_captions);
 
     if(self_size.width.type == containing_block_context::cbc_value_type_absolute)
@@ -338,11 +344,12 @@ void litehtml::render_item_table::calc_intrinsic_size()
 
     if(!css().get_width().is_predefined() && !css().get_width().has_percentage())
     {
-        table_width = m_grid->calc_table_width({}, false, m_intrinsic_min_size.width, m_intrinsic_max_size.width);
+        table_width = m_grid->calc_table_width({}, false, css().get_table_layout(), m_intrinsic_min_size.width,
+                                               m_intrinsic_max_size.width);
     } else
     {
-        table_width = m_grid->calc_table_width({}, css().get_width().is_predefined(), m_intrinsic_min_size.width,
-                                               m_intrinsic_max_size.width);
+        table_width = m_grid->calc_table_width({}, css().get_width().is_predefined(), css().get_table_layout(),
+                                               m_intrinsic_min_size.width, m_intrinsic_max_size.width);
     }
 
     for(int row = 0; row < m_grid->rows_count(); row++)

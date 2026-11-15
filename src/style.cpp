@@ -53,6 +53,7 @@ namespace litehtml
         {_border_top_style_,       border_style_strings                },
         {_border_bottom_style_,    border_style_strings                },
         {_border_collapse_,        border_collapse_strings             },
+        {_table_layout_,           table_layout_strings                },
 
         // these 4 properties are comma-separated lists of keywords, see parse_keyword_comma_list
         {_background_attachment_,  background_attachment_strings       },
@@ -284,6 +285,7 @@ namespace litehtml
         case _border_left_style_:
         case _border_right_style_:
         case _border_collapse_:
+        case _table_layout_:
 
         case _flex_direction_:
         case _flex_wrap_:

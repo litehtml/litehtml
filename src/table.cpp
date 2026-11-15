@@ -309,11 +309,12 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
 }
 
 litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> block_width, bool is_auto,
-                                                         pixel_t& min_table_width, pixel_t& max_table_width)
+                                                         table_layout layout, pixel_t& min_table_width,
+                                                         pixel_t& max_table_width)
 {
-    // Calculate the minimum content width (MCW) of each cell: the formatted content may span any number of lines but
-    // may not overflow the cell box. If the specified 'width' (W) of the cell is greater than MCW, W is the minimum
-    // cell width. A value of 'auto' means that MCW is the minimum cell width.
+    // In automatic table layout numeric cell widths are preferences, not unshrinkable content minima.
+    // Keep the measured content floor separate so a constrained table can shrink
+    // these columns without overflowing their contents. Fixed table layout keeps them as minima.
     //
     // Also, calculate the "maximum" cell width of each cell: formatting the content without breaking lines other than
     // where explicit line breaks occur.
@@ -327,13 +328,30 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
             {
                 cell->min_width = cell->el->get_intrinsic_min_size().width;
                 cell->max_width = cell->el->get_intrinsic_max_size().width;
+                const auto& css = cell->el->css();
+                if(layout == table_layout_auto && !css.get_width().is_predefined() &&
+                   !css.get_width().has_percentage() && !css.get_min_width().is_intrinsic_sizing() &&
+                   !css.get_max_width().is_intrinsic_sizing())
+                {
+                    css_length minimum;
+                    minimum.predef(sizing_min_content);
+                    cell->min_width =
+                        cell->el->resolve_intrinsic_width(minimum, 0_px) + cell->el->render_offset_width();
+                    if(!css.get_min_width().is_predefined())
+                    {
+                        cell->min_width =
+                            std::max(cell->min_width, css.get_min_width().calc_percent(block_width.value_or(0_px)) +
+                                                          cell->el->render_offset_width());
+                    }
+                    cell->max_width = std::max(cell->max_width, cell->min_width);
+                }
             }
         }
     }
 
     // For each column, determine a maximum and minimum column width from the cells that span only that column.
-    // The minimum is that required by the cell with the largest minimum cell width (or the column 'width', whichever is
-    // larger).
+    // The minimum is the largest hard cell minimum; numeric column widths
+    // remain preferred widths for the allocation below.
     // The maximum is that required by the cell with the largest maximum cell width (or the column 'width', whichever is
     // larger).
 
@@ -515,6 +533,39 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
                 if(cur_width <= block_width || !shrunk)
                 {
                     break;
+                }
+            }
+            // Automatic layout: shrink pixel-width columns from their preferred widths towards their content
+            // minima in proportion to the shrinkable range (preferred - minimum) of each column.
+            if(cur_width > block_width && layout == table_layout_auto)
+            {
+                pixel_t other_width      = 0_px;
+                pixel_t minimum_width    = 0_px;
+                pixel_t shrinkable_width = 0_px;
+                for(const auto& column : m_columns)
+                {
+                    if(!column.css_width.is_predefined() && !column.css_width.has_percentage())
+                    {
+                        minimum_width    += column.min_width;
+                        shrinkable_width += column.width - column.min_width;
+                    } else
+                    {
+                        other_width += column.width;
+                    }
+                }
+                const pixel_t available = std::max(*block_width - other_width - minimum_width, 0_px);
+                const float   ratio     = shrinkable_width > 0_px ? (available / shrinkable_width).value() : 0.0f;
+                if(ratio < 1.0f)
+                {
+                    cur_width = 0_px;
+                    for(auto& column : m_columns)
+                    {
+                        if(!column.css_width.is_predefined() && !column.css_width.has_percentage())
+                        {
+                            column.width = column.min_width + (column.width - column.min_width) * ratio;
+                        }
+                        cur_width += column.width;
+                    }
                 }
             }
         }

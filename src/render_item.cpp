@@ -1876,13 +1876,11 @@ litehtml::containing_block_context litehtml::render_item::calculate_containing_b
         {
             ret.height.type = containing_block_context::cbc_value_type_auto;
         }
-        if(ret.width.type != containing_block_context::cbc_value_type_auto &&
-           (src_el()->css().get_display() == display_table || src_el()->is_root()))
+        if(ret.width.type != containing_block_context::cbc_value_type_auto && src_el()->is_root())
         {
             ret.width.value -= content_offset_width();
         }
-        if(ret.height.type != containing_block_context::cbc_value_type_auto &&
-           (src_el()->css().get_display() == display_table || src_el()->is_root()))
+        if(ret.height.type != containing_block_context::cbc_value_type_auto && src_el()->is_root())
         {
             ret.height.value -= content_offset_height();
         }
