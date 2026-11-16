@@ -43,8 +43,8 @@ void litebrowser::draw_buffer::on_scroll(const draw_page_function_t& cb_draw, in
             cairo_t* cr          = cairo_create(new_surface);
             cairo_rectangle(cr, (rec_clean.x.value() - left) * m_scale_factor - m_scale_factor,
                             (rec_clean.y.value() - top) * m_scale_factor - m_scale_factor,
-                            std::ceil((double) rec_clean.width * m_scale_factor) + 2.0 * m_scale_factor,
-                            std::ceil((double) rec_clean.height * m_scale_factor) + 2.0 * m_scale_factor);
+                            std::ceil(static_cast<double>(rec_clean.width) * m_scale_factor) + 2.0 * m_scale_factor,
+                            std::ceil(static_cast<double>(rec_clean.height) * m_scale_factor) + 2.0 * m_scale_factor);
             cairo_clip(cr);
             cairo_set_source_surface(cr, m_draw_buffer, surface_shift_x, surface_shift_y);
             cairo_paint(cr);
@@ -121,13 +121,13 @@ void litebrowser::draw_buffer::redraw_area(const draw_page_function_t& cb_draw, 
         int fixed_width  = fixed_right - fixed_left;
         int fixed_height = fixed_bottom - fixed_top;
 
-        int s_x      = (int) std::round((double) fixed_x * m_scale_factor);
-        int s_y      = (int) std::round((double) fixed_y * m_scale_factor);
-        int s_width  = (int) std::round((double) fixed_width * m_scale_factor);
-        int s_height = (int) std::round((double) fixed_height * m_scale_factor);
+        int s_x      = static_cast<int>(std::round(static_cast<double>(fixed_x) * m_scale_factor));
+        int s_y      = static_cast<int>(std::round(static_cast<double>(fixed_y) * m_scale_factor));
+        int s_width  = static_cast<int>(std::round(static_cast<double>(fixed_width) * m_scale_factor));
+        int s_height = static_cast<int>(std::round(static_cast<double>(fixed_height) * m_scale_factor));
 
-        litehtml::position pos{(litehtml::pixel_t) fixed_x, (litehtml::pixel_t) fixed_y,
-                               (litehtml::pixel_t) fixed_width, (litehtml::pixel_t) fixed_height};
+        litehtml::position pos{litehtml::pixel_t(fixed_x), litehtml::pixel_t(fixed_y), litehtml::pixel_t(fixed_width),
+                               litehtml::pixel_t(fixed_height)};
         cairo_t*           cr = cairo_create(m_draw_buffer);
 
         // Apply clip with scaled position to avoid artifacts

@@ -59,14 +59,15 @@ cairo_pattern_t* create_conic_gradient_pattern(double angle, double radius,
         std::vector<bg_color_point> points;
         points.push_back(color_points[0]);
         bg_color_point cp;
-        cp.offset    = 0.5f;
-        cp.color.red = (litehtml::byte) INTERPOLATE_COLOR(color_points[0].color.red, color_points[1].color.red, 0.5f);
-        cp.color.green =
-            (litehtml::byte) INTERPOLATE_COLOR(color_points[0].color.green, color_points[1].color.green, 0.5f);
-        cp.color.blue =
-            (litehtml::byte) INTERPOLATE_COLOR(color_points[0].color.blue, color_points[1].color.blue, 0.5f);
-        cp.color.alpha =
-            (litehtml::byte) INTERPOLATE_COLOR(color_points[0].color.alpha, color_points[1].color.alpha, 0.5f);
+        cp.offset = 0.5f;
+        cp.color.red =
+            static_cast<litehtml::byte>(INTERPOLATE_COLOR(color_points[0].color.red, color_points[1].color.red, 0.5f));
+        cp.color.green = static_cast<litehtml::byte>(
+            INTERPOLATE_COLOR(color_points[0].color.green, color_points[1].color.green, 0.5f));
+        cp.color.blue = static_cast<litehtml::byte>(
+            INTERPOLATE_COLOR(color_points[0].color.blue, color_points[1].color.blue, 0.5f));
+        cp.color.alpha = static_cast<litehtml::byte>(
+            INTERPOLATE_COLOR(color_points[0].color.alpha, color_points[1].color.alpha, 0.5f));
         points.push_back(cp);
         points.push_back(color_points[1]);
         return create_conic_gradient_pattern(angle, radius, points);
@@ -106,7 +107,7 @@ cairo_pattern_t* create_conic_gradient_pattern(double angle, double radius,
             if(hint_fraction > 0.0 && hint_fraction < 1.0)
             {
                 const double exponent    = log(0.5) / log(hint_fraction);
-                size_t       before_hint = static_cast<size_t>(hint_fraction * hint_subdivisions);
+                auto         before_hint = static_cast<size_t>(hint_fraction * hint_subdivisions);
                 if(before_hint == 0)
                 {
                     before_hint = 1;

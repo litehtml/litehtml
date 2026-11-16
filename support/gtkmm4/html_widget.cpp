@@ -1,5 +1,7 @@
 #include "html_widget.h"
 
+#include <memory>
+
 using litehtml::operator""_px;
 
 html_widget::html_widget()
@@ -181,8 +183,8 @@ cairo_surface_t* html_widget::load_image(const std::string& path)
         ret = cairo_image_surface_create(CAIRO_FORMAT_RGB24, ptr->get_width(), ptr->get_height());
     }
 
-    Cairo::RefPtr<Cairo::Surface> surface(new Cairo::Surface(ret, false));
-    Cairo::RefPtr<Cairo::Context> ctx = Cairo::Context::create(surface);
+    Cairo::RefPtr<Cairo::Surface> surface = std::make_shared<Cairo::Surface>(ret, false);
+    Cairo::RefPtr<Cairo::Context> ctx     = Cairo::Context::create(surface);
     Gdk::Cairo::set_source_pixbuf(ctx, ptr, 0.0, 0.0);
     ctx->paint();
 
@@ -239,8 +241,9 @@ void html_widget::on_button_press_event(int /* n_press */, double x, double y)
     {
         Gdk::Rectangle rect(0, 0, 0, 0);
         bool           is_first = true;
-        page->on_lbutton_down((int) (x + m_draw_buffer.get_left()), (int) (y + m_draw_buffer.get_top()), (int) x,
-                              (int) y, [&](const litehtml::position& box) { update_rect(box, rect, is_first); });
+        page->on_lbutton_down(static_cast<int>(x + m_draw_buffer.get_left()),
+                              static_cast<int>(y + m_draw_buffer.get_top()), static_cast<int>(x), static_cast<int>(y),
+                              [&](const litehtml::position& box) { update_rect(box, rect, is_first); });
         if(!rect.has_zero_area())
         {
             m_draw_buffer.redraw_area(get_draw_function(current_page()), rect.get_x(), rect.get_y(), rect.get_width(),
@@ -257,7 +260,8 @@ void html_widget::on_button_release_event(int /* n_press */, double x, double y)
     {
         Gdk::Rectangle rect(0, 0, 0, 0);
         bool           is_first = true;
-        page->on_lbutton_up((int) (x + m_draw_buffer.get_left()), (int) (y + m_draw_buffer.get_top()), (int) x, (int) y,
+        page->on_lbutton_up(static_cast<int>(x + m_draw_buffer.get_left()),
+                            static_cast<int>(y + m_draw_buffer.get_top()), static_cast<int>(x), static_cast<int>(y),
                             [&](const litehtml::position& box) { update_rect(box, rect, is_first); });
         if(!rect.has_zero_area())
         {
@@ -310,7 +314,8 @@ void html_widget::on_mouse_move(double x, double y)
     {
         Gdk::Rectangle rect(0, 0, 0, 0);
         bool           is_first = true;
-        page->on_mouse_over((int) (x + m_draw_buffer.get_left()), (int) (y + m_draw_buffer.get_top()), (int) x, (int) y,
+        page->on_mouse_over(static_cast<int>(x + m_draw_buffer.get_left()),
+                            static_cast<int>(y + m_draw_buffer.get_top()), static_cast<int>(x), static_cast<int>(y),
                             [&](const litehtml::position& box) { update_rect(box, rect, is_first); });
         if(!rect.has_zero_area())
         {
@@ -434,7 +439,8 @@ void html_widget::allocate_scrollbars(int width, int height)
 void html_widget::on_vadjustment_changed()
 {
     auto page = current_page();
-    m_draw_buffer.on_scroll(get_draw_function(page), (int) m_hadjustment->get_value(), (int) m_vadjustment->get_value(),
+    m_draw_buffer.on_scroll(get_draw_function(page), static_cast<int>(m_hadjustment->get_value()),
+                            static_cast<int>(m_vadjustment->get_value()),
                             page ? page->get_fixed_boxes() : litehtml::position::vector{});
 
     queue_draw();
@@ -443,7 +449,8 @@ void html_widget::on_vadjustment_changed()
 void html_widget::on_hadjustment_changed()
 {
     auto page = current_page();
-    m_draw_buffer.on_scroll(get_draw_function(page), (int) m_hadjustment->get_value(), (int) m_vadjustment->get_value(),
+    m_draw_buffer.on_scroll(get_draw_function(page), static_cast<int>(m_hadjustment->get_value()),
+                            static_cast<int>(m_vadjustment->get_value()),
                             page ? page->get_fixed_boxes() : litehtml::position::vector{});
 
     queue_draw();
@@ -483,8 +490,10 @@ bool html_widget::on_frame_tick(const Glib::RefPtr<Gdk::FrameClock>& /* frame_cl
     {
         bool dx_used = false;
         bool dy_used = false;
-        auto values  = page->on_scroll((float) final_dx, (float) final_dy, (int) (m_mouse_x + m_draw_buffer.get_left()),
-                                       (int) (m_mouse_y + m_draw_buffer.get_top()), (int) m_mouse_x, (int) m_mouse_y);
+        auto values  = page->on_scroll(static_cast<float>(final_dx), static_cast<float>(final_dy),
+                                       static_cast<int>(m_mouse_x + m_draw_buffer.get_left()),
+                                       static_cast<int>(m_mouse_y + m_draw_buffer.get_top()),
+                                       static_cast<int>(m_mouse_x), static_cast<int>(m_mouse_y));
         if(!values.empty())
         {
             for(const auto& val : values)
@@ -548,7 +557,7 @@ void html_widget::on_realize()
     }
 }
 
-void html_widget::update_view_port(std::shared_ptr<litebrowser::web_page> page)
+void html_widget::update_view_port(const std::shared_ptr<litebrowser::web_page>& page)
 {
     if(page)
     {

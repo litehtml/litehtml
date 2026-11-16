@@ -5,6 +5,7 @@
 #include <mutex>
 #include <list>
 #include <condition_variable>
+#include <thread>
 #include "http_request.h"
 
 namespace litebrowser

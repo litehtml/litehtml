@@ -5,7 +5,6 @@
 #include <functional>
 #include <cstdlib>
 #include <string>
-#include <thread>
 #include <utility>
 #include <vector>
 #include <memory>

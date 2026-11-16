@@ -183,6 +183,14 @@ set(HEADER_LITEHTML
 	include/litehtml/render_text.h
 )
 
+find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
+
+if(CLANG_TIDY_EXE AND LITEHTML_ENABLE_LINT)
+    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-warnings-as-errors=*")
+else()
+    message(WARNING "Clang-Tidy not found or linting disabled. Static analysis skipped.")
+endif()
+
 # Added before the clang-tidy and warning settings below so they don't apply to these targets
 if(LITEHTML_BUILD_CONTAINER_CAIRO)
 	add_subdirectory(containers/cairo)
@@ -201,14 +209,6 @@ if(LITEHTML_BUILD_WEBPAGE)
 endif()
 if(LITEHTML_BUILD_GTKMM4)
 	add_subdirectory(support/gtkmm4)
-endif()
-
-find_program(CLANG_TIDY_EXE NAMES "clang-tidy")
-
-if(CLANG_TIDY_EXE AND LITEHTML_ENABLE_LINT)
-    set(CMAKE_CXX_CLANG_TIDY "${CLANG_TIDY_EXE};-warnings-as-errors=*")
-else()
-    message(WARNING "Clang-Tidy not found or linting disabled. Static analysis skipped.")
 endif()
 
 set(PROJECT_LIB_VERSION ${PROJECT_MAJOR}.${PROJECT_MINOR}.0)

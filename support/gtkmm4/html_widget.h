@@ -6,6 +6,7 @@
 #include "web_history.h"
 #include "../draw_buffer/draw_buffer.h"
 #include <queue>
+#include <utility>
 
 enum page_state
 {
@@ -66,27 +67,27 @@ class html_widget_notifier : public litebrowser::browser_notify_interface
 
     void connect_redraw(redraw_func _redraw_func)
     {
-        m_redraw_func = _redraw_func;
+        m_redraw_func = std::move(_redraw_func);
     }
 
     void connect_render(render_func _render_func)
     {
-        m_render_func = _render_func;
+        m_render_func = std::move(_render_func);
     }
 
     void connect_update_state(update_state_func _update_state_func)
     {
-        m_update_state_func = _update_state_func;
+        m_update_state_func = std::move(_update_state_func);
     }
 
     void connect_on_page_loaded(on_page_loaded_func _on_page_loaded_func)
     {
-        m_on_page_loaded_func = _on_page_loaded_func;
+        m_on_page_loaded_func = std::move(_on_page_loaded_func);
     }
 
     void connect_on_set_caption(on_set_caption_func _on_set_caption_func)
     {
-        m_on_set_caption_func = _on_set_caption_func;
+        m_on_set_caption_func = std::move(_on_set_caption_func);
     }
 
   private:
@@ -293,7 +294,7 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
         return m_current_page;
     }
 
-    void update_view_port(std::shared_ptr<litebrowser::web_page> page);
+    void update_view_port(const std::shared_ptr<litebrowser::web_page>& page);
     void restart_scrollbar_timer();
     bool on_frame_tick(const Glib::RefPtr<Gdk::FrameClock>& frame_clock);
 
@@ -302,7 +303,7 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
         return [page](cairo_t* cr, int x, int y, const litehtml::position* clip) {
             if(page)
             {
-                page->draw((litehtml::uint_ptr) cr, x, y, clip);
+                page->draw(reinterpret_cast<litehtml::uint_ptr>(cr), x, y, clip);
             }
         };
     }
