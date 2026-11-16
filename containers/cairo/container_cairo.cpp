@@ -37,18 +37,24 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
         }
     } else
     {
+        double marker_x      = std::ceil(marker.pos.x.value());
+        double marker_y      = std::ceil(marker.pos.y.value());
+        double marker_width  = std::ceil(marker.pos.width.value());
+        double marker_height = std::ceil(marker.pos.height.value());
         switch(marker.marker_type)
         {
         case litehtml::list_style_type_circle:
             {
-                draw_ellipse(reinterpret_cast<cairo_t*>(hdc), marker.pos.x, marker.pos.y, marker.pos.width,
-                             marker.pos.height, marker.color, 1);
+                draw_ellipse(reinterpret_cast<cairo_t*>(hdc), static_cast<float>(marker_x),
+                             static_cast<float>(marker_y), static_cast<float>(marker_width),
+                             static_cast<float>(marker_height), marker.color, 0.2_px);
             }
             break;
         case litehtml::list_style_type_disc:
             {
-                fill_ellipse(reinterpret_cast<cairo_t*>(hdc), marker.pos.x, marker.pos.y, marker.pos.width,
-                             marker.pos.height, marker.color);
+                fill_ellipse(reinterpret_cast<cairo_t*>(hdc), static_cast<float>(marker_x),
+                             static_cast<float>(marker_y), static_cast<float>(marker_width),
+                             static_cast<float>(marker_height), marker.color);
             }
             break;
         case litehtml::list_style_type_square:
@@ -58,7 +64,7 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
                 cairo_save(cr);
 
                 cairo_new_path(cr);
-                cairo_rectangle(cr, marker.pos.x, marker.pos.y, marker.pos.width, marker.pos.height);
+                cairo_rectangle(cr, marker_x, marker_y, marker_width, marker_height);
 
                 set_color(cr, marker.color);
                 cairo_fill(cr);
