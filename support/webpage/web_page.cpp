@@ -4,19 +4,13 @@
 
 void litebrowser::text_file::on_data(void* data, size_t len, size_t /*downloaded*/, size_t /*total*/)
 {
-    stream.write((const char*) data, (std::streamsize) len);
+    stream.write(static_cast<const char*>(data), static_cast<std::streamsize>(len));
 }
 
 void litebrowser::text_file::on_page_downloaded(u_int32_t http_status, u_int32_t err_code,
                                                 const std::string& /*err_text*/)
 {
-    if(err_code == 0 && (http_status == 200 || http_status == 0))
-    {
-        data_ready = true;
-    } else
-    {
-        data_ready = false;
-    }
+    data_ready = err_code == 0 && (http_status == 200 || http_status == 0);
     wait_mutex.unlock();
 }
 
@@ -206,7 +200,7 @@ void litebrowser::web_page::on_lbutton_up(int x, int y, int client_x, int client
     }
 }
 
-void litebrowser::web_page::on_page_downloaded(std::shared_ptr<text_file> data, u_int32_t /*http_status*/,
+void litebrowser::web_page::on_page_downloaded(const std::shared_ptr<text_file>& data, u_int32_t /*http_status*/,
                                                u_int32_t err_code, const std::string& err_text, const std::string& url)
 {
     if(err_code == 0)
@@ -234,7 +228,7 @@ void litebrowser::web_page::on_page_downloaded(std::shared_ptr<text_file> data, 
     m_notify->on_page_loaded(id());
 }
 
-void litebrowser::web_page::on_image_downloaded(std::shared_ptr<image_file> data, u_int32_t http_status,
+void litebrowser::web_page::on_image_downloaded(const std::shared_ptr<image_file>& data, u_int32_t http_status,
                                                 u_int32_t err_code, const std::string& /*err_text*/,
                                                 const std::string& /*url*/)
 {

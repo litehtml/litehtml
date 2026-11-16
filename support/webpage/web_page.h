@@ -240,9 +240,9 @@ namespace litebrowser
             const std::function<void(void* data, size_t len, size_t downloaded, size_t total)>& cb_on_data,
             const std::function<void(u_int32_t http_status, u_int32_t err_code, const std::string& err_text,
                                      const std::string& url)>&                                  cb_on_finish);
-        void on_page_downloaded(std::shared_ptr<text_file> data, u_int32_t http_status, u_int32_t err_code,
+        void on_page_downloaded(const std::shared_ptr<text_file>& data, u_int32_t http_status, u_int32_t err_code,
                                 const std::string& err_text, const std::string& url);
-        void on_image_downloaded(std::shared_ptr<image_file> data, u_int32_t http_status, u_int32_t err_code,
+        void on_image_downloaded(const std::shared_ptr<image_file>& data, u_int32_t http_status, u_int32_t err_code,
                                  const std::string& err_text, const std::string& url);
         void on_pool_update_state();
     };

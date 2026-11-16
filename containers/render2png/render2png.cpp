@@ -331,7 +331,7 @@ namespace html2png
 
         const auto sz = gdk_pixbuf_get_byte_length(pixbuf1);
 
-        if(memcmp(gdk_pixbuf_get_pixels(pixbuf1), gdk_pixbuf_get_pixels(pixbuf2), sz))
+        if(memcmp(gdk_pixbuf_get_pixels(pixbuf1), gdk_pixbuf_get_pixels(pixbuf2), sz) != 0)
         {
             return png_diff_data;
         }

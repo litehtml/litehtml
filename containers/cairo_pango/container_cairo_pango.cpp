@@ -83,7 +83,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         if(m_all_fonts.find(font) != m_all_fonts.end())
         {
             fonts  = font;
-            fonts += ",";
+            fonts += ',';
             break;
         }
     }
@@ -235,7 +235,7 @@ litehtml::pixel_t container_cairo_pango::text_width(const char* text, litehtml::
 
     g_object_unref(layout);
 
-    return (int) x_width;
+    return x_width;
 }
 
 enum class draw_type

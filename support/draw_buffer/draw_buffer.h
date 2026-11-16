@@ -4,7 +4,6 @@
 #include <cairo.h>
 #include <functional>
 #include <cmath>
-#include <memory>
 #include "litehtml/types.h"
 
 namespace litebrowser
@@ -101,8 +100,9 @@ namespace litebrowser
         /// @return pointer to the cairo surface
         static cairo_surface_t* make_surface(int width, int height, double scale_factor)
         {
-            return cairo_image_surface_create(CAIRO_FORMAT_RGB24, (int) std::ceil((double) width * scale_factor),
-                                              (int) std::ceil((double) height * scale_factor));
+            return cairo_image_surface_create(CAIRO_FORMAT_RGB24,
+                                              static_cast<int>(std::ceil(static_cast<double>(width) * scale_factor)),
+                                              static_cast<int>(std::ceil(static_cast<double>(height) * scale_factor)));
         }
 
         /// @brief Creates new buffer with specified size
@@ -191,7 +191,7 @@ namespace litebrowser
 
         static int get_denominator(double decimal)
         {
-            int numerator   = (int) (decimal * 100);
+            int numerator   = static_cast<int>(decimal * 100);
             int denominator = 100;
 
             int common_divisor = get_common_divisor(numerator, denominator);

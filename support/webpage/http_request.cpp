@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <set>
 #include <sstream>
 #include "http_request.h"
@@ -16,7 +17,7 @@ bool litebrowser::http_request::open()
         {
             if(chars_to_escape.find(ch) != chars_to_escape.end())
             {
-                new_url << '%' << std::hex << (uint32_t) ch;
+                new_url << '%' << std::hex << static_cast<uint32_t>(ch);
             } else
             {
                 new_url << ch;
@@ -73,10 +74,10 @@ bool litebrowser::http_request::open()
         {
             if(!post_str.empty())
             {
-                post_str += "&";
+                post_str += '&';
             }
             post_str += field.first;
-            post_str += "=";
+            post_str += '=';
             post_str += field.second;
         }
         curl_easy_setopt(curl, CURLOPT_POSTFIELDS, post_str.c_str());
@@ -108,14 +109,14 @@ bool litebrowser::http_request::open()
 
 size_t litebrowser::http_request::write_function(void* ptr, size_t size, size_t nmemb, void* stream)
 {
-    auto pThis = (http_request*) stream;
+    auto pThis = static_cast<http_request*>(stream);
 
     pThis->m_downloaded += size * nmemb;
     if(!pThis->m_total)
     {
         curl_off_t sz = 0;
         curl_easy_getinfo((CURL*) pThis->m_session, CURLINFO_CONTENT_LENGTH_DOWNLOAD_T, &sz);
-        pThis->m_total = (size_t) sz;
+        pThis->m_total = static_cast<size_t>(sz);
     }
     if(pThis->m_on_data)
     {
@@ -128,6 +129,6 @@ size_t litebrowser::http_request::write_function(void* ptr, size_t size, size_t 
 int litebrowser::http_request::progress_function(void* clientp, curl_off_t /*dltotal*/, curl_off_t /*dlnow*/,
                                                  curl_off_t /*ultotal*/, curl_off_t /*ulnow*/)
 {
-    auto pThis = (http_request*) clientp;
+    auto pThis = static_cast<http_request*>(clientp);
     return pThis->m_canceled ? 1 : 0;
 }
