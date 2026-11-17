@@ -171,10 +171,10 @@ namespace litehtml
 
         void round()
         {
+            width  = std::round(right().value()) - std::round(x.value());
+            height = std::round(bottom().value()) - std::round(y.value());
             x      = std::round(x.value());
             y      = std::round(y.value());
-            width  = std::round(width.value());
-            height = std::round(height.value());
         }
 
         position& operator=(const size& sz)
