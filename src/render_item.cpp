@@ -450,15 +450,23 @@ void litehtml::render_item::render_positioned(render_type rt)
         if(process)
         {
             containing_block_context containing_block_size;
+            position                 containing_block;
+            std::optional<position>  grid_area;
             if(el_position == element_position_fixed || (is_root() && !src_el()->is_positioned()))
             {
-                containing_block_size.height = view_port.height;
-                containing_block_size.width  = view_port.width;
+                containing_block.width  = view_port.width;
+                containing_block.height = view_port.height;
             } else
             {
-                containing_block_size.height = m_pos.height + m_padding.height();
-                containing_block_size.width  = m_pos.width + m_padding.width();
+                containing_block = {0_px, 0_px, m_pos.width + m_padding.width(), m_pos.height + m_padding.height()};
+                grid_area        = positioned_grid_area(el, containing_block);
+                if(grid_area)
+                {
+                    containing_block = *grid_area;
+                }
             }
+            containing_block_size.width         = containing_block.width;
+            containing_block_size.height        = containing_block.height;
             containing_block_size.height.type   = containing_block_context::cbc_value_type_absolute;
             containing_block_size.quirks_height = containing_block_size.height;
             // An exact used width must not replace the containing block's outline percentage base.
@@ -474,9 +482,13 @@ void litehtml::render_item::render_positioned(render_type rt)
             css_length el_width  = el->src_el()->css().get_width();
             css_length el_height = el->src_el()->css().get_height();
 
-            auto [el_static_offset_x, el_static_offset_y] = element_static_offset(el);
-            pixel_t el_static_x = el->m_pos.x + el_static_offset_x - el->content_offset_left();
-            pixel_t el_static_y = el->m_pos.y + el_static_offset_y - el->content_offset_top();
+            auto [el_static_offset_x, el_static_offset_y]  = element_static_offset(el);
+            el_static_offset_x                            -= containing_block.x;
+            el_static_offset_y                            -= containing_block.y;
+            // Only direct grid children use the grid area as their static-position rectangle.
+            const bool grid_child  = grid_area && el->parent().get() == this;
+            pixel_t    el_static_x = grid_child ? 0_px : el->m_pos.x + el_static_offset_x - el->content_offset_left();
+            pixel_t    el_static_y = grid_child ? 0_px : el->m_pos.y + el_static_offset_y - el->content_offset_top();
 
             const auto& padding             = el->css().get_padding();
             const auto& margins             = el->css().get_margins();

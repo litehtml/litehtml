@@ -46,6 +46,11 @@ namespace litehtml
         void                     calc_cb_width(const css_length& len, pixel_t percent_base,
                                                containing_block_context::typed_pixel& out_value) const;
         virtual void             calc_intrinsic_size() = 0;
+        virtual std::optional<position> positioned_grid_area(const std::shared_ptr<render_item>& /*el*/,
+                                                             const position& /*padding_box*/) const
+        {
+            return std::nullopt;
+        }
         virtual pixel_t _render(pixel_t /*x*/, pixel_t /*y*/, const containing_block_context& /*containing_block_size*/,
                                 formatting_context* /*fmt_ctx*/, bool /*second_pass = false*/)
         {

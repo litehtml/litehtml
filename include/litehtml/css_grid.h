@@ -264,6 +264,10 @@ namespace litehtml
     bool parse_grid_placement(const css_token_vector& tokens, grid_placement& placement);
     bool resolve_grid_axis(const grid_placement& placement, int explicit_tracks, resolved_grid_axis& result,
                            const grid_track_list* names = nullptr, bool bounded = false);
+    std::pair<std::optional<int>, std::optional<int>> resolve_positioned_grid_axis(const grid_placement& placement,
+                                                                                   int explicit_tracks, int first_track,
+                                                                                   int                    last_track,
+                                                                                   const grid_track_list& names);
     bool place_grid_items(const std::vector<grid_item_placement>& items, int explicit_columns, int explicit_rows,
                           grid_auto_flow flow, std::vector<grid_area>& areas, grid_area& bounds,
                           const grid_track_list* column_names = nullptr, const grid_track_list* row_names = nullptr,
