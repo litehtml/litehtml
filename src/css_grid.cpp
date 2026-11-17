@@ -616,15 +616,11 @@ namespace litehtml
         return true;
     }
 
-    bool resolve_grid_axis(const grid_placement& placement, int explicit_tracks, resolved_grid_axis& result,
-                           const grid_track_list* names, bool bounded)
+    namespace
     {
-        if(explicit_tracks < 0 || explicit_tracks > static_cast<int>(max_grid_tracks) ||
-           (bounded && explicit_tracks == 0))
+        std::optional<int64_t> resolve_line(const grid_line& line, bool is_start, int explicit_tracks,
+                                            const grid_track_list* names)
         {
-            return false;
-        }
-        auto resolve_line = [explicit_tracks, names](const grid_line& line, bool is_start) -> std::optional<int64_t> {
             if(line.type != grid_line_type::line || line.value == 0)
             {
                 return std::nullopt;
@@ -667,8 +663,11 @@ namespace litehtml
                 }
             }
             return -remaining;
-        };
-        auto resolve_span = [explicit_tracks, names](int64_t anchor, const grid_line& line, bool forward) {
+        }
+
+        int64_t resolve_span(int64_t anchor, const grid_line& line, bool forward, int explicit_tracks,
+                             const grid_track_list* names)
+        {
             int64_t remaining = line.value;
             if(line.name.empty())
             {
@@ -695,9 +694,57 @@ namespace litehtml
                 }
             }
             return std::min<int64_t>(anchor, 0) - remaining;
+        }
+    } // namespace
+
+    std::pair<std::optional<int>, std::optional<int>> resolve_positioned_grid_axis(const grid_placement& placement,
+                                                                                   int explicit_tracks, int first_track,
+                                                                                   int                    last_track,
+                                                                                   const grid_track_list& names)
+    {
+        auto start = resolve_line(placement.start, true, explicit_tracks, &names);
+        auto end   = resolve_line(placement.end, false, explicit_tracks, &names);
+        if(start && end)
+        {
+            if(*start > *end)
+            {
+                std::swap(start, end);
+            }
+            if(*start == *end)
+            {
+                end.reset();
+            }
+        }
+        auto in_grid = [first_track, last_track](std::optional<int64_t> line) -> std::optional<int> {
+            if(line && *line >= first_track && *line <= last_track)
+            {
+                return static_cast<int>(*line);
+            }
+            return std::nullopt;
         };
-        auto    start = resolve_line(placement.start, true);
-        auto    end   = resolve_line(placement.end, false);
+        // Positioned items cannot create implicit lines; a missing line becomes auto.
+        start = in_grid(start);
+        end   = in_grid(end);
+        if(placement.start.type == grid_line_type::span && end)
+        {
+            start = resolve_span(*end, placement.start, false, explicit_tracks, &names);
+        } else if(placement.end.type == grid_line_type::span && start)
+        {
+            end = resolve_span(*start, placement.end, true, explicit_tracks, &names);
+        }
+        return {in_grid(start), in_grid(end)};
+    }
+
+    bool resolve_grid_axis(const grid_placement& placement, int explicit_tracks, resolved_grid_axis& result,
+                           const grid_track_list* names, bool bounded)
+    {
+        if(explicit_tracks < 0 || explicit_tracks > static_cast<int>(max_grid_tracks) ||
+           (bounded && explicit_tracks == 0))
+        {
+            return false;
+        }
+        auto    start = resolve_line(placement.start, true, explicit_tracks, names);
+        auto    end   = resolve_line(placement.end, false, explicit_tracks, names);
         int64_t span  = 1;
         if(start && end)
         {
@@ -712,11 +759,11 @@ namespace litehtml
             span = *end - *start;
         } else if(placement.start.type == grid_line_type::span && end)
         {
-            start = resolve_span(*end, placement.start, false);
+            start = resolve_span(*end, placement.start, false, explicit_tracks, names);
             span  = *end - *start;
         } else if(placement.end.type == grid_line_type::span && start)
         {
-            const auto resolved_end = resolve_span(*start, placement.end, true);
+            const auto resolved_end = resolve_span(*start, placement.end, true, explicit_tracks, names);
             span                    = resolved_end - *start;
         } else if(placement.start.type == grid_line_type::span)
         {

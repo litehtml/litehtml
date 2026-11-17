@@ -17,7 +17,20 @@ namespace litehtml
         std::optional<inherited_axis> m_inherited_rows;
         std::vector<grid_area>        m_placed_areas;
 
-        void    calc_intrinsic_size() override;
+        struct positioned_axis
+        {
+            grid_track_list      names;
+            int                  explicit_tracks = 0;
+            int                  first_track     = 0;
+            std::vector<pixel_t> starts;
+            std::vector<pixel_t> ends;
+        };
+        std::optional<positioned_axis> m_positioned_columns;
+        std::optional<positioned_axis> m_positioned_rows;
+
+        std::optional<position> positioned_grid_area(const std::shared_ptr<render_item>& el,
+                                                     const position&                     padding_box) const override;
+        void                    calc_intrinsic_size() override;
         pixel_t _render_content(pixel_t x, pixel_t y, bool second_pass, const containing_block_context& self_size,
                                 formatting_context* fmt_ctx) override;
 

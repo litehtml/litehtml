@@ -378,6 +378,33 @@ namespace litehtml
         }
     } // namespace
 
+    std::optional<position> render_item_grid::positioned_grid_area(const std::shared_ptr<render_item>& el,
+                                                                   const position& padding_box) const
+    {
+        if(!m_positioned_columns || !m_positioned_rows)
+        {
+            return std::nullopt;
+        }
+        auto resolve_axis = [](const positioned_axis& axis, const grid_placement& placement, pixel_t padding,
+                               pixel_t extent) {
+            const auto lines =
+                resolve_positioned_grid_axis(placement, axis.explicit_tracks, axis.first_track,
+                                             axis.first_track + static_cast<int>(axis.starts.size()) - 1, axis.names);
+            auto first =
+                lines.first ? padding + axis.starts[static_cast<size_t>(*lines.first - axis.first_track)] : 0_px;
+            auto last =
+                lines.second ? padding + axis.ends[static_cast<size_t>(*lines.second - axis.first_track)] : extent;
+            return std::make_pair(first, std::max(0_px, last - first));
+        };
+        const auto horizontal =
+            resolve_axis(*m_positioned_columns, {el->css().get_grid_column_start(), el->css().get_grid_column_end()},
+                         m_padding.left, padding_box.width);
+        const auto vertical =
+            resolve_axis(*m_positioned_rows, {el->css().get_grid_row_start(), el->css().get_grid_row_end()},
+                         m_padding.top, padding_box.height);
+        return position{horizontal.first, vertical.first, horizontal.second, vertical.second};
+    }
+
     void render_item_grid::calc_intrinsic_size()
     {
         std::vector<std::shared_ptr<render_item>> children;
@@ -443,6 +470,8 @@ namespace litehtml
     pixel_t render_item_grid::_render_content(pixel_t, pixel_t, bool second_pass,
                                               const containing_block_context& self_size, formatting_context* fmt_ctx)
     {
+        m_positioned_columns.reset();
+        m_positioned_rows.reset();
         std::vector<std::shared_ptr<render_item>> children;
         std::vector<grid_item_placement>          placements;
         for(const auto& child : m_children)
@@ -792,13 +821,35 @@ namespace litehtml
             definite_height && !subgrid_rows ? height - track_extent(rows, 0, static_cast<int>(rows.size()), row_gap)
                                              : 0_px,
             rows.size(), row_gap, align_mode);
-        column_gap = column_alignment.second;
-        row_gap    = row_alignment.second;
+        column_gap               = column_alignment.second;
+        row_gap                  = row_alignment.second;
+        auto positioned_geometry = [](const std::vector<track_state>& tracks, grid_track_list names,
+                                      int explicit_tracks, int first_track, pixel_t gap, pixel_t offset) {
+            positioned_axis axis;
+            axis.names           = std::move(names);
+            axis.explicit_tracks = explicit_tracks;
+            axis.first_track     = first_track;
+            axis.starts.resize(tracks.size() + 1, offset);
+            axis.ends.resize(tracks.size() + 1, offset);
+            auto cursor = offset;
+            for(size_t index = 0; index < tracks.size(); ++index)
+            {
+                axis.starts[index]   = cursor;
+                axis.ends[index + 1] = cursor + tracks[index].size;
+                cursor               = axis.ends[index + 1] + gap;
+            }
+            axis.starts.back() = axis.ends.back();
+            return axis;
+        };
+        m_positioned_columns = positioned_geometry(columns, columns_resolved, column_count, bounds.column_start,
+                                                   column_gap, column_alignment.first);
+        m_positioned_rows =
+            positioned_geometry(rows, rows_resolved, row_count, bounds.row_start, row_gap, row_alignment.first);
         for(size_t index = 0; index < children.size(); ++index)
         {
-            int  col            = areas[index].column_start - bounds.column_start;
-            int  row            = areas[index].row_start - bounds.row_start;
-            auto left           = column_alignment.first + track_position(columns, col, column_gap);
+            int  col              = areas[index].column_start - bounds.column_start;
+            int  row              = areas[index].row_start - bounds.row_start;
+            auto left             = column_alignment.first + track_position(columns, col, column_gap);
             auto top            = row_alignment.first + track_position(rows, row, row_gap);
             auto area_width     = track_extent(columns, col, areas[index].column_end - bounds.column_start, column_gap);
             auto area_height    = track_extent(rows, row, areas[index].row_end - bounds.row_start, row_gap);
