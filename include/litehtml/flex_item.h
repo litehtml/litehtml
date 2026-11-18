@@ -3,6 +3,7 @@
 
 #include "formatting_context.h"
 #include "render_item.h"
+#include <optional>
 
 namespace litehtml
 {
@@ -21,6 +22,10 @@ namespace litehtml
      */
     class flex_item
     {
+        std::optional<containing_block_context> m_last_layout;
+        position                                m_last_position;
+        margins                                 m_last_margins;
+
       public:
         std::shared_ptr<render_item> el;
 
@@ -71,6 +76,8 @@ namespace litehtml
         }
         void            init(const litehtml::containing_block_context& self_size, flex_align_items align_items,
                              litehtml::formatting_context* fmt_ctx);
+        void            render(pixel_t x, pixel_t y, const containing_block_context& size, formatting_context* fmt_ctx);
+        bool            can_reuse_layout() const;
         virtual void    apply_main_auto_margins()                    = 0;
         virtual bool    apply_cross_auto_margins(pixel_t cross_size) = 0;
         virtual void    set_main_position(pixel_t pos)               = 0;

@@ -350,8 +350,8 @@ bool litehtml::flex_line::distribute_main_auto_margins(pixel_t free_main_size)
 }
 
 void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, bool is_row_direction,
-                               const litehtml::containing_block_context& self_size,
-                               litehtml::formatting_context*             fmt_ctx)
+                               bool stretch_to_height, const litehtml::containing_block_context& self_size,
+                               litehtml::formatting_context* fmt_ctx)
 {
     first_baseline.set(0_px, baseline::baseline_type_none);
     last_baseline.set(0_px, baseline::baseline_type_none);
@@ -393,10 +393,18 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
         /// Find line first/last baseline
         for(auto& item : items)
         {
-            item->el->render(0_px, 0_px,
-                             self_size.new_width(item->main_size - item->el->render_offset_width(),
-                                                 containing_block_context::size_mode_exact_width),
-                             fmt_ctx, false);
+            auto size = self_size.new_width(item->main_size - item->el->render_offset_width(),
+                                            containing_block_context::size_mode_exact_width);
+            if(stretch_to_height && item->can_reuse_layout() &&
+               is_one_of(item->align & 0xFF, flex_align_items_stretch, flex_align_items_normal) &&
+               item->el->css().get_height().is_auto_or_none() && !item->auto_margin_cross_start &&
+               !item->auto_margin_cross_end)
+            {
+                size.height.value =
+                    self_size.height.value - item->el->content_offset_height() + item->el->box_sizing_height();
+                size.size_mode |= containing_block_context::size_mode_exact_height;
+            }
+            item->render(0_px, 0_px, size, fmt_ctx);
             item->el->pos().width = item->main_size - item->el->content_offset_width();
 
             if((item->align & 0xFF) == flex_align_items_baseline)
@@ -504,13 +512,12 @@ void litehtml::flex_line::init(pixel_t container_main_size, bool fit_container, 
                 render_width =
                     std::max(render_width, item->el->get_intrinsic_min_size().width - item->el->render_offset_width());
             }
-            item->el->render(0_px, 0_px,
-                             self_size.new_width_height(render_width,
-                                                        item->main_size - item->el->content_offset_height() +
-                                                            item->el->box_sizing_height(),
-                                                        containing_block_context::size_mode_exact_width |
-                                                            containing_block_context::size_mode_exact_height),
-                             fmt_ctx, false);
+            item->render(
+                0_px, 0_px,
+                self_size.new_width_height(
+                    render_width, item->main_size - item->el->content_offset_height() + item->el->box_sizing_height(),
+                    containing_block_context::size_mode_exact_width | containing_block_context::size_mode_exact_height),
+                fmt_ctx);
             main_size += item->el->height();
             if(item->el->css().get_display() != display_table)
             {

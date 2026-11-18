@@ -5,9 +5,39 @@
 #include "types.h"
 #include <algorithm>
 
+namespace
+{
+    // Same traversal as elements_iterator with go_inside_inline and inline_selector, without the indirect calls.
+    template <class Callback> void walk_inlines(const std::shared_ptr<litehtml::render_item>& container, Callback& func)
+    {
+        for(const auto& el : container->children())
+        {
+            const auto& style   = el->src_el()->css();
+            const auto  display = style.get_display();
+            if(display == litehtml::display_inline && style.get_float() == litehtml::float_none)
+            {
+                func(el, litehtml::iterator_item_type_start_parent);
+                walk_inlines(el, func);
+                func(el, litehtml::iterator_item_type_end_parent);
+            } else if(display == litehtml::display_inline_text || display == litehtml::display_inline_table ||
+                      display == litehtml::display_inline_block || display == litehtml::display_inline_flex ||
+                      display == litehtml::display_inline_grid || style.get_float() != litehtml::float_none)
+            {
+                func(el, litehtml::iterator_item_type_child);
+            }
+        }
+    }
+} // namespace
+
 void litehtml::render_item_inline_context::for_each_inline(
     const std::function<void(const std::shared_ptr<render_item>& el, iterator_item_type item_type)>& callback,
     bool const_process) const
+{
+    for_each_inline_impl(callback, const_process);
+}
+
+template <class Callback>
+void litehtml::render_item_inline_context::for_each_inline_impl(Callback&& callback, bool const_process) const
 {
     white_space ws = src_el()->css().get_white_space();
 
@@ -26,12 +56,7 @@ void litehtml::render_item_inline_context::for_each_inline(
     // Whether the last non-space element was a float
     bool after_float = false;
 
-    go_inside_inline  go_inside_inlines_selector;
-    inline_selector   select_inlines;
-    elements_iterator inlines_iter(true, &go_inside_inlines_selector, &select_inlines);
-
-    inlines_iter.process(std::const_pointer_cast<render_item>(shared_from_this()),
-                         [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
+    auto process = [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
                              switch(item_type)
                              {
                              case iterator_item_type_child:
@@ -79,7 +104,8 @@ void litehtml::render_item_inline_context::for_each_inline(
                                  }
                                  break;
                              }
-                         });
+                         };
+    walk_inlines(std::const_pointer_cast<render_item>(shared_from_this()), process);
     if(last_space && !const_process)
     {
         last_space->skip(true);
@@ -94,7 +120,7 @@ litehtml::pixel_t litehtml::render_item_inline_context::_render_content(pixel_t 
     m_line_boxes.clear();
     m_max_line_width = 0;
 
-    for_each_inline(
+    for_each_inline_impl(
         [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
             switch(item_type)
             {
@@ -412,6 +438,7 @@ void litehtml::render_item_inline_context::apply_vertical_align()
 
 litehtml::pixel_t litehtml::render_item_inline_context::get_first_baseline()
 {
+    ensure_layout();
     pixel_t bl;
     if(!m_line_boxes.empty())
     {
@@ -426,6 +453,7 @@ litehtml::pixel_t litehtml::render_item_inline_context::get_first_baseline()
 
 litehtml::pixel_t litehtml::render_item_inline_context::get_last_baseline()
 {
+    ensure_layout();
     pixel_t bl;
     if(!m_line_boxes.empty())
     {
@@ -448,7 +476,7 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
 
     bool skip_spaces = ws == white_space_normal || ws == white_space_nowrap || ws == white_space_pre_line;
 
-    for_each_inline(
+    for_each_inline_impl(
         [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
             switch(item_type)
             {

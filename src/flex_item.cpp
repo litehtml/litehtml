@@ -5,6 +5,69 @@
 #include "flex_item.h"
 #include "flex_line.h"
 #include "types.h"
+#include "render_block_context.h"
+
+bool litehtml::flex_item::can_reuse_layout() const
+{
+    // A definite height suppresses bottom-margin collapsing in block content.
+    return el->css().get_height().is_auto_or_none() && el->src_el()->is_block_formatting_context() &&
+           !el->src_el()->is_replaced() && el->src_el()->get_document()->mode() == no_quirks_mode &&
+           !is_one_of(el->css().get_display(), display_table, display_inline_table, display_table_cell) &&
+           !(dynamic_cast<const render_item_block_context*>(el.get()) && el->collapse_bottom_margin());
+}
+
+void litehtml::flex_item::render(pixel_t x, pixel_t y, const containing_block_context& size,
+                                 formatting_context* fmt_ctx)
+{
+    const auto same_value = [](const containing_block_context::typed_pixel& a,
+                               const containing_block_context::typed_pixel& b) {
+        return a.type == b.type && a.value == b.value;
+    };
+    bool reuse   = false;
+    bool promote = false;
+    if(m_last_layout && can_reuse_layout() && (size.size_mode & containing_block_context::size_mode_exact_height) != 0)
+    {
+        const auto& previous = *m_last_layout;
+        reuse = (previous.size_mode & ~containing_block_context::size_mode_exact_height) ==
+                    (size.size_mode & ~containing_block_context::size_mode_exact_height) &&
+                same_value(previous.width, size.width) && same_value(previous.render_width, size.render_width) &&
+                previous.unclamped_render_width == size.unclamped_render_width &&
+                same_value(previous.min_width, size.min_width) && same_value(previous.max_width, size.max_width) &&
+                same_value(previous.min_height, size.min_height) && same_value(previous.max_height, size.max_height) &&
+                same_value(previous.quirks_height, size.quirks_height) && previous.context_idx == size.context_idx &&
+                previous.outline_percentage_width == size.outline_percentage_width &&
+                el->pos().width == m_last_position.width && el->pos().height == m_last_position.height;
+        if(reuse && (previous.size_mode != size.size_mode || !same_value(previous.height, size.height)))
+        {
+            promote = (previous.size_mode & containing_block_context::size_mode_exact_height) == 0 &&
+                      !el->height_dependent(el->src_el()->get_document()->layout_generation()) &&
+                      (el->css().get_min_height().is_auto_or_none() ||
+                       el->css().get_min_height().calc_percent(0_px) == 0_px) &&
+                      el->css().get_max_height().is_auto_or_none() &&
+                      size.height.value == m_last_position.height + el->box_sizing_height();
+            reuse = promote;
+        }
+    }
+    if(reuse)
+    {
+        // A natural-to-definite height promotion also requires a height-independent subtree.
+        el->get_margins() = m_last_margins;
+        el->pos().move_to(x + el->content_offset_left(), y + el->content_offset_top());
+        if(promote && (size.size_mode & containing_block_context::size_mode_content) == 0)
+        {
+            // Match render(): (height + box) - box can differ from height in the last bit.
+            el->pos().height        = size.height.value;
+            el->pos().height       -= el->box_sizing_height();
+            m_last_position.height  = el->pos().height;
+        }
+    } else
+    {
+        el->render(x, y, size, fmt_ctx, false);
+        m_last_position = el->pos();
+        m_last_margins  = el->get_margins();
+    }
+    m_last_layout = size;
+}
 
 void litehtml::flex_item::init(const litehtml::containing_block_context& self_size, flex_align_items align_items,
                                litehtml::formatting_context* fmt_ctx)
@@ -314,12 +377,12 @@ void litehtml::flex_item_row_direction::align_stretch(flex_line& ln, const conta
     set_cross_position(ln.cross_start);
     if(el->css().get_height().is_auto_or_none())
     {
-        el->render(el->left(), el->top(),
-                   self_size.new_width_height(el->pos().width + el->box_sizing_width(),
-                                              ln.cross_size - el->content_offset_height() + el->box_sizing_height(),
-                                              containing_block_context::size_mode_exact_width |
-                                                  containing_block_context::size_mode_exact_height),
-                   fmt_ctx);
+        render(el->left(), el->top(),
+               self_size.new_width_height(el->pos().width + el->box_sizing_width(),
+                                          ln.cross_size - el->content_offset_height() + el->box_sizing_height(),
+                                          containing_block_context::size_mode_exact_width |
+                                              containing_block_context::size_mode_exact_height),
+               fmt_ctx);
         apply_main_auto_margins();
     }
 }
@@ -410,7 +473,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
         size_mode |= containing_block_context::size_mode_ignore_css_height;
     }
 
-    el->render(0_px, 0_px, self_size.new_width(render_width, size_mode), fmt_ctx, false);
+    render(0_px, 0_px, self_size.new_width(render_width, size_mode), fmt_ctx);
 
     // A stretched item gets the full cross width, which can change its height (e.g. text wrapping).
     stretch_full_width = false;
@@ -420,7 +483,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
         if(full_width != render_width)
         {
             auto measured_height = el->height();
-            el->render(0_px, 0_px, self_size.new_width(full_width, size_mode), fmt_ctx, false);
+            render(0_px, 0_px, self_size.new_width(full_width, size_mode), fmt_ctx);
             if(el->height() != measured_height)
             {
                 stretch_full_width   = true;
@@ -573,12 +636,12 @@ void litehtml::flex_item_column_direction::apply_main_size(const containing_bloc
     // Non-stretch alignments don't re-render, so the item would keep its pre-flex height.
     if(el->height() != main_size)
     {
-        el->render(0_px, 0_px,
-                   self_size.new_width_height(el->width() - el->content_offset_width() + el->box_sizing_width(),
-                                              main_size - el->content_offset_height() + el->box_sizing_height(),
-                                              containing_block_context::size_mode_exact_width |
-                                                  containing_block_context::size_mode_exact_height),
-                   fmt_ctx, false);
+        render(0_px, 0_px,
+               self_size.new_width_height(el->width() - el->content_offset_width() + el->box_sizing_width(),
+                                          main_size - el->content_offset_height() + el->box_sizing_height(),
+                                          containing_block_context::size_mode_exact_width |
+                                              containing_block_context::size_mode_exact_height),
+               fmt_ctx);
     }
 }
 
@@ -595,20 +658,19 @@ void litehtml::flex_item_column_direction::align_stretch(flex_line& ln, const co
     }
     if(!el->css().get_width().is_auto_or_none())
     {
-        el->render(ln.cross_start, el->pos().y - el->content_offset_top(),
-                   self_size.new_width_height(ln.cross_size - el->content_offset_width() + el->box_sizing_width(),
-                                              main_size - el->content_offset_height() + el->box_sizing_height(),
-                                              containing_block_context::size_mode_exact_height),
-                   fmt_ctx, false);
+        render(ln.cross_start, el->pos().y - el->content_offset_top(),
+               self_size.new_width_height(ln.cross_size - el->content_offset_width() + el->box_sizing_width(),
+                                          main_size - el->content_offset_height() + el->box_sizing_height(),
+                                          containing_block_context::size_mode_exact_height),
+               fmt_ctx);
     } else
     {
-        el->render(
-            ln.cross_start, el->pos().y - el->content_offset_top(),
-            self_size.new_width_height(
-                std::max(0_px, ln.cross_size - el->content_offset_width() + el->box_sizing_width()),
-                main_size - el->content_offset_height() + el->box_sizing_height(),
-                containing_block_context::size_mode_exact_width | containing_block_context::size_mode_exact_height),
-            fmt_ctx, false);
+        render(ln.cross_start, el->pos().y - el->content_offset_top(),
+               self_size.new_width_height(
+                   std::max(0_px, ln.cross_size - el->content_offset_width() + el->box_sizing_width()),
+                   main_size - el->content_offset_height() + el->box_sizing_height(),
+                   containing_block_context::size_mode_exact_width | containing_block_context::size_mode_exact_height),
+               fmt_ctx);
     }
     /// Apply auto margins after rendering
     apply_main_auto_margins();

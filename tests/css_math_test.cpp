@@ -387,5 +387,87 @@ int main()
     ok              &= check(huge && std::isfinite(huge->css().line_height().computed_value.value()) &&
                                  huge->css().line_height().computed_value > 1000000_px,
                              "inherited non-finite calculated number values cannot overflow line-height geometry");
+
+    std::string nested_flex =
+        "<!doctype html><style>body{margin:0}.row{display:flex}.column{display:flex;flex-direction:column}"
+        "img{display:block;width:10px;height:10px}</style>";
+    for(int depth = 0; depth < 10; ++depth)
+    {
+        nested_flex += depth % 2 == 0 ? "<div class=row>" : "<div class=column>";
+    }
+    nested_flex += "<img id=nested-image src=test>";
+    for(int depth = 0; depth < 10; ++depth)
+    {
+        nested_flex += "</div>";
+    }
+    const auto nested          = document::createFromString(nested_flex, &container);
+    container.image_size_calls = 0;
+    nested->render(800);
+    ok &= check(container.image_size_calls < 128, "nested flex does not repeatedly measure the same image subtree");
+    const auto nested_image  = nested->root()->select_one("#nested-image");
+    ok                      &= check(nested_image && near(nested_image->get_placement().height.value(), 10),
+                                     "reusing nested flex measurements preserves image height");
+
+    const auto stretch = document::createFromString(
+        "<!doctype html><style>body{margin:0}.row{display:flex;width:300px}"
+        ".item{flex:1}.peer{width:20px;height:80px}.percent{height:50%}"
+        ".column{display:flex;flex-direction:column;width:150px}"
+        ".natural{height:30px}.relative{position:relative;top:3px}"
+        "#bounded{display:flex;flex-direction:column;min-height:100px}"
+        "#growing{flex-grow:1;height:10px}"
+        "</style><div class=row><div class=item id=stretched><div class=percent id=percent></div></div>"
+        "<div class=peer></div></div><div class=column><div id=column-item>"
+        "<div class=natural></div><div class=percent id=column-percent></div></div></div>"
+        "<div class=row><div id=bounded><div id=growing></div></div></div>"
+        "<div style='width:120px;line-height:20px'><span class=relative id=relative>"
+        "one <span style='vertical-align:top'>two three four five</span> six seven eight</span></div>",
+        &container);
+    stretch->render(800);
+    const auto stretched          = stretch->root()->select_one("#stretched");
+    const auto percent            = stretch->root()->select_one("#percent");
+    const auto column_percent     = stretch->root()->select_one("#column-percent");
+    const auto relative           = stretch->root()->select_one("#relative");
+    const auto growing            = stretch->root()->select_one("#growing");
+    ok                           &= check(stretched && percent && near(stretched->get_placement().height.value(), 80) &&
+                                              near(percent->get_placement().height.value(), 40),
+                                          "stretch still establishes a definite percentage height");
+    ok                           &= check(column_percent && near(column_percent->get_placement().height.value(), 15),
+                                          "column final layout still resolves percentage descendants");
+    ok                           &= check(growing && near(growing->get_placement().height.value(), 100),
+                                          "stretch still redistributes space inside a min-height-clamped column");
+    const auto relative_position  = relative->get_placement();
+    stretch->render(400);
+    stretch->render(800);
+    ok &= check(near(percent->get_placement().height.value(), 40) &&
+                    near(column_percent->get_placement().height.value(), 15) &&
+                    near(relative->get_placement().x.value(), relative_position.x.value()) &&
+                    near(relative->get_placement().y.value(), relative_position.y.value()) &&
+                    near(relative->get_placement().height.value(), relative_position.height.value()),
+                "repeated layout and resizing preserve percentage heights and relative inline positions");
+
+    // Flex measures items several times; descendants of reused layouts must end up at the final layout.
+    const auto reused = document::createFromString(
+        "<!doctype html><style>body{margin:0}.row{display:flex}.column{display:flex;flex-direction:column}"
+        "table{border-spacing:0}td{padding:0;vertical-align:middle}"
+        ".tall{width:10px;height:40px}.box{width:10px;height:10px}.abs{position:absolute;left:5px;bottom:7px}"
+        "</style><div class=row><div class=column><div class=row><div style='flex:1'><table><tr>"
+        "<td><div class=tall></div></td><td><div class=box id=middle></div></td><td style='vertical-align:bottom'><div class=box id=bottom></div></td>"
+        "</tr></table></div><div class=box></div></div></div></div>"
+        "<div class=row><div class=column><div class=row><div style='flex:1;position:relative;height:50px'>"
+        "<div class='box abs' id=absolute></div></div></div></div></div>",
+        &container);
+    const auto reused_middle   = reused->root()->select_one("#middle");
+    const auto reused_bottom   = reused->root()->select_one("#bottom");
+    const auto reused_absolute = reused->root()->select_one("#absolute");
+    for(const int width : {800, 200, 800})
+    {
+        reused->render(width);
+        ok &= check(reused_middle && near(reused_middle->get_placement().y.value(), 15) &&
+                        reused_bottom && near(reused_bottom->get_placement().y.value(), 30),
+                    "table cell vertical alignment survives reused flex layouts");
+        ok &= check(reused_absolute && near(reused_absolute->get_placement().x.value(), 5) &&
+                        near(reused_absolute->get_placement().y.value(), 73),
+                    "absolute descendants of reused flex layouts use the final containing block");
+    }
     return ok ? 0 : 1;
 }

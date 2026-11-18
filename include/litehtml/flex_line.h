@@ -35,7 +35,7 @@ namespace litehtml
             return items.size() > 1 ? main_gap * static_cast<int>(items.size() - 1) : 0_px;
         }
 
-        void    init(pixel_t container_main_size, bool fit_container, bool is_row_direction,
+        void    init(pixel_t container_main_size, bool fit_container, bool is_row_direction, bool stretch_to_height,
                      const litehtml::containing_block_context& self_size, litehtml::formatting_context* fmt_ctx);
         bool    distribute_main_auto_margins(pixel_t free_main_size);
         pixel_t calculate_items_position(pixel_t container_main_size, flex_justify_content justify_content,

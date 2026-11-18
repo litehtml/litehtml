@@ -538,6 +538,7 @@ namespace litehtml
             cb_context.render_width  = cb_context.width;
 
             m_root_render->update_intrinsic_size();
+            ++m_layout_generation;
 
             if(rt == render_fixed_only)
             {
@@ -546,6 +547,7 @@ namespace litehtml
             } else
             {
                 ret = m_root_render->render(0_px, 0_px, cb_context, nullptr);
+                m_root_render->ensure_layout_tree();
                 if(m_root_render->fetch_positioned())
                 {
                     m_fixed_boxes.clear();

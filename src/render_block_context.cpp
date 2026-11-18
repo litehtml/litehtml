@@ -159,6 +159,7 @@ litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /
 
 litehtml::pixel_t litehtml::render_item_block_context::get_first_baseline()
 {
+    ensure_layout();
     if(m_children.empty())
     {
         return height() - margin_bottom();
@@ -169,6 +170,7 @@ litehtml::pixel_t litehtml::render_item_block_context::get_first_baseline()
 
 litehtml::pixel_t litehtml::render_item_block_context::get_last_baseline()
 {
+    ensure_layout();
     if(m_children.empty())
     {
         return height() - margin_bottom();
