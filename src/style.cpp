@@ -2202,12 +2202,21 @@ namespace litehtml
         }
     }
 
-    const property_value& style::get_property(string_id name) const
+    const property_value* style::find_property(string_id name) const
     {
         auto it = m_properties.find(name);
         if(it != m_properties.end())
         {
-            return it->second;
+            return &it->second;
+        }
+        return nullptr;
+    }
+
+    const property_value& style::get_property(string_id name) const
+    {
+        if(const property_value* value = find_property(name))
+        {
+            return *value;
         }
         static property_value dummy;
         return dummy;
