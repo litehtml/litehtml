@@ -4,6 +4,7 @@
 #include "render_item.h"
 #include "types.h"
 #include <algorithm>
+#include <vector>
 
 //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -297,7 +298,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
         }
     }
 
-    if(is_empty() || (!is_empty() && last_box && is_break_only()))
+    if(is_empty() || (last_box && is_break_only()))
     {
         m_height   = m_default_line_height.computed_value;
         m_baseline = m_font_metrics.base_line();
@@ -344,7 +345,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
     }
 
     va_context            current_context;
-    std::list<va_context> contexts;
+    std::vector<va_context> contexts;
 
     current_context.baseline    = 0;
     current_context.fm          = m_font_metrics;
@@ -386,6 +387,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
     //    and for top and bottom aligned items
     for(const auto& lbi : m_items)
     {
+        const auto type = lbi->get_type();
         // Apply text-align-justify
         m_min_width += lbi->get_rendered_min_width();
         if(spacing_x != 0_px && counter)
@@ -409,8 +411,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
 
         // Calculate new baseline for inline start/continue
         // Inline start/continue elements are inline containers like <span>
-        if(lbi->get_type() == line_box_item::type_inline_start ||
-           lbi->get_type() == line_box_item::type_inline_continue)
+        if(type == line_box_item::type_inline_start || type == line_box_item::type_inline_continue)
         {
             contexts.push_back(current_context);
             if(is_one_of(lbi->get_el()->css().get_vertical_align(), va_top, va_bottom))
@@ -531,7 +532,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
             }
         }
 
-        if(lbi->get_type() == line_box_item::type_inline_end)
+        if(type == line_box_item::type_inline_end)
         {
             if(!contexts.empty())
             {
@@ -623,7 +624,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
         }
     };
 
-    std::list<inline_item_box> inlines;
+    std::vector<inline_item_box> inlines;
 
     contexts.clear();
 
@@ -638,7 +639,8 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
     // 3. Calculate inline boxes
     for(const auto& lbi : m_items)
     {
-        if(is_one_of(lbi->get_type(), line_box_item::type_inline_start, line_box_item::type_inline_continue))
+        const auto type = lbi->get_type();
+        if(is_one_of(type, line_box_item::type_inline_start, line_box_item::type_inline_continue))
         {
             contexts.push_back(current_context);
             current_context.fm = lbi->get_el()->css().get_font_metrics();
@@ -652,7 +654,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
                 current_context.baseline  = m_top + m_height - lbi->get_items_bottom();
                 current_context.start_lbi = lbi.get();
             }
-        } else if(lbi->get_type() == line_box_item::type_inline_end)
+        } else if(type == line_box_item::type_inline_end)
         {
             if(!contexts.empty())
             {
@@ -666,7 +668,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
             lbi->pos().y =
                 current_context.baseline - lbi->get_el()->get_last_baseline() + lbi->get_el()->content_offset_top();
         } else if(is_one_of(lbi->get_el()->css().get_vertical_align(), va_top, va_bottom) &&
-                  lbi->get_type() == line_box_item::type_text_part)
+                  type == line_box_item::type_text_part)
         {
             if(lbi->get_el()->css().get_vertical_align() == va_top)
             {
@@ -683,17 +685,16 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
 
         // Text and inline blocks move themselves; an inline element's start, continuation and end
         // stand for its boxes, moved below.
-        if(!is_one_of(lbi->get_type(), line_box_item::type_inline_start, line_box_item::type_inline_continue,
+        if(!is_one_of(type, line_box_item::type_inline_start, line_box_item::type_inline_continue,
                       line_box_item::type_inline_end))
         {
             lbi->get_el()->apply_relative_shift(containing_block_size);
         }
 
         // Calculate and push inline box into the render item element
-        if(lbi->get_type() == line_box_item::type_inline_start ||
-           lbi->get_type() == line_box_item::type_inline_continue)
+        if(type == line_box_item::type_inline_start || type == line_box_item::type_inline_continue)
         {
-            if(lbi->get_type() == line_box_item::type_inline_start)
+            if(type == line_box_item::type_inline_start)
             {
                 lbi->get_el()->clear_inline_boxes();
             }
@@ -711,7 +712,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
             inlines.back().box.x      = lbi->left() + shift.x;
             inlines.back().box.y      = lbi->top() - lbi->get_el()->content_offset_top() + shift.y;
             inlines.back().box.height = lbi->bottom() - lbi->top() + lbi->get_el()->content_offset_height();
-        } else if(lbi->get_type() == line_box_item::type_inline_end)
+        } else if(type == line_box_item::type_inline_end)
         {
             if(!inlines.empty())
             {

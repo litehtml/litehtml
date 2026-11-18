@@ -39,6 +39,43 @@ namespace litehtml
         pixel_t  m_intrinsic_content_height    = 0_px;
         position m_bounds; // bounding box of the element
         bool     m_skip = false;
+        bool     m_height_dependent = false;
+        uint64_t m_height_dependency_generation = 0;
+
+        // Results of recent layouts of a subtree with its own formatting context, valid during one
+        // document render. A hit restores the item's own box; when the hit is not the layout the
+        // descendants currently hold, the item is marked stale and laid out again by ensure_layout()
+        // before anything reads its descendants.
+        struct layout_entry
+        {
+            uint64_t                 generation = 0;
+            uint64_t                 last_use   = 0;
+            containing_block_context size;
+            bool                     second_pass = false;
+            position                 pos; // relative to the render() origin
+            litehtml::margins        margin_box;
+            litehtml::margins        padding_box;
+            litehtml::margins        border_box;
+            pixel_t                  result = 0_px;
+        };
+        static constexpr int layout_entries_count = 2;
+        struct layout_cache
+        {
+            layout_entry entries[layout_entries_count];
+            int          current = -1; // entry matching the descendants' layout
+            int          used    = -1; // entry the parent got from the last render()
+            uint64_t     tick    = 0;
+        };
+        // Allocated on first use, so items that never take the cached path stay small.
+        std::unique_ptr<layout_cache> m_layout_cache;
+        bool                          m_layout_stale = false;
+        // Set on stale items and their ancestors, so ensure_layout_tree() visits only those branches.
+        bool                          m_stale_subtree = false;
+
+        void    update_height_dependency(uint64_t generation);
+        void    mark_stale_subtree();
+        pixel_t execute_render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
+                               bool second_pass, uint64_t generation, int slot);
 
         containing_block_context calculate_containing_block_context(const containing_block_context& cb_context) const;
         void                     calc_cb_length(const css_length& len, pixel_t percent_base,
@@ -94,6 +131,32 @@ namespace litehtml
         pixel_t get_intrinsic_content_height() const
         {
             return m_intrinsic_content_height;
+        }
+
+        // Whether making the item's height definite can change its descendants' layout.
+        // Computed on demand once per document render, as only flex layout needs it.
+        bool height_dependent(uint64_t generation)
+        {
+            if(m_height_dependency_generation != generation)
+            {
+                m_height_dependency_generation = generation;
+                update_height_dependency(generation);
+            }
+            return m_height_dependent;
+        }
+
+        // Lays out the descendants again if they don't match the item's last render() result.
+        void ensure_layout();
+        void ensure_layout_tree();
+
+        // Called before descendants are changed outside of the item's render().
+        void invalidate_layout()
+        {
+            ensure_layout();
+            if(m_layout_cache)
+            {
+                m_layout_cache->current = -1;
+            }
         }
 
         void update_intrinsic_size();

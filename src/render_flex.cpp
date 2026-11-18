@@ -141,6 +141,11 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     pixel_t sum_cross_size = 0_px;
     pixel_t sum_main_size  = 0_px;
     pixel_t ret_width      = 0_px;
+    const bool stretch_to_height = is_row_direction && single_line &&
+                                   css().get_flex_align_content() == flex_align_content_stretch &&
+                                   self_size.height.type != containing_block_context::cbc_value_type_auto &&
+                                   (self_size.max_height.type == containing_block_context::cbc_value_type_none ||
+                                    self_size.max_height.value <= self_size.height.value);
 
     /////////////////////////////////////////////////////////////////
     /// Resolving Flexible Lengths
@@ -156,7 +161,7 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
         {
             ln.items.reverse();
         }
-        ln.init(container_main_size, fit_container, is_row_direction, self_size, fmt_ctx);
+        ln.init(container_main_size, fit_container, is_row_direction, stretch_to_height, self_size, fmt_ctx);
         sum_cross_size += ln.cross_size;
         sum_main_size   = std::max(sum_main_size, ln.main_size + ln.gap_size());
     }
@@ -542,6 +547,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_flex::init()
 
 litehtml::pixel_t litehtml::render_item_flex::get_first_baseline()
 {
+    ensure_layout();
     if(css().get_flex_direction() == flex_direction_row || css().get_flex_direction() == flex_direction_row_reverse)
     {
         if(!m_lines.empty())
@@ -571,6 +577,7 @@ litehtml::pixel_t litehtml::render_item_flex::get_first_baseline()
 
 litehtml::pixel_t litehtml::render_item_flex::get_last_baseline()
 {
+    ensure_layout();
     if(css().get_flex_direction() == flex_direction_row || css().get_flex_direction() == flex_direction_row_reverse)
     {
         if(!m_lines.empty())

@@ -6,7 +6,6 @@
 #include <algorithm>
 #include <memory>
 #include <optional>
-#include <stdexcept>
 #include <typeinfo>
 
 litehtml::render_item::render_item(std::shared_ptr<element> _src_el) :
@@ -29,6 +28,66 @@ litehtml::render_item::render_item(std::shared_ptr<element> _src_el) :
     m_borders.right  = doc->to_pixels(src_el()->css().get_borders().right.width, fm, 0_px);
     m_borders.top    = doc->to_pixels(src_el()->css().get_borders().top.width, fm, 0_px);
     m_borders.bottom = doc->to_pixels(src_el()->css().get_borders().bottom.width, fm, 0_px);
+}
+
+void litehtml::render_item::update_height_dependency(uint64_t generation)
+{
+    // Flex measurement can reuse a natural height only when making it definite cannot change descendants.
+    // Text has no height properties of its own.
+    m_height_dependent = false;
+    if(src_el()->is_text())
+    {
+        return;
+    }
+    const auto& style  = css();
+    const bool  flex   = is_one_of(style.get_display(), display_flex, display_inline_flex);
+    m_height_dependent = style.get_height().has_percentage() || style.get_min_height().has_percentage() ||
+                         style.get_max_height().has_percentage() || style.get_height().is_intrinsic_sizing() ||
+                         style.get_min_height().is_intrinsic_sizing() || style.get_max_height().is_intrinsic_sizing() ||
+                         style.get_row_gap().has_percentage() || style.get_offsets().top.has_percentage() ||
+                         style.get_offsets().bottom.has_percentage() ||
+                         is_one_of(style.get_display(), display_grid, display_inline_grid) ||
+                         (flex && style.get_flex_wrap() != flex_wrap_nowrap);
+    if(m_height_dependent)
+    {
+        return;
+    }
+    const bool column =
+        flex && is_one_of(style.get_flex_direction(), flex_direction_column, flex_direction_column_reverse);
+    for(const auto& child : m_children)
+    {
+        if(!child->height_dependent(generation) && !column)
+        {
+            continue;
+        }
+        const auto& child_style = child->css();
+        // Positioned descendants get their final containing block in render_positioned().
+        if(is_one_of(child_style.get_position(), element_position_absolute, element_position_fixed))
+        {
+            continue;
+        }
+        if(column && child_style.get_flex_basis().has_percentage())
+        {
+            m_height_dependent = true;
+            return;
+        }
+        if(!child->height_dependent(generation))
+        {
+            continue;
+        }
+        const auto& child_height = child_style.get_height();
+        const bool  fixed_height =
+            !child_height.is_predefined() && !child_height.has_percentage() && !child_height.is_intrinsic_sizing() &&
+            !child_style.get_min_height().has_percentage() && !child_style.get_max_height().has_percentage() &&
+            !child_style.get_min_height().is_intrinsic_sizing() &&
+            !child_style.get_max_height().is_intrinsic_sizing() && !child_style.get_offsets().top.has_percentage() &&
+            !child_style.get_offsets().bottom.has_percentage();
+        if(!fixed_height)
+        {
+            m_height_dependent = true;
+            return;
+        }
+    }
 }
 
 void litehtml::render_item::update_intrinsic_size()
@@ -191,8 +250,6 @@ litehtml::pixel_t litehtml::render_item::resolve_intrinsic_width(const css_lengt
         return minimum;
     case sizing_max_content:
         return maximum;
-    case sizing_fit_content:
-        return std::min(maximum, std::max(minimum, available_width - render_offset_width()));
     case sizing_fit_content_function:
         if(const auto* argument = value.fit_content_argument())
         {
@@ -200,16 +257,69 @@ litehtml::pixel_t litehtml::render_item::resolve_intrinsic_width(const css_lengt
                 src_el()->get_document()->to_pixels(*argument, css().get_font_metrics(), available_width);
             return std::min(maximum, std::max(minimum, limit));
         }
-        throw std::logic_error("fit-content() is missing its sizing argument");
+        [[fallthrough]];
+    // Fall through to sizing_fit_content if no argument is provided
+    case sizing_fit_content:
     default:
-        throw std::logic_error("Expected an intrinsic sizing value");
+        return std::min(maximum, std::max(minimum, available_width - render_offset_width()));
     }
 }
+
+namespace
+{
+    bool same_layout_input(const litehtml::containing_block_context& a, const litehtml::containing_block_context& b)
+    {
+        const auto same = [](const litehtml::containing_block_context::typed_pixel& l,
+                             const litehtml::containing_block_context::typed_pixel& r) {
+            return l.type == r.type && l.value == r.value;
+        };
+        return same(a.width, b.width) && same(a.render_width, b.render_width) &&
+               a.unclamped_render_width == b.unclamped_render_width && same(a.min_width, b.min_width) &&
+               same(a.max_width, b.max_width) && same(a.height, b.height) && same(a.min_height, b.min_height) &&
+               same(a.max_height, b.max_height) && same(a.quirks_height, b.quirks_height) &&
+               a.context_idx == b.context_idx && a.size_mode == b.size_mode &&
+               a.outline_percentage_width == b.outline_percentage_width;
+    }
+} // namespace
 
 litehtml::pixel_t litehtml::render_item::render(pixel_t x, pixel_t y,
                                                 const containing_block_context& containing_block_size,
                                                 formatting_context* fmt_ctx, bool second_pass)
 {
+    if(src_el()->is_block_formatting_context() || (fmt_ctx == nullptr))
+    {
+        const uint64_t generation = src_el()->get_document()->layout_generation();
+        for(int i = 0; m_layout_cache && i < layout_entries_count && generation != 0; i++)
+        {
+            layout_entry& entry = m_layout_cache->entries[i];
+            if(entry.generation == generation && entry.second_pass == second_pass &&
+               same_layout_input(entry.size, containing_block_size))
+            {
+                m_pos                 = entry.pos;
+                m_pos.x              += x;
+                m_pos.y              += y;
+                m_margins             = entry.margin_box;
+                m_padding             = entry.padding_box;
+                m_borders             = entry.border_box;
+                entry.last_use        = ++m_layout_cache->tick;
+                m_layout_cache->used  = i;
+                m_layout_stale        = i != m_layout_cache->current;
+                if(m_layout_stale)
+                {
+                    mark_stale_subtree();
+                }
+                return entry.result;
+            }
+        }
+        return execute_render(x, y, containing_block_size, second_pass, generation, -1);
+    }
+
+    if(m_layout_cache)
+    {
+        m_layout_cache->current = m_layout_cache->used = -1;
+    }
+    m_layout_stale = false;
+
     calc_outlines(containing_block_size.outline_width());
 
     m_pos.clear();
@@ -221,18 +331,115 @@ litehtml::pixel_t litehtml::render_item::render(pixel_t x, pixel_t y,
     m_pos.x += content_left;
     m_pos.y += content_top;
 
-    if(src_el()->is_block_formatting_context() || (fmt_ctx == nullptr))
-    {
-        formatting_context fmt;
-        auto               ret = _render(x, y, containing_block_size, &fmt, second_pass);
-        fmt.apply_relative_shift(containing_block_size);
-        return ret;
-    }
-
     fmt_ctx->push_position(x + content_left, y + content_top);
     auto ret = _render(x, y, containing_block_size, fmt_ctx, second_pass);
     fmt_ctx->pop_position(x + content_left, y + content_top);
     return ret;
+}
+
+litehtml::pixel_t litehtml::render_item::execute_render(pixel_t x, pixel_t y,
+                                                        const containing_block_context& containing_block_size,
+                                                        bool second_pass, uint64_t generation, int slot)
+{
+    if(m_layout_cache)
+    {
+        m_layout_cache->current = m_layout_cache->used = -1;
+    }
+    m_layout_stale = false;
+
+    calc_outlines(containing_block_size.outline_width());
+
+    m_pos.clear();
+    m_pos.move_to(x, y);
+    m_pos.x += content_offset_left();
+    m_pos.y += content_offset_top();
+
+    formatting_context fmt;
+    auto               ret = _render(x, y, containing_block_size, &fmt, second_pass);
+    fmt.apply_relative_shift(containing_block_size);
+
+    if(generation != 0)
+    {
+        if(!m_layout_cache)
+        {
+            m_layout_cache = std::make_unique<layout_cache>();
+        }
+        auto& cache = *m_layout_cache;
+        if(slot < 0)
+        {
+            // Take a free entry or the least recently used one.
+            for(int i = 0; i < layout_entries_count; i++)
+            {
+                if(cache.entries[i].generation != generation)
+                {
+                    slot = i;
+                    break;
+                }
+                if(slot < 0 || cache.entries[i].last_use < cache.entries[slot].last_use)
+                {
+                    slot = i;
+                }
+            }
+        }
+        layout_entry& entry  = cache.entries[slot];
+        entry.generation     = generation;
+        entry.last_use       = ++cache.tick;
+        entry.size           = containing_block_size;
+        entry.second_pass    = second_pass;
+        entry.pos            = m_pos;
+        entry.pos.x         -= x;
+        entry.pos.y         -= y;
+        entry.margin_box     = m_margins;
+        entry.padding_box    = m_padding;
+        entry.border_box     = m_borders;
+        entry.result         = ret;
+        cache.current = cache.used = slot;
+    }
+    return ret;
+}
+
+void litehtml::render_item::ensure_layout()
+{
+    if(!m_layout_stale)
+    {
+        return;
+    }
+    const int           slot  = m_layout_cache->used;
+    const layout_entry& entry = m_layout_cache->entries[slot];
+    // Restore the item's own box afterwards: the parent may have moved or resized it.
+    const position                 pos     = m_pos;
+    const margins                  margin  = m_margins;
+    const margins                  padding = m_padding;
+    const margins                  border  = m_borders;
+    const containing_block_context size    = entry.size;
+    execute_render(0_px, 0_px, size, entry.second_pass, entry.generation, slot);
+    m_pos     = pos;
+    m_margins = margin;
+    m_padding = padding;
+    m_borders = border;
+}
+
+void litehtml::render_item::mark_stale_subtree()
+{
+    for(render_item* item = this; item && !item->m_stale_subtree;)
+    {
+        item->m_stale_subtree = true;
+        item                  = item->m_parent.lock().get();
+    }
+}
+
+void litehtml::render_item::ensure_layout_tree()
+{
+    if(!m_stale_subtree)
+    {
+        return;
+    }
+    m_stale_subtree = false;
+    ensure_layout();
+    for(const auto& el : m_children)
+    {
+        el->ensure_layout_tree();
+    }
 }
 
 void litehtml::render_item::calc_outlines(pixel_t parent_width)
@@ -1030,6 +1237,7 @@ void litehtml::render_item::render_positioned(render_type rt)
                 el->m_pos = pos;
             }
 
+            el->ensure_layout_tree();
             // Calculate element bounds
             el->calc_bounds();
 
@@ -1093,12 +1301,14 @@ void litehtml::render_item::calc_document_size(litehtml::size& sz, pixel_t x /*=
 {
     m_bounds = {content_left(), content_top(), content_width(), content_height()};
 
-    auto inline_processed = for_inline_boxes([this, &sz, &x, &y](const position& box, bool, bool) {
+    auto add_inline_box = [this, &sz, &x, &y](const position& box, bool, bool) {
         sz.width  = std::max(sz.width, x + box.x + box.width);
         sz.height = std::max(sz.height, y + box.y + box.height);
         m_bounds.add_bounds({m_pos.x + box.x, m_pos.y + box.y, box.width, box.height});
         return true;
-    });
+    };
+    // std::ref keeps std::function from allocating a copy of the lambda for every element.
+    auto inline_processed = for_inline_boxes(std::ref(add_inline_box));
 
     auto add_bounds = [this](const std::shared_ptr<render_item>& el) {
         if(el->css().get_position() != element_position_fixed)

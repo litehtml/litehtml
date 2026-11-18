@@ -76,6 +76,7 @@ namespace litehtml
         std::string                             m_text;
         document_mode                           m_mode      = no_quirks_mode;
         bool                                    m_finalized = false;
+        uint64_t                                m_layout_generation = 0;
 
       public:
         document(document_container* objContainer);
@@ -88,6 +89,10 @@ namespace litehtml
         document_mode mode() const
         {
             return m_mode;
+        }
+        uint64_t layout_generation() const
+        {
+            return m_layout_generation;
         }
         uint_ptr  get_font(const font_description& descr, font_metrics* fm);
         pixel_t   render(pixel_t max_width, render_type rt = render_all);

@@ -249,6 +249,7 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
                 cell->el->pos().height =
                     box_bottom - box_top - cell->el->content_offset_top() - cell->el->content_offset_bottom();
                 table_height = std::max(table_height, m_grid->row(span_row).bottom);
+                cell->el->invalidate_layout();
                 cell->el->apply_vertical_align();
             }
         }

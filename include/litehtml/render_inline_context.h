@@ -37,6 +37,8 @@ namespace litehtml
             bool const_process) const;
 
       protected:
+        template <class Callback> void for_each_inline_impl(Callback&& callback, bool const_process) const;
+
         std::vector<std::unique_ptr<litehtml::line_box>> m_line_boxes;
         pixel_t                                          m_max_line_width;
 

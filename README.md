@@ -186,6 +186,11 @@ cmake --build build-math --target litehtml-math-tests
 ctest --test-dir build-math -R litehtml-math-tests --output-on-failure
 ```
 
+The headless checks also cover nested flex measurement work, percentage-height
+stretch, and repeated layout/resizing with relative inline content. The nested
+flex check bounds image-size callbacks rather than asserting machine-dependent
+render times.
+
 ## HTML Parser
 
 **litehtml** uses [gumbo-parser](https://codeberg.org/gumbo-parser/gumbo-parser) to parse
