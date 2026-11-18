@@ -5,7 +5,7 @@
 litehtml::el_image::el_image(const document::ptr& doc) :
     html_tag(doc)
 {
-    m_css.set_display(display_inline_block);
+    m_css->set_display(display_inline_block);
 }
 
 void litehtml::el_image::get_content_size(size& sz, pixel_t /*max_width*/)

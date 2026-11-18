@@ -3,8 +3,23 @@
 #include "render_item.h"
 #include "document_container.h"
 
+namespace
+{
+    // Styles of a text node that has not been styled yet. Shared and never modified: compute_styles() switches the
+    // node to its parent's shared text styles (or a private copy) before writing anything.
+    const std::shared_ptr<litehtml::css_properties>& unstyled_text_css()
+    {
+        static const std::shared_ptr<litehtml::css_properties> css = [] {
+            auto ret = std::make_shared<litehtml::css_properties>();
+            ret->set_display(litehtml::display_inline_text);
+            return ret;
+        }();
+        return css;
+    }
+} // namespace
+
 litehtml::el_text::el_text(const char* text, const document::ptr& doc) :
-    element(doc)
+    element(doc, unstyled_text_css())
 {
     if(text)
     {
@@ -12,7 +27,6 @@ litehtml::el_text::el_text(const char* text, const document::ptr& doc) :
     }
     m_use_transformed = false;
     m_draw_spaces     = true;
-    css().set_display(display_inline_text);
 }
 
 void litehtml::el_text::get_content_size(size& sz, pixel_t /*max_width*/)
@@ -28,6 +42,20 @@ void litehtml::el_text::get_text(std::string& text) const
 void litehtml::el_text::compute_styles(bool /*recursive*/)
 {
     element::ptr el_parent = parent();
+    // All text children of one parent get identical styles (everything below depends only on the parent chain), so
+    // they share one css_properties owned by the parent instead of each holding a copy.
+    if(el_parent)
+    {
+        if(!el_parent->m_text_css)
+        {
+            el_parent->m_text_css = std::make_shared<css_properties>();
+        }
+        m_css = el_parent->m_text_css;
+    } else if(m_css == unstyled_text_css())
+    {
+        m_css = std::make_shared<css_properties>(*m_css);
+    }
+
     if(el_parent)
     {
         css().line_height() = el_parent->css().line_height();
@@ -40,11 +68,11 @@ void litehtml::el_text::compute_styles(bool /*recursive*/)
     css().set_display(display_inline_text);
     css().set_float(float_none);
 
-    if(m_css.get_text_transform() != text_transform_none)
+    if(m_css->get_text_transform() != text_transform_none)
     {
         m_transformed_text = m_text;
         m_use_transformed  = true;
-        get_document()->container()->transform_text(m_transformed_text, m_css.get_text_transform());
+        get_document()->container()->transform_text(m_transformed_text, m_css->get_text_transform());
     } else
     {
         m_use_transformed = false;
