@@ -21,7 +21,14 @@ namespace litehtml
     }
 
     element::element(const document::ptr& doc) :
-        m_doc(doc)
+        m_doc(doc),
+        m_css(std::make_shared<css_properties>())
+    {
+    }
+
+    element::element(const document::ptr& doc, std::shared_ptr<css_properties> css) :
+        m_doc(doc),
+        m_css(std::move(css))
     {
     }
 
@@ -89,7 +96,7 @@ namespace litehtml
 
     std::vector<std::tuple<std::string, std::string>> element::dump_get_attrs()
     {
-        return m_css.dump_get_attrs();
+        return m_css->dump_get_attrs();
     }
 
     void element::dump(dumper& cout)
@@ -316,7 +323,7 @@ namespace litehtml
 
     bool element::is_block_formatting_context() const
     {
-        if(m_css.get_display() == display_block)
+        if(m_css->get_display() == display_block)
         {
             auto par = layout_parent();
             if(par && is_one_of(par->css().get_display(), display_inline_flex, display_flex, display_grid,
@@ -325,12 +332,12 @@ namespace litehtml
                 return true;
             }
         }
-        if(m_css.get_display() == display_inline_block || m_css.get_display() == display_table_cell ||
-           m_css.get_display() == display_inline_flex || m_css.get_display() == display_flex ||
-           m_css.get_display() == display_grid || m_css.get_display() == display_inline_grid ||
-           m_css.get_display() == display_table_caption || is_root() || m_css.get_float() != float_none ||
-           m_css.get_position() == element_position_absolute || m_css.get_position() == element_position_fixed ||
-           m_css.get_overflow() > overflow_visible)
+        if(m_css->get_display() == display_inline_block || m_css->get_display() == display_table_cell ||
+           m_css->get_display() == display_inline_flex || m_css->get_display() == display_flex ||
+           m_css->get_display() == display_grid || m_css->get_display() == display_inline_grid ||
+           m_css->get_display() == display_table_caption || is_root() || m_css->get_float() != float_none ||
+           m_css->get_position() == element_position_absolute || m_css->get_position() == element_position_fixed ||
+           m_css->get_overflow() > overflow_visible)
         {
             return true;
         }

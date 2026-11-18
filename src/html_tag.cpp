@@ -308,7 +308,7 @@ namespace litehtml
     void litehtml::html_tag::get_content_size(size& sz, pixel_t max_width)
     {
         sz.height = 0;
-        if(m_css.get_display() == display_block)
+        if(m_css->get_display() == display_block)
         {
             sz.width = max_width;
         } else
@@ -326,17 +326,17 @@ namespace litehtml
 
         draw_background(hdc, x, y, clip, ri);
 
-        if(m_css.get_display() == display_list_item &&
-           (m_css.get_list_style_type() != list_style_type_none || m_css.get_list_style_image() != ""))
+        if(m_css->get_display() == display_list_item &&
+           (m_css->get_list_style_type() != list_style_type_none || m_css->get_list_style_image() != ""))
         {
-            if(m_css.get_overflow() > overflow_visible)
+            if(m_css->get_overflow() > overflow_visible)
             {
                 position border_box  = pos;
                 border_box          += ri->get_paddings();
                 border_box          += ri->get_borders();
 
                 border_radiuses bdr_radius =
-                    m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
+                    m_css->get_borders().radius.calc_percents(border_box.width, border_box.height);
 
                 bdr_radius -= ri->get_borders();
                 bdr_radius -= ri->get_paddings();
@@ -346,7 +346,7 @@ namespace litehtml
 
             draw_list_marker(hdc, pos, ri);
 
-            if(m_css.get_overflow() > overflow_visible)
+            if(m_css->get_overflow() > overflow_visible)
             {
                 get_document()->container()->del_clip();
             }
@@ -381,7 +381,7 @@ namespace litehtml
 
         m_style.subst_vars(this);
 
-        m_css.compute(this, doc);
+        m_css->compute(this, doc);
 
         if(recursive)
         {
@@ -1040,30 +1040,30 @@ namespace litehtml
                 // set left borders radius for the first box
                 if(first)
                 {
-                    bdr.radius.bottom_left_x = m_css.get_borders().radius.bottom_left_x;
-                    bdr.radius.bottom_left_y = m_css.get_borders().radius.bottom_left_y;
-                    bdr.radius.top_left_x    = m_css.get_borders().radius.top_left_x;
-                    bdr.radius.top_left_y    = m_css.get_borders().radius.top_left_y;
+                    bdr.radius.bottom_left_x = m_css->get_borders().radius.bottom_left_x;
+                    bdr.radius.bottom_left_y = m_css->get_borders().radius.bottom_left_y;
+                    bdr.radius.top_left_x    = m_css->get_borders().radius.top_left_x;
+                    bdr.radius.top_left_y    = m_css->get_borders().radius.top_left_y;
                 }
 
                 // set right borders radius for the last box
                 if(last)
                 {
-                    bdr.radius.bottom_right_x = m_css.get_borders().radius.bottom_right_x;
-                    bdr.radius.bottom_right_y = m_css.get_borders().radius.bottom_right_y;
-                    bdr.radius.top_right_x    = m_css.get_borders().radius.top_right_x;
-                    bdr.radius.top_right_y    = m_css.get_borders().radius.top_right_y;
+                    bdr.radius.bottom_right_x = m_css->get_borders().radius.bottom_right_x;
+                    bdr.radius.bottom_right_y = m_css->get_borders().radius.bottom_right_y;
+                    bdr.radius.top_right_x    = m_css->get_borders().radius.top_right_x;
+                    bdr.radius.top_right_y    = m_css->get_borders().radius.top_right_y;
                 }
 
-                bdr.top    = m_css.get_borders().top;
-                bdr.bottom = m_css.get_borders().bottom;
+                bdr.top    = m_css->get_borders().top;
+                bdr.bottom = m_css->get_borders().bottom;
                 if(first)
                 {
-                    bdr.left = m_css.get_borders().left;
+                    bdr.left = m_css->get_borders().left;
                 }
                 if(last)
                 {
-                    bdr.right = m_css.get_borders().right;
+                    bdr.right = m_css->get_borders().right;
                 }
 
                 if(bg)
@@ -1141,11 +1141,11 @@ namespace litehtml
                     }
                 }
 
-                borders bdr = m_css.get_borders();
+                borders bdr = m_css->get_borders();
                 if(bdr.is_visible())
                 {
                     border_box.round();
-                    bdr.radius = m_css.get_borders().radius.calc_percents(border_box.width, border_box.height);
+                    bdr.radius = m_css->get_borders().radius.calc_percents(border_box.width, border_box.height);
                     get_document()->container()->draw_borders(hdc, bdr, border_box, is_root());
                 }
             }
@@ -1273,9 +1273,9 @@ namespace litehtml
             lm.pos.height = img_size.height;
         }
 
-        if(m_css.get_list_style_position() == list_style_position_outside)
+        if(m_css->get_list_style_position() == list_style_position_outside)
         {
-            if(m_css.get_list_style_type() >= list_style_type_armenian)
+            if(m_css->get_list_style_type() >= list_style_type_armenian)
             {
                 if(lm.font)
                 {
@@ -1292,7 +1292,7 @@ namespace litehtml
             }
         }
 
-        if(m_css.get_list_style_type() >= list_style_type_armenian)
+        if(m_css->get_list_style_type() >= list_style_type_armenian)
         {
             auto marker_text = get_list_marker_text(lm.index);
             if(marker_text.empty())
@@ -1319,7 +1319,7 @@ namespace litehtml
 
     std::string litehtml::html_tag::get_list_marker_text(int index)
     {
-        switch(m_css.get_list_style_type())
+        switch(m_css->get_list_style_type())
         {
         case litehtml::list_style_type_decimal:
             return std::to_string(index);
@@ -1661,14 +1661,14 @@ namespace litehtml
         if(own_only)
         {
             // return own background with check for empty one
-            if(m_css.get_bg().is_empty())
+            if(m_css->get_bg().is_empty())
             {
                 return nullptr;
             }
-            return &m_css.get_bg();
+            return &m_css->get_bg();
         }
 
-        if(m_css.get_bg().is_empty())
+        if(m_css->get_bg().is_empty())
         {
             // if this is root element (<html>) try to get background from body
             if(is_root())
@@ -1698,7 +1698,7 @@ namespace litehtml
             }
         }
 
-        return &m_css.get_bg();
+        return &m_css->get_bg();
     }
 
     std::string html_tag::dump_get_name()

@@ -22,6 +22,7 @@ namespace litehtml
         friend class html_tag;
         friend class el_table;
         friend class document;
+        friend class el_text;
 
       public:
         using ptr       = std::shared_ptr<element>;
@@ -32,7 +33,11 @@ namespace litehtml
         std::weak_ptr<element>                m_parent;
         std::weak_ptr<document>               m_doc;
         elements_list                         m_children;
-        css_properties                        m_css;
+        // Computed styles. Owned by this element, except for text nodes, which all share one object per parent
+        // (see m_text_css): their styles only depend on the parent chain, so siblings would hold identical copies.
+        std::shared_ptr<css_properties>       m_css;
+        // Computed styles shared by this element's text children. Created on demand by el_text::compute_styles.
+        std::shared_ptr<css_properties>       m_text_css;
         std::list<std::weak_ptr<render_item>> m_renders;
         used_selector::vector                 m_used_styles;
 
@@ -44,6 +49,8 @@ namespace litehtml
 
       public:
         explicit element(const std::shared_ptr<document>& doc);
+        // For subclasses that provide their own (possibly shared) css_properties instead of allocating one
+        element(const std::shared_ptr<document>& doc, std::shared_ptr<css_properties> css);
         virtual ~element() = default;
 
         const css_properties& css() const;
@@ -237,12 +244,12 @@ namespace litehtml
 
     inline const css_properties& element::css() const
     {
-        return m_css;
+        return *m_css;
     }
 
     inline css_properties& element::css()
     {
-        return m_css;
+        return *m_css;
     }
 
     inline bool element::is_block_box() const
