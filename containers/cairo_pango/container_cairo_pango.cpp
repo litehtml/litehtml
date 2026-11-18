@@ -1,5 +1,7 @@
 #include <array>
 #include <cmath>
+#include <fontconfig/fontconfig.h>
+#include <pango/pangofc-fontmap.h>
 #include "container_cairo_pango.h"
 
 container_cairo_pango::container_cairo_pango()
@@ -7,6 +9,28 @@ container_cairo_pango::container_cairo_pango()
     PangoFontMap* fontmap = pango_cairo_font_map_new_for_font_type(CAIRO_FONT_TYPE_FT);
     if(fontmap)
     {
+        // Give this font map its own FcConfig. Pango normally leaves the config NULL, which
+        // delegates every fontconfig operation (family listing, font matching, ...) to
+        // fontconfig's global "current config". That global config is never freed, so all of the
+        // caches it accumulates are reported as leaks. With a dedicated config, the caches live in
+        // this config and are released when the font map is finalized by the destructor.
+        FcConfig* current = FcConfigGetCurrent();
+        FcFontSet* app_fonts =
+            current ? FcConfigGetFonts(current, FcSetApplication) : nullptr;
+        if(app_fonts && app_fonts->nfont > 0)
+        {
+            // A custom config (e.g. FOR_TESTING test fonts) is installed; keep using it.
+            pango_fc_font_map_set_config(PANGO_FC_FONT_MAP(fontmap), current);
+        }
+        else
+        {
+            FcConfig* config = FcInitLoadConfigAndFonts();
+            if(config)
+            {
+                pango_fc_font_map_set_config(PANGO_FC_FONT_MAP(fontmap), config);
+                FcConfigDestroy(config);
+            }
+        }
         pango_cairo_font_map_set_default(PANGO_CAIRO_FONT_MAP(fontmap));
         g_object_unref(fontmap);
     }

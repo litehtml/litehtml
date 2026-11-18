@@ -44,6 +44,10 @@ void litebrowser::http_requests_pool::stop()
         active_thread->thread().join();
     }
     m_threads.clear();
+    {
+        std::unique_lock<std::mutex> lock(m_queue_mutex);
+        m_queue.clear();
+    }
 }
 
 bool litebrowser::http_requests_pool::is_downloading()

@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.20)
 project(litehtml_container_pango LANGUAGES CXX)
 
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(LITEHTML_PANGO REQUIRED IMPORTED_TARGET GLOBAL pango pangocairo)
+pkg_check_modules(LITEHTML_PANGO REQUIRED IMPORTED_TARGET GLOBAL pango pangocairo pangoft2 fontconfig)
 
 add_library(${PROJECT_NAME}
 	container_cairo_pango.cpp
