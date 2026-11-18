@@ -149,13 +149,25 @@ namespace litehtml
     const Type& html_tag::get_property(string_id name, bool inherited, const Type& default_value,
                                        uint_ptr css_properties_member_offset) const
     {
-        const property_value& value = m_style.get_property(name);
-
-        if(value.is<Type>())
+        if(const property_value* value = m_style.find_property(name))
         {
-            return value.get<Type>();
+            if(value->is<Type>())
+            {
+                return value->get<Type>();
+            }
+            if(inherited || value->is<inherit>())
+            {
+                if(auto _parent = parent())
+                {
+                    // NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast)
+                    return *reinterpret_cast<const Type*>(reinterpret_cast<const byte*>(&_parent->css()) +
+                                                          css_properties_member_offset);
+                    // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
+                }
+            }
+            return default_value;
         }
-        if(inherited || value.is<inherit>())
+        if(inherited)
         {
             if(auto _parent = parent())
             {
@@ -164,7 +176,6 @@ namespace litehtml
                                                       css_properties_member_offset);
                 // NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
             }
-            return default_value;
         }
         return default_value;
     }

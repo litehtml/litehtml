@@ -9,6 +9,7 @@
 #include "gradient.h"
 #include "web_color.h"
 #include <optional>
+#include <unordered_map>
 
 namespace litehtml
 {
@@ -38,7 +39,7 @@ namespace litehtml
     };
 
     class html_tag;
-    using props_map = std::map<string_id, property_value>;
+    using props_map = std::unordered_map<string_id, property_value>;
 
     // represents a style block, eg. "color: black; display: inline"
     class style
@@ -61,6 +62,7 @@ namespace litehtml
         void add_property(string_id name, const std::string& val, const std::string& baseurl = "",
                           bool important = false, document_container* container = nullptr);
 
+        const property_value* find_property(string_id name) const;
         const property_value& get_property(string_id name) const;
 
         bool empty() const
