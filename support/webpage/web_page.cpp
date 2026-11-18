@@ -38,10 +38,13 @@ void litebrowser::web_page::open(const std::string& url, const std::string& frag
     auto cb_on_data = [data](void* in_data, size_t len, size_t /*downloaded*/, size_t /*total*/) {
         data->on_data(in_data, len, 0, 0);
     };
-    auto shared_this  = shared_from_this();
-    auto cb_on_finish = [shared_this, data](u_int32_t http_status, u_int32_t err_code, const std::string& err_text,
-                                            const std::string& url) {
-        shared_this->on_page_downloaded(data, http_status, err_code, err_text, url);
+    auto weak_this   = weak_from_this();
+    auto cb_on_finish = [weak_this, data](u_int32_t http_status, u_int32_t err_code, const std::string& err_text,
+                                         const std::string& url) {
+        if(auto shared_this = weak_this.lock())
+        {
+            shared_this->on_page_downloaded(data, http_status, err_code, err_text, url);
+        }
     };
     http_request(m_url, cb_on_data, cb_on_finish);
 }
@@ -262,10 +265,13 @@ void litebrowser::web_page::load_image(const char* src, const char* baseurl, boo
         auto cb_on_data = [data](void* in_data, size_t len, size_t /*downloaded*/, size_t /*total*/) {
             data->on_data(in_data, len, 0, 0);
         };
-        auto shared_this  = shared_from_this();
-        auto cb_on_finish = [shared_this, data](u_int32_t http_status, u_int32_t err_code, const std::string& err_text,
-                                                const std::string& url) {
-            shared_this->on_image_downloaded(data, http_status, err_code, err_text, url);
+        auto weak_this   = weak_from_this();
+        auto cb_on_finish = [weak_this, data](u_int32_t http_status, u_int32_t err_code, const std::string& err_text,
+                                             const std::string& url) {
+            if(auto shared_this = weak_this.lock())
+            {
+                shared_this->on_image_downloaded(data, http_status, err_code, err_text, url);
+            }
         };
 
         http_request(url, cb_on_data, cb_on_finish);
