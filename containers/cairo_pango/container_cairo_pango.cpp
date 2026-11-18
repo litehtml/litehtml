@@ -44,6 +44,7 @@ container_cairo_pango::~container_cairo_pango()
     {
         cairo_font_options_destroy(m_font_options);
     }
+    pango_cairo_font_map_set_default(nullptr);
 }
 
 void container_cairo_pango::set_font_options(cairo_antialias_t antialias, cairo_hint_style_t hint_style,
