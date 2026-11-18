@@ -7,6 +7,7 @@
 #include <pango/pangocairo.h>
 #include <pango/pango-font.h>
 #include <set>
+#include <unordered_map>
 
 struct cairo_font
 {
@@ -27,12 +28,30 @@ struct cairo_font
     litehtml::web_color   decoration_color;
 };
 
+// Pango metrics depend only on the resolved family, whole-pixel size, style and weight.
+// Decoration fields are applied per font_description, so they are not part of the key.
+struct font_metrics_cache_entry
+{
+    litehtml::font_metrics metrics; // draw_spaces is filled in per description
+
+    int underline_position;
+    int underline_thickness;
+    int strikethrough_position;
+    int strikethrough_thickness;
+};
+
 class container_cairo_pango : public container_cairo
 {
     cairo_surface_t*      m_temp_surface;
     cairo_t*              m_temp_cr;
     std::set<std::string> m_all_fonts;
     cairo_font_options_t* m_font_options = nullptr;
+    // text_width measurements are expensive (Pango layout + itemization), and the same
+    // (font, text) pair is measured many times: whitespace nodes and repeated strings
+    // dominate. Cache per font handle so stale entries can be evicted in delete_font.
+    std::unordered_map<litehtml::uint_ptr, std::unordered_map<std::string, litehtml::pixel_t>> m_text_width_cache;
+    // Expensive font metrics are computed once per (family, size, style, weight).
+    std::unordered_map<std::string, font_metrics_cache_entry> m_font_metrics_cache;
 
   public:
     container_cairo_pango();

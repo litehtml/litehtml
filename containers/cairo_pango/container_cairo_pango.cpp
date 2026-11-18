@@ -14,15 +14,13 @@ container_cairo_pango::container_cairo_pango()
         // fontconfig's global "current config". That global config is never freed, so all of the
         // caches it accumulates are reported as leaks. With a dedicated config, the caches live in
         // this config and are released when the font map is finalized by the destructor.
-        FcConfig* current = FcConfigGetCurrent();
-        FcFontSet* app_fonts =
-            current ? FcConfigGetFonts(current, FcSetApplication) : nullptr;
+        FcConfig*  current   = FcConfigGetCurrent();
+        FcFontSet* app_fonts = current ? FcConfigGetFonts(current, FcSetApplication) : nullptr;
         if(app_fonts && app_fonts->nfont > 0)
         {
             // A custom config (e.g. FOR_TESTING test fonts) is installed; keep using it.
             pango_fc_font_map_set_config(PANGO_FC_FONT_MAP(fontmap), current);
-        }
-        else
+        } else
         {
             FcConfig* config = FcInitLoadConfigAndFonts();
             if(config)
@@ -118,56 +116,93 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         fonts = "serif,";
     }
 
-    PangoFontDescription* desc = pango_font_description_from_string(fonts.c_str());
-    pango_font_description_set_absolute_size(desc, descr.size * PANGO_SCALE);
-    if(descr.style == litehtml::font_style_italic)
-    {
-        pango_font_description_set_style(desc, PANGO_STYLE_ITALIC);
-    } else
-    {
-        pango_font_description_set_style(desc, PANGO_STYLE_NORMAL);
-    }
-
-    pango_font_description_set_weight(desc, static_cast<PangoWeight>(descr.weight));
+    std::string key  = fonts;
+    key             += ':';
+    key             += std::to_string(static_cast<int>(descr.size));
+    key             += ':';
+    key             += std::to_string(static_cast<int>(descr.style));
+    key             += ':';
+    key             += std::to_string(descr.weight);
 
     cairo_font* ret = nullptr;
 
     if(fm)
     {
-        fm->font_size = descr.size;
-
-        cairo_save(m_temp_cr);
-        PangoLayout*   layout   = pango_cairo_create_layout(m_temp_cr);
-        PangoContext*  context  = pango_layout_get_context(layout);
-        PangoLanguage* language = pango_language_get_default();
-        pango_layout_set_font_description(layout, desc);
-        PangoFontMetrics* metrics = pango_context_get_metrics(context, desc, language);
-
-        fm->ascent      = PANGO_PIXELS(static_cast<double>(pango_font_metrics_get_ascent(metrics)));
-        fm->height      = PANGO_PIXELS(static_cast<double>(pango_font_metrics_get_height(metrics)));
-        fm->descent     = fm->height - fm->ascent;
-        fm->x_height    = fm->height;
-        fm->draw_spaces = (descr.decoration_line != litehtml::text_decoration_line_none);
-        fm->sub_shift   = descr.size / 5;
-        fm->super_shift = descr.size / 3;
-
-        pango_layout_set_text(layout, "x", 1);
-
-        PangoRectangle ink_rect;
-        PangoRectangle logical_rect;
-        pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
-        fm->x_height = ink_rect.height;
-        if(fm->x_height == fm->height)
+        auto it = m_font_metrics_cache.find(key);
+        if(it == m_font_metrics_cache.end())
         {
-            fm->x_height = fm->x_height * 4 / 5;
+            font_metrics_cache_entry entry{};
+
+            PangoFontDescription* desc = pango_font_description_from_string(fonts.c_str());
+            pango_font_description_set_absolute_size(desc, descr.size * PANGO_SCALE);
+            if(descr.style == litehtml::font_style_italic)
+            {
+                pango_font_description_set_style(desc, PANGO_STYLE_ITALIC);
+            } else
+            {
+                pango_font_description_set_style(desc, PANGO_STYLE_NORMAL);
+            }
+            pango_font_description_set_weight(desc, static_cast<PangoWeight>(descr.weight));
+
+            cairo_save(m_temp_cr);
+            PangoLayout*   layout   = pango_cairo_create_layout(m_temp_cr);
+            PangoContext*  context  = pango_layout_get_context(layout);
+            PangoLanguage* language = pango_language_get_default();
+            pango_layout_set_font_description(layout, desc);
+            PangoFontMetrics* metrics = pango_context_get_metrics(context, desc, language);
+
+            entry.metrics.font_size   = descr.size;
+            entry.metrics.ascent      = PANGO_PIXELS(static_cast<double>(pango_font_metrics_get_ascent(metrics)));
+            entry.metrics.height      = PANGO_PIXELS(static_cast<double>(pango_font_metrics_get_height(metrics)));
+            entry.metrics.descent     = entry.metrics.height - entry.metrics.ascent;
+            entry.metrics.x_height    = entry.metrics.height;
+            entry.metrics.sub_shift   = descr.size / 5;
+            entry.metrics.super_shift = descr.size / 3;
+
+            pango_layout_set_text(layout, "x", 1);
+
+            PangoRectangle ink_rect;
+            PangoRectangle logical_rect;
+            pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
+            entry.metrics.x_height = ink_rect.height;
+            if(entry.metrics.x_height == entry.metrics.height)
+            {
+                entry.metrics.x_height = entry.metrics.x_height * 4 / 5;
+            }
+
+            pango_layout_set_text(layout, "0", 1);
+
+            pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
+            entry.metrics.ch_width = logical_rect.width;
+
+            entry.underline_position      = pango_font_metrics_get_underline_position(metrics);
+            entry.underline_thickness     = pango_font_metrics_get_underline_thickness(metrics);
+            entry.strikethrough_position  = pango_font_metrics_get_strikethrough_position(metrics);
+            entry.strikethrough_thickness = pango_font_metrics_get_strikethrough_thickness(metrics);
+
+            cairo_restore(m_temp_cr);
+            g_object_unref(layout);
+            pango_font_metrics_unref(metrics);
+            pango_font_description_free(desc);
+
+            it = m_font_metrics_cache.emplace(key, entry).first;
         }
 
-        pango_layout_set_text(layout, "0", 1);
+        const font_metrics_cache_entry& entry = it->second;
 
-        pango_layout_get_pixel_extents(layout, &ink_rect, &logical_rect);
-        fm->ch_width = logical_rect.width;
+        *fm             = entry.metrics;
+        fm->draw_spaces = (descr.decoration_line != litehtml::text_decoration_line_none);
 
-        cairo_restore(m_temp_cr);
+        PangoFontDescription* desc = pango_font_description_from_string(fonts.c_str());
+        pango_font_description_set_absolute_size(desc, descr.size * PANGO_SCALE);
+        if(descr.style == litehtml::font_style_italic)
+        {
+            pango_font_description_set_style(desc, PANGO_STYLE_ITALIC);
+        } else
+        {
+            pango_font_description_set_style(desc, PANGO_STYLE_NORMAL);
+        }
+        pango_font_description_set_weight(desc, static_cast<PangoWeight>(descr.weight));
 
         ret                   = new cairo_font;
         ret->font             = desc;
@@ -188,10 +223,10 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
             doc->cvt_units(thinkness, *fm, static_cast<int>(one_em.val()));
         }
 
-        ret->underline_position = -pango_font_metrics_get_underline_position(metrics);
+        ret->underline_position = -entry.underline_position;
         if(thinkness.is_predefined())
         {
-            ret->underline_thickness = pango_font_metrics_get_underline_thickness(metrics);
+            ret->underline_thickness = entry.underline_thickness;
         } else
         {
             ret->underline_thickness = static_cast<int>(thinkness.val() * PANGO_SCALE);
@@ -200,10 +235,10 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         ret->underline_thickness = PANGO_PIXELS(ret->underline_thickness);
         ret->underline_position  = PANGO_PIXELS(ret->underline_position);
 
-        ret->strikethrough_position = pango_font_metrics_get_strikethrough_position(metrics);
+        ret->strikethrough_position = entry.strikethrough_position;
         if(thinkness.is_predefined())
         {
-            ret->strikethrough_thickness = pango_font_metrics_get_strikethrough_thickness(metrics);
+            ret->strikethrough_thickness = entry.strikethrough_thickness;
         } else
         {
             ret->strikethrough_thickness = static_cast<int>(thinkness.val() * PANGO_SCALE);
@@ -215,7 +250,7 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         ret->overline_position = pango_units_from_double(fm->ascent);
         if(thinkness.is_predefined())
         {
-            ret->overline_thickness = pango_font_metrics_get_underline_thickness(metrics);
+            ret->overline_thickness = entry.underline_thickness;
         } else
         {
             ret->overline_thickness = static_cast<int>(thinkness.val() * PANGO_SCALE);
@@ -223,9 +258,6 @@ litehtml::uint_ptr container_cairo_pango::create_font(const litehtml::font_descr
         pango_quantize_line_geometry(&ret->overline_thickness, &ret->overline_position);
         ret->overline_thickness = PANGO_PIXELS(ret->overline_thickness);
         ret->overline_position  = PANGO_PIXELS(ret->overline_position);
-
-        g_object_unref(layout);
-        pango_font_metrics_unref(metrics);
     }
 
     return reinterpret_cast<litehtml::uint_ptr>(ret);
@@ -239,10 +271,22 @@ void container_cairo_pango::delete_font(litehtml::uint_ptr hFont)
         pango_font_description_free(fnt->font);
         delete fnt;
     }
+    m_text_width_cache.erase(hFont);
 }
 
 litehtml::pixel_t container_cairo_pango::text_width(const char* text, litehtml::uint_ptr hFont)
 {
+    if(!text || !*text)
+    {
+        return 0;
+    }
+    auto& font_cache = m_text_width_cache[hFont];
+
+    if(auto it = font_cache.find(text); it != font_cache.end())
+    {
+        return it->second;
+    }
+
     auto* fnt = reinterpret_cast<cairo_font*>(hFont);
 
     cairo_save(m_temp_cr);
@@ -260,6 +304,11 @@ litehtml::pixel_t container_cairo_pango::text_width(const char* text, litehtml::
 
     g_object_unref(layout);
 
+    // Cache short strings to avoid repeated expensive measurements
+    if(strlen(text) < 8)
+    {
+        return font_cache.emplace(text, static_cast<litehtml::pixel_t>(x_width)).first->second;
+    }
     return x_width;
 }
 
