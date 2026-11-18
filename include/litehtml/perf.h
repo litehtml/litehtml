@@ -1,4 +1,5 @@
 #ifndef LITEHTML_PERF_H
+#define LITEHTML_PERF_H
 
 #include <unordered_map>
 #include <chrono>
