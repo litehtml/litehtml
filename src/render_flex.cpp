@@ -105,8 +105,8 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     const pixel_t column_gap = css().get_column_gap().calc_percent(self_size.render_width);
     const pixel_t row_gap    = css().get_row_gap().calc_percent(
         self_size.height.type == containing_block_context::cbc_value_type_auto ? 0_px : self_size.height.value);
-    const pixel_t main_gap          = is_row_direction ? column_gap : row_gap;
-    const pixel_t cross_gap         = is_row_direction ? row_gap : column_gap;
+    const pixel_t main_gap  = is_row_direction ? column_gap : row_gap;
+    const pixel_t cross_gap = is_row_direction ? row_gap : column_gap;
 
     if(!is_row_direction)
     {
@@ -138,9 +138,9 @@ litehtml::pixel_t litehtml::render_item_flex::_render_content(pixel_t x, pixel_t
     /////////////////////////////////////////////////////////////////
     m_lines = get_lines(self_size, fmt_ctx, is_row_direction, container_main_size, main_gap, single_line, second_pass);
 
-    pixel_t sum_cross_size = 0_px;
-    pixel_t sum_main_size  = 0_px;
-    pixel_t ret_width      = 0_px;
+    pixel_t    sum_cross_size    = 0_px;
+    pixel_t    sum_main_size     = 0_px;
+    pixel_t    ret_width         = 0_px;
     const bool stretch_to_height = is_row_direction && single_line &&
                                    css().get_flex_align_content() == flex_align_content_stretch &&
                                    self_size.height.type != containing_block_context::cbc_value_type_auto &&
@@ -541,6 +541,8 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_flex::init()
     }
     convert_inlines();
     children() = new_children;
+
+    src_el()->add_render(shared_from_this());
 
     return shared_from_this();
 }
