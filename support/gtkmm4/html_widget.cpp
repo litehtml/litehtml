@@ -220,13 +220,15 @@ void html_widget::on_redraw()
 
 inline static void update_rect(const litehtml::position& pos, Gdk::Rectangle& rect, bool& is_first)
 {
+    litehtml::position rounded_box = pos;
+    rounded_box.round();
     if(is_first)
     {
-        rect     = Gdk::Rectangle(pos.x, pos.y, pos.width, pos.height);
+        rect     = Gdk::Rectangle(rounded_box.x, rounded_box.y, rounded_box.width, rounded_box.height);
         is_first = false;
     } else
     {
-        rect.join(Gdk::Rectangle(pos.x, pos.y, pos.width, pos.height));
+        rect.join(Gdk::Rectangle(rounded_box.x, rounded_box.y, rounded_box.width, rounded_box.height));
     }
 }
 
