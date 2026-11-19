@@ -83,7 +83,16 @@ void litehtml::render_item_inline_context::for_each_inline_impl(Callback&& callb
                                      }
                                      if(last_space && (!el->src_el()->is_float() || !after_float))
                                      {
-                                         callback(last_space, iterator_item_type_child);
+                                         if(el->src_el()->is_break() && el->css().get_clear() == clear_none)
+                                         {
+                                             if(!const_process)
+                                             {
+                                                 last_space->skip(true);
+                                             }
+                                         } else
+                                         {
+                                             callback(last_space, iterator_item_type_child);
+                                         }
                                          last_space = nullptr;
                                      }
                                      after_float = el->src_el()->is_float();
@@ -298,9 +307,9 @@ litehtml::pixel_t litehtml::render_item_inline_context::new_box(const std::uniqu
     el_pos.el_pos.width    += text_indent + first_line_margin;
     auto new_pos            = fmt_ctx->place_to_left(el_pos);
 
-    m_line_boxes.emplace_back(std::make_unique<line_box>(new_pos.top, new_pos.left + first_line_margin + text_indent,
-                                                         new_pos.left + new_pos.width, css().line_height(),
-                                                         css().get_font_metrics(), css().get_text_align()));
+    m_line_boxes.emplace_back(std::make_unique<line_box>(
+        new_pos.top, new_pos.left + first_line_margin + text_indent, new_pos.left + new_pos.width, css().line_height(),
+        css().get_font_metrics(), css().get_text_align(), src_el()->get_document()->mode()));
 
     // Add items returned by finish_last_box function into the new line
     for(auto& it : items)

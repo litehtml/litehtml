@@ -222,83 +222,62 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
     bool last_box, const containing_block_context& containing_block_size)
 {
     std::list<std::unique_ptr<line_box_item>> ret_items;
-    bool                                      finished_with_break = false;
+    const auto                                last_text           = get_last_text_part();
+    const bool                                finished_with_break = last_text && last_text->src_el()->is_break();
 
-    if(!last_box)
+    // Keep the break's inline context, but remove spaces preceding it.
+    auto iter = m_items.rbegin();
+    while(iter != m_items.rend())
     {
-        if(!is_empty())
+        if((*iter)->get_type() == line_box_item::type_text_part)
         {
-            finished_with_break = m_items.back()->get_el()->src_el()->is_break();
-        }
-        while(!m_items.empty())
-        {
-            if(m_items.back()->get_type() == line_box_item::type_text_part)
+            if((*iter)->get_el()->src_el()->is_break() && finished_with_break)
             {
-                // remove trailing spaces
-                if(m_items.back()->get_el()->src_el()->is_break() ||
-                   m_items.back()->get_el()->src_el()->is_white_space())
+                iter++;
+            } else if((*iter)->get_el()->src_el()->is_white_space())
+            {
+                (*iter)->get_el()->skip(true);
+                m_width -= (*iter)->width();
+                if(iter != m_items.rbegin())
                 {
-                    m_width -= m_items.back()->width();
-                    m_items.back()->get_el()->skip(true);
-                    m_items.pop_back();
-                } else
-                {
-                    break;
+                    auto r_iter = iter;
+                    r_iter--;
+                    while(true)
+                    {
+                        (*r_iter)->pos().x -= (*iter)->width();
+                        if(r_iter == m_items.rbegin())
+                        {
+                            break;
+                        }
+                        r_iter--;
+                    }
                 }
-            } else if(m_items.back()->get_type() == line_box_item::type_inline_start)
-            {
-                // remove trailing empty inline_start markers
-                // these markers will be added at the beginning of the next line box
-                m_width -= m_items.back()->width();
-                ret_items.emplace_front(std::move(m_items.back()));
-                m_items.pop_back();
+                iter = decltype(iter)(m_items.erase(std::next(iter).base()));
             } else
             {
                 break;
             }
-        }
-    } else
-    {
-        // remove trailing spaces
-        auto iter = m_items.rbegin();
-        while(iter != m_items.rend())
+        } else
         {
-            if((*iter)->get_type() == line_box_item::type_text_part)
+            if(!last_box && !finished_with_break && (*iter)->get_type() != line_box_item::type_inline_start)
             {
-                if((*iter)->get_el()->src_el()->is_white_space())
-                {
-                    (*iter)->get_el()->skip(true);
-                    m_width -= (*iter)->width();
-                    // Space can be between text and inline_end marker
-                    // We have to shift all items on the right side
-                    if(iter != m_items.rbegin())
-                    {
-                        auto r_iter = iter;
-                        r_iter--;
-                        while(true)
-                        {
-                            (*r_iter)->pos().x -= (*iter)->width();
-                            if(r_iter == m_items.rbegin())
-                            {
-                                break;
-                            }
-                            r_iter--;
-                        }
-                    }
-                    // erase white space element
-                    iter = decltype(iter)(m_items.erase(std::next(iter).base()));
-                } else
-                {
-                    break;
-                }
-            } else
-            {
-                iter++;
+                break;
             }
+            iter++;
         }
     }
 
-    if(is_empty() || (last_box && is_break_only()))
+    if(!last_box)
+    {
+        while(!m_items.empty() && m_items.back()->get_type() == line_box_item::type_inline_start)
+        {
+            m_width -= m_items.back()->width();
+            ret_items.emplace_front(std::move(m_items.back()));
+            m_items.pop_back();
+        }
+    }
+
+    if(is_empty())
     {
         m_height   = m_default_line_height.computed_value;
         m_baseline = m_font_metrics.base_line();
@@ -337,13 +316,6 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
     float offj    = static_cast<float>(spacing_x) / std::max(1.f, static_cast<float>(m_items.size()) - 1.f);
     float cixx    = 0.0f;
 
-    std::optional<pixel_t> line_height;
-
-    if(!m_default_line_height.css_value.is_predefined())
-    {
-        line_height = m_default_line_height.computed_value;
-    }
-
     va_context            current_context;
     std::vector<va_context> contexts;
 
@@ -361,11 +333,11 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
         int     count      = 0;
         pixel_t max_height = 0_px;
 
-        void add_item(const line_box_item* item)
+        void add_item(pixel_t item_top, pixel_t item_bottom)
         {
-            top        = std::min(top, item->top());
-            bottom     = std::max(bottom, item->bottom());
-            max_height = std::max(max_height, item->height());
+            top        = count ? std::min(top, item_top) : item_top;
+            bottom     = count ? std::max(bottom, item_bottom) : item_bottom;
+            max_height = std::max(max_height, item_bottom - item_top);
             count++;
         }
         pixel_t height() const
@@ -377,7 +349,23 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
     items_dimensions line_max_height;
     items_dimensions top_aligned_max_height;
     items_dimensions bottom_aligned_max_height;
-    items_dimensions inline_boxes_dims;
+
+    const bool has_text = std::any_of(m_items.begin(), m_items.end(), [](const auto& item) {
+        return item->get_type() == line_box_item::type_text_part &&
+               (item->get_el()->css().get_display() == display_inline_text || item->get_el()->src_el()->is_break());
+    });
+
+    // Keep atomic-only lines' sizing; text lines include the block strut only in standards mode.
+    if(m_mode == no_quirks_mode && has_text)
+    {
+        const pixel_t half_leading = (m_default_line_height.computed_value - m_font_metrics.height) / 2_px;
+        line_max_height.add_item(-m_font_metrics.ascent - half_leading, m_font_metrics.base_line() + half_leading);
+    }
+
+    const bool has_content = std::any_of(m_items.begin(), m_items.end(), [](const auto& item) {
+        return item->get_type() == line_box_item::type_text_part && !item->get_el()->src_el()->is_break() &&
+               !item->get_el()->skip();
+    });
 
     // First pass
     // 1. Apply text-align-justify
@@ -483,53 +471,62 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
             lbi->pos().y = bl - lbi->get_el()->get_last_baseline() + content_offset;
         }
 
+        const bool is_break = lbi->get_el()->src_el()->is_break();
+        if((type != line_box_item::type_text_part && m_mode != no_quirks_mode) || (is_break && has_content))
+        {
+            if(type == line_box_item::type_inline_end && !contexts.empty())
+            {
+                current_context = contexts.back();
+                contexts.pop_back();
+            }
+            continue;
+        }
+
+        pixel_t item_top    = lbi->top();
+        pixel_t item_bottom = lbi->bottom();
+        if(is_break || (!lbi->get_el()->src_el()->is_inline_box() && !lbi->get_el()->src_el()->is_replaced()))
+        {
+            const auto&   fm = is_break ? current_context.fm : lbi->get_el()->css().get_font_metrics();
+            const pixel_t line_height =
+                is_break ? current_context.line_height : lbi->get_el()->css().line_height().computed_value;
+            const pixel_t half_leading = (line_height - fm.height) / 2_px;
+            // A break supplies its parent's text metrics only on an otherwise empty line.
+            item_top    = (is_break ? bl - fm.ascent : lbi->top()) - half_leading;
+            item_bottom = item_top + line_height;
+        }
+
         if(is_top_bottom_box)
         {
             switch(lbi->get_el()->css().get_vertical_align())
             {
             case va_top:
-                top_aligned_max_height.add_item(lbi.get());
+                top_aligned_max_height.add_item(item_top, item_bottom);
                 break;
             case va_bottom:
-                bottom_aligned_max_height.add_item(lbi.get());
+                bottom_aligned_max_height.add_item(item_top, item_bottom);
                 break;
             default:
                 break;
             }
         } else if(current_context.start_lbi)
         {
-            current_context.start_lbi->add_item_height(lbi->top(), lbi->bottom());
+            current_context.start_lbi->add_item_height(item_top, item_bottom);
             switch(current_context.start_lbi->get_el()->css().get_vertical_align())
             {
             case va_top:
-                top_aligned_max_height.add_item(lbi.get());
+                top_aligned_max_height.add_item(current_context.start_lbi->get_items_top(),
+                                                current_context.start_lbi->get_items_bottom());
                 break;
             case va_bottom:
-                bottom_aligned_max_height.add_item(lbi.get());
+                bottom_aligned_max_height.add_item(current_context.start_lbi->get_items_top(),
+                                                   current_context.start_lbi->get_items_bottom());
                 break;
             default:
                 break;
             }
         } else
         {
-            if(!lbi->get_el()->src_el()->is_inline_box())
-            {
-                line_max_height.add_item(lbi.get());
-            } else
-            {
-                inline_boxes_dims.add_item(lbi.get());
-            }
-        }
-
-        if(!lbi->get_el()->src_el()->is_inline_box() && !lbi->get_el()->css().line_height().css_value.is_predefined())
-        {
-            if(line_height.has_value())
-            {
-                line_height = std::max(line_height.value(), lbi->get_el()->css().line_height().computed_value);
-            } else
-            {
-                line_height = lbi->get_el()->css().line_height().computed_value;
-            }
+            line_max_height.add_item(item_top, item_bottom);
         }
 
         if(type == line_box_item::type_inline_end)
@@ -542,75 +539,12 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
         }
     }
 
-    pixel_t top_shift = 0_px;
-    if(line_height.has_value())
-    {
-        m_height = line_height.value();
-        if(line_max_height.count != 0)
-        {
-            // We have inline items
-            top_shift = std::abs(line_max_height.top.value());
+    m_height =
+        std::max({line_max_height.height(), top_aligned_max_height.max_height, bottom_aligned_max_height.max_height});
 
-            const pixel_t top_shift_correction = (line_height.value() - line_max_height.height()) / 2_px;
-            // We have to calculate the baseline from the top of the line box due to possible round errors.
-            // The top_shift_correction is actually text offset from the top of the line box.
-            // The (top_shift_correction + line_max_height.height()): is the bottom of the text with shift
-            // (text_bottom). The line_max_height.bottom is the text baseline here. So the formula is: baseline =
-            // line_height - text_bottom + text_baseline The linebox baseline is the length from the bottom of the line
-            // box to the text baseline.
-            m_baseline =
-                line_height.value() - (top_shift_correction + line_max_height.height()) + line_max_height.bottom;
-            top_shift += top_shift_correction;
-            if(inline_boxes_dims.count)
-            {
-                const pixel_t diff2(std::abs(inline_boxes_dims.top.value()) - std::abs(top_shift.value()));
-                if(diff2 > 0_px)
-                {
-                    m_height   += diff2;
-                    top_shift  += diff2;
-                    m_baseline += diff2;
-                }
-                const pixel_t diff1 = inline_boxes_dims.bottom - (line_max_height.bottom + top_shift_correction);
-                if(diff1 > 0_px)
-                {
-                    m_height += diff1;
-                }
-            }
-        } else if(inline_boxes_dims.count != 0)
-        {
-            // We have inline boxes only
-            m_height   = inline_boxes_dims.height();
-            top_shift  = std::abs(inline_boxes_dims.top.value());
-            m_baseline = inline_boxes_dims.bottom;
-        } else
-        {
-            // We don't have inline items and inline boxes
-            top_shift = 0_px;
-        }
-
-        const pixel_t top_down_height =
-            std::max(top_aligned_max_height.max_height, bottom_aligned_max_height.max_height);
-        if(top_down_height > m_height)
-        {
-            if(bottom_aligned_max_height.count)
-            {
-                top_shift += bottom_aligned_max_height.height() - m_height;
-            }
-            m_height = top_down_height;
-        }
-    } else
-    {
-        // Add inline boxes dimensions
-        line_max_height.top    = std::min(line_max_height.top, inline_boxes_dims.top);
-        line_max_height.bottom = std::max(line_max_height.bottom, inline_boxes_dims.bottom);
-
-        // Height is maximum from inline elements height and top/bottom aligned elements height
-        m_height =
-            std::max({line_max_height.height(), top_aligned_max_height.height(), bottom_aligned_max_height.height()});
-
-        top_shift  = -std::min(line_max_height.top, line_max_height.bottom - bottom_aligned_max_height.height());
-        m_baseline = line_max_height.bottom;
-    }
+    const pixel_t top_shift =
+        -std::min(line_max_height.top, line_max_height.bottom - bottom_aligned_max_height.max_height);
+    m_baseline = line_max_height.bottom;
 
     struct inline_item_box
     {
@@ -866,31 +800,6 @@ void litehtml::line_box::y_shift(pixel_t shift)
     {
         el->y_shift(shift);
     }
-}
-
-bool litehtml::line_box::is_break_only() const
-{
-    if(m_items.empty())
-    {
-        return false;
-    }
-
-    bool break_found = false;
-
-    for(auto iter = m_items.rbegin(); iter != m_items.rend(); iter++)
-    {
-        if((*iter)->get_type() == line_box_item::type_text_part)
-        {
-            if((*iter)->get_el()->src_el()->is_break())
-            {
-                break_found = true;
-            } else if(!(*iter)->get_el()->skip())
-            {
-                return false;
-            }
-        }
-    }
-    return break_found;
 }
 
 std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::new_width(pixel_t left, pixel_t right)
