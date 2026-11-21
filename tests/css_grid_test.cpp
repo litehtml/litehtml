@@ -1317,5 +1317,22 @@ int main()
         ok &=
             check(anchors.clicked_url == "/target", std::string("contents links should remain clickable in ") + layout);
     }
+
+    const auto positioned_grid = document::createFromString(
+        "<!doctype html><style>body{margin:0}#grid{display:grid;position:relative;width:200px;height:100px;"
+        "grid-template-columns:80px 120px;grid-template-rows:100px}"
+        ".absolute{position:absolute;grid-column:2;left:0;top:0;width:20px;height:20px}</style>"
+        "<div id=grid><div id=direct class=absolute></div>"
+        "<div><div><div id=nested class=absolute></div></div></div></div>",
+        &container);
+    const auto direct            = positioned_grid->root()->select_one("#direct");
+    const auto nested_positioned = positioned_grid->root()->select_one("#nested");
+    for(const int width : {800, 400, 800})
+    {
+        positioned_grid->render(width);
+        ok &= check(direct && nested_positioned && direct->get_placement().x == 80_px &&
+                        nested_positioned->get_placement().x == 80_px,
+                    "positioned grid descendants retain their grid area through static wrappers and resizing");
+    }
     return ok ? 0 : 1;
 }

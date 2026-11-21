@@ -25,7 +25,6 @@ namespace litehtml
         std::shared_ptr<element>                  m_element;
         std::weak_ptr<render_item>                m_parent;
         std::list<std::shared_ptr<render_item>>   m_children;
-        std::vector<std::shared_ptr<render_item>> m_positioned;
         std::vector<std::shared_ptr<render_item>> m_stacking_contexts;
         std::weak_ptr<render_item>                m_stacking_context;
         std::shared_ptr<scroll_view>              m_scroll_view;
@@ -78,6 +77,10 @@ namespace litehtml
         void    mark_stale_subtree();
         pixel_t execute_render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
                                bool second_pass, uint64_t generation, int slot);
+        void render_positioned_children(render_item&                        containing_block,
+                                        const std::shared_ptr<render_item>& stacking_parent, const position& viewport,
+                                        render_type rt);
+        void render_positioned_element(const std::shared_ptr<render_item>& el, const position& viewport);
 
         containing_block_context calculate_containing_block_context(const containing_block_context& cb_context) const;
         void                     calc_cb_length(const css_length& len, pixel_t percent_base,
@@ -604,12 +607,11 @@ namespace litehtml
         std::tuple<std::shared_ptr<litehtml::render_item>, std::shared_ptr<litehtml::render_item>,
                    std::shared_ptr<litehtml::render_item>>
              split_inlines();
-        bool fetch_positioned();
+        // Lay out positioned descendants and rebuild stacking membership in every render mode.
         void render_positioned(render_type rt = render_all);
         // returns element offset related to the containing block
         std::tuple<pixel_t, pixel_t> element_static_offset(const std::shared_ptr<litehtml::render_item>& el);
 
-        void add_positioned(const std::shared_ptr<litehtml::render_item>& el);
         // Whether this element establishes a stacking context. See
         // https://drafts.csswg.org/css-position-4/#stacking-contexts
         bool creates_stacking_context() const;
@@ -618,8 +620,6 @@ namespace litehtml
         {
             return !m_stacking_context.expired();
         }
-        // Collect stacked descendants into their nearest stacking context ancestor.
-        void collect_stacking_contexts(const std::shared_ptr<render_item>& stacking_parent);
         // Calculate the bounding box of the element, including its children.
         void calc_bounds();
         void calc_document_size(litehtml::size& sz, pixel_t x = 0_px, pixel_t y = 0_px);

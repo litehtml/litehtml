@@ -548,12 +548,8 @@ namespace litehtml
             {
                 ret = m_root_render->render(0_px, 0_px, cb_context, nullptr);
                 m_root_render->ensure_layout_tree();
-                if(m_root_render->fetch_positioned())
-                {
-                    m_fixed_boxes.clear();
-                    m_root_render->render_positioned(rt);
-                }
-                m_root_render->collect_stacking_contexts(m_root_render);
+                m_fixed_boxes.clear();
+                m_root_render->render_positioned(rt);
                 m_size.width  = 0;
                 m_size.height = 0;
                 m_root_render->calc_document_size(m_size);

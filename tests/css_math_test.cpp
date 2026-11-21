@@ -1,5 +1,6 @@
 #include "litehtml/css_parser.h"
 #include "litehtml/document.h"
+#include "litehtml/render_item.h"
 #include "litehtml/style.h"
 #include "grid_test_container.h"
 #include <algorithm>
@@ -38,8 +39,9 @@ namespace
     class math_container : public grid_test_container
     {
       public:
-        int                                                  viewport_width = 800;
+        int                                                  viewport_width   = 800;
         int                                                  image_size_calls = 0;
+        mutable int                                          viewport_calls   = 0;
         litehtml::position                                   image_box;
         std::vector<litehtml::background_layer::color_point> stops;
         litehtml::uint_ptr create_font(const litehtml::font_description& description, const litehtml::document* doc,
@@ -57,6 +59,7 @@ namespace
         }
         void get_viewport(litehtml::position& viewport) const override
         {
+            ++viewport_calls;
             grid_test_container::get_viewport(viewport);
             viewport.width = viewport_width;
         }
@@ -468,6 +471,85 @@ int main()
         ok &= check(reused_absolute && near(reused_absolute->get_placement().x.value(), 5) &&
                         near(reused_absolute->get_placement().y.value(), 73),
                     "absolute descendants of reused flex layouts use the final containing block");
+    }
+
+    {
+        math_container positioned_container;
+        const auto     positioned =
+            document::createFromString("<!doctype html><style>body{margin:0}"
+                                       "#relative{position:relative;left:20px;top:30px;width:300px;height:120px}"
+                                       "#absolute{position:absolute;left:10px;top:15px;width:100px;height:80px}"
+                                       "#fixed{position:fixed;left:50%;top:7px;width:40px;height:20px}"
+                                       "#inside{position:absolute;left:50%;top:0;width:10px;height:10px}"
+                                       "</style><div id=relative><div><div id=absolute><div><div id=fixed>"
+                                       "<div><div id=inside></div></div></div></div></div></div></div>",
+                                       &positioned_container);
+        const auto absolute  = positioned->root()->select_one("#absolute");
+        const auto fixed     = positioned->root()->select_one("#fixed");
+        const auto inside    = positioned->root()->select_one("#inside");
+        ok                  &= check(absolute && fixed && inside, "positioned test elements exist");
+        if(absolute && fixed && inside)
+        {
+            const auto absolute_render = absolute->get_render_item();
+            const auto fixed_render    = fixed->get_render_item();
+            const auto inside_render   = inside->get_render_item();
+            for(const int width : {800, 400, 800})
+            {
+                positioned_container.viewport_width = width;
+                positioned->render(width);
+                ok &= check(near(absolute->get_placement().x.value(), 30) &&
+                                near(absolute->get_placement().y.value(), 45) &&
+                                near(fixed->get_placement().x.value(), width / 2.0f) &&
+                                near(inside->get_placement().x.value(), width / 2.0f + 20),
+                            "nested positioned elements retain their containing blocks across resizing");
+            }
+            ok &= check(absolute_render && fixed_render && inside_render, "positioned test renderers exist");
+            if(absolute_render && fixed_render && inside_render)
+            {
+                // Sentinel positions reveal whether each nested element was processed.
+                absolute_render->pos().x            = 77_px;
+                inside_render->pos().x              = 88_px;
+                positioned_container.viewport_width = 600;
+                positioned->render(600, render_fixed_only);
+                position::vector fixed_boxes;
+                positioned->get_fixed_boxes(fixed_boxes);
+                ok &= check(absolute_render->pos().x == 77_px && inside_render->pos().x == 88_px &&
+                                near(fixed->get_placement().x.value(), 300) && fixed_boxes.size() == 1,
+                            "fixed-only layout traverses excluded ancestors without relaying out nested absolutes");
+
+                fixed_render->pos().x = 123_px;
+                positioned->root_render()->render_positioned(render_no_fixed);
+                ok &= check(absolute_render->pos().x == 10_px && fixed_render->pos().x == 123_px &&
+                                inside_render->pos().x == 20_px,
+                            "no-fixed layout skips nested fixed boxes but reaches their absolute descendants");
+                positioned->render(600, render_no_fixed);
+                positioned->get_fixed_boxes(fixed_boxes);
+                ok &= check(fixed_boxes.empty(), "no-fixed document layout clears fixed-box bookkeeping");
+            }
+        }
+    }
+    {
+        math_container changing_container;
+        const auto     changing = document::createFromString(
+            "<style>body{margin:0}#fixed{position:fixed;left:1px;top:2px;width:10px;height:10px}"
+            "@media(max-width:500px){#fixed{display:none}}</style><div id=fixed></div>",
+            &changing_container);
+        position::vector fixed_boxes;
+        changing->render(800);
+        changing->get_fixed_boxes(fixed_boxes);
+        ok                                &= check(fixed_boxes.size() == 1, "fixed layout registers its redraw bounds");
+        changing_container.viewport_width  = 400;
+        changing->media_changed();
+        changing->render(400);
+        changing->get_fixed_boxes(fixed_boxes);
+        ok &= check(fixed_boxes.empty(), "removing the last fixed box clears stale redraw bounds");
+
+        const auto relatives = document::createFromString(
+            "<style>div{position:relative}</style><div><div><div></div></div></div>", &changing_container);
+        relatives->render(400);
+        changing_container.viewport_calls = 0;
+        relatives->root_render()->render_positioned();
+        ok &= check(changing_container.viewport_calls == 1, "positioned traversal reads the viewport once");
     }
     return ok ? 0 : 1;
 }

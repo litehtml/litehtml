@@ -601,676 +601,632 @@ litehtml::render_item::split_inlines()
     return ret;
 }
 
-bool litehtml::render_item::fetch_positioned()
-{
-    bool ret = false;
-
-    m_positioned.clear();
-
-    for(auto& el : m_children)
-    {
-        litehtml::element_position el_pos = el->src_el()->css().get_position();
-        if(el_pos != element_position_static)
-        {
-            add_positioned(el);
-        }
-        if(!ret && (el_pos == element_position_absolute || el_pos == element_position_fixed))
-        {
-            ret = true;
-        }
-        if(el->fetch_positioned())
-        {
-            ret = true;
-        }
-    }
-    return ret;
-}
-
 void litehtml::render_item::render_positioned(render_type rt)
 {
     position view_port;
     src_el()->get_document()->container()->get_viewport(view_port);
+    render_positioned_children(*this, shared_from_this(), view_port, rt);
+}
 
-    bool process = false;
-    for(auto& el : m_positioned)
+void litehtml::render_item::render_positioned_children(render_item&                        containing_block,
+                                                       const std::shared_ptr<render_item>& stacking_parent,
+                                                       const position& view_port, render_type rt)
+{
+    m_stacking_contexts.clear();
+
+    for(auto& el : m_children)
     {
-        element_position el_position = el->src_el()->css().get_position();
-
-        process = false;
-        if(el->src_el()->css().get_display() != display_none)
+        const auto el_position = el->css().get_position();
+        if(el->css().get_display() != display_none &&
+           ((el_position == element_position_absolute && rt != render_fixed_only) ||
+            (el_position == element_position_fixed && rt != render_no_fixed)))
         {
-            if(el_position == element_position_absolute)
-            {
-                if(rt != render_fixed_only)
-                {
-                    process = true;
-                }
-            } else if(el_position == element_position_fixed)
-            {
-                if(rt != render_no_fixed)
-                {
-                    process = true;
-                }
-            }
+            containing_block.render_positioned_element(el, view_port);
+        }
+        const bool stacked = el->src_el()->is_positioned() ||
+                             ((el->is_flex_item() || el->is_grid_item()) && !el->css().z_index_is_auto());
+        if(stacked)
+        {
+            stacking_parent->m_stacking_contexts.push_back(el);
+            el->m_stacking_context = stacking_parent;
+        } else
+        {
+            el->m_stacking_context.reset();
         }
 
-        if(process)
-        {
-            containing_block_context containing_block_size;
-            position                 containing_block;
-            std::optional<position>  grid_area;
-            if(el_position == element_position_fixed || (is_root() && !src_el()->is_positioned()))
-            {
-                containing_block.width  = view_port.width;
-                containing_block.height = view_port.height;
-            } else
-            {
-                containing_block = {0_px, 0_px, m_pos.width + m_padding.width(), m_pos.height + m_padding.height()};
-                grid_area        = positioned_grid_area(el, containing_block);
-                if(grid_area)
-                {
-                    containing_block = *grid_area;
-                }
-            }
-            containing_block_size.width         = containing_block.width;
-            containing_block_size.height        = containing_block.height;
-            containing_block_size.height.type   = containing_block_context::cbc_value_type_absolute;
-            containing_block_size.quirks_height = containing_block_size.height;
-            // An exact used width must not replace the containing block's outline percentage base.
-            containing_block_size.outline_percentage_width = containing_block_size.width.value;
-
-            css_length css_left   = el->src_el()->css().get_offsets().left;
-            css_length css_right  = el->src_el()->css().get_offsets().right;
-            css_length css_top    = el->src_el()->css().get_offsets().top;
-            css_length css_bottom = el->src_el()->css().get_offsets().bottom;
-
-            bool need_render = false;
-
-            css_length el_width  = el->src_el()->css().get_width();
-            css_length el_height = el->src_el()->css().get_height();
-
-            auto [el_static_offset_x, el_static_offset_y]  = element_static_offset(el);
-            el_static_offset_x                            -= containing_block.x;
-            el_static_offset_y                            -= containing_block.y;
-            // Only direct grid children use the grid area as their static-position rectangle.
-            const bool grid_child  = grid_area && el->parent().get() == this;
-            pixel_t    el_static_x = grid_child ? 0_px : el->m_pos.x + el_static_offset_x - el->content_offset_left();
-            pixel_t    el_static_y = grid_child ? 0_px : el->m_pos.y + el_static_offset_y - el->content_offset_top();
-
-            const auto& padding             = el->css().get_padding();
-            const auto& margins             = el->css().get_margins();
-            const bool  percentage_outlines = padding.left.has_percentage() || padding.right.has_percentage() ||
-                                              padding.top.has_percentage() || padding.bottom.has_percentage() ||
-                                              margins.left.has_percentage() || margins.right.has_percentage() ||
-                                              margins.top.has_percentage() || margins.bottom.has_percentage();
-            const bool  intrinsic_width     = el_width.is_intrinsic_sizing() ||
-                                              el->css().get_min_width().is_intrinsic_sizing() ||
-                                              el->css().get_max_width().is_intrinsic_sizing();
-            const bool  intrinsic_height    = el_height.is_intrinsic_sizing() ||
-                                              el->css().get_min_height().is_intrinsic_sizing() ||
-                                              el->css().get_max_height().is_intrinsic_sizing();
-            const bool  resolved_width      = intrinsic_width && !el_width.is_auto_or_none();
-            const bool  resolved_height     = intrinsic_height && !el_height.is_auto_or_none();
-            if(intrinsic_width || intrinsic_height || percentage_outlines)
-            {
-                auto measure = containing_block_size;
-                if((intrinsic_height || percentage_outlines) && el_width.is_auto_or_none() &&
-                   !css_left.is_predefined() && !css_right.is_predefined())
-                {
-                    measure.width.value =
-                        std::max(0_px, measure.width.value - css_left.calc_percent(containing_block_size.width) -
-                                           css_right.calc_percent(containing_block_size.width));
-                    measure.render_width = measure.width;
-                }
-                el->render(0_px, 0_px, measure, nullptr);
-                if(resolved_width)
-                {
-                    el_width.set_value((el->m_pos.width + el->box_sizing_width()).value(), css_units_px);
-                }
-                if(resolved_height)
-                {
-                    el_height.set_value((el->m_pos.height + el->box_sizing_height()).value(), css_units_px);
-                }
-            }
-
-            // The height is a css height, so it is specified in the box sizing of the element and
-            // the paddings and the borders are added to it only for a content-box element.
-            auto fix_height_min_max = [&](pixel_t height) {
-                auto max_height = el->css().get_max_height();
-                auto min_height = el->css().get_min_height();
-                if(!resolved_height && max_height.is_intrinsic_sizing())
-                {
-                    height = std::min(height, el->m_pos.height + el->box_sizing_height());
-                } else if(!resolved_height && !max_height.is_predefined())
-                {
-                    pixel_t max_height_value = max_height.calc_percent(containing_block_size.height);
-                    height                   = std::min(height, max_height_value);
-                }
-                if(!resolved_height && min_height.is_intrinsic_sizing())
-                {
-                    height = std::max(height, el->m_pos.height + el->box_sizing_height());
-                } else if(!resolved_height && !min_height.is_predefined())
-                {
-                    pixel_t min_height_value = min_height.calc_percent(containing_block_size.height);
-                    height                   = std::max(height, min_height_value);
-                }
-                height += el->content_offset_height() - el->box_sizing_height();
-                return height;
-            };
-
-            // see fix_height_min_max
-            auto fix_width_min_max = [&](pixel_t width) {
-                auto max_width = el->css().get_max_width();
-                auto min_width = el->css().get_min_width();
-                if(!resolved_width && max_width.is_intrinsic_sizing())
-                {
-                    width = std::min(width, el->resolve_intrinsic_width(max_width, containing_block_size.width));
-                } else if(!resolved_width && !max_width.is_predefined())
-                {
-                    pixel_t max_width_value = max_width.calc_percent(containing_block_size.width);
-                    width                   = std::min(width, max_width_value);
-                }
-                if(!resolved_width && min_width.is_intrinsic_sizing())
-                {
-                    width = std::max(width, el->resolve_intrinsic_width(min_width, containing_block_size.width));
-                } else if(!resolved_width && !min_width.is_predefined())
-                {
-                    pixel_t min_width_value = min_width.calc_percent(containing_block_size.width);
-                    width                   = std::max(width, min_width_value);
-                }
-                width += el->content_offset_width() - el->box_sizing_width();
-                return width;
-            };
-
-            pixel_t bottom = 0_px;
-            pixel_t top    = 0_px;
-            pixel_t height = 0_px;
-
-            // Calculate vertical position
-            // https://www.w3.org/TR/CSS22/visudet.html#abs-non-replaced-height
-            // 10.6.4 Absolutely positioned, non-replaced elements
-            if(css_top.is_predefined() && !css_bottom.is_predefined() && el_height.is_predefined())
-            {
-                // 1. 'top' and 'height' are 'auto' and 'bottom' is not 'auto', then the height is based on the
-                // content per 10.6.7, set 'auto' values for 'margin-top' and 'margin-bottom' to 0, and solve for 'top'
-                if(el->css().get_margins().top.is_predefined())
-                {
-                    el->m_margins.top = 0;
-                }
-                if(el->css().get_margins().bottom.is_predefined())
-                {
-                    el->m_margins.bottom = 0;
-                }
-                height = el->height();
-                bottom = css_bottom.calc_percent(containing_block_size.height);
-                top    = containing_block_size.height.value - height - bottom;
-            } else if(css_top.is_predefined() && css_bottom.is_predefined() && !el_height.is_predefined())
-            {
-                // 2. 'top' and 'bottom' are 'auto' and 'height' is not 'auto', then set 'top' to the static position,
-                // set 'auto' values for 'margin-top' and 'margin-bottom' to 0, and solve for 'bottom'
-                if(el->css().get_margins().top.is_predefined())
-                {
-                    el->m_margins.top = 0;
-                }
-                if(el->css().get_margins().bottom.is_predefined())
-                {
-                    el->m_margins.bottom = 0;
-                }
-                top    = el_static_y;
-                height = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
-            } else if(!css_top.is_predefined() && css_bottom.is_predefined() && el_height.is_predefined())
-            {
-                // 3. 'height' and 'bottom' are 'auto' and 'top' is not 'auto', then the height is based on the
-                // content per 10.6.7, set 'auto' values for 'margin-top' and 'margin-bottom' to 0,
-                // and solve for 'bottom'
-                if(el->css().get_margins().top.is_predefined())
-                {
-                    el->m_margins.top = 0;
-                }
-                if(el->css().get_margins().bottom.is_predefined())
-                {
-                    el->m_margins.bottom = 0;
-                }
-                height = el->height();
-                top    = css_top.calc_percent(containing_block_size.height);
-            } else if(css_top.is_predefined() && !css_bottom.is_predefined() && !el_height.is_predefined())
-            {
-                // 4. 'top' is 'auto', 'height' and 'bottom' are not 'auto', then set 'auto' values for 'margin-top'
-                // and 'margin-bottom' to 0, and solve for 'top'
-                if(el->css().get_margins().top.is_predefined())
-                {
-                    el->m_margins.top = 0;
-                }
-                if(el->css().get_margins().bottom.is_predefined())
-                {
-                    el->m_margins.bottom = 0;
-                }
-                height = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
-                bottom = css_bottom.calc_percent(containing_block_size.height);
-                top    = containing_block_size.height.value - height - bottom;
-            } else if(!css_top.is_predefined() && !css_bottom.is_predefined() && el_height.is_predefined())
-            {
-                // 5. 'height' is 'auto', 'top' and 'bottom' are not 'auto', then 'auto' values for 'margin-top' and
-                // 'margin-bottom' are set to 0 and solve for 'height'
-                if(el->css().get_margins().top.is_predefined())
-                {
-                    el->m_margins.top = 0;
-                }
-                if(el->css().get_margins().bottom.is_predefined())
-                {
-                    el->m_margins.bottom = 0;
-                }
-                bottom = css_bottom.calc_percent(containing_block_size.height);
-                top    = css_top.calc_percent(containing_block_size.height);
-                if(el->src_el()->is_replaced())
-                {
-                    height = el->height() - el->content_offset_height();
-                    pixel_t reminded =
-                        (containing_block_size.height.value - top - bottom) - height - el->content_offset_height();
-                    if(reminded > 0_px)
-                    {
-                        int divider = 0;
-                        if(el->css().get_margins().top.is_predefined())
-                        {
-                            divider++;
-                        }
-                        if(el->css().get_margins().bottom.is_predefined())
-                        {
-                            divider++;
-                        }
-                        if(divider != 0)
-                        {
-                            if(el->css().get_margins().top.is_predefined())
-                            {
-                                el->m_margins.top = reminded / pixel_t(divider);
-                            }
-                            if(el->css().get_margins().bottom.is_predefined())
-                            {
-                                el->m_margins.bottom = reminded / pixel_t(divider);
-                            }
-                        }
-                    }
-                    height += el->content_offset_height();
-                } else
-                {
-                    height = containing_block_size.height.value - top - bottom;
-                }
-                if(intrinsic_height)
-                {
-                    height = fix_height_min_max(height - el->render_offset_height());
-                }
-                if(!intrinsic_height && !el->css().get_max_height().is_predefined())
-                {
-                    pixel_t max_height = el->css().get_max_height().calc_percent(containing_block_size.height);
-                    if(height - el->content_offset_height() > max_height)
-                    {
-                        pixel_t reminded = height - el->content_offset_height() - max_height;
-                        height           = max_height;
-                        int divider      = 0;
-                        if(el->css().get_margins().top.is_predefined())
-                        {
-                            divider++;
-                        }
-                        if(el->css().get_margins().bottom.is_predefined())
-                        {
-                            divider++;
-                        }
-                        if(divider != 0)
-                        {
-                            if(el->css().get_margins().top.is_predefined())
-                            {
-                                el->m_margins.top = reminded / pixel_t(divider);
-                            }
-                            if(el->css().get_margins().bottom.is_predefined())
-                            {
-                                el->m_margins.bottom = reminded / pixel_t(divider);
-                            }
-                        }
-                        height += el->content_offset_height();
-                    }
-                }
-            } else if(!css_top.is_predefined() && css_bottom.is_predefined() && !el_height.is_predefined())
-            {
-                // 6. 'bottom' is 'auto', 'top' and 'height' are not 'auto', then set 'auto' values for 'margin-top'
-                // and 'margin-bottom' to 0 and solve for 'bottom'
-                if(el->css().get_margins().top.is_predefined())
-                {
-                    el->m_margins.top = 0;
-                }
-                if(el->css().get_margins().bottom.is_predefined())
-                {
-                    el->m_margins.bottom = 0;
-                }
-                height = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
-                top    = css_top.calc_percent(containing_block_size.height);
-            } else if(css_top.is_predefined() && css_bottom.is_predefined() && el_height.is_predefined())
-            {
-                // If all three of 'top', 'height', and 'bottom' are auto, set 'top' to the static position and
-                // apply rule number three.
-                if(el->css().get_margins().top.is_predefined())
-                {
-                    el->m_margins.top = 0;
-                }
-                if(el->css().get_margins().bottom.is_predefined())
-                {
-                    el->m_margins.bottom = 0;
-                }
-                height = el->height();
-                top    = el_static_y;
-            } else
-            {
-                // If none of the three are 'auto':
-                height           = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
-                top              = css_top.calc_percent(containing_block_size.height);
-                bottom           = css_bottom.calc_percent(containing_block_size.height);
-                pixel_t remained = containing_block_size.height.value - height - top - bottom;
-
-                if(el->css().get_margins().top.is_predefined() && el->css().get_margins().bottom.is_predefined())
-                {
-                    // If both 'margin-top' and 'margin-bottom' are 'auto', solve the equation under the extra
-                    // constraint that the two margins get equal values.
-                    el->m_margins.top = el->m_margins.bottom  = remained / 2_px;
-                    height                                   += el->m_margins.top + el->m_margins.bottom;
-                } else
-                {
-                    // If one of 'margin-top' or 'margin-bottom' is 'auto', solve the equation for that value.
-                    if(el->css().get_margins().top.is_predefined())
-                    {
-                        el->m_margins.top  = remained;
-                        height            += el->m_margins.top;
-                    }
-                    if(el->css().get_margins().bottom.is_predefined())
-                    {
-                        el->m_margins.bottom  = remained;
-                        height               += el->m_margins.bottom;
-                    }
-                }
-            }
-            el->m_pos.y = top + el->content_offset_top();
-            if(el->m_pos.height != height - el->content_offset_height())
-            {
-                el->m_pos.height = height - el->content_offset_height();
-                need_render      = true;
-            }
-
-            // Calculate horizontal position
-            pixel_t right = 0_px;
-            pixel_t left  = 0_px;
-            pixel_t width = 0_px;
-            // https://www.w3.org/TR/CSS22/visudet.html#abs-non-replaced-width
-            // 10.3.7 Absolutely positioned, non-replaced elements
-            if(css_left.is_predefined() && !css_right.is_predefined() && el_width.is_predefined())
-            {
-                // 1. 'left' and 'width' are 'auto' and 'right' is not 'auto', then the width is shrink-to-fit.
-                // Then solve for 'left'
-                if(el->css().get_margins().left.is_predefined())
-                {
-                    el->m_margins.left = 0;
-                }
-                if(el->css().get_margins().right.is_predefined())
-                {
-                    el->m_margins.right = 0;
-                }
-                width = el->width();
-                right = css_right.calc_percent(containing_block_size.width);
-                left  = containing_block_size.width.value - width - right;
-            } else if(css_left.is_predefined() && css_right.is_predefined() && !el_width.is_predefined())
-            {
-                // 2. 'left' and 'right' are 'auto' and 'width' is not 'auto', then if the 'direction' property of
-                // the element establishing the static-position containing block is 'ltr' set 'left' to the
-                // static position, otherwise set 'right' to the static position. Then solve for 'left'
-                // (if 'direction is 'rtl') or 'right' (if 'direction' is 'ltr').
-                if(el->css().get_margins().left.is_predefined())
-                {
-                    el->m_margins.left = 0;
-                }
-                if(el->css().get_margins().right.is_predefined())
-                {
-                    el->m_margins.right = 0;
-                }
-                left  = el_static_x;
-                width = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
-            } else if(!css_left.is_predefined() && css_right.is_predefined() && el_width.is_predefined())
-            {
-                // 3. 'width' and 'right' are 'auto' and 'left' is not 'auto', then the width is shrink-to-fit .
-                // Then solve for 'right'
-                if(el->css().get_margins().left.is_predefined())
-                {
-                    el->m_margins.left = 0;
-                }
-                if(el->css().get_margins().right.is_predefined())
-                {
-                    el->m_margins.right = 0;
-                }
-                width = el->width();
-                left  = css_left.calc_percent(containing_block_size.width);
-            } else if(css_left.is_predefined() && !css_right.is_predefined() && !el_width.is_predefined())
-            {
-                // 4. 'left' is 'auto', 'width' and 'right' are not 'auto', then solve for 'left'
-                if(el->css().get_margins().left.is_predefined())
-                {
-                    el->m_margins.left = 0;
-                }
-                if(el->css().get_margins().right.is_predefined())
-                {
-                    el->m_margins.right = 0;
-                }
-                right = css_right.calc_percent(containing_block_size.width);
-                width = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
-                left  = containing_block_size.width.value - right - width;
-            } else if(!css_left.is_predefined() && !css_right.is_predefined() && el_width.is_predefined())
-            {
-                // 5. 'width' is 'auto', 'left' and 'right' are not 'auto', then solve for 'width'
-                if(el->css().get_margins().left.is_predefined())
-                {
-                    el->m_margins.left = 0;
-                }
-                if(el->css().get_margins().right.is_predefined())
-                {
-                    el->m_margins.right = 0;
-                }
-                left  = css_left.calc_percent(containing_block_size.width);
-                right = css_right.calc_percent(containing_block_size.width);
-                if(el->src_el()->is_replaced())
-                {
-                    width = el->width() - el->content_offset_width();
-                    pixel_t reminded =
-                        (containing_block_size.width.value - left - right) - width - el->content_offset_width();
-                    if(reminded != 0_px)
-                    {
-                        int divider = 0;
-                        if(el->css().get_margins().left.is_predefined())
-                        {
-                            divider++;
-                        }
-                        if(el->css().get_margins().right.is_predefined())
-                        {
-                            divider++;
-                        }
-                        if(divider != 0)
-                        {
-                            if(el->css().get_margins().left.is_predefined())
-                            {
-                                el->m_margins.left = reminded / pixel_t(divider);
-                            }
-                            if(el->css().get_margins().right.is_predefined())
-                            {
-                                el->m_margins.right = reminded / pixel_t(divider);
-                            }
-                        }
-                    }
-                    width += el->content_offset_width();
-                } else
-                {
-                    width = containing_block_size.width.value - left - right;
-                }
-                if(intrinsic_width)
-                {
-                    width = fix_width_min_max(width - el->render_offset_width());
-                }
-                if(!intrinsic_width && !el->css().get_max_width().is_predefined())
-                {
-                    pixel_t max_width = el->css().get_max_width().calc_percent(containing_block_size.height);
-                    if(width - el->content_offset_width() > max_width)
-                    {
-                        pixel_t reminded = width - el->content_offset_width() - max_width;
-                        width            = max_width;
-                        int divider      = 0;
-                        if(el->css().get_margins().left.is_predefined())
-                        {
-                            divider++;
-                        }
-                        if(el->css().get_margins().right.is_predefined())
-                        {
-                            divider++;
-                        }
-                        if(divider != 0)
-                        {
-                            if(el->css().get_margins().left.is_predefined())
-                            {
-                                el->m_margins.left = reminded / pixel_t(divider);
-                            }
-                            if(el->css().get_margins().right.is_predefined())
-                            {
-                                el->m_margins.right = reminded / pixel_t(divider);
-                            }
-                        }
-                        width += el->content_offset_width();
-                    }
-                }
-            } else if(!css_left.is_predefined() && css_right.is_predefined() && !el_width.is_predefined())
-            {
-                // 6. 'right' is 'auto', 'left' and 'width' are not 'auto', then solve for 'right'
-                if(el->css().get_margins().left.is_predefined())
-                {
-                    el->m_margins.left = 0;
-                }
-                if(el->css().get_margins().right.is_predefined())
-                {
-                    el->m_margins.right = 0;
-                }
-                left  = css_left.calc_percent(containing_block_size.width);
-                width = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
-            } else if(css_left.is_predefined() && css_right.is_predefined() && el_width.is_predefined())
-            {
-                // If all three of 'left', 'width', and 'right' are 'auto': First set any 'auto' values for
-                // 'margin-left' and 'margin-right' to 0. Then, if the 'direction' property of the element
-                // establishing the static-position containing block is 'ltr' set 'left' to the static position
-                // and apply rule number three below; otherwise, set 'right' to the static position and apply
-                // rule number one below.
-                if(el->css().get_margins().left.is_predefined())
-                {
-                    el->m_margins.left = 0;
-                }
-                if(el->css().get_margins().right.is_predefined())
-                {
-                    el->m_margins.right = 0;
-                }
-                width = el->width();
-                left  = el_static_x;
-            } else
-            {
-                // If none of the three is 'auto':
-                width            = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
-                left             = css_left.calc_percent(containing_block_size.width);
-                right            = css_right.calc_percent(containing_block_size.width);
-                pixel_t remained = containing_block_size.width.value - width - left - right;
-
-                if(el->css().get_margins().left.is_predefined() && el->css().get_margins().right.is_predefined())
-                {
-                    // If both 'margin-left' and 'margin-right' are 'auto', solve the equation under the extra
-                    // constraint that the two margins get equal values, unless this would make them negative,
-                    // in which case when direction of the containing block is 'ltr' ('rtl'), set 'margin-left'
-                    // ('margin-right') to zero and solve for 'margin-right' ('margin-left').
-                    el->m_margins.left = el->m_margins.right = remained / 2_px;
-                    if(el->m_margins.left < 0_px)
-                    {
-                        el->m_margins.left  = 0;
-                        el->m_margins.right = remained;
-                    }
-                    width += el->m_margins.left + el->m_margins.right;
-                } else
-                {
-                    // If one of 'margin-left' or 'margin-right' is 'auto', solve the equation
-                    // for that value. If the values are over-constrained, ignore the value for 'left'
-                    // (in case the 'direction' property of the containing block is 'rtl') or 'right' (in case
-                    // 'direction' is 'ltr') and solve for that value.
-                    if(el->css().get_margins().left.is_predefined())
-                    {
-                        el->m_margins.left  = remained;
-                        width              += el->m_margins.left;
-                    }
-                    if(el->css().get_margins().right.is_predefined())
-                    {
-                        el->m_margins.right  = remained;
-                        width               += el->m_margins.right;
-                    }
-                }
-            }
-            el->m_pos.x = left + el->content_offset_left();
-            if(el->m_pos.width != width - el->content_offset_width())
-            {
-                el->m_pos.width = width - el->content_offset_width();
-                need_render     = true;
-            }
-
-            if(el_position != element_position_fixed)
-            {
-                el->m_pos.x -= el_static_offset_x;
-                el->m_pos.y -= el_static_offset_y;
-            }
-
-            if(need_render)
-            {
-                // The width of the element is already resolved against its containing block, so it is
-                // passed as an exact width. Passing it as a normal containing block width would make
-                // the element resolve its own percentage width against itself, and its percentage
-                // sized children would then be laid out into that wrong containing block.
-                // An exact width is specified in the box sizing of the element, like the css width is,
-                // because calculate_containing_block_context() subtracts the paddings and the borders
-                // from it for a border-box element.
-                position pos = el->m_pos;
-                el->render(el->left(), el->top(),
-                           containing_block_size.new_width(el->m_pos.width + el->box_sizing_width(),
-                                                           containing_block_context::size_mode_exact_width),
-                           nullptr, true);
-                el->m_pos = pos;
-            }
-
-            el->ensure_layout_tree();
-            // Calculate element bounds
-            el->calc_bounds();
-
-            if(el_position == element_position_fixed)
-            {
-                src_el()->get_document()->add_fixed_box(el->m_bounds);
-            }
-        }
-
-        el->render_positioned();
-    }
-
-    if(!m_positioned.empty())
-    {
-        std::stable_sort(m_positioned.begin(), m_positioned.end(),
-                         [](const std::shared_ptr<render_item>& Left, const std::shared_ptr<render_item>& Right) {
-                             return (Left->src_el()->css().get_z_index() < Right->src_el()->css().get_z_index());
-                         });
+        el->render_positioned_children(el_position == element_position_static ? containing_block : *el,
+                                       el->creates_stacking_context() ? el : stacking_parent, view_port, rt);
     }
 }
 
-void litehtml::render_item::add_positioned(const std::shared_ptr<litehtml::render_item>& el)
+void litehtml::render_item::render_positioned_element(const std::shared_ptr<render_item>& el, const position& view_port)
 {
-    if(src_el()->css().get_position() != element_position_static || is_root())
+    const auto               el_position = el->css().get_position();
+    containing_block_context containing_block_size;
+    position                 containing_block;
+    std::optional<position>  grid_area;
+    if(el_position == element_position_fixed || (is_root() && !src_el()->is_positioned()))
     {
-        m_positioned.push_back(el);
+        containing_block.width  = view_port.width;
+        containing_block.height = view_port.height;
     } else
     {
-        auto el_parent = parent();
-        if(el_parent)
+        containing_block = {0_px, 0_px, m_pos.width + m_padding.width(), m_pos.height + m_padding.height()};
+        grid_area        = positioned_grid_area(el, containing_block);
+        if(grid_area)
         {
-            el_parent->add_positioned(el);
+            containing_block = *grid_area;
         }
+    }
+    containing_block_size.width         = containing_block.width;
+    containing_block_size.height        = containing_block.height;
+    containing_block_size.height.type   = containing_block_context::cbc_value_type_absolute;
+    containing_block_size.quirks_height = containing_block_size.height;
+    // An exact used width must not replace the containing block's outline percentage base.
+    containing_block_size.outline_percentage_width = containing_block_size.width.value;
+
+    css_length css_left   = el->src_el()->css().get_offsets().left;
+    css_length css_right  = el->src_el()->css().get_offsets().right;
+    css_length css_top    = el->src_el()->css().get_offsets().top;
+    css_length css_bottom = el->src_el()->css().get_offsets().bottom;
+
+    bool need_render = false;
+
+    css_length el_width  = el->src_el()->css().get_width();
+    css_length el_height = el->src_el()->css().get_height();
+
+    auto [el_static_offset_x, el_static_offset_y]  = element_static_offset(el);
+    el_static_offset_x                            -= containing_block.x;
+    el_static_offset_y                            -= containing_block.y;
+    // Only direct grid children use the grid area as their static-position rectangle.
+    const bool grid_child  = grid_area && el->parent().get() == this;
+    pixel_t    el_static_x = grid_child ? 0_px : el->m_pos.x + el_static_offset_x - el->content_offset_left();
+    pixel_t    el_static_y = grid_child ? 0_px : el->m_pos.y + el_static_offset_y - el->content_offset_top();
+
+    const auto& padding             = el->css().get_padding();
+    const auto& margins             = el->css().get_margins();
+    const bool  percentage_outlines = padding.left.has_percentage() || padding.right.has_percentage() ||
+                                      padding.top.has_percentage() || padding.bottom.has_percentage() ||
+                                      margins.left.has_percentage() || margins.right.has_percentage() ||
+                                      margins.top.has_percentage() || margins.bottom.has_percentage();
+    const bool  intrinsic_width = el_width.is_intrinsic_sizing() || el->css().get_min_width().is_intrinsic_sizing() ||
+                                  el->css().get_max_width().is_intrinsic_sizing();
+    const bool intrinsic_height = el_height.is_intrinsic_sizing() || el->css().get_min_height().is_intrinsic_sizing() ||
+                                  el->css().get_max_height().is_intrinsic_sizing();
+    const bool resolved_width   = intrinsic_width && !el_width.is_auto_or_none();
+    const bool resolved_height  = intrinsic_height && !el_height.is_auto_or_none();
+    if(intrinsic_width || intrinsic_height || percentage_outlines)
+    {
+        auto measure = containing_block_size;
+        if((intrinsic_height || percentage_outlines) && el_width.is_auto_or_none() && !css_left.is_predefined() &&
+           !css_right.is_predefined())
+        {
+            measure.width.value =
+                std::max(0_px, measure.width.value - css_left.calc_percent(containing_block_size.width) -
+                                   css_right.calc_percent(containing_block_size.width));
+            measure.render_width = measure.width;
+        }
+        el->render(0_px, 0_px, measure, nullptr);
+        if(resolved_width)
+        {
+            el_width.set_value((el->m_pos.width + el->box_sizing_width()).value(), css_units_px);
+        }
+        if(resolved_height)
+        {
+            el_height.set_value((el->m_pos.height + el->box_sizing_height()).value(), css_units_px);
+        }
+    }
+
+    // The height is a css height, so it is specified in the box sizing of the element and
+    // the paddings and the borders are added to it only for a content-box element.
+    auto fix_height_min_max = [&](pixel_t height) {
+        auto max_height = el->css().get_max_height();
+        auto min_height = el->css().get_min_height();
+        if(!resolved_height && max_height.is_intrinsic_sizing())
+        {
+            height = std::min(height, el->m_pos.height + el->box_sizing_height());
+        } else if(!resolved_height && !max_height.is_predefined())
+        {
+            pixel_t max_height_value = max_height.calc_percent(containing_block_size.height);
+            height                   = std::min(height, max_height_value);
+        }
+        if(!resolved_height && min_height.is_intrinsic_sizing())
+        {
+            height = std::max(height, el->m_pos.height + el->box_sizing_height());
+        } else if(!resolved_height && !min_height.is_predefined())
+        {
+            pixel_t min_height_value = min_height.calc_percent(containing_block_size.height);
+            height                   = std::max(height, min_height_value);
+        }
+        height += el->content_offset_height() - el->box_sizing_height();
+        return height;
+    };
+
+    // see fix_height_min_max
+    auto fix_width_min_max = [&](pixel_t width) {
+        auto max_width = el->css().get_max_width();
+        auto min_width = el->css().get_min_width();
+        if(!resolved_width && max_width.is_intrinsic_sizing())
+        {
+            width = std::min(width, el->resolve_intrinsic_width(max_width, containing_block_size.width));
+        } else if(!resolved_width && !max_width.is_predefined())
+        {
+            pixel_t max_width_value = max_width.calc_percent(containing_block_size.width);
+            width                   = std::min(width, max_width_value);
+        }
+        if(!resolved_width && min_width.is_intrinsic_sizing())
+        {
+            width = std::max(width, el->resolve_intrinsic_width(min_width, containing_block_size.width));
+        } else if(!resolved_width && !min_width.is_predefined())
+        {
+            pixel_t min_width_value = min_width.calc_percent(containing_block_size.width);
+            width                   = std::max(width, min_width_value);
+        }
+        width += el->content_offset_width() - el->box_sizing_width();
+        return width;
+    };
+
+    pixel_t bottom = 0_px;
+    pixel_t top    = 0_px;
+    pixel_t height = 0_px;
+
+    // Calculate vertical position
+    // https://www.w3.org/TR/CSS22/visudet.html#abs-non-replaced-height
+    // 10.6.4 Absolutely positioned, non-replaced elements
+    if(css_top.is_predefined() && !css_bottom.is_predefined() && el_height.is_predefined())
+    {
+        // 1. 'top' and 'height' are 'auto' and 'bottom' is not 'auto', then the height is based on the
+        // content per 10.6.7, set 'auto' values for 'margin-top' and 'margin-bottom' to 0, and solve for 'top'
+        if(el->css().get_margins().top.is_predefined())
+        {
+            el->m_margins.top = 0;
+        }
+        if(el->css().get_margins().bottom.is_predefined())
+        {
+            el->m_margins.bottom = 0;
+        }
+        height = el->height();
+        bottom = css_bottom.calc_percent(containing_block_size.height);
+        top    = containing_block_size.height.value - height - bottom;
+    } else if(css_top.is_predefined() && css_bottom.is_predefined() && !el_height.is_predefined())
+    {
+        // 2. 'top' and 'bottom' are 'auto' and 'height' is not 'auto', then set 'top' to the static position,
+        // set 'auto' values for 'margin-top' and 'margin-bottom' to 0, and solve for 'bottom'
+        if(el->css().get_margins().top.is_predefined())
+        {
+            el->m_margins.top = 0;
+        }
+        if(el->css().get_margins().bottom.is_predefined())
+        {
+            el->m_margins.bottom = 0;
+        }
+        top    = el_static_y;
+        height = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
+    } else if(!css_top.is_predefined() && css_bottom.is_predefined() && el_height.is_predefined())
+    {
+        // 3. 'height' and 'bottom' are 'auto' and 'top' is not 'auto', then the height is based on the
+        // content per 10.6.7, set 'auto' values for 'margin-top' and 'margin-bottom' to 0,
+        // and solve for 'bottom'
+        if(el->css().get_margins().top.is_predefined())
+        {
+            el->m_margins.top = 0;
+        }
+        if(el->css().get_margins().bottom.is_predefined())
+        {
+            el->m_margins.bottom = 0;
+        }
+        height = el->height();
+        top    = css_top.calc_percent(containing_block_size.height);
+    } else if(css_top.is_predefined() && !css_bottom.is_predefined() && !el_height.is_predefined())
+    {
+        // 4. 'top' is 'auto', 'height' and 'bottom' are not 'auto', then set 'auto' values for 'margin-top'
+        // and 'margin-bottom' to 0, and solve for 'top'
+        if(el->css().get_margins().top.is_predefined())
+        {
+            el->m_margins.top = 0;
+        }
+        if(el->css().get_margins().bottom.is_predefined())
+        {
+            el->m_margins.bottom = 0;
+        }
+        height = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
+        bottom = css_bottom.calc_percent(containing_block_size.height);
+        top    = containing_block_size.height.value - height - bottom;
+    } else if(!css_top.is_predefined() && !css_bottom.is_predefined() && el_height.is_predefined())
+    {
+        // 5. 'height' is 'auto', 'top' and 'bottom' are not 'auto', then 'auto' values for 'margin-top' and
+        // 'margin-bottom' are set to 0 and solve for 'height'
+        if(el->css().get_margins().top.is_predefined())
+        {
+            el->m_margins.top = 0;
+        }
+        if(el->css().get_margins().bottom.is_predefined())
+        {
+            el->m_margins.bottom = 0;
+        }
+        bottom = css_bottom.calc_percent(containing_block_size.height);
+        top    = css_top.calc_percent(containing_block_size.height);
+        if(el->src_el()->is_replaced())
+        {
+            height = el->height() - el->content_offset_height();
+            pixel_t reminded =
+                (containing_block_size.height.value - top - bottom) - height - el->content_offset_height();
+            if(reminded > 0_px)
+            {
+                int divider = 0;
+                if(el->css().get_margins().top.is_predefined())
+                {
+                    divider++;
+                }
+                if(el->css().get_margins().bottom.is_predefined())
+                {
+                    divider++;
+                }
+                if(divider != 0)
+                {
+                    if(el->css().get_margins().top.is_predefined())
+                    {
+                        el->m_margins.top = reminded / pixel_t(divider);
+                    }
+                    if(el->css().get_margins().bottom.is_predefined())
+                    {
+                        el->m_margins.bottom = reminded / pixel_t(divider);
+                    }
+                }
+            }
+            height += el->content_offset_height();
+        } else
+        {
+            height = containing_block_size.height.value - top - bottom;
+        }
+        if(intrinsic_height)
+        {
+            height = fix_height_min_max(height - el->render_offset_height());
+        }
+        if(!intrinsic_height && !el->css().get_max_height().is_predefined())
+        {
+            pixel_t max_height = el->css().get_max_height().calc_percent(containing_block_size.height);
+            if(height - el->content_offset_height() > max_height)
+            {
+                pixel_t reminded = height - el->content_offset_height() - max_height;
+                height           = max_height;
+                int divider      = 0;
+                if(el->css().get_margins().top.is_predefined())
+                {
+                    divider++;
+                }
+                if(el->css().get_margins().bottom.is_predefined())
+                {
+                    divider++;
+                }
+                if(divider != 0)
+                {
+                    if(el->css().get_margins().top.is_predefined())
+                    {
+                        el->m_margins.top = reminded / pixel_t(divider);
+                    }
+                    if(el->css().get_margins().bottom.is_predefined())
+                    {
+                        el->m_margins.bottom = reminded / pixel_t(divider);
+                    }
+                }
+                height += el->content_offset_height();
+            }
+        }
+    } else if(!css_top.is_predefined() && css_bottom.is_predefined() && !el_height.is_predefined())
+    {
+        // 6. 'bottom' is 'auto', 'top' and 'height' are not 'auto', then set 'auto' values for 'margin-top'
+        // and 'margin-bottom' to 0 and solve for 'bottom'
+        if(el->css().get_margins().top.is_predefined())
+        {
+            el->m_margins.top = 0;
+        }
+        if(el->css().get_margins().bottom.is_predefined())
+        {
+            el->m_margins.bottom = 0;
+        }
+        height = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
+        top    = css_top.calc_percent(containing_block_size.height);
+    } else if(css_top.is_predefined() && css_bottom.is_predefined() && el_height.is_predefined())
+    {
+        // If all three of 'top', 'height', and 'bottom' are auto, set 'top' to the static position and
+        // apply rule number three.
+        if(el->css().get_margins().top.is_predefined())
+        {
+            el->m_margins.top = 0;
+        }
+        if(el->css().get_margins().bottom.is_predefined())
+        {
+            el->m_margins.bottom = 0;
+        }
+        height = el->height();
+        top    = el_static_y;
+    } else
+    {
+        // If none of the three are 'auto':
+        height           = fix_height_min_max(el_height.calc_percent(containing_block_size.height));
+        top              = css_top.calc_percent(containing_block_size.height);
+        bottom           = css_bottom.calc_percent(containing_block_size.height);
+        pixel_t remained = containing_block_size.height.value - height - top - bottom;
+
+        if(el->css().get_margins().top.is_predefined() && el->css().get_margins().bottom.is_predefined())
+        {
+            // If both 'margin-top' and 'margin-bottom' are 'auto', solve the equation under the extra
+            // constraint that the two margins get equal values.
+            el->m_margins.top = el->m_margins.bottom  = remained / 2_px;
+            height                                   += el->m_margins.top + el->m_margins.bottom;
+        } else
+        {
+            // If one of 'margin-top' or 'margin-bottom' is 'auto', solve the equation for that value.
+            if(el->css().get_margins().top.is_predefined())
+            {
+                el->m_margins.top  = remained;
+                height            += el->m_margins.top;
+            }
+            if(el->css().get_margins().bottom.is_predefined())
+            {
+                el->m_margins.bottom  = remained;
+                height               += el->m_margins.bottom;
+            }
+        }
+    }
+    el->m_pos.y = top + el->content_offset_top();
+    if(el->m_pos.height != height - el->content_offset_height())
+    {
+        el->m_pos.height = height - el->content_offset_height();
+        need_render      = true;
+    }
+
+    // Calculate horizontal position
+    pixel_t right = 0_px;
+    pixel_t left  = 0_px;
+    pixel_t width = 0_px;
+    // https://www.w3.org/TR/CSS22/visudet.html#abs-non-replaced-width
+    // 10.3.7 Absolutely positioned, non-replaced elements
+    if(css_left.is_predefined() && !css_right.is_predefined() && el_width.is_predefined())
+    {
+        // 1. 'left' and 'width' are 'auto' and 'right' is not 'auto', then the width is shrink-to-fit.
+        // Then solve for 'left'
+        if(el->css().get_margins().left.is_predefined())
+        {
+            el->m_margins.left = 0;
+        }
+        if(el->css().get_margins().right.is_predefined())
+        {
+            el->m_margins.right = 0;
+        }
+        width = el->width();
+        right = css_right.calc_percent(containing_block_size.width);
+        left  = containing_block_size.width.value - width - right;
+    } else if(css_left.is_predefined() && css_right.is_predefined() && !el_width.is_predefined())
+    {
+        // 2. 'left' and 'right' are 'auto' and 'width' is not 'auto', then if the 'direction' property of
+        // the element establishing the static-position containing block is 'ltr' set 'left' to the
+        // static position, otherwise set 'right' to the static position. Then solve for 'left'
+        // (if 'direction is 'rtl') or 'right' (if 'direction' is 'ltr').
+        if(el->css().get_margins().left.is_predefined())
+        {
+            el->m_margins.left = 0;
+        }
+        if(el->css().get_margins().right.is_predefined())
+        {
+            el->m_margins.right = 0;
+        }
+        left  = el_static_x;
+        width = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
+    } else if(!css_left.is_predefined() && css_right.is_predefined() && el_width.is_predefined())
+    {
+        // 3. 'width' and 'right' are 'auto' and 'left' is not 'auto', then the width is shrink-to-fit .
+        // Then solve for 'right'
+        if(el->css().get_margins().left.is_predefined())
+        {
+            el->m_margins.left = 0;
+        }
+        if(el->css().get_margins().right.is_predefined())
+        {
+            el->m_margins.right = 0;
+        }
+        width = el->width();
+        left  = css_left.calc_percent(containing_block_size.width);
+    } else if(css_left.is_predefined() && !css_right.is_predefined() && !el_width.is_predefined())
+    {
+        // 4. 'left' is 'auto', 'width' and 'right' are not 'auto', then solve for 'left'
+        if(el->css().get_margins().left.is_predefined())
+        {
+            el->m_margins.left = 0;
+        }
+        if(el->css().get_margins().right.is_predefined())
+        {
+            el->m_margins.right = 0;
+        }
+        right = css_right.calc_percent(containing_block_size.width);
+        width = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
+        left  = containing_block_size.width.value - right - width;
+    } else if(!css_left.is_predefined() && !css_right.is_predefined() && el_width.is_predefined())
+    {
+        // 5. 'width' is 'auto', 'left' and 'right' are not 'auto', then solve for 'width'
+        if(el->css().get_margins().left.is_predefined())
+        {
+            el->m_margins.left = 0;
+        }
+        if(el->css().get_margins().right.is_predefined())
+        {
+            el->m_margins.right = 0;
+        }
+        left  = css_left.calc_percent(containing_block_size.width);
+        right = css_right.calc_percent(containing_block_size.width);
+        if(el->src_el()->is_replaced())
+        {
+            width            = el->width() - el->content_offset_width();
+            pixel_t reminded = (containing_block_size.width.value - left - right) - width - el->content_offset_width();
+            if(reminded != 0_px)
+            {
+                int divider = 0;
+                if(el->css().get_margins().left.is_predefined())
+                {
+                    divider++;
+                }
+                if(el->css().get_margins().right.is_predefined())
+                {
+                    divider++;
+                }
+                if(divider != 0)
+                {
+                    if(el->css().get_margins().left.is_predefined())
+                    {
+                        el->m_margins.left = reminded / pixel_t(divider);
+                    }
+                    if(el->css().get_margins().right.is_predefined())
+                    {
+                        el->m_margins.right = reminded / pixel_t(divider);
+                    }
+                }
+            }
+            width += el->content_offset_width();
+        } else
+        {
+            width = containing_block_size.width.value - left - right;
+        }
+        if(intrinsic_width)
+        {
+            width = fix_width_min_max(width - el->render_offset_width());
+        }
+        if(!intrinsic_width && !el->css().get_max_width().is_predefined())
+        {
+            pixel_t max_width = el->css().get_max_width().calc_percent(containing_block_size.height);
+            if(width - el->content_offset_width() > max_width)
+            {
+                pixel_t reminded = width - el->content_offset_width() - max_width;
+                width            = max_width;
+                int divider      = 0;
+                if(el->css().get_margins().left.is_predefined())
+                {
+                    divider++;
+                }
+                if(el->css().get_margins().right.is_predefined())
+                {
+                    divider++;
+                }
+                if(divider != 0)
+                {
+                    if(el->css().get_margins().left.is_predefined())
+                    {
+                        el->m_margins.left = reminded / pixel_t(divider);
+                    }
+                    if(el->css().get_margins().right.is_predefined())
+                    {
+                        el->m_margins.right = reminded / pixel_t(divider);
+                    }
+                }
+                width += el->content_offset_width();
+            }
+        }
+    } else if(!css_left.is_predefined() && css_right.is_predefined() && !el_width.is_predefined())
+    {
+        // 6. 'right' is 'auto', 'left' and 'width' are not 'auto', then solve for 'right'
+        if(el->css().get_margins().left.is_predefined())
+        {
+            el->m_margins.left = 0;
+        }
+        if(el->css().get_margins().right.is_predefined())
+        {
+            el->m_margins.right = 0;
+        }
+        left  = css_left.calc_percent(containing_block_size.width);
+        width = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
+    } else if(css_left.is_predefined() && css_right.is_predefined() && el_width.is_predefined())
+    {
+        // If all three of 'left', 'width', and 'right' are 'auto': First set any 'auto' values for
+        // 'margin-left' and 'margin-right' to 0. Then, if the 'direction' property of the element
+        // establishing the static-position containing block is 'ltr' set 'left' to the static position
+        // and apply rule number three below; otherwise, set 'right' to the static position and apply
+        // rule number one below.
+        if(el->css().get_margins().left.is_predefined())
+        {
+            el->m_margins.left = 0;
+        }
+        if(el->css().get_margins().right.is_predefined())
+        {
+            el->m_margins.right = 0;
+        }
+        width = el->width();
+        left  = el_static_x;
+    } else
+    {
+        // If none of the three is 'auto':
+        width            = fix_width_min_max(el_width.calc_percent(containing_block_size.width));
+        left             = css_left.calc_percent(containing_block_size.width);
+        right            = css_right.calc_percent(containing_block_size.width);
+        pixel_t remained = containing_block_size.width.value - width - left - right;
+
+        if(el->css().get_margins().left.is_predefined() && el->css().get_margins().right.is_predefined())
+        {
+            // If both 'margin-left' and 'margin-right' are 'auto', solve the equation under the extra
+            // constraint that the two margins get equal values, unless this would make them negative,
+            // in which case when direction of the containing block is 'ltr' ('rtl'), set 'margin-left'
+            // ('margin-right') to zero and solve for 'margin-right' ('margin-left').
+            el->m_margins.left = el->m_margins.right = remained / 2_px;
+            if(el->m_margins.left < 0_px)
+            {
+                el->m_margins.left  = 0;
+                el->m_margins.right = remained;
+            }
+            width += el->m_margins.left + el->m_margins.right;
+        } else
+        {
+            // If one of 'margin-left' or 'margin-right' is 'auto', solve the equation
+            // for that value. If the values are over-constrained, ignore the value for 'left'
+            // (in case the 'direction' property of the containing block is 'rtl') or 'right' (in case
+            // 'direction' is 'ltr') and solve for that value.
+            if(el->css().get_margins().left.is_predefined())
+            {
+                el->m_margins.left  = remained;
+                width              += el->m_margins.left;
+            }
+            if(el->css().get_margins().right.is_predefined())
+            {
+                el->m_margins.right  = remained;
+                width               += el->m_margins.right;
+            }
+        }
+    }
+    el->m_pos.x = left + el->content_offset_left();
+    if(el->m_pos.width != width - el->content_offset_width())
+    {
+        el->m_pos.width = width - el->content_offset_width();
+        need_render     = true;
+    }
+
+    if(el_position != element_position_fixed)
+    {
+        el->m_pos.x -= el_static_offset_x;
+        el->m_pos.y -= el_static_offset_y;
+    }
+
+    if(need_render)
+    {
+        // The width of the element is already resolved against its containing block, so it is
+        // passed as an exact width. Passing it as a normal containing block width would make
+        // the element resolve its own percentage width against itself, and its percentage
+        // sized children would then be laid out into that wrong containing block.
+        // An exact width is specified in the box sizing of the element, like the css width is,
+        // because calculate_containing_block_context() subtracts the paddings and the borders
+        // from it for a border-box element.
+        position pos = el->m_pos;
+        el->render(el->left(), el->top(),
+                   containing_block_size.new_width(el->m_pos.width + el->box_sizing_width(),
+                                                   containing_block_context::size_mode_exact_width),
+                   nullptr, true);
+        el->m_pos = pos;
+    }
+
+    el->ensure_layout_tree();
+    // Calculate element bounds
+    el->calc_bounds();
+
+    if(el_position == element_position_fixed)
+    {
+        src_el()->get_document()->add_fixed_box(el->m_bounds);
     }
 }
 
@@ -1295,28 +1251,6 @@ bool litehtml::render_item::creates_stacking_context() const
         return true;
     }
     return false;
-}
-
-void litehtml::render_item::collect_stacking_contexts(const std::shared_ptr<render_item>& stacking_parent)
-{
-    m_stacking_contexts.clear();
-
-    for(const auto& el : m_children)
-    {
-        const bool stacked = el->src_el()->is_positioned() ||
-                             ((el->is_flex_item() || el->is_grid_item()) && !el->css().z_index_is_auto());
-
-        if(stacked)
-        {
-            stacking_parent->m_stacking_contexts.push_back(el);
-            el->m_stacking_context = stacking_parent;
-        } else
-        {
-            el->m_stacking_context.reset();
-        }
-
-        el->collect_stacking_contexts(el->creates_stacking_context() ? el : stacking_parent);
-    }
 }
 
 void litehtml::render_item::calc_bounds()

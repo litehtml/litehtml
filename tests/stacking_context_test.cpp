@@ -17,11 +17,17 @@ namespace
     class click_container : public grid_test_container
     {
       public:
-        std::string clicked;
+        std::string                      clicked;
+        std::vector<litehtml::web_color> fills;
 
         void on_anchor_click(const char* url, const litehtml::element::ptr&) override
         {
             clicked = url;
+        }
+        void draw_solid_fill(litehtml::uint_ptr, const litehtml::background_layer&,
+                             const litehtml::web_color& color) override
+        {
+            fills.push_back(color);
         }
     };
 
@@ -50,6 +56,102 @@ int main()
 {
     using namespace litehtml;
     bool ok = true;
+
+    {
+        click_container container;
+        auto            doc = document::createFromString(
+            "<!doctype html><style>body{margin:0}.page{position:relative;width:80px;height:80px}"
+            "a{position:absolute;left:0;top:0;width:40px;height:40px}"
+            "#under{z-index:-1;background:#ff0000}#first{z-index:2;background:#00ff00}"
+            "#last{z-index:2;background:#0000ff}</style>"
+            "<div class=page><div><a id=first href=/first></a></div>"
+            "<a id=under href=/under></a><div><a id=last href=/last></a></div></div>",
+            &container);
+        for(int i = 0; i < 2; ++i)
+        {
+            doc->render(800);
+            container.fills.clear();
+            doc->draw(0, 0, 0, nullptr);
+            ok &= check(container.fills ==
+                            std::vector<web_color>{web_color(255, 0, 0), web_color(0, 255, 0), web_color(0, 0, 255)},
+                        "positioned paint order follows z-index and tree order across repeated layouts");
+            ok &= check(hover_id(doc, 10, 10) == "last", "later equal-z positioned sibling wins hit-testing");
+        }
+    }
+
+    for(const auto* layout : {"flex", "grid"})
+    {
+        click_container container;
+        auto            doc = document::createFromString(
+            std::string("<!doctype html><style>body{margin:0}.page{position:relative;width:200px;height:100px}"
+                        ".layout{display:") +
+                layout +
+                ";width:200px;height:100px;grid-template-columns:80px;grid-template-rows:100px}"
+                ".item{width:80px;height:100px;z-index:1}"
+                "a{position:absolute;left:50%;top:10px;width:40px;height:40px}"
+                "#inner{z-index:20;background:#ff0000}#sibling{z-index:2;background:#0000ff}</style>"
+                "<div class=page><div class=layout><div class=item><div><a id=inner href=/inner></a></div>"
+                "</div></div><a id=sibling href=/sibling></a></div>",
+            &container);
+        const auto inner = doc->root()->select_one("#inner");
+        for(const auto mode : {render_all, render_no_fixed, render_fixed_only})
+        {
+            doc->render(800, mode);
+            container.fills.clear();
+            doc->draw(0, 0, 0, nullptr);
+            ok &= check(inner && inner->get_placement().x == 100_px &&
+                            container.fills == std::vector<web_color>{web_color(255, 0, 0), web_color(0, 0, 255)} &&
+                            hover_id(doc, 110, 20) == "sibling",
+                        std::string("static ") + layout +
+                            " stacking context must not replace the positioned containing block");
+        }
+    }
+
+    {
+        click_container container;
+        auto            doc = document::createFromString(
+            "<!doctype html><style>body{margin:0}.page{position:relative;width:100px;height:100px}"
+            "#wrapper{position:relative;z-index:1;width:80px;height:80px}"
+            "a{position:absolute;left:10px;top:10px;width:40px;height:40px}"
+            "#inner{z-index:20;background:#ff0000}#sibling{z-index:2;background:#0000ff}</style>"
+            "<div class=page><div id=wrapper><a id=inner href=/inner></a></div>"
+            "<a id=sibling href=/sibling></a></div>",
+            &container);
+        const auto wrapper  = doc->root()->select_one("#wrapper");
+        const auto inner    = doc->root()->select_one("#inner");
+        ok                 &= check(wrapper && inner, "changing stacking-context test elements exist");
+        if(wrapper && inner)
+        {
+            struct state
+            {
+                element_position position;
+                render_type      mode;
+            };
+            for(const auto current : {
+                    state{element_position_relative, render_all       },
+                    state{element_position_static,   render_fixed_only},
+                    state{element_position_relative, render_fixed_only},
+                    state{element_position_static,   render_no_fixed  },
+                    state{element_position_relative, render_all       }
+            })
+            {
+                wrapper->css().set_position(current.position);
+                doc->render(800, current.mode);
+                container.fills.clear();
+                doc->draw(0, 0, 0, nullptr);
+                const bool confined = current.position == element_position_relative;
+                const auto expected = confined ? std::vector<web_color>{web_color(255, 0, 0), web_color(0, 0, 255)}
+                                               : std::vector<web_color>{web_color(0, 0, 255), web_color(255, 0, 0)};
+                ok &= check(container.fills == expected && inner->get_placement().x == 10_px &&
+                                inner->get_placement().y == 10_px &&
+                                hover_id(doc, 20, 20) == (confined ? "sibling" : "inner"),
+                            "every render mode refreshes changed stacking ownership without changing geometry");
+                click(doc, 20, 20);
+                ok &= check(container.clicked == (confined ? "/sibling" : "/inner"),
+                            "clicks follow refreshed stacking ownership");
+            }
+        }
+    }
 
     {
         // Links inside position:absolute; z-index:auto containers must remain
