@@ -112,6 +112,8 @@ namespace litehtml
 
         caption_side m_caption_side = caption_side_top;
 
+        container_type m_container_type = container_type_normal;
+
         int m_order = 0;
 
         void      compute_font(const html_tag* el, const std::shared_ptr<document>& doc);
@@ -153,6 +155,11 @@ namespace litehtml
 
         int  get_z_index() const;
         void set_z_index(int mZIndex);
+
+        bool z_index_is_auto() const
+        {
+            return m_z_index.is_predefined();
+        }
 
         vertical_align get_vertical_align() const;
         void           set_vertical_align(vertical_align mVerticalAlign);
@@ -247,6 +254,9 @@ namespace litehtml
 
         caption_side get_caption_side() const;
         void         set_caption_side(caption_side side);
+
+        container_type get_container_type() const;
+        void           set_container_type(container_type type);
 
         float                get_flex_grow() const;
         float                get_flex_shrink() const;
@@ -780,6 +790,16 @@ namespace litehtml
     inline void css_properties::set_caption_side(caption_side side)
     {
         m_caption_side = side;
+    }
+
+    inline container_type css_properties::get_container_type() const
+    {
+        return m_container_type;
+    }
+
+    inline void css_properties::set_container_type(container_type type)
+    {
+        m_container_type = type;
     }
 
     inline int css_properties::get_order() const

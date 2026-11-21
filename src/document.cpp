@@ -553,6 +553,7 @@ namespace litehtml
                     m_fixed_boxes.clear();
                     m_root_render->render_positioned(rt);
                 }
+                m_root_render->collect_stacking_contexts(m_root_render);
                 m_size.width  = 0;
                 m_size.height = 0;
                 m_root_render->calc_document_size(m_size);

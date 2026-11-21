@@ -90,7 +90,7 @@ namespace litehtml
         _flex_, _flex_flow_, _flex_direction_, _flex_wrap_, _justify_content_, _align_items_, _align_content_,
         _align_self_, _flex_grow_, _flex_shrink_, _flex_basis_,
 
-        _caption_side_, _order_,
+        _caption_side_, _container_type_, _order_,
 
         _counter_reset_, _counter_increment_,
 

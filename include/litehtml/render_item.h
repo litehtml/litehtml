@@ -26,6 +26,8 @@ namespace litehtml
         std::weak_ptr<render_item>                m_parent;
         std::list<std::shared_ptr<render_item>>   m_children;
         std::vector<std::shared_ptr<render_item>> m_positioned;
+        std::vector<std::shared_ptr<render_item>> m_stacking_contexts;
+        std::weak_ptr<render_item>                m_stacking_context;
         std::shared_ptr<scroll_view>              m_scroll_view;
 
         margins  m_margins;
@@ -38,8 +40,8 @@ namespace litehtml
         pixel_t  m_intrinsic_content_max_width = 0_px;
         pixel_t  m_intrinsic_content_height    = 0_px;
         position m_bounds; // bounding box of the element
-        bool     m_skip = false;
-        bool     m_height_dependent = false;
+        bool     m_skip                         = false;
+        bool     m_height_dependent             = false;
         uint64_t m_height_dependency_generation = 0;
 
         // Results of recent layouts of a subtree with its own formatting context, valid during one
@@ -70,7 +72,7 @@ namespace litehtml
         std::unique_ptr<layout_cache> m_layout_cache;
         bool                          m_layout_stale = false;
         // Set on stale items and their ancestors, so ensure_layout_tree() visits only those branches.
-        bool                          m_stale_subtree = false;
+        bool m_stale_subtree = false;
 
         void    update_height_dependency(uint64_t generation);
         void    mark_stale_subtree();
@@ -159,7 +161,7 @@ namespace litehtml
             }
         }
 
-        void update_intrinsic_size();
+        void    update_intrinsic_size();
         pixel_t resolve_intrinsic_width(const css_length& value, pixel_t available_width) const;
 
         pixel_t h_scroll(pixel_t dx)
@@ -608,6 +610,16 @@ namespace litehtml
         std::tuple<pixel_t, pixel_t> element_static_offset(const std::shared_ptr<litehtml::render_item>& el);
 
         void add_positioned(const std::shared_ptr<litehtml::render_item>& el);
+        // Whether this element establishes a stacking context. See
+        // https://drafts.csswg.org/css-position-4/#stacking-contexts
+        bool creates_stacking_context() const;
+        // Whether this element is a stacked child of a stacking context.
+        bool is_stacked_member() const
+        {
+            return !m_stacking_context.expired();
+        }
+        // Collect stacked descendants into their nearest stacking context ancestor.
+        void collect_stacking_contexts(const std::shared_ptr<render_item>& stacking_parent);
         // Calculate the bounding box of the element, including its children.
         void calc_bounds();
         void calc_document_size(litehtml::size& sz, pixel_t x = 0_px, pixel_t y = 0_px);
@@ -628,15 +640,16 @@ namespace litehtml
         virtual void add_inline_box(const position& /*box*/) {};
         virtual void clear_inline_boxes() {};
         void draw_stacking_context(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, bool with_positioned);
-        virtual void    draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag,
-                                      int zindex);
+        virtual void draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag, int zindex,
+                                   const render_item* stacking_context = nullptr);
         virtual pixel_t get_draw_vertical_offset()
         {
             return 0_px;
         }
         virtual std::shared_ptr<element> get_child_by_point(
             pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex,
-            const std::function<bool(const std::shared_ptr<render_item>&)>& check);
+            const std::function<bool(const std::shared_ptr<render_item>&)>& check,
+            const render_item*                                              stacking_context = nullptr);
         std::shared_ptr<element> get_element_by_point(
             pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
             const std::function<bool(const std::shared_ptr<render_item>&)>& check);

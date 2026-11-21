@@ -688,6 +688,19 @@ namespace litehtml
     };
 
     // ==========================================================
+    // CSS Property: container-type
+    // ==========================================================
+    inline constexpr auto container_type_strings = split_css_values<4>("normal;none;size;inline-size");
+
+    enum container_type
+    {
+        container_type_normal,
+        container_type_none,
+        container_type_size,
+        container_type_inline_size,
+    };
+
+    // ==========================================================
     // CSS Property: text-decoration-line
     // ==========================================================
     inline constexpr auto style_text_decoration_line_strings =

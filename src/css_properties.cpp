@@ -36,6 +36,8 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
         static_cast<white_space>(el->get_property<int>(_white_space_, true, white_space_normal, offset(m_white_space)));
     m_caption_side = static_cast<caption_side>(
         el->get_property<int>(_caption_side_, true, caption_side_top, offset(m_caption_side)));
+    m_container_type = static_cast<container_type>(
+        el->get_property<int>(_container_type_, false, container_type_normal, offset(m_container_type)));
 
     if(m_display == display_contents)
     {
@@ -799,6 +801,7 @@ std::vector<std::tuple<std::string, std::string>> litehtml::css_properties::dump
     ret.emplace_back("visibility", css_values(visibility_strings).value_by_index(m_visibility));
     ret.emplace_back("appearance", css_values(appearance_strings).value_by_index(m_appearance));
     ret.emplace_back("box_sizing", css_values(box_sizing_strings).value_by_index(m_box_sizing));
+    ret.emplace_back("container_type", css_values(container_type_strings).value_by_index(m_container_type));
     ret.emplace_back("z_index", m_z_index.to_string());
     ret.emplace_back("vertical_align", css_values(vertical_align_strings).value_by_index(m_vertical_align));
     ret.emplace_back("float", css_values(element_float_strings).value_by_index(m_float));

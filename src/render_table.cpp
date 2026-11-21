@@ -458,7 +458,7 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 }
 
 void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
-                                                draw_flag flag, int zindex)
+                                                draw_flag flag, int zindex, const render_item* stacking_context)
 {
     if(!m_grid)
     {
@@ -478,7 +478,7 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t
         {
             caption->src_el()->draw(hdc, pos.x, pos.y, clip, caption);
         }
-        caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
+        caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context);
     }
     for(int row = 0; row < m_grid->rows_count(); row++)
     {
@@ -496,10 +496,97 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t
                 {
                     cell->el->src_el()->draw(hdc, pos.x, pos.y, clip, cell->el);
                 }
-                cell->el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex);
+                cell->el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context);
             }
         }
     }
+}
+
+std::shared_ptr<litehtml::element> litehtml::render_item_table::get_child_by_point(
+    pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex,
+    const std::function<bool(const std::shared_ptr<render_item>&)>& check, const render_item* stacking_context)
+{
+    if(!m_grid)
+    {
+        return nullptr;
+    }
+
+    if(src_el()->css().get_overflow() > overflow_visible)
+    {
+        if(!m_pos.is_point_inside(x, y))
+        {
+            return nullptr;
+        }
+    }
+
+    if(flag != draw_positioned)
+    {
+        auto bounds  = m_bounds;
+        bounds.x    -= get_scroll_left();
+        bounds.y    -= get_scroll_top();
+        if(!bounds.is_point_inside(x, y))
+        {
+            return nullptr;
+        }
+    }
+
+    position el_pos = m_pos;
+    el_pos.x        = x - el_pos.x + get_scroll_left();
+    el_pos.y        = y - el_pos.y + get_scroll_top();
+
+    element::ptr ret = nullptr;
+
+    auto try_child = [&](const std::shared_ptr<render_item>& child) {
+        element::ptr found =
+            child->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex, check, stacking_context);
+        if(found)
+        {
+            if(!check)
+            {
+                ret = found;
+            } else
+            {
+                found->run_on_renderers([&check, &ret, &found](const std::shared_ptr<render_item>& ri) -> bool {
+                    if(check(ri))
+                    {
+                        ret = found;
+                        return false;
+                    }
+                    return true;
+                });
+            }
+        }
+        if(!ret && flag == draw_block && child->is_point_inside(el_pos.x, el_pos.y))
+        {
+            if(!check || check(child))
+            {
+                ret = child->src_el();
+            }
+        }
+    };
+
+    for(int row = m_grid->rows_count() - 1; row >= 0 && !ret; row--)
+    {
+        const bool row_visible = m_grid->row(row).el_row->is_visible();
+        for(int col = m_grid->cols_count() - 1; col >= 0 && !ret; col--)
+        {
+            table_cell* cell = m_grid->cell(col, row);
+            if(cell->el && row_visible && cell->el->is_visible())
+            {
+                try_child(cell->el);
+            }
+        }
+    }
+
+    for(auto caption = m_grid->captions().rbegin(); caption != m_grid->captions().rend() && !ret; ++caption)
+    {
+        if((*caption)->is_visible())
+        {
+            try_child(*caption);
+        }
+    }
+
+    return ret;
 }
 
 litehtml::pixel_t litehtml::render_item_table::get_draw_vertical_offset()
