@@ -14,9 +14,9 @@ namespace litehtml
         font_style  style = font_style_normal; // Font stype, see the enum font_style
         int         weight;                    // Font weight.
         int         decoration_line =
-            text_decoration_line_none;   // Decoration line. A bitset of flags of the enum text_decoration_line
-        css_length decoration_thickness; // Decoration line thickness in pixels. See predefined values in
-                                         // enumtext_decoration_thickness
+            text_decoration_line_none; // Decoration line. A bitset of flags of the enum text_decoration_line
+        css_length            decoration_thickness; // Decoration line thickness in pixels. See predefined values in
+                                                    // enumtext_decoration_thickness
         text_decoration_style decoration_style =
             text_decoration_style_solid; // Decoration line style. See enum text_decoration_style
         web_color   decoration_color = web_color::current_color;     // Decoration line color

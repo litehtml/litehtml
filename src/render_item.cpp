@@ -529,13 +529,9 @@ litehtml::position litehtml::render_item::relative_shift(const containing_block_
     return shift;
 }
 
-std::tuple<std::shared_ptr<litehtml::render_item>, std::shared_ptr<litehtml::render_item>,
-           std::shared_ptr<litehtml::render_item>>
-litehtml::render_item::split_inlines()
+litehtml::split_inlines_result litehtml::render_item::split_inlines()
 {
-    std::tuple<std::shared_ptr<litehtml::render_item>, std::shared_ptr<litehtml::render_item>,
-               std::shared_ptr<litehtml::render_item>>
-        ret;
+    split_inlines_result ret;
     for(const auto& child : m_children)
     {
         if(child->src_el()->is_block_box() && child->src_el()->css().get_float() == float_none)

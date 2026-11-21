@@ -74,8 +74,8 @@ namespace litehtml
         std::string                             m_lang;
         std::string                             m_culture;
         std::string                             m_text;
-        document_mode                           m_mode      = no_quirks_mode;
-        bool                                    m_finalized = false;
+        document_mode                           m_mode              = no_quirks_mode;
+        bool                                    m_finalized         = false;
         uint64_t                                m_layout_generation = 0;
 
       public:

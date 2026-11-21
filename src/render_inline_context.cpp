@@ -57,63 +57,63 @@ void litehtml::render_item_inline_context::for_each_inline_impl(Callback&& callb
     bool after_float = false;
 
     auto process = [&](const std::shared_ptr<render_item>& el, iterator_item_type item_type) {
-                             switch(item_type)
-                             {
-                             case iterator_item_type_child:
-                                 {
-                                     // skip spaces to make rendering a bit faster
-                                     if(skip_spaces)
-                                     {
-                                         if(el->src_el()->is_white_space())
-                                         {
-                                             if(was_space)
-                                             {
-                                                 if(!const_process)
-                                                 {
-                                                     el->skip(true);
-                                                 }
-                                                 return;
-                                             }
-                                             last_space = el;
-                                             was_space  = true;
-                                             return;
-                                         }
-                                         // skip all spaces after line break
-                                         was_space = el->src_el()->is_break();
-                                     }
-                                     if(last_space && (!el->src_el()->is_float() || !after_float))
-                                     {
-                                         if(el->src_el()->is_break() && el->css().get_clear() == clear_none)
-                                         {
-                                             if(!const_process)
-                                             {
-                                                 last_space->skip(true);
-                                             }
-                                         } else
-                                         {
-                                             callback(last_space, iterator_item_type_child);
-                                         }
-                                         last_space = nullptr;
-                                     }
-                                     after_float = el->src_el()->is_float();
-                                     // place element into rendering flow
-                                     callback(el, item_type);
-                                 }
-                                 break;
+        switch(item_type)
+        {
+        case iterator_item_type_child:
+            {
+                // skip spaces to make rendering a bit faster
+                if(skip_spaces)
+                {
+                    if(el->src_el()->is_white_space())
+                    {
+                        if(was_space)
+                        {
+                            if(!const_process)
+                            {
+                                el->skip(true);
+                            }
+                            return;
+                        }
+                        last_space = el;
+                        was_space  = true;
+                        return;
+                    }
+                    // skip all spaces after line break
+                    was_space = el->src_el()->is_break();
+                }
+                if(last_space && (!el->src_el()->is_float() || !after_float))
+                {
+                    if(el->src_el()->is_break() && el->css().get_clear() == clear_none)
+                    {
+                        if(!const_process)
+                        {
+                            last_space->skip(true);
+                        }
+                    } else
+                    {
+                        callback(last_space, iterator_item_type_child);
+                    }
+                    last_space = nullptr;
+                }
+                after_float = el->src_el()->is_float();
+                // place element into rendering flow
+                callback(el, item_type);
+            }
+            break;
 
-                             case iterator_item_type_start_parent:
-                             case iterator_item_type_end_parent:
-                                 {
-                                     if(last_space)
-                                     {
-                                         callback(last_space, iterator_item_type_child);
-                                         last_space = nullptr;
-                                     }
-                                     callback(el, item_type);
-                                 }
-                                 break;
-                             }
-                         };
+        case iterator_item_type_start_parent:
+        case iterator_item_type_end_parent:
+            {
+                if(last_space)
+                {
+                    callback(last_space, iterator_item_type_child);
+                    last_space = nullptr;
+                }
+                callback(el, item_type);
+            }
+            break;
+        }
+    };
     walk_inlines(std::const_pointer_cast<render_item>(shared_from_this()), process);
     if(last_space && !const_process)
     {

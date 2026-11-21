@@ -17,6 +17,9 @@ namespace litehtml
 {
     class element;
 
+    using split_inlines_result =
+        std::tuple<std::shared_ptr<render_item>, std::shared_ptr<render_item>, std::shared_ptr<render_item>>;
+
     class render_item : public std::enable_shared_from_this<render_item>
     {
         friend class document;
@@ -604,9 +607,7 @@ namespace litehtml
 
         virtual std::shared_ptr<render_item> clone() = 0;
 
-        std::tuple<std::shared_ptr<litehtml::render_item>, std::shared_ptr<litehtml::render_item>,
-                   std::shared_ptr<litehtml::render_item>>
-             split_inlines();
+        split_inlines_result split_inlines();
         // Lay out positioned descendants and rebuild stacking membership in every render mode.
         void render_positioned(render_type rt = render_all);
         // returns element offset related to the containing block

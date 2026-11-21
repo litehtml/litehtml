@@ -44,7 +44,8 @@ namespace litehtml
         f_componentize      = 1,
         f_remove_whitespace = 2
     };
-    css_token_vector normalize(css_token_vector input, int options = 0, const keep_whitespace_fn& keep_whitespace = nullptr);
+    css_token_vector normalize(css_token_vector input, int options = 0,
+                               const keep_whitespace_fn& keep_whitespace = nullptr);
     css_token_vector normalize(std::string input, int options = 0, const keep_whitespace_fn& keep_whitespace = nullptr);
 
     std::vector<css_token_vector> parse_comma_separated_list(const css_token_vector& tokens);

@@ -539,7 +539,7 @@ namespace litehtml
             {
                 return false;
             }
-            m_expression    = std::move(expr);
+            m_expression = std::move(expr);
             m_fit_content_argument.reset();
             m_is_predefined = false;
             m_units         = unit;

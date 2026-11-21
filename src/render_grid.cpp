@@ -498,7 +498,7 @@ namespace litehtml
         pixel_t    width           = self_size.render_width;
         bool       definite_height = self_size.height.type != containing_block_context::cbc_value_type_auto &&
                                      self_size.height.type != containing_block_context::cbc_value_type_none;
-        pixel_t    height     = definite_height ? std::max(0_px, self_size.height.value - box_sizing_height()) : 0_px;
+        pixel_t    height = definite_height ? std::max(0_px, self_size.height.value - box_sizing_height()) : 0_px;
         const bool intrinsic_height_constraint =
             css().get_min_height().is_intrinsic_sizing() || css().get_max_height().is_intrinsic_sizing();
         if(definite_height && intrinsic_height_constraint &&
@@ -513,8 +513,8 @@ namespace litehtml
                 height = std::max(height, self_size.min_height.value);
             }
         }
-        pixel_t    column_gap = css().get_column_gap().calc_percent(width);
-        pixel_t    row_gap    = css().get_row_gap().calc_percent(height);
+        pixel_t column_gap = css().get_column_gap().calc_percent(width);
+        pixel_t row_gap    = css().get_row_gap().calc_percent(height);
         if(subgrid_columns && css().get_column_gap().is_predefined())
         {
             column_gap = m_inherited_columns->gap;
@@ -847,9 +847,9 @@ namespace litehtml
             positioned_geometry(rows, rows_resolved, row_count, bounds.row_start, row_gap, row_alignment.first);
         for(size_t index = 0; index < children.size(); ++index)
         {
-            int  col              = areas[index].column_start - bounds.column_start;
-            int  row              = areas[index].row_start - bounds.row_start;
-            auto left             = column_alignment.first + track_position(columns, col, column_gap);
+            int  col            = areas[index].column_start - bounds.column_start;
+            int  row            = areas[index].row_start - bounds.row_start;
+            auto left           = column_alignment.first + track_position(columns, col, column_gap);
             auto top            = row_alignment.first + track_position(rows, row, row_gap);
             auto area_width     = track_extent(columns, col, areas[index].column_end - bounds.column_start, column_gap);
             auto area_height    = track_extent(rows, row, areas[index].row_end - bounds.row_start, row_gap);
