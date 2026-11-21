@@ -45,7 +45,7 @@ void litehtml::flex_item::render(pixel_t x, pixel_t y, const containing_block_co
                        el->css().get_min_height().calc_percent(0_px) == 0_px) &&
                       el->css().get_max_height().is_auto_or_none() &&
                       size.height.value == m_last_position.height + el->box_sizing_height();
-            reuse = promote;
+            reuse   = promote;
         }
     }
     if(reuse)
@@ -492,7 +492,7 @@ void litehtml::flex_item_column_direction::direction_specific_init(const litehtm
         }
     }
 
-    auto content_height = el->height() - el->content_offset_height();
+    auto       content_height       = el->height() - el->content_offset_height();
     const bool intrinsic_min_height = el->css().get_min_height().is_intrinsic_sizing();
     const bool intrinsic_max_height = el->css().get_max_height().is_intrinsic_sizing();
     const auto intrinsic_height     = el->get_intrinsic_content_height() + el->content_offset_height();

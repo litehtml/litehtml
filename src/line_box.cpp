@@ -316,7 +316,7 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
     float offj    = static_cast<float>(spacing_x) / std::max(1.f, static_cast<float>(m_items.size()) - 1.f);
     float cixx    = 0.0f;
 
-    va_context            current_context;
+    va_context              current_context;
     std::vector<va_context> contexts;
 
     current_context.baseline    = 0;
@@ -660,7 +660,8 @@ std::list<std::unique_ptr<litehtml::line_box_item>> litehtml::line_box::finish(
 
     for(auto iter = inlines.rbegin(); iter != inlines.rend(); ++iter)
     {
-        iter->box.width = m_items.back()->right() + iter->element->relative_shift(containing_block_size).x - iter->box.x;
+        iter->box.width =
+            m_items.back()->right() + iter->element->relative_shift(containing_block_size).x - iter->box.x;
         iter->element->add_inline_box(iter->box);
 
         ret_items.emplace_front(std::unique_ptr<line_box_item>(new lbi_continue(iter->element)));

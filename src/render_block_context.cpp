@@ -250,8 +250,7 @@ void litehtml::render_item_block_context::apply_vertical_align()
         return;
     }
 
-    auto is_out_of_flow = [](const std::shared_ptr<render_item>& el)
-    {
+    auto is_out_of_flow = [](const std::shared_ptr<render_item>& el) {
         auto position = el->src_el()->css().get_position();
         return position == element_position_absolute || position == element_position_fixed;
     };

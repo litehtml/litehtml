@@ -217,16 +217,17 @@ namespace litehtml
         std::vector<css_length>                   m_column_widths;
 
       public:
-        void          clear();
-        void          begin_row(const std::shared_ptr<render_item>& row);
-        void          add_cell(const std::shared_ptr<render_item>& el);
-        bool          is_rowspanned(int r, int c);
-        void          finish();
+        void clear();
+        void begin_row(const std::shared_ptr<render_item>& row);
+        void add_cell(const std::shared_ptr<render_item>& el);
+        bool is_rowspanned(int r, int c);
+        void finish();
         // Widths specified on <col>/<colgroup> elements, one entry per column starting from the first one
-        void          set_column_widths(std::vector<css_length> widths)
+        void set_column_widths(std::vector<css_length> widths)
         {
             m_column_widths = std::move(widths);
         }
+
         table_cell*   cell(int t_col, int t_row);
         table_column& column(int c)
         {
