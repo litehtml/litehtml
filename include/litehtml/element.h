@@ -30,12 +30,12 @@ namespace litehtml
         using weak_ptr  = std::weak_ptr<element>;
 
       protected:
-        std::weak_ptr<element>                m_parent;
-        std::weak_ptr<document>               m_doc;
-        elements_list                         m_children;
+        std::weak_ptr<element>  m_parent;
+        std::weak_ptr<document> m_doc;
+        elements_list           m_children;
         // Computed styles. Owned by this element, except for text nodes, which all share one object per parent
         // (see m_text_css): their styles only depend on the parent chain, so siblings would hold identical copies.
-        std::shared_ptr<css_properties>       m_css;
+        std::shared_ptr<css_properties> m_css;
         // Computed styles shared by this element's text children. Created on demand by el_text::compute_styles.
         std::shared_ptr<css_properties>       m_text_css;
         std::list<std::weak_ptr<render_item>> m_renders;
@@ -65,6 +65,7 @@ namespace litehtml
         bool     is_float() const;
         bool     is_block_formatting_context() const;
         bool     is_flex_item() const;
+        bool     is_grid_item() const;
 
         pixel_t v_scroll(pixel_t dy) const;
         pixel_t h_scroll(pixel_t dx) const;
@@ -233,6 +234,16 @@ namespace litehtml
         if(par)
         {
             return is_one_of(par->css().get_display(), display_flex, display_inline_flex);
+        }
+        return false;
+    }
+
+    inline bool litehtml::element::is_grid_item() const
+    {
+        auto par = layout_parent();
+        if(par)
+        {
+            return is_one_of(par->css().get_display(), display_grid, display_inline_grid);
         }
         return false;
     }

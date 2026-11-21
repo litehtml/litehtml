@@ -70,6 +70,7 @@ namespace litehtml
         {_align_self_,             flex_align_items_strings            },
 
         {_caption_side_,           caption_side_strings                },
+        {_container_type_,         container_type_strings              },
 
         {_text_decoration_style_,  style_text_decoration_style_strings },
         {_text_emphasis_position_, style_text_emphasis_position_strings},
@@ -293,6 +294,7 @@ namespace litehtml
         case _align_content_:
 
         case _caption_side_:
+        case _container_type_:
 
             if(auto index = m_valid_values.at(name).value_index(ident); index.has_value())
             {
@@ -1839,12 +1841,12 @@ namespace litehtml
         bool           valid = value.size() == 1 && is_one_of(value[0].ident(), "none", "initial", "unset");
         if(!valid)
         {
-            auto             slash = std::find_if(value.begin(), value.end(),
-                                                  [](const css_token& token) { return token.ch == '/'; });
+            auto slash =
+                std::find_if(value.begin(), value.end(), [](const css_token& token) { return token.ch == '/'; });
             css_token_vector first(value.begin(), slash);
             css_token_vector second(slash == value.end() ? slash : slash + 1, value.end());
-            const bool       has_area_strings = std::any_of(
-                first.begin(), first.end(), [](const css_token& token) { return token.type == STRING; });
+            const bool       has_area_strings =
+                std::any_of(first.begin(), first.end(), [](const css_token& token) { return token.type == STRING; });
             if(has_area_strings)
             {
                 css_token_vector area_tokens;
@@ -1900,8 +1902,8 @@ namespace litehtml
                     const bool has_repeat = std::any_of(second.begin(), second.end(), [](const css_token& token) {
                         return token.type == CV_FUNCTION && lowcase(token.name()) == "repeat";
                     });
-                    valid = !has_repeat && parse_grid_track_list(second, columns) && !columns.empty() &&
-                            columns.size() <= 1024;
+                    valid                 = !has_repeat && parse_grid_track_list(second, columns) && !columns.empty() &&
+                                            columns.size() <= 1024;
                 }
             } else if(slash != value.end())
             {
