@@ -75,6 +75,7 @@ the optional library targets. See their guides below for source-tree integration
 | `LITEHTML_BUILD_TESTING` | `OFF` | Download and build the separate litehtml test project. |
 | `LITEHTML_BUILD_GRID_TESTS` | `OFF` | Build the local CSS Grid regression tests. |
 | `LITEHTML_BUILD_MATH_TESTS` | `OFF` | Build the local CSS calculation regression tests. |
+| `LITEHTML_BUILD_STACKING_TESTS` | `OFF` | Build the local stacking, drawing, and hit-testing regression tests. |
 | `LITEHTML_ENABLE_LINT` | `ON` | Run clang-tidy for litehtml and local tests when it is available. |
 | `EXTERNAL_GUMBO` | `OFF` | Link against a system-installed gumbo instead of the bundled copy. |
 
@@ -189,7 +190,20 @@ ctest --test-dir build-math -R litehtml-math-tests --output-on-failure
 The headless checks also cover nested flex measurement work, percentage-height
 stretch, and repeated layout/resizing with relative inline content. The nested
 flex check bounds image-size callbacks rather than asserting machine-dependent
-render times.
+render times. They also cover nested positioned layout and fixed-only/no-fixed
+render modes.
+
+To run the local stacking and hit-testing tests:
+
+```sh
+cmake -S . -B build-stacking -DLITEHTML_BUILD_STACKING_TESTS=ON
+cmake --build build-stacking --target litehtml-stacking-tests
+ctest --test-dir build-stacking -R litehtml-stacking-tests --output-on-failure
+```
+
+These checks cover independent containing blocks and flex/grid stacking contexts,
+including refreshed stacking ownership during fixed-only rendering. Positioned
+layout and stacking collection share one traversal in every render mode.
 
 ## HTML Parser
 
