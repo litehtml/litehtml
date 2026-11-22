@@ -275,6 +275,8 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
     void on_button_release_event(int n_press, double x, double y);
     void on_mouse_move(double x, double y);
     bool on_key_pressed(guint keyval, guint keycode, Gdk::ModifierType state);
+    bool focus_navigate(bool forward);
+    void scroll_into_view(const litehtml::position& box);
 
     void size_allocate_vfunc(int width, int height, int baseline) override;
     void allocate_scrollbars(int width, int height);

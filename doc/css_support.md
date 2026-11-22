@@ -685,8 +685,15 @@ Supported selector types are listed below. See the next section for pseudo-class
 | `:link` | matches `<a href>` elements |
 | `:hover` | set on mouse-over |
 | `:active` | set on mouse press |
+| `:focus` | set on the focused element |
+| `:focus-visible` | set when the focus was moved by the keyboard (or explicitly requested by `document::set_focus`) |
+| `:focus-within` | matches the focused element and its ancestors |
 | `:checked` | matches the `checked` attribute or dynamic state |
 | `:disabled` | matches the `disabled` attribute or dynamic state |
+
+Focus navigation follows the `tabindex` attribute (positive values first, then `0`/absent in document
+order; negative values are skipped) and skips `inert` subtrees, `display: none` and
+`visibility: hidden`. See [using.md](using.md#keyboard-navigation-and-focus) for the API.
 
 ### Recognized by the parser but never match
 
@@ -694,11 +701,9 @@ These are accepted so that a selector list containing them (e.g. `a:link, a:visi
 its other selectors, but litehtml has no matching logic or state for them, so they never match on
 their own:
 
-`:any-link`, `:visited`, `:local-link`, `:target`, `:target-within`, `:scope`, `:focus`,
-`:focus-visible`, `:focus-within`, `:empty`, `:host`.
+`:any-link`, `:visited`, `:local-link`, `:target`, `:target-within`, `:scope`, `:empty`, `:host`.
 
 - `:visited` — litehtml does not track visited links.
-- `:focus` / `:focus-visible` / `:focus-within` — no focus state is maintained.
 - `:empty` — no structural emptiness check is implemented.
 - `:host` — shadow DOM is not implemented (never matches, as in a browser outside a shadow tree).
 

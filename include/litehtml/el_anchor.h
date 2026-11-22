@@ -12,6 +12,7 @@ namespace litehtml
 
         void on_click() override;
         void apply_stylesheet(const litehtml::css& stylesheet) override;
+        bool can_be_focused() const override;
     };
 } // namespace litehtml
 

@@ -115,6 +115,17 @@ namespace litehtml
         virtual bool        is_break() const;
         virtual bool        is_text() const;
 
+        // Returns true when the element's kind and attributes allow it to receive the focus. The document
+        // additionally requires the element to generate a visible box. Override this in elements that can
+        // be focused.
+        virtual bool can_be_focused() const;
+        // Returns the value of the tabindex attribute, or an empty optional when the element has no valid
+        // tabindex. The document uses it to order the sequential focus navigation.
+        virtual std::optional<int> tab_index() const;
+        // Returns true if the element or one of its ancestors has the inert attribute. Inert elements and
+        // their descendants cannot be focused and do not receive clicks.
+        bool is_inert() const;
+
         virtual bool on_mouse_over();
         virtual bool on_mouse_leave();
         virtual bool on_lbutton_down();

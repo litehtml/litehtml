@@ -177,6 +177,58 @@ are relative to the HTML layout. So ```0,0``` is the top-left corner.
 The parameters ```client_x``` and ```client_y``` are the mouse position in the client area (draw area). These parameters
 are used to handle the elements with **fixed** position.
 
+## Keyboard navigation and focus
+
+litehtml keeps the focus state of the document and can move it in the sequential focus navigation order
+(Tab and Shift+Tab):
+```cpp
+std::optional<litehtml::position> litehtml::document::focus_next(
+    const std::function<void(const litehtml::position&)>& redraw_box);
+std::optional<litehtml::position> litehtml::document::focus_prev(
+    const std::function<void(const litehtml::position&)>& redraw_box);
+```
+
+Both functions focus the next/previous focusable element and return its document relative position. The position can be
+used to scroll the focused element into view. The value is empty when the document has no focusable elements. Like the
+mouse functions, they accept the ```redraw_box``` callback, which is called for the areas that need to be repainted when
+the focus state changes the element styles.
+
+The sequential focus navigation order is:
+
+* elements with a positive ```tabindex```, in ascending order,
+* elements with ```tabindex="0"``` or without a ```tabindex``` (links with ```href```), in document order.
+
+Elements with a negative ```tabindex``` can be focused by a mouse click or programmatically, but are skipped by
+```focus_next```/```focus_prev```. Elements with ```display: none``` or ```visibility: hidden```, and elements inside a
+subtree with the ```inert``` attribute are skipped as well. The focus wraps around: Tab on the last element focuses the
+first one and Shift+Tab on the first element focuses the last one.
+
+By default only ```<a href>``` elements can be focused. Any element can be made focusable with the ```tabindex```
+attribute. Applications that create custom element types can override ```litehtml::element::can_be_focused()``` (the
+default implementation returns ```false```).
+
+The focus can also be changed programmatically:
+```cpp
+bool litehtml::document::set_focus(const std::shared_ptr<litehtml::element>& el,
+                                   bool focus_visible,
+                                   const std::function<void(const litehtml::position&)>& redraw_box);
+std::shared_ptr<litehtml::element> litehtml::document::get_focused_element() const;
+```
+**set_focus** focuses the element (```nullptr``` removes the focus) and returns whether the focus changed. The
+```redraw_box``` callback is called for the areas that need to be repainted. **focus_visible** controls the
+```:focus-visible``` pseudo class and should be ```true``` when the focus was moved with the keyboard.
+
+The document maintains the focus pseudo classes:
+
+* ```:focus``` matches the focused element.
+* ```:focus-visible``` matches the focused element when the focus was set by the keyboard, or when **set_focus** was
+  called with ```focus_visible = true```. A mouse focus does not match it.
+* ```:focus-within``` matches the focused element and all of its ancestors.
+
+```document::on_lbutton_down``` focuses the nearest focusable ancestor of the clicked element, without
+```:focus-visible```, and a click outside any focusable element removes the focus. The ```inert``` attribute makes an
+element and its descendants non-focusable and non-clickable.
+
 ## Processing anchor click
 
 If you process the mouse, the clicking on anchor tag will call the function [document_container::on_anchor_click](document_container.md#on_anchor_click). This function gets the url of the anchor as parameter and pointer to litehtml::element. You can open the new document at this point.

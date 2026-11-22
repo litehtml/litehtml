@@ -69,6 +69,7 @@ namespace litehtml
         position::vector                        m_fixed_boxes;
         std::shared_ptr<element>                m_over_element;
         std::shared_ptr<element>                m_active_element;
+        std::weak_ptr<element>                  m_focused_element;
         std::list<std::shared_ptr<render_item>> m_tabular_elements;
         media_query_list_list::vector           m_media_lists;
         media_features                          m_media;
@@ -77,6 +78,7 @@ namespace litehtml
         std::string                             m_text;
         document_mode                           m_mode              = no_quirks_mode;
         bool                                    m_finalized         = false;
+        bool                                    m_focus_visible     = false;
         uint64_t                                m_layout_generation = 0;
 
       public:
@@ -119,6 +121,20 @@ namespace litehtml
                                                    const std::function<void(const position&)>& redraw_box);
         bool                         on_button_cancel(const std::function<void(const position&)>& redraw_box);
         bool                         on_mouse_leave(const std::function<void(const position&)>& redraw_box);
+        // Move the focus to the next/previous focusable element in the sequential focus navigation order.
+        // The returned position is the document relative position of the focused element, so the caller can
+        // scroll it into view. The optional is empty when the document has no focusable elements.
+        std::optional<position>      focus_next(const std::function<void(const position&)>& redraw_box);
+        std::optional<position>      focus_prev(const std::function<void(const position&)>& redraw_box);
+        // Focus el (nullptr removes the focus). focus_visible controls the :focus-visible pseudo class and
+        // should be true when the focus was moved by the keyboard. Returns true when the focus state changed;
+        // redraw_box is called for the areas that need to be repainted.
+        bool                         set_focus(const std::shared_ptr<element>& el, bool focus_visible,
+                                               const std::function<void(const position&)>& redraw_box);
+        std::shared_ptr<element>     get_focused_element() const
+        {
+            return m_focused_element.lock();
+        }
         std::shared_ptr<element>     create_element(const char* tag_name, const string_map& attributes);
         std::shared_ptr<element>     root();
         std::shared_ptr<render_item> root_render();
@@ -159,6 +175,13 @@ namespace litehtml
         void         create_node(void* gnode, elements_list& elements, bool parseTextNode, bool process_root);
         bool         update_media_lists(const media_features& features);
         bool         update_styles(const std::function<void(const position&)>& redraw_box);
+        bool         change_focus(const std::shared_ptr<element>& el, bool focus_visible);
+        bool         is_focusable(const std::shared_ptr<element>& el) const;
+        void         collect_tabbable(const std::shared_ptr<element>& el, bool inert,
+                                      std::vector<std::shared_ptr<element>>& result) const;
+        std::vector<std::shared_ptr<element>> tabbable_elements() const;
+        position     element_document_position(const std::shared_ptr<element>& el) const;
+        std::optional<position> focus_step(bool forward, const std::function<void(const position&)>& redraw_box);
         // Lays out again only the subtrees whose content changed. Returns false when the change
         // cannot be contained in a subtree and the whole document has to be laid out again.
         bool relayout_after_style_change(styles_update& update, const std::function<void(const position&)>& redraw_box);
