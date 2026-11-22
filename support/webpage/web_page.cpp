@@ -203,6 +203,20 @@ void litebrowser::web_page::on_lbutton_up(int x, int y, int client_x, int client
     }
 }
 
+std::optional<litehtml::position> litebrowser::web_page::focus_next(
+    const std::function<void(const litehtml::position&)>& redraw_box)
+{
+    std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
+    return m_html ? m_html->focus_next(redraw_box) : std::nullopt;
+}
+
+std::optional<litehtml::position> litebrowser::web_page::focus_prev(
+    const std::function<void(const litehtml::position&)>& redraw_box)
+{
+    std::lock_guard<std::recursive_mutex> html_lock(m_html_mutex);
+    return m_html ? m_html->focus_prev(redraw_box) : std::nullopt;
+}
+
 void litebrowser::web_page::on_page_downloaded(const std::shared_ptr<text_file>& data, u_int32_t /*http_status*/,
                                                u_int32_t err_code, const std::string& err_text, const std::string& url)
 {

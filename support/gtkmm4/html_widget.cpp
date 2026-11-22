@@ -1,6 +1,7 @@
 #include "html_widget.h"
 
 #include <memory>
+#include <optional>
 
 using litehtml::operator""_px;
 
@@ -328,8 +329,15 @@ void html_widget::on_mouse_move(double x, double y)
     }
 }
 
-bool html_widget::on_key_pressed(guint keyval, guint /* keycode */, Gdk::ModifierType /* state */)
+bool html_widget::on_key_pressed(guint keyval, guint /* keycode */, Gdk::ModifierType state)
 {
+    if(keyval == GDK_KEY_Tab || keyval == GDK_KEY_ISO_Left_Tab)
+    {
+        const bool backward = keyval == GDK_KEY_ISO_Left_Tab ||
+                              (state & Gdk::ModifierType::SHIFT_MASK) != Gdk::ModifierType::NO_MODIFIER_MASK;
+        return focus_navigate(!backward);
+    }
+
     switch(keyval)
     {
     case GDK_KEY_KP_Page_Down:
@@ -370,6 +378,75 @@ bool html_widget::on_key_pressed(guint keyval, guint /* keycode */, Gdk::Modifie
     }
 
     return false;
+}
+
+bool html_widget::focus_navigate(bool forward)
+{
+    std::shared_ptr<litebrowser::web_page> page = current_page();
+    if(!page)
+    {
+        return false;
+    }
+
+    litehtml::position::vector boxes;
+
+    const std::function<void(const litehtml::position&)> redraw = [&boxes](const litehtml::position& box) {
+        boxes.push_back(box);
+    };
+
+    const std::optional<litehtml::position> pos = forward ? page->focus_next(redraw) : page->focus_prev(redraw);
+    if(!pos)
+    {
+        return false;
+    }
+
+    update_view_port(page);
+    if(!boxes.empty())
+    {
+        redraw_boxes(boxes);
+    }
+    scroll_into_view(*pos);
+    return true;
+}
+
+void html_widget::scroll_into_view(const litehtml::position& box)
+{
+    const int left        = m_draw_buffer.get_left();
+    const int top         = m_draw_buffer.get_top();
+    const int view_width  = m_draw_buffer.get_width();
+    const int view_height = m_draw_buffer.get_height();
+    if(view_width <= 0 || view_height <= 0)
+    {
+        return;
+    }
+
+    const int box_left   = static_cast<int>(box.left());
+    const int box_right  = static_cast<int>(box.right());
+    const int box_top    = static_cast<int>(box.top());
+    const int box_bottom = static_cast<int>(box.bottom());
+
+    int new_left = left;
+    int new_top  = top;
+
+    if(box_left < left)
+    {
+        new_left = box_left;
+    } else if(box_right > left + view_width)
+    {
+        new_left = box_right - view_width;
+    }
+    if(box_top < top)
+    {
+        new_top = box_top;
+    } else if(box_bottom > top + view_height)
+    {
+        new_top = box_bottom - view_height;
+    }
+
+    if(new_left != left || new_top != top)
+    {
+        scroll_to(new_left, new_top);
+    }
 }
 
 void html_widget::update_cursor()

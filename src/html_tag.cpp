@@ -961,6 +961,11 @@ namespace litehtml
 
     bool litehtml::html_tag::on_lbutton_down()
     {
+        if(is_inert())
+        {
+            return false;
+        }
+
         bool ret = false;
 
         element::ptr el = shared_from_this();
@@ -1000,6 +1005,10 @@ namespace litehtml
 
     void litehtml::html_tag::on_click()
     {
+        if(is_inert())
+        {
+            return;
+        }
         if(!is_root())
         {
             if(!get_document()->container()->on_element_click(shared_from_this()))
@@ -1011,6 +1020,26 @@ namespace litehtml
                 }
             }
         }
+    }
+
+    bool litehtml::html_tag::can_be_focused() const
+    {
+        return !is_inert() && tab_index().has_value();
+    }
+
+    std::optional<int> litehtml::html_tag::tab_index() const
+    {
+        const char* tabindex = get_attr("tabindex");
+        if(!tabindex)
+        {
+            return std::nullopt;
+        }
+        int value = 0;
+        if(!html_parse_integer(tabindex, value))
+        {
+            return std::nullopt;
+        }
+        return value;
     }
 
     bool litehtml::html_tag::is_break() const

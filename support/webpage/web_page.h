@@ -2,6 +2,7 @@
 #define LITEBROWSER_WEB_PAGE_H
 
 #include <memory>
+#include <optional>
 #include <unistd.h>
 #include <sstream>
 #include <vector>
@@ -147,6 +148,8 @@ namespace litebrowser
                              const std::function<void(const litehtml::position&)>& redraw_box);
         void on_lbutton_up(int x, int y, int client_x, int client_y,
                            const std::function<void(const litehtml::position&)>& redraw_box);
+        std::optional<litehtml::position> focus_next(const std::function<void(const litehtml::position&)>& redraw_box);
+        std::optional<litehtml::position> focus_prev(const std::function<void(const litehtml::position&)>& redraw_box);
 
         [[nodiscard]]
         const std::string& get_cursor() const

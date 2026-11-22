@@ -70,6 +70,10 @@ namespace litehtml
         bool on_lbutton_down() override;
         bool on_lbutton_up(bool is_click) override;
         void on_click() override;
+        bool can_be_focused() const override;
+
+        std::optional<int> tab_index() const override;
+
         bool set_pseudo_class(string_id cls, bool add) override;
         bool set_class(const char* pclass, bool add) override;
         bool is_replaced() const override;

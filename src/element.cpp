@@ -586,6 +586,29 @@ namespace litehtml
     bool        element::is_break() const LITEHTML_RETURN_FUNC(false);
     bool        element::is_text() const LITEHTML_RETURN_FUNC(false);
 
+    bool               element::can_be_focused() const LITEHTML_RETURN_FUNC(false);
+    std::optional<int> element::tab_index() const
+    {
+        return std::nullopt;
+    }
+    bool element::is_inert() const
+    {
+        if(get_attr("inert"))
+        {
+            return true;
+        }
+        auto par = parent();
+        while(par)
+        {
+            if(par->get_attr("inert"))
+            {
+                return true;
+            }
+            par = par->parent();
+        }
+        return false;
+    }
+
     bool element::on_mouse_over() LITEHTML_RETURN_FUNC(false);
     bool element::on_mouse_leave() LITEHTML_RETURN_FUNC(false);
     bool element::on_lbutton_down() LITEHTML_RETURN_FUNC(false);

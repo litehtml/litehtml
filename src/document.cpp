@@ -35,6 +35,17 @@
 namespace litehtml
 {
 
+    namespace
+    {
+        // Focus navigation order: positive tabindex values first in ascending order, then the elements
+        // with tabindex 0 or without an explicit tabindex in document order.
+        int focus_order_index(const element::ptr& el)
+        {
+            const auto tab_index = el->tab_index();
+            return tab_index && *tab_index > 0 ? *tab_index : 0;
+        }
+    } // namespace
+
     document::document(document_container* container)
     {
         m_container = container;
@@ -855,6 +866,20 @@ namespace litehtml
             cursor = m_over_element->css().get_cursor();
         }
 
+        element::ptr focus_el;
+        for(auto el = over_el; el; el = el->parent())
+        {
+            if(is_focusable(el))
+            {
+                focus_el = el;
+                break;
+            }
+        }
+        if(change_focus(focus_el, false))
+        {
+            state_was_changed = true;
+        }
+
         m_container->set_cursor(cursor.c_str());
 
         if(state_was_changed)
@@ -887,6 +912,214 @@ namespace litehtml
     {
         m_active_element = nullptr;
         return on_mouse_leave(redraw_box);
+    }
+
+    bool document::change_focus(const element::ptr& el, bool focus_visible)
+    {
+        const auto current = m_focused_element.lock();
+
+        if(current == el)
+        {
+            if(!el || m_focus_visible == focus_visible)
+            {
+                return false;
+            }
+            m_focus_visible = focus_visible;
+            return el->set_pseudo_class(_focus_visible_, focus_visible);
+        }
+
+        bool changed = false;
+
+        const auto set_focus_within = [&changed](const element::ptr& focused, bool add) {
+            for(auto ancestor = focused; ancestor; ancestor = ancestor->parent())
+            {
+                if(ancestor->set_pseudo_class(_focus_within_, add))
+                {
+                    changed = true;
+                }
+            }
+        };
+
+        if(current)
+        {
+            if(current->set_pseudo_class(_focus_, false))
+            {
+                changed = true;
+            }
+            if(current->set_pseudo_class(_focus_visible_, false))
+            {
+                changed = true;
+            }
+            set_focus_within(current, false);
+        }
+
+        m_focused_element = el;
+        m_focus_visible   = el && focus_visible;
+
+        if(el)
+        {
+            if(el->set_pseudo_class(_focus_, true))
+            {
+                changed = true;
+            }
+            if(el->set_pseudo_class(_focus_visible_, focus_visible))
+            {
+                changed = true;
+            }
+            set_focus_within(el, true);
+        }
+
+        return changed;
+    }
+
+    bool document::set_focus(const element::ptr& el, bool focus_visible,
+                             const std::function<void(const position&)>& redraw_box)
+    {
+        if(el && !is_focusable(el))
+        {
+            return false;
+        }
+        if(!change_focus(el, focus_visible))
+        {
+            return false;
+        }
+        update_styles(redraw_box);
+        return true;
+    }
+
+    bool document::is_focusable(const element::ptr& el) const
+    {
+        if(!el->can_be_focused())
+        {
+            return false;
+        }
+        if(is_one_of(el->css().get_display(), display_none, display_contents))
+        {
+            return false;
+        }
+        return el->css().get_visibility() == visibility_visible;
+    }
+
+    void document::collect_tabbable(const element::ptr& el, bool inert, std::vector<element::ptr>& result) const
+    {
+        if(el->css().get_display() == display_none)
+        {
+            return;
+        }
+
+        const bool el_inert = inert || el->get_attr("inert") != nullptr;
+        if(!el_inert && is_focusable(el))
+        {
+            const auto tab_index = el->tab_index();
+            if(!tab_index || *tab_index >= 0)
+            {
+                result.push_back(el);
+            }
+        }
+
+        for(const auto& child : el->children())
+        {
+            collect_tabbable(child, el_inert, result);
+        }
+    }
+
+    std::vector<element::ptr> document::tabbable_elements() const
+    {
+        std::vector<element::ptr> elements;
+        if(m_root)
+        {
+            collect_tabbable(m_root, false, elements);
+            std::stable_sort(elements.begin(), elements.end(), [](const element::ptr& a, const element::ptr& b) {
+                const int a_index = focus_order_index(a);
+                const int b_index = focus_order_index(b);
+                if(a_index == 0 || b_index == 0)
+                {
+                    // Positive tabindex values come first; zero/absent keep document order.
+                    return a_index != 0;
+                }
+                return a_index < b_index;
+            });
+        }
+        return elements;
+    }
+
+    std::optional<position> document::focus_next(const std::function<void(const position&)>& redraw_box)
+    {
+        return focus_step(true, redraw_box);
+    }
+
+    std::optional<position> document::focus_prev(const std::function<void(const position&)>& redraw_box)
+    {
+        return focus_step(false, redraw_box);
+    }
+
+    position document::element_document_position(const element::ptr& el) const
+    {
+        position pos;
+        bool     is_first = true;
+
+        const auto add_box = [&pos, &is_first](const position& box) {
+            if(is_first)
+            {
+                pos      = box;
+                is_first = false;
+            } else
+            {
+                const pixel_t right  = std::max(pos.right(), box.right());
+                const pixel_t bottom = std::max(pos.bottom(), box.bottom());
+                pos.x                = std::min(pos.x, box.x);
+                pos.y                = std::min(pos.y, box.y);
+                pos.width            = right - pos.x;
+                pos.height           = bottom - pos.y;
+            }
+        };
+
+        for(const auto& weak_ri : el->m_renders)
+        {
+            if(const auto ri = weak_ri.lock())
+            {
+                ri->get_rendering_boxes(add_box);
+            }
+        }
+
+        if(is_first)
+        {
+            return el->get_placement();
+        }
+        return pos;
+    }
+
+    std::optional<position> document::focus_step(bool forward, const std::function<void(const position&)>& redraw_box)
+    {
+        if(!m_root_render || !m_render_width)
+        {
+            return std::nullopt;
+        }
+
+        const auto elements = tabbable_elements();
+        if(elements.empty())
+        {
+            return std::nullopt;
+        }
+
+        size_t     index   = forward ? 0 : elements.size() - 1;
+        const auto current = m_focused_element.lock();
+        const auto it      = std::find(elements.begin(), elements.end(), current);
+        if(it != elements.end())
+        {
+            const auto current_index = static_cast<size_t>(std::distance(elements.begin(), it));
+            if(forward)
+            {
+                index = (current_index + 1) % elements.size();
+            } else
+            {
+                index = (current_index + elements.size() - 1) % elements.size();
+            }
+        }
+
+        const auto& el = elements[index];
+        set_focus(el, true, redraw_box);
+        return element_document_position(el);
     }
 
     void document::get_fixed_boxes(position::vector& fixed_boxes)
