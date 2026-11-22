@@ -36,15 +36,20 @@ namespace litehtml
         margins  m_padding;
         margins  m_borders;
         position m_pos;
-        size     m_intrinsic_min_size;
-        size     m_intrinsic_max_size;
-        pixel_t  m_intrinsic_content_min_width = 0_px;
-        pixel_t  m_intrinsic_content_max_width = 0_px;
-        pixel_t  m_intrinsic_content_height    = 0_px;
-        position m_bounds; // bounding box of the element
-        bool     m_skip                         = false;
-        bool     m_height_dependent             = false;
-        uint64_t m_height_dependency_generation = 0;
+        // Arguments of the last render(): the item can be laid out again in place without the
+        // parent once its own box is known to be definite.
+        containing_block_context m_cb_context;
+        position                 m_render_origin;
+        bool                     m_outer_floats = false;
+        size                     m_intrinsic_min_size;
+        size                     m_intrinsic_max_size;
+        pixel_t                  m_intrinsic_content_min_width = 0_px;
+        pixel_t                  m_intrinsic_content_max_width = 0_px;
+        pixel_t                  m_intrinsic_content_height    = 0_px;
+        position                 m_bounds; // bounding box of the element
+        bool                     m_skip                         = false;
+        bool                     m_height_dependent             = false;
+        uint64_t                 m_height_dependency_generation = 0;
 
         // Results of recent layouts of a subtree with its own formatting context, valid during one
         // document render. A hit restores the item's own box; when the hit is not the layout the
@@ -156,6 +161,27 @@ namespace litehtml
         // Lays out the descendants again if they don't match the item's last render() result.
         void ensure_layout();
         void ensure_layout_tree();
+
+        // Whether the item's border box is fully determined by its containing block, so a layout
+        // change inside it cannot move or resize anything outside of it.
+        bool has_definite_size() const;
+
+        const containing_block_context& cb_context() const
+        {
+            return m_cb_context;
+        }
+
+        const position& render_origin() const
+        {
+            return m_render_origin;
+        }
+
+        // The formatting context this item was laid out in had floats, so it cannot be laid out
+        // again with a fresh context without changing where its content flows.
+        bool has_outer_floats() const
+        {
+            return m_outer_floats;
+        }
 
         // Called before descendants are changed outside of the item's render().
         void invalidate_layout()

@@ -7,6 +7,7 @@ option(LITEHTML_ENABLE_LINT "enable linting for litehtml" ON)
 option(LITEHTML_BUILD_GRID_TESTS "build CSS Grid regression tests" OFF)
 option(LITEHTML_BUILD_MATH_TESTS "build CSS math regression tests" OFF)
 option(LITEHTML_BUILD_STACKING_TESTS "build stacking context hit-test regression tests" OFF)
+option(LITEHTML_BUILD_REFLOW_TESTS "build incremental re-layout regression tests" OFF)
 option(LITEHTML_BUILD_CONTAINER_CAIRO "build litehtml_container_cairo library (requires cairo)" OFF)
 option(LITEHTML_BUILD_CONTAINER_PANGO "build litehtml_container_pango library (requires pango, pangocairo)" OFF)
 option(LITEHTML_BUILD_RENDER2PNG "build litehtml_render2png library (requires gtk4, gdk-pixbuf-2.0, fontconfig)" OFF)
@@ -284,6 +285,14 @@ if(LITEHTML_BUILD_STACKING_TESTS)
 	add_test(NAME litehtml-stacking-tests COMMAND litehtml-stacking-tests)
 endif()
 
+if(LITEHTML_BUILD_REFLOW_TESTS)
+	enable_testing()
+	add_executable(litehtml-reflow-tests tests/reflow_test.cpp)
+	target_include_directories(litehtml-reflow-tests PRIVATE tests)
+	target_link_libraries(litehtml-reflow-tests PRIVATE litehtml)
+	add_test(NAME litehtml-reflow-tests COMMAND litehtml-reflow-tests)
+endif()
+
 # install and export
 install(TARGETS ${PROJECT_NAME}
 	EXPORT litehtmlTargets
@@ -302,7 +311,7 @@ else ()
 	ExternalProject_Add(
 			litehtml-tests
 			GIT_REPOSITORY      https://github.com/litehtml/litehtml-tests.git
-			GIT_TAG             9183f53399f9b0cd2c78f8cb1264e9e3151e6e77
+			GIT_TAG             e11157fc13d9a408de1c2d7765b0730ae33a3c62
 			SOURCE_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-src"
 			BINARY_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-build"
 			CMAKE_ARGS          -DLITEHTML_PATH=${CMAKE_CURRENT_SOURCE_DIR}

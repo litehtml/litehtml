@@ -49,6 +49,11 @@ namespace html2png
             return default_value;
         }
 
+        bool has_key(const std::string& key) const
+        {
+            return m_data.find(key) != m_data.end();
+        }
+
         bool get_bool(const std::string& key, bool default_value)
         {
             auto iter = m_data.find(key);
@@ -272,6 +277,10 @@ namespace html2png
         int wheel_at_y = cfg.get_int("wheelaty", 0);
         int wheel_dy   = cfg.get_int("wheely", 0);
         int wheel_dx   = cfg.get_int("wheelx", 0);
+        // Move the mouse pointer to the given viewport position (hover tests).
+        const bool hover   = cfg.has_key("mousex") && cfg.has_key("mousey");
+        int        mouse_x = hover ? cfg.get_int("mousex", 0) : 0;
+        int        mouse_y = hover ? cfg.get_int("mousey", 0) : 0;
 
         auto* surface = cairo_image_surface_create(CAIRO_FORMAT_ARGB32, width, height);
         if(surface)
@@ -289,6 +298,13 @@ namespace html2png
             if(wheel_dy != 0 || wheel_dx != 0)
             {
                 doc->on_scroll(wheel_dx, wheel_dy, wheel_at_x - draw_x, wheel_at_y - draw_y, wheel_at_x, wheel_at_y);
+            }
+            if(hover)
+            {
+                // The document coordinates are the viewport coordinates shifted by the draw offset,
+                // the same way the wheel keys are converted.
+                doc->on_mouse_over(mouse_x - draw_x, mouse_y - draw_y, mouse_x, mouse_y,
+                                   [](const litehtml::position&) {});
             }
             litehtml::position clip(0, 0, width, height);
             doc->draw(reinterpret_cast<litehtml::uint_ptr>(cr), draw_x, draw_y, &clip);

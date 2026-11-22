@@ -46,6 +46,7 @@ namespace litehtml
 
     class html_tag;
     class render_item;
+    struct styles_update;
 
     class document : public std::enable_shared_from_this<document>
     {
@@ -158,8 +159,13 @@ namespace litehtml
         void         create_node(void* gnode, elements_list& elements, bool parseTextNode, bool process_root);
         bool         update_media_lists(const media_features& features);
         bool         update_styles(const std::function<void(const position&)>& redraw_box);
-        void         rebuild_render_tree();
-        void         fix_tables_layout();
+        // Lays out again only the subtrees whose content changed. Returns false when the change
+        // cannot be contained in a subtree and the whole document has to be laid out again.
+        bool relayout_after_style_change(styles_update& update, const std::function<void(const position&)>& redraw_box);
+        std::shared_ptr<render_item> relayout_root_for(const std::shared_ptr<render_item>& item,
+                                                       const styles_update&                update) const;
+        void                         rebuild_render_tree();
+        void                         fix_tables_layout();
         void fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str);
         void fix_table_parent(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str);
     };

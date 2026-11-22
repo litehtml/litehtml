@@ -8,6 +8,7 @@
 #include "el_cdata.h"
 #include "el_comment.h"
 #include "el_div.h"
+#include "element.h"
 #include "el_font.h"
 #include "el_image.h"
 #include "el_link.h"
@@ -27,7 +28,9 @@
 #include "render_table.h"
 #include "stylesheet.h"
 #include "types.h"
+#include <algorithm>
 #include <map>
+#include <vector>
 
 namespace litehtml
 {
@@ -948,22 +951,193 @@ namespace litehtml
 
     bool document::update_styles(const std::function<void(const position&)>& redraw_box)
     {
-        bool       render_tree_changed = false;
-        const bool changed             = m_root->find_styles_changes(redraw_box, &render_tree_changed);
-        if(render_tree_changed)
-        {
+        styles_update update;
+        const bool    changed = m_root->find_styles_changes(redraw_box, update);
+
+        const auto redraw_everything = [&]() {
             const auto old_size = m_size;
+            render(*m_render_width);
+            position viewport;
+            container()->get_viewport(viewport);
+            redraw_box(position(0_px, 0_px, std::max({old_size.width, m_size.width, viewport.right()}),
+                                std::max({old_size.height, m_size.height, viewport.bottom()})));
+        };
+
+        if(update.render_tree_changed)
+        {
             rebuild_render_tree();
             if(m_render_width)
             {
-                render(*m_render_width);
-                position viewport;
-                container()->get_viewport(viewport);
-                redraw_box(position(0_px, 0_px, std::max({old_size.width, m_size.width, viewport.right()}),
-                                    std::max({old_size.height, m_size.height, viewport.bottom()})));
+                redraw_everything();
             }
+        } else if(update.layout_changed && !relayout_after_style_change(update, redraw_box) && m_render_width)
+        {
+            // The change could not be kept inside a subtree: lay out the whole document again.
+            redraw_everything();
         }
         return changed;
+    }
+
+    std::shared_ptr<render_item> document::relayout_root_for(const std::shared_ptr<render_item>& item,
+                                                             const styles_update&                update) const
+    {
+        const auto is_changed = [&update](const std::shared_ptr<render_item>& candidate) {
+            const auto el = candidate->src_el();
+            return std::find(update.changed_elements.begin(), update.changed_elements.end(), el) !=
+                   update.changed_elements.end();
+        };
+        // Out-of-flow boxes are laid out by render_positioned() with a containing block that is not
+        // the one stored on the item, so they can only be laid out again by a full render.
+        for(auto el = item; el; el = el->parent())
+        {
+            if(is_one_of(el->src_el()->css().get_position(), element_position_absolute, element_position_fixed))
+            {
+                return nullptr;
+            }
+        }
+        // The changed element's own border box may change, so its parent is the first candidate.
+        for(auto candidate = item ? item->parent() : nullptr; candidate; candidate = candidate->parent())
+        {
+            if(is_changed(candidate))
+            {
+                continue;
+            }
+            if(candidate->is_flex_item() || candidate->is_grid_item())
+            {
+                // The surrounding flex/grid layout may depend on this item's intrinsic size.
+                continue;
+            }
+            if(is_one_of(candidate->src_el()->css().get_display(), display_table_row_group, display_table_header_group,
+                         display_table_footer_group, display_table_row, display_table_cell, display_table_column,
+                         display_table_column_group, display_table_caption))
+            {
+                // Table boxes are laid out by the table algorithm, not on their own.
+                continue;
+            }
+            if(!candidate->has_definite_size())
+            {
+                continue;
+            }
+            if(!candidate->src_el()->is_block_formatting_context() && candidate->has_outer_floats())
+            {
+                // A fresh formatting context would not flow the content around the outer floats.
+                continue;
+            }
+            return candidate;
+        }
+        return m_root_render;
+    }
+
+    bool document::relayout_after_style_change(styles_update&                              update,
+                                               const std::function<void(const position&)>& redraw_box)
+    {
+        if(!m_root_render || !m_render_width)
+        {
+            return false;
+        }
+
+        std::vector<std::shared_ptr<render_item>> roots;
+        for(const auto& item : update.changed_renders)
+        {
+            if(!item)
+            {
+                continue;
+            }
+            auto root = relayout_root_for(item, update);
+            if(!root)
+            {
+                return false;
+            }
+            if(std::find(roots.begin(), roots.end(), root) == roots.end())
+            {
+                roots.push_back(root);
+            }
+        }
+        if(roots.empty())
+        {
+            // The changed boxes are not part of the render tree (e.g. display: contents).
+            return false;
+        }
+
+        // Drop roots that are covered by another root.
+        std::vector<std::shared_ptr<render_item>> top_roots;
+        for(const auto& root : roots)
+        {
+            bool covered = false;
+            for(auto parent = root->parent(); parent; parent = parent->parent())
+            {
+                if(std::find(roots.begin(), roots.end(), parent) != roots.end())
+                {
+                    covered = true;
+                    break;
+                }
+            }
+            if(!covered)
+            {
+                top_roots.push_back(root);
+            }
+        }
+        roots = std::move(top_roots);
+
+        const auto outline_box = [](const std::shared_ptr<render_item>& item) {
+            position box  = item->pos();
+            box          += item->get_paddings();
+            box          += item->get_borders();
+            box          += item->get_margins();
+            return box;
+        };
+
+        ++m_layout_generation;
+        for(const auto& root : roots)
+        {
+            if(root == m_root_render)
+            {
+                return false;
+            }
+            const position before = outline_box(root);
+            root->update_intrinsic_size();
+            const auto origin = root->render_origin();
+            root->render(origin.x, origin.y, root->cb_context(), nullptr);
+            if(root->src_el()->css().get_position() == element_position_relative)
+            {
+                // The parent applied the relative shift after the original layout.
+                root->apply_relative_shift(root->cb_context());
+            }
+            const position after = outline_box(root);
+            if(after.x != before.x || after.y != before.y || after.width != before.width ||
+               after.height != before.height)
+            {
+                // The change was not contained after all; the caller lays out the document again.
+                return false;
+            }
+        }
+
+        const size old_size = m_size;
+
+        // Positioned descendants and fixed boxes may depend on the new layout of the subtrees.
+        m_fixed_boxes.clear();
+        m_root_render->render_positioned(render_all);
+        m_size = {};
+        m_root_render->calc_document_size(m_size);
+
+        // Report the new areas; the old ones were reported before the styles were recomputed.
+        for(const auto& root : roots)
+        {
+            root->get_rendering_boxes(redraw_box);
+        }
+        for(const auto& item : update.changed_renders)
+        {
+            if(item)
+            {
+                item->get_rendering_boxes(redraw_box);
+            }
+        }
+        if(old_size.width != m_size.width || old_size.height != m_size.height)
+        {
+            redraw_box(position(0_px, 0_px, old_size.width, old_size.height));
+            redraw_box(position(0_px, 0_px, m_size.width, m_size.height));
+        }
+        return true;
     }
 
     bool document::media_changed()

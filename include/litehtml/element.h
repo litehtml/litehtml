@@ -9,12 +9,17 @@
 #include <list>
 #include <memory>
 #include <tuple>
+#include <vector>
 
 namespace litehtml
 {
     class line_box;
     class dumper;
     class render_item;
+
+    // Result of element::find_styles_changes: what changed in the computed styles and which
+    // render items have to be redrawn/laid out again.
+    struct styles_update;
 
     class element : public std::enable_shared_from_this<element>
     {
@@ -157,6 +162,7 @@ namespace litehtml
         void add_render(const std::shared_ptr<render_item>& ri);
         bool find_styles_changes(const std::function<void(const position&)>& redraw_box,
                                  bool*                                       render_tree_changed = nullptr);
+        bool find_styles_changes(const std::function<void(const position&)>& redraw_box, styles_update& update);
 
         element::ptr add_pseudo_before(const style& style)
         {
@@ -181,6 +187,21 @@ namespace litehtml
         bool find_counter(string_id counter_name_id, std::map<string_id, int>::iterator& map_iterator);
         void parse_counter_tokens(const std::vector<std::string>& tokens, int default_value,
                                   const std::function<void(string_id, int)>& handler) const;
+    };
+
+    // Result of element::find_styles_changes: what changed in the computed styles and which
+    // render items have to be redrawn/laid out again.
+    struct styles_update
+    {
+        // The element tree or the render tree structure changed; the render tree must be rebuilt.
+        bool render_tree_changed = false;
+        // A property that can change layout changed; the affected subtrees must be laid out again.
+        bool layout_changed = false;
+        // Elements whose computed style changed.
+        std::vector<element::ptr> changed_elements;
+        // Render items of the elements whose computed style changed. They are reported before the
+        // styles are recomputed and are still the current items after an in-place re-layout.
+        std::vector<std::shared_ptr<render_item>> changed_renders;
     };
 
     //////////////////////////////////////////////////////////////////////////

@@ -233,6 +233,17 @@ namespace litehtml
 
     bool element::find_styles_changes(const std::function<void(const position&)>& redraw_box, bool* render_tree_changed)
     {
+        styles_update update;
+        const bool    ret = find_styles_changes(redraw_box, update);
+        if(render_tree_changed)
+        {
+            *render_tree_changed = *render_tree_changed || update.render_tree_changed;
+        }
+        return ret;
+    }
+
+    bool element::find_styles_changes(const std::function<void(const position&)>& redraw_box, styles_update& update)
+    {
         if(css().get_display() == display_inline_text)
         {
             return false;
@@ -249,6 +260,7 @@ namespace litehtml
                     if(ri)
                     {
                         ri->get_rendering_boxes(redraw_box);
+                        update.changed_renders.push_back(ri);
                     }
                 }
                 if(el->css().get_display() == display_contents)
@@ -268,8 +280,17 @@ namespace litehtml
                 }
             }
 
+            update.changed_elements.push_back(shared_from_this());
+
+            const size_t old_children = m_children.size();
+            std::string  old_layout;
+            if(!update.layout_changed)
+            {
+                old_layout = css().layout_signature();
+            }
+
             std::vector<std::pair<element::ptr, style_display>> old_displays;
-            if(render_tree_changed && !*render_tree_changed)
+            if(!update.render_tree_changed)
             {
                 const auto save_displays = [&](const auto& self, const element::ptr& el) -> void {
                     old_displays.emplace_back(el, el->css().get_display());
@@ -282,22 +303,29 @@ namespace litehtml
             }
             refresh_styles();
             compute_styles();
-            if(render_tree_changed)
+
+            for(const auto& old_display : old_displays)
             {
-                for(const auto& old_display : old_displays)
+                if(old_display.first->css().get_display() != old_display.second)
                 {
-                    if(old_display.first->css().get_display() != old_display.second)
-                    {
-                        *render_tree_changed = true;
-                        break;
-                    }
+                    update.render_tree_changed = true;
+                    break;
                 }
+            }
+            if(m_children.size() != old_children)
+            {
+                // ::before/::after elements can be added or removed by refresh_styles (content: none).
+                update.render_tree_changed = true;
+            }
+            if(!update.layout_changed && css().layout_signature() != old_layout)
+            {
+                update.layout_changed = true;
             }
             ret = true;
         }
         for(auto& el : m_children)
         {
-            if(el->find_styles_changes(redraw_box, render_tree_changed))
+            if(el->find_styles_changes(redraw_box, update))
             {
                 ret = true;
             }
