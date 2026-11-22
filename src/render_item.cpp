@@ -286,6 +286,11 @@ litehtml::pixel_t litehtml::render_item::render(pixel_t x, pixel_t y,
                                                 const containing_block_context& containing_block_size,
                                                 formatting_context* fmt_ctx, bool second_pass)
 {
+    // Remember the inputs so the item can be laid out again in place after a style change.
+    m_cb_context    = containing_block_size;
+    m_render_origin = position(x, y, 0_px, 0_px);
+    m_outer_floats  = fmt_ctx && fmt_ctx->has_floats();
+
     if(src_el()->is_block_formatting_context() || (fmt_ctx == nullptr))
     {
         const uint64_t generation = src_el()->get_document()->layout_generation();
@@ -440,6 +445,29 @@ void litehtml::render_item::ensure_layout_tree()
     {
         el->ensure_layout_tree();
     }
+}
+
+bool litehtml::render_item::has_definite_size() const
+{
+    const auto& style = css();
+    if(style.get_width().is_intrinsic_sizing() || style.get_height().is_intrinsic_sizing())
+    {
+        return false;
+    }
+    // Only boxes whose width and height come from CSS can be definite. An inline, table-internal
+    // or otherwise content-sized box cannot be laid out again on its own.
+    if(!src_el()->is_block_box() && !src_el()->is_block_formatting_context() && !src_el()->is_replaced())
+    {
+        return false;
+    }
+    const containing_block_context self_size = calculate_containing_block_context(m_cb_context);
+    const auto                     definite  = [](const containing_block_context::typed_pixel& value,
+                                                  const containing_block_context::typed_pixel& base) {
+        return value.type == containing_block_context::cbc_value_type_absolute ||
+               (value.type == containing_block_context::cbc_value_type_percentage &&
+                base.type == containing_block_context::cbc_value_type_absolute);
+    };
+    return definite(self_size.width, m_cb_context.width) && definite(self_size.height, m_cb_context.height);
 }
 
 void litehtml::render_item::calc_outlines(pixel_t parent_width)

@@ -129,6 +129,12 @@ namespace litehtml
 
         std::vector<std::tuple<std::string, std::string>> dump_get_attrs();
 
+        // Serialised computed values of every property that can affect the box model or the
+        // line layout. Two styles with equal signatures lay out the same way in the same
+        // containing block. Paint-only properties (color, background, visibility, cursor,
+        // text decoration, border radius and colors, appearance) are not included.
+        std::string layout_signature() const;
+
         element_position get_position() const;
         void             set_position(element_position mElPosition);
 

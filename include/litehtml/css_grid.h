@@ -42,12 +42,22 @@ namespace litehtml
         grid_breadth_type type = grid_breadth_type::automatic;
         css_length        length;
         float             fraction = 0;
+
+        std::string to_string() const
+        {
+            return std::to_string(static_cast<int>(type)) + ":" + length.to_string() + ":" + std::to_string(fraction);
+        }
     };
 
     struct grid_track_size
     {
         grid_breadth min;
         grid_breadth max;
+
+        std::string to_string() const
+        {
+            return min.to_string() + "/" + max.to_string();
+        }
     };
 
     struct auto_repeat_info
@@ -117,6 +127,54 @@ namespace litehtml
         void add_line_names(size_t index, const std::vector<std::string>& names)
         {
             m_line_names.emplace_back(index, names);
+        }
+
+        std::string to_string() const
+        {
+            std::string ret  = m_subgrid ? "subgrid:" : "grid:";
+            ret             += std::to_string(m_size);
+            for(const auto& seg : m_segments)
+            {
+                ret += '|';
+                ret += std::to_string(static_cast<int>(seg.repeat_kind));
+                ret += '@' + std::to_string(seg.end) + '[';
+                for(const auto& track : seg.pattern)
+                {
+                    ret += track.to_string() + ',';
+                }
+                ret += ']';
+                for(const auto& names : seg.line_names)
+                {
+                    ret += '+';
+                    for(const auto& name : names)
+                    {
+                        ret += name + " ";
+                    }
+                }
+            }
+            for(const auto& seg : m_name_segments)
+            {
+                ret += "|name:";
+                ret += std::to_string(seg.count) + (seg.auto_fill ? "f" : "") + '[';
+                for(const auto& names : seg.pattern)
+                {
+                    ret += '+';
+                    for(const auto& name : names)
+                    {
+                        ret += name + " ";
+                    }
+                }
+                ret += ']';
+            }
+            for(const auto& line : m_line_names)
+            {
+                ret += "|line:" + std::to_string(line.first);
+                for(const auto& name : line.second)
+                {
+                    ret += " " + name;
+                }
+            }
+            return ret;
         }
 
         std::vector<std::string> line_names_at(size_t index) const
@@ -222,6 +280,12 @@ namespace litehtml
         int            value     = 0;
         std::string    name      = {};
         bool           name_only = false;
+
+        std::string to_string() const
+        {
+            return std::to_string(static_cast<int>(type)) + ":" + std::to_string(value) + ":" + name +
+                   (name_only ? ":name" : "");
+        }
     };
 
     struct grid_placement
@@ -256,6 +320,18 @@ namespace litehtml
         int                                            rows    = 0;
         int                                            columns = 0;
         std::vector<std::pair<std::string, grid_area>> areas;
+
+        std::string to_string() const
+        {
+            std::string ret = std::to_string(rows) + "x" + std::to_string(columns);
+            for(const auto& area : areas)
+            {
+                ret += "|" + area.first + ":" + std::to_string(area.second.column_start) + "," +
+                       std::to_string(area.second.column_end) + "," + std::to_string(area.second.row_start) + "," +
+                       std::to_string(area.second.row_end);
+            }
+            return ret;
+        }
     };
 
     bool parse_grid_track_list(const css_token_vector& tokens, grid_track_list& tracks);

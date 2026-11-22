@@ -168,6 +168,10 @@ The parameter of the ```redraw_box``` is the rectangle that you need to redraw. 
 times if you need to redraw several rectangles. Please note, you should queue the redraw of the rectangles and call the
 actual redraw after functions are called.
 
+A style change that affects layout is applied before the functions return. The document is laid out again, and the
+changed element is reported both with the boxes it had before the change and with the boxes it has afterwards. So it is
+normal to receive overlapping rectangles for the same element; they do not need to be merged, just repainted.
+
 All functions returns the ```bool``` to indicate that you have to redraw something. Also note the ```x``` and ```y```
 are relative to the HTML layout. So ```0,0``` is the top-left corner.
 The parameters ```client_x``` and ```client_y``` are the mouse position in the client area (draw area). These parameters

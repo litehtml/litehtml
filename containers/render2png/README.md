@@ -109,6 +109,8 @@ wheelx: 0
 wheely: 40
 wheelatx: 100
 wheelaty: 100
+mousex: 120
+mousey: 80
 ```
 
 All numeric values are integers in pixels.
@@ -124,6 +126,8 @@ All numeric values are integers in pixels.
 | `wheely` | `0` | Requested vertical scroll increment for a scrollable element. |
 | `wheelatx` | `0` | Horizontal viewport coordinate used to find the element to scroll. |
 | `wheelaty` | `0` | Vertical viewport coordinate used to find the element to scroll. |
+| `mousex` | not simulated | Horizontal viewport coordinate of the mouse pointer. Requires `mousey`. |
+| `mousey` | not simulated | Vertical viewport coordinate of the mouse pointer. Requires `mousex`. |
 
 The first layout uses the converter's screen width. Its best-fit width is
 converted to an integer, truncating fractional pixels toward zero. If
@@ -138,6 +142,13 @@ does not compare greater than zero using litehtml's pixel comparison defaults
 to `1` instead. `height` changes the output image height, not the converter's
 viewport height. Set output dimensions to positive values; the converter does
 not validate them before creating the Cairo surface.
+
+When both `mousex` and `mousey` are present, the converter moves the mouse
+pointer to that position before drawing by calling `document::on_mouse_over`.
+This applies `:hover` styles, including layout changes. The viewport
+coordinates are converted to document coordinates with the `drawx`/`drawy`
+offsets, the same way `wheelatx`/`wheelaty` are. The hover happens after the
+optional scroll and before the document is drawn.
 
 When `wheelx` or `wheely` is nonzero, the converter requests a scroll before
 drawing. It selects a scrollable element for each nonzero axis at

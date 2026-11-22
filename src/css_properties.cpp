@@ -826,3 +826,122 @@ std::vector<std::tuple<std::string, std::string>> litehtml::css_properties::dump
 
     return ret;
 }
+
+std::string litehtml::css_properties::layout_signature() const
+{
+    std::string ret;
+    ret.reserve(1024);
+
+    const auto add = [&ret](const std::string& name, const std::string& value) {
+        ret += name;
+        ret += '=';
+        ret += value;
+        ret += ';';
+    };
+    const auto add_int    = [&add](const std::string& name, int value) { add(name, std::to_string(value)); };
+    const auto add_float  = [&add](const std::string& name, float value) { add(name, std::to_string(value)); };
+    const auto add_length = [&add](const std::string& name, const css_length& value) { add(name, value.to_string()); };
+    const auto add_box    = [&add_length](const std::string& prefix, const css_margins& box) {
+        add_length(prefix + "_left", box.left);
+        add_length(prefix + "_right", box.right);
+        add_length(prefix + "_top", box.top);
+        add_length(prefix + "_bottom", box.bottom);
+    };
+    const auto add_border = [&add_length, &add_int](const std::string& prefix, const css_border& border) {
+        // The used border width can depend on the style, so both are part of the layout.
+        add_length(prefix + "_width", border.width);
+        add_int(prefix + "_style", static_cast<int>(border.style));
+    };
+
+    add_int("display", static_cast<int>(m_display));
+    add_int("position", static_cast<int>(m_el_position));
+    add_int("float", static_cast<int>(m_float));
+    add_int("clear", static_cast<int>(m_clear));
+    add_int("box_sizing", static_cast<int>(m_box_sizing));
+    add_int("overflow", static_cast<int>(m_overflow));
+    add_int("container_type", static_cast<int>(m_container_type));
+    add("z_index", m_z_index.to_string());
+
+    add_int("white_space", static_cast<int>(m_white_space));
+    add_int("text_align", static_cast<int>(m_text_align));
+    add_int("text_transform", static_cast<int>(m_text_transform));
+    add_int("vertical_align", static_cast<int>(m_vertical_align));
+    add_int("caption_side", static_cast<int>(m_caption_side));
+    add_length("text_indent", m_css_text_indent);
+
+    add_box("margin", m_css_margins);
+    add_box("padding", m_css_padding);
+    add_border("border_left", m_css_borders.left);
+    add_border("border_right", m_css_borders.right);
+    add_border("border_top", m_css_borders.top);
+    add_border("border_bottom", m_css_borders.bottom);
+
+    add_length("width", m_css_width);
+    add_length("height", m_css_height);
+    add_length("min_width", m_css_min_width);
+    add_length("min_height", m_css_min_height);
+    add_length("max_width", m_css_max_width);
+    add_length("max_height", m_css_max_height);
+    add_length("offset_left", m_css_offsets.left);
+    add_length("offset_right", m_css_offsets.right);
+    add_length("offset_top", m_css_offsets.top);
+    add_length("offset_bottom", m_css_offsets.bottom);
+
+    add_length("line_height", m_css_line_height);
+    add_float("line_height_used", m_line_height.computed_value.value());
+
+    add_int("list_style_type", static_cast<int>(m_list_style_type));
+    add_int("list_style_position", static_cast<int>(m_list_style_position));
+    add("list_style_image", m_list_style_image);
+    add("list_style_image_baseurl", m_list_style_image_baseurl);
+
+    // The font handle is not part of the layout: it is created from a description that also encodes
+    // text decoration and emphasis, so it changes for paint-only style changes. Measurement only
+    // depends on the family, size, weight, style and metrics below.
+    add_length("font_size", m_font_size);
+    add("font_family", m_font_family);
+    add_length("font_weight", m_font_weight);
+    add_int("font_style", static_cast<int>(m_font_style));
+    add_float("font_metrics_size", m_font_metrics.font_size.value());
+    add_float("font_metrics_height", m_font_metrics.height.value());
+    add_float("font_metrics_ascent", m_font_metrics.ascent.value());
+    add_float("font_metrics_descent", m_font_metrics.descent.value());
+    add_float("font_metrics_x_height", m_font_metrics.x_height.value());
+    add_float("font_metrics_ch_width", m_font_metrics.ch_width.value());
+    add_float("font_metrics_sub_shift", m_font_metrics.sub_shift.value());
+    add_float("font_metrics_super_shift", m_font_metrics.super_shift.value());
+
+    add("content", m_content);
+    add_int("border_collapse", static_cast<int>(m_border_collapse));
+    add_int("table_layout", static_cast<int>(m_table_layout));
+    add_length("border_spacing_x", m_css_border_spacing_x);
+    add_length("border_spacing_y", m_css_border_spacing_y);
+
+    add_float("flex_grow", m_flex_grow);
+    add_float("flex_shrink", m_flex_shrink);
+    add_length("flex_basis", m_flex_basis);
+    add_int("flex_direction", static_cast<int>(m_flex_direction));
+    add_int("flex_wrap", static_cast<int>(m_flex_wrap));
+    add_int("flex_justify_content", static_cast<int>(m_flex_justify_content));
+    add_int("flex_align_items", static_cast<int>(m_flex_align_items));
+    add_int("flex_align_self", static_cast<int>(m_flex_align_self));
+    add_int("flex_align_content", static_cast<int>(m_flex_align_content));
+    add_int("order", m_order);
+
+    add("grid_template_columns", m_grid_template_columns.to_string());
+    add("grid_template_rows", m_grid_template_rows.to_string());
+    add("grid_template_areas", m_grid_template_areas.to_string());
+    add("grid_auto_columns", m_grid_auto_columns.to_string());
+    add("grid_auto_rows", m_grid_auto_rows.to_string());
+    add("grid_column_start", m_grid_column_start.to_string());
+    add("grid_column_end", m_grid_column_end.to_string());
+    add("grid_row_start", m_grid_row_start.to_string());
+    add("grid_row_end", m_grid_row_end.to_string());
+    add_int("grid_auto_flow", static_cast<int>(m_grid_auto_flow));
+    add_int("grid_justify_items", static_cast<int>(m_grid_justify_items));
+    add_int("grid_justify_self", static_cast<int>(m_grid_justify_self));
+    add_length("row_gap", m_row_gap);
+    add_length("column_gap", m_column_gap);
+
+    return ret;
+}
