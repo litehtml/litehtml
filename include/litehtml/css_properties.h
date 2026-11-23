@@ -49,6 +49,7 @@ namespace litehtml
         css_margins           m_css_margins;
         css_margins           m_css_padding;
         css_borders           m_css_borders;
+        css_border            m_outline;
         css_length            m_css_width;
         css_length            m_css_height;
         css_length            m_css_min_width;
@@ -134,7 +135,7 @@ namespace litehtml
         // Serialised computed values of every property that can affect the box model or the
         // line layout. Two styles with equal signatures lay out the same way in the same
         // containing block. Paint-only properties (color, background, visibility, cursor,
-        // text decoration, border radius and colors, appearance) are not included.
+        // text decoration, border radius and colors, outline, appearance) are not included.
         std::string layout_signature() const;
 
         element_position get_position() const;
@@ -186,6 +187,10 @@ namespace litehtml
 
         const css_borders& get_borders() const;
         void               set_borders(const css_borders& mCssBorders);
+
+        const css_border& get_outline() const;
+        // The distance the outline paints outside the border box, or zero when it is not visible.
+        pixel_t outline_extent() const;
 
         const css_length& get_width() const;
         void              set_width(const css_length& mCssWidth);
@@ -507,6 +512,18 @@ namespace litehtml
     inline void css_properties::set_borders(const css_borders& mCssBorders)
     {
         m_css_borders = mCssBorders;
+    }
+
+    inline const css_border& css_properties::get_outline() const
+    {
+        return m_outline;
+    }
+
+    inline pixel_t css_properties::outline_extent() const
+    {
+        const bool visible =
+            m_outline.style > border_style_hidden && m_outline.width.val() > 0 && m_outline.color.alpha != 0;
+        return visible ? pixel_t(m_outline.width.val()) : 0_px;
     }
 
     inline const css_length& css_properties::get_width() const

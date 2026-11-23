@@ -266,7 +266,8 @@ namespace litehtml
         border_style_groove,
         border_style_ridge,
         border_style_inset,
-        border_style_outset
+        border_style_outset,
+        border_style_auto // only valid for outline-style
     };
 
     // ==========================================================

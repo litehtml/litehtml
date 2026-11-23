@@ -253,6 +253,9 @@ namespace litehtml
 
         if(requires_styles_update())
         {
+            const size_t  first_changed_render = update.changed_renders.size();
+            const pixel_t old_outline_extent   = css().outline_extent();
+
             auto process_boxes = [&](const std::shared_ptr<element>& el, const auto& self) -> void {
                 for(const auto& weak_ri : el->m_renders)
                 {
@@ -320,6 +323,15 @@ namespace litehtml
             if(!update.layout_changed && css().layout_signature() != old_layout)
             {
                 update.layout_changed = true;
+            }
+            if(!update.render_tree_changed && css().outline_extent() != old_outline_extent)
+            {
+                // The outline is painted outside the element's boxes. The old area was reported above;
+                // also report the new outline area so a paint-only outline change is fully repainted.
+                for(size_t i = first_changed_render; i < update.changed_renders.size(); i++)
+                {
+                    update.changed_renders[i]->get_rendering_boxes(redraw_box);
+                }
             }
             ret = true;
         }
