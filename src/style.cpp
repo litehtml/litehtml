@@ -23,6 +23,7 @@ namespace litehtml
                            Args... args);
     int  parse_1234_lengths(const css_token_vector& tokens, css_length len[4], int options, css_values keywords = {});
     bool parse_border_width(const css_token& tok, css_length& width);
+    bool parse_outline_color(const css_token& tok, web_color& color, document_container* container);
     bool parse_font_family(const css_token_vector& tokens, std::string& font_family);
     bool parse_font_weight(const css_token& tok, css_length& weight);
 
@@ -100,6 +101,8 @@ namespace litehtml
          {_border_top_width_, _border_right_width_, _border_bottom_width_, _border_left_width_, _border_top_style_,
           _border_right_style_, _border_bottom_style_, _border_left_style_, _border_top_color_, _border_right_color_,
           _border_bottom_color_, _border_left_color_}                                                                 },
+
+        {_outline_,         {_outline_width_, _outline_style_, _outline_color_}                                       },
 
         {_flex_,            {_flex_grow_, _flex_shrink_, _flex_basis_}                                                },
         {_flex_flow_,       {_flex_direction_, _flex_wrap_}                                                           },
@@ -435,6 +438,14 @@ namespace litehtml
             }
             break;
 
+        // outline-color = <color> | invert | auto  https://drafts.csswg.org/css-ui/#outline-color
+        case _outline_color_:
+            if(parse_outline_color(val, *clr, container))
+            {
+                add_parsed_property(name, property_value(*clr, important));
+            }
+            break;
+
             //  =============================  BACKGROUND  =============================
 
         case _background_:
@@ -539,6 +550,33 @@ namespace litehtml
             {
                 add_parsed_property(__litehtml_border_spacing_x_, property_value(len[0], important));
                 add_parsed_property(__litehtml_border_spacing_y_, property_value(len[1], important));
+            }
+            break;
+
+            //  =============================  OUTLINE  =============================
+
+        // outline = <'outline-width'> || <'outline-style'> || <'outline-color'>
+        // https://drafts.csswg.org/css-ui/#outline
+        case _outline_:
+            parse_outline(value, important, container);
+            break;
+
+        // outline-width = <line-width>  https://drafts.csswg.org/css-ui/#outline-width
+        case _outline_width_:
+            if(parse_border_width(val, *len))
+            {
+                add_parsed_property(name, property_value(*len, important));
+            }
+            break;
+
+        // outline-style = auto | <line-style>  https://drafts.csswg.org/css-ui/#outline-style
+        case _outline_style_:
+            if(ident == "auto")
+            {
+                add_parsed_property(name, property_value(static_cast<int>(border_style_auto), important));
+            } else if(auto index = css_values(border_style_strings).value_index(ident); index.has_value())
+            {
+                add_parsed_property(name, property_value(*index, important));
             }
             break;
 
@@ -1048,6 +1086,83 @@ namespace litehtml
         add_parsed_property(_id(_s(name) + "-width"), property_value(width, important));
         add_parsed_property(_id(_s(name) + "-style"), property_value(style, important));
         add_parsed_property(_id(_s(name) + "-color"), property_value(color, important));
+    }
+
+    // https://drafts.csswg.org/css-ui/#outline-color
+    // <color> | invert | auto
+    bool parse_outline_color(const css_token& tok, web_color& color, document_container* container)
+    {
+        if(tok.ident() == "invert" || tok.ident() == "auto")
+        {
+            color = web_color::current_color;
+            return true;
+        }
+        return parse_color(tok, color, container);
+    }
+
+    // https://drafts.csswg.org/css-ui/#outline-style
+    // auto | <line-style>
+    bool parse_outline_style(const css_token& tok, border_style& style)
+    {
+        if(tok.ident() == "auto")
+        {
+            style = border_style_auto;
+            return true;
+        }
+        return parse_keyword(tok, style, border_style_strings);
+    }
+
+    // https://drafts.csswg.org/css-ui/#outline
+    // <'outline-width'> || <'outline-style'> || <'outline-color'>
+    bool parse_outline_helper(const css_token_vector& tokens, document_container* container, css_length& width,
+                              border_style& style, web_color& color)
+    {
+        // initial values: https://developer.mozilla.org/en-US/docs/Web/CSS/outline#formal_definition
+        css_length   _width = border_width_medium_value;
+        border_style _style = border_style_none;
+        web_color    _color = web_color::current_color;
+
+        bool width_found = false;
+        bool style_found = false;
+        bool color_found = false;
+
+        for(const auto& token : tokens)
+        {
+            if(!width_found && parse_border_width(token, _width))
+            {
+                width_found = true;
+            } else if(!style_found && parse_outline_style(token, _style))
+            {
+                style_found = true;
+            } else if(!color_found && parse_outline_color(token, _color, container))
+            {
+                color_found = true;
+            } else
+            {
+                return false;
+            }
+        }
+
+        width = _width;
+        style = _style;
+        color = _color;
+        return true;
+    }
+
+    void style::parse_outline(const css_token_vector& tokens, bool important, document_container* container)
+    {
+        css_length   width;
+        border_style style;
+        web_color    color;
+
+        if(!parse_outline_helper(tokens, container, width, style, color))
+        {
+            return;
+        }
+
+        add_parsed_property(_outline_width_, property_value(width, important));
+        add_parsed_property(_outline_style_, property_value(style, important));
+        add_parsed_property(_outline_color_, property_value(color, important));
     }
 
     bool parse_length(const css_token& tok, css_length& length, int options, css_values keywords)

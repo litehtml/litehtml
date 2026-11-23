@@ -117,6 +117,46 @@ int main()
                     "a paint-only hover should only report the changed box");
     }
 
+    // An outline paints outside the border box, so a paint-only outline change reports that outer area.
+    {
+        reflow_container container;
+        const auto       doc =
+            document::createFromString("<style>body{margin:0;font-size:16px;line-height:20px}"
+                                       "#wrapper{width:200px;height:100px}#box{width:100px;height:20px;margin:10px}"
+                                       "#box:hover{outline:8px solid #f00}</style>"
+                                       "<div id=wrapper><div id=box></div></div>",
+                                       &container);
+        doc->render(800);
+        const auto box  = doc->root()->select_one("#box");
+        ok             &= check(box && box->get_placement().width == 100_px && box->get_placement().height == 20_px,
+                                "the hovered box should have its initial size");
+
+        const auto covers_outline = [&container]() {
+            for(const auto& redraw : container.redraws)
+            {
+                // The border box is at (10,10); the 8px outline reaches (2,2)-(118,38).
+                if(redraw.x <= 2_px && redraw.y <= 2_px && redraw.right() >= 118_px && redraw.bottom() >= 38_px)
+                {
+                    return true;
+                }
+            }
+            return false;
+        };
+
+        const bool hovered = doc->on_mouse_over(20, 20, 20, 20, container.redraw);
+        ok &= check(hovered && !container.redraws.empty(), "an outline-only hover should request a redraw");
+        ok &= check(box->get_placement().width == 100_px && box->get_placement().height == 20_px,
+                    "an outline must not change the layout");
+        ok &= check(covers_outline(), "an outline hover must report the area painted outside the border box");
+        ok &= check(redraws_within(container.redraws, position(0_px, 0_px, 200_px, 100_px)),
+                    "the outline hover area should stay inside the definite-size wrapper");
+
+        container.clear_redraws();
+        doc->on_mouse_leave(container.redraw);
+        ok &= check(box->get_placement().width == 100_px, "leaving the hover should keep the geometry");
+        ok &= check(covers_outline(), "leaving an outline hover must report the previous outline area");
+    }
+
     // A paint-only change never lays the document out again, not even without a definite-size ancestor.
     {
         reflow_container container;

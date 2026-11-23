@@ -128,6 +128,7 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `border-radius` | ✅ | length/% (1–4 / 1–4) | 0 |
 | `border-collapse` | ✅ | 2 | ~14 |
 | `border-spacing` | ✅ | length{1,2} | ~53 |
+| `outline` (+ `outline-width/style/color`) | ✅ | see below | ~8 |
 | `color` | ✅ | any color | ~950 |
 | `font` (+ `font-family/-size/-style/-weight`) | ✅ | see below | ~225 |
 | `font-variant` | ❌ | 2 | — |
@@ -360,6 +361,23 @@ Tests: [css21/border-spacing-002.htm](https://github.com/litehtml/litehtml-tests
 
 Other border tests: [table-border-0.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-border-0.htm),
 [css21/border-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/border-001.htm).
+
+#### `outline` (shorthand), `outline-width`, `outline-style`, `outline-color`
+✅ Supported — `<'outline-width'> || <'outline-style'> || <'outline-color'>` in any order.
+`outline-width` accepts `thin`, `medium`, `thick` (1px/3px/5px) or a non-negative `<length>`;
+`outline-style` accepts the border styles plus `auto` (painted as a solid ring); `outline-color`
+defaults to `currentColor`, and `invert`/`auto` fall back to `currentColor`. The outline is painted
+immediately outside the border box and follows `border-radius`. It is ink overflow: it does not
+affect layout, sibling positions, or the scrollable document size.
+
+Tests: [outline-basic.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-basic.htm),
+[outline-styles.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-styles.htm),
+[outline-width-color.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-width-color.htm),
+[outline-shorthand.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-shorthand.htm),
+[outline-border-radius.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-border-radius.htm),
+[outline-inline.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-inline.htm),
+[outline-does-not-affect-layout.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-does-not-affect-layout.htm),
+[outline-none.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-none.htm).
 
 ---
 

@@ -98,6 +98,7 @@ namespace litehtml
         void parse_border_side(string_id name, const css_token_vector& tokens, bool important,
                                document_container* container);
         void parse_border_radius(const css_token_vector& tokens, bool important);
+        void parse_outline(const css_token_vector& tokens, bool important, document_container* container);
 
         bool parse_list_style_image(const css_token& tok, std::string& url);
         void parse_list_style(const css_token_vector& tokens, const std::string& baseurl, bool important);

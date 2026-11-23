@@ -1998,12 +1998,22 @@ void litehtml::render_item::get_rendering_boxes(const std::function<void(const p
         add_y = view_port.top();
     }
 
+    // The outline is painted outside the border box, so it has to be part of the reported area.
+    const pixel_t outline_extent = src_el()->css().outline_extent();
+    const auto    grow           = [outline_extent](position box) {
+        box.x      -= outline_extent;
+        box.y      -= outline_extent;
+        box.width  += outline_extent * 2;
+        box.height += outline_extent * 2;
+        return box;
+    };
+
     auto inline_processed = for_inline_boxes([&](const position& box, bool, bool) {
         position box_ = box;
         scroll_box(box_);
         box_.x += add_x;
         box_.y += add_y;
-        redraw_box(box_);
+        redraw_box(grow(box_));
         return true;
     });
 
@@ -2014,7 +2024,7 @@ void litehtml::render_item::get_rendering_boxes(const std::function<void(const p
         pos          += m_borders;
         pos.x        += add_x;
         pos.y        += add_y;
-        redraw_box(pos);
+        redraw_box(grow(pos));
     }
 }
 

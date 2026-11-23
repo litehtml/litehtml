@@ -1047,6 +1047,51 @@ namespace litehtml
         return false;
     }
 
+    void litehtml::html_tag::draw_outline(uint_ptr hdc, const position& border_box, const border_radiuses& radius,
+                                          bool first, bool last) const
+    {
+        const css_border& outline = m_css->get_outline();
+        if(outline.style <= border_style_hidden || outline.width.val() <= 0 || outline.color.alpha == 0)
+        {
+            return;
+        }
+
+        const border  side(outline);
+        const pixel_t width = side.width;
+
+        borders bdr;
+        bdr.top    = side;
+        bdr.bottom = side;
+        if(first)
+        {
+            bdr.left = side;
+        }
+        if(last)
+        {
+            bdr.right = side;
+        }
+
+        // draw_borders() paints the sides inside draw_pos, so grow the border box by the outline width to
+        // paint the outline immediately outside of it. The outline follows the border radius.
+        const auto grow_radius    = [width](pixel_t value) { return value > 0_px ? value + width : value; };
+        bdr.radius.top_left_x     = grow_radius(radius.top_left_x);
+        bdr.radius.top_left_y     = grow_radius(radius.top_left_y);
+        bdr.radius.top_right_x    = grow_radius(radius.top_right_x);
+        bdr.radius.top_right_y    = grow_radius(radius.top_right_y);
+        bdr.radius.bottom_right_x = grow_radius(radius.bottom_right_x);
+        bdr.radius.bottom_right_y = grow_radius(radius.bottom_right_y);
+        bdr.radius.bottom_left_x  = grow_radius(radius.bottom_left_x);
+        bdr.radius.bottom_left_y  = grow_radius(radius.bottom_left_y);
+
+        const pixel_t left  = first ? width : 0_px;
+        const pixel_t right = last ? width : 0_px;
+        position      draw_pos(border_box.x - left, border_box.y - width, border_box.width + left + right,
+                               border_box.height + width * 2);
+        draw_pos.round();
+
+        get_document()->container()->draw_borders(hdc, bdr, draw_pos, false);
+    }
+
     void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
                                              const std::shared_ptr<render_item>& ri)
     {
@@ -1123,6 +1168,7 @@ namespace litehtml
                     box.round();
                     get_document()->container()->draw_borders(hdc, b, box, false);
                 }
+                draw_outline(hdc, box, bdr.radius.calc_percents(box.width, box.height), first, last);
             }
             return true;
         });
@@ -1177,6 +1223,11 @@ namespace litehtml
                     bdr.radius = m_css->get_borders().radius.calc_percents(border_box.width, border_box.height);
                     get_document()->container()->draw_borders(hdc, bdr, border_box, is_root());
                 }
+
+                border_box.round();
+                draw_outline(hdc, border_box,
+                             m_css->get_borders().radius.calc_percents(border_box.width, border_box.height), true,
+                             true);
             }
         }
     }

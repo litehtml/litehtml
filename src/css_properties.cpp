@@ -273,6 +273,22 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     doc->cvt_units(m_css_borders.radius.bottom_right_x, m_font_metrics, 0_px);
     doc->cvt_units(m_css_borders.radius.bottom_right_y, m_font_metrics, 0_px);
 
+    // https://drafts.csswg.org/css-ui/#outline
+    // The outline is painted outside the border box and is not part of the box model, so it does not
+    // participate in layout or in the document (scrollable) size.
+    m_outline.color = get_color_property(el, _outline_color_, false, m_color, offset(m_outline.color));
+    m_outline.style = static_cast<border_style>(
+        el->get_property<int>(_outline_style_, false, border_style_none, offset(m_outline.style)));
+    m_outline.width =
+        el->get_property<css_length>(_outline_width_, false, border_width_medium_value, offset(m_outline.width));
+
+    // The computed value of outline-width is zero when the outline is not drawn.
+    if(m_outline.style == border_style_none || m_outline.style == border_style_hidden)
+    {
+        m_outline.width = 0;
+    }
+    snap_border_width(m_outline.width, doc);
+
     m_border_collapse = static_cast<border_collapse>(
         el->get_property<int>(_border_collapse_, true, border_collapse_separate, offset(m_border_collapse)));
     m_table_layout = static_cast<table_layout>(
@@ -810,6 +826,7 @@ std::vector<std::tuple<std::string, std::string>> litehtml::css_properties::dump
     ret.emplace_back("margins", m_css_margins.to_string());
     ret.emplace_back("padding", m_css_padding.to_string());
     ret.emplace_back("borders", m_css_borders.to_string());
+    ret.emplace_back("outline", m_outline.to_string());
     ret.emplace_back("width", m_css_width.to_string());
     ret.emplace_back("height", m_css_height.to_string());
     ret.emplace_back("min_width", m_css_min_width.to_string());
