@@ -688,8 +688,8 @@ Supported selector types are listed below. See the next section for pseudo-class
 | `:focus` | set on the focused element |
 | `:focus-visible` | set when the focus was moved by the keyboard (or explicitly requested by `document::set_focus`) |
 | `:focus-within` | matches the focused element and its ancestors |
-| `:checked` | matches the `checked` attribute or dynamic state |
-| `:disabled` | matches the `disabled` attribute or dynamic state |
+| `:checked` | matches the `checked` attribute, dynamic checkbox/radio state, or the selected state of an `<option>` |
+| `:disabled` | matches the `disabled` attribute, dynamic state, or a control inside a disabled `<fieldset>` |
 
 Focus navigation follows the `tabindex` attribute (positive values first, then `0`/absent in document
 order; negative values are skipped) and skips `inert` subtrees, `display: none` and

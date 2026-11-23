@@ -24,6 +24,25 @@ void litebrowser::http_requests_pool::enqueue(
     m_mutex_condition.notify_one();
 }
 
+void litebrowser::http_requests_pool::enqueue(
+    const std::string& url, const std::vector<std::pair<std::string, std::string>>& form_data,
+    const std::function<void(void* data, size_t len, size_t downloaded, size_t total)>& cb_on_data,
+    const std::function<void(u_int32_t http_status, u_int32_t err_code, const std::string& err_text,
+                             const std::string& url)>&                                  cb_on_finish)
+{
+    {
+        std::unique_lock<std::mutex> lock(m_queue_mutex);
+        auto                         request = std::make_shared<http_request>(url, cb_on_data, cb_on_finish);
+        request->set_post(true);
+        for(const auto& field : form_data)
+        {
+            request->add_form_data(field.first, field.second);
+        }
+        m_queue.push_back(request);
+    }
+    m_mutex_condition.notify_one();
+}
+
 void litebrowser::http_requests_pool::stop()
 {
     {

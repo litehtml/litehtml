@@ -3,6 +3,7 @@
 
 #include <cairo.h>
 #include <litehtml.h>
+#include <functional>
 
 namespace litebrowser
 {
@@ -21,6 +22,15 @@ namespace litebrowser
         virtual int              get_screen_width()                                    = 0;
         virtual int              get_screen_height()                                   = 0;
         virtual cairo_surface_t* load_image(const std::string& path)                   = 0;
+
+        // Shows the option list of a select. When the user chooses an option the host must call
+        // on_selected with the updated data; web_page applies it to the document.
+        virtual void show_select_popup(
+            const litehtml::element::ptr& el, const char* element_id, const litehtml::select_control_data& data,
+            const std::function<void(const litehtml::select_control_data&)>& on_selected) = 0;
+
+        // Navigates to the action of a submitted form. The action is already resolved by web_page.
+        virtual void submit_form(const litehtml::form_data& data) = 0;
     };
 
     class browser_notify_interface

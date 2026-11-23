@@ -229,6 +229,46 @@ The document maintains the focus pseudo classes:
 ```:focus-visible```, and a click outside any focusable element removes the focus. The ```inert``` attribute makes an
 element and its descendants non-focusable and non-clickable.
 
+## Forms and controls
+
+litehtml creates form elements for `<form>`, `<input>` (button, checkbox, hidden, image, number,
+password, radio, reset, search, submit, text), `<textarea>`, `<select>`, `<option>`,
+`<optgroup>`, `<label>`, `<fieldset>`, `<legend>` and `<button>`. Default styles are part of the
+built-in master stylesheet.
+
+Controls are focused with the same navigation as links. The container receives the control through
+[document_container::on_focus_change](document_container.md#on_focus_change) with its type and
+current data.
+
+When the user edits a control, the container applies the new state with:
+```cpp
+bool litehtml::document::update_focused(const litehtml::control_data& data,
+                                        const std::function<void(const litehtml::position&)>& redraw_box);
+```
+The payload is `bool` for checkbox/radio, `text_control_data` for text-like controls and
+`select_control_data` for select. The document updates the focused element, applies `:checked`
+or other state pseudo classes and calls `redraw_box` for the control. Value changes are also
+reported through [document_container::on_change](document_container.md#on_change).
+
+Text controls ask the container for the text state while drawing through
+[document_container::get_text_data](document_container.md#get_text_data). The control draws the
+text, selection and caret itself using the container drawing functions.
+
+A click on a select calls
+[document_container::show_select_popup](document_container.md#show_select_popup). The container
+shows the option list and applies the result with `document::update_focused`.
+
+Submitting a form (submit button, image button or Enter) calls
+[document_container::on_submit](document_container.md#on_submit) with a `litehtml::form_data`
+object containing the form attributes and the ordered list of successful fields. Like
+`on_anchor_click`, do not destroy the document inside `on_submit`; start navigation after the
+document mouse/key event function returns. Programmatic submission is available with:
+```cpp
+bool litehtml::document::submit_form(const std::shared_ptr<litehtml::element>& form,
+                                     const std::shared_ptr<litehtml::element>& submitter = nullptr);
+bool litehtml::document::submit_focused_form(const std::function<void(const litehtml::position&)>& redraw_box);
+```
+
 ## Processing anchor click
 
 If you process the mouse, the clicking on anchor tag will call the function [document_container::on_anchor_click](document_container.md#on_anchor_click). This function gets the url of the anchor as parameter and pointer to litehtml::element. You can open the new document at this point.

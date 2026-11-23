@@ -3,6 +3,7 @@
 
 #include "html.h"
 #include "types.h"
+#include "controls.h"
 #include "css_properties.h"
 #include "stylesheet.h"
 #include <functional>
@@ -119,6 +120,17 @@ namespace litehtml
         // additionally requires the element to generate a visible box. Override this in elements that can
         // be focused.
         virtual bool can_be_focused() const;
+        // Returns whether the element is checked (checkbox, radio, selected option).
+        virtual bool is_checked() const;
+        // Returns whether the element is disabled, including by a disabled ancestor fieldset.
+        virtual bool is_disabled() const;
+        // Kind of the form control (control_type::none for non-control elements).
+        virtual control_type get_control_type() const;
+        // Current state of the control (see control_data).
+        virtual control_data get_control_data() const;
+        // Applies a state change delivered by the container (document::update_focused).
+        // Returns true when the change affected styles.
+        virtual bool update_focused(const control_data& data);
         // Returns the value of the tabindex attribute, or an empty optional when the element has no valid
         // tabindex. The document uses it to order the sequential focus navigation.
         virtual std::optional<int> tab_index() const;

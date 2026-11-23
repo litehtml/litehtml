@@ -28,6 +28,11 @@ namespace litehtml
         string_vector          m_str_classes;
         std::vector<string_id> m_classes;
         style                  m_style;
+        // Declarations produced by presentational attributes (width/height, size, rows/cols, ...).
+        // They are kept apart from m_style so refresh_styles() can re-apply them with the same
+        // priority they had when parse_attributes() ran: after the UA rules and before author rules.
+        style                  m_attr_style;
+        size_t                 m_attr_style_position = 0;
         string_map             m_attrs;
         std::vector<string_id> m_pseudo_classes;
 
@@ -129,6 +134,10 @@ namespace litehtml
         std::string  get_list_marker_text(int index);
         element::ptr get_element_before(const style& style, bool create);
         element::ptr get_element_after(const style& style, bool create);
+
+        // Adds a presentational-hint declaration. Hints are applied after the UA rules and before the
+        // author rules, both on the first style computation and on refresh_styles().
+        void add_attr_property(string_id prop_name, const css_token_vector& tokens);
 
         void map_to_pixel_length_property(string_id prop_name, const std::string& attr_value);
         void map_to_pixel_length_property_with_default_value(string_id prop_name, const std::string& attr_value,

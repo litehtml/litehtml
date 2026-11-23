@@ -5,6 +5,7 @@
 #include "web_color.h"
 #include "background.h"
 #include "borders.h"
+#include "controls.h"
 #include "element.h"
 #include "font_description.h"
 #include <memory>
@@ -83,6 +84,41 @@ namespace litehtml
         }
         virtual void split_text(const char* text, const std::function<void(const char*)>& on_word,
                                 const std::function<void(const char*)>& on_space);
+
+        // Form controls integration. All of these functions have default implementations, so
+        // containers that do not support controls keep working.
+
+        // Called when the focused element changes. el is nullptr when the focus is removed.
+        // element_id is nullptr when the element has no id attribute. control_data contains the
+        // current state of the control: bool for checkbox/radio, text_control_data for text-like
+        // controls, select_control_data for select and monostate for other elements.
+        virtual void on_focus_change(const litehtml::element::ptr& /*el*/, const char* /*element_id*/,
+                                     litehtml::control_type /*type*/, const litehtml::control_data& /*data*/)
+        {
+        }
+
+        // Lets the container provide the authoritative text state of a text-like control. The
+        // control fills data with its cached state before the call; the container may replace it.
+        virtual void get_text_data(const litehtml::element::ptr& /*el*/, litehtml::text_control_data& /*data*/) {}
+
+        // Called when the value of a control changes (not when only the caret moves). The payload is
+        // bool for checkbox/radio, text_control_data for text-like controls and select_control_data
+        // for select.
+        virtual void on_change(const litehtml::element::ptr& /*el*/, const char* /*element_id*/,
+                               const litehtml::control_data& /*data*/)
+        {
+        }
+
+        // Called when a form is submitted.
+        virtual void on_submit(const litehtml::form_data& /*data*/) {}
+
+        // Requests the container to show the option list of a select. Returns true when the popup
+        // was shown; the container applies the chosen item with document::update_focused.
+        virtual bool show_select_popup(const litehtml::element::ptr& /*el*/, const char* /*element_id*/,
+                                       const litehtml::select_control_data& /*data*/)
+        {
+            return false;
+        }
 
       protected:
         virtual ~document_container() = default;

@@ -334,36 +334,169 @@ blockquote {
 
 form {
 	display: block;
-	margin-top: 0em;
+	margin: 0;
 }
 
-option {
+fieldset {
+	display: block;
+	margin: 0 2px;
+	padding: 0.35em 0.75em 0.625em;
+	border: 1px solid #c0c0c0;
+}
+
+legend {
+	display: block;
+	padding: 0 2px;
+}
+
+label {
+	display: inline;
+}
+
+option, optgroup {
 	display: none;
 }
 
 input, textarea, keygen, select, button, isindex {
-	margin: 0em;
+	margin: 0;
 	color: initial;
 	line-height: normal;
 	text-transform: none;
 	text-indent: 0;
 	text-shadow: none;
 	display: inline-block;
+	vertical-align: middle;
 }
+
 input[type="hidden"] {
 	display: none;
 }
 
-button,
-select,
-input[type="radio"],
+input {
+	appearance: textfield;
+	width: 20ch;
+	height: 1.5em;
+	padding: 0 2px;
+	border: 1px solid #767676;
+	border-radius: 2px;
+	background-color: #fff;
+	color: #000;
+	cursor: text;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="search"],
+input[type="number"] {
+	appearance: textfield;
+	width: 20ch;
+	height: 1.5em;
+	padding: 0 2px;
+	border: 1px solid #767676;
+	border-radius: 2px;
+	background-color: #fff;
+	color: #000;
+	cursor: text;
+}
+
 input[type="checkbox"],
-input[type="reset"],
-input[type="submit"],
-input[type="button"],
-input[type="color"],
-input[type="search"] {
+input[type="radio"] {
 	box-sizing: border-box;
+	width: 13px;
+	height: 13px;
+	padding: 0;
+	margin: 0 3px 0 0;
+	border: 1px solid #767676;
+	background-color: #fff;
+	cursor: pointer;
+}
+
+input[type="checkbox"] {
+	appearance: checkbox;
+	border-radius: 2px;
+}
+
+input[type="radio"] {
+	appearance: radio;
+	border-radius: 50%;
+}
+
+input[type="checkbox"]:checked {
+	border-color: #0b5ed7;
+	background-color: #0b5ed7;
+}
+
+input[type="radio"]:checked {
+	border-color: #0b5ed7;
+}
+
+button,
+input[type="button"],
+input[type="submit"],
+input[type="reset"] {
+	appearance: button;
+	box-sizing: border-box;
+	width: auto;
+	height: auto;
+	min-width: 4em;
+	padding: 2px 10px;
+	border: 1px solid #767676;
+	border-radius: 2px;
+	background-color: #e9e9e9;
+	color: #000;
+	cursor: pointer;
+}
+
+input[type="image"] {
+	display: inline-block;
+	width: auto;
+	height: auto;
+	padding: 0;
+	border: none;
+	background-color: transparent;
+	cursor: pointer;
+}
+
+textarea {
+	appearance: textarea;
+	box-sizing: border-box;
+	width: 20ch;
+	height: 3.7em;
+	padding: 2px;
+	border: 1px solid #767676;
+	border-radius: 2px;
+	background-color: #fff;
+	color: #000;
+	vertical-align: top;
+	cursor: text;
+}
+
+select {
+	appearance: menulist;
+	box-sizing: border-box;
+	min-width: 8em;
+	height: 1.5em;
+	padding: 0 2px;
+	border: 1px solid #767676;
+	border-radius: 2px;
+	background-color: #fff;
+	color: #000;
+	cursor: pointer;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+	border-color: #0b5ed7;
+}
+
+input:disabled,
+textarea:disabled,
+select:disabled,
+button:disabled {
+	color: #999;
+	background-color: #f2f2f2;
+	border-color: #c0c0c0;
 }
 
 

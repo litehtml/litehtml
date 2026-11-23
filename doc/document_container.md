@@ -44,6 +44,15 @@ public:
     virtual std::string    resolve_color(const std::string& /*color*/) const { return std::string(); }
     virtual void                split_text(const char* text, const std::function<void(const char*)>& on_word, const std::function<void(const char*)>& on_space);
 
+    virtual void                on_focus_change(const litehtml::element::ptr& el, const char* element_id,
+                                                litehtml::control_type type, const litehtml::control_data& data);
+    virtual void                get_text_data(const litehtml::element::ptr& el, litehtml::text_control_data& data);
+    virtual void                on_change(const litehtml::element::ptr& el, const char* element_id,
+                                          const litehtml::control_data& data);
+    virtual void                on_submit(const litehtml::form_data& data);
+    virtual bool                show_select_popup(const litehtml::element::ptr& el, const char* element_id,
+                                                  const litehtml::select_control_data& data);
+
 protected:
     virtual ~document_container() = default;
 };
@@ -104,6 +113,13 @@ Below is the list of member functions you have to implement:
   - [set_base_url](#set_base_url)
   - [resolve_color](#resolve_color)
   - [split_text](#split_text)
+
+11. **Forms and controls**
+  - [on_focus_change](#on_focus_change)
+  - [get_text_data](#get_text_data)
+  - [on_change](#on_change)
+  - [on_submit](#on_submit)
+  - [show_select_popup](#show_select_popup)
 
 
 ### create_font
@@ -521,3 +537,107 @@ This function is used to split the text into words and spaces. The ```text``` pa
 ```cpp
 if (c <= ' ' && (c == ' ' || c == '\t' || c == '\n' || c == '\r' || c == '\f'))
 ```
+
+## Forms and controls
+
+litehtml implements `<form>`, `<input>` (button, checkbox, hidden, image, number, password, radio, reset,
+search, submit and text), `<textarea>`, `<select>`, `<option>`, `<optgroup>`, `<label>`, `<fieldset>`,
+`<legend>` and `<button>`.
+
+The functions below have default implementations, so existing containers keep working. A container
+that supports form controls should implement them.
+
+```cpp
+struct text_control_data
+{
+    std::string text;
+    size_t      caret           = 0; // byte offset into text
+    size_t      selection_start = 0;
+    size_t      selection_end   = 0;
+    bool        caret_visible   = true;
+};
+
+struct select_option_data
+{
+    std::string value;
+    std::string label;
+    int         index    = -1; // document order index of the option
+    bool        disabled = false;
+    bool        selected = false;
+};
+
+struct select_group_data
+{
+    std::string                     label; // empty for ungrouped options
+    bool                            disabled = false;
+    std::vector<select_option_data> options;
+};
+
+struct select_control_data
+{
+    std::vector<select_group_data> groups;
+    bool                           multiple = false;
+    int                            size     = 1;
+};
+
+using control_data = std::variant<std::monostate, bool, text_control_data, select_control_data>;
+```
+
+### on_focus_change
+```cpp
+virtual void on_focus_change(const litehtml::element::ptr& el, const char* element_id,
+                             litehtml::control_type type, const litehtml::control_data& data);
+```
+Called when the focused element changes. `el` is `nullptr` when the focus is removed and `element_id`
+is `nullptr` when the element has no `id` attribute. `type` is `control_type::none` for non-control
+elements. The `data` payload is:
+
+* `bool` for checkbox and radio,
+* `text_control_data` for text, number, password, search and textarea,
+* `select_control_data` for select.
+
+The container usually starts native editing or remembers the control state in this function.
+
+### get_text_data
+```cpp
+virtual void get_text_data(const litehtml::element::ptr& el, litehtml::text_control_data& data);
+```
+Called by text controls while drawing and while collecting form values. The control fills `data` with
+its cached state first, so a container that does not implement editing can leave the function empty.
+A container that owns the editing state replaces `data` with its current text, caret and selection.
+The control draws the resulting text, selection and caret.
+
+### on_change
+```cpp
+virtual void on_change(const litehtml::element::ptr& el, const char* element_id,
+                       const litehtml::control_data& data);
+```
+Called when a value changes, not when only the caret moves. The payload follows `on_focus_change`.
+`on_change` is reported for checkbox, radio, number, password, search, text, textarea and select.
+
+### on_submit
+```cpp
+virtual void on_submit(const litehtml::form_data& data);
+```
+Called when a form is submitted by a submit button, an image button or the Enter key. `form_data`
+contains `id`, `action`, `method`, `target`, `enctype` and the ordered `fields` (name/value pairs)
+of all successful controls. The container resolves relative actions and performs the request.
+
+### show_select_popup
+```cpp
+virtual bool show_select_popup(const litehtml::element::ptr& el, const char* element_id,
+                               const litehtml::select_control_data& data);
+```
+Called when the user activates a select. Return `true` when a popup was shown. The container
+applies the chosen item by calling `document::update_focused` with the updated
+`select_control_data` (the `selected` flags changed).
+
+### Updating a control from the container
+
+When the user edits a control, the container updates the state and reports it back:
+```cpp
+bool litehtml::document::update_focused(const litehtml::control_data& data,
+                                        const std::function<void(const litehtml::position&)>& redraw_box);
+```
+The document forwards the data to the focused element, applies style changes (for example
+`:checked`) and calls `redraw_box` for the focused control.
