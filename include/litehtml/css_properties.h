@@ -50,6 +50,7 @@ namespace litehtml
         css_margins           m_css_padding;
         css_borders           m_css_borders;
         css_border            m_outline;
+        css_length            m_outline_offset;
         css_length            m_css_width;
         css_length            m_css_height;
         css_length            m_css_min_width;
@@ -189,6 +190,7 @@ namespace litehtml
         void               set_borders(const css_borders& mCssBorders);
 
         const css_border& get_outline() const;
+        const css_length& get_outline_offset() const;
         // The distance the outline paints outside the border box, or zero when it is not visible.
         pixel_t outline_extent() const;
 
@@ -519,11 +521,21 @@ namespace litehtml
         return m_outline;
     }
 
+    inline const css_length& css_properties::get_outline_offset() const
+    {
+        return m_outline_offset;
+    }
+
     inline pixel_t css_properties::outline_extent() const
     {
         const bool visible =
             m_outline.style > border_style_hidden && m_outline.width.val() > 0 && m_outline.color.alpha != 0;
-        return visible ? pixel_t(m_outline.width.val()) : 0_px;
+        if(!visible)
+        {
+            return 0_px;
+        }
+        const pixel_t outer = pixel_t(m_outline_offset.val()) + pixel_t(m_outline.width.val());
+        return outer > 0_px ? outer : 0_px;
     }
 
     inline const css_length& css_properties::get_width() const

@@ -289,6 +289,9 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     }
     snap_border_width(m_outline.width, doc);
 
+    m_outline_offset = el->get_property<css_length>(_outline_offset_, false, 0, offset(m_outline_offset));
+    doc->cvt_units(m_outline_offset, m_font_metrics, 0_px);
+
     m_border_collapse = static_cast<border_collapse>(
         el->get_property<int>(_border_collapse_, true, border_collapse_separate, offset(m_border_collapse)));
     m_table_layout = static_cast<table_layout>(
@@ -827,6 +830,7 @@ std::vector<std::tuple<std::string, std::string>> litehtml::css_properties::dump
     ret.emplace_back("padding", m_css_padding.to_string());
     ret.emplace_back("borders", m_css_borders.to_string());
     ret.emplace_back("outline", m_outline.to_string());
+    ret.emplace_back("outline_offset", m_outline_offset.to_string());
     ret.emplace_back("width", m_css_width.to_string());
     ret.emplace_back("height", m_css_height.to_string());
     ret.emplace_back("min_width", m_css_min_width.to_string());

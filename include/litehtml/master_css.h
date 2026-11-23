@@ -484,12 +484,6 @@ select {
 	cursor: pointer;
 }
 
-input:focus,
-textarea:focus,
-select:focus {
-	border-color: #0b5ed7;
-}
-
 input:disabled,
 textarea:disabled,
 select:disabled,
@@ -497,6 +491,30 @@ button:disabled {
 	color: #999;
 	background-color: #f2f2f2;
 	border-color: #c0c0c0;
+}
+
+:focus-visible {
+	outline: auto 1px #E59700;
+}
+
+html:focus-visible,
+body:focus-visible {
+	outline: none;
+}
+
+embed:focus-visible,
+iframe:focus-visible,
+object:focus-visible {
+	outline: none;
+}
+
+a:link:focus-visible {
+	outline-offset: 1px;
+}
+
+input[type="checkbox"]:focus-visible,
+input[type="radio"]:focus-visible {
+	outline-offset: 2px;
 }
 
 

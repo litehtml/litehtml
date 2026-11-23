@@ -973,14 +973,18 @@ namespace litehtml
     {
         const auto current = m_focused_element.lock();
 
+        // Text-entry controls always match :focus-visible while focused, even when the focus was moved
+        // by the mouse or by a script. This matches Chrome's focus-visible heuristic.
+        const bool visible = focus_visible || (el && el->accepts_keyboard_input());
+
         if(current == el)
         {
-            if(!el || m_focus_visible == focus_visible)
+            if(!el || m_focus_visible == visible)
             {
                 return false;
             }
-            m_focus_visible = focus_visible;
-            return el->set_pseudo_class(_focus_visible_, focus_visible);
+            m_focus_visible = visible;
+            return el->set_pseudo_class(_focus_visible_, visible);
         }
 
         bool changed = false;
@@ -1009,7 +1013,7 @@ namespace litehtml
         }
 
         m_focused_element = el;
-        m_focus_visible   = el && focus_visible;
+        m_focus_visible   = el && visible;
 
         if(el)
         {
@@ -1017,7 +1021,7 @@ namespace litehtml
             {
                 changed = true;
             }
-            if(el->set_pseudo_class(_focus_visible_, focus_visible))
+            if(el->set_pseudo_class(_focus_visible_, visible))
             {
                 changed = true;
             }
@@ -1197,7 +1201,8 @@ namespace litehtml
         {
             if(const auto ri = weak_ri.lock())
             {
-                ri->get_rendering_boxes(add_box);
+                // The focus/caret position is the element box, not the area painted by its outline.
+                ri->get_rendering_boxes(add_box, false);
             }
         }
 

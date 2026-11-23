@@ -128,7 +128,7 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `border-radius` | ✅ | length/% (1–4 / 1–4) | 0 |
 | `border-collapse` | ✅ | 2 | ~14 |
 | `border-spacing` | ✅ | length{1,2} | ~53 |
-| `outline` (+ `outline-width/style/color`) | ✅ | see below | ~8 |
+| `outline` (+ `outline-width/style/color/offset`) | ✅ | see below | ~15 |
 | `color` | ✅ | any color | ~950 |
 | `font` (+ `font-family/-size/-style/-weight`) | ✅ | see below | ~225 |
 | `font-variant` | ❌ | 2 | — |
@@ -150,7 +150,7 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `appearance` | ❌ | 16 | 0 |
 
 Properties **not recognized at all** (silently ignored by the parser): `letter-spacing`, `word-spacing`, `table-layout`, `empty-cells`, `direction`,
-`unicode-bidi`, `quotes`, `text-shadow`, `box-shadow`, `outline`, `opacity`, `transform`,
+`unicode-bidi`, `quotes`, `text-shadow`, `box-shadow`, `opacity`, `transform`,
 `transition`, `animation`, `columns`, `column-*`, `filter`, `clip-path`,
 `object-fit` … (everything else not listed above).
 
@@ -362,13 +362,21 @@ Tests: [css21/border-spacing-002.htm](https://github.com/litehtml/litehtml-tests
 Other border tests: [table-border-0.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-border-0.htm),
 [css21/border-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/border-001.htm).
 
-#### `outline` (shorthand), `outline-width`, `outline-style`, `outline-color`
+#### `outline` (shorthand), `outline-width`, `outline-style`, `outline-color`, `outline-offset`
 ✅ Supported — `<'outline-width'> || <'outline-style'> || <'outline-color'>` in any order.
 `outline-width` accepts `thin`, `medium`, `thick` (1px/3px/5px) or a non-negative `<length>`;
 `outline-style` accepts the border styles plus `auto` (painted as a solid ring); `outline-color`
-defaults to `currentColor`, and `invert`/`auto` fall back to `currentColor`. The outline is painted
-immediately outside the border box and follows `border-radius`. It is ink overflow: it does not
-affect layout, sibling positions, or the scrollable document size.
+defaults to `currentColor`, and `invert`/`auto` fall back to `currentColor`. `outline-offset`
+accepts a `<length>` (including negative values) and is not part of the shorthand. The outline is
+painted outside the border box (offset by `outline-offset`) and follows `border-radius`. It is ink
+overflow: it does not affect layout, sibling positions, or the scrollable document size.
+
+The UA stylesheet mimics Chrome's focus ring: `:focus-visible` gets
+`outline: auto 1px #E59700` (Chrome's Linux/Windows focus-ring color), with
+`outline-offset: 1px` for links and `2px` for checkbox/radio; `html`, `body`, `embed`, `iframe` and
+`object` never show it. `:focus-visible` matches text-entry controls (`input` text-like types,
+`textarea`, `select`) even when focus came from the mouse or script, while buttons, links,
+checkbox and radio only match it for keyboard focus.
 
 Tests: [outline-basic.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-basic.htm),
 [outline-styles.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-styles.htm),
@@ -377,7 +385,14 @@ Tests: [outline-basic.htm](https://github.com/litehtml/litehtml-tests/blob/main/
 [outline-border-radius.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-border-radius.htm),
 [outline-inline.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-inline.htm),
 [outline-does-not-affect-layout.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-does-not-affect-layout.htm),
-[outline-none.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-none.htm).
+[outline-none.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-none.htm),
+[outline-offset.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/outline-offset.htm),
+[focus-input-mouse.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-input-mouse.htm),
+[focus-select-mouse.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-select-mouse.htm),
+[focus-button-keyboard.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-button-keyboard.htm),
+[focus-button-mouse.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-button-mouse.htm),
+[focus-link-keyboard.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-link-keyboard.htm),
+[focus-checkbox-keyboard.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-checkbox-keyboard.htm).
 
 ---
 

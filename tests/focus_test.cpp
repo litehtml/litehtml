@@ -157,6 +157,10 @@ int main()
         ok               &= check(matches(a, "a:focus") && matches(a, "a:focus-visible"),
                                   "keyboard focus sets both :focus and :focus-visible");
         ok &= check(a->css().get_color() == web_color(0, 255, 0), "the :focus-visible style should win over :focus");
+        ok &= check(a->css().get_outline().style == border_style_auto && a->css().get_outline().width.val() == 1.0f &&
+                        a->css().get_outline().color == web_color(229, 151, 0) &&
+                        a->css().get_outline_offset().val() == 1.0f,
+                    "a keyboard-focused link should use the UA focus ring with the link offset");
         ok &= check(matches(wrap, "div:focus-within") && !matches(other, "div:focus-within"),
                     ":focus-within should match only the ancestors of the focused element");
         ok &= check(!container.redraws.empty(), "a focus style change should request a redraw");
@@ -177,6 +181,8 @@ int main()
         ok &= check(matches(b, "a:focus") && !matches(b, "a:focus-visible"),
                     "a mouse focus does not match :focus-visible");
         ok &= check(b->css().get_color() == web_color(0, 0, 255), "the :focus only style should be applied");
+        ok &= check(b->css().get_outline().style == border_style_none && b->css().outline_extent() == 0_px,
+                    "a mouse-focused link should not use the UA focus ring");
 
         // Clicking outside any focusable element clears the focus.
         doc->on_lbutton_down(500, 500, 500, 500, container.redraw);
@@ -184,6 +190,47 @@ int main()
         ok &= check(!doc->get_focused_element(), "a click outside any focusable element clears the focus");
         ok &= check(!matches(b, "a:focus") && !matches(b, "a:focus-visible") && !matches(wrap, "div:focus-within"),
                     "clearing the focus removes all focus pseudo classes");
+    }
+
+    // Text-entry controls always match :focus-visible, even when the focus came from the mouse or script.
+    {
+        focus_container container;
+        const auto      doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px;line-height:20px}</style>"
+            "<input id=t type=text><input id=n type=number><input id=p type=password>"
+            "<input id=se type=search><textarea id=ta></textarea>"
+            "<select id=sel><option>x</option></select>"
+            "<input id=c type=checkbox><input id=r type=radio><button id=b>b</button><a id=l href='#'>l</a>",
+            &container);
+        doc->render(800);
+
+        for(const char* id : {"#t", "#n", "#p", "#se", "#ta", "#sel"})
+        {
+            const auto el  = doc->root()->select_one(id);
+            ok            &= check(el && doc->set_focus(el, false, container.redraw),
+                                   std::string("a text-entry control should be focusable: ") + id);
+            ok            &= check(el && matches(el, ":focus-visible"),
+                                   std::string("mouse-style focus should keep :focus-visible for ") + id);
+            ok            &= check(el && el->css().get_outline().style == border_style_auto,
+                                   std::string("mouse-style focus should apply the UA focus ring for ") + id);
+        }
+        for(const char* id : {"#c", "#r", "#b", "#l"})
+        {
+            const auto el  = doc->root()->select_one(id);
+            ok            &= check(el && doc->set_focus(el, false, container.redraw),
+                                   std::string("a non-text control should be focusable: ") + id);
+            ok            &= check(el && !matches(el, ":focus-visible"),
+                                   std::string("mouse-style focus should not set :focus-visible for ") + id);
+            ok            &= check(el && el->css().outline_extent() == 0_px,
+                                   std::string("mouse-style focus should not apply the UA focus ring for ") + id);
+        }
+
+        const auto c = doc->root()->select_one("#c");
+        ok &= check(c && doc->set_focus(c, true, container.redraw) && c->css().get_outline_offset().val() == 2.0f,
+                    "a keyboard-focused checkbox should use the 2px focus ring offset");
+        const auto l = doc->root()->select_one("#l");
+        ok &= check(l && doc->set_focus(l, true, container.redraw) && l->css().get_outline_offset().val() == 1.0f,
+                    "a keyboard-focused link should use the 1px focus ring offset");
     }
 
     // Programmatic focus.

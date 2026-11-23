@@ -1057,7 +1057,9 @@ namespace litehtml
         }
 
         const border  side(outline);
-        const pixel_t width = side.width;
+        const pixel_t width  = side.width;
+        const pixel_t offset = static_cast<pixel_t>(m_css->get_outline_offset().val());
+        const pixel_t grow   = offset + width;
 
         borders bdr;
         bdr.top    = side;
@@ -1071,9 +1073,16 @@ namespace litehtml
             bdr.right = side;
         }
 
-        // draw_borders() paints the sides inside draw_pos, so grow the border box by the outline width to
-        // paint the outline immediately outside of it. The outline follows the border radius.
-        const auto grow_radius    = [width](pixel_t value) { return value > 0_px ? value + width : value; };
+        // draw_borders() paints the sides inside draw_pos, so grow the border box by the outline offset and
+        // width to paint the outline in the requested position. The outline follows the border radius.
+        const auto grow_radius = [grow](pixel_t value) {
+            if(value <= 0_px)
+            {
+                return value;
+            }
+            const pixel_t grown = value + grow;
+            return grown > 0_px ? grown : 0_px;
+        };
         bdr.radius.top_left_x     = grow_radius(radius.top_left_x);
         bdr.radius.top_left_y     = grow_radius(radius.top_left_y);
         bdr.radius.top_right_x    = grow_radius(radius.top_right_x);
@@ -1083,10 +1092,15 @@ namespace litehtml
         bdr.radius.bottom_left_x  = grow_radius(radius.bottom_left_x);
         bdr.radius.bottom_left_y  = grow_radius(radius.bottom_left_y);
 
-        const pixel_t left  = first ? width : 0_px;
-        const pixel_t right = last ? width : 0_px;
-        position      draw_pos(border_box.x - left, border_box.y - width, border_box.width + left + right,
-                               border_box.height + width * 2);
+        const pixel_t left        = first ? grow : 0_px;
+        const pixel_t right       = last ? grow : 0_px;
+        const pixel_t draw_width  = border_box.width + left + right;
+        const pixel_t draw_height = border_box.height + grow * 2;
+        if(draw_width <= 0_px || draw_height <= 0_px)
+        {
+            return;
+        }
+        position draw_pos(border_box.x - left, border_box.y - grow, draw_width, draw_height);
         draw_pos.round();
 
         get_document()->container()->draw_borders(hdc, bdr, draw_pos, false);

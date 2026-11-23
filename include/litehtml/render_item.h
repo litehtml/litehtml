@@ -688,9 +688,11 @@ namespace litehtml
          * Returns the boxes of rendering element. All coordinates are absolute
          *
          * @param redraw_box function to be called on every rendering box
+         * @param include_outline include the area painted by the outline (redraw invalidation)
          * @return
          */
-        void get_rendering_boxes(const std::function<void(const position&)>& redraw_box) const;
+        void get_rendering_boxes(const std::function<void(const position&)>& redraw_box,
+                                 bool                                        include_outline = true) const;
     };
 } // namespace litehtml
 

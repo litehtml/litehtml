@@ -1967,7 +1967,8 @@ bool litehtml::render_item::is_point_inside(pixel_t x, pixel_t y) const
     return pos.is_point_inside(x, y);
 }
 
-void litehtml::render_item::get_rendering_boxes(const std::function<void(const position&)>& redraw_box) const
+void litehtml::render_item::get_rendering_boxes(const std::function<void(const position&)>& redraw_box,
+                                                bool include_outline /* = true */) const
 {
     pixel_t add_x = 0_px;
     pixel_t add_y = 0_px;
@@ -1998,8 +1999,9 @@ void litehtml::render_item::get_rendering_boxes(const std::function<void(const p
         add_y = view_port.top();
     }
 
-    // The outline is painted outside the border box, so it has to be part of the reported area.
-    const pixel_t outline_extent = src_el()->css().outline_extent();
+    // The outline is painted outside the border box, so it has to be part of the reported area
+    // when the boxes are used for redraw invalidation.
+    const pixel_t outline_extent = include_outline ? src_el()->css().outline_extent() : 0_px;
     const auto    grow           = [outline_extent](position box) {
         box.x      -= outline_extent;
         box.y      -= outline_extent;
