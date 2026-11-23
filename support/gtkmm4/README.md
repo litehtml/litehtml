@@ -4,8 +4,10 @@
 combines the [webpage library](../webpage/README.md) and
 [draw buffer](../draw_buffer/README.md) to load, lay out and display pages.
 The widget handles scrolling, mouse and keyboard input, navigation history,
-and page title updates. The application supplies the window and any address
-bar or navigation controls.
+and page title updates. It also supports HTML form controls: text entry,
+caret and selection movement, clipboard shortcuts, checkbox/radio activation,
+select popups and GET/POST form submission. The application supplies the
+window and any address bar or navigation controls.
 
 > **Security:** The underlying page loader currently disables TLS peer
 > certificate verification. Do not rely on it to authenticate HTTPS
@@ -104,6 +106,19 @@ its [window integration](https://github.com/litehtml/litebrowser-linux/blob/mast
   the current bitmask; test `page_state_has_back`, `page_state_has_forward`
   and `page_state_downloading` to update controls. The downloading flag
   reflects pending-page or request state, not whether loading succeeded.
+- The select popup has no arrow and matches the select: the same width, background, text
+  color, border color and font. All options are visible at once; when the list is taller than
+  the widget, the popup is clamped to the widget height and the options scroll. Long labels are
+  ellipsized to the control width.
+- Text controls receive keyboard input while focused. Tab/Shift+Tab move the
+  focus; Enter submits a form from a text input or activates a focused button;
+  Space toggles a focused checkbox/radio; Enter/Space opens a select popup.
+  Ctrl+A/C/X/V provide select-all and clipboard operations. The widget blinks
+  the caret while a text control is focused.
+- Form submission is handled by the widget. GET forms append the encoded
+  fields to the action URL. POST forms use the page request pool. Navigation
+  history stores the resulting URL only, so Back/Reload of a POST result is a
+  GET request.
 - `get_html_source()` returns the current page's source, or an empty string
   when there is no current page. `run_with_document(callback)` invokes the
   callback for the current document under its lock, if one exists. Do not

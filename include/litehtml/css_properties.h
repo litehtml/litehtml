@@ -7,6 +7,7 @@
 #include "css_margins.h"
 #include "css_grid.h"
 #include "css_offsets.h"
+#include "font_description.h"
 #include "types.h"
 
 namespace litehtml
@@ -63,7 +64,8 @@ namespace litehtml
         std::string           m_list_style_image;
         std::string           m_list_style_image_baseurl;
         background            m_bg;
-        uint_ptr              m_font      = 0;
+        uint_ptr              m_font = 0;
+        font_description      m_font_description;
         css_length            m_font_size = 0;
         std::string           m_font_family;
         css_length            m_font_weight;
@@ -232,6 +234,9 @@ namespace litehtml
 
         uint_ptr get_font() const;
         void     set_font(uint_ptr mFont);
+
+        // The description used to create the font returned by get_font().
+        const font_description& get_font_description() const;
 
         const font_metrics& get_font_metrics() const;
         void                set_font_metrics(const font_metrics& mFontMetrics);
@@ -655,6 +660,11 @@ namespace litehtml
     inline uint_ptr css_properties::get_font() const
     {
         return m_font;
+    }
+
+    inline const font_description& css_properties::get_font_description() const
+    {
+        return m_font_description;
     }
 
     inline void css_properties::set_font(uint_ptr mFont)

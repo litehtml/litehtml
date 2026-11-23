@@ -1,9 +1,139 @@
 #include "html_widget.h"
 
+#include <litehtml/render_item.h>
+#include <litehtml/url.h>
+#include <gdk/gdkkeysyms.h>
+#include <cmath>
 #include <memory>
 #include <optional>
+#include <sstream>
 
 using litehtml::operator""_px;
+
+namespace
+{
+    litehtml::web_color blend(const litehtml::web_color& fg, const litehtml::web_color& bg, double factor)
+    {
+        const auto mix = [factor](int f, int b) {
+            return static_cast<litehtml::byte>(
+                std::lround(static_cast<double>(f) * factor + static_cast<double>(b) * (1.0 - factor)));
+        };
+        return {mix(fg.red, bg.red), mix(fg.green, bg.green), mix(fg.blue, bg.blue)};
+    }
+
+    std::string css_color(const litehtml::web_color& color)
+    {
+        return "#" + color.to_string();
+    }
+
+    std::string css_font_family(const std::string& family)
+    {
+        if(family.empty() || family.find_first_of(",\"'") != std::string::npos)
+        {
+            return family;
+        }
+        if(family.find(' ') != std::string::npos)
+        {
+            return "\"" + family + "\"";
+        }
+        return family;
+    }
+
+    bool map_key_event(guint keyval, Gdk::ModifierType state, litebrowser::key_event& event)
+    {
+        event.ctrl  = (state & Gdk::ModifierType::CONTROL_MASK) != Gdk::ModifierType::NO_MODIFIER_MASK;
+        event.shift = (state & Gdk::ModifierType::SHIFT_MASK) != Gdk::ModifierType::NO_MODIFIER_MASK;
+
+        switch(keyval)
+        {
+        case GDK_KEY_BackSpace:
+            event.kind = litebrowser::key_event::kind::backspace;
+            return true;
+        case GDK_KEY_Delete:
+        case GDK_KEY_KP_Delete:
+            event.kind = litebrowser::key_event::kind::delete_;
+            return true;
+        case GDK_KEY_Left:
+        case GDK_KEY_KP_Left:
+            event.kind = litebrowser::key_event::kind::left;
+            return true;
+        case GDK_KEY_Right:
+        case GDK_KEY_KP_Right:
+            event.kind = litebrowser::key_event::kind::right;
+            return true;
+        case GDK_KEY_Up:
+        case GDK_KEY_KP_Up:
+            event.kind = litebrowser::key_event::kind::up;
+            return true;
+        case GDK_KEY_Down:
+        case GDK_KEY_KP_Down:
+            event.kind = litebrowser::key_event::kind::down;
+            return true;
+        case GDK_KEY_Home:
+        case GDK_KEY_KP_Home:
+            event.kind = litebrowser::key_event::kind::home;
+            return true;
+        case GDK_KEY_End:
+        case GDK_KEY_KP_End:
+            event.kind = litebrowser::key_event::kind::end;
+            return true;
+        case GDK_KEY_Return:
+        case GDK_KEY_KP_Enter:
+            event.kind = litebrowser::key_event::kind::enter;
+            return true;
+        case GDK_KEY_space:
+            event.kind = litebrowser::key_event::kind::space;
+            return true;
+        case GDK_KEY_Escape:
+            event.kind = litebrowser::key_event::kind::escape;
+            return true;
+        default:
+            break;
+        }
+
+        if(event.ctrl)
+        {
+            switch(keyval)
+            {
+            case GDK_KEY_a:
+            case GDK_KEY_A:
+                event.kind = litebrowser::key_event::kind::select_all;
+                return true;
+            case GDK_KEY_c:
+            case GDK_KEY_C:
+                event.kind = litebrowser::key_event::kind::copy;
+                return true;
+            case GDK_KEY_x:
+            case GDK_KEY_X:
+                event.kind = litebrowser::key_event::kind::cut;
+                return true;
+            case GDK_KEY_v:
+            case GDK_KEY_V:
+                event.kind = litebrowser::key_event::kind::paste;
+                return true;
+            default:
+                return false;
+            }
+        }
+
+        if((state & Gdk::ModifierType::ALT_MASK) == Gdk::ModifierType::NO_MODIFIER_MASK)
+        {
+            const gunichar ch = gdk_keyval_to_unicode(keyval);
+            if(ch >= 0x20 && ch != 0x7F)
+            {
+                char buffer[7] = {};
+                int  length    = g_unichar_to_utf8(ch, buffer);
+                if(length > 0)
+                {
+                    event.kind = litebrowser::key_event::kind::character;
+                    event.text.assign(buffer, static_cast<size_t>(length));
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+} // namespace
 
 html_widget::html_widget()
 {
@@ -61,6 +191,9 @@ html_widget::html_widget()
 
 html_widget::~html_widget()
 {
+    m_caret_timer.disconnect();
+    m_select_popup.reset();
+    remove_select_popup_style();
     m_notifier->disconnect();
 
     if(!gobj())
@@ -207,6 +340,376 @@ void html_widget::open_page(const std::string& url, const std::string& fragment)
     m_sig_update_state.emit(get_state());
 }
 
+void html_widget::open_page_post(const std::string& url, const litehtml::form_data& data)
+{
+    {
+        std::lock_guard<std::mutex> lock(m_page_mutex);
+        if(m_current_page)
+        {
+            m_current_page->stop_loading();
+        }
+        m_next_page = std::make_shared<litebrowser::web_page>(this, m_notifier, 10);
+        m_next_page->open_post(url, data, "");
+    }
+    m_sig_set_address.emit(url);
+    m_sig_update_state.emit(get_state());
+    m_history.url_opened(url);
+}
+
+void html_widget::submit_form(const litehtml::form_data& data)
+{
+    const std::string method = data.method.empty() ? "get" : data.method;
+    if(method == "post")
+    {
+        open_page_post(data.action, data);
+        return;
+    }
+
+    std::string query;
+    for(const auto& field : data.fields)
+    {
+        if(!query.empty())
+        {
+            query += '&';
+        }
+        query += litehtml::url::encode(field.name);
+        query += '=';
+        query += litehtml::url::encode(field.value);
+    }
+
+    std::string url = data.action;
+    if(!query.empty())
+    {
+        url += url.find('?') == std::string::npos ? "?" : "&";
+        url += query;
+    }
+    open_url(url);
+}
+
+void html_widget::show_select_popup(const litehtml::element::ptr&        el, const char* /*element_id*/,
+                                    const litehtml::select_control_data& data,
+                                    const std::function<void(const litehtml::select_control_data&)>& on_selected)
+{
+    const uint64_t generation = ++m_select_popup_generation;
+    if(m_select_popup)
+    {
+        m_select_popup->popdown();
+        m_select_popup.reset();
+    }
+    remove_select_popup_style();
+    m_select_popup_callback = on_selected;
+
+    // Border box of the select in widget coordinates.
+    litehtml::position         box;
+    litehtml::web_color        background = litehtml::web_color::white;
+    litehtml::web_color        text       = litehtml::web_color::black;
+    litehtml::web_color        border     = litehtml::web_color(118, 118, 118);
+    litehtml::font_description font;
+    font.family = "sans-serif";
+    font.size   = 16_px;
+    font.weight = 400;
+    font.style  = litehtml::font_style_normal;
+
+    if(el)
+    {
+        box = el->get_placement();
+        if(const auto ri = el->get_render_item())
+        {
+            const litehtml::margins paddings  = ri->get_paddings();
+            const litehtml::margins borders   = ri->get_borders();
+            box.x                            -= paddings.left + borders.left;
+            box.y                            -= paddings.top + borders.top;
+            box.width                        += paddings.width() + borders.width();
+            box.height                       += paddings.height() + borders.height();
+        }
+        box.x -= m_draw_buffer.get_left();
+        box.y -= m_draw_buffer.get_top();
+
+        const auto& css = el->css();
+        if(css.get_bg().m_color.alpha != 0)
+        {
+            background = css.get_bg().m_color;
+        }
+        text                = css.get_color();
+        const auto& borders = css.get_borders();
+        if(borders.top.style != litehtml::border_style_none && litehtml::pixel_t(borders.top.width.val()) > 0_px)
+        {
+            border = borders.top.color;
+        }
+        font = css.get_font_description();
+        if(font.family.empty())
+        {
+            font.family = "sans-serif";
+        }
+        if(font.weight <= 0)
+        {
+            font.weight = 400;
+        }
+        if(font.size <= 0_px)
+        {
+            font.size = 16_px;
+        }
+    }
+
+    // The popup must be opaque; flatten a translucent control background over white.
+    if(background.alpha != 255)
+    {
+        background = blend(background, litehtml::web_color::white, static_cast<double>(background.alpha) / 255.0);
+    }
+    const litehtml::web_color hover_color    = blend(text, background, 0.06);
+    const litehtml::web_color selected_color = blend(text, background, 0.10);
+    const litehtml::web_color group_color    = blend(text, background, 0.65);
+    const litehtml::web_color disabled_color = blend(text, background, 0.45);
+
+    // The popup matches the select box: 1px border on each side, no extra padding or shadow.
+    const int popup_width   = std::max(1, static_cast<int>(box.width));
+    const int content_width = std::max(1, popup_width - 2);
+    // Popup height is limited to the widget; the list scrolls when it does not fit.
+    const int widget_height = get_allocated_height();
+
+    const std::string popup_class = "litehtml-select-popup-" + std::to_string(generation);
+
+    std::ostringstream css_text;
+    css_text << "popover." << popup_class << " {\n"
+             << "    background: transparent;\n"
+             << "}\n"
+             << "popover." << popup_class << " > contents {\n"
+             << "    padding: 0;\n"
+             << "    margin: 0;\n"
+             << "    min-width: 0;\n"
+             << "    min-height: 0;\n"
+             << "    border: 1px solid " << css_color(border) << ";\n"
+             << "    border-radius: 0;\n"
+             << "    box-shadow: none;\n"
+             << "    background-color: " << css_color(background) << ";\n"
+             << "    color: " << css_color(text) << ";\n"
+             << "    font-family: " << css_font_family(font.family) << ";\n"
+             << "    font-size: " << font.size.value() << "px;\n"
+             << "    font-weight: " << font.weight << ";\n"
+             << "    font-style: " << (font.style == litehtml::font_style_italic ? "italic" : "normal") << ";\n"
+             << "}\n"
+             << "popover." << popup_class << " list {\n"
+             << "    padding: 0;\n"
+             << "    background: transparent;\n"
+             << "    color: " << css_color(text) << ";\n"
+             << "}\n"
+             << "popover." << popup_class << " list > row {\n"
+             << "    background: transparent;\n"
+             << "    color: " << css_color(text) << ";\n"
+             << "}\n"
+             << "popover." << popup_class << " list > row > label {\n"
+             << "    color: " << css_color(text) << ";\n"
+             << "}\n"
+             << "popover." << popup_class << " list > row:hover {\n"
+             << "    background-color: " << css_color(hover_color) << ";\n"
+             << "}\n"
+             << "popover." << popup_class << " list > row.selected {\n"
+             << "    background-color: " << css_color(selected_color) << ";\n"
+             << "}\n"
+             << "popover." << popup_class << " list > row.group-label > label {\n"
+             << "    color: " << css_color(group_color) << ";\n"
+             << "}\n"
+             << "popover." << popup_class << " list > row:disabled > label {\n"
+             << "    color: " << css_color(disabled_color) << ";\n"
+             << "}\n";
+
+    m_select_popup_display = get_display();
+    if(m_select_popup_display)
+    {
+        auto provider = Gtk::CssProvider::create();
+        try
+        {
+            provider->load_from_data(css_text.str());
+            Gtk::StyleProvider::add_provider_for_display(m_select_popup_display, provider,
+                                                         GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+            m_select_popup_provider = provider;
+        }
+        catch(const Glib::Error&)
+        {
+            m_select_popup_display.reset();
+        }
+    }
+
+    auto popover = std::make_unique<Gtk::Popover>();
+    popover->add_css_class(popup_class);
+    popover->set_has_arrow(false);
+    popover->set_position(Gtk::PositionType::BOTTOM);
+
+    auto list = Gtk::make_managed<Gtk::ListBox>();
+    list->set_selection_mode(Gtk::SelectionMode::NONE);
+
+    auto data_ptr = std::make_shared<litehtml::select_control_data>(data);
+    auto row_map  = std::make_shared<std::vector<int>>();
+
+    for(const auto& group : data.groups)
+    {
+        if(!group.label.empty())
+        {
+            auto label = Gtk::make_managed<Gtk::Label>(group.label);
+            label->set_xalign(0.0f);
+            label->set_ellipsize(Pango::EllipsizeMode::END);
+            label->set_margin_start(8);
+            label->set_margin_end(8);
+            label->set_margin_top(4);
+            label->set_margin_bottom(2);
+            auto row = Gtk::make_managed<Gtk::ListBoxRow>();
+            row->add_css_class("group-label");
+            row->set_activatable(false);
+            row->set_selectable(false);
+            row->set_child(*label);
+            list->append(*row);
+            row_map->push_back(-1);
+        }
+
+        for(const auto& option : group.options)
+        {
+            auto label = Gtk::make_managed<Gtk::Label>(option.label);
+            label->set_xalign(0.0f);
+            label->set_hexpand(true);
+            label->set_ellipsize(Pango::EllipsizeMode::END);
+            label->set_margin_start(group.label.empty() ? 8 : 20);
+            label->set_margin_end(8);
+            label->set_margin_top(3);
+            label->set_margin_bottom(3);
+            auto       row     = Gtk::make_managed<Gtk::ListBoxRow>();
+            const bool enabled = !option.disabled && !group.disabled;
+            row->set_sensitive(enabled);
+            row->set_activatable(enabled);
+            row->set_selectable(false);
+            row->set_child(*label);
+            if(option.selected)
+            {
+                row->add_css_class("selected");
+            }
+            list->append(*row);
+            row_map->push_back(option.index);
+        }
+    }
+
+    list->signal_row_activated().connect([this, data_ptr, row_map](Gtk::ListBoxRow* row) {
+        if(!row)
+        {
+            return;
+        }
+        const int row_index = row->get_index();
+        if(row_index < 0 || static_cast<size_t>(row_index) >= row_map->size())
+        {
+            return;
+        }
+        const int option_index = (*row_map)[static_cast<size_t>(row_index)];
+        if(option_index < 0)
+        {
+            return;
+        }
+
+        auto updated = *data_ptr;
+        for(auto& group : updated.groups)
+        {
+            for(auto& option : group.options)
+            {
+                if(option.index == option_index)
+                {
+                    option.selected = updated.multiple ? !option.selected : true;
+                } else if(!updated.multiple)
+                {
+                    option.selected = false;
+                }
+            }
+        }
+
+        if(m_select_popup_callback)
+        {
+            m_select_popup_callback(updated);
+        }
+        if(!updated.multiple && m_select_popup)
+        {
+            m_select_popup->popdown();
+        }
+    });
+
+    // Show every item; the list scrolls only when it is taller than the widget.
+    auto scrolled = Gtk::make_managed<Gtk::ScrolledWindow>();
+    scrolled->set_policy(Gtk::PolicyType::NEVER, Gtk::PolicyType::AUTOMATIC);
+    scrolled->set_size_request(content_width, -1);
+    scrolled->set_max_content_width(content_width);
+    scrolled->set_propagate_natural_width(false);
+    scrolled->set_propagate_natural_height(true);
+    if(widget_height > 2)
+    {
+        scrolled->set_max_content_height(widget_height - 2);
+    }
+    scrolled->set_child(*list);
+    popover->set_child(*scrolled);
+    popover->set_parent(*this);
+
+    if(el)
+    {
+        popover->set_pointing_to(Gdk::Rectangle(static_cast<int>(box.x), static_cast<int>(box.y), popup_width,
+                                                std::max(1, static_cast<int>(box.height))));
+    }
+
+    popover->signal_closed().connect([this, generation]() {
+        if(generation != m_select_popup_generation)
+        {
+            return;
+        }
+        m_select_popup_callback = {};
+        remove_select_popup_style();
+        Glib::signal_idle().connect_once([this, generation]() {
+            if(generation == m_select_popup_generation)
+            {
+                m_select_popup.reset();
+            }
+        });
+    });
+
+    auto* popup_ptr = popover.get();
+    m_select_popup  = std::move(popover);
+    popup_ptr->popup();
+}
+
+void html_widget::remove_select_popup_style()
+{
+    if(m_select_popup_provider && m_select_popup_display)
+    {
+        Gtk::StyleProvider::remove_provider_for_display(m_select_popup_display, m_select_popup_provider);
+    }
+    m_select_popup_provider.reset();
+    m_select_popup_display.reset();
+}
+
+void html_widget::update_caret_timer()
+{
+    auto       page       = current_page();
+    const bool text_focus = page && page->has_text_focus();
+    if(text_focus)
+    {
+        m_caret_visible = true;
+        page->set_caret_visible(true);
+        m_caret_timer.disconnect();
+        m_caret_timer = Glib::signal_timeout().connect(sigc::mem_fun(*this, &html_widget::on_caret_tick), 500);
+    } else
+    {
+        if(m_caret_timer.connected())
+        {
+            m_caret_timer.disconnect();
+        }
+        m_caret_visible = true;
+    }
+}
+
+bool html_widget::on_caret_tick()
+{
+    auto page = current_page();
+    if(!page || !page->has_text_focus())
+    {
+        return false;
+    }
+    m_caret_visible = !m_caret_visible;
+    page->set_caret_visible(m_caret_visible);
+    return true;
+}
+
 void html_widget::scroll_to(int x, int y)
 {
     m_hadjustment->set_value(x);
@@ -253,6 +756,7 @@ void html_widget::on_button_press_event(int /* n_press */, double x, double y)
                                       rect.get_height());
             queue_draw();
         }
+        update_caret_timer();
     }
 }
 
@@ -272,6 +776,7 @@ void html_widget::on_button_release_event(int /* n_press */, double x, double y)
                                       rect.get_height());
             queue_draw();
         }
+        update_caret_timer();
     }
 }
 
@@ -331,6 +836,53 @@ void html_widget::on_mouse_move(double x, double y)
 
 bool html_widget::on_key_pressed(guint keyval, guint /* keycode */, Gdk::ModifierType state)
 {
+    auto page = current_page();
+    if(page)
+    {
+        litebrowser::key_event event;
+        if(map_key_event(keyval, state, event))
+        {
+            if(event.kind == litebrowser::key_event::kind::paste)
+            {
+                auto clipboard = get_clipboard();
+                clipboard->read_text_async(sigc::track_object(
+                    [this, page, clipboard](const Glib::RefPtr<Gio::AsyncResult>& result) {
+                        try
+                        {
+                            const Glib::ustring    text = clipboard->read_text_finish(result);
+                            litebrowser::key_event paste_event;
+                            paste_event.kind = litebrowser::key_event::kind::paste;
+                            paste_event.text = text;
+                            if(page->on_key_event(paste_event).handled)
+                            {
+                                m_caret_visible = true;
+                                update_caret_timer();
+                                queue_draw();
+                            }
+                        }
+                        catch(...)
+                        {
+                        }
+                    },
+                    *this));
+                return true;
+            }
+
+            const auto result = page->on_key_event(event);
+            if(result.handled)
+            {
+                if(result.set_clipboard && !result.clipboard_text.empty())
+                {
+                    get_clipboard()->set_text(result.clipboard_text);
+                }
+                m_caret_visible = true;
+                update_caret_timer();
+                queue_draw();
+                return true;
+            }
+        }
+    }
+
     if(keyval == GDK_KEY_Tab || keyval == GDK_KEY_ISO_Left_Tab)
     {
         const bool backward = keyval == GDK_KEY_ISO_Left_Tab ||
@@ -406,6 +958,7 @@ bool html_widget::focus_navigate(bool forward)
         redraw_boxes(boxes);
     }
     scroll_into_view(*pos);
+    update_caret_timer();
     return true;
 }
 

@@ -5,20 +5,28 @@
 #include "el_base.h"
 #include "el_body.h"
 #include "el_break.h"
+#include "el_button.h"
+#include "el_form.h"
 #include "el_cdata.h"
 #include "el_comment.h"
 #include "el_div.h"
 #include "element.h"
 #include "el_font.h"
 #include "el_image.h"
+#include "el_input.h"
+#include "el_label.h"
 #include "el_link.h"
+#include "el_optgroup.h"
+#include "el_option.h"
 #include "el_para.h"
 #include "el_script.h"
+#include "el_select.h"
 #include "el_space.h"
 #include "el_style.h"
 #include "el_table.h"
 #include "el_td.h"
 #include "el_text.h"
+#include "el_textarea.h"
 #include "el_title.h"
 #include "el_tr.h"
 #include "gumbo.h"
@@ -471,6 +479,30 @@ namespace litehtml
             } else if(!strcmp(tag_name, "font"))
             {
                 newTag = std::make_shared<el_font>(this_doc);
+            } else if(!strcmp(tag_name, "form"))
+            {
+                newTag = std::make_shared<el_form>(this_doc);
+            } else if(!strcmp(tag_name, "input"))
+            {
+                newTag = std::make_shared<el_input>(this_doc);
+            } else if(!strcmp(tag_name, "textarea"))
+            {
+                newTag = std::make_shared<el_textarea>(this_doc);
+            } else if(!strcmp(tag_name, "select"))
+            {
+                newTag = std::make_shared<el_select>(this_doc);
+            } else if(!strcmp(tag_name, "option"))
+            {
+                newTag = std::make_shared<el_option>(this_doc);
+            } else if(!strcmp(tag_name, "optgroup"))
+            {
+                newTag = std::make_shared<el_optgroup>(this_doc);
+            } else if(!strcmp(tag_name, "label"))
+            {
+                newTag = std::make_shared<el_label>(this_doc);
+            } else if(!strcmp(tag_name, "button"))
+            {
+                newTag = std::make_shared<el_button>(this_doc);
             } else
             {
                 newTag = std::make_shared<html_tag>(this_doc);
@@ -898,14 +930,37 @@ namespace litehtml
         {
             return false;
         }
+        bool changed = false;
         if(m_over_element)
         {
-            if(m_over_element->on_lbutton_up(m_active_element == m_over_element))
-            {
-                return update_styles(redraw_box);
-            }
+            changed = m_over_element->on_lbutton_up(m_active_element == m_over_element);
+        }
+        changed = flush_redraw(redraw_box) || changed;
+        if(changed)
+        {
+            return redraw_box ? update_styles(redraw_box) : true;
         }
         return false;
+    }
+
+    bool document::flush_redraw(const std::function<void(const position&)>& redraw_box)
+    {
+        if(!m_redraw_requested)
+        {
+            return false;
+        }
+        m_redraw_requested = false;
+        if(redraw_box)
+        {
+            position viewport(0_px, 0_px, m_size.width, m_size.height);
+            if(m_container)
+            {
+                m_container->get_viewport(viewport);
+            }
+            redraw_box(position(0_px, 0_px, std::max(m_size.width, viewport.right()),
+                                std::max(m_size.height, viewport.bottom())));
+        }
+        return true;
     }
 
     bool document::on_button_cancel(const std::function<void(const position&)>& redraw_box)
@@ -969,7 +1024,68 @@ namespace litehtml
             set_focus_within(el, true);
         }
 
+        if(m_container)
+        {
+            m_container->on_focus_change(el, el ? el->get_attr("id") : nullptr,
+                                         el ? el->get_control_type() : control_type::none,
+                                         el ? el->get_control_data() : control_data{});
+        }
+
         return changed;
+    }
+
+    bool document::update_focused(const control_data& data, const std::function<void(const position&)>& redraw_box)
+    {
+        const auto el = m_focused_element.lock();
+        if(!el)
+        {
+            return false;
+        }
+
+        const bool styles_changed = el->update_focused(data);
+        if(styles_changed && redraw_box)
+        {
+            update_styles(redraw_box);
+        }
+        if(redraw_box)
+        {
+            redraw_box(element_document_position(el));
+            flush_redraw(redraw_box);
+        }
+        return true;
+    }
+
+    bool document::submit_form(const std::shared_ptr<element>& form, const std::shared_ptr<element>& submitter)
+    {
+        if(auto form_el = std::dynamic_pointer_cast<el_form>(form))
+        {
+            form_el->submit(submitter);
+            return true;
+        }
+        return false;
+    }
+
+    bool document::submit_focused_form(const std::function<void(const position&)>& redraw_box)
+    {
+        auto el = m_focused_element.lock();
+        if(!el)
+        {
+            return false;
+        }
+        while(el && el->tag() != _form_)
+        {
+            el = el->parent();
+        }
+        if(!el)
+        {
+            return false;
+        }
+        const bool ret = submit_form(el);
+        if(ret && redraw_box)
+        {
+            redraw_box(element_document_position(el));
+        }
+        return ret;
     }
 
     bool document::set_focus(const element::ptr& el, bool focus_visible,
@@ -983,7 +1099,10 @@ namespace litehtml
         {
             return false;
         }
-        update_styles(redraw_box);
+        if(redraw_box)
+        {
+            update_styles(redraw_box);
+        }
         return true;
     }
 

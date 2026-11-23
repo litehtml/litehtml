@@ -786,14 +786,14 @@ namespace litehtml
             break;
         case _checked_:
             // Form state: matches either the dynamic pseudo-class (set_pseudo_class)
-            // or the standard HTML checked attribute.
-            if(!(sel.name in m_pseudo_classes) && !get_attr("checked"))
+            // or the checked state of the control.
+            if(!(sel.name in m_pseudo_classes) && !is_checked())
             {
                 return select_no_match;
             }
             break;
         case _disabled_:
-            if(!(sel.name in m_pseudo_classes) && !get_attr("disabled"))
+            if(!(sel.name in m_pseudo_classes) && !is_disabled())
             {
                 return select_no_match;
             }
@@ -1627,8 +1627,26 @@ namespace litehtml
 
         m_style.clear();
 
+        // Presentational hints must be applied after the UA rules and before the author rules, the
+        // same position they had when parse_attributes() ran.
+        bool       hints_applied = m_attr_style.empty();
+        const auto apply_hints   = [this, &hints_applied]() {
+            if(!hints_applied)
+            {
+                m_style.combine(m_attr_style);
+                hints_applied = true;
+            }
+        };
+
+        size_t used_index = 0;
         for(auto& usel : m_used_styles)
         {
+            if(!hints_applied && used_index == m_attr_style_position)
+            {
+                apply_hints();
+            }
+            ++used_index;
+
             usel->m_used = false;
 
             if(usel->m_selector->is_media_valid())
@@ -1683,6 +1701,8 @@ namespace litehtml
                 }
             }
         }
+
+        apply_hints();
     }
 
     const litehtml::background* litehtml::html_tag::get_background(bool own_only)
@@ -1740,13 +1760,25 @@ namespace litehtml
     }
 
     // https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-pixel-length-property
+    void html_tag::add_attr_property(string_id prop_name, const css_token_vector& tokens)
+    {
+        if(m_attr_style.empty())
+        {
+            m_attr_style_position = m_used_styles.size();
+        }
+        m_attr_style.add_property(prop_name, tokens);
+        // Keep the hint in the current style as well; refresh_styles() rebuilds m_style and
+        // re-applies the hint at m_attr_style_position.
+        m_style.add_property(prop_name, tokens);
+    }
+
     void html_tag::map_to_pixel_length_property(string_id prop_name, const std::string& attr_value)
     {
         int n;
         if(html_parse_non_negative_integer(attr_value, n))
         {
             css_token tok(DIMENSION, static_cast<float>(n), css_number_integer, "px");
-            m_style.add_property(prop_name, {tok});
+            add_attr_property(prop_name, {tok});
         }
     }
 
@@ -1757,7 +1789,7 @@ namespace litehtml
         int n = default_value;
         html_parse_non_negative_integer(attr_value, n);
         css_token tok(DIMENSION, static_cast<float>(n), css_number_integer, "px");
-        m_style.add_property(prop_name, {tok});
+        add_attr_property(prop_name, {tok});
     }
 
     // https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-dimension-property
@@ -1779,7 +1811,7 @@ namespace litehtml
             tok = {PERCENTAGE, x, css_number_number};
         }
 
-        m_style.add_property(prop_name, {tok});
+        add_attr_property(prop_name, {tok});
     }
 
     // https://html.spec.whatwg.org/multipage/rendering.html#maps-to-the-dimension-property-(ignoring-zero)
@@ -1801,7 +1833,7 @@ namespace litehtml
             tok = {PERCENTAGE, x, css_number_number};
         }
 
-        m_style.add_property(prop_name, {tok});
+        add_attr_property(prop_name, {tok});
     }
 
 } // namespace litehtml

@@ -5,6 +5,7 @@
 #include "encodings.h"
 #include "font_description.h"
 #include "master_css.h"
+#include "controls.h"
 #include "types.h"
 
 #include <functional>
@@ -79,6 +80,7 @@ namespace litehtml
         document_mode                           m_mode              = no_quirks_mode;
         bool                                    m_finalized         = false;
         bool                                    m_focus_visible     = false;
+        bool                                    m_redraw_requested  = false;
         uint64_t                                m_layout_generation = 0;
 
       public:
@@ -104,47 +106,63 @@ namespace litehtml
         {
             return m_def_color;
         }
-        void                         cvt_units(css_length& val, const font_metrics& metrics, pixel_t size) const;
-        pixel_t                      to_pixels(const css_length& val, const font_metrics& metrics, pixel_t size) const;
-        pixel_t                      width() const;
-        pixel_t                      height() const;
-        pixel_t                      content_width() const;
-        pixel_t                      content_height() const;
-        void                         add_stylesheet(const char* str, const char* baseurl, const char* media);
-        bool                         on_mouse_over(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+        void                       cvt_units(css_length& val, const font_metrics& metrics, pixel_t size) const;
+        pixel_t                    to_pixels(const css_length& val, const font_metrics& metrics, pixel_t size) const;
+        pixel_t                    width() const;
+        pixel_t                    height() const;
+        pixel_t                    content_width() const;
+        pixel_t                    content_height() const;
+        void                       add_stylesheet(const char* str, const char* baseurl, const char* media);
+        bool                       on_mouse_over(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+                                                 const std::function<void(const position&)>& redraw_box);
+        std::vector<scroll_values> on_scroll(pixel_t dx, pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x,
+                                             pixel_t client_y) const;
+        bool                       on_lbutton_down(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
                                                    const std::function<void(const position&)>& redraw_box);
-        std::vector<scroll_values>   on_scroll(pixel_t dx, pixel_t dy, pixel_t x, pixel_t y, pixel_t client_x,
-                                               pixel_t client_y) const;
-        bool                         on_lbutton_down(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
-                                                     const std::function<void(const position&)>& redraw_box);
-        bool                         on_lbutton_up(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
-                                                   const std::function<void(const position&)>& redraw_box);
-        bool                         on_button_cancel(const std::function<void(const position&)>& redraw_box);
-        bool                         on_mouse_leave(const std::function<void(const position&)>& redraw_box);
+        bool                       on_lbutton_up(pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+                                                 const std::function<void(const position&)>& redraw_box);
+        bool                       on_button_cancel(const std::function<void(const position&)>& redraw_box);
+        bool                       on_mouse_leave(const std::function<void(const position&)>& redraw_box);
         // Move the focus to the next/previous focusable element in the sequential focus navigation order.
         // The returned position is the document relative position of the focused element, so the caller can
         // scroll it into view. The optional is empty when the document has no focusable elements.
-        std::optional<position>      focus_next(const std::function<void(const position&)>& redraw_box);
-        std::optional<position>      focus_prev(const std::function<void(const position&)>& redraw_box);
+        std::optional<position> focus_next(const std::function<void(const position&)>& redraw_box);
+        std::optional<position> focus_prev(const std::function<void(const position&)>& redraw_box);
         // Focus el (nullptr removes the focus). focus_visible controls the :focus-visible pseudo class and
         // should be true when the focus was moved by the keyboard. Returns true when the focus state changed;
         // redraw_box is called for the areas that need to be repainted.
-        bool                         set_focus(const std::shared_ptr<element>& el, bool focus_visible,
-                                               const std::function<void(const position&)>& redraw_box);
-        std::shared_ptr<element>     get_focused_element() const
+        bool set_focus(const std::shared_ptr<element>& el, bool focus_visible,
+                       const std::function<void(const position&)>& redraw_box);
+        // Applies a control state change to the focused element and repaints its box. Returns true
+        // when there is a focused element that accepted the update.
+        bool update_focused(const control_data& data, const std::function<void(const position&)>& redraw_box);
+        // Submits the given form. submitter is the button that triggered the submission (may be
+        // nullptr). Returns false when form is not a form element.
+        bool submit_form(const std::shared_ptr<element>& form, const std::shared_ptr<element>& submitter = nullptr);
+        // Submits the form that contains the focused element (Enter key).
+        bool submit_focused_form(const std::function<void(const position&)>& redraw_box);
+        // Requests a full redraw on the next control update (used when a value changes without a
+        // style change, for example a form reset).
+        void request_redraw()
+        {
+            m_redraw_requested = true;
+        }
+        // Reports and clears a pending full redraw. Returns true when redraw_box was called.
+        bool                     flush_redraw(const std::function<void(const position&)>& redraw_box);
+        std::shared_ptr<element> get_focused_element() const
         {
             return m_focused_element.lock();
         }
-        std::shared_ptr<element>     create_element(const char* tag_name, const string_map& attributes);
-        std::shared_ptr<element>     root();
-        std::shared_ptr<render_item> root_render();
-        void                         get_fixed_boxes(position::vector& fixed_boxes);
-        void                         add_fixed_box(const position& pos);
-        void                         add_media_list(const media_query_list_list::ptr& list);
-        bool                         media_changed();
-        bool                         lang_changed();
-        bool                         match_lang(const std::string& lang);
-        void                         add_tabular(const std::shared_ptr<render_item>& el);
+        std::shared_ptr<element>       create_element(const char* tag_name, const string_map& attributes);
+        std::shared_ptr<element>       root();
+        std::shared_ptr<render_item>   root_render();
+        void                           get_fixed_boxes(position::vector& fixed_boxes);
+        void                           add_fixed_box(const position& pos);
+        void                           add_media_list(const media_query_list_list::ptr& list);
+        bool                           media_changed();
+        bool                           lang_changed();
+        bool                           match_lang(const std::string& lang);
+        void                           add_tabular(const std::shared_ptr<render_item>& el);
         std::shared_ptr<const element> get_over_element() const
         {
             return m_over_element;
@@ -180,7 +198,7 @@ namespace litehtml
         void         collect_tabbable(const std::shared_ptr<element>& el, bool inert,
                                       std::vector<std::shared_ptr<element>>& result) const;
         std::vector<std::shared_ptr<element>> tabbable_elements() const;
-        position     element_document_position(const std::shared_ptr<element>& el) const;
+        position                              element_document_position(const std::shared_ptr<element>& el) const;
         std::optional<position> focus_step(bool forward, const std::function<void(const position&)>& redraw_box);
         // Lays out again only the subtrees whose content changed. Returns false when the change
         // cannot be contained in a subtree and the whole document has to be laid out again.

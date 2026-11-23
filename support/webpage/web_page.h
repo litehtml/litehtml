@@ -1,6 +1,7 @@
 #ifndef LITEBROWSER_WEB_PAGE_H
 #define LITEBROWSER_WEB_PAGE_H
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <unistd.h>
@@ -14,6 +15,41 @@
 
 namespace litebrowser
 {
+    struct key_event
+    {
+        enum class kind
+        {
+            character,
+            backspace,
+            delete_,
+            left,
+            right,
+            up,
+            down,
+            home,
+            end,
+            enter,
+            space,
+            escape,
+            select_all,
+            copy,
+            cut,
+            paste
+        };
+
+        kind        kind = kind::character;
+        std::string text;
+        bool        shift = false;
+        bool        ctrl  = false;
+    };
+
+    struct key_event_result
+    {
+        bool        handled       = false;
+        bool        set_clipboard = false;
+        std::string clipboard_text;
+    };
+
     class text_file
     {
         std::mutex        wait_mutex;
@@ -95,6 +131,12 @@ namespace litebrowser
 
         std::shared_ptr<browser_notify_interface> m_notify;
 
+        litehtml::element::ptr             m_focused_control;
+        litehtml::control_type             m_focused_control_type = litehtml::control_type::none;
+        litehtml::text_control_data        m_text_data;
+        bool                               m_has_text_data = false;
+        std::optional<litehtml::form_data> m_pending_submit;
+
       public:
         explicit web_page(html_host_interface* html_host, std::shared_ptr<browser_notify_interface> notify,
                           int pool_size) :
@@ -117,6 +159,7 @@ namespace litebrowser
         }
 
         void open(const std::string& url, const std::string& fragment);
+        void open_post(const std::string& url, const litehtml::form_data& data, const std::string& fragment);
 
         void             get_viewport(litehtml::position& viewport) const override;
         void             on_anchor_click(const char* url, const litehtml::element::ptr& el) override;
@@ -128,9 +171,15 @@ namespace litebrowser
         void             make_url(const char* url, const char* basepath, std::string& out) override;
         void             load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
         void             on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event) override;
-        double           get_screen_dpi() const override;
-        int              get_screen_width() const override;
-        int              get_screen_height() const override;
+        void   on_focus_change(const litehtml::element::ptr& el, const char* element_id, litehtml::control_type type,
+                               const litehtml::control_data& data) override;
+        void   get_text_data(const litehtml::element::ptr& el, litehtml::text_control_data& data) override;
+        void   on_submit(const litehtml::form_data& data) override;
+        bool   show_select_popup(const litehtml::element::ptr& el, const char* element_id,
+                                 const litehtml::select_control_data& data) override;
+        double get_screen_dpi() const override;
+        int    get_screen_width() const override;
+        int    get_screen_height() const override;
 
         void show_fragment(const std::string& fragment);
         void show_fragment_and_reset()
@@ -150,6 +199,12 @@ namespace litebrowser
                            const std::function<void(const litehtml::position&)>& redraw_box);
         std::optional<litehtml::position> focus_next(const std::function<void(const litehtml::position&)>& redraw_box);
         std::optional<litehtml::position> focus_prev(const std::function<void(const litehtml::position&)>& redraw_box);
+        void                              update_focused(const litehtml::control_data& data);
+        bool                              has_text_focus() const;
+        void                              set_caret_visible(bool visible);
+        key_event_result                  on_key_event(const key_event& event);
+        void                              submit_focused_form();
+        void                              show_focused_select_popup();
 
         [[nodiscard]]
         const std::string& get_cursor() const
@@ -248,6 +303,10 @@ namespace litebrowser
         void on_image_downloaded(const std::shared_ptr<image_file>& data, u_int32_t http_status, u_int32_t err_code,
                                  const std::string& err_text, const std::string& url);
         void on_pool_update_state();
+        void open_internal(const std::string& url, const std::string& fragment,
+                           const std::vector<litehtml::form_field>* post_data);
+        void process_pending_submit();
+        void apply_select(const litehtml::select_control_data& data);
     };
 } // namespace litebrowser
 

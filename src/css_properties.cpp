@@ -591,7 +591,8 @@ void litehtml::css_properties::compute_font(const html_tag* el, const document::
     descr.emphasis_color       = m_text_emphasis_color;
     descr.emphasis_position    = m_text_emphasis_position;
 
-    m_font = doc->get_font(descr, &m_font_metrics);
+    m_font_description = descr;
+    m_font             = doc->get_font(descr, &m_font_metrics);
 }
 
 void litehtml::css_properties::compute_background(const html_tag* el, const document::ptr& doc)

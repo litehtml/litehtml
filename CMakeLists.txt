@@ -9,6 +9,7 @@ option(LITEHTML_BUILD_MATH_TESTS "build CSS math regression tests" OFF)
 option(LITEHTML_BUILD_STACKING_TESTS "build stacking context hit-test regression tests" OFF)
 option(LITEHTML_BUILD_REFLOW_TESTS "build incremental re-layout regression tests" OFF)
 option(LITEHTML_BUILD_FOCUS_TESTS "build focus and keyboard navigation tests" OFF)
+option(LITEHTML_BUILD_CONTROLS_TESTS "build form controls tests" OFF)
 option(LITEHTML_BUILD_CONTAINER_CAIRO "build litehtml_container_cairo library (requires cairo)" OFF)
 option(LITEHTML_BUILD_CONTAINER_PANGO "build litehtml_container_pango library (requires pango, pangocairo)" OFF)
 option(LITEHTML_BUILD_RENDER2PNG "build litehtml_render2png library (requires gtk4, gdk-pixbuf-2.0, fontconfig)" OFF)
@@ -54,25 +55,34 @@ set(SOURCE_LITEHTML
 	src/css_parser.cpp
 	src/document.cpp
 	src/document_container.cpp
+	src/control_text_layout.cpp
 	src/el_anchor.cpp
 	src/el_base.cpp
 	src/el_before_after.cpp
 	src/el_body.cpp
 	src/el_break.cpp
+	src/el_button.cpp
 	src/el_cdata.cpp
 	src/el_comment.cpp
 	src/el_div.cpp
 	src/element.cpp
 	src/el_font.cpp
 	src/el_image.cpp
+	src/el_input.cpp
+	src/el_label.cpp
 	src/el_link.cpp
+	src/el_form.cpp
+	src/el_optgroup.cpp
+	src/el_option.cpp
 	src/el_para.cpp
 	src/el_script.cpp
+	src/el_select.cpp
 	src/el_space.cpp
 	src/el_style.cpp
 	src/el_table.cpp
 	src/el_td.cpp
 	src/el_text.cpp
+	src/el_textarea.cpp
 	src/el_title.cpp
 	src/el_tr.cpp
 	src/encodings.cpp
@@ -125,24 +135,33 @@ set(HEADER_LITEHTML
 	include/litehtml/css_tokenizer.h
 	include/litehtml/document.h
 	include/litehtml/document_container.h
+	include/litehtml/controls.h
 	include/litehtml/el_anchor.h
 	include/litehtml/el_base.h
 	include/litehtml/el_before_after.h
 	include/litehtml/el_body.h
 	include/litehtml/el_break.h
+	include/litehtml/el_button.h
 	include/litehtml/el_cdata.h
 	include/litehtml/el_comment.h
 	include/litehtml/el_div.h
 	include/litehtml/el_font.h
 	include/litehtml/el_image.h
+	include/litehtml/el_form.h
+	include/litehtml/el_input.h
+	include/litehtml/el_label.h
 	include/litehtml/el_link.h
+	include/litehtml/el_optgroup.h
+	include/litehtml/el_option.h
 	include/litehtml/el_para.h
 	include/litehtml/el_script.h
+	include/litehtml/el_select.h
 	include/litehtml/el_space.h
 	include/litehtml/el_style.h
 	include/litehtml/el_table.h
 	include/litehtml/el_td.h
 	include/litehtml/el_text.h
+	include/litehtml/el_textarea.h
 	include/litehtml/el_title.h
 	include/litehtml/el_tr.h
 	include/litehtml/element.h
@@ -168,6 +187,7 @@ set(HEADER_LITEHTML
 	include/litehtml/render_item.h
 	include/litehtml/render_flex.h
 	include/litehtml/render_grid.h
+	include/litehtml/render_control.h
 	include/litehtml/render_image.h
 	include/litehtml/render_inline.h
 	include/litehtml/render_table.h
@@ -300,6 +320,14 @@ if(LITEHTML_BUILD_FOCUS_TESTS)
 	target_include_directories(litehtml-focus-tests PRIVATE tests)
 	target_link_libraries(litehtml-focus-tests PRIVATE litehtml)
 	add_test(NAME litehtml-focus-tests COMMAND litehtml-focus-tests)
+endif()
+
+if(LITEHTML_BUILD_CONTROLS_TESTS)
+	enable_testing()
+	add_executable(litehtml-controls-tests tests/controls_test.cpp)
+	target_include_directories(litehtml-controls-tests PRIVATE tests)
+	target_link_libraries(litehtml-controls-tests PRIVATE litehtml)
+	add_test(NAME litehtml-controls-tests COMMAND litehtml-controls-tests)
 endif()
 
 # install and export

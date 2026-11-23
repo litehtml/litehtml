@@ -229,6 +229,14 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
 
     litebrowser::draw_buffer m_draw_buffer;
 
+    std::unique_ptr<Gtk::Popover>                             m_select_popup;
+    std::function<void(const litehtml::select_control_data&)> m_select_popup_callback;
+    Glib::RefPtr<Gtk::CssProvider>                            m_select_popup_provider;
+    Glib::RefPtr<Gdk::Display>                                m_select_popup_display;
+    sigc::connection                                          m_caret_timer;
+    bool                                                      m_caret_visible           = true;
+    uint64_t                                                  m_select_popup_generation = 0;
+
   public:
     explicit html_widget();
     ~html_widget() override;
@@ -266,6 +274,10 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
     void             scroll_to(int x, int y) override;
     void             get_viewport(litehtml::position& viewport) const override;
     cairo_surface_t* load_image(const std::string& path) override;
+    void show_select_popup(const litehtml::element::ptr& el, const char* element_id,
+                           const litehtml::select_control_data&                             data,
+                           const std::function<void(const litehtml::select_control_data&)>& on_selected) override;
+    void submit_form(const litehtml::form_data& data) override;
 
   protected:
     void snapshot_vfunc(const Glib::RefPtr<Gtk::Snapshot>& snapshot) override;
@@ -299,6 +311,10 @@ class html_widget : public Gtk::Widget, public litebrowser::html_host_interface
     void update_view_port(const std::shared_ptr<litebrowser::web_page>& page);
     void restart_scrollbar_timer();
     bool on_frame_tick(const Glib::RefPtr<Gdk::FrameClock>& frame_clock);
+    void open_page_post(const std::string& url, const litehtml::form_data& data);
+    void remove_select_popup_style();
+    void update_caret_timer();
+    bool on_caret_tick();
 
     litebrowser::draw_buffer::draw_page_function_t get_draw_function(const std::shared_ptr<litebrowser::web_page>& page)
     {

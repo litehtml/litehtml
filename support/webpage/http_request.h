@@ -21,6 +21,7 @@ namespace litebrowser
                            const std::string& url)>
                                                          m_on_finish;
         volatile bool                                    m_canceled;
+        bool                                             m_is_post = false;
         size_t                                           m_downloaded;
         size_t                                           m_total;
         volatile void*                                   m_session;
@@ -66,6 +67,10 @@ namespace litebrowser
         void clear_form_data()
         {
             m_form_data.clear();
+        }
+        void set_post(bool is_post)
+        {
+            m_is_post = is_post;
         }
         const std::string& get_url()
         {

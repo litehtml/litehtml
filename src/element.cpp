@@ -609,6 +609,42 @@ namespace litehtml
         return false;
     }
 
+    bool element::is_checked() const
+    {
+        return get_attr("checked") != nullptr;
+    }
+
+    bool element::is_disabled() const
+    {
+        if(get_attr("disabled"))
+        {
+            return true;
+        }
+        for(auto par = parent(); par; par = par->parent())
+        {
+            if(par->tag() == _fieldset_ && par->get_attr("disabled"))
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    control_type element::get_control_type() const
+    {
+        return control_type::none;
+    }
+
+    control_data element::get_control_data() const
+    {
+        return {};
+    }
+
+    bool element::update_focused(const control_data& /*data*/)
+    {
+        return false;
+    }
+
     bool element::on_mouse_over() LITEHTML_RETURN_FUNC(false);
     bool element::on_mouse_leave() LITEHTML_RETURN_FUNC(false);
     bool element::on_lbutton_down() LITEHTML_RETURN_FUNC(false);

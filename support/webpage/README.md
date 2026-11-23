@@ -63,7 +63,10 @@ Implement all methods of both interfaces in [`html_host.h`](html_host.h):
   includes the viewport origin in document coordinates as well as its size.
   Implement `open_url`, `update_cursor`, `scroll_to` and `redraw_boxes` to
   handle the corresponding application events. `get_cursor()` provides the
-  current cursor name.
+  current cursor name. `show_select_popup` receives the options of a select
+  and a callback that must be called with the updated selection;
+  `submit_form` receives the resolved `litehtml::form_data` of a submitted
+  form and performs the navigation.
 - `browser_notify_interface` reports requests through `redraw`, `render`,
   `update_state` and `on_set_caption`, and announces a page load with
   `on_page_loaded(page_id)`. The host must perform the corresponding
@@ -100,7 +103,12 @@ void start_page(const std::shared_ptr<litebrowser::web_page>& page,
 Store the returned page in your application before calling `start_page`. The
 example assumes a non-null page and notifier and a nonempty URL. Pass the
 fragment without `#`, or an empty string. The final constructor argument is
-the number of request workers; it must be positive. The host must remain
+the number of request workers; it must be positive.
+
+For a POST form submission use `open_post(url, form_data, fragment)`. The
+request pool sends the fields as an `application/x-www-form-urlencoded` body.
+Navigation history is URL based, so Back/Reload of a POST result performs a
+GET request. The host must remain
 valid while the page and its outstanding work use it. The page stores the
 notifier as a `shared_ptr`. Use an explicit scheme for network URLs: if a URL
 has no scheme and does not start with `/`, `open` prefixes it with `http://`.
@@ -168,6 +176,12 @@ Redraw the returned regions and schedule presentation. `on_lbutton_down` and
 handles scrollable elements and returns affected scroll boxes; the host also
 manages scrolling of the outer viewport. The draw buffer guide describes
 converting and presenting its actual, potentially snapped viewport position.
+
+Form controls are edited in the page. `has_text_focus()` reports whether a
+text control is focused; `on_key_event()` applies text editing, checkbox/radio
+activation, select popups and form submission; `set_caret_visible()` toggles
+the caret for blink handling. The host forwards key events to these functions
+and calls `redraw_boxes` for the returned invalidated areas.
 
 `id()` identifies the page while it is alive; `width()` and `height()` report
 the laid-out document size, or zero when no document exists. `url()`,

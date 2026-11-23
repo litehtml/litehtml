@@ -67,6 +67,11 @@ bool litebrowser::http_request::open()
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, slist);
     }
 
+    if(m_is_post)
+    {
+        curl_easy_setopt(curl, CURLOPT_POST, 1L);
+    }
+
     std::string post_str;
     if(!m_form_data.empty())
     {
