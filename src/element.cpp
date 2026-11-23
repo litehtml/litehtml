@@ -647,6 +647,22 @@ namespace litehtml
         return control_type::none;
     }
 
+    bool element::accepts_keyboard_input() const
+    {
+        switch(get_control_type())
+        {
+        case control_type::text:
+        case control_type::number:
+        case control_type::password:
+        case control_type::search:
+        case control_type::textarea:
+        case control_type::select:
+            return true;
+        default:
+            return false;
+        }
+    }
+
     control_data element::get_control_data() const
     {
         return {};

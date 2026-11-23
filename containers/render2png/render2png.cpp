@@ -49,6 +49,16 @@ namespace html2png
             return default_value;
         }
 
+        std::string get_string(const std::string& key, const std::string& default_value)
+        {
+            auto iter = m_data.find(key);
+            if(iter != m_data.end())
+            {
+                return iter->second;
+            }
+            return default_value;
+        }
+
         bool has_key(const std::string& key) const
         {
             return m_data.find(key) != m_data.end();
@@ -305,6 +315,14 @@ namespace html2png
                 // the same way the wheel keys are converted.
                 doc->on_mouse_over(mouse_x - draw_x, mouse_y - draw_y, mouse_x, mouse_y,
                                    [](const litehtml::position&) {});
+            }
+            // Focus an element before drawing. focusvisible=false simulates focus moved by the mouse.
+            if(const std::string focus_selector = cfg.get_string("focus", ""); !focus_selector.empty())
+            {
+                if(auto focus_el = doc->root()->select_one(focus_selector))
+                {
+                    doc->set_focus(focus_el, cfg.get_bool("focusvisible", true), [](const litehtml::position&) {});
+                }
             }
             litehtml::position clip(0, 0, width, height);
             doc->draw(reinterpret_cast<litehtml::uint_ptr>(cr), draw_x, draw_y, &clip);

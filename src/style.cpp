@@ -580,6 +580,10 @@ namespace litehtml
             }
             break;
 
+        // outline-offset = <length>  https://drafts.csswg.org/css-ui/#outline-offset
+        case _outline_offset_:
+            return add_length_property(name, val, css_values(), f_length, important);
+
             //  =============================  LIST  =============================
 
         case _list_style_image_:

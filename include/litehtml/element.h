@@ -126,6 +126,9 @@ namespace litehtml
         virtual bool is_disabled() const;
         // Kind of the form control (control_type::none for non-control elements).
         virtual control_type get_control_type() const;
+        // Whether the element accepts keyboard text input. Such elements always match
+        // :focus-visible while focused, regardless of how the focus was moved.
+        bool accepts_keyboard_input() const;
         // Current state of the control (see control_data).
         virtual control_data get_control_data() const;
         // Applies a state change delivered by the container (document::update_focused).

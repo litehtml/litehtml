@@ -71,7 +71,7 @@ namespace litehtml
         _border_top_left_radius_y_, _border_top_right_radius_y_, _border_bottom_right_radius_y_,
         _border_bottom_left_radius_y_,
 
-        _outline_, _outline_width_, _outline_style_, _outline_color_,
+        _outline_, _outline_width_, _outline_style_, _outline_color_, _outline_offset_,
 
         _list_style_, _list_style_type_, _list_style_position_, _list_style_image_, _list_style_image_baseurl_,
 

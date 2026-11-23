@@ -1235,8 +1235,10 @@ void html_widget::redraw_boxes(const litehtml::position::vector& boxes)
 
     Gdk::Rectangle rect(0, 0, 0, 0);
     bool           is_first = true;
-    for(const auto& pos : boxes)
+    for(const auto& p : boxes)
     {
+        litehtml::position pos = p;
+        pos.round();
         if(is_first)
         {
             rect     = Gdk::Rectangle(pos.x, pos.y, pos.width, pos.height);
