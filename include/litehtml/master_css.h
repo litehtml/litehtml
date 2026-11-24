@@ -447,6 +447,10 @@ input[type="reset"] {
 	cursor: pointer;
 }
 
+button {
+	text-align: center;
+}
+
 input[type="image"] {
 	display: inline-block;
 	width: auto;

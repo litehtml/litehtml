@@ -443,6 +443,60 @@ int main()
                     "removing the focus should notify the container with a null element");
     }
 
+    // A button with child elements lays its content out instead of flattening it into a label.
+    {
+        controls_container container;
+        const auto         doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px;line-height:20px}</style>"
+            "<button id=b><img src=dot.png alt=Send><span id=s>Send <strong>now</strong></span></button>"
+            "<button id=multi>a<br>b</button>"
+            "<button id=single>a b</button>",
+            &container);
+        doc->render(800);
+
+        const auto b      = doc->root()->select_one("#b");
+        const auto s      = doc->root()->select_one("#s");
+        const auto multi  = doc->root()->select_one("#multi");
+        const auto single = doc->root()->select_one("#single");
+
+        ok &= check(b && s && multi && single, "the button and its content should create elements");
+        ok &= check(b && !b->is_replaced() && multi && !multi->is_replaced(),
+                    "a button with child elements should not be replaced");
+        ok &= check(single && single->is_replaced(), "a text-only button should stay replaced");
+        ok &= check(s && s->parent() == b, "the span should stay inside the button");
+        ok &= check(multi && single && multi->get_placement().height > single->get_placement().height,
+                    "a line break inside a button should lay out two lines");
+    }
+
+    // Clicking the content of a submit button submits the form through the button.
+    {
+        controls_container container;
+        const auto         doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px;line-height:20px}</style>"
+            "<form id=f action='/go'>"
+            "<button id=b name=button value=value><span id=s>Go <strong>now</strong></span></button>"
+            "</form>",
+            &container);
+        doc->render(800);
+
+        const auto b   = doc->root()->select_one("#b");
+        const auto box = b ? b->get_placement() : position{};
+        const int  x   = static_cast<int>(box.x + box.width / 2);
+        const int  y   = static_cast<int>(box.y + box.height / 2);
+
+        container.clear();
+        doc->on_lbutton_down(x, y, x, y, container.redraw);
+        const auto over  = doc->get_over_element();
+        ok              &= check(over && over.get() != b.get() && over->is_ancestor(b),
+                                 "the button content should be hit instead of the button itself");
+        doc->on_lbutton_up(x, y, x, y, container.redraw);
+
+        ok &= check(container.submits.size() == 1 && field_value(container.submits.back(), "button") == "value",
+                    "clicking content inside a button should submit the form");
+        ok &= check(!container.focus_events.empty() && container.focus_events.back().el == b,
+                    "clicking content inside a button should focus the button");
+    }
+
     if(ok)
     {
         std::cout << "All controls tests passed\n";
