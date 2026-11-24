@@ -131,7 +131,8 @@ namespace litehtml
         auto font = css().get_font();
         auto fm   = css().get_font_metrics();
         auto tw   = font ? get_document()->container()->text_width(m_label.c_str(), font) : 0_px;
-        sz.width  = std::max(20_px, tw + 20_px);
+        // The label is the whole content: the paddings and the borders come from the CSS box.
+        sz.width  = tw;
         sz.height = fm.height + 4_px;
     }
 

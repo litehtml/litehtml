@@ -569,8 +569,10 @@ int main()
 
         const auto ta  = doc->root()->select_one("#ta");
         ok            &= check(doc->set_focus(ta, true, container.redraw), "the textarea should be focusable");
-        ok            &= check(ta->get_placement().height == 120_px, "author height must win over the rows attribute");
-        ok            &= check(ta->get_placement().width == 250_px, "author width must win over the cols attribute");
+        // The master stylesheet gives textareas box-sizing:border-box, padding:2px and border:1px,
+        // so the placement (the content box) is the border box minus 6px in both directions.
+        ok &= check(ta->get_placement().height == 114_px, "author height must win over the rows attribute");
+        ok &= check(ta->get_placement().width == 244_px, "author width must win over the cols attribute");
     }
 
     // Form submission order and implicit submitter.
@@ -777,6 +779,50 @@ int main()
         const auto* focused_draw  = find_text_draw(container, "Default");
         ok                       &= check(focused_draw && focused_draw->color == web_color(1, 2, 3),
                                           "input:focus::placeholder should override the UA colour");
+    }
+
+    // Replaced controls are sized by their CSS box: border-box sizes, min/max bounds and no
+    // aspect-ratio coupling between width and height.
+    {
+        controls_container container;
+        const auto         doc =
+            document::createFromString("<style>body{margin:0;font-size:16px}"
+                                       "input,button{display:block;margin:0;padding:5px 8px;border:1px solid #000}"
+                                       "input,button{box-sizing:border-box}"
+                                       "#box{width:300px}"
+                                       "#in{width:100%;height:32px}"
+                                       "#minh{min-height:40px;width:100px}"
+                                       "#minh_fixed{min-height:40px;width:100px;height:20px}"
+                                       "#maxw{width:200px;max-width:100px;height:20px}"
+                                       "#no_ratio{width:640px;height:auto}"
+                                       "</style>"
+                                       "<div id=box><input id=in value=x></div>"
+                                       "<button id=minh>Min</button>"
+                                       "<button id=minh_fixed>Min</button>"
+                                       "<input id=maxw value=m>"
+                                       "<input id=no_ratio value=r>"
+                                       "<button id=label>Submit</button>",
+                                       &container);
+        doc->render(800);
+
+        const auto in         = doc->root()->select_one("#in");
+        const auto minh       = doc->root()->select_one("#minh");
+        const auto minh_fixed = doc->root()->select_one("#minh_fixed");
+        const auto maxw       = doc->root()->select_one("#maxw");
+        const auto no_ratio   = doc->root()->select_one("#no_ratio");
+        const auto label      = doc->root()->select_one("#label");
+
+        ok &= check(in && minh && minh_fixed && maxw && no_ratio && label, "sizing controls should exist");
+        // 300px wide container, box-sizing:border-box, 8px paddings and 1px borders on each side.
+        ok &= check(in->get_placement().width == 282_px, "a border-box input must not add its padding to the width");
+        ok &= check(in->get_placement().height == 20_px, "a border-box input must not add its padding to the height");
+        ok &= check(minh->get_placement().height == 28_px, "min-height must apply to a control with an auto height");
+        ok &= check(minh_fixed->get_placement().height == 28_px, "min-height must win over a smaller height");
+        ok &= check(maxw->get_placement().width == 82_px, "max-width must clamp a definite width");
+        ok &= check(no_ratio->get_placement().height == 16_px,
+                    "the width of a control must not scale its intrinsic height");
+        ok &= check(label->get_placement().width == 48_px,
+                    "a button content width must be the label width (6 chars * 8px, no extra padding)");
     }
 
     if(ok)

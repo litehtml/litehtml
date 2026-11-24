@@ -537,13 +537,8 @@ namespace litehtml
             {
                 const auto font = css().get_font();
                 const auto text = label();
-                if(font && !text.empty())
-                {
-                    sz.width = get_document()->container()->text_width(text.c_str(), font) + 20_px;
-                } else
-                {
-                    sz.width = 20_px;
-                }
+                // The label is the whole content: the paddings and the borders come from the CSS box.
+                sz.width  = font ? get_document()->container()->text_width(text.c_str(), font) : 0_px;
                 sz.height = fm.height + 4_px;
             }
             break;

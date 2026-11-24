@@ -443,7 +443,6 @@ input[type="reset"] {
 	box-sizing: border-box;
 	width: auto;
 	height: auto;
-	min-width: 4em;
 	padding: 2px 10px;
 	border: 1px solid #767676;
 	border-radius: 2px;
@@ -483,7 +482,6 @@ textarea {
 select {
 	appearance: menulist;
 	box-sizing: border-box;
-	min-width: 8em;
 	height: 1.5em;
 	padding: 0 2px;
 	border: 1px solid #767676;

@@ -137,110 +137,83 @@ litehtml::pixel_t litehtml::render_item_image::_render(pixel_t x, pixel_t y,
     const bool height_is_auto = src_el()->css().get_height().is_predefined() ||
                                 self_size.height.type == containing_block_context::cbc_value_type_auto;
 
+    // The CSS sizes are box sizes: for a border-box element the paddings and the borders have to be
+    // removed from them to get the content size stored in m_pos.
+    const pixel_t bs_width  = box_sizing_width();
+    const pixel_t bs_height = box_sizing_height();
+    // The intrinsic aspect ratio of a form control does not couple its width and height: a wider
+    // search box is not a taller one. Images keep the ratio.
+    const bool  keep_ratio  = src_el()->get_control_type() == control_type::none;
+    const auto& height_base = containing_block_size.height_for_percentages(doc->mode());
+    const auto  px_length   = [&](const css_length& len, pixel_t base) {
+        return doc->to_pixels(len, css().get_font_metrics(), base);
+    };
+    const auto clamp_width = [&](pixel_t value) {
+        if(!max_width.is_predefined())
+        {
+            value = std::min(value, std::max(0_px, px_length(max_width, parent_width) - bs_width));
+        }
+        if(!min_width.is_predefined())
+        {
+            value = std::max(value, std::max(0_px, px_length(min_width, parent_width) - bs_width));
+        }
+        return value;
+    };
+    const auto clamp_height = [&](pixel_t value) {
+        if(!max_height.is_predefined())
+        {
+            value =
+                std::min(value, std::max(0_px, calc_max_height(sz.height, containing_block_size.height) - bs_height));
+        }
+        if(!min_height.is_predefined())
+        {
+            value = std::max(value, std::max(0_px, px_length(min_height, height_base.value) - bs_height));
+        }
+        return value;
+    };
+
     if(height_is_auto && src_el()->css().get_width().is_predefined())
     {
-        m_pos.height = sz.height;
-        m_pos.width  = sz.width;
+        m_pos.height = clamp_height(sz.height);
+        m_pos.width  = clamp_width(sz.width);
 
-        // check for max-width
-        if(!src_el()->css().get_max_width().is_predefined())
+        if(keep_ratio)
         {
-            pixel_t max_width = doc->to_pixels(css().get_max_width(), css().get_font_metrics(), parent_width);
-            if(m_pos.width > max_width)
+            if(m_pos.width != sz.width && sz.width != 0_px)
             {
-                m_pos.width = max_width;
+                m_pos.height = clamp_height(m_pos.width * sz.height / sz.width);
             }
-            if(sz.width != 0_px)
+            if(m_pos.height != sz.height && sz.height != 0_px)
             {
-                m_pos.height = m_pos.width * sz.height / sz.width;
-            } else
-            {
-                m_pos.height = sz.height;
-            }
-        }
-
-        // check for max-height
-        if(!src_el()->css().get_max_height().is_predefined())
-        {
-            pixel_t max_height = calc_max_height(sz.height, containing_block_size.height);
-            if(m_pos.height > max_height)
-            {
-                m_pos.height = max_height;
-            }
-            if(sz.height != 0_px)
-            {
-                m_pos.width = m_pos.height * sz.width / sz.height;
-            } else
-            {
-                m_pos.width = sz.width;
+                m_pos.width = clamp_width(m_pos.height * sz.width / sz.height);
             }
         }
     } else if(!height_is_auto && src_el()->css().get_width().is_predefined())
     {
-        m_pos.height = self_size.height;
+        m_pos.height = clamp_height(self_size.height.value - bs_height);
 
-        // check for max-height
-        if(!src_el()->css().get_max_height().is_predefined())
+        if(keep_ratio && sz.height != 0_px)
         {
-            pixel_t max_height = calc_max_height(sz.height, containing_block_size.height);
-            if(m_pos.height > max_height)
-            {
-                m_pos.height = max_height;
-            }
-        }
-
-        if(sz.height != 0_px)
-        {
-            m_pos.width = m_pos.height * sz.width / sz.height;
+            m_pos.width = clamp_width(m_pos.height * sz.width / sz.height);
         } else
         {
-            m_pos.width = sz.width;
+            m_pos.width = clamp_width(sz.width);
         }
     } else if(height_is_auto && !src_el()->css().get_width().is_predefined())
     {
-        m_pos.width = src_el()->css().get_width().calc_percent(parent_width);
+        m_pos.width = clamp_width(src_el()->css().get_width().calc_percent(parent_width) - bs_width);
 
-        // check for max-width
-        if(!src_el()->css().get_max_width().is_predefined())
+        if(keep_ratio && sz.width != 0_px)
         {
-            pixel_t max_width = doc->to_pixels(css().get_max_width(), css().get_font_metrics(), parent_width);
-            if(m_pos.width > max_width)
-            {
-                m_pos.width = max_width;
-            }
-        }
-
-        if(sz.width != 0_px)
-        {
-            m_pos.height = m_pos.width * sz.height / sz.width;
+            m_pos.height = clamp_height(m_pos.width * sz.height / sz.width);
         } else
         {
-            m_pos.height = sz.height;
+            m_pos.height = clamp_height(sz.height);
         }
     } else
     {
-        m_pos.width  = src_el()->css().get_width().calc_percent(parent_width);
-        m_pos.height = self_size.height;
-
-        // check for max-height
-        if(!src_el()->css().get_max_height().is_predefined())
-        {
-            pixel_t max_height = calc_max_height(sz.height, containing_block_size.height);
-            if(m_pos.height > max_height)
-            {
-                m_pos.height = max_height;
-            }
-        }
-
-        // check for max-height
-        if(!src_el()->css().get_max_width().is_predefined())
-        {
-            pixel_t max_width = doc->to_pixels(css().get_max_width(), css().get_font_metrics(), parent_width);
-            if(m_pos.width > max_width)
-            {
-                m_pos.width = max_width;
-            }
-        }
+        m_pos.width  = clamp_width(src_el()->css().get_width().calc_percent(parent_width) - bs_width);
+        m_pos.height = clamp_height(self_size.height.value - bs_height);
     }
 
     m_pos.x += content_offset_left();
@@ -292,6 +265,35 @@ void litehtml::render_item_image::calc_intrinsic_size()
             intrinsic_height = std::max(intrinsic_height, *minimum);
         }
         intrinsic_width = intrinsic_height * sz.width / sz.height;
+    }
+
+    // The intrinsic size is a content size, while the min/max sizes are box sizes: for a border-box
+    // element the paddings and the borders have to be removed from them. The generic clamp in
+    // render_item::update_intrinsic_size() skips inline elements, so it is done here as well.
+    const auto doc   = src_el()->get_document();
+    const auto fm    = css().get_font_metrics();
+    const auto bound = [&](const css_length& value, pixel_t box) -> std::optional<pixel_t> {
+        if(value.is_predefined() || value.has_percentage() || value.is_intrinsic_sizing())
+        {
+            return std::nullopt;
+        }
+        return std::max(0_px, doc->to_pixels(value, fm, 0_px) - box);
+    };
+    if(const auto maximum = bound(css().get_max_width(), box_sizing_width()))
+    {
+        intrinsic_width = std::min(intrinsic_width, *maximum);
+    }
+    if(const auto minimum = bound(css().get_min_width(), box_sizing_width()))
+    {
+        intrinsic_width = std::max(intrinsic_width, *minimum);
+    }
+    if(const auto maximum = bound(css().get_max_height(), box_sizing_height()))
+    {
+        sz.height = std::min(sz.height, *maximum);
+    }
+    if(const auto minimum = bound(css().get_min_height(), box_sizing_height()))
+    {
+        sz.height = std::max(sz.height, *minimum);
     }
 
     m_intrinsic_min_size.width = m_intrinsic_max_size.width = intrinsic_width;
