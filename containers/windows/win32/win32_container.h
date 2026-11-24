@@ -56,6 +56,9 @@ class win32_container : public litehtml::document_container
     {
     }
 
+    void draw_combobox_marker(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color& color) override;
+    void draw_checkbox_marker(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color& color) override;
+
     void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
     void del_clip() override;
     litehtml::element::ptr create_element(const char* tag_name, const std::string& attributes,

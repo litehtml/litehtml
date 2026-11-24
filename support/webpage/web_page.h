@@ -5,7 +5,9 @@
 #include <memory>
 #include <optional>
 #include <unistd.h>
+#include <chrono>
 #include <sstream>
+#include <string>
 #include <vector>
 #include "container_cairo_pango.h"
 #include "html_host.h"
@@ -28,6 +30,8 @@ namespace litebrowser
             down,
             home,
             end,
+            page_up,
+            page_down,
             enter,
             space,
             escape,
@@ -136,6 +140,12 @@ namespace litebrowser
         litehtml::text_control_data        m_text_data;
         bool                               m_has_text_data = false;
         std::optional<litehtml::form_data> m_pending_submit;
+
+        // Listbox select keyboard state.
+        int                                   m_select_anchor      = -1;
+        int                                   m_select_last_active = -1;
+        std::string                           m_select_typeahead;
+        std::chrono::steady_clock::time_point m_select_typeahead_at{};
 
       public:
         explicit web_page(html_host_interface* html_host, std::shared_ptr<browser_notify_interface> notify,
@@ -307,6 +317,8 @@ namespace litebrowser
                            const std::vector<litehtml::form_field>* post_data);
         void process_pending_submit();
         void apply_select(const litehtml::select_control_data& data);
+        bool handle_listbox_key(const key_event& event, key_event_result& result,
+                                const std::function<void(const litehtml::position&)>& redraw);
     };
 } // namespace litebrowser
 

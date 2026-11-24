@@ -115,6 +115,13 @@ its [window integration](https://github.com/litehtml/litebrowser-linux/blob/mast
   Space toggles a focused checkbox/radio; Enter/Space opens a select popup.
   Ctrl+A/C/X/V provide select-all and clipboard operations. The widget blinks
   the caret while a text control is focused.
+- A focused listbox select (`multiple` or `size > 1`) uses Up/Down to move the
+  selection, Home/End for the first/last option, and Page Up/Page Down by a
+  page (`size - 1` rows). Shift extends a range in a multiple listbox, Ctrl
+  moves the active option without changing the selection, and Space or
+  Ctrl+Space toggles the active option. Letter keys select by prefix
+  (type-ahead). The active option is kept scrolled into view and is outlined
+  when it is not selected.
 - Form submission is handled by the widget. GET forms append the encoded
   fields to the action URL. POST forms use the page request pool. Navigation
   history stores the resulting URL only, so Back/Reload of a POST result is a

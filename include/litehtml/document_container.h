@@ -58,6 +58,13 @@ namespace litehtml
         virtual void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders,
                                   const litehtml::position& draw_pos, bool root)                                    = 0;
 
+        // Draw the dropdown marker of a one-line select (a down-pointing chevron) inside pos.
+        virtual void draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                                          const litehtml::web_color& color) = 0;
+        // Draw the check mark of a checked checkbox inside pos.
+        virtual void draw_checkbox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                                          const litehtml::web_color& color) = 0;
+
         virtual void set_caption(const char* caption)                                                       = 0;
         virtual void set_base_url(const char* base_url)                                                     = 0;
         virtual void link(const std::shared_ptr<litehtml::document>& doc, const litehtml::element::ptr& el) = 0;
@@ -112,8 +119,10 @@ namespace litehtml
         // Called when a form is submitted.
         virtual void on_submit(const litehtml::form_data& /*data*/) {}
 
-        // Requests the container to show the option list of a select. Returns true when the popup
-        // was shown; the container applies the chosen item with document::update_focused.
+        // Requests the container to show the option list of a one-line select (dropdown). Listbox selects
+        // (multiple or size > 1) are rendered inline and select their rows directly, so they never call this.
+        // Returns true when the popup was shown; the container applies the chosen item with
+        // document::update_focused.
         virtual bool show_select_popup(const litehtml::element::ptr& /*el*/, const char* /*element_id*/,
                                        const litehtml::select_control_data& /*data*/)
         {

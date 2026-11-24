@@ -52,6 +52,10 @@ class container_cairo : public litehtml::document_container
     void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos,
                       bool root) override;
     void draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) override;
+    void draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                              const litehtml::web_color& color) override;
+    void draw_checkbox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                              const litehtml::web_color& color) override;
     std::shared_ptr<litehtml::element> create_element(const char* tag_name, const litehtml::string_map& attributes,
                                                       const std::shared_ptr<litehtml::document>& doc) override;
     void                               get_media_features(litehtml::media_features& media) const override;

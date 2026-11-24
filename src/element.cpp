@@ -676,6 +676,12 @@ namespace litehtml
     bool element::on_mouse_over() LITEHTML_RETURN_FUNC(false);
     bool element::on_mouse_leave() LITEHTML_RETURN_FUNC(false);
     bool element::on_lbutton_down() LITEHTML_RETURN_FUNC(false);
+    bool element::on_lbutton_down_at(pixel_t /*x*/, pixel_t /*y*/)
+    {
+        return on_lbutton_down();
+    }
+    bool element::can_scroll_content(pixel_t /*dy*/) const LITEHTML_RETURN_FUNC(false);
+    pixel_t element::scroll_content(pixel_t /*dy*/) LITEHTML_RETURN_FUNC(0_px);
     bool element::on_lbutton_up(const bool /*is_click*/) LITEHTML_RETURN_FUNC(false);
     bool element::set_pseudo_class(string_id /*cls*/, bool /*add*/) LITEHTML_RETURN_FUNC(false);
     bool element::set_class(const char* /*pclass*/, bool /*add*/) LITEHTML_RETURN_FUNC(false);

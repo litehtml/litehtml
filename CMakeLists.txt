@@ -15,9 +15,13 @@ option(LITEHTML_BUILD_CONTAINER_PANGO "build litehtml_container_pango library (r
 option(LITEHTML_BUILD_RENDER2PNG "build litehtml_render2png library (requires gtk4, gdk-pixbuf-2.0, fontconfig)" OFF)
 option(LITEHTML_BUILD_DRAW_BUFFER "build litehtml_draw_buffer library (requires cairo)" OFF)
 option(LITEHTML_BUILD_WEBPAGE "build litehtml_webpage library (requires libcurl)" OFF)
+option(LITEHTML_BUILD_WEBPAGE_TESTS "build webpage keyboard tests (requires libcurl)" OFF)
 option(LITEHTML_BUILD_GTKMM4 "build litehtml_gtkmm4 library (requires gtkmm-4.0)" OFF)
 
 # Enable libraries required by the selected ones
+if(LITEHTML_BUILD_WEBPAGE_TESTS)
+	set(LITEHTML_BUILD_WEBPAGE ON)
+endif()
 if(LITEHTML_BUILD_GTKMM4)
 	set(LITEHTML_BUILD_WEBPAGE ON)
 	set(LITEHTML_BUILD_DRAW_BUFFER ON)
@@ -328,6 +332,14 @@ if(LITEHTML_BUILD_CONTROLS_TESTS)
 	target_include_directories(litehtml-controls-tests PRIVATE tests)
 	target_link_libraries(litehtml-controls-tests PRIVATE litehtml)
 	add_test(NAME litehtml-controls-tests COMMAND litehtml-controls-tests)
+endif()
+
+if(LITEHTML_BUILD_WEBPAGE_TESTS)
+	enable_testing()
+	add_executable(litehtml-webpage-tests tests/web_page_keyboard_test.cpp)
+	target_include_directories(litehtml-webpage-tests PRIVATE tests)
+	target_link_libraries(litehtml-webpage-tests PRIVATE litehtml_webpage)
+	add_test(NAME litehtml-webpage-tests COMMAND litehtml-webpage-tests)
 endif()
 
 # install and export

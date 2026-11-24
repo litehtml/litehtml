@@ -120,6 +120,8 @@ Below is the list of member functions you have to implement:
   - [on_change](#on_change)
   - [on_submit](#on_submit)
   - [show_select_popup](#show_select_popup)
+  - [draw_combobox_marker](#draw_combobox_marker)
+  - [draw_checkbox_marker](#draw_checkbox_marker)
 
 
 ### create_font
@@ -551,8 +553,10 @@ replaced control rendering, where the container draws the centered label passed 
 [draw_text](#draw_text). Interactive descendants are not allowed by the HTML specification, but a
 button tree that contains them is still laid out rather than rejected.
 
-The functions below have default implementations, so existing containers keep working. A container
-that supports form controls should implement them.
+The callbacks below have default implementations, so existing containers keep working. A container
+that supports form controls should implement them. The control markers are drawn by the container
+through [draw_combobox_marker](#draw_combobox_marker) and [draw_checkbox_marker](#draw_checkbox_marker),
+which are required.
 
 ```cpp
 struct text_control_data
@@ -635,9 +639,31 @@ of all successful controls. The container resolves relative actions and performs
 virtual bool show_select_popup(const litehtml::element::ptr& el, const char* element_id,
                                const litehtml::select_control_data& data);
 ```
-Called when the user activates a select. Return `true` when a popup was shown. The container
-applies the chosen item by calling `document::update_focused` with the updated
+Called when the user activates a one-line select (dropdown). Return `true` when a popup was shown. The
+container applies the chosen item by calling `document::update_focused` with the updated
 `select_control_data` (the `selected` flags changed).
+
+Listbox selects (`multiple` or `size > 1`) are drawn and selected inline by litehtml; they do not call this
+function.
+
+### draw_combobox_marker
+```cpp
+virtual void draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                                  const litehtml::web_color& color);
+```
+Draw the dropdown marker of a one-line select (a down-pointing chevron) inside `pos` using `color`.
+litehtml calls it after drawing the control background, borders and text. Draw the marker as a
+shape, not as a font glyph: the control font may not contain the arrow character. Keep the stroke
+inside `pos` (inset the path by half of the stroke width).
+
+### draw_checkbox_marker
+```cpp
+virtual void draw_checkbox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                                  const litehtml::web_color& color);
+```
+Draw the check mark of a checked checkbox inside `pos` using `color`. litehtml calls it after
+drawing the checkbox background and borders. As with the combobox marker, draw a shape instead of a
+font glyph and keep the stroke inside `pos`.
 
 ### Updating a control from the container
 

@@ -75,6 +75,10 @@ namespace litehtml
 
         pixel_t v_scroll(pixel_t dy) const;
         pixel_t h_scroll(pixel_t dx) const;
+        // Replaced controls that keep their own scroll position (listbox selects) report and apply scrolling
+        // through these hooks. dy is the requested scroll delta; scroll_content returns the consumed delta.
+        virtual bool    can_scroll_content(pixel_t dy) const;
+        virtual pixel_t scroll_content(pixel_t dy);
 
         bool         is_root() const;
         element::ptr parent() const;
@@ -144,6 +148,9 @@ namespace litehtml
         virtual bool on_mouse_over();
         virtual bool on_mouse_leave();
         virtual bool on_lbutton_down();
+        // Pointer position aware variant, in document coordinates. The default implementation ignores the
+        // position and calls on_lbutton_down().
+        virtual bool on_lbutton_down_at(pixel_t x, pixel_t y);
         virtual bool on_lbutton_up(bool is_click = true);
         virtual void on_click();
         virtual bool set_pseudo_class(string_id cls, bool add);

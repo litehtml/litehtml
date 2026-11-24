@@ -891,7 +891,7 @@ namespace litehtml
 
         if(m_over_element)
         {
-            if(m_over_element->on_lbutton_down())
+            if(m_over_element->on_lbutton_down_at(x, y))
             {
                 state_was_changed = true;
             }

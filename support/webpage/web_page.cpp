@@ -1,8 +1,10 @@
 #include <litehtml/url_path.h>
 #include <litehtml/url.h>
+#include <litehtml/el_select.h>
 #include "control_text_layout.h"
 #include "web_page.h"
 #include <algorithm>
+#include <cctype>
 #include <cmath>
 
 using litehtml::operator""_px;
@@ -81,6 +83,141 @@ namespace
             }
         }
         return best;
+    }
+
+    struct listbox_item
+    {
+        std::string label;
+        int         index    = -1;
+        bool        group    = false;
+        bool        disabled = false;
+    };
+
+    std::string lower_ascii(std::string text)
+    {
+        std::transform(text.begin(), text.end(), text.begin(),
+                       [](unsigned char ch) { return static_cast<char>(std::tolower(ch)); });
+        return text;
+    }
+
+    std::vector<listbox_item> listbox_items(const litehtml::select_control_data& data)
+    {
+        std::vector<listbox_item> items;
+        for(const auto& group : data.groups)
+        {
+            if(!group.label.empty())
+            {
+                listbox_item item;
+                item.label    = group.label;
+                item.group    = true;
+                item.disabled = group.disabled;
+                items.push_back(std::move(item));
+            }
+            for(const auto& option : group.options)
+            {
+                listbox_item item;
+                item.label    = option.label;
+                item.index    = option.index;
+                item.disabled = option.disabled || group.disabled;
+                items.push_back(std::move(item));
+            }
+        }
+        return items;
+    }
+
+    int first_enabled_from(const std::vector<listbox_item>& items, int start, int direction)
+    {
+        if(items.empty())
+        {
+            return -1;
+        }
+        if(direction >= 0)
+        {
+            for(int i = std::max(0, start); i < static_cast<int>(items.size()); ++i)
+            {
+                if(!items[static_cast<size_t>(i)].group && !items[static_cast<size_t>(i)].disabled)
+                {
+                    return items[static_cast<size_t>(i)].index;
+                }
+            }
+        } else
+        {
+            for(int i = std::min(start, static_cast<int>(items.size()) - 1); i >= 0; --i)
+            {
+                if(!items[static_cast<size_t>(i)].group && !items[static_cast<size_t>(i)].disabled)
+                {
+                    return items[static_cast<size_t>(i)].index;
+                }
+            }
+        }
+        return -1;
+    }
+
+    int option_position(const std::vector<listbox_item>& items, int option_index)
+    {
+        for(size_t i = 0; i < items.size(); ++i)
+        {
+            if(items[i].index == option_index && !items[i].group)
+            {
+                return static_cast<int>(i);
+            }
+        }
+        return -1;
+    }
+
+    int first_selected_option(const litehtml::select_control_data& data)
+    {
+        for(const auto& group : data.groups)
+        {
+            for(const auto& option : group.options)
+            {
+                if(option.selected)
+                {
+                    return option.index;
+                }
+            }
+        }
+        return -1;
+    }
+
+    void select_only(litehtml::select_control_data& data, int option_index)
+    {
+        for(auto& group : data.groups)
+        {
+            for(auto& option : group.options)
+            {
+                option.selected = option.index == option_index && !option.disabled && !group.disabled;
+            }
+        }
+    }
+
+    void toggle_option(litehtml::select_control_data& data, int option_index)
+    {
+        for(auto& group : data.groups)
+        {
+            for(auto& option : group.options)
+            {
+                if(option.index == option_index && !option.disabled && !group.disabled)
+                {
+                    option.selected = !option.selected;
+                    return;
+                }
+            }
+        }
+    }
+
+    void select_range(litehtml::select_control_data& data, int anchor, int active)
+    {
+        const int first = std::min(anchor, active);
+        const int last  = std::max(anchor, active);
+        for(auto& group : data.groups)
+        {
+            for(auto& option : group.options)
+            {
+                const bool in_range = option.index >= first && option.index <= last;
+                option.selected     = in_range && !option.disabled && !group.disabled;
+            }
+        }
     }
 } // namespace
 
@@ -548,6 +685,10 @@ litebrowser::key_event_result litebrowser::web_page::on_key_event(const key_even
                 data.selection_start = data.selection_end = data.caret;
                 moved                                     = true;
                 break;
+            case key_event::kind::page_up:
+            case key_event::kind::page_down:
+                // Text controls keep the previous page-scrolling behavior.
+                break;
             }
 
             if(text_edited || moved)
@@ -583,8 +724,9 @@ litebrowser::key_event_result litebrowser::web_page::on_key_event(const key_even
                 }
                 break;
             case litehtml::control_type::select:
-                if(event.kind == key_event::kind::space || event.kind == key_event::kind::enter ||
-                   event.kind == key_event::kind::down)
+                if(!handle_listbox_key(event, result, redraw) &&
+                   (event.kind == key_event::kind::space || event.kind == key_event::kind::enter ||
+                    event.kind == key_event::kind::down))
                 {
                     m_focused_control->on_click();
                     result.handled = true;
@@ -612,6 +754,239 @@ litebrowser::key_event_result litebrowser::web_page::on_key_event(const key_even
     }
     process_pending_submit();
     return result;
+}
+
+bool litebrowser::web_page::handle_listbox_key(const key_event& event, key_event_result& result,
+                                               const std::function<void(const litehtml::position&)>& redraw)
+{
+    if(!m_html || !m_focused_control)
+    {
+        return false;
+    }
+
+    const auto  current_control = m_focused_control->get_control_data();
+    const auto* select          = std::get_if<litehtml::select_control_data>(&current_control);
+    if(!select || (!select->multiple && select->size <= 1))
+    {
+        return false;
+    }
+
+    auto*     widget      = dynamic_cast<litehtml::el_select*>(m_focused_control.get());
+    const int core_active = widget ? widget->active_option() : -1;
+    if(core_active != m_select_last_active)
+    {
+        // The active option was changed outside the keyboard handler, for example by a mouse click.
+        m_select_anchor      = core_active;
+        m_select_last_active = core_active;
+        m_select_typeahead.clear();
+    }
+
+    int active = core_active;
+    if(active < 0)
+    {
+        active = first_selected_option(*select);
+    }
+
+    const auto items = listbox_items(*select);
+    if(items.empty())
+    {
+        result.handled = true;
+        return true;
+    }
+
+    const auto step_enabled = [&items](int current, int direction) {
+        if(current < 0)
+        {
+            return first_enabled_from(items, direction > 0 ? 0 : static_cast<int>(items.size()) - 1, direction);
+        }
+        const int pos = option_position(items, current);
+        if(pos < 0)
+        {
+            return first_enabled_from(items, direction > 0 ? 0 : static_cast<int>(items.size()) - 1, direction);
+        }
+        const int found = first_enabled_from(items, pos + direction, direction);
+        return found >= 0 ? found : current;
+    };
+
+    const auto page_enabled = [&items, select](int current, int direction) {
+        const int step = std::max(1, select->size - 1);
+        int       pos  = 0;
+        if(current < 0)
+        {
+            pos = direction > 0 ? 0 : static_cast<int>(items.size()) - 1;
+        } else
+        {
+            const int current_pos = option_position(items, current);
+            pos                   = (current_pos < 0 ? 0 : current_pos) + direction * step;
+            pos                   = std::clamp(pos, 0, static_cast<int>(items.size()) - 1);
+        }
+        int found = first_enabled_from(items, pos, direction);
+        if(found < 0)
+        {
+            found = first_enabled_from(items, direction > 0 ? static_cast<int>(items.size()) - 1 : 0, -direction);
+        }
+        return found;
+    };
+
+    litehtml::select_control_data updated    = *select;
+    int                           new_active = active;
+
+    switch(event.kind)
+    {
+    case key_event::kind::up:
+    case key_event::kind::down:
+    case key_event::kind::home:
+    case key_event::kind::end:
+    case key_event::kind::page_up:
+    case key_event::kind::page_down:
+        {
+            m_select_typeahead.clear();
+            switch(event.kind)
+            {
+            case key_event::kind::up:
+                new_active = step_enabled(active, -1);
+                break;
+            case key_event::kind::down:
+                new_active = step_enabled(active, 1);
+                break;
+            case key_event::kind::home:
+                new_active = first_enabled_from(items, 0, 1);
+                break;
+            case key_event::kind::end:
+                new_active = first_enabled_from(items, static_cast<int>(items.size()) - 1, -1);
+                break;
+            case key_event::kind::page_up:
+                new_active = page_enabled(active, -1);
+                break;
+            case key_event::kind::page_down:
+                new_active = page_enabled(active, 1);
+                break;
+            default:
+                break;
+            }
+
+            result.handled = true;
+            if(new_active < 0)
+            {
+                return true;
+            }
+
+            const bool ctrl_only = event.ctrl && !event.shift && select->multiple;
+            const bool extending = event.shift && select->multiple;
+            if(ctrl_only)
+            {
+                // Move the keyboard cursor without changing the selection.
+            } else if(extending)
+            {
+                int anchor = m_select_anchor;
+                if(anchor < 0)
+                {
+                    anchor = active >= 0 ? active : new_active;
+                }
+                select_range(updated, anchor, new_active);
+                m_select_anchor = anchor;
+            } else
+            {
+                select_only(updated, new_active);
+                m_select_anchor = new_active;
+            }
+            break;
+        }
+
+    case key_event::kind::space:
+        m_select_typeahead.clear();
+        result.handled = true;
+        if(active < 0)
+        {
+            return true;
+        }
+        if(select->multiple)
+        {
+            toggle_option(updated, active);
+        } else
+        {
+            select_only(updated, active);
+        }
+        m_select_anchor = active;
+        break;
+
+    case key_event::kind::enter:
+    case key_event::kind::escape:
+        m_select_typeahead.clear();
+        result.handled = true;
+        return true;
+
+    case key_event::kind::character:
+        {
+            if(event.text.empty())
+            {
+                return false;
+            }
+
+            const auto now = std::chrono::steady_clock::now();
+            if(m_select_typeahead.empty() || now - m_select_typeahead_at > std::chrono::seconds(1))
+            {
+                m_select_typeahead = event.text;
+            } else
+            {
+                m_select_typeahead += event.text;
+            }
+            m_select_typeahead_at = now;
+
+            const auto find_match = [&items](const std::string& prefix) {
+                const auto lowered = lower_ascii(prefix);
+                for(const auto& item : items)
+                {
+                    if(item.group || item.disabled)
+                    {
+                        continue;
+                    }
+                    const auto label = lower_ascii(item.label);
+                    if(label.size() >= lowered.size() && label.compare(0, lowered.size(), lowered) == 0)
+                    {
+                        return item.index;
+                    }
+                }
+                return -1;
+            };
+
+            int match = find_match(m_select_typeahead);
+            if(match < 0 && m_select_typeahead.size() > event.text.size())
+            {
+                m_select_typeahead = event.text;
+                match              = find_match(m_select_typeahead);
+            }
+
+            result.handled = true;
+            if(match < 0)
+            {
+                return true;
+            }
+
+            select_only(updated, match);
+            m_select_anchor      = match;
+            m_select_last_active = match;
+            if(widget)
+            {
+                widget->set_active_option(match);
+                widget->scroll_option_into_view(match);
+            }
+            m_html->update_focused(updated, redraw);
+            return true;
+        }
+
+    default:
+        return false;
+    }
+
+    if(widget)
+    {
+        widget->set_active_option(new_active);
+        widget->scroll_option_into_view(new_active);
+    }
+    m_select_last_active = new_active;
+    m_html->update_focused(updated, redraw);
+    return true;
 }
 
 void litebrowser::web_page::submit_focused_form()
@@ -708,6 +1083,9 @@ void litebrowser::web_page::on_page_downloaded(const std::shared_ptr<text_file>&
         m_text_data            = {};
         m_has_text_data        = false;
         m_pending_submit.reset();
+        m_select_anchor      = -1;
+        m_select_last_active = -1;
+        m_select_typeahead.clear();
     }
 
     if(m_html)
@@ -802,12 +1180,27 @@ void litebrowser::web_page::on_focus_change(const litehtml::element::ptr& el, co
     m_focused_control      = el;
     m_focused_control_type = type;
     m_has_text_data        = false;
+    m_select_anchor        = -1;
+    m_select_last_active   = -1;
+    m_select_typeahead.clear();
     if(el)
     {
         if(const auto* text = std::get_if<litehtml::text_control_data>(&data))
         {
             m_text_data     = *text;
             m_has_text_data = true;
+        } else if(const auto* select = std::get_if<litehtml::select_control_data>(&data))
+        {
+            if(select->multiple || select->size > 1)
+            {
+                const int active = first_selected_option(*select);
+                if(auto* widget = dynamic_cast<litehtml::el_select*>(el.get()))
+                {
+                    widget->set_active_option(active);
+                }
+                m_select_anchor      = active;
+                m_select_last_active = active;
+            }
         }
     } else
     {

@@ -47,6 +47,10 @@ class LiteHtmlView : public BView, public litehtml::document_container
     virtual void               draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders,
                                             const litehtml::position& draw_pos, bool root) override;
     virtual void               draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) override;
+    virtual void               draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                                                    const litehtml::web_color& color) override;
+    virtual void               draw_checkbox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                                                    const litehtml::web_color& color) override;
     virtual std::shared_ptr<litehtml::element> create_element(const char* tag_name, const std::string& attributes,
                                                               const std::shared_ptr<litehtml::document>& doc) override;
     virtual void                               get_media_features(litehtml::media_features& media) const override;

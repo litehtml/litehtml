@@ -37,6 +37,8 @@ class grid_test_container : public litehtml::document_container
         return "sans-serif";
     }
     void draw_list_marker(litehtml::uint_ptr, const litehtml::list_marker&) override {}
+    void draw_combobox_marker(litehtml::uint_ptr, const litehtml::position&, const litehtml::web_color&) override {}
+    void draw_checkbox_marker(litehtml::uint_ptr, const litehtml::position&, const litehtml::web_color&) override {}
     void load_image(const char*, const char*, bool) override {}
     void get_image_size(const char*, const char*, litehtml::size&) override {}
     void draw_image(litehtml::uint_ptr, const litehtml::background_layer&, const std::string&,

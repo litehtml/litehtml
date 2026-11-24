@@ -258,9 +258,21 @@ Text controls ask the container for the text state while drawing through
 [document_container::get_text_data](document_container.md#get_text_data). The control draws the
 text, selection and caret itself using the container drawing functions.
 
-A click on a select calls
-[document_container::show_select_popup](document_container.md#show_select_popup). The container
-shows the option list and applies the result with `document::update_focused`.
+The select dropdown marker and the checkbox tick are drawn by the container through
+[document_container::draw_combobox_marker](document_container.md#draw_combobox_marker) and
+[document_container::draw_checkbox_marker](document_container.md#draw_checkbox_marker), so they do
+not depend on the control font containing those glyphs.
+
+A single-line select is a dropdown: a click calls
+[document_container::show_select_popup](document_container.md#show_select_popup). The container shows the
+option list and applies the result with `document::update_focused`.
+
+A select with `multiple` or `size > 1` is a listbox. litehtml draws its option rows inline (including
+`<optgroup>` labels, disabled options and the selected rows), selects a row directly on click (in a multiple
+listbox a click toggles that row), and scrolls the rows with the mouse wheel when they do not fit. Listboxes
+never call `show_select_popup`. Listbox keyboard navigation (arrows, Home/End, Page Up/Page Down, Shift/Ctrl
+modifiers, Space toggling and type-ahead) is implemented by the container; see the
+[gtkmm4 widget](../support/gtkmm4/README.md) and [webpage](../support/webpage/README.md) guides.
 
 Submitting a form (submit button, image button or Enter) calls
 [document_container::on_submit](document_container.md#on_submit) with a `litehtml::form_data`
