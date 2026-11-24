@@ -443,6 +443,19 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
         return cur_width;
     }
 
+    // The percentage of a column width, as a number (1 for 1%). Zero for the other columns.
+    const auto percentage_coefficient = [&](const css_length& length) {
+        if(length.is_predefined() || !length.has_percentage())
+        {
+            return 0.0f;
+        }
+        if(!length.is_expression())
+        {
+            return length.val();
+        }
+        return *block_width > 0_px ? length.calc_percent(*block_width).value() / block_width->value() * 100 : 0.0f;
+    };
+
     if(cur_width < block_width)
     {
         if(cur_width - min_w + max_w <= block_width)
@@ -456,8 +469,37 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
                 }
                 cur_width += m_columns[col].width;
             }
-            if(cur_width == block_width || is_auto)
+            if(cur_width == block_width)
             {
+                return cur_width;
+            }
+            if(is_auto)
+            {
+                // A percentage column width is resolved against the table width, so a percentage column
+                // cannot be narrower than its content: widen the table until every percentage column fits,
+                // but not beyond the available width. An auto-width table stretches this way when a
+                // percentage column cannot hold its content at the shrink-to-fit width.
+                pixel_t required_width = 0_px;
+                for(const auto& column : m_columns)
+                {
+                    const float percent = percentage_coefficient(column.css_width);
+                    if(percent > 0.0f)
+                    {
+                        required_width = std::max(required_width, column.min_width * 100_px / percent);
+                    }
+                }
+                const pixel_t available_width = std::max(min_table_width, block_width.value());
+                const pixel_t target_width    = std::min(available_width, required_width);
+                if(target_width <= cur_width)
+                {
+                    return cur_width;
+                }
+                distribute_width(target_width - cur_width, 0, m_cols_count - 1);
+                cur_width = 0_px;
+                for(int col = 0; col < m_cols_count; col++)
+                {
+                    cur_width += m_columns[col].width;
+                }
                 return cur_width;
             }
         }
@@ -469,15 +511,8 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
         }
     } else
     {
-        pixel_t    fixed_width            = 0_px;
-        float      percent                = 0;
-        const auto percentage_coefficient = [&](const css_length& length) {
-            if(!length.is_expression())
-            {
-                return length.val();
-            }
-            return *block_width > 0_px ? length.calc_percent(*block_width).value() / block_width->value() * 100 : 0.0f;
-        };
+        pixel_t fixed_width = 0_px;
+        float   percent     = 0;
         for(int col = 0; col < m_cols_count; col++)
         {
             if(!m_columns[col].css_width.is_predefined() && m_columns[col].css_width.has_percentage())
