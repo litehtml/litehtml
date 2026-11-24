@@ -378,7 +378,7 @@ input {
 	height: 1.5em;
 	padding: 0 2px;
 	border: 1px solid #767676;
-	border-radius: 2px;
+	border-radius: 3px;
 	background-color: #fff;
 	color: #000;
 	cursor: text;
@@ -393,7 +393,7 @@ input[type="number"] {
 	height: 1.5em;
 	padding: 0 2px;
 	border: 1px solid #767676;
-	border-radius: 2px;
+	border-radius: 3px;
 	background-color: #fff;
 	color: #000;
 	cursor: text;
@@ -418,7 +418,7 @@ input[type="radio"] {
 
 input[type="checkbox"] {
 	appearance: checkbox;
-	border-radius: 2px;
+	border-radius: 3px;
 }
 
 input[type="radio"] {
@@ -443,12 +443,19 @@ input[type="reset"] {
 	box-sizing: border-box;
 	width: auto;
 	height: auto;
-	padding: 2px 10px;
+	padding: 0px 4px;
 	border: 1px solid #767676;
-	border-radius: 2px;
+	border-radius: 3px;
 	background-color: #e9e9e9;
 	color: #000;
-	cursor: pointer;
+	cursor: default;
+}
+
+button:hover,
+input[type="button"]:hover,
+input[type="submit"]:hover,
+input[type="reset"]:hover {
+	background-color: #D0D0D7;
 }
 
 button {
@@ -472,7 +479,7 @@ textarea {
 	height: 3.7em;
 	padding: 2px;
 	border: 1px solid #767676;
-	border-radius: 2px;
+	border-radius: 3px;
 	background-color: #fff;
 	color: #000;
 	vertical-align: top;
@@ -485,10 +492,10 @@ select {
 	height: 1.5em;
 	padding: 0 2px;
 	border: 1px solid #767676;
-	border-radius: 2px;
-	background-color: #fff;
+	border-radius: 3px;
+	background-color: #e9e9e9;
 	color: #000;
-	cursor: pointer;
+	cursor: default;
 }
 
 input:disabled,
