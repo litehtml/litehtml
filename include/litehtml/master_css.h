@@ -399,6 +399,11 @@ input[type="number"] {
 	cursor: text;
 }
 
+input::placeholder,
+textarea::placeholder {
+	color: darkgray;
+}
+
 input[type="checkbox"],
 input[type="radio"] {
 	box-sizing: border-box;

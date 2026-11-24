@@ -98,6 +98,10 @@ namespace litehtml
             m_initial_value = m_value;
             m_text.text     = m_value;
             m_text.caret    = m_text.text.size();
+            if(m_type != input_type::number)
+            {
+                m_placeholder = get_attr("placeholder", "");
+            }
             {
                 int size = 20;
                 if(const char* attr = get_attr("size"))
@@ -148,6 +152,11 @@ namespace litehtml
             return *m_checked;
         }
         return get_attr("checked") != nullptr;
+    }
+
+    bool el_input::is_placeholder_shown() const
+    {
+        return !m_placeholder.empty() && m_text.text.empty();
     }
 
     control_type el_input::get_control_type() const
@@ -274,13 +283,15 @@ namespace litehtml
             {
                 return false;
             }
-            const bool value_changed = text->text != m_text.text;
-            m_text                   = *text;
-            m_value                  = m_text.text;
+            const bool placeholder_shown = is_placeholder_shown();
+            const bool value_changed     = text->text != m_text.text;
+            m_text                       = *text;
+            m_value                      = m_text.text;
             if(value_changed)
             {
                 notify_change();
             }
+            return placeholder_shown != is_placeholder_shown();
         }
         return false;
     }
@@ -443,12 +454,42 @@ namespace litehtml
     void el_input::compute_styles(bool recursive)
     {
         html_tag::compute_styles(recursive);
+        compute_placeholder_style();
 
         if(m_type == input_type::image && !m_src.empty())
         {
             const bool redraw_on_ready = !css().get_width().is_predefined() && !css().get_height().is_predefined();
             get_document()->container()->load_image(m_src.c_str(), nullptr, redraw_on_ready);
         }
+    }
+
+    void el_input::refresh_styles()
+    {
+        m_placeholder_style.clear();
+        html_tag::refresh_styles();
+    }
+
+    void el_input::apply_placeholder_style(const style& style)
+    {
+        m_placeholder_style.combine(style);
+    }
+
+    void el_input::compute_placeholder_style()
+    {
+        if(m_placeholder.empty() || !is_text_control() || m_type == input_type::number)
+        {
+            m_placeholder_el.reset();
+            return;
+        }
+
+        auto placeholder = std::make_unique<html_tag>(get_document());
+        placeholder->parent(shared_from_this());
+        if(!m_placeholder_style.empty())
+        {
+            placeholder->add_style(m_placeholder_style);
+        }
+        placeholder->compute_styles(false);
+        m_placeholder_el = std::move(placeholder);
     }
 
     void el_input::get_content_size(size& sz, pixel_t /*max_width*/)
@@ -538,8 +579,21 @@ namespace litehtml
         auto font      = css().get_font();
         auto color     = css().get_color();
         auto line_h    = text_line_height(*this);
-        auto text      = m_type == input_type::password ? control_text::masked_text(data.text) : data.text;
-        auto caret     = data.caret;
+
+        const bool show_placeholder = data.text.empty() && !m_placeholder.empty();
+        if(show_placeholder && m_placeholder_el)
+        {
+            if(const auto placeholder_font = m_placeholder_el->css().get_font())
+            {
+                font = placeholder_font;
+            }
+            color = m_placeholder_el->css().get_color();
+        }
+
+        auto text  = show_placeholder
+                         ? m_placeholder
+                         : (m_type == input_type::password ? control_text::masked_text(data.text) : data.text);
+        auto caret = data.caret;
         if(m_type == input_type::password)
         {
             // Each masked codepoint takes three bytes.

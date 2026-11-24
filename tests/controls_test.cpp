@@ -46,12 +46,20 @@ namespace
             litehtml::position pos;
         };
 
+        struct text_event
+        {
+            std::string         text;
+            litehtml::web_color color;
+            litehtml::position  pos;
+        };
+
         litehtml::position::vector                 redraws;
         std::vector<focus_event>                   focus_events;
         std::vector<change_event>                  changes;
         std::vector<litehtml::form_data>           submits;
         std::vector<litehtml::select_control_data> popups;
         std::vector<border_event>                  border_draws;
+        std::vector<text_event>                    text_draws;
         litehtml::element::ptr                     override_element;
         litehtml::text_control_data                override_data;
         bool                                       override_active = false;
@@ -67,6 +75,7 @@ namespace
             changes.clear();
             submits.clear();
             popups.clear();
+            text_draws.clear();
         }
 
         void on_focus_change(const litehtml::element::ptr& el, const char* element_id, litehtml::control_type type,
@@ -106,6 +115,12 @@ namespace
         {
             border_draws.push_back({borders, pos});
         }
+
+        void draw_text(litehtml::uint_ptr /*hdc*/, const char* text, litehtml::uint_ptr /*font*/,
+                       litehtml::web_color color, const litehtml::position& pos) override
+        {
+            text_draws.push_back({text, color, pos});
+        }
     };
 
     bool matches(const litehtml::element::ptr& el, const char* selector)
@@ -128,6 +143,19 @@ namespace
     litehtml::text_control_data text_data(const litehtml::element::ptr& el)
     {
         return std::get<litehtml::text_control_data>(el->get_control_data());
+    }
+
+    const controls_container::text_event* find_text_draw(const controls_container& container, const std::string& text)
+    {
+        auto it = std::find_if(container.text_draws.begin(), container.text_draws.end(),
+                               [&](const auto& event) { return event.text == text; });
+        return it == container.text_draws.end() ? nullptr : &*it;
+    }
+
+    size_t count_text_draws(const controls_container& container, const std::string& text)
+    {
+        return static_cast<size_t>(std::count_if(container.text_draws.begin(), container.text_draws.end(),
+                                                 [&](const auto& event) { return event.text == text; }));
     }
 
     std::string field_value(const litehtml::form_data& data, const std::string& name)
@@ -660,6 +688,95 @@ int main()
                     "clicking content inside a button should submit the form");
         ok &= check(!container.focus_events.empty() && container.focus_events.back().el == b,
                     "clicking content inside a button should focus the button");
+    }
+
+    // Placeholder rendering, ::placeholder styles and :placeholder-shown.
+    {
+        controls_container container;
+        const auto         doc = document::createFromString("<style>body{margin:0;font-size:16px;line-height:20px}"
+                                                            "input::placeholder{color:rgb(0,128,0)}"
+                                                            "textarea::placeholder{color:rgb(0,0,255)}</style>"
+                                                            "<input id=t placeholder='Type here'>"
+                                                            "<input id=v placeholder='Type here' value='abc'>"
+                                                            "<input id=pw type=password placeholder='Secret'>"
+                                                            "<input id=num type=number placeholder='Number'>"
+                                                            "<input id=cb type=checkbox placeholder='Check'>"
+                                                            "<textarea id=ta placeholder='Notes'></textarea>",
+                                                            &container);
+        doc->render(800);
+
+        const auto t = doc->root()->select_one("#t");
+
+        container.clear();
+        doc->draw(0, 0, 0, nullptr);
+
+        const auto* placeholder  = find_text_draw(container, "Type here");
+        ok                      &= check(placeholder != nullptr, "an empty text input should draw its placeholder");
+        ok                      &= check(placeholder && placeholder->color == web_color(0, 128, 0),
+                                         "input::placeholder colour should be applied");
+        ok &= check(count_text_draws(container, "Type here") == 1, "only the empty input should draw the placeholder");
+        ok &= check(find_text_draw(container, "abc") != nullptr, "a filled input should draw its value");
+        ok &= check(find_text_draw(container, "Secret") != nullptr, "a password placeholder should not be masked");
+        ok &= check(find_text_draw(container, "Number") == nullptr, "a number input should not draw a placeholder");
+        ok &= check(find_text_draw(container, "Check") == nullptr, "a checkbox should not draw a placeholder");
+        const auto* notes  = find_text_draw(container, "Notes");
+        ok                &= check(notes != nullptr, "an empty textarea should draw its placeholder");
+        ok &= check(notes && notes->color == web_color(0, 0, 255), "textarea::placeholder colour should be applied");
+
+        ok &= check(matches(t, "input:placeholder-shown"),
+                    "an empty input with a placeholder should match :placeholder-shown");
+        ok &= check(!matches(doc->root()->select_one("#v"), "input:placeholder-shown"),
+                    "a filled input should not match :placeholder-shown");
+        ok &= check(matches(doc->root()->select_one("#ta"), "textarea:placeholder-shown"),
+                    "an empty textarea with a placeholder should match :placeholder-shown");
+
+        ok &= check(doc->set_focus(t, true, container.redraw), "the placeholder input should be focusable");
+        text_control_data text;
+        text.text   = "hello";
+        text.caret  = 5;
+        ok         &= check(static_cast<el_input*>(t.get())->update_focused(text),
+                            "hiding the placeholder should report a style change");
+        ok &= check(!matches(t, "input:placeholder-shown"), "a filled input should stop matching :placeholder-shown");
+        container.clear();
+        doc->draw(0, 0, 0, nullptr);
+        ok &= check(find_text_draw(container, "Type here") == nullptr, "the placeholder should hide while typing");
+        ok &= check(find_text_draw(container, "hello") != nullptr, "the typed value should be drawn");
+
+        text.text.clear();
+        text.caret  = 0;
+        ok         &= check(static_cast<el_input*>(t.get())->update_focused(text),
+                            "showing the placeholder should report a style change");
+        ok &= check(matches(t, "input:placeholder-shown"), "clearing the value should restore :placeholder-shown");
+        container.clear();
+        doc->draw(0, 0, 0, nullptr);
+        ok &= check(find_text_draw(container, "Type here") != nullptr,
+                    "clearing the value should restore the placeholder");
+    }
+
+    // UA placeholder colour and focus-dependent ::placeholder rules.
+    {
+        controls_container container;
+        const auto         doc = document::createFromString("<style>body{margin:0;font-size:16px;line-height:20px}"
+                                                            "input:focus::placeholder{color:rgb(1,2,3)}</style>"
+                                                            "<input id=t placeholder='Default'>",
+                                                            &container);
+        doc->render(800);
+
+        const auto t = doc->root()->select_one("#t");
+
+        container.clear();
+        doc->draw(0, 0, 0, nullptr);
+        const auto* default_draw  = find_text_draw(container, "Default");
+        ok                       &= check(default_draw != nullptr, "the UA placeholder should be drawn");
+        ok                       &= check(default_draw && default_draw->color == web_color(169, 169, 169),
+                                          "the master stylesheet should give the placeholder the darkgray colour");
+
+        ok &= check(doc->set_focus(t, true, container.redraw), "the input should be focusable");
+        container.clear();
+        doc->draw(0, 0, 0, nullptr);
+        const auto* focused_draw  = find_text_draw(container, "Default");
+        ok                       &= check(focused_draw && focused_draw->color == web_color(1, 2, 3),
+                                          "input:focus::placeholder should override the UA colour");
     }
 
     if(ok)

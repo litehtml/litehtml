@@ -499,11 +499,12 @@ namespace litehtml
             "focus",
             "focus-visible",
             "focus-within",
-            // Form state pseudo-classes: matched against the checked/disabled
-            // ATTRIBUTES kept in sync by the embedding application (litehtml
-            // has no UI state of its own).
+            // Form state pseudo-classes. :checked/:disabled are matched against
+            // the attributes; :placeholder-shown is derived from the control's
+            // current value and placeholder attribute.
             "checked",
             "disabled",
+            "placeholder-shown",
             // Tree-Structural pseudo-classes  https://www.w3.org/TR/selectors-4/#structural-pseudos
             "root",
             "empty",

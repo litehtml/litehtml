@@ -258,6 +258,13 @@ Text controls ask the container for the text state while drawing through
 [document_container::get_text_data](document_container.md#get_text_data). The control draws the
 text, selection and caret itself using the container drawing functions.
 
+Text-like `<input>` controls (`text`, `search`, `password`; not `number`) and `<textarea>` render
+their `placeholder` attribute while the value is empty. Placeholder text is paint-only: it creates no
+box and does not affect layout. It is styled through `::placeholder`, which the built-in stylesheet
+gives `color: darkgray`; author rules such as `input::placeholder { color: #757575 }` (including
+`:focus::placeholder`) override it. The control matches `:placeholder-shown` while the attribute is
+present and the value is empty.
+
 The select dropdown marker and the checkbox tick are drawn by the container through
 [document_container::draw_combobox_marker](document_container.md#draw_combobox_marker) and
 [document_container::draw_checkbox_marker](document_container.md#draw_checkbox_marker), so they do

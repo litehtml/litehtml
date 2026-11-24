@@ -4,6 +4,7 @@
 #include "controls.h"
 #include "document.h"
 #include "html_tag.h"
+#include <memory>
 #include <optional>
 
 namespace litehtml
@@ -31,12 +32,14 @@ namespace litehtml
         bool         is_replaced() const override;
         bool         can_be_focused() const override;
         bool         is_checked() const override;
+        bool         is_placeholder_shown() const override;
         control_type get_control_type() const override;
         control_data get_control_data() const override;
         bool         update_focused(const control_data& data) override;
 
         void parse_attributes() override;
         void compute_styles(bool recursive = true) override;
+        void refresh_styles() override;
         void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
                   const std::shared_ptr<render_item>& ri) override;
         void get_content_size(size& sz, pixel_t max_width) override;
@@ -64,14 +67,20 @@ namespace litehtml
         std::string         m_initial_value;
         std::string         m_src;
         std::string         m_alt;
+        std::string         m_placeholder;
         text_control_data   m_text;
         pixel_t             m_text_scroll = 0_px;
+
+        style                     m_placeholder_style;
+        std::unique_ptr<html_tag> m_placeholder_el;
 
         void        parse_type(const std::string& type);
         void        set_checked(bool checked);
         bool        select_radio();
         std::string label() const;
         void        notify_change();
+        void        apply_placeholder_style(const style& style) override;
+        void        compute_placeholder_style();
         void        draw_text_control(uint_ptr hdc, const position& pos);
         void        draw_button_label(uint_ptr hdc, const position& pos);
         void        draw_checkbox(uint_ptr hdc, const position& pos);

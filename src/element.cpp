@@ -208,7 +208,7 @@ namespace litehtml
             if(used_style->m_selector->is_media_valid())
             {
                 int res = select(*(used_style->m_selector), true);
-                if((res == select_no_match && used_style->m_used) || (res == select_match && !used_style->m_used))
+                if((res == select_no_match && used_style->m_used) || (res != select_no_match && !used_style->m_used))
                 {
                     return true;
                 }
@@ -624,6 +624,11 @@ namespace litehtml
     bool element::is_checked() const
     {
         return get_attr("checked") != nullptr;
+    }
+
+    bool element::is_placeholder_shown() const
+    {
+        return false;
     }
 
     bool element::is_disabled() const

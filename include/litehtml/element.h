@@ -128,6 +128,8 @@ namespace litehtml
         virtual bool is_checked() const;
         // Returns whether the element is disabled, including by a disabled ancestor fieldset.
         virtual bool is_disabled() const;
+        // Returns whether the element is currently showing its placeholder text.
+        virtual bool is_placeholder_shown() const;
         // Kind of the form control (control_type::none for non-control elements).
         virtual control_type get_control_type() const;
         // Whether the element accepts keyboard text input. Such elements always match
