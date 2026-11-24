@@ -1703,11 +1703,11 @@ namespace litehtml
 
     void litehtml::html_tag::apply_placeholder_style(const style& /*style*/) {}
 
-    void litehtml::html_tag::refresh_styles()
+    void litehtml::html_tag::refresh_styles(bool recursive)
     {
         for(auto& el : m_children)
         {
-            if(el->css().get_display() != display_inline_text)
+            if(recursive && el->css().get_display() != display_inline_text)
             {
                 el->refresh_styles();
             }

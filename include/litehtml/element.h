@@ -112,7 +112,7 @@ namespace litehtml
         virtual void        remove_attr(const char* name);
         virtual const char* get_attr(const char* name, const char* def = nullptr) const;
         virtual void        apply_stylesheet(const litehtml::css& stylesheet);
-        virtual void        refresh_styles();
+        virtual void        refresh_styles(bool recursive = true);
         virtual bool        is_white_space() const;
         virtual bool        is_space() const;
         virtual bool        is_comment() const;
