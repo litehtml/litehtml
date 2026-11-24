@@ -4,6 +4,7 @@
 #include "controls.h"
 #include "document.h"
 #include "html_tag.h"
+#include <memory>
 #include <optional>
 
 namespace litehtml
@@ -15,11 +16,14 @@ namespace litehtml
 
         bool         is_replaced() const override;
         bool         can_be_focused() const override;
+        bool         is_placeholder_shown() const override;
         control_type get_control_type() const override;
         control_data get_control_data() const override;
         bool         update_focused(const control_data& data) override;
 
         void parse_attributes() override;
+        void compute_styles(bool recursive = true) override;
+        void refresh_styles() override;
         void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
                   const std::shared_ptr<render_item>& ri) override;
         void get_content_size(size& sz, pixel_t max_width) override;
@@ -34,12 +38,17 @@ namespace litehtml
         std::string dump_get_name() override;
 
       private:
-        text_control_data m_text;
-        std::string       m_initial_text;
-        std::string       m_name;
-        size_t            m_first_line = 0;
+        text_control_data         m_text;
+        std::string               m_initial_text;
+        std::string               m_name;
+        std::string               m_placeholder;
+        size_t                    m_first_line = 0;
+        style                     m_placeholder_style;
+        std::unique_ptr<html_tag> m_placeholder_el;
 
         void notify_change();
+        void apply_placeholder_style(const style& style) override;
+        void compute_placeholder_style();
         void draw_text_control(uint_ptr hdc, const position& pos);
         void fill_rect(uint_ptr hdc, const position& pos, const web_color& color);
     };

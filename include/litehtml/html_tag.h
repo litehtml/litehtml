@@ -147,6 +147,9 @@ namespace litehtml
         void map_to_dimension_property(string_id prop_name, const std::string& attr_value);
         void map_to_dimension_property_ignoring_zero(string_id prop_name, const std::string& attr_value);
 
+        // Applies declarations from a rule that matched this element's ::placeholder pseudo-element.
+        virtual void apply_placeholder_style(const style& style);
+
       private:
         void handle_counter_properties();
     };

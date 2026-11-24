@@ -270,7 +270,14 @@ namespace litehtml
                         us->m_used = true;
                     };
 
-                    if(apply & select_match_pseudo_class)
+                    if(apply & select_match_with_placeholder)
+                    {
+                        if(!(apply & select_match_pseudo_class) || select(*sel, true))
+                        {
+                            apply_placeholder_style(*sel->m_style);
+                            us->m_used = true;
+                        }
+                    } else if(apply & select_match_pseudo_class)
                     {
                         if(select(*sel, true))
                         {
@@ -536,6 +543,13 @@ namespace litehtml
                         return select_no_match;
                     }
                     res |= select_match_with_before;
+                } else if(attr.name == _placeholder_)
+                {
+                    if(m_tag != _input_ && m_tag != _textarea_)
+                    {
+                        return select_no_match;
+                    }
+                    res |= select_match_with_placeholder;
                 } else
                 {
                     return select_no_match;
@@ -788,6 +802,13 @@ namespace litehtml
             // Form state: matches either the dynamic pseudo-class (set_pseudo_class)
             // or the checked state of the control.
             if(!(sel.name in m_pseudo_classes) && !is_checked())
+            {
+                return select_no_match;
+            }
+            break;
+        case _placeholder_shown_:
+            // Form state: the control currently displays placeholder text.
+            if(!(sel.name in m_pseudo_classes) && !is_placeholder_shown())
             {
                 return select_no_match;
             }
@@ -1680,6 +1701,8 @@ namespace litehtml
         handle_counter_properties();
     }
 
+    void litehtml::html_tag::apply_placeholder_style(const style& /*style*/) {}
+
     void litehtml::html_tag::refresh_styles()
     {
         for(auto& el : m_children)
@@ -1720,7 +1743,14 @@ namespace litehtml
 
                 if(apply != select_no_match)
                 {
-                    if(apply & select_match_pseudo_class)
+                    if(apply & select_match_with_placeholder)
+                    {
+                        if(!(apply & select_match_pseudo_class) || select(*usel->m_selector, true))
+                        {
+                            apply_placeholder_style(*usel->m_selector->m_style);
+                            usel->m_used = true;
+                        }
+                    } else if(apply & select_match_pseudo_class)
                     {
                         if(select(*usel->m_selector, true))
                         {
@@ -1731,6 +1761,7 @@ namespace litehtml
                                 {
                                     el->add_style(*usel->m_selector->m_style);
                                 }
+                                usel->m_used = true;
                             } else if(apply & select_match_with_before)
                             {
                                 element::ptr el = get_element_before(*usel->m_selector->m_style, false);
@@ -1738,6 +1769,7 @@ namespace litehtml
                                 {
                                     el->add_style(*usel->m_selector->m_style);
                                 }
+                                usel->m_used = true;
                             } else
                             {
                                 add_style(*usel->m_selector->m_style);
@@ -1751,6 +1783,7 @@ namespace litehtml
                         {
                             el->add_style(*usel->m_selector->m_style);
                         }
+                        usel->m_used = true;
                     } else if(apply & select_match_with_before)
                     {
                         element::ptr el = get_element_before(*usel->m_selector->m_style, false);
@@ -1758,6 +1791,7 @@ namespace litehtml
                         {
                             el->add_style(*usel->m_selector->m_style);
                         }
+                        usel->m_used = true;
                     } else
                     {
                         add_style(*usel->m_selector->m_style);

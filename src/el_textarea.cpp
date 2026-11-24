@@ -32,7 +32,8 @@ namespace litehtml
     {
         html_tag::parse_attributes();
 
-        m_name = get_attr("name", "");
+        m_name        = get_attr("name", "");
+        m_placeholder = get_attr("placeholder", "");
 
         std::string text;
         get_text(text);
@@ -82,6 +83,11 @@ namespace litehtml
         return control_type::textarea;
     }
 
+    bool el_textarea::is_placeholder_shown() const
+    {
+        return !m_placeholder.empty() && m_text.text.empty();
+    }
+
     control_data el_textarea::get_control_data() const
     {
         return m_text;
@@ -91,14 +97,51 @@ namespace litehtml
     {
         if(const auto text = std::get_if<text_control_data>(&data))
         {
-            const bool value_changed = text->text != m_text.text;
-            m_text                   = *text;
+            const bool placeholder_shown = is_placeholder_shown();
+            const bool value_changed     = text->text != m_text.text;
+            m_text                       = *text;
             if(value_changed)
             {
                 notify_change();
             }
+            return placeholder_shown != is_placeholder_shown();
         }
         return false;
+    }
+
+    void el_textarea::compute_styles(bool recursive)
+    {
+        html_tag::compute_styles(recursive);
+        compute_placeholder_style();
+    }
+
+    void el_textarea::refresh_styles()
+    {
+        m_placeholder_style.clear();
+        html_tag::refresh_styles();
+    }
+
+    void el_textarea::apply_placeholder_style(const style& style)
+    {
+        m_placeholder_style.combine(style);
+    }
+
+    void el_textarea::compute_placeholder_style()
+    {
+        if(m_placeholder.empty())
+        {
+            m_placeholder_el.reset();
+            return;
+        }
+
+        auto placeholder = std::make_unique<html_tag>(get_document());
+        placeholder->parent(shared_from_this());
+        if(!m_placeholder_style.empty())
+        {
+            placeholder->add_style(m_placeholder_style);
+        }
+        placeholder->compute_styles(false);
+        m_placeholder_el = std::move(placeholder);
     }
 
     void el_textarea::notify_change()
@@ -189,8 +232,19 @@ namespace litehtml
         auto font      = css().get_font();
         auto color     = css().get_color();
         auto line_h    = text_line_height(*this);
-        auto lines     = control_text::layout_lines(*get_document(), font, data.text, pos.width);
-        auto caret     = control_text::caret_position(*get_document(), font, lines, data.text, data.caret);
+
+        const bool show_placeholder = data.text.empty() && !m_placeholder.empty();
+        if(show_placeholder && m_placeholder_el)
+        {
+            if(const auto placeholder_font = m_placeholder_el->css().get_font())
+            {
+                font = placeholder_font;
+            }
+            color = m_placeholder_el->css().get_color();
+        }
+
+        auto lines = control_text::layout_lines(*get_document(), font, data.text, pos.width);
+        auto caret = control_text::caret_position(*get_document(), font, lines, data.text, data.caret);
 
         const auto visible_lines =
             std::max(static_cast<size_t>(1), static_cast<size_t>(static_cast<int>(pos.height / line_h)));
@@ -207,6 +261,26 @@ namespace litehtml
         }
 
         container->set_clip(pos, border_radiuses{});
+
+        if(show_placeholder)
+        {
+            const auto placeholder_lines = control_text::layout_lines(*get_document(), font, m_placeholder, pos.width);
+            for(size_t i = 0; i < placeholder_lines.size(); i++)
+            {
+                const auto y = pos.y + pixel_t(static_cast<int>(i)) * line_h;
+                if(y >= pos.bottom())
+                {
+                    break;
+                }
+                const auto& line = placeholder_lines[i];
+                if(line.end > line.start)
+                {
+                    const auto text = m_placeholder.substr(line.start, line.end - line.start);
+                    position   text_pos(pos.x, y, line.width, line_h);
+                    container->draw_text(hdc, text.c_str(), font, color, text_pos);
+                }
+            }
+        }
 
         size_t selection_start = std::min(data.selection_start, data.selection_end);
         size_t selection_end   = std::max(data.selection_start, data.selection_end);
