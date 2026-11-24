@@ -544,6 +544,13 @@ litehtml implements `<form>`, `<input>` (button, checkbox, hidden, image, number
 search, submit and text), `<textarea>`, `<select>`, `<option>`, `<optgroup>`, `<label>`, `<fieldset>`,
 `<legend>` and `<button>`.
 
+A `<button>` whose content model is used (phrasing content such as `<img>`, `<span>`, `<strong>` or
+`<br>`) is a normal inline-block container: its children are laid out and drawn, the same way the
+user agent stylesheet centers them with `text-align: center`. A button with text only keeps the
+replaced control rendering, where the container draws the centered label passed through
+[draw_text](#draw_text). Interactive descendants are not allowed by the HTML specification, but a
+button tree that contains them is still laid out rather than rejected.
+
 The functions below have default implementations, so existing containers keep working. A container
 that supports form controls should implement them.
 

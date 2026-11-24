@@ -236,6 +236,10 @@ password, radio, reset, search, submit, text), `<textarea>`, `<select>`, `<optio
 `<optgroup>`, `<label>`, `<fieldset>`, `<legend>` and `<button>`. Default styles are part of the
 built-in master stylesheet.
 
+A `<button>` with child elements (`<img>`, `<span>`, `<strong>`, `<br>`, …) is laid out as an
+inline-block container, so its phrasing content keeps its own formatting; a text-only button is
+rendered as a replaced control with the label centered by the container.
+
 Controls are focused with the same navigation as links. The container receives the control through
 [document_container::on_focus_change](document_container.md#on_focus_change) with its type and
 current data.

@@ -49,7 +49,7 @@ namespace litehtml
         }
 
         get_text(m_label);
-        if(m_label.empty())
+        if(m_label.empty() && m_children.empty())
         {
             if(m_type == button_type::submit)
             {
@@ -61,9 +61,15 @@ namespace litehtml
         }
     }
 
+    bool el_button::has_content_children() const
+    {
+        return std::any_of(m_children.begin(), m_children.end(),
+                           [](const element::ptr& child) { return !child->is_text(); });
+    }
+
     bool el_button::is_replaced() const
     {
-        return true;
+        return !has_content_children();
     }
 
     bool el_button::can_be_focused() const
@@ -134,6 +140,12 @@ namespace litehtml
     {
         html_tag::draw(hdc, x, y, clip, ri);
 
+        // With child elements the content is laid out and drawn by the render items.
+        if(!is_replaced())
+        {
+            return;
+        }
+
         position pos  = ri->pos();
         pos.x        += x;
         pos.y        += y;
@@ -161,6 +173,10 @@ namespace litehtml
         if(css().get_display() == display_none)
         {
             return nullptr;
+        }
+        if(!is_replaced())
+        {
+            return element::create_render_item(parent_ri);
         }
         auto ret = std::make_shared<render_item_control>(shared_from_this());
         ret->parent(parent_ri);

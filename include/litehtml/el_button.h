@@ -38,6 +38,10 @@ namespace litehtml
         std::string dump_get_name() override;
 
       private:
+        // A button with child elements renders its content as a normal inline-block container;
+        // a button with only text keeps the replaced control rendering of its centered label.
+        bool has_content_children() const;
+
         button_type m_type = button_type::submit;
         std::string m_name;
         std::string m_value;
