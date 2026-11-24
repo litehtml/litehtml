@@ -179,9 +179,12 @@ converting and presenting its actual, potentially snapped viewport position.
 
 Form controls are edited in the page. `has_text_focus()` reports whether a
 text control is focused; `on_key_event()` applies text editing, checkbox/radio
-activation, select popups and form submission; `set_caret_visible()` toggles
-the caret for blink handling. The host forwards key events to these functions
-and calls `redraw_boxes` for the returned invalidated areas.
+activation, select popups, listbox select navigation and form submission;
+`set_caret_visible()` toggles the caret for blink handling. Listbox selects
+(`multiple` or `size > 1`) handle Up/Down/Home/End/Page Up/Page Down, Shift
+range selection, Ctrl active-option movement, Space toggling and type-ahead.
+The host forwards key events to these functions and calls `redraw_boxes` for
+the returned invalidated areas.
 
 `id()` identifies the page while it is alive; `width()` and `height()` report
 the laid-out document size, or zero when no document exists. `url()`,

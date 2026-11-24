@@ -1,6 +1,7 @@
 #include "test_container.h"
 #include "Font.h"
 #include "litehtml/types.h"
+#include <algorithm>
 #include <cmath>
 #include <fstream>
 #include <sstream>
@@ -237,6 +238,61 @@ void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
         // do nothing
         break;
     }
+}
+
+namespace
+{
+    // Strokes a two-segment marker path with round caps and joins.
+    void stroke_marker(canvas& cvs, const position& from, const position& corner, const position& to)
+    {
+        cvs.begin_path();
+        cvs.move_to(from.x, from.y);
+        cvs.line_to(corner.x, corner.y);
+        cvs.line_to(to.x, to.y);
+        cvs.stroke();
+    }
+} // namespace
+
+void test_container::draw_combobox_marker(uint_ptr hdc, const position& pos, const web_color& color)
+{
+    auto& cvs = *(canvas*) hdc;
+
+    const float stroke = std::max(1.0f, std::round(pos.height.value() / 3.0f));
+    const float inset  = stroke / 2.0f;
+
+    cvs.set_line_width(stroke);
+    cvs.line_cap  = circle;
+    cvs.line_join = rounded;
+    cvs.set_color(stroke_style, color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f, color.alpha / 255.0f);
+    stroke_marker(cvs, position(pos.left() + inset, pos.top() + inset),
+                  position(pos.left() + pos.width / 2_px, pos.bottom() - inset),
+                  position(pos.right() - inset, pos.top() + inset));
+}
+
+void test_container::draw_checkbox_marker(uint_ptr hdc, const position& pos, const web_color& color)
+{
+    auto& cvs = *(canvas*) hdc;
+
+    const float size   = std::min(pos.width.value(), pos.height.value());
+    const float stroke = std::max(1.0f, std::round(size / 7.0f));
+    const float inset  = stroke / 2.0f + std::round(size / 8.0f);
+    const float left   = pos.left() + inset;
+    const float right  = pos.right() - inset;
+    const float top    = pos.top() + inset;
+    const float bottom = pos.bottom() - inset;
+    const float width  = right - left;
+    const float height = bottom - top;
+    if(width <= 0.0f || height <= 0.0f)
+    {
+        return;
+    }
+
+    cvs.set_line_width(stroke);
+    cvs.line_cap  = circle;
+    cvs.line_join = rounded;
+    cvs.set_color(stroke_style, color.red / 255.0f, color.green / 255.0f, color.blue / 255.0f, color.alpha / 255.0f);
+    stroke_marker(cvs, position(left, top + height * 0.55f), position(left + width * 0.35f, bottom),
+                  position(right, top));
 }
 
 string getdir(string filename)

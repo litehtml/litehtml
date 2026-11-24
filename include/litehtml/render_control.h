@@ -20,6 +20,16 @@ namespace litehtml
             return std::make_shared<render_item_control>(src_el());
         }
 
+        pixel_t v_scroll(pixel_t dy) override
+        {
+            return src_el()->scroll_content(dy);
+        }
+
+        bool is_v_scrollable(const pixel_t dy) const override
+        {
+            return src_el()->can_scroll_content(dy);
+        }
+
       protected:
         pixel_t _render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
                         formatting_context* fmt_ctx, bool second_pass) override

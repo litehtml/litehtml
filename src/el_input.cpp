@@ -634,16 +634,9 @@ namespace litehtml
         {
             return;
         }
-        auto     container = get_document()->container();
-        auto     font      = css().get_font();
-        auto     fm        = css().get_font_metrics();
-        auto     text      = "\xE2\x9C\x93"; // U+2713 CHECK MARK
-        auto     tw        = container->text_width(text, font);
-        auto     th        = fm.height > 0_px ? fm.height : pos.height;
-        position text_pos(pos.x + std::max(0_px, (pos.width - tw) / 2_px),
-                          pos.y + std::max(0_px, (pos.height - th) / 2_px), tw, th);
+        auto* container = get_document()->container();
         container->set_clip(pos, border_radiuses{});
-        container->draw_text(hdc, text, font, web_color(255, 255, 255), text_pos);
+        container->draw_checkbox_marker(hdc, pos, web_color(255, 255, 255));
         container->del_clip();
     }
 

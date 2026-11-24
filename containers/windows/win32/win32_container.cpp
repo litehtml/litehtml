@@ -1,5 +1,6 @@
 #include "win32_container.h"
 #include "litehtml/os_types.h"
+#include <algorithm>
 #include <cmath>
 
 using namespace std;
@@ -255,6 +256,60 @@ void win32_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
         }
         break;
     }
+    release_clip((HDC) hdc);
+}
+
+void win32_container::draw_combobox_marker(uint_ptr hdc, const position& pos, const web_color& color)
+{
+    apply_clip((HDC) hdc);
+
+    const int stroke  = std::max(1, (int) std::round(pos.height.value() / 3.0f));
+    const int inset   = stroke / 2;
+    HPEN      pen     = CreatePen(PS_SOLID, stroke, RGB(color.red, color.green, color.blue));
+    HGDIOBJ   old_pen = SelectObject((HDC) hdc, pen);
+
+    POINT points[3] = {
+        {(int) pos.left() + inset,              (int) pos.top() + inset   },
+        {(int) (pos.left() + pos.width / 2_px), (int) pos.bottom() - inset},
+        {(int) pos.right() - inset,             (int) pos.top() + inset   }
+    };
+    Polyline((HDC) hdc, points, 3);
+
+    SelectObject((HDC) hdc, old_pen);
+    DeleteObject(pen);
+    release_clip((HDC) hdc);
+}
+
+void win32_container::draw_checkbox_marker(uint_ptr hdc, const position& pos, const web_color& color)
+{
+    const int size   = std::min((int) pos.width, (int) pos.height);
+    const int stroke = std::max(1, (int) std::round(size / 7.0f));
+    const int inset  = stroke / 2 + (int) std::round(size / 8.0f);
+    const int left   = (int) pos.left() + inset;
+    const int right  = (int) pos.right() - inset;
+    const int top    = (int) pos.top() + inset;
+    const int bottom = (int) pos.bottom() - inset;
+    const int width  = right - left;
+    const int height = bottom - top;
+    if(width <= 0 || height <= 0)
+    {
+        return;
+    }
+
+    apply_clip((HDC) hdc);
+
+    HPEN    pen     = CreatePen(PS_SOLID, stroke, RGB(color.red, color.green, color.blue));
+    HGDIOBJ old_pen = SelectObject((HDC) hdc, pen);
+
+    POINT points[3] = {
+        {left,                    top + height * 55 / 100},
+        {left + width * 35 / 100, bottom                 },
+        {right,                   top                    }
+    };
+    Polyline((HDC) hdc, points, 3);
+
+    SelectObject((HDC) hdc, old_pen);
+    DeleteObject(pen);
     release_clip((HDC) hdc);
 }
 

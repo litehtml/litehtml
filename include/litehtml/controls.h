@@ -60,7 +60,8 @@ namespace litehtml
     {
         std::vector<select_group_data> groups;
         bool                           multiple = false;
-        int                            size     = 1;
+        // Number of option rows a listbox displays; 1 for a one-line dropdown.
+        int size = 1;
     };
 
     // Payload passed between the document, its container and the focused control:

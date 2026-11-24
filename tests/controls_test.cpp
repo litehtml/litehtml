@@ -7,6 +7,7 @@
 #include "litehtml/el_select.h"
 #include "litehtml/el_textarea.h"
 #include "grid_test_container.h"
+#include <algorithm>
 #include <iostream>
 #include <string>
 
@@ -39,11 +40,18 @@ namespace
             litehtml::control_data data;
         };
 
+        struct border_event
+        {
+            litehtml::borders  borders;
+            litehtml::position pos;
+        };
+
         litehtml::position::vector                 redraws;
         std::vector<focus_event>                   focus_events;
         std::vector<change_event>                  changes;
         std::vector<litehtml::form_data>           submits;
         std::vector<litehtml::select_control_data> popups;
+        std::vector<border_event>                  border_draws;
         litehtml::element::ptr                     override_element;
         litehtml::text_control_data                override_data;
         bool                                       override_active = false;
@@ -91,6 +99,12 @@ namespace
         {
             popups.push_back(data);
             return true;
+        }
+
+        void draw_borders(litehtml::uint_ptr /*hdc*/, const litehtml::borders& borders, const litehtml::position& pos,
+                          bool /*root*/) override
+        {
+            border_draws.push_back({borders, pos});
         }
     };
 
@@ -337,6 +351,157 @@ int main()
         ok &= check(!matches(cb, "input:checked"), "reset should restore the checkbox state");
         ok &= check(matches(doc->root()->select_one("#sel option:last-child"), "option:checked"),
                     "reset should restore the selected option");
+    }
+
+    // Listbox selects: multiple or size > 1 render as rows and are selected in place.
+    {
+        controls_container container;
+        const auto         doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px;line-height:20px}</style>"
+            "<form id=f>"
+            "<select id=lm name=lm multiple>"
+            "<option value=a>A</option><option value=b>B</option><option value=c selected>C</option>"
+            "<option value=d disabled>D</option><option value=e>E</option></select>"
+            "<select id=ls name=ls size=3>"
+            "<option value=x>X</option><option value=y>Y</option><option value=z>Z</option></select>"
+            "<select id=lm2 name=lm2 multiple size=2>"
+            "<option value=p>P</option><option value=q>Q</option>"
+            "<option value=r>R</option><option value=s>S</option></select>"
+            "</form>",
+            &container);
+        doc->render(800);
+
+        const auto lm  = doc->root()->select_one("#lm");
+        const auto ls  = doc->root()->select_one("#ls");
+        const auto lm2 = doc->root()->select_one("#lm2");
+
+        const auto selected_values = [](const element::ptr& el) {
+            std::vector<std::string> values;
+            for(const auto& group : std::static_pointer_cast<el_select>(el)->select_data().groups)
+            {
+                for(const auto& option : group.options)
+                {
+                    if(option.selected)
+                    {
+                        values.push_back(option.value);
+                    }
+                }
+            }
+            return values;
+        };
+        const auto pitch     = lm->css().line_height().computed_value + 1_px;
+        const auto click_row = [&](const element::ptr& el, int row) {
+            const auto pos = el->get_placement();
+            click_at(doc, container, static_cast<int>(pos.x + 5_px),
+                     static_cast<int>(pos.y + pixel_t(row) * pitch + pitch / 2_px));
+        };
+        const auto scroll_at = [&](const element::ptr& el, pixel_t dy) {
+            const auto pos = el->get_placement();
+            return doc->on_scroll(0_px, dy, pos.x + 5_px, pos.y + 5_px, pos.x + 5_px, pos.y + 5_px);
+        };
+
+        ok &= check(std::static_pointer_cast<el_select>(lm)->select_data().size == 4,
+                    "a multiple select should default to 4 visible rows");
+        ok &= check(lm->get_placement().height == 4 * pitch, "a multiple select should be as tall as its visible rows");
+        ok &= check(std::static_pointer_cast<el_select>(lm2)->select_data().size == 2,
+                    "the size attribute should set the visible rows");
+        ok &= check(std::static_pointer_cast<el_select>(ls)->select_data().size == 3,
+                    "a sized single select should use its visible row count");
+        ok &= check(ls->get_placement().height == 3 * pitch, "a sized select should be as tall as its rows");
+        ok &= check(selected_values(lm) == std::vector<std::string>{"c"},
+                    "a multiple select should keep only the explicitly selected option");
+        ok &= check(selected_values(ls).empty(), "a listbox without a selected option should stay unselected");
+
+        doc->draw(0, 0, 0, nullptr);
+        ok &= check(true, "drawing listbox selects should not crash");
+
+        // Multiple listboxes toggle rows; single listboxes replace the selection.
+        container.clear();
+        click_row(lm, 0);
+        ok &= check(selected_values(lm) == std::vector<std::string>{"a", "c"},
+                    "clicking a multiple listbox row should toggle it on");
+        ok &= check(container.changes.size() == 1 && container.changes.back().id == "lm",
+                    "a listbox selection should report on_change");
+
+        click_row(lm, 0);
+        ok &= check(selected_values(lm) == std::vector<std::string>{"c"},
+                    "clicking a selected multiple row should toggle it off");
+
+        container.clear();
+        click_row(lm, 3);
+        ok &= check(selected_values(lm) == std::vector<std::string>{"c"} && container.changes.empty(),
+                    "clicking a disabled listbox row should do nothing");
+
+        container.clear();
+        click_row(ls, 1);
+        ok &= check(selected_values(ls) == std::vector<std::string>{"y"},
+                    "clicking a single listbox row should select only it");
+        click_row(ls, 2);
+        ok &= check(selected_values(ls) == std::vector<std::string>{"z"},
+                    "clicking another single listbox row should replace the selection");
+
+        // Mouse wheel scrolls the option rows and reveals them for clicks.
+        auto scrolled  = scroll_at(lm, 30_px);
+        ok            &= check(scrolled.size() == 1 && scrolled.back().dy == pitch,
+                               "the wheel should scroll a listbox by the available row height");
+        click_row(lm, 0);
+        ok &= check(selected_values(lm) == std::vector<std::string>{"b", "c"},
+                    "clicking after scrolling should select the revealed row");
+
+        scrolled  = scroll_at(lm, -30_px);
+        ok       &= check(scrolled.size() == 1 && scrolled.back().dy == -pitch,
+                          "scrolling up should move back to the first row");
+        ok       &= check(scroll_at(lm, 100_px).size() == 1, "scrolling down should be clamped to the last row");
+        ok       &= check(scroll_at(lm, 10_px).empty(), "a listbox at the bottom should not consume more scrolling");
+
+        // Revealing an option from the keyboard adjusts the visible rows.
+        auto* const widget = dynamic_cast<el_select*>(lm.get());
+        widget->scroll_option_into_view(0);
+        container.clear();
+        click_row(lm, 0);
+        ok &= check(selected_values(lm) == std::vector<std::string>{"a", "b", "c"},
+                    "revealing the first option should reset the visible rows");
+
+        widget->scroll_option_into_view(4);
+        container.clear();
+        click_row(lm, 0);
+        ok &= check(selected_values(lm) == std::vector<std::string>{"a", "c"},
+                    "revealing the last option should scroll the rows");
+    }
+
+    // The active listbox option is outlined only while it is not selected.
+    {
+        controls_container container;
+        const auto         doc =
+            document::createFromString("<style>body{margin:0;font-size:16px;line-height:20px}</style>"
+                                       "<select id=lm multiple size=4><option>one</option><option selected>two</option>"
+                                       "<option>three</option><option>four</option></select>",
+                                       &container);
+        doc->render(800);
+
+        const auto lm  = doc->root()->select_one("#lm");
+        auto*      el  = dynamic_cast<el_select*>(lm.get());
+        ok            &= check(el != nullptr, "the listbox select should exist");
+        ok            &= check(doc->set_focus(lm, true, container.redraw), "the listbox should be focusable");
+
+        const auto outline_count = [&container]() {
+            return static_cast<size_t>(std::count_if(container.border_draws.begin(), container.border_draws.end(),
+                                                     [](const controls_container::border_event& draw) {
+                                                         return draw.borders.top.width == 2_px &&
+                                                                draw.borders.top.color ==
+                                                                    litehtml::web_color(16, 16, 16);
+                                                     }));
+        };
+
+        el->set_active_option(0);
+        container.border_draws.clear();
+        doc->draw(0, 0, 0, nullptr);
+        ok &= check(outline_count() == 1, "an active unselected option should draw an outline");
+
+        el->set_active_option(1);
+        container.border_draws.clear();
+        doc->draw(0, 0, 0, nullptr);
+        ok &= check(outline_count() == 0, "an active selected option should not draw an outline");
     }
 
     // Attribute-mapped sizes must survive a focus style refresh.

@@ -201,7 +201,7 @@ namespace litehtml
             return m_scroll_view ? m_scroll_view->h_scroll(dx) : 0_px;
         }
 
-        pixel_t v_scroll(pixel_t dy)
+        virtual pixel_t v_scroll(pixel_t dy)
         {
             return m_scroll_view ? m_scroll_view->v_scroll(dy) : 0_px;
         }
@@ -211,7 +211,7 @@ namespace litehtml
             return m_scroll_view ? m_scroll_view->is_h_scrollable(dx) : false;
         }
 
-        bool is_v_scrollable(const pixel_t dy) const
+        virtual bool is_v_scrollable(const pixel_t dy) const
         {
             return m_scroll_view ? m_scroll_view->is_v_scrollable(dy) : false;
         }

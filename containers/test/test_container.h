@@ -41,6 +41,8 @@ class test_container : public document_container
                              const background_layer::conic_gradient& gradient) override;
     void draw_borders(uint_ptr hdc, const borders& borders, const position& draw_pos, bool root) override;
     void draw_list_marker(uint_ptr hdc, const list_marker& marker) override;
+    void draw_combobox_marker(uint_ptr hdc, const position& pos, const web_color& color) override;
+    void draw_checkbox_marker(uint_ptr hdc, const position& pos, const web_color& color) override;
     element::ptr create_element(const char* /*tag_name*/, const string_map& /*attributes*/,
                                 const document::ptr& /*doc*/) override
     {

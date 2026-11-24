@@ -2,6 +2,8 @@
 #include "cairo_borders.h"
 #include "conic_gradient.h"
 #include "litehtml/html.h"
+#include <algorithm>
+#include <cmath>
 
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
@@ -76,6 +78,81 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
             break;
         }
     }
+}
+
+void container_cairo::draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                                           const litehtml::web_color& color)
+{
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
+    if(!cr || pos.width <= 0_px || pos.height <= 0_px)
+    {
+        return;
+    }
+
+    // A stroked chevron; the stroke width follows the marker box and the path is inset by half of
+    // it, so the round caps stay inside pos.
+    const double stroke = std::max(1.0, std::round(static_cast<double>(pos.height) / 3.0));
+    const double inset  = stroke / 2.0;
+
+    cairo_save(cr);
+    apply_clip(cr);
+
+    set_color(cr, color);
+    cairo_set_line_width(cr, stroke);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+
+    const double left   = static_cast<double>(pos.left());
+    const double right  = static_cast<double>(pos.right());
+    const double top    = static_cast<double>(pos.top());
+    const double bottom = static_cast<double>(pos.bottom());
+    const double center = (left + right) / 2.0;
+
+    cairo_move_to(cr, left + inset, top + inset);
+    cairo_line_to(cr, center, bottom - inset);
+    cairo_line_to(cr, right - inset, top + inset);
+    cairo_stroke(cr);
+
+    cairo_restore(cr);
+}
+
+void container_cairo::draw_checkbox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
+                                           const litehtml::web_color& color)
+{
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
+    if(!cr || pos.width <= 0_px || pos.height <= 0_px)
+    {
+        return;
+    }
+
+    const double size   = std::min(static_cast<double>(pos.width), static_cast<double>(pos.height));
+    const double stroke = std::max(1.0, std::round(size / 7.0));
+    const double inset  = stroke / 2.0 + std::round(size / 8.0);
+    const double left   = static_cast<double>(pos.left()) + inset;
+    const double right  = static_cast<double>(pos.right()) - inset;
+    const double top    = static_cast<double>(pos.top()) + inset;
+    const double bottom = static_cast<double>(pos.bottom()) - inset;
+    const double width  = right - left;
+    const double height = bottom - top;
+    if(width <= 0.0 || height <= 0.0)
+    {
+        return;
+    }
+
+    cairo_save(cr);
+    apply_clip(cr);
+
+    set_color(cr, color);
+    cairo_set_line_width(cr, stroke);
+    cairo_set_line_cap(cr, CAIRO_LINE_CAP_ROUND);
+    cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+
+    cairo_move_to(cr, left, top + height * 0.55);
+    cairo_line_to(cr, left + width * 0.35, bottom);
+    cairo_line_to(cr, right, top);
+    cairo_stroke(cr);
+
+    cairo_restore(cr);
 }
 
 void container_cairo::get_image_size(const char* src, const char* baseurl, litehtml::size& sz)

@@ -77,6 +77,14 @@ namespace
         case GDK_KEY_KP_End:
             event.kind = litebrowser::key_event::kind::end;
             return true;
+        case GDK_KEY_Page_Up:
+        case GDK_KEY_KP_Page_Up:
+            event.kind = litebrowser::key_event::kind::page_up;
+            return true;
+        case GDK_KEY_Page_Down:
+        case GDK_KEY_KP_Page_Down:
+            event.kind = litebrowser::key_event::kind::page_down;
+            return true;
         case GDK_KEY_Return:
         case GDK_KEY_KP_Enter:
             event.kind = litebrowser::key_event::kind::enter;

@@ -6,6 +6,7 @@
  */
 #include "container_haiku.h"
 
+#include <algorithm>
 #include <cmath>
 #include <string>
 #include <iostream>
@@ -479,6 +480,50 @@ void LiteHtmlView::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders&
         FillRect(BRect(BPoint(draw_pos.right() - borders.right.width, draw_pos.top()),
                        BPoint(draw_pos.right(), draw_pos.bottom())));
     }
+}
+
+void LiteHtmlView::draw_combobox_marker(litehtml::uint_ptr /*hdc*/, const litehtml::position& pos,
+                                        const litehtml::web_color& color)
+{
+    const float stroke = std::max(1.0f, std::round(pos.height.value() / 3.0f));
+    const float inset  = stroke / 2.0f;
+
+    SetPenSize(stroke);
+    SetHighColor(color.red, color.green, color.blue, color.alpha);
+
+    const BPoint top_left(pos.left().value() + inset, pos.top().value() + inset);
+    const BPoint bottom_center(pos.left().value() + pos.width.value() / 2.0f, pos.bottom().value() - inset);
+    const BPoint top_right(pos.right().value() - inset, pos.top().value() + inset);
+    StrokeLine(top_left, bottom_center);
+    StrokeLine(bottom_center, top_right);
+}
+
+void LiteHtmlView::draw_checkbox_marker(litehtml::uint_ptr /*hdc*/, const litehtml::position& pos,
+                                        const litehtml::web_color& color)
+{
+    const float size   = std::min(pos.width.value(), pos.height.value());
+    const float stroke = std::max(1.0f, std::round(size / 7.0f));
+    const float inset  = stroke / 2.0f + std::round(size / 8.0f);
+
+    const float left   = pos.left().value() + inset;
+    const float right  = pos.right().value() - inset;
+    const float top    = pos.top().value() + inset;
+    const float bottom = pos.bottom().value() - inset;
+    const float width  = right - left;
+    const float height = bottom - top;
+    if(width <= 0.0f || height <= 0.0f)
+    {
+        return;
+    }
+
+    SetPenSize(stroke);
+    SetHighColor(color.red, color.green, color.blue, color.alpha);
+
+    const BPoint start(left, top + height * 0.55f);
+    const BPoint corner(left + width * 0.35f, bottom);
+    const BPoint end(right, top);
+    StrokeLine(start, corner);
+    StrokeLine(corner, end);
 }
 
 void LiteHtmlView::transform_text(std::string& text, litehtml::text_transform tt)
