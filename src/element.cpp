@@ -587,7 +587,7 @@ namespace litehtml
     void        element::set_attr(const char* /*name*/, const char* /*val*/) LITEHTML_EMPTY_FUNC;
     void        element::remove_attr(const char* /*name*/) LITEHTML_EMPTY_FUNC;
     void        element::apply_stylesheet(const litehtml::css& /*stylesheet*/) LITEHTML_EMPTY_FUNC;
-    void        element::refresh_styles() LITEHTML_EMPTY_FUNC;
+    void        element::refresh_styles(bool /*recursive*/) LITEHTML_EMPTY_FUNC;
     void        element::on_click() LITEHTML_EMPTY_FUNC;
     void        element::compute_styles(bool /*recursive*/) LITEHTML_EMPTY_FUNC;
     const char* element::get_attr(const char* /*name*/, const char* def /*= 0*/) const LITEHTML_RETURN_FUNC(def);
