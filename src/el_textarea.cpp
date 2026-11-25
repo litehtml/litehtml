@@ -115,10 +115,10 @@ namespace litehtml
         compute_placeholder_style();
     }
 
-    void el_textarea::refresh_styles()
+    void el_textarea::refresh_styles(bool recursive)
     {
         m_placeholder_style.clear();
-        html_tag::refresh_styles();
+        html_tag::refresh_styles(recursive);
     }
 
     void el_textarea::apply_placeholder_style(const style& style)

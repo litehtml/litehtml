@@ -463,10 +463,10 @@ namespace litehtml
         }
     }
 
-    void el_input::refresh_styles()
+    void el_input::refresh_styles(bool recursive)
     {
         m_placeholder_style.clear();
-        html_tag::refresh_styles();
+        html_tag::refresh_styles(recursive);
     }
 
     void el_input::apply_placeholder_style(const style& style)
