@@ -23,7 +23,7 @@ namespace litehtml
 
         void parse_attributes() override;
         void compute_styles(bool recursive = true) override;
-        void refresh_styles() override;
+        void refresh_styles(bool recursive = true) override;
         void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
                   const std::shared_ptr<render_item>& ri) override;
         void get_content_size(size& sz, pixel_t max_width) override;
