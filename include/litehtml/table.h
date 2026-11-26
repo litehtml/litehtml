@@ -228,6 +228,8 @@ namespace litehtml
         // True when the matching m_column_widths entry comes from a <col> element
         // rather than a <colgroup>. Fixed layout gives <col> widths priority.
         std::vector<bool> m_column_widths_from_col;
+        // The first row of the row group that the next begin_row() call belongs to
+        int m_row_group_start = 0;
 
       public:
         void clear();

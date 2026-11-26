@@ -313,6 +313,50 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
         }
     }
 
+    // CSS 2.1 17.5.1: the column and column-group backgrounds are painted behind the cells, over the
+    // area of the cells. They cover every row of the columns they span and never bleed into the
+    // border spacing.
+    auto fill_paint_boxes = [&](const std::vector<part_paint_area>& areas) {
+        for(const auto& area : areas)
+        {
+            position::vector& boxes = area.el->paint_boxes();
+            boxes.clear();
+            if(!area.el->src_el()->get_background())
+            {
+                continue;
+            }
+            const int last_column = std::min(area.first_column + area.column_count, m_grid->cols_count());
+            for(int col = std::max(area.first_column, 0); col < last_column; col++)
+            {
+                for(int row = 0; row < m_grid->rows_count(); row++)
+                {
+                    position box;
+                    box.x      = m_grid->column(col).left;
+                    box.width  = m_grid->column(col).width;
+                    box.y      = m_grid->row(row).top + top_captions;
+                    box.height = m_grid->row(row).bottom - m_grid->row(row).top;
+                    if(collapse)
+                    {
+                        // The column boxes have to cover the table border box, which holds half of the
+                        // outer collapsed borders (CSS 2.1 17.6.2).
+                        if(row == 0)
+                        {
+                            box.y      -= m_grid->collapsed_top() / 2;
+                            box.height += m_grid->collapsed_top() / 2;
+                        }
+                        if(row == m_grid->rows_count() - 1)
+                        {
+                            box.height += m_grid->collapsed_bottom() / 2;
+                        }
+                    }
+                    boxes.push_back(box);
+                }
+            }
+        }
+    };
+    fill_paint_boxes(m_column_group_areas);
+    fill_paint_boxes(m_column_areas);
+
     pixel_t bottom_captions = 0_px;
 
     for(auto& caption : m_grid->captions())
@@ -433,10 +477,15 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 
     std::vector<css_length> column_widths;
     std::vector<bool>       column_widths_from_col;
-    auto add_columns = [&](const std::shared_ptr<render_item>& el, const css_length& width, bool from_col) {
+    m_column_group_areas.clear();
+    m_column_areas.clear();
+    int  column_index = 0;
+    auto add_columns  = [&](const std::shared_ptr<render_item>& el, const css_length& width, bool from_col) {
         const int span = std::max(1, atoi(el->src_el()->get_attr("span", "1")));
         column_widths.insert(column_widths.end(), span, width);
         column_widths_from_col.insert(column_widths_from_col.end(), span, from_col);
+        m_column_areas.push_back({std::static_pointer_cast<render_item_table_part>(el), column_index, span});
+        column_index += span;
     };
     for(const auto& el : m_children)
     {
@@ -445,7 +494,8 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
             add_columns(el, el->src_el()->css().get_width(), true);
         } else if(el->src_el()->css().get_display() == display_table_column_group)
         {
-            bool has_columns = false;
+            const int group_first_column = column_index;
+            bool      has_columns        = false;
             for(const auto& col : el->children())
             {
                 if(col->src_el()->css().get_display() == display_table_column)
@@ -458,6 +508,11 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
             {
                 // A column-group width is not a column width in fixed layout.
                 add_columns(el, el->src_el()->css().get_width(), false);
+            }
+            if(column_index > group_first_column)
+            {
+                m_column_group_areas.push_back({std::static_pointer_cast<render_item_table_part>(el),
+                                                group_first_column, column_index - group_first_column});
             }
         }
     }
@@ -506,14 +561,33 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t
         }
         caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context, cur_clipping, abs_clipping);
     }
+
+    if(flag == draw_block)
+    {
+        // CSS 2.1 17.5.1: the table, column group, column, row group and row backgrounds are painted in
+        // that order, all of them behind the cells. The table background is drawn by the table itself.
+        for(const auto& area : m_column_group_areas)
+        {
+            draw_part_background(hdc, area, pos, clip, cur_clipping);
+        }
+        for(const auto& area : m_column_areas)
+        {
+            draw_part_background(hdc, area, pos, clip, cur_clipping);
+        }
+        draw_row_group_backgrounds(hdc, pos, clip, cur_clipping);
+        for(int row = 0; row < m_grid->rows_count(); row++)
+        {
+            const auto& row_el = m_grid->row(row).el_row;
+            if(row_el && row_el->is_visible())
+            {
+                row_el->src_el()->draw_background(hdc, pos.x, pos.y, clip, cur_clipping, row_el);
+            }
+        }
+    }
+
     for(int row = 0; row < m_grid->rows_count(); row++)
     {
         const bool row_visible = m_grid->row(row).el_row->is_visible();
-        if(row_visible && flag == draw_block)
-        {
-            m_grid->row(row).el_row->src_el()->draw_background(hdc, pos.x, pos.y, clip, cur_clipping,
-                                                               m_grid->row(row).el_row);
-        }
         for(int col = 0; col < m_grid->cols_count(); col++)
         {
             table_cell* cell = m_grid->cell(col, row);
@@ -525,6 +599,59 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t
                 }
                 cell->el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context, cur_clipping,
                                         abs_clipping);
+            }
+        }
+    }
+}
+
+void litehtml::render_item_table::draw_part_background(uint_ptr hdc, const part_paint_area& area, const position& pos,
+                                                       const position* clip, const clipping* cur_clipping)
+{
+    if(!area.el->is_visible() || !area.el->src_el()->get_background())
+    {
+        return;
+    }
+    area.el->src_el()->draw_background(hdc, pos.x, pos.y, clip, cur_clipping, area.el);
+}
+
+void litehtml::render_item_table::draw_row_group_backgrounds(uint_ptr hdc, const position& pos, const position* clip,
+                                                             const clipping* cur_clipping)
+{
+    for(int row = 0; row < m_grid->rows_count(); row++)
+    {
+        const auto& row_el = m_grid->row(row).el_row;
+        if(!row_el)
+        {
+            continue;
+        }
+        const auto group = row_el->parent();
+        if(!group || (row > 0 && m_grid->row(row - 1).el_row && m_grid->row(row - 1).el_row->parent() == group))
+        {
+            // The first row of this group is painted when the group is reached.
+            continue;
+        }
+        if(!group->is_visible() || !group->src_el()->get_background())
+        {
+            continue;
+        }
+        if(!is_one_of(group->src_el()->css().get_display(), display_table_row_group, display_table_header_group,
+                      display_table_footer_group))
+        {
+            // Only row groups are painted as a group; a row directly inside a table has no group box.
+            continue;
+        }
+        // A row group is painted over the cells of its rows, so border spacing between the rows of the
+        // group and between the columns stays visible.
+        for(int group_row = row; group_row < m_grid->rows_count(); group_row++)
+        {
+            const auto& group_row_el = m_grid->row(group_row).el_row;
+            if(!group_row_el || group_row_el->parent() != group)
+            {
+                break;
+            }
+            if(group_row_el->is_visible())
+            {
+                group->src_el()->draw_background(hdc, pos.x, pos.y, clip, cur_clipping, group_row_el);
             }
         }
     }
@@ -624,6 +751,23 @@ litehtml::pixel_t litehtml::render_item_table::get_draw_vertical_offset()
         return m_grid->top_captions_height();
     }
     return 0_px;
+}
+
+bool litehtml::render_item_table_part::for_inline_boxes(
+    const std::function<bool(const position& box, bool first, bool last)>& process) const
+{
+    if(m_paint_boxes.empty())
+    {
+        return false;
+    }
+    for(size_t i = 0; i < m_paint_boxes.size(); i++)
+    {
+        if(!process(m_paint_boxes[i], i == 0, i + 1 == m_paint_boxes.size()))
+        {
+            break;
+        }
+    }
+    return true;
 }
 
 bool litehtml::render_item_table_row::for_inline_boxes(

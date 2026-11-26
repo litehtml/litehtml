@@ -26,6 +26,29 @@ void litehtml::table_grid::add_cell(const std::shared_ptr<render_item>& el)
 
 void litehtml::table_grid::begin_row(const std::shared_ptr<render_item>& row)
 {
+    if(!m_rows.empty())
+    {
+        const auto prev_group = m_rows.back().el_row ? m_rows.back().el_row->parent() : nullptr;
+        const auto row_group  = row ? row->parent() : nullptr;
+        if(prev_group != row_group)
+        {
+            // CSS 2.1 17.5.1: a cell box cannot extend beyond the last row of its row group, so the
+            // rowspans of the group that just ended have to be clipped before the new row is filled.
+            const int last_row = static_cast<int>(m_cells.size()) - 1;
+            for(int r = m_row_group_start; r <= last_row; r++)
+            {
+                for(auto& cell : m_cells[r])
+                {
+                    if(cell.el)
+                    {
+                        cell.rowspan = std::min(cell.rowspan, last_row - r + 1);
+                    }
+                }
+            }
+            m_row_group_start = last_row + 1;
+        }
+    }
+
     std::vector<table_cell> r;
     m_cells.push_back(r);
 
@@ -834,8 +857,9 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
 
 void litehtml::table_grid::clear()
 {
-    m_rows_count = 0;
-    m_cols_count = 0;
+    m_rows_count      = 0;
+    m_cols_count      = 0;
+    m_row_group_start = 0;
     m_cells.clear();
     m_columns.clear();
     m_rows.clear();

@@ -8,16 +8,31 @@
 #include <optional>
 #include <typeinfo>
 
+namespace
+{
+    // CSS 2.1 17.2: the margin properties do not apply to the internal table boxes.
+    bool margins_apply(const litehtml::css_properties& style)
+    {
+        return !litehtml::is_one_of(style.get_display(), litehtml::display_table_cell, litehtml::display_table_row,
+                                    litehtml::display_table_row_group, litehtml::display_table_header_group,
+                                    litehtml::display_table_footer_group, litehtml::display_table_column,
+                                    litehtml::display_table_column_group);
+    }
+} // namespace
+
 litehtml::render_item::render_item(std::shared_ptr<element> _src_el) :
     m_element(std::move(_src_el))
 {
     document::ptr doc = src_el()->get_document();
     auto          fm  = css().get_font_metrics();
 
-    m_margins.left   = doc->to_pixels(src_el()->css().get_margins().left, fm, 0_px);
-    m_margins.right  = doc->to_pixels(src_el()->css().get_margins().right, fm, 0_px);
-    m_margins.top    = doc->to_pixels(src_el()->css().get_margins().top, fm, 0_px);
-    m_margins.bottom = doc->to_pixels(src_el()->css().get_margins().bottom, fm, 0_px);
+    if(margins_apply(css()))
+    {
+        m_margins.left   = doc->to_pixels(src_el()->css().get_margins().left, fm, 0_px);
+        m_margins.right  = doc->to_pixels(src_el()->css().get_margins().right, fm, 0_px);
+        m_margins.top    = doc->to_pixels(src_el()->css().get_margins().top, fm, 0_px);
+        m_margins.bottom = doc->to_pixels(src_el()->css().get_margins().bottom, fm, 0_px);
+    }
 
     m_padding.left   = doc->to_pixels(src_el()->css().get_padding().left, fm, 0_px);
     m_padding.right  = doc->to_pixels(src_el()->css().get_padding().right, fm, 0_px);
@@ -478,11 +493,14 @@ void litehtml::render_item::calc_outlines(pixel_t parent_width)
     m_borders.left  = m_element->css().get_borders().left.width.calc_percent(parent_width);
     m_borders.right = m_element->css().get_borders().right.width.calc_percent(parent_width);
 
-    m_margins.left  = m_element->css().get_margins().left.calc_percent(parent_width);
-    m_margins.right = m_element->css().get_margins().right.calc_percent(parent_width);
+    if(margins_apply(m_element->css()))
+    {
+        m_margins.left  = m_element->css().get_margins().left.calc_percent(parent_width);
+        m_margins.right = m_element->css().get_margins().right.calc_percent(parent_width);
 
-    m_margins.top    = m_element->css().get_margins().top.calc_percent(parent_width);
-    m_margins.bottom = m_element->css().get_margins().bottom.calc_percent(parent_width);
+        m_margins.top    = m_element->css().get_margins().top.calc_percent(parent_width);
+        m_margins.bottom = m_element->css().get_margins().bottom.calc_percent(parent_width);
+    }
 
     m_padding.top    = m_element->css().get_padding().top.calc_percent(parent_width);
     m_padding.bottom = m_element->css().get_padding().bottom.calc_percent(parent_width);
