@@ -50,7 +50,7 @@ bool litehtml::table_grid::is_rowspanned(int r, int c)
     return false;
 }
 
-void litehtml::table_grid::finish()
+void litehtml::table_grid::finish(table_layout layout)
 {
     m_rows_count = static_cast<int>(m_cells.size());
     m_cols_count = 0;
@@ -112,24 +112,110 @@ void litehtml::table_grid::finish()
                     m_rows[row].border_bottom = cell(col, row)->borders.bottom;
                 }
             }
-
-            if(cell(col, row)->el && cell(col, row)->colspan <= 1)
-            {
-                if(!cell(col, row)->el->src_el()->css().get_width().is_predefined() &&
-                   m_columns[col].css_width.is_predefined())
-                {
-                    m_columns[col].css_width = cell(col, row)->el->src_el()->css().get_width();
-                }
-            }
         }
     }
 
-    // The width of a <col> is used when none of the cells in its column specifies one
-    for(int col = 0; col < m_cols_count && col < static_cast<int>(m_column_widths.size()); col++)
+    if(layout == table_layout_fixed)
     {
-        if(m_columns[col].css_width.is_predefined())
+        // CSS 2.1 17.5.2.1: a <col> width wins, then a cell in the first row; later rows
+        // never affect column widths.
+        for(int col = 0; col < m_cols_count && col < static_cast<int>(m_column_widths.size()); col++)
         {
-            m_columns[col].css_width = m_column_widths[col];
+            if(col < static_cast<int>(m_column_widths_from_col.size()) && m_column_widths_from_col[col] &&
+               !m_column_widths[col].is_predefined())
+            {
+                m_columns[col].css_width              = m_column_widths[col];
+                m_columns[col].width_from_col_element = true;
+            }
+        }
+
+        if(m_rows_count)
+        {
+            for(int col = 0; col < m_cols_count; col++)
+            {
+                table_cell* first_row_cell = cell(col, 0);
+                if(!first_row_cell || !first_row_cell->el)
+                {
+                    continue;
+                }
+                const css_length& width = first_row_cell->el->css().get_width();
+                if(width.is_predefined())
+                {
+                    continue;
+                }
+
+                std::vector<int> columns;
+                const int        last_col = std::min(col + first_row_cell->colspan, m_cols_count);
+                for(int c = col; c < last_col; c++)
+                {
+                    if(!m_columns[c].width_from_col_element)
+                    {
+                        columns.push_back(c);
+                    }
+                }
+                if(columns.empty())
+                {
+                    continue;
+                }
+
+                css_length column_width = width;
+                if(columns.size() > 1 && !width.is_expression())
+                {
+                    const auto column_count = static_cast<float>(columns.size());
+                    if(width.has_percentage())
+                    {
+                        column_width.set_value(width.val() / column_count, css_units_percentage);
+                    } else
+                    {
+                        column_width.set_value(width.val() / column_count, width.units());
+                    }
+                }
+
+                const pixel_t offset =
+                    first_row_cell->el->render_offset_width() / pixel_t(static_cast<int>(columns.size()));
+                for(size_t i = 0; i < columns.size(); i++)
+                {
+                    const int c = columns[i];
+                    if(columns.size() > 1 && width.is_expression())
+                    {
+                        // A math expression cannot be divided symbolically; assign it to
+                        // the first unclaimed column and leave the rest auto.
+                        if(i == 0)
+                        {
+                            m_columns[c].css_width        = width;
+                            m_columns[c].css_width_offset = first_row_cell->el->render_offset_width();
+                        }
+                        continue;
+                    }
+                    m_columns[c].css_width        = column_width;
+                    m_columns[c].css_width_offset = offset;
+                }
+            }
+        }
+    } else
+    {
+        for(int col = 0; col < m_cols_count; col++)
+        {
+            for(int row = 0; row < m_rows_count; row++)
+            {
+                if(cell(col, row)->el && cell(col, row)->colspan <= 1)
+                {
+                    if(!cell(col, row)->el->src_el()->css().get_width().is_predefined() &&
+                       m_columns[col].css_width.is_predefined())
+                    {
+                        m_columns[col].css_width = cell(col, row)->el->src_el()->css().get_width();
+                    }
+                }
+            }
+        }
+
+        // The width of a <col> is used when none of the cells in its column specifies one
+        for(int col = 0; col < m_cols_count && col < static_cast<int>(m_column_widths.size()); col++)
+        {
+            if(m_columns[col].css_width.is_predefined())
+            {
+                m_columns[col].css_width = m_column_widths[col];
+            }
         }
     }
 
@@ -308,10 +394,148 @@ void litehtml::table_grid::distribute_width(pixel_t width, int start, int end)
     }
 }
 
+litehtml::pixel_t litehtml::table_grid::calc_fixed_table_width(pixel_t table_width, pixel_t& min_table_width,
+                                                               pixel_t& max_table_width)
+{
+    table_width = std::max(table_width, 0_px);
+
+    std::vector<pixel_t> widths(static_cast<size_t>(m_cols_count), 0_px);
+    std::vector<float>   percents(static_cast<size_t>(m_cols_count), 0.0f);
+    pixel_t              fixed_total   = 0_px;
+    float                percent_total = 0.0f;
+    int                  auto_count    = 0;
+
+    // Percentage as a number (1 for 1%), resolved against the used table width.
+    const auto percentage_of = [table_width](const css_length& length) {
+        if(length.is_predefined() || !length.has_percentage())
+        {
+            return 0.0f;
+        }
+        if(!length.is_expression())
+        {
+            return length.val();
+        }
+        return table_width > 0_px ? length.calc_percent(table_width).value() / table_width.value() * 100 : 0.0f;
+    };
+
+    for(int col = 0; col < m_cols_count; col++)
+    {
+        const auto& column = m_columns[col];
+        if(column.css_width.is_predefined())
+        {
+            auto_count++;
+        } else if(column.css_width.has_percentage())
+        {
+            percents[col]  = percentage_of(column.css_width);
+            percent_total += percents[col];
+            fixed_total   += column.css_width_offset;
+        } else
+        {
+            widths[col]  = column.css_width.calc_percent(0_px) + column.css_width_offset;
+            fixed_total += widths[col];
+        }
+    }
+
+    // Pixel widths can force the table wider; percentage widths are resolved against
+    // the resulting used width and never stretch it.
+    const pixel_t used_width = std::max(table_width, fixed_total);
+    pixel_t       available  = used_width - fixed_total;
+
+    if(percent_total > 0.0f)
+    {
+        // With no auto columns (or when percentages already exceed the space left by
+        // pixel columns) the percentage columns fill the available space.
+        const bool fill_available = auto_count == 0 || available <= used_width * (percent_total / 100.0f);
+        pixel_t    distributed    = 0_px;
+        for(int col = 0; col < m_cols_count; col++)
+        {
+            if(percents[col] <= 0.0f)
+            {
+                continue;
+            }
+            const pixel_t share =
+                fill_available ? available * (percents[col] / percent_total) : used_width * (percents[col] / 100.0f);
+            widths[col]  = share + m_columns[col].css_width_offset;
+            distributed += share;
+        }
+        available = fill_available ? 0_px : std::max(available - distributed, 0_px);
+    }
+
+    if(auto_count)
+    {
+        const pixel_t share       = available / pixel_t(auto_count);
+        pixel_t       distributed = 0_px;
+        int           last_auto   = -1;
+        for(int col = 0; col < m_cols_count; col++)
+        {
+            if(m_columns[col].css_width.is_predefined())
+            {
+                widths[col]  = share;
+                distributed += share;
+                last_auto    = col;
+            }
+        }
+        if(last_auto >= 0)
+        {
+            widths[last_auto] += available - distributed;
+        }
+    } else if(percent_total <= 0.0f && fixed_total > 0_px && fixed_total < used_width)
+    {
+        // All columns have pixel widths: spread the extra space proportionally, as
+        // browsers do, so the columns fill the table.
+        pixel_t distributed = 0_px;
+        int     last_fixed  = -1;
+        for(int col = 0; col < m_cols_count; col++)
+        {
+            if(!m_columns[col].css_width.is_predefined() && !m_columns[col].css_width.has_percentage())
+            {
+                widths[col]  = used_width * (widths[col] / fixed_total);
+                distributed += widths[col];
+                last_fixed   = col;
+            }
+        }
+        if(last_fixed >= 0)
+        {
+            widths[last_fixed] += used_width - distributed;
+        }
+    }
+
+    pixel_t total = 0_px;
+    for(int col = 0; col < m_cols_count; col++)
+    {
+        total += widths[col];
+    }
+    // Close rounding gaps so the column sum matches the table's content width.
+    if(m_cols_count > 0 && total != used_width)
+    {
+        widths.back() += used_width - total;
+        if(widths.back() < 0_px)
+        {
+            widths.back() = 0_px;
+        }
+    }
+
+    for(int col = 0; col < m_cols_count; col++)
+    {
+        m_columns[col].width = widths[col];
+    }
+
+    min_table_width = used_width;
+    max_table_width = used_width;
+    return used_width;
+}
+
 litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> block_width, bool is_auto,
                                                          table_layout layout, pixel_t& min_table_width,
                                                          pixel_t& max_table_width)
 {
+    // Fixed layout ignores cell content; intrinsic sizing and auto-width tables fall
+    // back to the automatic algorithm (CSS 2.1 17.5.2.1).
+    if(layout == table_layout_fixed && block_width.has_value() && !is_auto)
+    {
+        return calc_fixed_table_width(*block_width, min_table_width, max_table_width);
+    }
+
     // In automatic table layout numeric cell widths are preferences, not unshrinkable content minima.
     // Keep the measured content floor separate so a constrained table can shrink
     // these columns without overflowing their contents. Fixed table layout keeps them as minima.

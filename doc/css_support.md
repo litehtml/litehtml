@@ -131,6 +131,7 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `border-radius` | ✅ | length/% (1–4 / 1–4) | 0 |
 | `border-collapse` | ✅ | 2 | ~14 |
 | `border-spacing` | ✅ | length{1,2} | ~53 |
+| `table-layout` | ✅ | 2 | fixed-table-layout tests |
 | `outline` (+ `outline-width/style/color/offset`) | ✅ | see below | ~15 |
 | `box-shadow` (+ `box-shadow-color/offset/blur/spread/position`) | ✅ | see below | box-shadow tests |
 | `color` | ✅ | any color | ~950 |
@@ -153,7 +154,7 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `cursor` | ⚠️ | any | ~10 |
 | `appearance` | ❌ | 16 | 0 |
 
-Properties **not recognized at all** (silently ignored by the parser): `letter-spacing`, `word-spacing`, `table-layout`, `empty-cells`, `direction`,
+Properties **not recognized at all** (silently ignored by the parser): `letter-spacing`, `word-spacing`, `empty-cells`, `direction`,
 `unicode-bidi`, `quotes`, `text-shadow`, `opacity`, `transform`,
 `transition`, `animation`, `columns`, `column-*`, `filter`, `clip-path`,
 `object-fit` … (everything else not listed above).
@@ -623,6 +624,27 @@ back to laying items out vertically.
 ---
 
 ### Table
+
+#### `table-layout`
+✅ Supported — `auto`, `fixed`.
+
+`fixed` implements the CSS 2.1 §17.5.2.1 algorithm: a `<col>` width sets the
+column, otherwise a non-`auto` width on a cell in the first row does (`colspan`
+cells divide their width over the spanned columns), and the remaining columns
+share the leftover table width equally. Later rows never affect column widths.
+Pixel column widths can make the table wider than its specified width;
+percentage columns resolve against the table width and are scaled when they
+together exceed the available space. Content that does not fit a fixed column
+overflows or wraps according to the cell's own `overflow`/`white-space`.
+An auto-width table falls back to the automatic layout algorithm.
+
+Tests: [css21/fixed-table-layout-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-001.htm),
+[css21/fixed-table-layout-005.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-005.htm),
+[css21/fixed-table-layout-007.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-007.htm),
+[table-layout-fixed-first-row.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-first-row.htm),
+[table-layout-fixed-col-vs-cell.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-col-vs-cell.htm),
+[table-layout-fixed-percent.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-percent.htm),
+[table-layout-fixed-overflow-table.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-overflow-table.htm).
 
 #### `caption-side`
 ✅ Supported — `top`, `bottom` (verified: the caption moves).
