@@ -104,6 +104,9 @@ namespace litehtml
 
         {_outline_,         {_outline_width_, _outline_style_, _outline_color_}                                       },
 
+        {_box_shadow_,
+         {_box_shadow_color_, _box_shadow_offset_, _box_shadow_blur_, _box_shadow_spread_, _box_shadow_position_}     },
+
         {_flex_,            {_flex_grow_, _flex_shrink_, _flex_basis_}                                                },
         {_flex_flow_,       {_flex_direction_, _flex_wrap_}                                                           },
 
@@ -583,6 +586,113 @@ namespace litehtml
         // outline-offset = <length>  https://drafts.csswg.org/css-ui/#outline-offset
         case _outline_offset_:
             return add_length_property(name, val, css_values(), f_length, important);
+
+            //  =============================  BOX SHADOW  =============================
+
+        // box-shadow = <spread-shadow>#; see parse_box_shadow.
+        // https://drafts.csswg.org/css-backgrounds/#box-shadow
+        case _box_shadow_:
+            parse_box_shadow(value, important, container);
+            break;
+
+        // box-shadow-color = <color>#  https://drafts.csswg.org/css-backgrounds/#box-shadow-color
+        case _box_shadow_color_:
+            {
+                color_vector colors;
+                auto         layers = parse_comma_separated_list(value);
+                bool         valid  = !layers.empty();
+                for(const auto& layer : layers)
+                {
+                    web_color color;
+                    if(layer.size() != 1 || !parse_color(layer[0], color, container))
+                    {
+                        valid = false;
+                        break;
+                    }
+                    colors.push_back(color);
+                }
+                if(valid)
+                {
+                    add_parsed_property(name, property_value(colors, important));
+                }
+            }
+            break;
+
+        // box-shadow-offset = none | <length>{2}  (per shadow)
+        // https://drafts.csswg.org/css-backgrounds/#box-shadow-offset
+        case _box_shadow_offset_:
+            {
+                size_vector offsets;
+                if(ident == "none")
+                {
+                    add_parsed_property(name, property_value(offsets, important));
+                    break;
+                }
+                auto layers = parse_comma_separated_list(value);
+                bool valid  = !layers.empty();
+                for(const auto& layer : layers)
+                {
+                    css_length offset[2];
+                    if(!parse_two_lengths(layer, offset, f_length))
+                    {
+                        valid = false;
+                        break;
+                    }
+                    offsets.emplace_back(offset[0], offset[1]);
+                }
+                if(valid)
+                {
+                    add_parsed_property(name, property_value(offsets, important));
+                }
+            }
+            break;
+
+        // box-shadow-blur = <length [0,∞]>#  https://drafts.csswg.org/css-backgrounds/#box-shadow-blur
+        case _box_shadow_blur_:
+        case _box_shadow_spread_:
+            {
+                const int     options = name == _box_shadow_blur_ ? f_length | f_positive : f_length;
+                length_vector lengths;
+                auto          layers = parse_comma_separated_list(value);
+                bool          valid  = !layers.empty();
+                for(const auto& layer : layers)
+                {
+                    css_length length;
+                    if(layer.size() != 1 || !length.from_token(layer[0], options))
+                    {
+                        valid = false;
+                        break;
+                    }
+                    lengths.push_back(length);
+                }
+                if(valid)
+                {
+                    add_parsed_property(name, property_value(lengths, important));
+                }
+            }
+            break;
+
+        // box-shadow-position = [ outset | inset ]#  https://drafts.csswg.org/css-backgrounds/#box-shadow-position
+        case _box_shadow_position_:
+            {
+                int_vector positions;
+                auto       layers = parse_comma_separated_list(value);
+                bool       valid  = !layers.empty();
+                for(const auto& layer : layers)
+                {
+                    if(layer.size() != 1 || !is_one_of(layer[0].ident(), "outset", "inset"))
+                    {
+                        valid = false;
+                        break;
+                    }
+                    positions.push_back(layer[0].ident() == "inset" ? 1 : 0);
+                }
+                if(valid)
+                {
+                    add_parsed_property(name, property_value(positions, important));
+                }
+            }
+            break;
 
             //  =============================  LIST  =============================
 
@@ -1167,6 +1277,83 @@ namespace litehtml
         add_parsed_property(_outline_width_, property_value(width, important));
         add_parsed_property(_outline_style_, property_value(style, important));
         add_parsed_property(_outline_color_, property_value(color, important));
+    }
+
+    void style::parse_box_shadow(const css_token_vector& tokens, bool important, document_container* container)
+    {
+        size_vector   offsets;
+        length_vector blurs;
+        length_vector spreads;
+        color_vector  colors;
+        int_vector    positions;
+
+        auto layers = parse_comma_separated_list(tokens);
+        if(layers.empty())
+        {
+            return;
+        }
+
+        // `none` resets every longhand.
+        if(layers.size() == 1 && layers[0].size() == 1 && layers[0][0].ident() == "none")
+        {
+            add_parsed_property(_box_shadow_offset_, property_value(offsets, important));
+            add_parsed_property(_box_shadow_blur_, property_value(blurs, important));
+            add_parsed_property(_box_shadow_spread_, property_value(spreads, important));
+            add_parsed_property(_box_shadow_color_, property_value(colors, important));
+            add_parsed_property(_box_shadow_position_, property_value(positions, important));
+            return;
+        }
+
+        for(const auto& layer : layers)
+        {
+            css_length lengths[4];
+            int        count = 0;
+            web_color  color;
+            bool       has_color    = false;
+            bool       inset        = false;
+            bool       has_position = false;
+
+            for(const auto& token : layer)
+            {
+                if(!has_position && token.type == IDENT && is_one_of(token.ident(), "outset", "inset"))
+                {
+                    inset        = token.ident() == "inset";
+                    has_position = true;
+                    continue;
+                }
+                // The third length is the blur radius, which may not be negative.
+                css_length length;
+                if(count < 4 && length.from_token(token, count == 2 ? f_length | f_positive : f_length))
+                {
+                    lengths[count++] = length;
+                    continue;
+                }
+                if(!has_color && parse_color(token, color, container))
+                {
+                    has_color = true;
+                    continue;
+                }
+                // An invalid shadow invalidates the whole declaration.
+                return;
+            }
+
+            if(count < 2)
+            {
+                return;
+            }
+
+            offsets.emplace_back(lengths[0], lengths[1]);
+            blurs.emplace_back(count > 2 ? lengths[2] : css_length());
+            spreads.emplace_back(count > 3 ? lengths[3] : css_length());
+            colors.push_back(has_color ? color : web_color::current_color);
+            positions.push_back(inset ? 1 : 0);
+        }
+
+        add_parsed_property(_box_shadow_offset_, property_value(offsets, important));
+        add_parsed_property(_box_shadow_blur_, property_value(blurs, important));
+        add_parsed_property(_box_shadow_spread_, property_value(spreads, important));
+        add_parsed_property(_box_shadow_color_, property_value(colors, important));
+        add_parsed_property(_box_shadow_position_, property_value(positions, important));
     }
 
     bool parse_length(const css_token& tok, css_length& length, int options, css_values keywords)

@@ -300,6 +300,7 @@
   <ItemGroup>
     <ClInclude Include="include\litehtml\background.h" />
     <ClInclude Include="include\litehtml\borders.h" />
+    <ClInclude Include="include\litehtml\box_shadow.h" />
     <ClInclude Include="include\litehtml\clipping.h" />
     <ClInclude Include="include\litehtml\box.h" />
     <ClInclude Include="include\litehtml\css_length.h" />

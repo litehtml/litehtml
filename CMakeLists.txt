@@ -129,6 +129,7 @@ set(HEADER_LITEHTML
 	include/litehtml.h
 	include/litehtml/background.h
 	include/litehtml/borders.h
+	include/litehtml/box_shadow.h
 	include/litehtml/clipping.h
 	include/litehtml/codepoint.h
 	include/litehtml/css_length.h

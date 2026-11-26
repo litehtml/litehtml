@@ -73,6 +73,9 @@ namespace litehtml
 
         _outline_, _outline_width_, _outline_style_, _outline_color_, _outline_offset_,
 
+        _box_shadow_, _box_shadow_color_, _box_shadow_offset_, _box_shadow_blur_, _box_shadow_spread_,
+        _box_shadow_position_,
+
         _list_style_, _list_style_type_, _list_style_position_, _list_style_image_, _list_style_image_baseurl_,
 
         _margin_, _margin_top_, _margin_right_, _margin_bottom_, _margin_left_,

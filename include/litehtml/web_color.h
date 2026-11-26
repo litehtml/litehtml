@@ -1,6 +1,8 @@
 #ifndef LITEHTML_WEB_COLOR_H
 #define LITEHTML_WEB_COLOR_H
 
+#include <vector>
+
 #include "css_tokenizer.h"
 #include "types.h"
 
@@ -46,6 +48,8 @@ namespace litehtml
         web_color   darken(double fraction) const;
         std::string to_string() const;
     };
+
+    using color_vector = std::vector<web_color>;
 
     bool parse_color(const css_token& token, web_color& color, document_container* container);
 } // namespace litehtml

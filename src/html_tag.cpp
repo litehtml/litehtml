@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 
 #include "html.h"
@@ -1124,6 +1125,47 @@ namespace litehtml
         get_document()->container()->draw_borders(hdc, bdr, draw_pos, false, clip_chain);
     }
 
+    // The distance an outset shadow can paint outside the border box.
+    static pixel_t box_shadow_reach(const box_shadow_vector& shadows)
+    {
+        pixel_t reach = 0_px;
+        for(const auto& shadow : shadows)
+        {
+            if(shadow.inset)
+            {
+                continue;
+            }
+            // Containers paint the blur up to roughly 1.5x the blur radius plus two pixels.
+            const pixel_t extent =
+                pixel_t(std::fabs(shadow.blur.val()) * 1.5f + 2.f + std::max(0.f, shadow.spread.val())) +
+                pixel_t(std::max(std::fabs(shadow.x.val()), std::fabs(shadow.y.val())));
+            reach = std::max(reach, extent);
+        }
+        return reach;
+    }
+
+    void litehtml::html_tag::draw_box_shadows(uint_ptr hdc, const position& box, const border_radiuses& radius,
+                                              bool inset, const clipping* clip_chain) const
+    {
+        const auto& shadows = m_css->get_box_shadows();
+        // The first shadow in the list is painted on top, so draw the list back to front.
+        for(auto it = shadows.rbegin(); it != shadows.rend(); ++it)
+        {
+            if(it->inset != inset || it->color.alpha == 0)
+            {
+                continue;
+            }
+            shadow_paint shadow;
+            shadow.x      = pixel_t(it->x.val());
+            shadow.y      = pixel_t(it->y.val());
+            shadow.blur   = pixel_t(std::max(0.f, it->blur.val()));
+            shadow.spread = pixel_t(it->spread.val());
+            shadow.color  = it->color;
+            shadow.inset  = it->inset;
+            get_document()->container()->draw_box_shadow(hdc, box, radius, shadow, clip_chain);
+        }
+    }
+
     void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
                                              const clipping* clip_chain, const std::shared_ptr<render_item>& ri)
     {
@@ -1135,7 +1177,11 @@ namespace litehtml
             box.x        += x;
             box.y        += y;
 
-            if(box.does_intersect(clip))
+            const pixel_t reach      = box_shadow_reach(m_css->get_box_shadows());
+            position      reach_box  = box;
+            reach_box               += margins{reach, reach, reach, reach};
+
+            if(reach_box.does_intersect(clip))
             {
                 content_box  = box;
                 content_box -= ri->get_borders();
@@ -1172,6 +1218,11 @@ namespace litehtml
                     bdr.right = m_css->get_borders().right;
                 }
 
+                position shadow_box = box;
+                shadow_box.round();
+                border_radiuses shadow_radius = bdr.radius.calc_percents(box.width, box.height);
+                draw_box_shadows(hdc, shadow_box, shadow_radius, false, clip_chain);
+
                 if(bg)
                 {
                     int num_layers = bg->get_layers_number();
@@ -1193,6 +1244,13 @@ namespace litehtml
                         bg->draw_layer(hdc, i, layer, get_document()->container(), clip_chain);
                     }
                 }
+                position padding_box  = shadow_box;
+                padding_box          -= ri->get_borders();
+                padding_box.round();
+                border_radiuses inner_radius  = shadow_radius;
+                inner_radius                 -= ri->get_borders();
+                draw_box_shadows(hdc, padding_box, inner_radius, true, clip_chain);
+
                 if(bdr.is_visible())
                 {
                     borders b = bdr;
@@ -1215,11 +1273,21 @@ namespace litehtml
             border_box          += ri->get_paddings();
             border_box          += ri->get_borders();
 
-            if(border_box.does_intersect(clip) || is_root())
+            const pixel_t reach  = box_shadow_reach(m_css->get_box_shadows());
+            position      ink    = border_box;
+            ink                 += margins{reach, reach, reach, reach};
+
+            if(ink.does_intersect(clip) || is_root())
             {
                 auto v_offset  = ri->get_draw_vertical_offset();
                 pos.y         += v_offset;
                 pos.height    -= v_offset;
+
+                position shadow_box = border_box;
+                shadow_box.round();
+                border_radiuses shadow_radius =
+                    m_css->get_borders().radius.calc_percents(shadow_box.width, shadow_box.height);
+                draw_box_shadows(hdc, shadow_box, shadow_radius, false, clip_chain);
 
                 const background* bg = get_background();
                 if(bg)
@@ -1247,6 +1315,13 @@ namespace litehtml
                         bg->draw_layer(hdc, i, layer, get_document()->container(), clip_chain);
                     }
                 }
+
+                position padding_box  = shadow_box;
+                padding_box          -= ri->get_borders();
+                padding_box.round();
+                border_radiuses inner_radius  = shadow_radius;
+                inner_radius                 -= ri->get_borders();
+                draw_box_shadows(hdc, padding_box, inner_radius, true, clip_chain);
 
                 borders bdr = m_css->get_borders();
                 if(bdr.is_visible())

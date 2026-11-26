@@ -2,6 +2,7 @@
 #define LITEHTML_H
 
 #include <litehtml/html.h>
+#include <litehtml/box_shadow.h>
 #include <litehtml/controls.h>
 #include <litehtml/document.h>
 #include <litehtml/html_tag.h>

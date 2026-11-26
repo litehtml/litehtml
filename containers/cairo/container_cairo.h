@@ -31,6 +31,8 @@ class container_cairo : public litehtml::document_container
                              const litehtml::clipping*                         clip) override;
     void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos,
                       bool root, const litehtml::clipping* clip) override;
+    void draw_box_shadow(litehtml::uint_ptr hdc, const litehtml::position& box, const litehtml::border_radiuses& radius,
+                         const litehtml::shadow_paint& shadow, const litehtml::clipping* clip) override;
     void draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker,
                           const litehtml::clipping* clip) override;
     void draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color& color,
