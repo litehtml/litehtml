@@ -109,6 +109,16 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     auto cell_height = [&](int col, int row) {
         const table_cell* cell   = m_grid->cell(col, row);
         pixel_t           height = cell->el->height();
+        // On a table cell the height property is a minimum row height, not a
+        // replacement for the content height.
+        const auto& css_height = cell->el->css().get_height();
+        if(!css_height.is_predefined() && !css_height.has_percentage())
+        {
+            const pixel_t specified =
+                src_el()->get_document()->to_pixels(css_height, cell->el->css().get_font_metrics(), 0_px) +
+                cell->el->render_offset_height();
+            height = std::max(height, specified);
+        }
         if(collapse)
         {
             const margins& collapsed = m_grid->collapsed_borders(col, row);

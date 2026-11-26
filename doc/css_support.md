@@ -216,6 +216,10 @@ Percentage heights of in-flow boxes use automatic sizing when their containing b
 indefinite. In quirks mode, eligible auto-height blocks can be skipped, but flex containers remain
 boundaries. Definite percentage heights, including zero, are applied.
 
+On a table cell, `height` is a minimum row height: the row grows to the declared height but never
+shrinks below the cell's content. This also applies to empty cells, whose backgrounds and borders
+are painted at the declared height.
+
 Tests: [table-1-width.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-1-width.htm),
 [table-2-width.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-2-width.htm),
 [css21/width-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/width-001.htm),
@@ -639,8 +643,11 @@ overflows or wraps according to the cell's own `overflow`/`white-space`.
 An auto-width table falls back to the automatic layout algorithm.
 
 Tests: [css21/fixed-table-layout-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-001.htm),
-[css21/fixed-table-layout-005.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-005.htm),
-[css21/fixed-table-layout-007.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-007.htm),
+[css21/fixed-table-layout-004.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-004.htm),
+[css21/fixed-table-layout-006.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-006.htm),
+[css21/fixed-table-layout-010.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-010.htm),
+[css21/fixed-table-layout-013.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-013.htm),
+[css21/fixed-table-layout-016.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/fixed-table-layout-016.htm),
 [table-layout-fixed-first-row.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-first-row.htm),
 [table-layout-fixed-col-vs-cell.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-col-vs-cell.htm),
 [table-layout-fixed-percent.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-percent.htm),
