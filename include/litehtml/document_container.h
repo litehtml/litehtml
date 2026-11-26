@@ -5,6 +5,7 @@
 #include "web_color.h"
 #include "background.h"
 #include "borders.h"
+#include "box_shadow.h"
 #include "clipping.h"
 #include "controls.h"
 #include "element.h"
@@ -64,6 +65,16 @@ namespace litehtml
                                          const litehtml::clipping*               clip)                           = 0;
         virtual void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders,
                                   const litehtml::position& draw_pos, bool root, const litehtml::clipping* clip) = 0;
+
+        // Draws one box shadow. `box` is the border box for outset shadows and the padding box for
+        // inset shadows; `radius` is the border radius of that box. `shadow` holds pixel offsets.
+        // An outset shadow paints outside the rounded `box` only and must be clipped out of it;
+        // an inset shadow paints inside the rounded `box`. Both must honour `clip`.
+        virtual void draw_box_shadow(litehtml::uint_ptr /*hdc*/, const litehtml::position& /*box*/,
+                                     const litehtml::border_radiuses& /*radius*/,
+                                     const litehtml::shadow_paint& /*shadow*/, const litehtml::clipping* /*clip*/)
+        {
+        }
 
         // Draw the dropdown marker of a one-line select (a down-pointing chevron) inside pos.
         virtual void draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,

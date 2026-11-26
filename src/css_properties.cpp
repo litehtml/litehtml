@@ -1,5 +1,6 @@
 #include "html.h"
 #include "css_properties.h"
+#include <algorithm>
 #include <cmath>
 #include "document.h"
 #include "html_tag.h"
@@ -360,8 +361,62 @@ void litehtml::css_properties::compute(const html_tag* el, const document::ptr& 
     m_order = el->get_property<int>(_order_, false, 0, offset(m_order));
 
     compute_background(el, doc);
+    compute_box_shadow(el, doc);
     compute_flex(el, doc);
     compute_grid(el, doc);
+}
+
+void litehtml::css_properties::compute_box_shadow(const html_tag* el, const document::ptr& doc)
+{
+    m_box_shadow_offsets = el->get_property<size_vector>(_box_shadow_offset_, false, {}, offset(m_box_shadow_offsets));
+    m_box_shadow_blurs   = el->get_property<length_vector>(_box_shadow_blur_, false, {}, offset(m_box_shadow_blurs));
+    m_box_shadow_spreads =
+        el->get_property<length_vector>(_box_shadow_spread_, false, {}, offset(m_box_shadow_spreads));
+    m_box_shadow_colors = el->get_property<color_vector>(_box_shadow_color_, false, {}, offset(m_box_shadow_colors));
+    m_box_shadow_positions =
+        el->get_property<int_vector>(_box_shadow_position_, false, {}, offset(m_box_shadow_positions));
+
+    m_box_shadows.clear();
+
+    // The longhand lists are matched by index; shorter lists repeat, as for other CSS lists.
+    // Offsets are mandatory: without them the element has no shadow.
+    const size_t count = m_box_shadow_offsets.size();
+    for(size_t i = 0; i < count; i++)
+    {
+        box_shadow shadow;
+        shadow.x = m_box_shadow_offsets[i].width;
+        shadow.y = m_box_shadow_offsets[i].height;
+        if(!m_box_shadow_blurs.empty())
+        {
+            shadow.blur = m_box_shadow_blurs[i % m_box_shadow_blurs.size()];
+        }
+        if(!m_box_shadow_spreads.empty())
+        {
+            shadow.spread = m_box_shadow_spreads[i % m_box_shadow_spreads.size()];
+        }
+        if(!m_box_shadow_colors.empty())
+        {
+            shadow.color = m_box_shadow_colors[i % m_box_shadow_colors.size()];
+        }
+        if(!m_box_shadow_positions.empty())
+        {
+            shadow.inset = m_box_shadow_positions[i % m_box_shadow_positions.size()] != 0;
+        }
+
+        doc->cvt_units(shadow.x, m_font_metrics, 0_px);
+        doc->cvt_units(shadow.y, m_font_metrics, 0_px);
+        doc->cvt_units(shadow.blur, m_font_metrics, 0_px);
+        doc->cvt_units(shadow.spread, m_font_metrics, 0_px);
+        if(shadow.blur.val() < 0)
+        {
+            shadow.blur = 0;
+        }
+        if(shadow.color.is_current_color)
+        {
+            shadow.color = m_color;
+        }
+        m_box_shadows.push_back(shadow);
+    }
 }
 
 // used for all color properties except `color` (color:currentcolor is converted to color:inherit during parsing)

@@ -20,9 +20,10 @@ namespace litehtml
     {
     }; // "inherit" was specified as the value of this property
 
-    struct property_value : variant<invalid, inherit, int, int_vector, css_length, length_vector, float, web_color,
-                                    std::vector<image>, std::string, std::vector<std::string>, size_vector,
-                                    css_token_vector, grid_track_list, grid_track_size, grid_line, grid_template_areas>
+    struct property_value
+        : variant<invalid, inherit, int, int_vector, css_length, length_vector, float, web_color, color_vector,
+                  std::vector<image>, std::string, std::vector<std::string>, size_vector, css_token_vector,
+                  grid_track_list, grid_track_size, grid_line, grid_template_areas>
     {
         bool                     m_important = false;
         bool                     m_has_var   = false; // css_token_vector, parsing is delayed because of var()
@@ -99,6 +100,7 @@ namespace litehtml
                                document_container* container);
         void parse_border_radius(const css_token_vector& tokens, bool important);
         void parse_outline(const css_token_vector& tokens, bool important, document_container* container);
+        void parse_box_shadow(const css_token_vector& tokens, bool important, document_container* container);
 
         bool parse_list_style_image(const css_token& tok, std::string& url);
         void parse_list_style(const css_token_vector& tokens, const std::string& baseurl, bool important);

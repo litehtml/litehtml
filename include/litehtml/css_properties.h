@@ -4,6 +4,7 @@
 #include "string_id.h"
 #include "background.h"
 #include "borders.h"
+#include "box_shadow.h"
 #include "css_margins.h"
 #include "css_grid.h"
 #include "css_offsets.h"
@@ -66,6 +67,12 @@ namespace litehtml
         std::string           m_list_style_image;
         std::string           m_list_style_image_baseurl;
         background            m_bg;
+        box_shadow_vector     m_box_shadows;
+        size_vector           m_box_shadow_offsets;
+        length_vector         m_box_shadow_blurs;
+        length_vector         m_box_shadow_spreads;
+        color_vector          m_box_shadow_colors;
+        int_vector            m_box_shadow_positions;
         uint_ptr              m_font = 0;
         font_description      m_font_description;
         css_length            m_font_size = 0;
@@ -122,6 +129,7 @@ namespace litehtml
 
         void      compute_font(const html_tag* el, const std::shared_ptr<document>& doc);
         void      compute_background(const html_tag* el, const std::shared_ptr<document>& doc);
+        void      compute_box_shadow(const html_tag* el, const std::shared_ptr<document>& doc);
         void      compute_flex(const html_tag* el, const std::shared_ptr<document>& doc);
         void      compute_grid(const html_tag* el, const std::shared_ptr<document>& doc);
         web_color get_color_property(const html_tag* el, string_id name, bool inherited, web_color default_value,
@@ -188,6 +196,8 @@ namespace litehtml
 
         const css_borders& get_borders() const;
         void               set_borders(const css_borders& mCssBorders);
+
+        const box_shadow_vector& get_box_shadows() const;
 
         const css_border& get_outline() const;
         const css_length& get_outline_offset() const;
@@ -514,6 +524,11 @@ namespace litehtml
     inline void css_properties::set_borders(const css_borders& mCssBorders)
     {
         m_css_borders = mCssBorders;
+    }
+
+    inline const box_shadow_vector& css_properties::get_box_shadows() const
+    {
+        return m_box_shadows;
     }
 
     inline const css_border& css_properties::get_outline() const

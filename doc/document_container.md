@@ -22,6 +22,7 @@ public:
     virtual void                draw_radial_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient, const litehtml::clipping* clip) = 0;
     virtual void                draw_conic_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient, const litehtml::clipping* clip) = 0;
     virtual void                draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root, const litehtml::clipping* clip) = 0;
+    virtual void                draw_box_shadow(litehtml::uint_ptr hdc, const litehtml::position& box, const litehtml::border_radiuses& radius, const litehtml::shadow_paint& shadow, const litehtml::clipping* clip) {}
 
     virtual void                set_caption(const char* caption) = 0;
     virtual void                set_base_url(const char* base_url) = 0;
@@ -76,6 +77,7 @@ Below is the list of member functions you have to implement:
   - [draw_radial_gradient](#draw_radial_gradient)
   - [draw_conic_gradient](#draw_conic_gradient)
   - [draw_borders](#draw_borders)
+  - [draw_box_shadow](#draw_box_shadow)
 
 3. **Image Handling**
   - [load_image](#load_image)
@@ -386,6 +388,33 @@ virtual void draw_borders(uint_ptr hdc, const css_borders& borders, const liteht
 ```
 
 Draw the element borders here. The parameter ```root``` is ```true``` if you have to draw the borders for the root element (usually this is ```<html>```).
+
+### draw_box_shadow
+```cpp
+virtual void draw_box_shadow(uint_ptr hdc, const litehtml::position& box, const litehtml::border_radiuses& radius, const litehtml::shadow_paint& shadow, const litehtml::clipping* clip);
+```
+
+Draws one `box-shadow` (CSS example: `box-shadow: 4px 4px 8px 2px rgba(0, 0, 0, 0.4);`). This function has a default empty implementation, so containers that do not support shadows keep working.
+
+litehtml calls this once per shadow, back to front (the first shadow in the CSS list is painted last, on top). Outset shadows are drawn before the element background; inset shadows are drawn after it and before the borders.
+
+* `box` - the border box for an outset shadow, or the padding box for an inset shadow.
+* `radius` - the border radius of `box`.
+* `shadow` - the shadow parameters in pixels:
+
+```cpp
+struct shadow_paint
+{
+    pixel_t   x;      // horizontal offset
+    pixel_t   y;      // vertical offset
+    pixel_t   blur;   // blur radius (>= 0)
+    pixel_t   spread;
+    web_color color;
+    bool      inset;
+};
+```
+
+An outset shadow is painted outside `box` only: it must be clipped out of the rounded `box` (the area behind the element stays unpainted), while still honouring `clip`. An inset shadow is painted inside `box` and must be clipped to the rounded `box`.
 
 ### set_caption
 ```cpp

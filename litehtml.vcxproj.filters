@@ -244,6 +244,9 @@
     <ClInclude Include="include\litehtml\borders.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="include\litehtml\box_shadow.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="include\litehtml\clipping.h">
       <Filter>Header Files</Filter>
     </ClInclude>

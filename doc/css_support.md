@@ -129,6 +129,7 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `border-collapse` | ✅ | 2 | ~14 |
 | `border-spacing` | ✅ | length{1,2} | ~53 |
 | `outline` (+ `outline-width/style/color/offset`) | ✅ | see below | ~15 |
+| `box-shadow` (+ `box-shadow-color/offset/blur/spread/position`) | ✅ | see below | box-shadow tests |
 | `color` | ✅ | any color | ~950 |
 | `font` (+ `font-family/-size/-style/-weight`) | ✅ | see below | ~225 |
 | `font-variant` | ❌ | 2 | — |
@@ -150,7 +151,7 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `appearance` | ❌ | 16 | 0 |
 
 Properties **not recognized at all** (silently ignored by the parser): `letter-spacing`, `word-spacing`, `table-layout`, `empty-cells`, `direction`,
-`unicode-bidi`, `quotes`, `text-shadow`, `box-shadow`, `opacity`, `transform`,
+`unicode-bidi`, `quotes`, `text-shadow`, `opacity`, `transform`,
 `transition`, `animation`, `columns`, `column-*`, `filter`, `clip-path`,
 `object-fit` … (everything else not listed above).
 
@@ -393,6 +394,29 @@ Tests: [outline-basic.htm](https://github.com/litehtml/litehtml-tests/blob/main/
 [focus-button-mouse.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-button-mouse.htm),
 [focus-link-keyboard.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-link-keyboard.htm),
 [focus-checkbox-keyboard.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/focus-checkbox-keyboard.htm).
+
+#### `box-shadow` (shorthand) and `box-shadow-color/offset/blur/spread/position`
+✅ Supported — `<spread-shadow>#`, i.e. a comma-separated list of
+`<color>? && [<length>{2} <length [0,∞]>? <length>?] && <outset|inset>?`.
+The longhands accept comma-separated lists as well; `box-shadow-offset` is a list of length pairs,
+`box-shadow-blur`/`box-shadow-spread` are length lists, `box-shadow-color` is a color list and
+`box-shadow-position` is a list of `outset`/`inset`. The lists are matched by index and shorter
+lists repeat. An omitted color is `currentColor`; an omitted blur/spread is zero.
+`none` clears the list.
+
+Outset shadows paint behind the element's background and outside its border box only (they are
+clipped out of the border box, so transparent elements do not show the shadow through themselves);
+inset shadows paint above the background and below the borders. Shadows follow `border-radius`, do
+not affect layout, and are drawn by `document_container::draw_box_shadow` (blur is approximated by
+a triple box blur in the cairo container).
+
+Tests: [box-shadow/basic.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/box-shadow/basic.htm),
+[box-shadow/clip-outside.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/box-shadow/clip-outside.htm),
+[box-shadow/spread-radius.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/box-shadow/spread-radius.htm),
+[box-shadow/longhands.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/box-shadow/longhands.htm),
+[box-shadow/inset.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/box-shadow/inset.htm),
+[box-shadow/multiple.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/box-shadow/multiple.htm),
+[box-shadow/none-invalid.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/box-shadow/none-invalid.htm).
 
 ---
 

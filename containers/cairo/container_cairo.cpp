@@ -556,6 +556,221 @@ void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
     cairo_restore(cr);
 }
 
+// Three box-blur passes approximate a Gaussian blur. Integer arithmetic keeps the result
+// deterministic, so golden test images do not depend on the platform's libm.
+static void blur_a8_surface(cairo_surface_t* surface, int radius)
+{
+    if(radius <= 0)
+    {
+        return;
+    }
+    const int width  = cairo_image_surface_get_width(surface);
+    const int height = cairo_image_surface_get_height(surface);
+    if(width <= 0 || height <= 0)
+    {
+        return;
+    }
+    unsigned char* data = cairo_image_surface_get_data(surface);
+    if(!data)
+    {
+        return;
+    }
+    const int stride = cairo_image_surface_get_stride(surface);
+
+    const size_t     size = static_cast<size_t>(width) * static_cast<size_t>(height);
+    std::vector<int> a(size);
+    std::vector<int> b(size);
+    for(int y = 0; y < height; y++)
+    {
+        const unsigned char* row = data + static_cast<size_t>(y) * stride;
+        for(int x = 0; x < width; x++)
+        {
+            a[static_cast<size_t>(y) * width + x] = row[x];
+        }
+    }
+
+    const int  window = 2 * radius + 1;
+    const auto clamp  = [](int value, int limit) { return value < 0 ? 0 : (value >= limit ? limit - 1 : value); };
+
+    for(int pass = 0; pass < 3; pass++)
+    {
+        for(int y = 0; y < height; y++)
+        {
+            const size_t row = static_cast<size_t>(y) * width;
+            int          sum = 0;
+            for(int i = -radius; i <= radius; i++)
+            {
+                sum += a[row + clamp(i, width)];
+            }
+            for(int x = 0; x < width; x++)
+            {
+                b[row + x]  = sum / window;
+                sum        -= a[row + clamp(x - radius, width)];
+                sum        += a[row + clamp(x + radius + 1, width)];
+            }
+        }
+        for(int x = 0; x < width; x++)
+        {
+            int sum = 0;
+            for(int i = -radius; i <= radius; i++)
+            {
+                sum += b[static_cast<size_t>(clamp(i, height)) * width + x];
+            }
+            for(int y = 0; y < height; y++)
+            {
+                a[static_cast<size_t>(y) * width + x]  = sum / window;
+                sum                                   -= b[static_cast<size_t>(clamp(y - radius, height)) * width + x];
+                sum += b[static_cast<size_t>(clamp(y + radius + 1, height)) * width + x];
+            }
+        }
+    }
+
+    for(int y = 0; y < height; y++)
+    {
+        unsigned char* row = data + static_cast<size_t>(y) * stride;
+        for(int x = 0; x < width; x++)
+        {
+            row[x] = static_cast<unsigned char>(a[static_cast<size_t>(y) * width + x]);
+        }
+    }
+    cairo_surface_mark_dirty(surface);
+}
+
+static litehtml::border_radiuses adjust_border_radius(const litehtml::border_radiuses& radius, litehtml::pixel_t delta)
+{
+    litehtml::border_radiuses result;
+    result.top_left_x     = std::max(0_px, radius.top_left_x + delta);
+    result.top_left_y     = std::max(0_px, radius.top_left_y + delta);
+    result.top_right_x    = std::max(0_px, radius.top_right_x + delta);
+    result.top_right_y    = std::max(0_px, radius.top_right_y + delta);
+    result.bottom_right_x = std::max(0_px, radius.bottom_right_x + delta);
+    result.bottom_right_y = std::max(0_px, radius.bottom_right_y + delta);
+    result.bottom_left_x  = std::max(0_px, radius.bottom_left_x + delta);
+    result.bottom_left_y  = std::max(0_px, radius.bottom_left_y + delta);
+    return result;
+}
+
+void container_cairo::draw_box_shadow(litehtml::uint_ptr hdc, const litehtml::position& box,
+                                      const litehtml::border_radiuses& radius, const litehtml::shadow_paint& shadow,
+                                      const litehtml::clipping* clip)
+{
+    if(!hdc || box.width <= 0_px || box.height <= 0_px || shadow.color.alpha == 0)
+    {
+        return;
+    }
+
+    // Cap the blur so the mask surface and the integer blur radius stay in range; oversized
+    // shadows are skipped below anyway.
+    const litehtml::pixel_t blur = std::min(std::max(0_px, shadow.blur), 4096_px);
+    const int blur_radius        = blur > 0_px ? std::max(1, static_cast<int>(std::lround(blur.value() / 2.0))) : 0;
+    const int padding            = blur_radius * 3 + 2;
+
+    // The mask covers the shadow shape plus the blur reach. For an inset shadow the mask area is the
+    // box (it is clipped to the box when composited); the "hole" is cleared out of it.
+    litehtml::position mask_area = box;
+    if(!shadow.inset)
+    {
+        mask_area   += litehtml::margins{shadow.spread, shadow.spread, shadow.spread, shadow.spread};
+        mask_area.x += shadow.x;
+        mask_area.y += shadow.y;
+    }
+    mask_area.x      -= litehtml::pixel_t(padding);
+    mask_area.y      -= litehtml::pixel_t(padding);
+    mask_area.width  += litehtml::pixel_t(padding * 2);
+    mask_area.height += litehtml::pixel_t(padding * 2);
+    mask_area.round();
+    if(mask_area.width <= 0_px || mask_area.height <= 0_px || mask_area.width > 8192_px || mask_area.height > 8192_px)
+    {
+        return;
+    }
+
+    const int surface_width  = static_cast<int>(mask_area.width);
+    const int surface_height = static_cast<int>(mask_area.height);
+    const int origin_x       = static_cast<int>(mask_area.x);
+    const int origin_y       = static_cast<int>(mask_area.y);
+    if(static_cast<long long>(surface_width) * surface_height > 8ll * 1024 * 1024)
+    {
+        return;
+    }
+
+    cairo_surface_t* mask = cairo_image_surface_create(CAIRO_FORMAT_A8, surface_width, surface_height);
+    if(cairo_surface_status(mask) != CAIRO_STATUS_SUCCESS)
+    {
+        cairo_surface_destroy(mask);
+        return;
+    }
+
+    cairo_t* mask_cr = cairo_create(mask);
+    cairo_translate(mask_cr, -origin_x, -origin_y);
+    if(shadow.inset)
+    {
+        cairo_set_source_rgba(mask_cr, 1, 1, 1, 1);
+        cairo_paint(mask_cr);
+
+        litehtml::position hole  = box;
+        hole.x                  += shadow.spread + shadow.x;
+        hole.y                  += shadow.spread + shadow.y;
+        hole.width              -= shadow.spread * 2;
+        hole.height             -= shadow.spread * 2;
+        if(hole.width > 0_px && hole.height > 0_px)
+        {
+            const litehtml::border_radiuses hole_radius = adjust_border_radius(radius, -shadow.spread);
+            cairo_set_operator(mask_cr, CAIRO_OPERATOR_CLEAR);
+            rounded_rectangle(mask_cr, hole, hole_radius);
+            cairo_fill(mask_cr);
+            cairo_set_operator(mask_cr, CAIRO_OPERATOR_OVER);
+        }
+    } else
+    {
+        litehtml::position shape  = box;
+        shape                    += litehtml::margins{shadow.spread, shadow.spread, shadow.spread, shadow.spread};
+        shape.x                  += shadow.x;
+        shape.y                  += shadow.y;
+        if(shape.width <= 0_px || shape.height <= 0_px)
+        {
+            cairo_destroy(mask_cr);
+            cairo_surface_destroy(mask);
+            return;
+        }
+        litehtml::border_radiuses shape_radius = adjust_border_radius(radius, shadow.spread);
+        shape_radius.fix_values(shape.width, shape.height);
+        cairo_set_source_rgba(mask_cr, 1, 1, 1, 1);
+        rounded_rectangle(mask_cr, shape, shape_radius);
+        cairo_fill(mask_cr);
+    }
+    cairo_destroy(mask_cr);
+
+    cairo_surface_flush(mask);
+    blur_a8_surface(mask, blur_radius);
+
+    if(!shadow.inset)
+    {
+        // An outer shadow is painted outside the border box only. Remove the blurred shadow from
+        // behind the element, so transparent backgrounds and images do not show it through.
+        cairo_t* cut = cairo_create(mask);
+        cairo_translate(cut, -origin_x, -origin_y);
+        cairo_set_operator(cut, CAIRO_OPERATOR_CLEAR);
+        rounded_rectangle(cut, box, radius);
+        cairo_fill(cut);
+        cairo_destroy(cut);
+        cairo_surface_mark_dirty(mask);
+    }
+
+    auto* cr = reinterpret_cast<cairo_t*>(hdc);
+    cairo_save(cr);
+    apply_clip(cr, clip);
+    if(shadow.inset)
+    {
+        rounded_rectangle(cr, box, radius);
+        cairo_clip(cr);
+    }
+    set_color(cr, shadow.color);
+    cairo_mask_surface(cr, mask, origin_x, origin_y);
+    cairo_restore(cr);
+
+    cairo_surface_destroy(mask);
+}
+
 void container_cairo::transform_text(std::string& /*text*/, litehtml::text_transform /*tt*/) {}
 
 void container_cairo::apply_clip(cairo_t* cr, const litehtml::clipping* clip)
