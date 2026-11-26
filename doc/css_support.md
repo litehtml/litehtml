@@ -89,6 +89,9 @@ and fallbacks.
   finite and within integer geometry limits; non-negative properties use zero
   as the lower bound.
 - Math expression nesting/tree depth is limited to 128.
+- `var()` substitution preserves declaration order: a later longhand still overrides the value
+  that came from an earlier shorthand, for example
+  `border: var(--bw) solid; border-color: var(--bc)`.
 
 This support does not add new CSS units or properties, calculations in colors
 or angles, or calculations in numeric-only properties such as `z-index`,

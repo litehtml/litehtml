@@ -4,6 +4,7 @@
 #include "style.h"
 #include "css_parser.h"
 #include "internal.h"
+#include <algorithm>
 #include <set>
 #include "html_tag.h"
 #include "document.h"
@@ -2475,18 +2476,40 @@ namespace litehtml
         }
     }
 
+    std::vector<string_id> style::ordered_property_names() const
+    {
+        std::vector<std::pair<std::uint32_t, string_id>> ordered;
+        ordered.reserve(m_properties.size());
+        for(const auto& property : m_properties)
+        {
+            ordered.emplace_back(property.second.m_order, property.first);
+        }
+        std::sort(ordered.begin(), ordered.end(), [](const auto& a, const auto& b) { return a.first < b.first; });
+
+        std::vector<string_id> names;
+        names.reserve(ordered.size());
+        for(const auto& item : ordered)
+        {
+            names.push_back(item.second);
+        }
+        return names;
+    }
+
     void style::add_parsed_property(string_id name, const property_value& propval)
     {
+        property_value value = propval;
+        value.m_order        = ++m_next_order;
+
         auto prop = m_properties.find(name);
         if(prop != m_properties.end())
         {
-            if(!prop->second.m_important || (propval.m_important && prop->second.m_important))
+            if(!prop->second.m_important || (value.m_important && prop->second.m_important))
             {
-                prop->second = propval;
+                prop->second = value;
             }
         } else
         {
-            m_properties[name] = propval;
+            m_properties[name] = value;
         }
     }
 
@@ -2504,9 +2527,10 @@ namespace litehtml
 
     void style::combine(const style& src)
     {
-        for(const auto& property : src.m_properties)
+        // Copy in declaration order so shorthands and longhands keep their cascade order.
+        for(const auto& name : src.ordered_property_names())
         {
-            add_parsed_property(property.first, property.second);
+            add_parsed_property(name, src.get_property(name));
         }
     }
 
@@ -2621,55 +2645,86 @@ namespace litehtml
 
     void style::subst_vars(const html_tag* el)
     {
-        std::vector<style> expanded_shorthands;
-        for(auto& prop : m_properties)
+        std::vector<string_id> var_names;
+        var_names.reserve(m_properties.size());
+        for(const auto& property : m_properties)
         {
-            if(prop.second.m_has_var)
+            if(property.second.m_has_var)
             {
-                auto& value = prop.second.get<css_token_vector>();
-                if(!subst_vars_(prop.first, value, el))
-                {
-                    prop.second = property_value(invalid(), prop.second.m_important);
-                    continue;
-                }
-                if(prop.second.m_var_shorthand)
-                {
-                    style expanded;
-                    expanded.add_property(*prop.second.m_var_shorthand, value, "", prop.second.m_important,
-                                          el->get_document()->container());
-                    auto parsed = expanded.get_property(prop.first);
-                    if(parsed.m_has_var || parsed.is<invalid>())
-                    {
-                        parsed = property_value(invalid(), prop.second.m_important);
-                    }
-                    prop.second = parsed;
-                    continue;
-                }
-                style resolved;
-                resolved.add_property(prop.first, value, "", prop.second.m_important, el->get_document()->container());
-                if(!resolved.m_properties.count(prop.first) && !resolved.m_properties.empty())
-                {
-                    // Shorthands such as margin are stored as their longhands.
-                    expanded_shorthands.push_back(std::move(resolved));
-                    continue;
-                }
-                auto parsed = resolved.get_property(prop.first);
-                if(parsed.is<invalid>() || parsed.m_has_var)
-                {
-                    parsed = property_value(invalid(), prop.second.m_important);
-                }
-                prop.second = parsed;
+                var_names.push_back(property.first);
             }
         }
-        for(const auto& expanded : expanded_shorthands)
-        {
-            for(const auto& longhand : expanded.m_properties)
+
+        // Merges one resolved declaration. Values keep the cascade order they were declared with,
+        // so a shorthand expanded here cannot override a later longhand (for example
+        // `border: var(...) solid` must not override a later `border-color`).
+        const auto merge = [this](string_id name, property_value value, std::uint32_t order) {
+            value.m_order = order;
+
+            auto prop = m_properties.find(name);
+            if(prop == m_properties.end())
             {
-                if(!longhand.second.m_has_var && !longhand.second.is<invalid>())
-                {
-                    add_parsed_property(longhand.first, longhand.second);
-                }
+                m_properties[name] = std::move(value);
+                return;
             }
+            const bool wins =
+                prop->second.m_important != value.m_important ? value.m_important : order >= prop->second.m_order;
+            if(wins)
+            {
+                prop->second = std::move(value);
+            }
+        };
+
+        for(const auto& name : var_names)
+        {
+            auto prop = m_properties.find(name);
+            if(prop == m_properties.end() || !prop->second.m_has_var)
+            {
+                continue;
+            }
+
+            property_value      pending = prop->second;
+            const std::uint32_t order   = pending.m_order;
+            auto&               value   = pending.get<css_token_vector>();
+
+            if(!subst_vars_(name, value, el))
+            {
+                merge(name, property_value(invalid(), pending.m_important), order);
+                continue;
+            }
+            if(pending.m_var_shorthand)
+            {
+                style expanded;
+                expanded.add_property(*pending.m_var_shorthand, value, "", pending.m_important,
+                                      el->get_document()->container());
+                auto parsed = expanded.get_property(name);
+                if(parsed.m_has_var || parsed.is<invalid>())
+                {
+                    parsed = property_value(invalid(), pending.m_important);
+                }
+                merge(name, parsed, order);
+                continue;
+            }
+
+            style resolved;
+            resolved.add_property(name, value, "", pending.m_important, el->get_document()->container());
+            if(!resolved.m_properties.count(name) && !resolved.m_properties.empty())
+            {
+                // Shorthands such as margin are stored as their longhands. Keep every longhand at
+                // the shorthand's declaration order.
+                m_properties.erase(name);
+                for(const auto& longhand : resolved.ordered_property_names())
+                {
+                    merge(longhand, resolved.get_property(longhand), order);
+                }
+                continue;
+            }
+            auto parsed = resolved.get_property(name);
+            if(parsed.is<invalid>() || parsed.m_has_var)
+            {
+                parsed = property_value(invalid(), pending.m_important);
+            }
+            merge(name, parsed, order);
         }
     }
 
