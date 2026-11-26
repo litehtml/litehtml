@@ -371,7 +371,7 @@ else ()
 	ExternalProject_Add(
 			litehtml-tests
 			GIT_REPOSITORY      https://github.com/litehtml/litehtml-tests.git
-			GIT_TAG             5d23a28e7c65780d91bb0b1ca5f26395623e02d8
+			GIT_TAG             5d1b9a880fb7a3186d2dbc3433eecfd0649631e5
 			SOURCE_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-src"
 			BINARY_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-build"
 			CMAKE_ARGS          -DLITEHTML_PATH=${CMAKE_CURRENT_SOURCE_DIR}
