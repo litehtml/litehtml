@@ -10,6 +10,8 @@
 
 namespace litehtml
 {
+    class clipping;
+
     class background_layer
     {
       public:
@@ -154,7 +156,8 @@ namespace litehtml
             int idx, const background_layer& layer) const;
         std::unique_ptr<background_layer::conic_gradient> get_conic_gradient_layer(int                     idx,
                                                                                    const background_layer& layer) const;
-        void draw_layer(uint_ptr hdc, int idx, const background_layer& layer, document_container* container) const;
+        void draw_layer(uint_ptr hdc, int idx, const background_layer& layer, document_container* container,
+                        const clipping* clip) const;
     };
 } // namespace litehtml
 

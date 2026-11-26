@@ -200,9 +200,10 @@ litehtml::pixel_t win32_container::text_width(const char* text, uint_ptr hFont)
     return size.cx;
 }
 
-void win32_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos)
+void win32_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos,
+                                const litehtml::clipping* clip)
 {
-    apply_clip((HDC) hdc);
+    apply_clip((HDC) hdc, clip);
 
     HFONT oldFont = (HFONT) SelectObject((HDC) hdc, (HFONT) hFont);
 
@@ -223,9 +224,9 @@ litehtml::pixel_t win32_container::pt_to_px(float pt) const
     return MulDiv(pt, GetDeviceCaps(m_tmp_hdc, LOGPIXELSY), 72);
 }
 
-void win32_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
+void win32_container::draw_list_marker(uint_ptr hdc, const list_marker& marker, const litehtml::clipping* clip)
 {
-    apply_clip((HDC) hdc);
+    apply_clip((HDC) hdc, clip);
 
     litehtml::pixel_t top_margin = marker.pos.height / 3;
     if(top_margin < 4)
@@ -259,9 +260,10 @@ void win32_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
     release_clip((HDC) hdc);
 }
 
-void win32_container::draw_combobox_marker(uint_ptr hdc, const position& pos, const web_color& color)
+void win32_container::draw_combobox_marker(uint_ptr hdc, const position& pos, const web_color& color,
+                                           const litehtml::clipping* clip)
 {
-    apply_clip((HDC) hdc);
+    apply_clip((HDC) hdc, clip);
 
     const int stroke  = std::max(1, (int) std::round(pos.height.value() / 3.0f));
     const int inset   = stroke / 2;
@@ -280,7 +282,8 @@ void win32_container::draw_combobox_marker(uint_ptr hdc, const position& pos, co
     release_clip((HDC) hdc);
 }
 
-void win32_container::draw_checkbox_marker(uint_ptr hdc, const position& pos, const web_color& color)
+void win32_container::draw_checkbox_marker(uint_ptr hdc, const position& pos, const web_color& color,
+                                           const litehtml::clipping* clip)
 {
     const int size   = std::min((int) pos.width, (int) pos.height);
     const int stroke = std::max(1, (int) std::round(size / 7.0f));
@@ -296,7 +299,7 @@ void win32_container::draw_checkbox_marker(uint_ptr hdc, const position& pos, co
         return;
     }
 
-    apply_clip((HDC) hdc);
+    apply_clip((HDC) hdc, clip);
 
     HPEN    pen     = CreatePen(PS_SOLID, stroke, RGB(color.red, color.green, color.blue));
     HGDIOBJ old_pen = SelectObject((HDC) hdc, pen);
@@ -387,10 +390,11 @@ void win32_container::unlock_images_cache()
     LeaveCriticalSection(&m_img_sync);
 }
 
-void win32_container::draw_solid_fill(uint_ptr _hdc, const background_layer& layer, const web_color& color)
+void win32_container::draw_solid_fill(uint_ptr _hdc, const background_layer& layer, const web_color& color,
+                                      const litehtml::clipping* clip)
 {
     HDC hdc = (HDC) _hdc;
-    apply_clip(hdc);
+    apply_clip(hdc, clip);
 
     auto border_box = layer.border_box;
     fill_rect(hdc, border_box.x, border_box.y, border_box.width, border_box.height, color);
@@ -399,10 +403,10 @@ void win32_container::draw_solid_fill(uint_ptr _hdc, const background_layer& lay
 }
 
 void win32_container::draw_image(uint_ptr _hdc, const background_layer& layer, const string& url,
-                                 const string& base_url)
+                                 const string& base_url, const litehtml::clipping* clip)
 {
     HDC hdc = (HDC) _hdc;
-    apply_clip(hdc);
+    apply_clip(hdc, clip);
 
     wstring wurl;
     make_url_utf8(url.c_str(), base_url.c_str(), wurl);
@@ -418,20 +422,7 @@ void win32_container::draw_image(uint_ptr _hdc, const background_layer& layer, c
     release_clip(hdc);
 }
 
-void win32_container::set_clip(const position& pos, const border_radiuses& bdr_radius)
-{
-    m_clips.push_back(pos);
-}
-
-void win32_container::del_clip()
-{
-    if(!m_clips.empty())
-    {
-        m_clips.pop_back();
-    }
-}
-
-void win32_container::apply_clip(HDC hdc)
+void win32_container::apply_clip(HDC hdc, const litehtml::clipping* clip)
 {
     if(m_hClipRgn)
     {
@@ -439,16 +430,27 @@ void win32_container::apply_clip(HDC hdc)
         m_hClipRgn = NULL;
     }
 
-    if(!m_clips.empty())
+    if(!clip)
     {
-        POINT ptView = {0, 0};
-        GetWindowOrgEx(hdc, &ptView);
-
-        position clip_pos = m_clips.back();
-        m_hClipRgn = CreateRectRgn(clip_pos.left() - ptView.x, clip_pos.top() - ptView.y, clip_pos.right() - ptView.x,
-                                   clip_pos.bottom() - ptView.y);
-        SelectClipRgn(hdc, m_hClipRgn);
+        return;
     }
+
+    POINT ptView = {0, 0};
+    GetWindowOrgEx(hdc, &ptView);
+
+    litehtml::clipping::apply(clip, [&](const litehtml::position& pos, const litehtml::border_radiuses&) {
+        HRGN rgn =
+            CreateRectRgn(pos.left() - ptView.x, pos.top() - ptView.y, pos.right() - ptView.x, pos.bottom() - ptView.y);
+        if(m_hClipRgn)
+        {
+            CombineRgn(m_hClipRgn, m_hClipRgn, rgn, RGN_AND);
+            DeleteObject(rgn);
+        } else
+        {
+            m_hClipRgn = rgn;
+        }
+    });
+    SelectClipRgn(hdc, m_hClipRgn);
 }
 
 void win32_container::release_clip(HDC hdc)

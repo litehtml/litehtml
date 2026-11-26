@@ -111,13 +111,14 @@ namespace
         }
 
         void draw_borders(litehtml::uint_ptr /*hdc*/, const litehtml::borders& borders, const litehtml::position& pos,
-                          bool /*root*/) override
+                          bool /*root*/, const litehtml::clipping* /*clip*/) override
         {
             border_draws.push_back({borders, pos});
         }
 
         void draw_text(litehtml::uint_ptr /*hdc*/, const char* text, litehtml::uint_ptr /*font*/,
-                       litehtml::web_color color, const litehtml::position& pos) override
+                       litehtml::web_color color, const litehtml::position& pos,
+                       const litehtml::clipping* /*clip*/) override
         {
             text_draws.push_back({text, color, pos});
         }

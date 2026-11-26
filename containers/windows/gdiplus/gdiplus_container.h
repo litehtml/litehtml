@@ -22,6 +22,6 @@ class gdiplus_container : public win32_container
     void free_image(uint_ptr img) override;
     void draw_img_bg(HDC hdc, uint_ptr img, const litehtml::background_layer& layer) override;
     // litehtml::document_container members
-    void draw_borders(uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos,
-                      bool root) override;
+    void draw_borders(uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root,
+                      const litehtml::clipping* clip) override;
 };

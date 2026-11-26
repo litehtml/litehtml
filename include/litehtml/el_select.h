@@ -20,7 +20,7 @@ namespace litehtml
         bool         update_focused(const control_data& data) override;
 
         void    parse_attributes() override;
-        void    draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+        void    draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                      const std::shared_ptr<render_item>& ri) override;
         void    get_content_size(size& sz, pixel_t max_width) override;
         void    on_click() override;
@@ -63,10 +63,10 @@ namespace litehtml
         bool                     is_listbox() const;
         pixel_t                  max_scroll() const;
         std::vector<listbox_row> listbox_rows() const;
-        void                     draw_listbox(uint_ptr hdc, const position& pos);
-        void                     draw_active_outline(uint_ptr hdc, const position& row_pos);
-        void                     fill_rect(uint_ptr hdc, const position& pos, const web_color& color);
-        bool                     apply_listbox_selection(int option_index);
+        void                     draw_listbox(uint_ptr hdc, const position& pos, const clipping* clip_chain);
+        void                     draw_active_outline(uint_ptr hdc, const position& row_pos, const clipping* clip_chain);
+        void fill_rect(uint_ptr hdc, const position& pos, const web_color& color, const clipping* clip_chain);
+        bool apply_listbox_selection(int option_index);
 
         void        normalize_selection();
         std::string selected_text() const;

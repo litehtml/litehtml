@@ -69,12 +69,13 @@ namespace
             size = {10, 10};
         }
         void draw_image(litehtml::uint_ptr, const litehtml::background_layer& layer, const std::string&,
-                        const std::string&) override
+                        const std::string&, const litehtml::clipping*) override
         {
             image_box = layer.origin_box;
         }
         void draw_linear_gradient(litehtml::uint_ptr, const litehtml::background_layer&,
-                                  const litehtml::background_layer::linear_gradient& gradient) override
+                                  const litehtml::background_layer::linear_gradient& gradient,
+                                  const litehtml::clipping*) override
         {
             stops = gradient.color_points;
         }
@@ -176,7 +177,7 @@ int main()
     ok                   &= check(near(invalid_sizing.get_property(_width_).get<css_length>().val(), 17) &&
                                       near(invalid_sizing.get_property(_padding_left_).get<css_length>().val(), 3),
                                   "reject invalid fit-content and keep it out of unrelated properties");
-    std::string long_sum = "calc(1px";
+    std::string long_sum  = "calc(1px";
     for(int i = 1; i < 32; i++)
     {
         long_sum += " + 1px";
@@ -454,7 +455,8 @@ int main()
         "table{border-spacing:0}td{padding:0;vertical-align:middle}"
         ".tall{width:10px;height:40px}.box{width:10px;height:10px}.abs{position:absolute;left:5px;bottom:7px}"
         "</style><div class=row><div class=column><div class=row><div style='flex:1'><table><tr>"
-        "<td><div class=tall></div></td><td><div class=box id=middle></div></td><td style='vertical-align:bottom'><div class=box id=bottom></div></td>"
+        "<td><div class=tall></div></td><td><div class=box id=middle></div></td><td style='vertical-align:bottom'><div "
+        "class=box id=bottom></div></td>"
         "</tr></table></div><div class=box></div></div></div></div>"
         "<div class=row><div class=column><div class=row><div style='flex:1;position:relative;height:50px'>"
         "<div class='box abs' id=absolute></div></div></div></div></div>",
@@ -465,8 +467,8 @@ int main()
     for(const int width : {800, 200, 800})
     {
         reused->render(width);
-        ok &= check(reused_middle && near(reused_middle->get_placement().y.value(), 15) &&
-                        reused_bottom && near(reused_bottom->get_placement().y.value(), 30),
+        ok &= check(reused_middle && near(reused_middle->get_placement().y.value(), 15) && reused_bottom &&
+                        near(reused_bottom->get_placement().y.value(), 30),
                     "table cell vertical alignment survives reused flex layouts");
         ok &= check(reused_absolute && near(reused_absolute->get_placement().x.value(), 5) &&
                         near(reused_absolute->get_placement().y.value(), 73),

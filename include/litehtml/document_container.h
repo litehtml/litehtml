@@ -5,6 +5,7 @@
 #include "web_color.h"
 #include "background.h"
 #include "borders.h"
+#include "clipping.h"
 #include "controls.h"
 #include "element.h"
 #include "font_description.h"
@@ -35,35 +36,41 @@ namespace litehtml
     {
       public:
         virtual litehtml::uint_ptr create_font(const font_description& descr, const document* doc,
-                                               litehtml::font_metrics* fm)                                          = 0;
-        virtual void               delete_font(litehtml::uint_ptr hFont)                                            = 0;
-        virtual pixel_t            text_width(const char* text, litehtml::uint_ptr hFont)                           = 0;
+                                               litehtml::font_metrics* fm)                                       = 0;
+        virtual void               delete_font(litehtml::uint_ptr hFont)                                         = 0;
+        virtual pixel_t            text_width(const char* text, litehtml::uint_ptr hFont)                        = 0;
         virtual void               draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont,
-                                             litehtml::web_color color, const litehtml::position& pos)              = 0;
-        virtual pixel_t            pt_to_px(float pt) const                                                         = 0;
-        virtual pixel_t            get_default_font_size() const                                                    = 0;
-        virtual const char*        get_default_font_name() const                                                    = 0;
-        virtual void               draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker)    = 0;
-        virtual void               load_image(const char* src, const char* baseurl, bool redraw_on_ready)           = 0;
-        virtual void               get_image_size(const char* src, const char* baseurl, litehtml::size& sz)         = 0;
+                                             litehtml::web_color color, const litehtml::position& pos,
+                                             const litehtml::clipping* clip)                                     = 0;
+        virtual pixel_t            pt_to_px(float pt) const                                                      = 0;
+        virtual pixel_t            get_default_font_size() const                                                 = 0;
+        virtual const char*        get_default_font_name() const                                                 = 0;
+        virtual void               draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker,
+                                                    const litehtml::clipping* clip)                              = 0;
+        virtual void               load_image(const char* src, const char* baseurl, bool redraw_on_ready)        = 0;
+        virtual void               get_image_size(const char* src, const char* baseurl, litehtml::size& sz)      = 0;
         virtual void draw_image(litehtml::uint_ptr hdc, const background_layer& layer, const std::string& url,
-                                const std::string& base_url)                                                        = 0;
-        virtual void draw_solid_fill(litehtml::uint_ptr hdc, const background_layer& layer, const web_color& color) = 0;
+                                const std::string& base_url, const litehtml::clipping* clip)                     = 0;
+        virtual void draw_solid_fill(litehtml::uint_ptr hdc, const background_layer& layer, const web_color& color,
+                                     const litehtml::clipping* clip)                                             = 0;
         virtual void draw_linear_gradient(litehtml::uint_ptr hdc, const background_layer& layer,
-                                          const background_layer::linear_gradient& gradient)                        = 0;
+                                          const background_layer::linear_gradient& gradient,
+                                          const litehtml::clipping*                clip)                         = 0;
         virtual void draw_radial_gradient(litehtml::uint_ptr hdc, const background_layer& layer,
-                                          const background_layer::radial_gradient& gradient)                        = 0;
+                                          const background_layer::radial_gradient& gradient,
+                                          const litehtml::clipping*                clip)                         = 0;
         virtual void draw_conic_gradient(litehtml::uint_ptr hdc, const background_layer& layer,
-                                         const background_layer::conic_gradient& gradient)                          = 0;
+                                         const background_layer::conic_gradient& gradient,
+                                         const litehtml::clipping*               clip)                           = 0;
         virtual void draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders,
-                                  const litehtml::position& draw_pos, bool root)                                    = 0;
+                                  const litehtml::position& draw_pos, bool root, const litehtml::clipping* clip) = 0;
 
         // Draw the dropdown marker of a one-line select (a down-pointing chevron) inside pos.
         virtual void draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
-                                          const litehtml::web_color& color) = 0;
+                                          const litehtml::web_color& color, const litehtml::clipping* clip) = 0;
         // Draw the check mark of a checked checkbox inside pos.
         virtual void draw_checkbox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
-                                          const litehtml::web_color& color) = 0;
+                                          const litehtml::web_color& color, const litehtml::clipping* clip) = 0;
 
         virtual void set_caption(const char* caption)                                                       = 0;
         virtual void set_base_url(const char* base_url)                                                     = 0;
@@ -73,15 +80,13 @@ namespace litehtml
         {
             return false;
         };
-        virtual void on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event)        = 0;
-        virtual void set_cursor(const char* cursor)                                                       = 0;
-        virtual void transform_text(std::string& text, litehtml::text_transform tt)                       = 0;
-        virtual void import_css(std::string& text, const std::string& url, std::string& baseurl)          = 0;
-        virtual void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) = 0;
-        virtual void del_clip()                                                                           = 0;
-        virtual void get_viewport(litehtml::position& viewport) const                                     = 0;
+        virtual void on_mouse_event(const litehtml::element::ptr& el, litehtml::mouse_event event)    = 0;
+        virtual void set_cursor(const char* cursor)                                                   = 0;
+        virtual void transform_text(std::string& text, litehtml::text_transform tt)                   = 0;
+        virtual void import_css(std::string& text, const std::string& url, std::string& baseurl)      = 0;
+        virtual void get_viewport(litehtml::position& viewport) const                                 = 0;
         virtual litehtml::element::ptr create_element(const char* tag_name, const litehtml::string_map& attributes,
-                                                      const std::shared_ptr<litehtml::document>& doc)     = 0;
+                                                      const std::shared_ptr<litehtml::document>& doc) = 0;
 
         virtual void        get_media_features(litehtml::media_features& media) const       = 0;
         virtual void        get_language(std::string& language, std::string& culture) const = 0;

@@ -1382,7 +1382,8 @@ void litehtml::render_item::calc_document_size(litehtml::size& sz, pixel_t x /*=
 }
 
 void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
-                                                  bool with_positioned)
+                                                  bool with_positioned, const clipping* cur_clipping,
+                                                  const clipping* abs_clipping)
 {
     if(!is_visible())
     {
@@ -1401,7 +1402,7 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
         {
             if(idx.first < 0)
             {
-                draw_children(hdc, x, y, clip, draw_positioned, idx.first, this);
+                draw_children(hdc, x, y, clip, draw_positioned, idx.first, this, cur_clipping, abs_clipping);
             }
         }
     }
@@ -1420,9 +1421,9 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
 
     if(process)
     {
-        draw_children(hdc, x, y, clip, draw_block, 0, this);
-        draw_children(hdc, x, y, clip, draw_floats, 0, this);
-        draw_children(hdc, x, y, clip, draw_inlines, 0, this);
+        draw_children(hdc, x, y, clip, draw_block, 0, this, cur_clipping, abs_clipping);
+        draw_children(hdc, x, y, clip, draw_floats, 0, this, cur_clipping, abs_clipping);
+        draw_children(hdc, x, y, clip, draw_inlines, 0, this, cur_clipping, abs_clipping);
     }
 
     if(with_positioned)
@@ -1431,7 +1432,7 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
         {
             if(z_index.first == 0)
             {
-                draw_children(hdc, x, y, clip, draw_positioned, z_index.first, this);
+                draw_children(hdc, x, y, clip, draw_positioned, z_index.first, this, cur_clipping, abs_clipping);
             }
         }
 
@@ -1439,14 +1440,15 @@ void litehtml::render_item::draw_stacking_context(uint_ptr hdc, pixel_t x, pixel
         {
             if(z_index.first > 0)
             {
-                draw_children(hdc, x, y, clip, draw_positioned, z_index.first, this);
+                draw_children(hdc, x, y, clip, draw_positioned, z_index.first, this, cur_clipping, abs_clipping);
             }
         }
     }
 }
 
 void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag,
-                                          int zindex, const render_item* stacking_context)
+                                          int zindex, const render_item* stacking_context, const clipping* cur_clipping,
+                                          const clipping* abs_clipping)
 {
     if(clip && flag != draw_positioned)
     {
@@ -1463,34 +1465,47 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
     pos.x        += x - get_scroll_left();
     pos.y        += y - get_scroll_top();
 
-    document::ptr doc = src_el()->get_document();
+    // TODO: Process overflow for inline elements
+    const bool own_clip =
+        src_el()->css().get_overflow() > overflow_visible && src_el()->css().get_display() != display_inline;
 
-    if(src_el()->css().get_overflow() > overflow_visible)
+    clipping        own_clipping;
+    const clipping* child_cur_clipping = cur_clipping;
+    if(own_clip)
     {
-        // TODO: Process overflow for inline elements
-        if(src_el()->css().get_display() != display_inline)
-        {
-            position clip_box    = m_pos;
-            clip_box.x          += x;
-            clip_box.y          += y;
-            position border_box  = clip_box;
-            border_box          += m_padding;
-            border_box          += m_borders;
+        position clip_box    = m_pos;
+        clip_box.x          += x;
+        clip_box.y          += y;
+        position border_box  = clip_box;
+        border_box          += m_padding;
+        border_box          += m_borders;
 
-            border_radiuses bdr_radius =
-                src_el()->css().get_borders().radius.calc_percents(border_box.width, border_box.height);
+        border_radiuses bdr_radius =
+            src_el()->css().get_borders().radius.calc_percents(border_box.width, border_box.height);
 
-            bdr_radius -= m_borders;
-            bdr_radius -= m_padding;
+        bdr_radius -= m_borders;
+        bdr_radius -= m_padding;
 
-            doc->container()->set_clip(clip_box, bdr_radius);
-        }
+        own_clipping       = clipping(clip_box, bdr_radius, cur_clipping);
+        child_cur_clipping = &own_clipping;
     }
+    // Positioned elements are containing blocks for absolutely positioned descendants, so the
+    // clipping chain restarts at them. In-flow (static/relative) elements inherit the chain.
+    const bool      positioned         = src_el()->css().get_position() != element_position_static;
+    const clipping* child_abs_clipping = positioned ? child_cur_clipping : abs_clipping;
 
     for(const auto& el : m_children)
     {
         if(el->is_visible())
         {
+            const auto      child_position = el->src_el()->css().get_position();
+            const bool      child_fixed    = child_position == element_position_fixed;
+            const clipping* draw_clipping =
+                child_fixed ? nullptr
+                            : (child_position == element_position_absolute ? child_abs_clipping : child_cur_clipping);
+            const clipping* child_cur = child_fixed ? nullptr : draw_clipping;
+            const clipping* child_abs = child_fixed ? nullptr : child_abs_clipping;
+
             bool process = true;
             bool recurse = false;
             switch(flag)
@@ -1505,12 +1520,14 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                             if(el->src_el()->css().get_position() == element_position_fixed)
                             {
                                 // Fixed elements position is always relative to the (0,0)
-                                el->src_el()->draw(hdc, 0_px, 0_px, clip, el);
-                                el->draw_stacking_context(hdc, 0_px, 0_px, clip, el->creates_stacking_context());
+                                el->src_el()->draw(hdc, 0_px, 0_px, clip, nullptr, el);
+                                el->draw_stacking_context(hdc, 0_px, 0_px, clip, el->creates_stacking_context(),
+                                                          nullptr, nullptr);
                             } else
                             {
-                                el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
-                                el->draw_stacking_context(hdc, pos.x, pos.y, clip, el->creates_stacking_context());
+                                el->src_el()->draw(hdc, pos.x, pos.y, clip, draw_clipping, el);
+                                el->draw_stacking_context(hdc, pos.x, pos.y, clip, el->creates_stacking_context(),
+                                                          child_cur, child_abs);
                             }
                             process = !el->creates_stacking_context();
                             recurse = !el->creates_stacking_context();
@@ -1533,10 +1550,10 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                 if(!el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none &&
                    !el->src_el()->is_positioned() && !el->is_stacked_member())
                 {
-                    el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
+                    el->src_el()->draw(hdc, pos.x, pos.y, clip, draw_clipping, el);
                     if(el->creates_stacking_context())
                     {
-                        el->draw_stacking_context(hdc, pos.x, pos.y, clip, true);
+                        el->draw_stacking_context(hdc, pos.x, pos.y, clip, true, child_cur, child_abs);
                         process = false;
                     }
                 }
@@ -1545,8 +1562,9 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                 if(el->src_el()->css().get_float() != float_none && !el->src_el()->is_positioned() &&
                    !el->is_stacked_member())
                 {
-                    el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
-                    el->draw_stacking_context(hdc, pos.x, pos.y, clip, el->creates_stacking_context());
+                    el->src_el()->draw(hdc, pos.x, pos.y, clip, draw_clipping, el);
+                    el->draw_stacking_context(hdc, pos.x, pos.y, clip, el->creates_stacking_context(), child_cur,
+                                              child_abs);
                     process = false;
                 }
                 break;
@@ -1554,12 +1572,13 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                 if(el->src_el()->is_inline() && el->src_el()->css().get_float() == float_none &&
                    !el->src_el()->is_positioned() && !el->is_stacked_member())
                 {
-                    el->src_el()->draw(hdc, pos.x, pos.y, clip, el);
+                    el->src_el()->draw(hdc, pos.x, pos.y, clip, draw_clipping, el);
                     if(el->src_el()->css().get_display() == display_inline_block ||
                        el->src_el()->css().get_display() == display_inline_flex ||
                        el->src_el()->css().get_display() == display_inline_grid)
                     {
-                        el->draw_stacking_context(hdc, pos.x, pos.y, clip, el->creates_stacking_context());
+                        el->draw_stacking_context(hdc, pos.x, pos.y, clip, el->creates_stacking_context(), child_cur,
+                                                  child_abs);
                         process = false;
                     }
                 }
@@ -1574,7 +1593,8 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                 {
                     if(recurse)
                     {
-                        el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context);
+                        el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context, child_cur,
+                                          child_abs);
                     }
                 } else
                 {
@@ -1582,24 +1602,23 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                        el->src_el()->css().get_display() != display_inline_block && !el->src_el()->is_positioned() &&
                        !el->is_stacked_member() && !el->creates_stacking_context())
                     {
-                        el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context);
+                        el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context, child_cur,
+                                          child_abs);
                     }
                 }
             }
         }
     }
-
-    if(src_el()->css().get_overflow() > overflow_visible)
-    {
-        doc->container()->del_clip();
-    }
 }
 
 std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
-    pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex,
+    pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, pixel_t doc_x, pixel_t doc_y, draw_flag flag, int zindex,
     const std::function<bool(const std::shared_ptr<render_item>&)>& check, const render_item* stacking_context)
 {
-    if(src_el()->css().get_overflow() > overflow_visible)
+    // In-flow passes are bounded by every ancestor's overflow box, so the box can be checked here as an
+    // optimization. Positioned descendants are only clipped up to their containing block; is_point_visible()
+    // validates the candidates instead.
+    if(flag != draw_positioned && src_el()->css().get_overflow() > overflow_visible)
     {
         if(!m_pos.is_point_inside(x, y))
         {
@@ -1654,7 +1673,8 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                             {
                                 if(el->src_el()->css().get_position() == element_position_fixed)
                                 {
-                                    ret = el->get_element_by_point(client_x, client_y, client_x, client_y, check);
+                                    ret = el->get_element_by_point(client_x, client_y, client_x, client_y, client_x,
+                                                                   client_y, check);
                                     if(!ret && el->is_point_inside(client_x, client_y))
                                     {
                                         if(!check || check(el))
@@ -1664,8 +1684,10 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                                     }
                                 } else
                                 {
-                                    ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, check);
-                                    if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
+                                    ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x, doc_y,
+                                                                   check);
+                                    if(!ret && el->is_point_inside(el_pos.x, el_pos.y) &&
+                                       el->is_point_visible(doc_x, doc_y, client_x, client_y))
                                     {
                                         if(!check || check(el))
                                         {
@@ -1704,7 +1726,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                 {
                     if(el->creates_stacking_context())
                     {
-                        ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, check);
+                        ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x, doc_y, check);
                         if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
                         {
                             if(!check || check(el))
@@ -1715,8 +1737,8 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                         process = false;
                     } else
                     {
-                        ret = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex, check,
-                                                     stacking_context);
+                        ret = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x, doc_y, flag, zindex,
+                                                     check, stacking_context);
 
                         if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
                         {
@@ -1733,7 +1755,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                 if(el->src_el()->css().get_float() != float_none && !el->src_el()->is_positioned() &&
                    !el->is_stacked_member())
                 {
-                    ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, check);
+                    ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x, doc_y, check);
 
                     if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
                     {
@@ -1751,7 +1773,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                        el->src_el()->css().get_display() == display_inline_flex ||
                        el->src_el()->css().get_display() == display_inline_grid)
                     {
-                        ret     = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, check);
+                        ret     = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x, doc_y, check);
                         process = false;
                     } else
                     {
@@ -1772,8 +1794,8 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                 {
                     if(recurse)
                     {
-                        element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag,
-                                                                    zindex, check, stacking_context);
+                        element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x,
+                                                                    doc_y, flag, zindex, check, stacking_context);
                         if(child)
                         {
                             if(!check)
@@ -1781,15 +1803,15 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                                 ret = child;
                             } else
                             {
-                                child->run_on_renderers(
-                                    [&check, &ret, &child](const std::shared_ptr<render_item>& ri) -> bool {
-                                        if(check(ri))
-                                        {
-                                            ret = child;
-                                            return false;
-                                        }
-                                        return true;
-                                    });
+                                child->run_on_renderers([&check, &ret, &child, doc_x, doc_y, client_x,
+                                                         client_y](const std::shared_ptr<render_item>& ri) -> bool {
+                                    if(check(ri) && ri->is_point_visible(doc_x, doc_y, client_x, client_y))
+                                    {
+                                        ret = child;
+                                        return false;
+                                    }
+                                    return true;
+                                });
                             }
                         }
                     }
@@ -1801,8 +1823,8 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                        el->src_el()->css().get_display() != display_inline_grid && !el->is_stacked_member() &&
                        !el->creates_stacking_context())
                     {
-                        element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag,
-                                                                    zindex, check, stacking_context);
+                        element::ptr child = el->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x,
+                                                                    doc_y, flag, zindex, check, stacking_context);
                         if(child)
                         {
                             if(!check)
@@ -1810,15 +1832,15 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
                                 ret = child;
                             } else
                             {
-                                child->run_on_renderers(
-                                    [&check, &ret, &child](const std::shared_ptr<render_item>& ri) -> bool {
-                                        if(check(ri))
-                                        {
-                                            ret = child;
-                                            return false;
-                                        }
-                                        return true;
-                                    });
+                                child->run_on_renderers([&check, &ret, &child, doc_x, doc_y, client_x,
+                                                         client_y](const std::shared_ptr<render_item>& ri) -> bool {
+                                    if(check(ri) && ri->is_point_visible(doc_x, doc_y, client_x, client_y))
+                                    {
+                                        ret = child;
+                                        return false;
+                                    }
+                                    return true;
+                                });
                             }
                         }
                     }
@@ -1827,8 +1849,9 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
 
             if(check_in_flow && !ret)
             {
-                ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, check);
-                if(!ret && el->is_point_inside(el_pos.x, el_pos.y))
+                ret = el->get_element_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x, doc_y, check);
+                if(!ret && el->is_point_inside(el_pos.x, el_pos.y) &&
+                   el->is_point_visible(doc_x, doc_y, client_x, client_y))
                 {
                     if(!check || check(el))
                     {
@@ -1851,7 +1874,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_child_by_point(
 }
 
 std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(
-    pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+    pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, pixel_t doc_x, pixel_t doc_y,
     const std::function<bool(const std::shared_ptr<render_item>&)>& check)
 {
     if(!is_visible())
@@ -1872,7 +1895,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(
     {
         if(iter->first > 0)
         {
-            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, iter->first, check, this);
+            ret = get_child_by_point(x, y, client_x, client_y, doc_x, doc_y, draw_positioned, iter->first, check, this);
             if(ret)
             {
                 return ret;
@@ -1884,7 +1907,8 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(
     {
         if(z_index.first == 0)
         {
-            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, z_index.first, check, this);
+            ret =
+                get_child_by_point(x, y, client_x, client_y, doc_x, doc_y, draw_positioned, z_index.first, check, this);
             if(ret)
             {
                 return ret;
@@ -1904,19 +1928,19 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(
     if(process)
     {
 
-        ret = get_child_by_point(x, y, client_x, client_y, draw_inlines, 0, check, this);
+        ret = get_child_by_point(x, y, client_x, client_y, doc_x, doc_y, draw_inlines, 0, check, this);
         if(ret)
         {
             return ret;
         }
 
-        ret = get_child_by_point(x, y, client_x, client_y, draw_floats, 0, check, this);
+        ret = get_child_by_point(x, y, client_x, client_y, doc_x, doc_y, draw_floats, 0, check, this);
         if(ret)
         {
             return ret;
         }
 
-        ret = get_child_by_point(x, y, client_x, client_y, draw_block, 0, check, this);
+        ret = get_child_by_point(x, y, client_x, client_y, doc_x, doc_y, draw_block, 0, check, this);
         if(ret)
         {
             return ret;
@@ -1927,7 +1951,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(
     {
         if(iter->first < 0)
         {
-            ret = get_child_by_point(x, y, client_x, client_y, draw_positioned, iter->first, check, this);
+            ret = get_child_by_point(x, y, client_x, client_y, doc_x, doc_y, draw_positioned, iter->first, check, this);
             if(ret)
             {
                 return ret;
@@ -1946,7 +1970,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item::get_element_by_point(
         }
     } else
     {
-        if(is_point_inside(x, y))
+        if(is_point_inside(x, y) && is_point_visible(doc_x, doc_y, client_x, client_y))
         {
             if(!check || check(this->shared_from_this()))
             {
@@ -1965,6 +1989,73 @@ bool litehtml::render_item::is_point_inside(pixel_t x, pixel_t y) const
     pos += m_padding;
     pos += m_borders;
     return pos.is_point_inside(x, y);
+}
+
+bool litehtml::render_item::is_point_visible(pixel_t doc_x, pixel_t doc_y, pixel_t client_x, pixel_t client_y) const
+{
+    const auto self_position = src_el()->css().get_position();
+    if(self_position == element_position_fixed)
+    {
+        return true;
+    }
+
+    // Content of a fixed element (or an absolutely positioned element whose containing block is fixed)
+    // is painted in viewport coordinates.
+    bool fixed_context = false;
+    for(auto cur = parent(); cur; cur = cur->parent())
+    {
+        if(cur->css().get_position() == element_position_fixed)
+        {
+            fixed_context = true;
+            break;
+        }
+    }
+
+    const pixel_t x = fixed_context ? client_x : doc_x;
+    const pixel_t y = fixed_context ? client_y : doc_y;
+
+    // Document position of a box; the ancestors' scroll offsets are applied like in draw_children().
+    const auto placement = [](const render_item* item) {
+        position pos = item->m_pos;
+        if(item->css().get_position() == element_position_fixed)
+        {
+            return pos;
+        }
+        for(auto cur = item->parent(); cur; cur = cur->parent())
+        {
+            pos.x += cur->m_pos.x - cur->get_scroll_left();
+            pos.y += cur->m_pos.y - cur->get_scroll_top();
+            if(cur->css().get_position() == element_position_fixed)
+            {
+                break;
+            }
+        }
+        return pos;
+    };
+
+    // An absolutely positioned element is not clipped by ancestors between itself and its containing
+    // block; the containing block and every ancestor above it still apply.
+    bool apply = self_position != element_position_absolute;
+    for(auto cur = parent(); cur; cur = cur->parent())
+    {
+        const auto cur_position = cur->css().get_position();
+        if(cur_position != element_position_static)
+        {
+            apply = true;
+        }
+        if(apply && cur->css().get_display() != display_inline && cur->css().get_overflow() > overflow_visible)
+        {
+            if(!placement(cur.get()).is_point_inside(x, y))
+            {
+                return false;
+            }
+        }
+        if(cur_position == element_position_fixed)
+        {
+            break;
+        }
+    }
+    return true;
 }
 
 void litehtml::render_item::get_rendering_boxes(const std::function<void(const position&)>& redraw_box,

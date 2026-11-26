@@ -204,17 +204,17 @@ namespace litehtml
         sz.height = pixel_t(rows) * line_h;
     }
 
-    void el_textarea::fill_rect(uint_ptr hdc, const position& pos, const web_color& color)
+    void el_textarea::fill_rect(uint_ptr hdc, const position& pos, const web_color& color, const clipping* clip_chain)
     {
         background_layer layer;
         layer.border_box = pos;
         layer.clip_box   = pos;
         layer.origin_box = pos;
         layer.repeat     = background_repeat_no_repeat;
-        get_document()->container()->draw_solid_fill(hdc, layer, color);
+        get_document()->container()->draw_solid_fill(hdc, layer, color, clip_chain);
     }
 
-    void el_textarea::draw_text_control(uint_ptr hdc, const position& pos)
+    void el_textarea::draw_text_control(uint_ptr hdc, const position& pos, const clipping* clip_chain)
     {
         if(pos.width <= 0_px || pos.height <= 0_px)
         {
@@ -260,7 +260,7 @@ namespace litehtml
             m_first_line = lines.empty() ? 0 : lines.size() - 1;
         }
 
-        container->set_clip(pos, border_radiuses{});
+        clipping text_clipping(pos, border_radiuses{}, clip_chain);
 
         if(show_placeholder)
         {
@@ -277,7 +277,7 @@ namespace litehtml
                 {
                     const auto text = m_placeholder.substr(line.start, line.end - line.start);
                     position   text_pos(pos.x, y, line.width, line_h);
-                    container->draw_text(hdc, text.c_str(), font, color, text_pos);
+                    container->draw_text(hdc, text.c_str(), font, color, text_pos, &text_clipping);
                 }
             }
         }
@@ -303,12 +303,12 @@ namespace litehtml
                 if(x2 > x1)
                 {
                     position sel(pos.x + x1, y, x2 - x1, line_h);
-                    fill_rect(hdc, sel, web_color(0, 120, 215, 96));
+                    fill_rect(hdc, sel, web_color(0, 120, 215, 96), &text_clipping);
                 }
                 if(sel_end == line.end && selection_end > line.end)
                 {
                     position sel(pos.x + x2, y, 4_px, line_h);
-                    fill_rect(hdc, sel, web_color(0, 120, 215, 96));
+                    fill_rect(hdc, sel, web_color(0, 120, 215, 96), &text_clipping);
                 }
             }
 
@@ -316,7 +316,7 @@ namespace litehtml
             {
                 const auto text = data.text.substr(line.start, line.end - line.start);
                 position   text_pos(pos.x, y, line.width, line_h);
-                container->draw_text(hdc, text.c_str(), font, color, text_pos);
+                container->draw_text(hdc, text.c_str(), font, color, text_pos, &text_clipping);
             }
         }
 
@@ -327,17 +327,15 @@ namespace litehtml
             if(y < pos.bottom())
             {
                 position caret_pos(pos.x + caret.x, y, 1_px, line_h);
-                fill_rect(hdc, caret_pos, color);
+                fill_rect(hdc, caret_pos, color, &text_clipping);
             }
         }
-
-        container->del_clip();
     }
 
-    void el_textarea::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+    void el_textarea::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                            const std::shared_ptr<render_item>& ri)
     {
-        html_tag::draw(hdc, x, y, clip, ri);
+        html_tag::draw(hdc, x, y, clip, clip_chain, ri);
 
         position pos  = ri->pos();
         pos.x        += x;
@@ -346,7 +344,7 @@ namespace litehtml
 
         if(pos.does_intersect(clip))
         {
-            draw_text_control(hdc, pos);
+            draw_text_control(hdc, pos, clip_chain);
         }
     }
 

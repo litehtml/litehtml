@@ -250,7 +250,7 @@ litehtml::pixel_t LiteHtmlView::text_width(const char* text, litehtml::uint_ptr 
 }
 
 void LiteHtmlView::draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont,
-                             litehtml::web_color color, const litehtml::position& pos)
+                             litehtml::web_color color, const litehtml::position& pos, const litehtml::clipping* clip)
 {
     // std::cout << "draw_text" << std::endl;
     if(!text)
@@ -327,7 +327,8 @@ const char* LiteHtmlView::get_default_font_name() const
     return cp;
 }
 
-void LiteHtmlView::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker)
+void LiteHtmlView::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker,
+                                    const litehtml::clipping* clip)
 {
     std::cout << "draw_list_marker" << std::endl;
     if(!marker.image.empty())
@@ -415,7 +416,7 @@ void LiteHtmlView::get_image_size(const char* src, const char* baseurl, litehtml
 }
 
 void LiteHtmlView::draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url,
-                              const std::string& base_url)
+                              const std::string& base_url, const litehtml::clipping* clip)
 {
     draw_image(hdc, url.c_str(), base_url.c_str(), layer.border_box);
 }
@@ -437,7 +438,7 @@ void LiteHtmlView::draw_image(litehtml::uint_ptr hdc, const char* src, const cha
 }
 
 void LiteHtmlView::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                                   const litehtml::web_color& color)
+                                   const litehtml::web_color& color, const litehtml::clipping* clip)
 {
     SetHighColor(color.red, color.green, color.blue);
     FillRect(BRect(BPoint(layer.border_box.left(), layer.border_box.top()),
@@ -445,7 +446,7 @@ void LiteHtmlView::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::backg
 }
 
 void LiteHtmlView::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders,
-                                const litehtml::position& draw_pos, bool root)
+                                const litehtml::position& draw_pos, bool root, const litehtml::clipping* clip)
 {
     std::cout << "draw_borders" << std::endl;
     int bdr_top    = 0;
@@ -483,7 +484,7 @@ void LiteHtmlView::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders&
 }
 
 void LiteHtmlView::draw_combobox_marker(litehtml::uint_ptr /*hdc*/, const litehtml::position& pos,
-                                        const litehtml::web_color& color)
+                                        const litehtml::web_color& color, const litehtml::clipping* /*clip*/)
 {
     const float stroke = std::max(1.0f, std::round(pos.height.value() / 3.0f));
     const float inset  = stroke / 2.0f;
@@ -499,7 +500,7 @@ void LiteHtmlView::draw_combobox_marker(litehtml::uint_ptr /*hdc*/, const liteht
 }
 
 void LiteHtmlView::draw_checkbox_marker(litehtml::uint_ptr /*hdc*/, const litehtml::position& pos,
-                                        const litehtml::web_color& color)
+                                        const litehtml::web_color& color, const litehtml::clipping* /*clip*/)
 {
     const float size   = std::min(pos.width.value(), pos.height.value());
     const float stroke = std::max(1.0f, std::round(size / 7.0f));
@@ -529,16 +530,6 @@ void LiteHtmlView::draw_checkbox_marker(litehtml::uint_ptr /*hdc*/, const liteht
 void LiteHtmlView::transform_text(std::string& text, litehtml::text_transform tt)
 {
     std::cout << "transform_text" << std::endl;
-}
-
-void LiteHtmlView::set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius)
-{
-    std::cout << "set_clip" << std::endl;
-}
-
-void LiteHtmlView::del_clip()
-{
-    std::cout << "del_clip" << std::endl;
 }
 
 std::shared_ptr<litehtml::element> LiteHtmlView::create_element(const char* tag_name, const std::string& attributes,

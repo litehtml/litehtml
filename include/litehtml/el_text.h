@@ -25,7 +25,7 @@ namespace litehtml
             return true;
         }
 
-        void        draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+        void        draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                          const std::shared_ptr<render_item>& ri) override;
         std::string dump_get_name() override;
 

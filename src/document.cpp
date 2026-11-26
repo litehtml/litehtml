@@ -612,8 +612,8 @@ namespace litehtml
     {
         if(m_root && m_root_render)
         {
-            m_root->draw(hdc, x, y, clip, m_root_render);
-            m_root_render->draw_stacking_context(hdc, x, y, clip, true);
+            m_root->draw(hdc, x, y, clip, nullptr, m_root_render);
+            m_root_render->draw_stacking_context(hdc, x, y, clip, true, nullptr, nullptr);
         }
     }
 
@@ -736,7 +736,7 @@ namespace litehtml
             return false;
         }
 
-        element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, nullptr);
+        element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, x, y, nullptr);
 
         bool state_was_changed = false;
 
@@ -788,14 +788,14 @@ namespace litehtml
         if(dy != 0_px)
         {
             vscroll_el = m_root_render->get_element_by_point(
-                x, y, client_x, client_y,
+                x, y, client_x, client_y, x, y,
                 [dy](const std::shared_ptr<render_item>& el) -> bool { return el->is_v_scrollable(dy); });
         }
 
         if(dx != 0_px)
         {
             hscroll_el = m_root_render->get_element_by_point(
-                x, y, client_x, client_y,
+                x, y, client_x, client_y, x, y,
                 [dx](const std::shared_ptr<render_item>& el) -> bool { return el->is_h_scrollable(dx); });
         }
 
@@ -862,7 +862,7 @@ namespace litehtml
             return false;
         }
 
-        element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, nullptr);
+        element::ptr over_el = m_root_render->get_element_by_point(x, y, client_x, client_y, x, y, nullptr);
         m_active_element     = over_el;
 
         bool state_was_changed = false;

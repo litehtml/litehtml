@@ -324,18 +324,19 @@ namespace litehtml
         }
     }
 
-    void litehtml::html_tag::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+    void litehtml::html_tag::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                                   const std::shared_ptr<render_item>& ri)
     {
         position pos  = ri->pos();
         pos.x        += x;
         pos.y        += y;
 
-        draw_background(hdc, x, y, clip, ri);
+        draw_background(hdc, x, y, clip, clip_chain, ri);
 
         if(m_css->get_display() == display_list_item &&
            (m_css->get_list_style_type() != list_style_type_none || m_css->get_list_style_image() != ""))
         {
+            clipping marker_clipping;
             if(m_css->get_overflow() > overflow_visible)
             {
                 position border_box  = pos;
@@ -348,15 +349,11 @@ namespace litehtml
                 bdr_radius -= ri->get_borders();
                 bdr_radius -= ri->get_paddings();
 
-                get_document()->container()->set_clip(pos, bdr_radius);
+                marker_clipping = clipping(pos, bdr_radius, clip_chain);
+                clip_chain      = &marker_clipping;
             }
 
-            draw_list_marker(hdc, pos, ri);
-
-            if(m_css->get_overflow() > overflow_visible)
-            {
-                get_document()->container()->del_clip();
-            }
+            draw_list_marker(hdc, pos, clip_chain, ri);
         }
     }
 
@@ -1069,7 +1066,7 @@ namespace litehtml
     }
 
     void litehtml::html_tag::draw_outline(uint_ptr hdc, const position& border_box, const border_radiuses& radius,
-                                          bool first, bool last) const
+                                          bool first, bool last, const clipping* clip_chain) const
     {
         const css_border& outline = m_css->get_outline();
         if(outline.style <= border_style_hidden || outline.width.val() <= 0 || outline.color.alpha == 0)
@@ -1124,11 +1121,11 @@ namespace litehtml
         position draw_pos(border_box.x - left, border_box.y - grow, draw_width, draw_height);
         draw_pos.round();
 
-        get_document()->container()->draw_borders(hdc, bdr, draw_pos, false);
+        get_document()->container()->draw_borders(hdc, bdr, draw_pos, false, clip_chain);
     }
 
     void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
-                                             const std::shared_ptr<render_item>& ri)
+                                             const clipping* clip_chain, const std::shared_ptr<render_item>& ri)
     {
         auto inline_processed = ri->for_inline_boxes([&](const position& box_, bool first, bool last) {
             const background* bg = get_background();
@@ -1193,7 +1190,7 @@ namespace litehtml
                         layer.clip_box.round();
                         layer.origin_box.round();
 
-                        bg->draw_layer(hdc, i, layer, get_document()->container());
+                        bg->draw_layer(hdc, i, layer, get_document()->container(), clip_chain);
                     }
                 }
                 if(bdr.is_visible())
@@ -1201,9 +1198,9 @@ namespace litehtml
                     borders b = bdr;
                     b.radius  = bdr.radius.calc_percents(box.width, box.height);
                     box.round();
-                    get_document()->container()->draw_borders(hdc, b, box, false);
+                    get_document()->container()->draw_borders(hdc, b, box, false, clip_chain);
                 }
-                draw_outline(hdc, box, bdr.radius.calc_percents(box.width, box.height), first, last);
+                draw_outline(hdc, box, bdr.radius.calc_percents(box.width, box.height), first, last, clip_chain);
             }
             return true;
         });
@@ -1247,7 +1244,7 @@ namespace litehtml
                         layer.clip_box.round();
                         layer.origin_box.round();
 
-                        bg->draw_layer(hdc, i, layer, get_document()->container());
+                        bg->draw_layer(hdc, i, layer, get_document()->container(), clip_chain);
                     }
                 }
 
@@ -1256,13 +1253,13 @@ namespace litehtml
                 {
                     border_box.round();
                     bdr.radius = m_css->get_borders().radius.calc_percents(border_box.width, border_box.height);
-                    get_document()->container()->draw_borders(hdc, bdr, border_box, is_root());
+                    get_document()->container()->draw_borders(hdc, bdr, border_box, is_root(), clip_chain);
                 }
 
                 border_box.round();
                 draw_outline(hdc, border_box,
-                             m_css->get_borders().radius.calc_percents(border_box.width, border_box.height), true,
-                             true);
+                             m_css->get_borders().radius.calc_percents(border_box.width, border_box.height), true, true,
+                             clip_chain);
             }
         }
     }
@@ -1336,7 +1333,8 @@ namespace litehtml
         return false;
     }
 
-    void litehtml::html_tag::draw_list_marker(uint_ptr hdc, const position& pos, const std::shared_ptr<render_item>& ri)
+    void litehtml::html_tag::draw_list_marker(uint_ptr hdc, const position& pos, const clipping* clip_chain,
+                                              const std::shared_ptr<render_item>& ri)
     {
         list_marker lm;
 
@@ -1412,7 +1410,7 @@ namespace litehtml
             auto marker_text = get_list_marker_text(lm.index);
             if(marker_text.empty())
             {
-                get_document()->container()->draw_list_marker(hdc, lm);
+                get_document()->container()->draw_list_marker(hdc, lm, clip_chain);
             } else
             {
                 if(lm.font)
@@ -1423,12 +1421,13 @@ namespace litehtml
                     text_pos.move_to(text_pos.right() - tw, text_pos.y);
                     text_pos.width = tw;
                     text_pos.round();
-                    get_document()->container()->draw_text(hdc, marker_text.c_str(), lm.font, lm.color, text_pos);
+                    get_document()->container()->draw_text(hdc, marker_text.c_str(), lm.font, lm.color, text_pos,
+                                                           clip_chain);
                 }
             }
         } else
         {
-            get_document()->container()->draw_list_marker(hdc, lm);
+            get_document()->container()->draw_list_marker(hdc, lm, clip_chain);
         }
     }
 

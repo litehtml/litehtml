@@ -23,7 +23,8 @@ litehtml::pixel_t container_cairo::get_default_font_size() const
     return pt_to_px(12);
 }
 
-void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker)
+void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker,
+                                       const litehtml::clipping* clip)
 {
     if(!marker.image.empty())
     {
@@ -33,8 +34,12 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
         auto img = get_image(url);
         if(img)
         {
-            draw_pixbuf(reinterpret_cast<cairo_t*>(hdc), img, marker.pos.x, marker.pos.y,
-                        cairo_image_surface_get_width(img), cairo_image_surface_get_height(img));
+            auto* cr = reinterpret_cast<cairo_t*>(hdc);
+            cairo_save(cr);
+            apply_clip(cr, clip);
+            draw_pixbuf(cr, img, marker.pos.x, marker.pos.y, cairo_image_surface_get_width(img),
+                        cairo_image_surface_get_height(img));
+            cairo_restore(cr);
             cairo_surface_destroy(img);
         }
     } else
@@ -49,14 +54,14 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
             {
                 draw_ellipse(reinterpret_cast<cairo_t*>(hdc), static_cast<float>(marker_x),
                              static_cast<float>(marker_y), static_cast<float>(marker_width),
-                             static_cast<float>(marker_height), marker.color, 0.2_px);
+                             static_cast<float>(marker_height), marker.color, 0.2_px, clip);
             }
             break;
         case litehtml::list_style_type_disc:
             {
                 fill_ellipse(reinterpret_cast<cairo_t*>(hdc), static_cast<float>(marker_x),
                              static_cast<float>(marker_y), static_cast<float>(marker_width),
-                             static_cast<float>(marker_height), marker.color);
+                             static_cast<float>(marker_height), marker.color, clip);
             }
             break;
         case litehtml::list_style_type_square:
@@ -64,6 +69,7 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
             {
                 auto* cr = reinterpret_cast<cairo_t*>(hdc);
                 cairo_save(cr);
+                apply_clip(cr, clip);
 
                 cairo_new_path(cr);
                 cairo_rectangle(cr, marker_x, marker_y, marker_width, marker_height);
@@ -81,7 +87,7 @@ void container_cairo::draw_list_marker(litehtml::uint_ptr hdc, const litehtml::l
 }
 
 void container_cairo::draw_combobox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
-                                           const litehtml::web_color& color)
+                                           const litehtml::web_color& color, const litehtml::clipping* clip)
 {
     auto* cr = reinterpret_cast<cairo_t*>(hdc);
     if(!cr || pos.width <= 0_px || pos.height <= 0_px)
@@ -95,7 +101,7 @@ void container_cairo::draw_combobox_marker(litehtml::uint_ptr hdc, const litehtm
     const double inset  = stroke / 2.0;
 
     cairo_save(cr);
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     set_color(cr, color);
     cairo_set_line_width(cr, stroke);
@@ -117,7 +123,7 @@ void container_cairo::draw_combobox_marker(litehtml::uint_ptr hdc, const litehtm
 }
 
 void container_cairo::draw_checkbox_marker(litehtml::uint_ptr hdc, const litehtml::position& pos,
-                                           const litehtml::web_color& color)
+                                           const litehtml::web_color& color, const litehtml::clipping* clip)
 {
     auto* cr = reinterpret_cast<cairo_t*>(hdc);
     if(!cr || pos.width <= 0_px || pos.height <= 0_px)
@@ -140,7 +146,7 @@ void container_cairo::draw_checkbox_marker(litehtml::uint_ptr hdc, const litehtm
     }
 
     cairo_save(cr);
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     set_color(cr, color);
     cairo_set_line_width(cr, stroke);
@@ -183,7 +189,7 @@ void container_cairo::clip_background_layer(cairo_t* cr, const litehtml::backgro
 }
 
 void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                                 const std::string& url, const std::string& base_url)
+                                 const std::string& url, const std::string& base_url, const litehtml::clipping* clip)
 {
     if(url.empty() || (layer.clip_box.width == 0_px && layer.clip_box.height == 0_px))
     {
@@ -192,7 +198,7 @@ void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::backgro
 
     auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     clip_background_layer(cr, layer);
 
@@ -255,7 +261,7 @@ void container_cairo::draw_image(litehtml::uint_ptr hdc, const litehtml::backgro
 }
 
 void container_cairo::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                                      const litehtml::web_color& color)
+                                      const litehtml::web_color& color, const litehtml::clipping* clip)
 {
     if(color == litehtml::web_color::transparent)
     {
@@ -264,7 +270,7 @@ void container_cairo::draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::ba
 
     auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     clip_background_layer(cr, layer);
 
@@ -359,11 +365,12 @@ static void draw_pattern(
 }
 
 void container_cairo::draw_linear_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                                           const litehtml::background_layer::linear_gradient& gradient)
+                                           const litehtml::background_layer::linear_gradient& gradient,
+                                           const litehtml::clipping*                          clip)
 {
     auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     clip_background_layer(cr, layer);
 
@@ -425,11 +432,11 @@ void container_cairo::add_path_arc(cairo_t* cr, double x, double y, double rx, d
 }
 
 void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders,
-                                   const litehtml::position& draw_pos, bool /*root*/)
+                                   const litehtml::position& draw_pos, bool /*root*/, const litehtml::clipping* clip)
 {
     auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     cairo_new_path(cr);
 
@@ -551,31 +558,17 @@ void container_cairo::draw_borders(litehtml::uint_ptr hdc, const litehtml::borde
 
 void container_cairo::transform_text(std::string& /*text*/, litehtml::text_transform /*tt*/) {}
 
-void container_cairo::set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius)
+void container_cairo::apply_clip(cairo_t* cr, const litehtml::clipping* clip)
 {
-    m_clips.emplace_back(pos, bdr_radius);
-}
-
-void container_cairo::del_clip()
-{
-    if(!m_clips.empty())
-    {
-        m_clips.pop_back();
-    }
-}
-
-void container_cairo::apply_clip(cairo_t* cr)
-{
-    for(const auto& clip_box : m_clips)
-    {
-        rounded_rectangle(cr, clip_box.box, clip_box.radius);
+    litehtml::clipping::apply(clip, [cr, this](const litehtml::position& pos, const litehtml::border_radiuses& radius) {
+        rounded_rectangle(cr, pos, radius);
         cairo_clip(cr);
-    }
+    });
 }
 
 void container_cairo::draw_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width,
                                    litehtml::pixel_t height, const litehtml::web_color& color,
-                                   litehtml::pixel_t line_width)
+                                   litehtml::pixel_t line_width, const litehtml::clipping* clip)
 {
     if(!cr || width == 0_px || height == 0_px)
     {
@@ -583,7 +576,7 @@ void container_cairo::draw_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::p
     }
     cairo_save(cr);
 
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     cairo_new_path(cr);
 
@@ -599,7 +592,8 @@ void container_cairo::draw_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::p
 }
 
 void container_cairo::fill_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t y, litehtml::pixel_t width,
-                                   litehtml::pixel_t height, const litehtml::web_color& color)
+                                   litehtml::pixel_t height, const litehtml::web_color& color,
+                                   const litehtml::clipping* clip)
 {
     if(!cr || width == 0_px || height == 0_px)
     {
@@ -607,7 +601,7 @@ void container_cairo::fill_ellipse(cairo_t* cr, litehtml::pixel_t x, litehtml::p
     }
     cairo_save(cr);
 
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     cairo_new_path(cr);
 
@@ -752,11 +746,12 @@ void container_cairo::get_language(std::string& language, std::string& culture) 
 void container_cairo::link(const std::shared_ptr<litehtml::document>& /*ptr*/, const litehtml::element::ptr& /*el*/) {}
 
 void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                                           const litehtml::background_layer::radial_gradient& gradient)
+                                           const litehtml::background_layer::radial_gradient& gradient,
+                                           const litehtml::clipping*                          clip)
 {
     auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     clip_background_layer(cr, layer);
 
@@ -811,11 +806,12 @@ void container_cairo::draw_radial_gradient(litehtml::uint_ptr hdc, const litehtm
 }
 
 void container_cairo::draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                                          const litehtml::background_layer::conic_gradient& gradient)
+                                          const litehtml::background_layer::conic_gradient& gradient,
+                                          const litehtml::clipping*                         clip)
 {
     auto* cr = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     clip_background_layer(cr, layer);
 

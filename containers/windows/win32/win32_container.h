@@ -13,12 +13,11 @@ class win32_container : public litehtml::document_container
     typedef std::map<std::wstring, uint_ptr> images_map;
 
   protected:
-    images_map                 m_images;
-    litehtml::position::vector m_clips;
-    HRGN                       m_hClipRgn;
-    std::set<std::wstring>     m_installed_fonts;
-    HDC                        m_tmp_hdc;
-    CRITICAL_SECTION           m_img_sync;
+    images_map             m_images;
+    HRGN                   m_hClipRgn;
+    std::set<std::wstring> m_installed_fonts;
+    HDC                    m_tmp_hdc;
+    CRITICAL_SECTION       m_img_sync;
 
   public:
     win32_container();
@@ -32,35 +31,49 @@ class win32_container : public litehtml::document_container
     litehtml::pixel_t get_default_font_size() const override;
     litehtml::pixel_t text_width(const char* text, uint_ptr hFont) override;
     void              draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, litehtml::web_color color,
-                                const litehtml::position& pos) override;
+                                const litehtml::position& pos, const litehtml::clipping* clip) override;
     void              transform_text(std::string& text, litehtml::text_transform tt) override;
 
     litehtml::pixel_t pt_to_px(float pt) const override;
-    void              draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker) override;
-    void              load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
-    void              get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
+    void draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker, const litehtml::clipping* clip) override;
+    void load_image(const char* src, const char* baseurl, bool redraw_on_ready) override;
+    void get_image_size(const char* src, const char* baseurl, litehtml::size& sz) override;
     void draw_image(litehtml::uint_ptr hdc, const litehtml::background_layer& layer, const std::string& url,
-                    const std::string& base_url) override;
+                    const std::string& base_url, const litehtml::clipping* clip) override;
     void draw_solid_fill(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                         const litehtml::web_color& color) override;
+                         const litehtml::web_color& color, const litehtml::clipping* clip) override;
     void draw_linear_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                              const litehtml::background_layer::linear_gradient& gradient) override
+                              const litehtml::background_layer::linear_gradient& gradient,
+                              const litehtml::clipping*                          clip) override
     {
+        (void) hdc;
+        (void) layer;
+        (void) gradient;
+        (void) clip;
     }
     void draw_radial_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                              const litehtml::background_layer::radial_gradient& gradient) override
+                              const litehtml::background_layer::radial_gradient& gradient,
+                              const litehtml::clipping*                          clip) override
     {
+        (void) hdc;
+        (void) layer;
+        (void) gradient;
+        (void) clip;
     }
     void draw_conic_gradient(litehtml::uint_ptr hdc, const litehtml::background_layer& layer,
-                             const litehtml::background_layer::conic_gradient& gradient) override
+                             const litehtml::background_layer::conic_gradient& gradient,
+                             const litehtml::clipping*                         clip) override
     {
+        (void) hdc;
+        (void) layer;
+        (void) gradient;
+        (void) clip;
     }
 
-    void draw_combobox_marker(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color& color) override;
-    void draw_checkbox_marker(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color& color) override;
-
-    void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) override;
-    void del_clip() override;
+    void draw_combobox_marker(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color& color,
+                              const litehtml::clipping* clip) override;
+    void draw_checkbox_marker(uint_ptr hdc, const litehtml::position& pos, const litehtml::web_color& color,
+                              const litehtml::clipping* clip) override;
     litehtml::element::ptr create_element(const char* tag_name, const std::string& attributes,
                                           const litehtml::document::ptr& doc) override;
     void                   get_media_features(litehtml::media_features& media) const override;
@@ -69,7 +82,7 @@ class win32_container : public litehtml::document_container
     std::string            resolve_color(const std::string& color) const override;
 
   protected:
-    void apply_clip(HDC hdc);
+    void apply_clip(HDC hdc, const litehtml::clipping* clip);
     void release_clip(HDC hdc);
 
     virtual void make_url(LPCWSTR url, LPCWSTR basepath, std::wstring& out) = 0;

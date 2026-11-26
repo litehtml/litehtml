@@ -136,10 +136,10 @@ namespace litehtml
         sz.height = fm.height + 4_px;
     }
 
-    void el_button::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+    void el_button::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                          const std::shared_ptr<render_item>& ri)
     {
-        html_tag::draw(hdc, x, y, clip, ri);
+        html_tag::draw(hdc, x, y, clip, clip_chain, ri);
 
         // With child elements the content is laid out and drawn by the render items.
         if(!is_replaced())
@@ -164,9 +164,8 @@ namespace litehtml
         auto     th        = fm.height > 0_px ? fm.height : pos.height;
         position text_pos(pos.x + std::max(0_px, (pos.width - tw) / 2_px),
                           pos.y + std::max(0_px, (pos.height - th) / 2_px), tw, th);
-        container->set_clip(pos, border_radiuses{});
-        container->draw_text(hdc, m_label.c_str(), font, css().get_color(), text_pos);
-        container->del_clip();
+        clipping label_clipping(pos, border_radiuses{}, clip_chain);
+        container->draw_text(hdc, m_label.c_str(), font, css().get_color(), text_pos, &label_clipping);
     }
 
     std::shared_ptr<render_item> el_button::create_render_item(const std::shared_ptr<render_item>& parent_ri)

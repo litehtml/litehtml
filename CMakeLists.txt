@@ -129,6 +129,7 @@ set(HEADER_LITEHTML
 	include/litehtml.h
 	include/litehtml/background.h
 	include/litehtml/borders.h
+	include/litehtml/clipping.h
 	include/litehtml/codepoint.h
 	include/litehtml/css_length.h
 	include/litehtml/css_grid.h
@@ -369,7 +370,7 @@ else ()
 	ExternalProject_Add(
 			litehtml-tests
 			GIT_REPOSITORY      https://github.com/litehtml/litehtml-tests.git
-			GIT_TAG             49443332b3da4ed82fec9c9a957631f9f3bb1cc8
+			GIT_TAG             5d23a28e7c65780d91bb0b1ca5f26395623e02d8
 			SOURCE_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-src"
 			BINARY_DIR          "${CMAKE_BINARY_DIR}/litehtml-tests-build"
 			CMAKE_ARGS          -DLITEHTML_PATH=${CMAKE_CURRENT_SOURCE_DIR}

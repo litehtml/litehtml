@@ -24,7 +24,7 @@ namespace litehtml
         void parse_attributes() override;
         void compute_styles(bool recursive = true) override;
         void refresh_styles(bool recursive = true) override;
-        void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+        void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                   const std::shared_ptr<render_item>& ri) override;
         void get_content_size(size& sz, pixel_t max_width) override;
 
@@ -49,8 +49,8 @@ namespace litehtml
         void notify_change();
         void apply_placeholder_style(const style& style) override;
         void compute_placeholder_style();
-        void draw_text_control(uint_ptr hdc, const position& pos);
-        void fill_rect(uint_ptr hdc, const position& pos, const web_color& color);
+        void draw_text_control(uint_ptr hdc, const position& pos, const clipping* clip_chain);
+        void fill_rect(uint_ptr hdc, const position& pos, const web_color& color, const clipping* clip_chain);
     };
 } // namespace litehtml
 

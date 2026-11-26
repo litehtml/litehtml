@@ -20,8 +20,8 @@ class grid_test_container : public litehtml::document_container
     {
         return static_cast<int>(std::strlen(text)) * 8;
     }
-    void draw_text(litehtml::uint_ptr, const char*, litehtml::uint_ptr, litehtml::web_color,
-                   const litehtml::position&) override
+    void draw_text(litehtml::uint_ptr, const char*, litehtml::uint_ptr, litehtml::web_color, const litehtml::position&,
+                   const litehtml::clipping*) override
     {
     }
     litehtml::pixel_t pt_to_px(float value) const override
@@ -36,29 +36,41 @@ class grid_test_container : public litehtml::document_container
     {
         return "sans-serif";
     }
-    void draw_list_marker(litehtml::uint_ptr, const litehtml::list_marker&) override {}
-    void draw_combobox_marker(litehtml::uint_ptr, const litehtml::position&, const litehtml::web_color&) override {}
-    void draw_checkbox_marker(litehtml::uint_ptr, const litehtml::position&, const litehtml::web_color&) override {}
-    void load_image(const char*, const char*, bool) override {}
-    void get_image_size(const char*, const char*, litehtml::size&) override {}
-    void draw_image(litehtml::uint_ptr, const litehtml::background_layer&, const std::string&,
-                    const std::string&) override
+    void draw_list_marker(litehtml::uint_ptr, const litehtml::list_marker&, const litehtml::clipping*) override {}
+    void draw_combobox_marker(litehtml::uint_ptr, const litehtml::position&, const litehtml::web_color&,
+                              const litehtml::clipping*) override
     {
     }
-    void draw_solid_fill(litehtml::uint_ptr, const litehtml::background_layer&, const litehtml::web_color&) override {}
+    void draw_checkbox_marker(litehtml::uint_ptr, const litehtml::position&, const litehtml::web_color&,
+                              const litehtml::clipping*) override
+    {
+    }
+    void load_image(const char*, const char*, bool) override {}
+    void get_image_size(const char*, const char*, litehtml::size&) override {}
+    void draw_image(litehtml::uint_ptr, const litehtml::background_layer&, const std::string&, const std::string&,
+                    const litehtml::clipping*) override
+    {
+    }
+    void draw_solid_fill(litehtml::uint_ptr, const litehtml::background_layer&, const litehtml::web_color&,
+                         const litehtml::clipping*) override
+    {
+    }
     void draw_linear_gradient(litehtml::uint_ptr, const litehtml::background_layer&,
-                              const litehtml::background_layer::linear_gradient&) override
+                              const litehtml::background_layer::linear_gradient&, const litehtml::clipping*) override
     {
     }
     void draw_radial_gradient(litehtml::uint_ptr, const litehtml::background_layer&,
-                              const litehtml::background_layer::radial_gradient&) override
+                              const litehtml::background_layer::radial_gradient&, const litehtml::clipping*) override
     {
     }
     void draw_conic_gradient(litehtml::uint_ptr, const litehtml::background_layer&,
-                             const litehtml::background_layer::conic_gradient&) override
+                             const litehtml::background_layer::conic_gradient&, const litehtml::clipping*) override
     {
     }
-    void draw_borders(litehtml::uint_ptr, const litehtml::borders&, const litehtml::position&, bool) override {}
+    void draw_borders(litehtml::uint_ptr, const litehtml::borders&, const litehtml::position&, bool,
+                      const litehtml::clipping*) override
+    {
+    }
     void set_caption(const char*) override {}
     void set_base_url(const char*) override {}
     void link(const std::shared_ptr<litehtml::document>&, const litehtml::element::ptr&) override {}
@@ -67,8 +79,6 @@ class grid_test_container : public litehtml::document_container
     void set_cursor(const char*) override {}
     void transform_text(std::string&, litehtml::text_transform) override {}
     void import_css(std::string&, const std::string&, std::string&) override {}
-    void set_clip(const litehtml::position&, const litehtml::border_radiuses&) override {}
-    void del_clip() override {}
     void get_viewport(litehtml::position& viewport) const override
     {
         viewport = {0, 0, 800, 600};
