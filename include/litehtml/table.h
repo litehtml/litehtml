@@ -76,41 +76,51 @@ namespace litehtml
         pixel_t    border_right;
         pixel_t    left;
         pixel_t    right;
+        // Extra box offset of the first-row cell that supplied the fixed width (see render_offset_width())
+        pixel_t css_width_offset;
+        // The css_width came from a <col> element (fixed layout gives it priority)
+        bool width_from_col_element;
 
         table_column()
         {
-            left         = 0;
-            right        = 0;
-            border_left  = 0;
-            border_right = 0;
-            min_width    = 0;
-            max_width    = 0;
-            width        = 0;
+            left                   = 0;
+            right                  = 0;
+            border_left            = 0;
+            border_right           = 0;
+            min_width              = 0;
+            max_width              = 0;
+            width                  = 0;
+            css_width_offset       = 0;
+            width_from_col_element = false;
             css_width.predef(0);
         }
 
         table_column(pixel_t min_w, pixel_t max_w)
         {
-            left         = 0;
-            right        = 0;
-            border_left  = 0;
-            border_right = 0;
-            max_width    = max_w;
-            min_width    = min_w;
-            width        = 0;
+            left                   = 0;
+            right                  = 0;
+            border_left            = 0;
+            border_right           = 0;
+            max_width              = max_w;
+            min_width              = min_w;
+            width                  = 0;
+            css_width_offset       = 0;
+            width_from_col_element = false;
             css_width.predef(0);
         }
 
         table_column(const table_column& val)
         {
-            left         = val.left;
-            right        = val.right;
-            border_left  = val.border_left;
-            border_right = val.border_right;
-            max_width    = val.max_width;
-            min_width    = val.min_width;
-            width        = val.width;
-            css_width    = val.css_width;
+            left                   = val.left;
+            right                  = val.right;
+            border_left            = val.border_left;
+            border_right           = val.border_right;
+            max_width              = val.max_width;
+            min_width              = val.min_width;
+            width                  = val.width;
+            css_width              = val.css_width;
+            css_width_offset       = val.css_width_offset;
+            width_from_col_element = val.width_from_col_element;
         }
     };
 
@@ -215,17 +225,21 @@ namespace litehtml
 
         std::vector<std::shared_ptr<render_item>> m_captions;
         std::vector<css_length>                   m_column_widths;
+        // True when the matching m_column_widths entry comes from a <col> element
+        // rather than a <colgroup>. Fixed layout gives <col> widths priority.
+        std::vector<bool> m_column_widths_from_col;
 
       public:
         void clear();
         void begin_row(const std::shared_ptr<render_item>& row);
         void add_cell(const std::shared_ptr<render_item>& el);
         bool is_rowspanned(int r, int c);
-        void finish();
+        void finish(table_layout layout = table_layout_auto);
         // Widths specified on <col>/<colgroup> elements, one entry per column starting from the first one
-        void set_column_widths(std::vector<css_length> widths)
+        void set_column_widths(std::vector<css_length> widths, std::vector<bool> from_col = {})
         {
-            m_column_widths = std::move(widths);
+            m_column_widths          = std::move(widths);
+            m_column_widths_from_col = std::move(from_col);
         }
 
         table_cell*   cell(int t_col, int t_row);
@@ -286,6 +300,7 @@ namespace litehtml
         void    distribute_width(pixel_t width, int start, int end, table_column_accessor* acc);
         pixel_t calc_table_width(std::optional<pixel_t> block_width, bool is_auto, table_layout layout,
                                  pixel_t& min_table_width, pixel_t& max_table_width);
+        pixel_t calc_fixed_table_width(pixel_t table_width, pixel_t& min_table_width, pixel_t& max_table_width);
         void    calc_horizontal_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_x);
         void    calc_vertical_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_y);
         void    calc_collapsed_borders(const margins& table_borders);

@@ -345,8 +345,20 @@ void litehtml::render_item_table::calc_intrinsic_size()
 
     if(!css().get_width().is_predefined() && !css().get_width().has_percentage())
     {
-        table_width = m_grid->calc_table_width({}, false, css().get_table_layout(), m_intrinsic_min_size.width,
-                                               m_intrinsic_max_size.width);
+        if(css().get_table_layout() == table_layout_fixed)
+        {
+            // A fixed table with an explicit width contributes that width (or the sum
+            // of a wider set of pixel columns) without measuring cell content.
+            const pixel_t specified_width =
+                src_el()->get_document()->to_pixels(css().get_width(), css().get_font_metrics(), 0_px) -
+                box_sizing_width();
+            table_width = m_grid->calc_fixed_table_width(std::max(specified_width - table_width_spacing, 0_px),
+                                                         m_intrinsic_min_size.width, m_intrinsic_max_size.width);
+        } else
+        {
+            table_width = m_grid->calc_table_width({}, false, css().get_table_layout(), m_intrinsic_min_size.width,
+                                                   m_intrinsic_max_size.width);
+        }
     } else
     {
         table_width = m_grid->calc_table_width({}, css().get_width().is_predefined(), css().get_table_layout(),
@@ -410,15 +422,17 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
     }
 
     std::vector<css_length> column_widths;
-    auto                    add_columns = [&](const std::shared_ptr<render_item>& el, const css_length& width) {
+    std::vector<bool>       column_widths_from_col;
+    auto add_columns = [&](const std::shared_ptr<render_item>& el, const css_length& width, bool from_col) {
         const int span = std::max(1, atoi(el->src_el()->get_attr("span", "1")));
         column_widths.insert(column_widths.end(), span, width);
+        column_widths_from_col.insert(column_widths_from_col.end(), span, from_col);
     };
     for(const auto& el : m_children)
     {
         if(el->src_el()->css().get_display() == display_table_column)
         {
-            add_columns(el, el->src_el()->css().get_width());
+            add_columns(el, el->src_el()->css().get_width(), true);
         } else if(el->src_el()->css().get_display() == display_table_column_group)
         {
             bool has_columns = false;
@@ -427,18 +441,19 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
                 if(col->src_el()->css().get_display() == display_table_column)
                 {
                     has_columns = true;
-                    add_columns(col, col->src_el()->css().get_width());
+                    add_columns(col, col->src_el()->css().get_width(), true);
                 }
             }
             if(!has_columns)
             {
-                add_columns(el, el->src_el()->css().get_width());
+                // A column-group width is not a column width in fixed layout.
+                add_columns(el, el->src_el()->css().get_width(), false);
             }
         }
     }
-    m_grid->set_column_widths(std::move(column_widths));
+    m_grid->set_column_widths(std::move(column_widths), std::move(column_widths_from_col));
 
-    m_grid->finish();
+    m_grid->finish(src_el()->css().get_table_layout());
 
     if(src_el()->css().get_border_collapse() == border_collapse_separate)
     {
