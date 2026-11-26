@@ -8,6 +8,7 @@
 #include "css_tokenizer.h"
 #include "gradient.h"
 #include "web_color.h"
+#include <cstdint>
 #include <optional>
 #include <unordered_map>
 
@@ -28,6 +29,9 @@ namespace litehtml
         bool                     m_important = false;
         bool                     m_has_var   = false; // css_token_vector, parsing is delayed because of var()
         std::optional<string_id> m_var_shorthand;
+        // Declaration order within the style. It keeps shorthand/longhand cascade order when
+        // styles are combined and when var() declarations are parsed later.
+        std::uint32_t m_order = 0;
 
         property_value() = default;
         template <class T>
@@ -51,6 +55,7 @@ namespace litehtml
 
       private:
         props_map                              m_properties;
+        std::uint32_t                          m_next_order = 0;
         static std::map<string_id, css_values> m_valid_values;
 
       public:
@@ -75,6 +80,7 @@ namespace litehtml
         void clear()
         {
             m_properties.clear();
+            m_next_order = 0;
         }
 
         void subst_vars(const html_tag* el);
@@ -119,7 +125,8 @@ namespace litehtml
         void parse_align_self(string_id name, const css_token_vector& tokens, bool important);
         void parse_grid(string_id name, const css_token_vector& tokens, bool important);
 
-        void add_parsed_property(string_id name, const property_value& propval);
+        std::vector<string_id> ordered_property_names() const;
+        void                   add_parsed_property(string_id name, const property_value& propval);
         void add_length_property(string_id name, const css_token& val, const css_values& keywords, int options,
                                  bool important);
         void add_sizing_property(string_id name, const css_token& val, const css_values& keywords, bool important);

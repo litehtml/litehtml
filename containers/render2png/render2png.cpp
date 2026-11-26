@@ -315,6 +315,14 @@ namespace html2png
                 // the same way the wheel keys are converted.
                 doc->on_mouse_over(mouse_x - draw_x, mouse_y - draw_y, mouse_x, mouse_y,
                                    [](const litehtml::position&) {});
+                // Optionally move the pointer out again (hover-leave tests).
+                if(cfg.has_key("mouseleavex") && cfg.has_key("mouseleavey"))
+                {
+                    const int leave_x = cfg.get_int("mouseleavex", 0);
+                    const int leave_y = cfg.get_int("mouseleavey", 0);
+                    doc->on_mouse_over(leave_x - draw_x, leave_y - draw_y, leave_x, leave_y,
+                                       [](const litehtml::position&) {});
+                }
             }
             // Focus an element before drawing. focusvisible=false simulates focus moved by the mouse.
             if(const std::string focus_selector = cfg.get_string("focus", ""); !focus_selector.empty())
