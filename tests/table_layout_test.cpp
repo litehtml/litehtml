@@ -194,6 +194,62 @@ int main()
         ok &= check(a6->get_placement().width == 32_px, "the auto column keeps the content width");
     }
 
+    // A height on a table cell is a minimum row height: an empty cell still
+    // occupies that height.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            std::string(page_style) +
+                "<table class=fixed style='width:100px' id=t7>"
+                "<tr><td style='height:40px' id=a7></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto t7 = doc->root()->select_one("#t7");
+        const auto a7 = doc->root()->select_one("#a7");
+        ok           &= check(t7 && a7, "the empty-cell height table should exist");
+        ok &= check(t7->get_placement().height == 40_px, "an empty cell keeps its specified height");
+        ok &= check(a7->get_placement().height == 40_px, "the empty cell fills the row height");
+    }
+
+    // Content taller than the specified cell height wins.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            std::string(page_style) +
+                "<table class=fixed style='width:100px' id=t8>"
+                "<tr><td style='height:10px' id=a8><div style='height:50px' id=b8></div></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto t8 = doc->root()->select_one("#t8");
+        const auto a8 = doc->root()->select_one("#a8");
+        const auto b8 = doc->root()->select_one("#b8");
+        ok           &= check(t8 && a8 && b8, "the overflowing-cell table should exist");
+        ok &= check(t8->get_placement().height == 50_px, "taller content determines the row height");
+        ok &= check(a8->get_placement().height == 50_px, "the cell grows to its content");
+        ok &= check(b8->get_placement().height == 50_px, "the content keeps its height");
+    }
+
+    // Content shorter than the specified cell height grows the row.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            std::string(page_style) +
+                "<table class=fixed style='width:100px' id=t9>"
+                "<tr><td style='height:60px' id=a9><div style='height:20px' id=b9></div></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto t9 = doc->root()->select_one("#t9");
+        const auto a9 = doc->root()->select_one("#a9");
+        const auto b9 = doc->root()->select_one("#b9");
+        ok           &= check(t9 && a9 && b9, "the short-content table should exist");
+        ok &= check(t9->get_placement().height == 60_px, "the specified cell height determines the row height");
+        ok &= check(a9->get_placement().height == 60_px, "the cell fills the specified height");
+        ok &= check(b9->get_placement().height == 20_px, "the content keeps its own height");
+    }
+
     if(ok)
     {
         std::cout << "All table layout tests passed\n";
