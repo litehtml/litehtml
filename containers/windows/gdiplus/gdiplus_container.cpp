@@ -230,9 +230,10 @@ static void draw_vert_border(Graphics& graphics, const border& border, litehtml:
     }
 }
 
-void gdiplus_container::draw_borders(uint_ptr hdc, const borders& borders, const position& draw_pos, bool root)
+void gdiplus_container::draw_borders(uint_ptr hdc, const borders& borders, const position& draw_pos, bool root,
+                                     const litehtml::clipping* clip)
 {
-    apply_clip((HDC) hdc);
+    apply_clip((HDC) hdc, clip);
     Graphics graphics((HDC) hdc);
 
     if(borders.left.width != 0)

@@ -545,17 +545,17 @@ namespace litehtml
         }
     }
 
-    void el_input::fill_rect(uint_ptr hdc, const position& pos, const web_color& color)
+    void el_input::fill_rect(uint_ptr hdc, const position& pos, const web_color& color, const clipping* clip_chain)
     {
         background_layer layer;
         layer.border_box = pos;
         layer.clip_box   = pos;
         layer.origin_box = pos;
         layer.repeat     = background_repeat_no_repeat;
-        get_document()->container()->draw_solid_fill(hdc, layer, color);
+        get_document()->container()->draw_solid_fill(hdc, layer, color, clip_chain);
     }
 
-    void el_input::draw_text_control(uint_ptr hdc, const position& pos)
+    void el_input::draw_text_control(uint_ptr hdc, const position& pos, const clipping* clip_chain)
     {
         if(pos.width <= 0_px || pos.height <= 0_px)
         {
@@ -611,7 +611,7 @@ namespace litehtml
         }
         m_text_scroll = std::max(0_px, m_text_scroll);
 
-        container->set_clip(pos, border_radiuses{});
+        clipping      text_clipping(pos, border_radiuses{}, clip_chain);
         const pixel_t text_y = pos.y + std::max(0_px, (pos.height - line_h) / 2_px);
 
         size_t selection_start = std::min(data.selection_start, data.selection_end);
@@ -637,7 +637,7 @@ namespace litehtml
             if(x2 > x1)
             {
                 position sel(pos.x + x1 - m_text_scroll, text_y, x2 - x1, line_h);
-                fill_rect(hdc, sel, web_color(0, 120, 215, 96));
+                fill_rect(hdc, sel, web_color(0, 120, 215, 96), &text_clipping);
             }
         }
 
@@ -645,20 +645,18 @@ namespace litehtml
         {
             const auto tw = control_text::measure(*get_document(), font, text, 0, text.size());
             position   text_pos(pos.x - m_text_scroll, text_y, tw, line_h);
-            container->draw_text(hdc, text.c_str(), font, color, text_pos);
+            container->draw_text(hdc, text.c_str(), font, color, text_pos, &text_clipping);
         }
 
         const bool focused = get_document()->get_focused_element().get() == this;
         if(focused && data.caret_visible)
         {
             position caret(pos.x + caret_x - m_text_scroll, text_y, 1_px, line_h);
-            fill_rect(hdc, caret, color);
+            fill_rect(hdc, caret, color, &text_clipping);
         }
-
-        container->del_clip();
     }
 
-    void el_input::draw_button_label(uint_ptr hdc, const position& pos)
+    void el_input::draw_button_label(uint_ptr hdc, const position& pos, const clipping* clip_chain)
     {
         const auto text = label();
         if(text.empty())
@@ -672,24 +670,22 @@ namespace litehtml
         auto     th        = fm.height > 0_px ? fm.height : pos.height;
         position text_pos(pos.x + std::max(0_px, (pos.width - tw) / 2_px),
                           pos.y + std::max(0_px, (pos.height - th) / 2_px), tw, th);
-        container->set_clip(pos, border_radiuses{});
-        container->draw_text(hdc, text.c_str(), font, css().get_color(), text_pos);
-        container->del_clip();
+        clipping label_clipping(pos, border_radiuses{}, clip_chain);
+        container->draw_text(hdc, text.c_str(), font, css().get_color(), text_pos, &label_clipping);
     }
 
-    void el_input::draw_checkbox(uint_ptr hdc, const position& pos)
+    void el_input::draw_checkbox(uint_ptr hdc, const position& pos, const clipping* clip_chain)
     {
         if(!is_checked())
         {
             return;
         }
-        auto* container = get_document()->container();
-        container->set_clip(pos, border_radiuses{});
-        container->draw_checkbox_marker(hdc, pos, web_color(255, 255, 255));
-        container->del_clip();
+        auto*    container = get_document()->container();
+        clipping checkbox_clipping(pos, border_radiuses{}, clip_chain);
+        container->draw_checkbox_marker(hdc, pos, web_color(255, 255, 255), &checkbox_clipping);
     }
 
-    void el_input::draw_radio(uint_ptr hdc, const position& pos)
+    void el_input::draw_radio(uint_ptr hdc, const position& pos, const clipping* clip_chain)
     {
         if(!is_checked() || pos.width <= 0_px || pos.height <= 0_px)
         {
@@ -707,10 +703,11 @@ namespace litehtml
         layer.border_radius.top_right_x = layer.border_radius.top_right_y = radius;
         layer.border_radius.bottom_right_x = layer.border_radius.bottom_right_y = radius;
         layer.border_radius.bottom_left_x = layer.border_radius.bottom_left_y = radius;
-        get_document()->container()->draw_solid_fill(hdc, layer, web_color(11, 94, 215));
+        get_document()->container()->draw_solid_fill(hdc, layer, web_color(11, 94, 215), clip_chain);
     }
 
-    void el_input::draw_image(uint_ptr hdc, const position& pos, const std::shared_ptr<render_item>& ri)
+    void el_input::draw_image(uint_ptr hdc, const position& pos, const std::shared_ptr<render_item>& ri,
+                              const clipping* clip_chain)
     {
         if(pos.width <= 0_px || pos.height <= 0_px)
         {
@@ -724,13 +721,13 @@ namespace litehtml
         layer.border_box += ri->get_borders();
         layer.repeat      = background_repeat_no_repeat;
         layer.border_radius = css().get_borders().radius.calc_percents(layer.border_box.width, layer.border_box.height);
-        get_document()->container()->draw_image(hdc, layer, m_src, {});
+        get_document()->container()->draw_image(hdc, layer, m_src, {}, clip_chain);
     }
 
-    void el_input::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+    void el_input::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                         const std::shared_ptr<render_item>& ri)
     {
-        html_tag::draw(hdc, x, y, clip, ri);
+        html_tag::draw(hdc, x, y, clip, clip_chain, ri);
 
         position pos  = ri->pos();
         pos.x        += x;
@@ -747,21 +744,21 @@ namespace litehtml
         case input_type::hidden:
             break;
         case input_type::checkbox:
-            draw_checkbox(hdc, pos);
+            draw_checkbox(hdc, pos, clip_chain);
             break;
         case input_type::radio:
-            draw_radio(hdc, pos);
+            draw_radio(hdc, pos, clip_chain);
             break;
         case input_type::image:
-            draw_image(hdc, pos, ri);
+            draw_image(hdc, pos, ri, clip_chain);
             break;
         case input_type::button:
         case input_type::submit:
         case input_type::reset:
-            draw_button_label(hdc, pos);
+            draw_button_label(hdc, pos, clip_chain);
             break;
         default:
-            draw_text_control(hdc, pos);
+            draw_text_control(hdc, pos, clip_chain);
             break;
         }
     }

@@ -16,6 +16,7 @@
 namespace litehtml
 {
     class element;
+    class clipping;
 
     using split_inlines_result =
         std::tuple<std::shared_ptr<render_item>, std::shared_ptr<render_item>, std::shared_ptr<render_item>>;
@@ -666,21 +667,28 @@ namespace litehtml
         virtual void set_inline_boxes(position::vector& /*boxes*/) {};
         virtual void add_inline_box(const position& /*box*/) {};
         virtual void clear_inline_boxes() {};
-        void draw_stacking_context(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, bool with_positioned);
+        void draw_stacking_context(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, bool with_positioned,
+                                   const clipping* cur_clipping = nullptr, const clipping* abs_clipping = nullptr);
         virtual void draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, draw_flag flag, int zindex,
-                                   const render_item* stacking_context = nullptr);
+                                   const render_item* stacking_context = nullptr,
+                                   const clipping* cur_clipping = nullptr, const clipping* abs_clipping = nullptr);
         virtual pixel_t get_draw_vertical_offset()
         {
             return 0_px;
         }
         virtual std::shared_ptr<element> get_child_by_point(
-            pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex,
-            const std::function<bool(const std::shared_ptr<render_item>&)>& check,
-            const render_item*                                              stacking_context = nullptr);
+            pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, pixel_t doc_x, pixel_t doc_y, draw_flag flag,
+            int zindex, const std::function<bool(const std::shared_ptr<render_item>&)>& check,
+            const render_item* stacking_context = nullptr);
         std::shared_ptr<element> get_element_by_point(
-            pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y,
+            pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, pixel_t doc_x, pixel_t doc_y,
             const std::function<bool(const std::shared_ptr<render_item>&)>& check);
         virtual bool is_point_inside(pixel_t x, pixel_t y) const;
+        // Whether the point, given in document coordinates (client_x/client_y are viewport
+        // coordinates used inside position:fixed subtrees), is inside every overflow clip that
+        // applies to this element. Absolutely positioned elements are not clipped by static
+        // ancestors below their containing block and fixed elements are not clipped at all.
+        bool         is_point_visible(pixel_t doc_x, pixel_t doc_y, pixel_t client_x, pixel_t client_y) const;
         void         dump(litehtml::dumper& cout);
         position     get_placement() const;
         virtual void y_shift(pixel_t delta);

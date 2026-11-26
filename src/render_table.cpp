@@ -458,7 +458,8 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 }
 
 void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
-                                                draw_flag flag, int zindex, const render_item* stacking_context)
+                                                draw_flag flag, int zindex, const render_item* stacking_context,
+                                                const clipping* cur_clipping, const clipping* abs_clipping)
 {
     if(!m_grid)
     {
@@ -476,16 +477,17 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t
         }
         if(flag == draw_block)
         {
-            caption->src_el()->draw(hdc, pos.x, pos.y, clip, caption);
+            caption->src_el()->draw(hdc, pos.x, pos.y, clip, cur_clipping, caption);
         }
-        caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context);
+        caption->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context, cur_clipping, abs_clipping);
     }
     for(int row = 0; row < m_grid->rows_count(); row++)
     {
         const bool row_visible = m_grid->row(row).el_row->is_visible();
         if(row_visible && flag == draw_block)
         {
-            m_grid->row(row).el_row->src_el()->draw_background(hdc, pos.x, pos.y, clip, m_grid->row(row).el_row);
+            m_grid->row(row).el_row->src_el()->draw_background(hdc, pos.x, pos.y, clip, cur_clipping,
+                                                               m_grid->row(row).el_row);
         }
         for(int col = 0; col < m_grid->cols_count(); col++)
         {
@@ -494,16 +496,17 @@ void litehtml::render_item_table::draw_children(uint_ptr hdc, pixel_t x, pixel_t
             {
                 if(flag == draw_block)
                 {
-                    cell->el->src_el()->draw(hdc, pos.x, pos.y, clip, cell->el);
+                    cell->el->src_el()->draw(hdc, pos.x, pos.y, clip, cur_clipping, cell->el);
                 }
-                cell->el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context);
+                cell->el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context, cur_clipping,
+                                        abs_clipping);
             }
         }
     }
 }
 
 std::shared_ptr<litehtml::element> litehtml::render_item_table::get_child_by_point(
-    pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, draw_flag flag, int zindex,
+    pixel_t x, pixel_t y, pixel_t client_x, pixel_t client_y, pixel_t doc_x, pixel_t doc_y, draw_flag flag, int zindex,
     const std::function<bool(const std::shared_ptr<render_item>&)>& check, const render_item* stacking_context)
 {
     if(!m_grid)
@@ -511,7 +514,7 @@ std::shared_ptr<litehtml::element> litehtml::render_item_table::get_child_by_poi
         return nullptr;
     }
 
-    if(src_el()->css().get_overflow() > overflow_visible)
+    if(flag != draw_positioned && src_el()->css().get_overflow() > overflow_visible)
     {
         if(!m_pos.is_point_inside(x, y))
         {
@@ -537,8 +540,8 @@ std::shared_ptr<litehtml::element> litehtml::render_item_table::get_child_by_poi
     element::ptr ret = nullptr;
 
     auto try_child = [&](const std::shared_ptr<render_item>& child) {
-        element::ptr found =
-            child->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, flag, zindex, check, stacking_context);
+        element::ptr found = child->get_child_by_point(el_pos.x, el_pos.y, client_x, client_y, doc_x, doc_y, flag,
+                                                       zindex, check, stacking_context);
         if(found)
         {
             if(!check)

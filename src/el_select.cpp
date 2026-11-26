@@ -430,17 +430,17 @@ namespace litehtml
         return rows;
     }
 
-    void el_select::fill_rect(uint_ptr hdc, const position& pos, const web_color& color)
+    void el_select::fill_rect(uint_ptr hdc, const position& pos, const web_color& color, const clipping* clip_chain)
     {
         background_layer layer;
         layer.border_box = pos;
         layer.clip_box   = pos;
         layer.origin_box = pos;
         layer.repeat     = background_repeat_no_repeat;
-        get_document()->container()->draw_solid_fill(hdc, layer, color);
+        get_document()->container()->draw_solid_fill(hdc, layer, color, clip_chain);
     }
 
-    void el_select::draw_active_outline(uint_ptr hdc, const position& row_pos)
+    void el_select::draw_active_outline(uint_ptr hdc, const position& row_pos, const clipping* clip_chain)
     {
         borders bdr;
         border  side;
@@ -459,10 +459,10 @@ namespace litehtml
 
         position draw_pos(row_pos.x + 1_px, row_pos.y + 1_px, row_pos.width - 2_px, row_pos.height - 2_px);
         draw_pos.round();
-        get_document()->container()->draw_borders(hdc, bdr, draw_pos, false);
+        get_document()->container()->draw_borders(hdc, bdr, draw_pos, false, clip_chain);
     }
 
-    void el_select::draw_listbox(uint_ptr hdc, const position& pos)
+    void el_select::draw_listbox(uint_ptr hdc, const position& pos, const clipping* clip_chain)
     {
         auto       container = get_document()->container();
         auto       font      = css().get_font();
@@ -476,7 +476,7 @@ namespace litehtml
         const auto& selection_fg = focused ? web_color::white : text;
         const auto  bold_font    = select_bold_font(*this);
 
-        container->set_clip(pos, border_radiuses{});
+        clipping listbox_clipping(pos, border_radiuses{}, clip_chain);
 
         pixel_t y = pos.y - m_scroll_pos;
         for(const auto& row : rows)
@@ -498,13 +498,13 @@ namespace litehtml
                     position text_pos(pos.x + listbox_option_padding, y,
                                       std::max(0_px, pos.width - listbox_option_padding), line_h);
                     container->draw_text(hdc, row.label.c_str(), bold_font ? bold_font : font,
-                                         row.disabled ? listbox_disabled_color : text, text_pos);
+                                         row.disabled ? listbox_disabled_color : text, text_pos, &listbox_clipping);
                 }
             } else
             {
                 if(row.selected)
                 {
-                    fill_rect(hdc, position(pos.x, y, pos.width, row_h), selection_bg);
+                    fill_rect(hdc, position(pos.x, y, pos.width, row_h), selection_bg, &listbox_clipping);
                 }
                 if(font && !row.label.empty())
                 {
@@ -513,17 +513,15 @@ namespace litehtml
                                         line_h);
                     container->draw_text(hdc, row.label.c_str(), font,
                                          row.selected ? selection_fg : (row.disabled ? listbox_disabled_color : text),
-                                         text_pos);
+                                         text_pos, &listbox_clipping);
                 }
                 if(focused && !row.selected && row.option_index == m_active_option)
                 {
-                    draw_active_outline(hdc, position(pos.x, y, pos.width, row_h));
+                    draw_active_outline(hdc, position(pos.x, y, pos.width, row_h), &listbox_clipping);
                 }
             }
             y += row_h;
         }
-
-        container->del_clip();
     }
 
     std::string el_select::selected_text() const
@@ -638,10 +636,10 @@ namespace litehtml
         sz.height = line_h;
     }
 
-    void el_select::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+    void el_select::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                          const std::shared_ptr<render_item>& ri)
     {
-        html_tag::draw(hdc, x, y, clip, ri);
+        html_tag::draw(hdc, x, y, clip, clip_chain, ri);
 
         position pos  = ri->pos();
         pos.x        += x;
@@ -655,7 +653,7 @@ namespace litehtml
 
         if(is_listbox())
         {
-            draw_listbox(hdc, pos);
+            draw_listbox(hdc, pos, clip_chain);
             return;
         }
 
@@ -667,10 +665,10 @@ namespace litehtml
         position   text_pos(pos.x, pos.y + std::max(0_px, (pos.height - line_h) / 2_px),
                             std::max(0_px, pos.width - arrow_w - 2_px), line_h);
 
-        container->set_clip(pos, border_radiuses{});
+        clipping select_clipping(pos, border_radiuses{}, clip_chain);
         if(!text.empty())
         {
-            container->draw_text(hdc, text.c_str(), font, css().get_color(), text_pos);
+            container->draw_text(hdc, text.c_str(), font, css().get_color(), text_pos, &select_clipping);
         }
 
         // The marker is drawn by the container, so it does not depend on the control font having
@@ -679,8 +677,7 @@ namespace litehtml
         const auto marker_h = std::max(4_px, arrow_w / 3_px);
         position   marker_pos(pos.right() - arrow_w - 2_px + std::max(0_px, (arrow_w - marker_w) / 2_px),
                               pos.y + std::max(0_px, (pos.height - marker_h) / 2_px), marker_w, marker_h);
-        container->draw_combobox_marker(hdc, marker_pos, css().get_color());
-        container->del_clip();
+        container->draw_combobox_marker(hdc, marker_pos, css().get_color(), &select_clipping);
     }
 
     std::shared_ptr<render_item> el_select::create_render_item(const std::shared_ptr<render_item>& parent_ri)

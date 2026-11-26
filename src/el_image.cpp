@@ -36,10 +36,10 @@ void litehtml::el_image::parse_attributes()
     }
 }
 
-void litehtml::el_image::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+void litehtml::el_image::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                               const std::shared_ptr<render_item>& ri)
 {
-    html_tag::draw(hdc, x, y, clip, ri);
+    html_tag::draw(hdc, x, y, clip, clip_chain, ri);
     position pos  = ri->pos();
     pos.x        += x;
     pos.y        += y;
@@ -59,7 +59,7 @@ void litehtml::el_image::draw(uint_ptr hdc, pixel_t x, pixel_t y, const position
             layer.repeat      = background_repeat_no_repeat;
             layer.border_radius =
                 css().get_borders().radius.calc_percents(layer.border_box.width, layer.border_box.height);
-            get_document()->container()->draw_image(hdc, layer, m_src, {});
+            get_document()->container()->draw_image(hdc, layer, m_src, {}, clip_chain);
         }
     }
 }

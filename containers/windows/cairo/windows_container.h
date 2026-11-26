@@ -32,7 +32,7 @@ class windows_container : public container_cairo
     void               delete_font(litehtml::uint_ptr hFont) override;
     litehtml::pixel_t  text_width(const char* text, litehtml::uint_ptr hFont) override;
     void        draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color,
-                          const litehtml::position& pos) override;
+                          const litehtml::position& pos, const litehtml::clipping* clip) override;
     std::string resolve_color(const std::string& color) const override;
 
     cairo_surface_t* get_image(const std::string& url) override;

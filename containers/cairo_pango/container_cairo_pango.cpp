@@ -476,13 +476,14 @@ static void draw_double_line(cairo_t* cr, litehtml::pixel_t x, litehtml::pixel_t
 }
 
 void container_cairo_pango::draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont,
-                                      litehtml::web_color color, const litehtml::position& pos)
+                                      litehtml::web_color color, const litehtml::position& pos,
+                                      const litehtml::clipping* clip)
 {
     auto* fnt = reinterpret_cast<cairo_font*>(hFont);
     auto* cr  = reinterpret_cast<cairo_t*>(hdc);
     cairo_save(cr);
 
-    apply_clip(cr);
+    apply_clip(cr, clip);
 
     set_color(cr, color);
 

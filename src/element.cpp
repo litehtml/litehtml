@@ -685,15 +685,16 @@ namespace litehtml
     {
         return on_lbutton_down();
     }
-    bool element::can_scroll_content(pixel_t /*dy*/) const LITEHTML_RETURN_FUNC(false);
+    bool    element::can_scroll_content(pixel_t /*dy*/) const LITEHTML_RETURN_FUNC(false);
     pixel_t element::scroll_content(pixel_t /*dy*/) LITEHTML_RETURN_FUNC(0_px);
-    bool element::on_lbutton_up(const bool /*is_click*/) LITEHTML_RETURN_FUNC(false);
-    bool element::set_pseudo_class(string_id /*cls*/, bool /*add*/) LITEHTML_RETURN_FUNC(false);
-    bool element::set_class(const char* /*pclass*/, bool /*add*/) LITEHTML_RETURN_FUNC(false);
-    bool element::is_replaced() const LITEHTML_RETURN_FUNC(false);
+    bool    element::on_lbutton_up(const bool /*is_click*/) LITEHTML_RETURN_FUNC(false);
+    bool    element::set_pseudo_class(string_id /*cls*/, bool /*add*/) LITEHTML_RETURN_FUNC(false);
+    bool    element::set_class(const char* /*pclass*/, bool /*add*/) LITEHTML_RETURN_FUNC(false);
+    bool    element::is_replaced() const LITEHTML_RETURN_FUNC(false);
     void element::draw(uint_ptr /*hdc*/, pixel_t /*x*/, pixel_t /*y*/, const position* /*clip*/,
-                       const std::shared_ptr<render_item>& /*ri*/) LITEHTML_EMPTY_FUNC;
+                       const clipping* /*clip_chain*/, const std::shared_ptr<render_item>& /*ri*/) LITEHTML_EMPTY_FUNC;
     void element::draw_background(uint_ptr /*hdc*/, pixel_t /*x*/, pixel_t /*y*/, const position* /*clip*/,
+                                  const clipping* /*clip_chain*/,
                                   const std::shared_ptr<render_item>& /*ri*/) LITEHTML_EMPTY_FUNC;
     void element::get_text(std::string& /*text*/) const LITEHTML_EMPTY_FUNC;
     void element::parse_attributes() LITEHTML_EMPTY_FUNC;

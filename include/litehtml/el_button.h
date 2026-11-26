@@ -26,7 +26,7 @@ namespace litehtml
 
         void parse_attributes() override;
         void on_click() override;
-        void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+        void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                   const std::shared_ptr<render_item>& ri) override;
         void get_content_size(size& sz, pixel_t max_width) override;
 

@@ -14,6 +14,7 @@
 
 namespace litehtml
 {
+    class clipping;
     class line_box;
     class dumper;
     class render_item;
@@ -159,10 +160,10 @@ namespace litehtml
         virtual bool set_class(const char* pclass, bool add);
         virtual bool is_replaced() const;
         virtual void compute_styles(bool recursive = true);
-        virtual void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+        virtual void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                           const std::shared_ptr<render_item>& ri);
         virtual void draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
-                                     const std::shared_ptr<render_item>& ri);
+                                     const clipping* clip_chain, const std::shared_ptr<render_item>& ri);
 
         virtual void              get_text(std::string& text) const;
         virtual void              parse_attributes();

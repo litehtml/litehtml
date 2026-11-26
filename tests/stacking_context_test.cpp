@@ -1,6 +1,8 @@
 #include "litehtml/document.h"
 #include "grid_test_container.h"
+#include <algorithm>
 #include <iostream>
+#include <iterator>
 #include <string>
 
 namespace
@@ -17,17 +19,22 @@ namespace
     class click_container : public grid_test_container
     {
       public:
-        std::string                      clicked;
-        std::vector<litehtml::web_color> fills;
+        std::string                                  clicked;
+        std::vector<litehtml::web_color>             fills;
+        std::vector<std::vector<litehtml::position>> fill_clips;
 
         void on_anchor_click(const char* url, const litehtml::element::ptr&) override
         {
             clicked = url;
         }
-        void draw_solid_fill(litehtml::uint_ptr, const litehtml::background_layer&,
-                             const litehtml::web_color& color) override
+        void draw_solid_fill(litehtml::uint_ptr, const litehtml::background_layer&, const litehtml::web_color& color,
+                             const litehtml::clipping* clip) override
         {
             fills.push_back(color);
+            fill_clips.emplace_back();
+            litehtml::clipping::apply(clip, [this](const litehtml::position& pos, const litehtml::border_radiuses&) {
+                fill_clips.back().push_back(pos);
+            });
         }
     };
 
@@ -325,6 +332,170 @@ int main()
         container.clicked.clear();
         click(doc, 6, 62);
         ok &= check(container.clicked == "/coord", "nested-span coordinate link should activate on click");
+    }
+
+    {
+        // An absolutely positioned box must not be clipped by the overflow of a static ancestor
+        // between itself and its containing block (CSS 2.1 11.1.1), while in-flow content is clipped.
+        click_container container;
+        auto            doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".overflow{width:100px;height:100px;background:#ff0000;overflow:hidden}"
+            ".inflow{width:50px;height:50px;background:#0000ff;margin-left:150px}"
+            ".abs{position:absolute;left:150px;top:150px;width:50px;height:50px;background:#00ff00}"
+            "</style>"
+            "<div class=overflow><div class=inflow></div><a id=abs class=abs href=/abs></a></div>",
+            &container);
+        doc->render(800);
+        container.fills.clear();
+        container.fill_clips.clear();
+        doc->draw(0, 0, 0, nullptr);
+
+        ok &= check(container.fills ==
+                        std::vector<web_color>{web_color(255, 0, 0), web_color(0, 0, 255), web_color(0, 255, 0)},
+                    "static overflow:hidden draws its in-flow child and the absolute child");
+        ok &= check(container.fill_clips.size() == 3 && container.fill_clips[0].empty(),
+                    "static overflow:hidden does not clip its own background");
+        ok &= check(container.fill_clips.size() == 3 && container.fill_clips[1].size() == 1 &&
+                        container.fill_clips[1][0].x == 0_px && container.fill_clips[1][0].y == 0_px &&
+                        container.fill_clips[1][0].width == 100_px && container.fill_clips[1][0].height == 100_px,
+                    "in-flow content of static overflow:hidden is clipped by the box");
+        ok &= check(container.fill_clips.size() == 3 && container.fill_clips[2].empty(),
+                    "absolute child of static overflow:hidden is not clipped");
+
+        ok &= check(hover_id(doc, 160, 160) == "abs",
+                    "absolute child outside a static overflow:hidden ancestor is the hover target");
+        click(doc, 160, 160);
+        ok &= check(container.clicked == "/abs",
+                    "absolute child outside a static overflow:hidden ancestor activates on click");
+    }
+
+    {
+        // A positioned ancestor is the containing block, so its overflow clips absolute children.
+        click_container container;
+        auto            doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".overflow{position:relative;width:100px;height:100px;background:#ff0000;overflow:hidden}"
+            ".abs{position:absolute;left:50px;top:50px;width:100px;height:100px;background:#00ff00}"
+            "</style>"
+            "<div class=overflow><a id=abs class=abs href=/abs></a></div>",
+            &container);
+        doc->render(800);
+        container.fills.clear();
+        container.fill_clips.clear();
+        doc->draw(0, 0, 0, nullptr);
+
+        ok &= check(container.fills == std::vector<web_color>{web_color(255, 0, 0), web_color(0, 255, 0)},
+                    "positioned overflow:hidden draws its absolute child");
+        ok &= check(container.fill_clips.size() == 2 && container.fill_clips[1].size() == 1 &&
+                        container.fill_clips[1][0].width == 100_px && container.fill_clips[1][0].height == 100_px,
+                    "absolute child of positioned overflow:hidden is clipped by the containing block");
+        ok &= check(hover_id(doc, 120, 120) != "abs",
+                    "absolute child outside its positioned containing block is not the hover target");
+    }
+
+    {
+        // Only the containing block and its ancestors clip an absolute box; a static overflow:hidden
+        // below the containing block must not clip it.
+        click_container container;
+        auto            doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".cb{position:relative;width:100px;height:100px;overflow:hidden;background:#ff0000}"
+            ".nested{width:60px;height:60px;overflow:hidden;background:#0000ff}"
+            ".abs{position:absolute;left:50px;top:50px;width:100px;height:100px;background:#00ff00}"
+            "</style>"
+            "<div class=cb><div class=nested><div class=abs></div></div></div>",
+            &container);
+        doc->render(800);
+        container.fills.clear();
+        container.fill_clips.clear();
+        doc->draw(0, 0, 0, nullptr);
+
+        const auto green  = std::find(container.fills.begin(), container.fills.end(), web_color(0, 255, 0));
+        ok               &= check(green != container.fills.end(), "absolute child of a nested overflow draws");
+        if(green != container.fills.end())
+        {
+            const auto index = static_cast<size_t>(std::distance(container.fills.begin(), green));
+            ok &= check(container.fill_clips.size() == container.fills.size() &&
+                            container.fill_clips[index].size() == 1 && container.fill_clips[index][0].width == 100_px &&
+                            container.fill_clips[index][0].height == 100_px,
+                        "absolute child is clipped by its containing block only, not by a nested static overflow");
+        }
+    }
+
+    {
+        // Fixed elements are positioned relative to the viewport and are never clipped by ancestors.
+        click_container container;
+        auto            doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".overflow{position:relative;width:100px;height:100px;background:#ff0000;overflow:hidden}"
+            ".fixed{position:fixed;left:150px;top:150px;width:50px;height:50px;background:#00ff00}"
+            "</style>"
+            "<div class=overflow><a id=fixed class=fixed href=/fixed></a></div>",
+            &container);
+        doc->render(800);
+        container.fills.clear();
+        container.fill_clips.clear();
+        doc->draw(0, 0, 0, nullptr);
+
+        ok &= check(container.fills == std::vector<web_color>{web_color(255, 0, 0), web_color(0, 255, 0)},
+                    "fixed child of overflow:hidden draws");
+        ok &= check(container.fill_clips.size() == 2 && container.fill_clips[1].empty(),
+                    "fixed child of overflow:hidden is not clipped");
+
+        ok &= check(hover_id(doc, 160, 160) == "fixed",
+                    "fixed child outside an overflow:hidden ancestor is the hover target");
+        click(doc, 160, 160);
+        ok &=
+            check(container.clicked == "/fixed", "fixed child outside an overflow:hidden ancestor activates on click");
+    }
+
+    {
+        // Relative boxes are in-flow: they stay clipped by every ancestor.
+        click_container container;
+        auto            doc =
+            document::createFromString("<style>body{margin:0}"
+                                       ".overflow{width:100px;height:100px;background:#ff0000;overflow:hidden}"
+                                       ".rel{position:relative;left:150px;width:50px;height:50px;background:#00ff00}"
+                                       "</style>"
+                                       "<div class=overflow><div class=rel></div></div>",
+                                       &container);
+        doc->render(800);
+        container.fills.clear();
+        container.fill_clips.clear();
+        doc->draw(0, 0, 0, nullptr);
+
+        ok &= check(container.fills == std::vector<web_color>{web_color(255, 0, 0), web_color(0, 255, 0)},
+                    "relative child of overflow:hidden draws");
+        ok &= check(container.fill_clips.size() == 2 && container.fill_clips[1].size() == 1,
+                    "relative child of overflow:hidden stays clipped");
+    }
+
+    {
+        // A positioned containing block without overflow does not clip, and neither does a static
+        // overflow:hidden element between it and the absolute child.
+        click_container container;
+        auto            doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".cb{position:relative;width:100px;height:100px;background:#ff9800}"
+            ".nested{width:60px;height:60px;background:#1e88e5;overflow:hidden}"
+            ".abs{position:absolute;left:50px;top:50px;width:100px;height:100px;background:#43a047}"
+            "</style>"
+            "<div class=cb><div class=nested><div class=abs></div></div></div>",
+            &container);
+        doc->render(800);
+        container.fills.clear();
+        container.fill_clips.clear();
+        doc->draw(0, 0, 0, nullptr);
+
+        const auto green = std::find(container.fills.begin(), container.fills.end(), web_color(67, 160, 71));
+        ok &= check(green != container.fills.end(), "absolute child of a non-clipping containing block draws");
+        if(green != container.fills.end())
+        {
+            const auto index = static_cast<size_t>(std::distance(container.fills.begin(), green));
+            ok &= check(container.fill_clips.size() == container.fills.size() && container.fill_clips[index].empty(),
+                        "absolute child is not clipped without an overflow ancestor at or above its containing block");
+        }
     }
 
     return ok ? 0 : 1;

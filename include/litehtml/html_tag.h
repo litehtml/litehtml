@@ -83,9 +83,9 @@ namespace litehtml
         bool set_class(const char* pclass, bool add) override;
         bool is_replaced() const override;
         void compute_styles(bool recursive = true) override;
-        void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+        void draw(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                   const std::shared_ptr<render_item>& ri) override;
-        void draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
+        void draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip, const clipping* clip_chain,
                              const std::shared_ptr<render_item>& ri) override;
 
         template <class Type>
@@ -130,9 +130,10 @@ namespace litehtml
         std::string dump_get_name() override;
 
       protected:
-        void         draw_list_marker(uint_ptr hdc, const position& pos, const std::shared_ptr<render_item>& ri);
+        void         draw_list_marker(uint_ptr hdc, const position& pos, const clipping* clip_chain,
+                                      const std::shared_ptr<render_item>& ri);
         void         draw_outline(uint_ptr hdc, const position& border_box, const border_radiuses& radius, bool first,
-                                  bool last) const;
+                                  bool last, const clipping* clip_chain) const;
         std::string  get_list_marker_text(int index);
         element::ptr get_element_before(const style& style, bool create);
         element::ptr get_element_after(const style& style, bool create);

@@ -61,7 +61,7 @@ class container_cairo_pango : public container_cairo
     void               delete_font(litehtml::uint_ptr hFont) override;
     litehtml::pixel_t  text_width(const char* text, litehtml::uint_ptr hFont) override;
     void draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color,
-                   const litehtml::position& pos) override;
+                   const litehtml::position& pos, const litehtml::clipping* clip) override;
 
     // Lets a host application (e.g. a GTK-embedding container) mirror the
     // desktop's actual Xft/fontconfig antialiasing/hinting settings instead

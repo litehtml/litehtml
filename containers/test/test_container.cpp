@@ -135,7 +135,8 @@ pixel_t test_container::text_width(const char* text, uint_ptr hFont)
     return font->text_width(text);
 }
 
-void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos)
+void test_container::draw_text(uint_ptr hdc, const char* text, uint_ptr hFont, web_color color, const position& pos,
+                               const clipping* /*clip*/)
 {
     Font* font = (Font*) hFont;
     font->draw_text(*(canvas*) hdc, text, color, (int) pos.x, (int) pos.y);
@@ -154,13 +155,15 @@ const char* test_container::get_default_font_name() const
     return "Terminus";
 }
 
-void test_container::draw_solid_fill(uint_ptr hdc, const background_layer& layer, const web_color& color)
+void test_container::draw_solid_fill(uint_ptr hdc, const background_layer& layer, const web_color& color,
+                                     const clipping* /*clip*/)
 {
     auto cvs = (canvas*) hdc;
     fill_rect(*cvs, layer.border_box, color);
 }
 
-void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool /*root*/)
+void test_container::draw_borders(uint_ptr hdc, const borders& borders, const position& pos, bool /*root*/,
+                                  const clipping* /*clip*/)
 {
     canvas img((int) pos.width, (int) pos.height);
     img.global_composite_operation = lighter;
@@ -205,7 +208,7 @@ void test_container::draw_borders(uint_ptr hdc, const borders& borders, const po
     ::draw_image(*(canvas*) hdc, pos.x, pos.y, img);
 }
 
-void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker)
+void test_container::draw_list_marker(uint_ptr hdc, const list_marker& marker, const clipping* /*clip*/)
 {
     auto& cvs = *(canvas*) hdc;
 
@@ -253,7 +256,8 @@ namespace
     }
 } // namespace
 
-void test_container::draw_combobox_marker(uint_ptr hdc, const position& pos, const web_color& color)
+void test_container::draw_combobox_marker(uint_ptr hdc, const position& pos, const web_color& color,
+                                          const clipping* /*clip*/)
 {
     auto& cvs = *(canvas*) hdc;
 
@@ -269,7 +273,8 @@ void test_container::draw_combobox_marker(uint_ptr hdc, const position& pos, con
                   position(pos.right() - inset, pos.top() + inset));
 }
 
-void test_container::draw_checkbox_marker(uint_ptr hdc, const position& pos, const web_color& color)
+void test_container::draw_checkbox_marker(uint_ptr hdc, const position& pos, const web_color& color,
+                                          const clipping* /*clip*/)
 {
     auto& cvs = *(canvas*) hdc;
 
@@ -402,7 +407,8 @@ void draw_image_pattern(canvas& cvs, const background_layer& bg, const Bitmap& i
     cvs.restore();
 }
 
-void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const string& src, const string& base_url)
+void test_container::draw_image(uint_ptr hdc, const background_layer& bg, const string& src, const string& base_url,
+                                const clipping* /*clip*/)
 {
     auto&  cvs = *(canvas*) hdc;
     string url = make_url(src.c_str(), base_url.c_str());
@@ -452,19 +458,19 @@ template <class Gradient> void draw_gradient(uint_ptr hdc, const background_laye
 }
 
 void test_container::draw_linear_gradient(uint_ptr hdc, const background_layer& layer,
-                                          const background_layer::linear_gradient& gradient)
+                                          const background_layer::linear_gradient& gradient, const clipping* /*clip*/)
 {
     draw_gradient(hdc, layer, gradient);
 }
 
 void test_container::draw_radial_gradient(uint_ptr hdc, const background_layer& layer,
-                                          const background_layer::radial_gradient& gradient)
+                                          const background_layer::radial_gradient& gradient, const clipping* /*clip*/)
 {
     draw_gradient(hdc, layer, gradient);
 }
 
 void test_container::draw_conic_gradient(uint_ptr hdc, const background_layer& layer,
-                                         const background_layer::conic_gradient& gradient)
+                                         const background_layer::conic_gradient& gradient, const clipping* /*clip*/)
 {
     draw_gradient(hdc, layer, gradient);
 }

@@ -9,19 +9,19 @@ public:
     virtual litehtml::uint_ptr  create_font(const font_description& descr, const document* doc, litehtml::font_metrics* fm) = 0;
     virtual void                delete_font(litehtml::uint_ptr hFont) = 0;
     virtual pixel_t             text_width(const char* text, litehtml::uint_ptr hFont) = 0;
-    virtual void                draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos) = 0;
+    virtual void                draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont, litehtml::web_color color, const litehtml::position& pos, const litehtml::clipping* clip) = 0;
     virtual pixel_t             pt_to_px(float pt) const = 0;
     virtual pixel_t             get_default_font_size() const = 0;
     virtual const char*         get_default_font_name() const = 0;
-    virtual void                draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker) = 0;
+    virtual void                draw_list_marker(litehtml::uint_ptr hdc, const litehtml::list_marker& marker, const litehtml::clipping* clip) = 0;
     virtual void                load_image(const char* src, const char* baseurl, bool redraw_on_ready) = 0;
     virtual void                get_image_size(const char* src, const char* baseurl, litehtml::size& sz) = 0;
-    virtual void                draw_image(litehtml::uint_ptr hdc, const background_layer& layer, const std::string& url, const std::string& base_url) = 0;
-    virtual void                draw_solid_fill(litehtml::uint_ptr hdc, const background_layer& layer, const web_color& color) = 0;
-    virtual void                draw_linear_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient) = 0;
-    virtual void                draw_radial_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient) = 0;
-    virtual void                draw_conic_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient) = 0;
-    virtual void                draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root) = 0;
+    virtual void                draw_image(litehtml::uint_ptr hdc, const background_layer& layer, const std::string& url, const std::string& base_url, const litehtml::clipping* clip) = 0;
+    virtual void                draw_solid_fill(litehtml::uint_ptr hdc, const background_layer& layer, const web_color& color, const litehtml::clipping* clip) = 0;
+    virtual void                draw_linear_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient, const litehtml::clipping* clip) = 0;
+    virtual void                draw_radial_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient, const litehtml::clipping* clip) = 0;
+    virtual void                draw_conic_gradient(litehtml::uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient, const litehtml::clipping* clip) = 0;
+    virtual void                draw_borders(litehtml::uint_ptr hdc, const litehtml::borders& borders, const litehtml::position& draw_pos, bool root, const litehtml::clipping* clip) = 0;
 
     virtual void                set_caption(const char* caption) = 0;
     virtual void                set_base_url(const char* base_url) = 0;
@@ -32,8 +32,6 @@ public:
     virtual void                set_cursor(const char* cursor) = 0;
     virtual void                transform_text(std::string& text, litehtml::text_transform tt) = 0;
     virtual void                import_css(std::string& text, const std::string& url, std::string& baseurl) = 0;
-    virtual void                set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius) = 0;
-    virtual void                del_clip() = 0;
     virtual void                get_viewport(litehtml::position& viewport) const = 0;
     virtual litehtml::element::ptr create_element( const char* tag_name,
                                                    const std::string& attributes,
@@ -95,8 +93,7 @@ Below is the list of member functions you have to implement:
   - [set_cursor](#set_cursor)
 
 6. **Clipping**
-  - [set_clip](#set_clip)
-  - [del_clip](#del_clip)
+  - [clipping](#clipping)
 
 7. **Viewport and Media**
   - [get_viewport](#get_viewport)
@@ -241,7 +238,7 @@ Returns the default font face name.
 
 ### draw_list_marker
 ```cpp
-virtual void draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker);
+virtual void draw_list_marker(uint_ptr hdc, const litehtml::list_marker& marker, const litehtml::clipping* clip);
 ```
 
 Draws the list marker. Use the parameter **marker** to find the marker type and position.
@@ -314,7 +311,7 @@ public:
 
 ### draw_image
 ```cpp
-virtual void draw_image(litehtml::uint_ptr hdc, const background_layer& layer, const std::string& url, const std::string& base_url);
+virtual void draw_image(litehtml::uint_ptr hdc, const background_layer& layer, const std::string& url, const std::string& base_url, const litehtml::clipping* clip);
 ```
 
 Draw the image in this function. The parameter ```layer``` describes the image position and size. The ```url``` and ```base_url``` parameters are the image source.
@@ -322,14 +319,14 @@ Draw the image in this function. The parameter ```layer``` describes the image p
 
 ### draw_solid_fill
 ```cpp
-virtual void draw_solid_fill(uint_ptr hdc, const background_layer& layer, const web_color& color);
+virtual void draw_solid_fill(uint_ptr hdc, const background_layer& layer, const web_color& color, const litehtml::clipping* clip);
 ```
 
 Draw the solid color in the background. The ```layer``` parameter defines the position and size of the rectangle. The ```color``` parameter is the color to fill.
 
 ### draw_linear_gradient
 ```cpp
-virtual void draw_linear_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient);
+virtual void draw_linear_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::linear_gradient& gradient, const litehtml::clipping* clip);
 ```
 Draw the linear gradient in the background. The ```layer``` parameter defines the position and size of the rectangle. The ```gradient``` parameter is the gradient to fill.
 
@@ -347,7 +344,7 @@ public:
 
 ### draw_radial_gradient
 ```cpp
-virtual void draw_radial_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient);
+virtual void draw_radial_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::radial_gradient& gradient, const litehtml::clipping* clip);
 ```
 Draw the radial gradient in the background. The ```layer``` parameter defines the position and size of the rectangle. The ```gradient``` parameter is the gradient to fill.
 
@@ -365,7 +362,7 @@ public:
 
 ### draw_conic_gradient
 ```cpp
-virtual void draw_conic_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient);
+virtual void draw_conic_gradient(uint_ptr hdc, const background_layer& layer, const background_layer::conic_gradient& gradient, const litehtml::clipping* clip);
 ```
 Draw the conic gradient in the background. The ```layer``` parameter defines the position and size of the rectangle. The ```gradient``` parameter is the gradient to fill.
 
@@ -385,7 +382,7 @@ public:
 
 ### draw_borders
 ```cpp
-virtual void draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos, bool root);
+virtual void draw_borders(uint_ptr hdc, const css_borders& borders, const litehtml::position& draw_pos, bool root, const litehtml::clipping* clip);
 ```
 
 Draw the element borders here. The parameter ```root``` is ```true``` if you have to draw the borders for the root element (usually this is ```<html>```).
@@ -454,19 +451,48 @@ virtual void import_css(std::string& text, const std::string& url, std::string& 
 
 litehtml calls this function to load stylesheet. You have to download CSS file referred by **url** and **baseurl** parameters and copy content into **text** parameter.
 
-### set_clip
+### clipping
+
+Every drawing function receives a ```const litehtml::clipping* clip``` argument instead of the
+former ```set_clip```/```del_clip``` pair. It is a non-owning, stack allocated one-way linked list of
+clipping regions; every node contains the clipping rectangle and the border radiuses that have to be
+applied:
+
 ```cpp
-virtual void set_clip(const litehtml::position& pos, const litehtml::border_radiuses& bdr_radius);
+class clipping
+{
+public:
+    using apply_func_t = std::function<void(const position&, const border_radiuses&)>;
+
+    clipping() = default;
+    explicit clipping(const position& pos, const border_radiuses& bdr_radius, const clipping* parent = nullptr) noexcept;
+
+    const position&        pos() const noexcept;
+    const border_radiuses& radius() const noexcept;
+    const clipping*        parent() const noexcept;
+
+    // Calls func for every clipping region, innermost first.
+    void apply(const apply_func_t& func) const;
+    static void apply(const clipping* clip, const apply_func_t& func); // null-safe
+};
 ```
 
-Set the painting clip rectangle here. ```bdr_radius``` defines borders radius for rounded rectangles. Please note, litehtml can set some clip rects. You have to save the clip positions and apply clipping on draw something.
+The pointer is ```nullptr``` when nothing has to be clipped. The chain is only valid for the duration
+of the draw call. A typical implementation clips the Cairo context with every node of the chain:
 
-### del_clip
 ```cpp
-virtual void del_clip();
+void container::apply_clip(cairo_t* cr, const litehtml::clipping* clip)
+{
+    litehtml::clipping::apply(clip, [cr, this](const litehtml::position& pos, const litehtml::border_radiuses& radius) {
+        rounded_rectangle(cr, pos, radius);
+        cairo_clip(cr);
+    });
+}
 ```
 
-Deletes the last clipping.
+Note that litehtml already accounts for CSS overflow and containing block rules: an element with
+```position:absolute``` is not clipped by the overflow of ancestors between it and its containing
+block, and a ```position:fixed``` element is not clipped by ancestors at all.
 
 ### get_viewport
 ```cpp

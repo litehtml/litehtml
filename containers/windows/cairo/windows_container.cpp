@@ -102,7 +102,8 @@ litehtml::pixel_t windows_container::text_width(const char* text, litehtml::uint
 }
 
 void windows_container::draw_text(litehtml::uint_ptr hdc, const char* text, litehtml::uint_ptr hFont,
-                                  litehtml::web_color color, const litehtml::position& pos)
+                                  litehtml::web_color color, const litehtml::position& pos,
+                                  const litehtml::clipping* clip)
 {
     if(hFont)
     {
@@ -110,7 +111,7 @@ void windows_container::draw_text(litehtml::uint_ptr hdc, const char* text, lite
         cairo_t*    cr  = (cairo_t*) hdc;
         cairo_save(cr);
 
-        apply_clip(cr);
+        apply_clip(cr, clip);
 
         int x = pos.left();
         int y = pos.bottom() - fnt->metrics().descent;
