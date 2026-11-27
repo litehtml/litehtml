@@ -212,6 +212,7 @@ td, th {
 
 th {
 	font-weight: bold;
+	text-align: center;
 }
 
 table[border] {
@@ -249,6 +250,7 @@ table[align=center] {
 
 caption {
 	display: table-caption;
+	text-align: center;
 }
 
 td[nowrap], th[nowrap] {
