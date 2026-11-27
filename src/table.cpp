@@ -1381,6 +1381,7 @@ litehtml::table_row::table_row(pixel_t h, const std::shared_ptr<render_item>& ro
     border_top    = 0;
     top           = 0;
     bottom        = 0;
+    baseline      = 0;
     if(row)
     {
         css_height = row->src_el()->css().get_height();

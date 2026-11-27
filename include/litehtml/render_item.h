@@ -678,7 +678,16 @@ namespace litehtml
         pixel_t  calc_auto_margins(pixel_t parent_width); // returns left margin
 
         virtual std::shared_ptr<render_item> init();
-        virtual void                         apply_vertical_align() {}
+        /**
+         * Align the content of a box inside the box (table cells).
+         * @param baseline_shift when not negative, the distance the content has to be moved down to
+         *                       put its first baseline on the baseline of the row the box belongs to
+         *                       (table cells with 'vertical-align: baseline', CSS 2.1 17.5.3).
+         *                       When negative the value of 'vertical-align' is used instead.
+         */
+        virtual void apply_vertical_align([[maybe_unused]] pixel_t baseline_shift = -1_px) {}
+        // The first in-flow line box or table row, without a synthesized fallback baseline.
+        virtual std::optional<pixel_t> get_first_in_flow_baseline();
         /**
          * Get first baseline position. Default position is element bottom without bottom margin.
          * @returns offset of the first baseline from element top

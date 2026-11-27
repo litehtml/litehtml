@@ -5,6 +5,16 @@
 #include "types.h"
 #include <algorithm>
 
+namespace
+{
+    bool moves_with_cell_content(const litehtml::render_item& el)
+    {
+        return el.src_el()->css().get_display() != litehtml::display_none &&
+               !litehtml::is_one_of(el.src_el()->css().get_position(), litehtml::element_position_absolute,
+                                     litehtml::element_position_fixed);
+    }
+} // namespace
+
 litehtml::pixel_t litehtml::render_item_block_context::_render_content(pixel_t /*x*/, pixel_t /*y*/, bool second_pass,
                                                                        const containing_block_context& self_size,
                                                                        formatting_context*             fmt_ctx)
@@ -242,42 +252,52 @@ void litehtml::render_item_block_context::calc_intrinsic_size()
     m_intrinsic_max_size.height += content_offset_height();
 }
 
-void litehtml::render_item_block_context::apply_vertical_align()
+void litehtml::render_item_block_context::apply_vertical_align(pixel_t baseline_shift)
 {
-    auto va = src_el()->css().get_vertical_align();
-    if(va != va_middle && va != va_bottom)
-    {
-        return;
-    }
+    pixel_t add = 0_px;
 
-    auto is_out_of_flow = [](const std::shared_ptr<render_item>& el) {
-        auto position = el->src_el()->css().get_position();
-        return position == element_position_absolute || position == element_position_fixed;
-    };
-
-    pixel_t content_height = 0_px;
-    for(const auto& el : m_children)
+    if(baseline_shift >= 0_px)
     {
-        if(el->src_el()->css().get_display() != display_none && !is_out_of_flow(el))
+        // Move the content so that its first baseline lands on the baseline of the row the cell
+        // belongs to (CSS 2.1 17.5.3).
+        add = baseline_shift;
+    } else
+    {
+        auto va = src_el()->css().get_vertical_align();
+        if(va != va_middle && va != va_bottom)
         {
-            content_height = std::max(content_height, el->bottom());
+            return;
+        }
+
+        pixel_t content_height = 0_px;
+        for(const auto& el : m_children)
+        {
+            if(moves_with_cell_content(*el))
+            {
+                content_height = std::max(content_height, el->bottom());
+            }
+        }
+
+        if(m_pos.height <= content_height)
+        {
+            return;
+        }
+
+        add = m_pos.height - content_height;
+        if(va == va_middle)
+        {
+            add = add / 2;
         }
     }
 
-    if(m_pos.height <= content_height)
+    if(add == 0_px)
     {
         return;
     }
 
-    pixel_t add = m_pos.height - content_height;
-    if(va == va_middle)
-    {
-        add = add / 2;
-    }
-
     for(const auto& el : m_children)
     {
-        if(el->src_el()->css().get_display() != display_none && !is_out_of_flow(el))
+        if(moves_with_cell_content(*el))
         {
             el->pos().y += add;
         }

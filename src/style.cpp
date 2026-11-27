@@ -277,7 +277,6 @@ namespace litehtml
         case _overflow_:
 
         case _text_align_:
-        case _vertical_align_:
         case _text_transform_:
         case _white_space_:
 
@@ -306,6 +305,21 @@ namespace litehtml
             if(auto index = m_valid_values.at(name).value_index(ident); index.has_value())
             {
                 add_parsed_property(name, property_value(*index, important));
+            }
+            break;
+
+        // baseline | sub | super | top | text-top | middle | bottom | text-bottom | <length-percentage>
+        // https://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
+        case _vertical_align_:
+            if(auto index = m_valid_values.at(name).value_index(ident); index.has_value())
+            {
+                add_parsed_property(name, property_value(*index, important));
+            } else if(css_length offset; offset.from_token(val, f_length_percentage, css_values()))
+            {
+                // Table cells align at the baseline for sub/super/text-top/text-bottom and for
+                // <length>/<percentage> (CSS 2.1 17.5.3). Raising or lowering an inline box by the
+                // given length is not modelled, so the value computes to the baseline everywhere.
+                add_parsed_property(name, property_value(static_cast<int>(va_baseline), important));
             }
             break;
 

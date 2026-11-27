@@ -178,9 +178,6 @@ table {
 	border-left-color:gray;
 	border-bottom-color:black;
 	border-right-color:black;
-	font-size: medium;
-	font-weight: normal;
-	font-style: normal;
 	box-sizing: border-box;
 }
 
@@ -367,7 +364,6 @@ input, textarea, keygen, select, button, isindex {
 	text-indent: 0;
 	text-shadow: none;
 	display: inline-block;
-	vertical-align: middle;
 }
 
 input[type="hidden"] {
@@ -561,6 +557,18 @@ figcaption {
 	display: block;
 }
 
+)##";
+
+    // Quirks mode only (see document::finalize_from_external_root). Browsers keep the font of the
+    // document out of tables in quirks mode, emulating the HTML4-era user agents (Gecko's quirk.css).
+    // In standards mode all inherited properties are inherited as required by CSS 2.1 6.2.
+    const char* const quirks_css = R"##(
+table, caption {
+	font-size: medium;
+	font-weight: normal;
+	font-style: normal;
+	font-variant: normal;
+}
 )##";
 }
 #endif // LITEHTML_MASTER_CSS_H

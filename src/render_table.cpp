@@ -23,6 +23,23 @@ namespace
         }
         return nullptr;
     }
+
+    // CSS 2.1 17.5.3: in a table cell only top, middle, bottom and baseline apply. sub, super,
+    // text-top, text-bottom and <length>/<percentage> values align the cell at the baseline.
+    litehtml::vertical_align cell_vertical_align(const litehtml::render_item& cell)
+    {
+        switch(cell.src_el()->css().get_vertical_align())
+        {
+        case litehtml::va_top:
+            return litehtml::va_top;
+        case litehtml::va_middle:
+            return litehtml::va_middle;
+        case litehtml::va_bottom:
+            return litehtml::va_bottom;
+        default:
+            return litehtml::va_baseline;
+        }
+    }
 } // namespace
 
 litehtml::render_item_table::render_item_table(std::shared_ptr<element> _src_el) :
@@ -149,8 +166,6 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     table_width     += table_width_spacing;
     m_grid->calc_horizontal_positions(m_borders, src_el()->css().get_border_collapse(), m_border_spacing_x);
 
-    bool row_span_found = false;
-
     // Widest row of rendered cell contents, used to report the table's real extent
     pixel_t used_content_width = 0_px;
     bool    has_floats         = false;
@@ -186,11 +201,12 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
             }
         }
     }
-    auto cell_height = [&](int col, int row) {
+    auto cell_height = [&](int col, int row, pixel_t baseline_shift = 0_px) {
         const table_cell* cell   = m_grid->cell(col, row);
-        pixel_t           height = cell->el->height();
+        pixel_t           height = cell->el->height() + baseline_shift;
         // On a table cell the height property is a minimum row height, not a
-        // replacement for the content height.
+        // replacement for the content height. Baseline alignment moves the
+        // content, not this minimum.
         const auto& css_height = cell->el->css().get_height();
         if(!css_height.is_predefined() && !css_height.has_percentage())
         {
@@ -251,42 +267,85 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
                 if(cell->rowspan <= 1)
                 {
                     m_grid->row(row).height = std::max(m_grid->row(row).height, cell_height(col, row));
-                } else
-                {
-                    row_span_found = true;
                 }
             }
         }
         used_content_width = std::max(used_content_width, row_content_width);
     }
 
-    if(row_span_found)
+    const auto spanned_rows_height = [&](int first_row, int last_row) {
+        pixel_t height = m_border_spacing_y * pixel_t(last_row - first_row);
+        for(int row = first_row; row <= last_row; row++)
+        {
+            height += m_grid->row(row).height;
+        }
+        return height;
+    };
+    const auto last_spanned_row = [&](int row, const table_cell& cell) {
+        return std::min(row + cell.rowspan - 1, m_grid->rows_count() - 1);
+    };
+
+    // CSS 2.1 17.5.3: the row baseline is the largest distance between the top of the row and the
+    // baseline over the cells aligned at the baseline. A row without such cells uses the bottom
+    // content edge of its lowest cell.
+    for(int row = 0; row < m_grid->rows_count(); row++)
+    {
+        pixel_t row_baseline = 0_px;
+        bool    has_baseline = false;
+        for(int col = 0; col < m_grid->cols_count(); col++)
+        {
+            table_cell* cell = m_grid->cell(col, row);
+            if(!cell || !cell->el || cell_vertical_align(*cell->el) != va_baseline)
+            {
+                continue;
+            }
+            // In the collapsing model the cell box holds half of the collapsed top border above the
+            // row's grid line (CSS 2.1 17.6.2), so its baseline is that much closer to the row top.
+            const auto baseline = cell->el->get_first_in_flow_baseline();
+            cell->baseline = baseline ? *baseline : cell->el->content_offset_top() + cell->el->pos().height;
+            if(collapse)
+            {
+                cell->baseline -= m_grid->collapsed_borders(col, row).top.width / 2;
+            }
+            row_baseline = std::max(row_baseline, cell->baseline);
+            has_baseline = true;
+        }
+        m_grid->row(row).baseline = has_baseline ? row_baseline : m_grid->row(row).height;
+    }
+
+    for(int row = 0; row < m_grid->rows_count(); row++)
     {
         for(int col = 0; col < m_grid->cols_count(); col++)
         {
-            for(int row = 0; row < m_grid->rows_count(); row++)
+            const table_cell* cell = m_grid->cell(col, row);
+            if(cell && cell->el && cell->rowspan <= 1 && cell_vertical_align(*cell->el) == va_baseline)
             {
-                table_cell* cell = m_grid->cell(col, row);
-                if(cell->el)
-                {
-                    int span_row = row + cell->rowspan - 1;
-                    if(span_row >= m_grid->rows_count())
-                    {
-                        span_row = m_grid->rows_count() - 1;
-                    }
-                    if(span_row != row)
-                    {
-                        pixel_t h = 0_px;
-                        for(int i = row; i <= span_row; i++)
-                        {
-                            h += m_grid->row(i).height;
-                        }
-                        if(h < cell_height(col, row))
-                        {
-                            m_grid->row(span_row).height += cell_height(col, row) - h;
-                        }
-                    }
-                }
+                const pixel_t shift = m_grid->row(row).baseline - cell->baseline;
+                m_grid->row(row).height = std::max(m_grid->row(row).height, cell_height(col, row, shift));
+            }
+        }
+    }
+
+    // Distribute spanning cells after baseline alignment has established the minimum heights of
+    // single-row cells. The space between rows is already part of a spanning cell's height.
+    for(int col = 0; col < m_grid->cols_count(); col++)
+    {
+        for(int row = 0; row < m_grid->rows_count(); row++)
+        {
+            const table_cell* cell = m_grid->cell(col, row);
+            if(!cell || !cell->el || cell->rowspan <= 1)
+            {
+                continue;
+            }
+            const int     span_row = last_spanned_row(row, *cell);
+            const pixel_t shift    = cell_vertical_align(*cell->el) == va_baseline
+                                         ? m_grid->row(row).baseline - cell->baseline
+                                         : 0_px;
+            const pixel_t needed   = cell_height(col, row, shift);
+            const pixel_t height   = spanned_rows_height(row, span_row);
+            if(height < needed)
+            {
+                m_grid->row(span_row).height += needed - height;
             }
         }
     }
@@ -343,12 +402,19 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
                     box_top                  -= collapsed.top.width / 2;
                     box_bottom               += collapsed.bottom.width / 2;
                 }
+                // CSS 2.1 17.5.3: a baseline aligned cell is put on the baseline of the first row
+                // it spans.
+                pixel_t baseline_shift = -1_px;
+                if(cell_vertical_align(*cell->el) == va_baseline)
+                {
+                    baseline_shift = m_grid->row(row).baseline - cell->baseline;
+                }
                 cell->el->pos().y = box_top + cell->el->content_offset_top();
                 cell->el->pos().height =
                     box_bottom - box_top - cell->el->content_offset_top() - cell->el->content_offset_bottom();
                 table_height = std::max(table_height, m_grid->row(span_row).bottom);
                 cell->el->invalidate_layout();
-                cell->el->apply_vertical_align();
+                cell->el->apply_vertical_align(baseline_shift);
             }
         }
     }
@@ -920,6 +986,33 @@ litehtml::pixel_t litehtml::render_item_table::get_draw_vertical_bottom_offset()
         return m_grid->bottom_captions_height();
     }
     return 0_px;
+}
+
+std::optional<litehtml::pixel_t> litehtml::render_item_table::get_first_in_flow_baseline()
+{
+    ensure_layout();
+    if(!m_grid || m_grid->rows_count() == 0)
+    {
+        return std::nullopt;
+    }
+    // Captions are not rows (CSS 2.1 17.4, 17.5.3): the first row and the captions above it decide
+    // where the baseline is.
+    return content_offset_top() + m_grid->top_captions_height() + m_grid->row(0).top + m_grid->row(0).baseline;
+}
+
+litehtml::pixel_t litehtml::render_item_table::get_first_baseline()
+{
+    if(const auto baseline = get_first_in_flow_baseline())
+    {
+        return *baseline;
+    }
+    return height() - margin_bottom();
+}
+
+litehtml::pixel_t litehtml::render_item_table::get_last_baseline()
+{
+    // A table has a single baseline, the one of its first row.
+    return get_first_baseline();
 }
 
 bool litehtml::render_item_table::paints_collapsed_borders() const

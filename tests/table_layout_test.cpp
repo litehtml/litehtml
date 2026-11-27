@@ -351,6 +351,275 @@ int main()
         }
     }
 
+    // CSS 2.1 17.5.3: cells aligned at the baseline have their first baseline put on the baseline of
+    // the row, which is the largest distance from the cell top to the baseline.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".t{display:table;border-spacing:0}"
+            ".r{display:table-row}"
+            ".c{display:table-cell;vertical-align:baseline;padding:0}"
+            "</style>"
+            "<div class=t><div class=r>"
+            "<div class=c id=small14><div style='font-size:10px' id=small14in>x</div></div>"
+            "<div class=c id=big14><div style='font-size:30px' id=big14in>x</div></div>"
+            "</div></div>",
+            &container);
+        doc->render(800);
+
+        const auto small = doc->root()->select_one("#small14in");
+        const auto big   = doc->root()->select_one("#big14in");
+        ok &= check(small && big, "the baseline cells should exist");
+        if(small && big)
+        {
+            ok &= check(small->get_placement().y == 20_px,
+                        "a baseline cell is moved down to the baseline of the row");
+            ok &= check(big->get_placement().y == 0_px, "the tallest baseline cell sets the row baseline");
+        }
+    }
+
+    // CSS 2.1 17.5.3: sub, super, text-top, text-bottom and <length>/<percentage> do not apply to
+    // cells; the cell is aligned at the baseline instead.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".t{display:table;border-spacing:0}"
+            ".r{display:table-row}"
+            ".c{display:table-cell;padding:0}"
+            ".sub{vertical-align:sub}"
+            ".len{vertical-align:20px}"
+            "</style>"
+            "<div class=t><div class=r>"
+            "<div class='c sub' id=sub15><div style='font-size:10px' id=sub15in>x</div></div>"
+            "<div class='c len' id=len15><div style='font-size:10px' id=len15in>x</div></div>"
+            "<div class=c id=base15><div style='font-size:30px' id=base15in>x</div></div>"
+            "</div></div>",
+            &container);
+        doc->render(800);
+
+        const auto sub  = doc->root()->select_one("#sub15in");
+        const auto len  = doc->root()->select_one("#len15in");
+        const auto base = doc->root()->select_one("#base15in");
+        ok &= check(sub && len && base, "the fallback vertical-align cells should exist");
+        if(sub && len && base)
+        {
+            ok &= check(sub->get_placement().y == 20_px, "'vertical-align: sub' on a cell aligns it at the baseline");
+            ok &= check(len->get_placement().y == 20_px, "a length on a cell aligns it at the baseline");
+            ok &= check(base->get_placement().y == 0_px, "the tallest baseline cell sets the row baseline");
+        }
+    }
+
+    // CSS 2.1 17.5.3, 10.8.1: the baseline of a cell is the baseline of the first in-flow table row
+    // in it, and the baseline of a table is the baseline of its first row.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".t{display:table;border-spacing:0}"
+            ".r{display:table-row}"
+            ".c{display:table-cell;vertical-align:baseline;padding:0}"
+            "</style>"
+            "<div class=t><div class=r>"
+            "<div class=c id=nested16>"
+            "<div class=t><div class=r><div class=c><span style='font-size:30px' id=inner16>x</span></div></div></div>"
+            "</div>"
+            "<div class=c><span style='font-size:30px' id=ref16>x</span></div>"
+            "</div></div>",
+            &container);
+        doc->render(800);
+
+        const auto inner = doc->root()->select_one("#inner16");
+        const auto ref   = doc->root()->select_one("#ref16");
+        ok &= check(inner && ref, "the nested table cells should exist");
+        if(inner && ref)
+        {
+            ok &= check(inner->get_placement().y == ref->get_placement().y,
+                        "a table inside a cell provides the cell baseline from its first row");
+        }
+    }
+
+    // CSS 2.1 6.2: the font properties are inherited into tables.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}.t{display:table}.r{display:table-row}.c{display:table-cell}</style>"
+            "<div style='font-size:20px'><div class=t><div class=r><div class=c id=cell17>x</div></div></div></div>",
+            &container);
+        doc->render(800);
+
+        const auto cell = doc->root()->select_one("#cell17");
+        ok &= check(cell != nullptr, "the inherited font table should exist");
+        if(cell)
+        {
+            ok &= check(cell->css().get_font_size() == 20_px, "a table cell inherits the font size of its ancestors");
+        }
+    }
+
+    // A whitespace-only anonymous context before a nested table has no baseline of its own.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0;font:20px/20px sans-serif}"
+            "table,.inner,.lines{border-spacing:0}"
+            "td,.inner>div{display:table-cell;vertical-align:baseline;padding:0}"
+            ".inner,.lines{display:table}.lines>span{display:table-row}</style>"
+            "<table><tr><td><div class=inner>"
+            "<div> <a><span class=lines><span><span id=label18>array</span></span></span></a> </div>"
+            "<div><span class=lines><span><span id=marker18>tag</span></span></span></div>"
+            "</div></td></tr><tr><td><div id=next18>vector</div></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto label  = doc->root()->select_one("#label18");
+        const auto marker = doc->root()->select_one("#marker18");
+        const auto next   = doc->root()->select_one("#next18");
+        ok &= check(label && marker && next, "the nested baseline table should exist");
+        if(label && marker && next)
+        {
+            ok &= check(label->get_placement().y == marker->get_placement().y,
+                        "empty anonymous contexts must not replace the nested table baseline");
+            ok &= check(next->get_placement().y >= label->get_placement().y + label->get_placement().height,
+                        "the next row must not overlap the nested table label");
+        }
+    }
+
+    // Empty and out-of-flow descendants do not provide a cell's first in-flow baseline.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}table{border-spacing:0}td{padding:0;vertical-align:baseline}"
+            ".text{font-size:20px;line-height:20px}</style>"
+            "<table><tr><td><div></div><div style='position:absolute;font-size:40px'>a</div>"
+            "<div style='float:left;font-size:40px'>b</div><div class=text><span id=flow19>x</span></div></td>"
+            "<td><div class=text><span id=ref19>x</span></div></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto flow = doc->root()->select_one("#flow19");
+        const auto ref  = doc->root()->select_one("#ref19");
+        ok &= check(flow && ref, "the in-flow baseline cells should exist");
+        if(flow && ref)
+        {
+            ok &= check(flow->get_placement().y == ref->get_placement().y,
+                        "empty, positioned and floating boxes must not supply a cell baseline");
+        }
+    }
+
+    // A line box inside a zero-height block is still a valid first baseline.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}table{border-spacing:0}td{padding:0;vertical-align:baseline}</style>"
+            "<table><tr><td><div style='height:0;overflow:hidden;font-size:30px;line-height:30px'>x</div>"
+            "<div style='font-size:10px;line-height:10px'>later</div></td>"
+            "<td><div id=ref20 style='font-size:20px;line-height:20px'>x</div></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto ref = doc->root()->select_one("#ref20");
+        ok &= check(ref != nullptr, "the zero-height baseline reference should exist");
+        if(ref)
+        {
+            ok &= check(ref->get_placement().y == 10_px, "a zero-height block's first line still sets the baseline");
+        }
+    }
+
+    // A shifted non-spanning cell can determine the row's minimum height.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0;font:20px/20px sans-serif}table{border-spacing:0}"
+            "td{padding:0;vertical-align:baseline}</style>"
+            "<table id=table21><tr><td><div id=tall21>a<br>b</div></td>"
+            "<td style='padding-top:40px'><div id=anchor21>x</div></td></tr>"
+            "<tr><td><div id=next21>next</div></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto table  = doc->root()->select_one("#table21");
+        const auto tall   = doc->root()->select_one("#tall21");
+        const auto anchor = doc->root()->select_one("#anchor21");
+        const auto next   = doc->root()->select_one("#next21");
+        ok &= check(table && tall && anchor && next, "the shifted row height table should exist");
+        if(table && tall && anchor && next)
+        {
+            ok &= check(tall->get_placement().y == anchor->get_placement().y, "the first line baselines must align");
+            ok &= check(next->get_placement().y >= tall->get_placement().y + tall->get_placement().height,
+                        "a row must include the full shifted height of its baseline cells");
+            ok &= check(table->get_placement().height == 100_px, "the table includes the expanded row and next row");
+        }
+    }
+
+    // A specified cell height is a minimum, not extra space to move with the content.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}table{border-spacing:0}"
+            "td{padding:0;vertical-align:baseline}"
+            ".small{font-size:10px;line-height:10px}"
+            ".large{font-size:30px;line-height:30px}</style>"
+            "<table id=single22><tr><td style='height:100px'><div class=small id=small22>x</div></td>"
+            "<td><div class=large id=large22>x</div></td></tr></table>"
+            "<table id=span22><tr><td rowspan=2 style='height:100px'><div class=small id=spantext22>x</div></td>"
+            "<td><div class=large id=spanref22>x</div></td></tr>"
+            "<tr><td><div class=small>x</div></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto single   = doc->root()->select_one("#single22");
+        const auto span     = doc->root()->select_one("#span22");
+        const auto small    = doc->root()->select_one("#small22");
+        const auto large    = doc->root()->select_one("#large22");
+        const auto spantext = doc->root()->select_one("#spantext22");
+        const auto spanref  = doc->root()->select_one("#spanref22");
+        ok &= check(single && span && small && large && spantext && spanref, "the minimum height tables should exist");
+        if(single && span && small && large && spantext && spanref)
+        {
+            ok &= check(single->get_placement().height == 100_px,
+                        "a baseline shift must not increase a fitting cell minimum");
+            ok &= check(span->get_placement().height == 100_px,
+                        "a baseline shift must not increase a fitting rowspan minimum");
+            ok &= check(small->get_placement().y == large->get_placement().y + 20_px,
+                        "the single-row cell content remains baseline-aligned");
+            ok &= check(spantext->get_placement().y == spanref->get_placement().y + 20_px,
+                        "the spanning cell content remains baseline-aligned");
+        }
+    }
+
+    // Spanning cells use the rows' post-alignment heights and include inter-row border spacing.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}table{border-spacing:0 4px}td{padding:0;vertical-align:baseline}"
+            ".small{font:10px/10px sans-serif}.large{font:30px/30px sans-serif}"
+            "#collapsed23{border-collapse:collapse}</style>"
+            "<table id=baseline23><tr><td><div class=small>x</div></td>"
+            "<td rowspan=2><div class=large>x</div></td></tr><tr><td></td></tr></table>"
+            "<table id=top23><tr><td rowspan=2 style='height:30px;vertical-align:top'></td>"
+            "<td style='height:10px;vertical-align:top'></td></tr>"
+            "<tr><td style='height:10px;vertical-align:top'></td></tr></table>"
+            "<table id=collapsed23><tr><td><div class=small>x</div></td>"
+            "<td rowspan=2><div class=large>x</div></td></tr><tr><td></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto baseline  = doc->root()->select_one("#baseline23");
+        const auto top       = doc->root()->select_one("#top23");
+        const auto collapsed = doc->root()->select_one("#collapsed23");
+        ok &= check(baseline && top && collapsed, "the spanning-row tables should exist");
+        if(baseline && top && collapsed)
+        {
+            ok &= check(baseline->get_placement().height == 42_px,
+                        "baseline growth in the first row must not be added again to the last row");
+            ok &= check(top->get_placement().height == 38_px,
+                        "inter-row spacing counts toward a top-aligned cell's spanning height");
+            ok &= check(collapsed->get_placement().height == 30_px,
+                        "collapsed rows must fit the spanning cell without separate-border spacing");
+        }
+    }
+
     if(ok)
     {
         std::cout << "All table layout tests passed\n";

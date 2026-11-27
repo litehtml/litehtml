@@ -83,6 +83,10 @@ namespace litehtml
         pixel_t                      get_draw_vertical_bottom_offset() override;
         bool                         paints_collapsed_borders() const override;
         std::shared_ptr<render_item> init() override;
+        // CSS 2.1 10.8.1: the baseline of a table is the baseline of its first row.
+        std::optional<pixel_t> get_first_in_flow_baseline() override;
+        pixel_t                get_first_baseline() override;
+        pixel_t                get_last_baseline() override;
     };
 
     class render_item_table_row : public render_item

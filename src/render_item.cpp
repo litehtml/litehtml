@@ -482,6 +482,25 @@ void litehtml::render_item::ensure_layout_tree()
     }
 }
 
+std::optional<litehtml::pixel_t> litehtml::render_item::get_first_in_flow_baseline()
+{
+    ensure_layout();
+    for(const auto& child : m_children)
+    {
+        const auto& style = child->css();
+        if(style.get_display() == display_none || style.get_float() != float_none ||
+           is_one_of(style.get_position(), element_position_absolute, element_position_fixed))
+        {
+            continue;
+        }
+        if(const auto baseline = child->get_first_in_flow_baseline())
+        {
+            return content_offset_top() + child->top() + *baseline;
+        }
+    }
+    return std::nullopt;
+}
+
 bool litehtml::render_item::has_definite_size() const
 {
     const auto& style = css();

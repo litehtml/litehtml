@@ -136,6 +136,11 @@ namespace litehtml
             m_master_css.parse_css_stylesheet(master_styles, "", shared_from_this());
             m_master_css.sort_selectors();
         }
+        if(m_mode == quirks_mode)
+        {
+            m_master_css.parse_css_stylesheet(std::string(quirks_css), "", shared_from_this());
+            m_master_css.sort_selectors();
+        }
         if(user_styles != "")
         {
             m_user_css.parse_css_stylesheet(user_styles, "", shared_from_this());

@@ -2,6 +2,7 @@
 #define LITEHTML_RENDER_CONTROL_H
 
 #include "render_image.h"
+#include <algorithm>
 
 namespace litehtml
 {
@@ -28,6 +29,25 @@ namespace litehtml
         bool is_v_scrollable(const pixel_t dy) const override
         {
             return src_el()->can_scroll_content(dy);
+        }
+
+        // The label of a button without child boxes is painted vertically centred in the button's
+        // box (see el_button::draw), so the baseline of such a button is the baseline of its label
+        // and not the bottom of its box. The markers and values of other controls are not text
+        // centred that way and keep the replaced-element baseline.
+        pixel_t get_first_baseline() override
+        {
+            const auto fm = css().get_font_metrics();
+            if(src_el()->tag() != _button_ || fm.height <= 0_px)
+            {
+                return height() - margin_bottom();
+            }
+            return margin_top() + std::max(0_px, (m_pos.height - fm.height) / 2_px) + fm.ascent;
+        }
+
+        pixel_t get_last_baseline() override
+        {
+            return get_first_baseline();
         }
 
       protected:
