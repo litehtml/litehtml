@@ -250,6 +250,34 @@ int main()
         ok &= check(b9->get_placement().height == 20_px, "the content keeps its own height");
     }
 
+    // A collapsed border is centered on the grid line (CSS 2.1 17.6.2): a wider border takes only
+    // half of its extra width from the cell content, and the other half from its neighbour's.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}"
+            "table{border-collapse:collapse;table-layout:fixed;width:202px}"
+            "td{padding:0;border:2px solid #000;height:10px}"
+            "#w10{border-left:12px solid #000}</style>"
+            "<table><tr><td id=a10></td><td id=w10></td></tr></table>"
+            "<table><tr><td id=a11></td><td id=w11></td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto a10 = doc->root()->select_one("#a10");
+        const auto w10 = doc->root()->select_one("#w10");
+        const auto a11 = doc->root()->select_one("#a11");
+        const auto w11 = doc->root()->select_one("#w11");
+        ok &= check(a10 && w10 && a11 && w11, "the collapsed-border tables should exist");
+        if(a10 && w10 && a11 && w11)
+        {
+            ok &= check(w10->get_placement().width == w11->get_placement().width - 5_px,
+                        "a wider collapsed border takes only half of its extra width from the cell content");
+            ok &= check(a10->get_placement().width == a11->get_placement().width - 5_px,
+                        "a wider collapsed border takes the other half from the neighbouring cell content");
+        }
+    }
+
     if(ok)
     {
         std::cout << "All table layout tests passed\n";

@@ -45,6 +45,26 @@ litehtml::render_item::render_item(std::shared_ptr<element> _src_el) :
     m_borders.bottom = doc->to_pixels(src_el()->css().get_borders().bottom.width, fm, 0_px);
 }
 
+litehtml::borders litehtml::render_item::get_styled_borders() const
+{
+    const auto& css_borders = src_el()->css().get_borders();
+
+    borders ret;
+    ret.left.width   = m_borders.left;
+    ret.left.style   = css_borders.left.style;
+    ret.left.color   = css_borders.left.color;
+    ret.right.width  = m_borders.right;
+    ret.right.style  = css_borders.right.style;
+    ret.right.color  = css_borders.right.color;
+    ret.top.width    = m_borders.top;
+    ret.top.style    = css_borders.top.style;
+    ret.top.color    = css_borders.top.color;
+    ret.bottom.width = m_borders.bottom;
+    ret.bottom.style = css_borders.bottom.style;
+    ret.bottom.color = css_borders.bottom.color;
+    return ret;
+}
+
 void litehtml::render_item::update_height_dependency(uint64_t generation)
 {
     // Flex measurement can reuse a natural height only when making it definite cannot change descendants.
@@ -490,8 +510,13 @@ void litehtml::render_item::calc_outlines(pixel_t parent_width)
     m_padding.left  = m_element->css().get_padding().left.calc_percent(parent_width);
     m_padding.right = m_element->css().get_padding().right.calc_percent(parent_width);
 
-    m_borders.left  = m_element->css().get_borders().left.width.calc_percent(parent_width);
-    m_borders.right = m_element->css().get_borders().right.width.calc_percent(parent_width);
+    if(!m_borders_overridden)
+    {
+        m_borders.left   = m_element->css().get_borders().left.width.calc_percent(parent_width);
+        m_borders.right  = m_element->css().get_borders().right.width.calc_percent(parent_width);
+        m_borders.top    = m_element->css().get_borders().top.width.calc_percent(parent_width);
+        m_borders.bottom = m_element->css().get_borders().bottom.width.calc_percent(parent_width);
+    }
 
     if(margins_apply(m_element->css()))
     {

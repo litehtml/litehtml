@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <list>
+#include <optional>
 #include <tuple>
 #include "html.h"
 #include "pixel_type.h"
@@ -33,10 +34,13 @@ namespace litehtml
         std::weak_ptr<render_item>                m_stacking_context;
         std::shared_ptr<scroll_view>              m_scroll_view;
 
-        margins  m_margins;
-        margins  m_padding;
-        margins  m_borders;
-        position m_pos;
+        margins m_margins;
+        margins m_padding;
+        margins m_borders;
+        // The borders the box is laid out with; the collapsed ones while the table renders a cell.
+        bool                   m_borders_overridden = false;
+        std::optional<borders> m_paint_borders;
+        position               m_pos;
         // Arguments of the last render(): the item can be laid out again in place without the
         // parent once its own box is known to be definite.
         containing_block_context m_cb_context;
@@ -404,6 +408,66 @@ namespace litehtml
         margins& get_borders()
         {
             return m_borders;
+        }
+
+        const margins& get_borders() const
+        {
+            return m_borders;
+        }
+
+        // Lays the box out with the collapsed borders of a table cell (CSS 2.1 17.6.2).
+        void override_borders(const margins& val)
+        {
+            m_borders            = val;
+            m_borders_overridden = true;
+        }
+
+        // Restores the borders the box is laid out with once the cell is laid out.
+        void clear_borders_override(const margins& own_borders)
+        {
+            m_borders            = own_borders;
+            m_borders_overridden = false;
+        }
+
+        // The widths of the borders painted around the box: the collapsed ones for a table cell,
+        // its own otherwise.
+        margins paint_border_widths() const
+        {
+            if(!m_paint_borders)
+            {
+                return m_borders;
+            }
+            margins ret;
+            ret.left   = m_paint_borders->left.width;
+            ret.right  = m_paint_borders->right.width;
+            ret.top    = m_paint_borders->top.width;
+            ret.bottom = m_paint_borders->bottom.width;
+            return ret;
+        }
+
+        // The element's borders with the used widths (in pixels) and the computed style and color.
+        borders get_styled_borders() const;
+
+        // The collapsed borders the table resolved for this item, painted instead of the element's own ones.
+        const std::optional<borders>& paint_borders() const
+        {
+            return m_paint_borders;
+        }
+
+        void set_paint_borders(const borders& val)
+        {
+            m_paint_borders = val;
+        }
+
+        void reset_paint_borders()
+        {
+            m_paint_borders.reset();
+        }
+
+        // True when this item paints the collapsed borders of its grid itself.
+        virtual bool paints_collapsed_borders() const
+        {
+            return false;
         }
 
         /**

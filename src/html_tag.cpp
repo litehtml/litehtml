@@ -1169,6 +1169,19 @@ namespace litehtml
     void litehtml::html_tag::draw_background(uint_ptr hdc, pixel_t x, pixel_t y, const position* clip,
                                              const clipping* clip_chain, const std::shared_ptr<render_item>& ri)
     {
+        // In the collapsing border model the borders of the internal table boxes are resolved and
+        // painted by the table grid, and the table's own border is replaced by the outer collapsed
+        // ones (CSS 2.1 17.6.2).
+        const bool paint_own_borders =
+            m_css->get_border_collapse() != border_collapse_collapse ||
+            !(is_one_of(m_css->get_display(), display_table_row, display_table_row_group, display_table_header_group,
+                        display_table_footer_group, display_table_column, display_table_column_group) ||
+              (is_one_of(m_css->get_display(), display_table, display_inline_table) && ri->paints_collapsed_borders()));
+
+        // A table cell is laid out with its own borders but paints the collapsed ones, which form
+        // the border box it is drawn in.
+        const margins border_widths = ri->paint_border_widths();
+
         auto inline_processed = ri->for_inline_boxes([&](const position& box_, bool first, bool last) {
             const background* bg = get_background();
 
@@ -1184,7 +1197,7 @@ namespace litehtml
             if(reach_box.does_intersect(clip))
             {
                 content_box  = box;
-                content_box -= ri->get_borders();
+                content_box -= border_widths;
                 content_box -= ri->get_paddings();
 
                 css_borders bdr;
@@ -1207,15 +1220,18 @@ namespace litehtml
                     bdr.radius.top_right_y    = m_css->get_borders().radius.top_right_y;
                 }
 
-                bdr.top    = m_css->get_borders().top;
-                bdr.bottom = m_css->get_borders().bottom;
-                if(first)
+                if(paint_own_borders)
                 {
-                    bdr.left = m_css->get_borders().left;
-                }
-                if(last)
-                {
-                    bdr.right = m_css->get_borders().right;
+                    bdr.top    = m_css->get_borders().top;
+                    bdr.bottom = m_css->get_borders().bottom;
+                    if(first)
+                    {
+                        bdr.left = m_css->get_borders().left;
+                    }
+                    if(last)
+                    {
+                        bdr.right = m_css->get_borders().right;
+                    }
                 }
 
                 position shadow_box = box;
@@ -1245,10 +1261,10 @@ namespace litehtml
                     }
                 }
                 position padding_box  = shadow_box;
-                padding_box          -= ri->get_borders();
+                padding_box          -= border_widths;
                 padding_box.round();
                 border_radiuses inner_radius  = shadow_radius;
-                inner_radius                 -= ri->get_borders();
+                inner_radius                 -= border_widths;
                 draw_box_shadows(hdc, padding_box, inner_radius, true, clip_chain);
 
                 if(bdr.is_visible())
@@ -1271,7 +1287,7 @@ namespace litehtml
 
             position border_box  = pos;
             border_box          += ri->get_paddings();
-            border_box          += ri->get_borders();
+            border_box          += border_widths;
 
             const pixel_t reach  = box_shadow_reach(m_css->get_box_shadows());
             position      ink    = border_box;
@@ -1317,13 +1333,20 @@ namespace litehtml
                 }
 
                 position padding_box  = shadow_box;
-                padding_box          -= ri->get_borders();
+                padding_box          -= border_widths;
                 padding_box.round();
                 border_radiuses inner_radius  = shadow_radius;
-                inner_radius                 -= ri->get_borders();
+                inner_radius                 -= border_widths;
                 draw_box_shadows(hdc, padding_box, inner_radius, true, clip_chain);
 
-                borders bdr = m_css->get_borders();
+                borders bdr;
+                if(ri->paint_borders())
+                {
+                    bdr = *ri->paint_borders();
+                } else if(paint_own_borders)
+                {
+                    bdr = m_css->get_borders();
+                }
                 if(bdr.is_visible())
                 {
                     border_box.round();

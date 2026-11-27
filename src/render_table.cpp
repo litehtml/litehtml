@@ -12,38 +12,26 @@ litehtml::render_item_table::render_item_table(std::shared_ptr<element> _src_el)
 
 std::tuple<litehtml::pixel_t, litehtml::pixel_t> litehtml::render_item_table::calc_table_spacings() const
 {
-    pixel_t table_width_spacing = 0_px;
-    if(src_el()->css().get_border_collapse() == border_collapse_separate)
-    {
-        table_width_spacing = m_border_spacing_x * pixel_t(m_grid->cols_count() + 1);
-    } else
-    {
-        table_width_spacing = 0_px;
-
-        if(m_grid->cols_count())
-        {
-            table_width_spacing -= std::min(border_left(), m_grid->column(0).border_left);
-            table_width_spacing -= std::min(border_right(), m_grid->column(m_grid->cols_count() - 1).border_right);
-        }
-
-        for(int col = 1; col < m_grid->cols_count(); col++)
-        {
-            table_width_spacing -= std::min(m_grid->column(col).border_left, m_grid->column(col - 1).border_right);
-        }
-    }
-
-    // Calculate vertical table spacing
+    pixel_t table_width_spacing  = 0_px;
     pixel_t table_height_spacing = 0_px;
     if(src_el()->css().get_border_collapse() == border_collapse_separate)
     {
+        table_width_spacing  = m_border_spacing_x * pixel_t(m_grid->cols_count() + 1);
         table_height_spacing = m_border_spacing_y * pixel_t(m_grid->rows_count() + 1);
     } else
     {
-        // Row heights already hold half of the collapsed borders on their edges
-        // (CSS 2.1 17.6.2); the table's border box holds half of the outer ones.
-        m_grid->calc_collapsed_borders(m_borders);
-        table_height_spacing = 0_px;
+        // In the collapsing model the grid lines are the center lines of the collapsed borders and
+        // the table's box holds half of the outer ones (CSS 2.1 17.6.2).
+        std::vector<borders> column_borders;
+        std::vector<borders> column_group_borders;
+        collect_column_borders(column_borders, column_group_borders);
+        m_grid->calc_collapsed_borders(get_styled_borders(), column_borders, column_group_borders);
 
+        if(m_grid->cols_count())
+        {
+            table_width_spacing =
+                (m_grid->collapsed_left() + m_grid->collapsed_right()) / 2 - border_left() - border_right();
+        }
         if(m_grid->rows_count())
         {
             table_height_spacing =
@@ -52,6 +40,43 @@ std::tuple<litehtml::pixel_t, litehtml::pixel_t> litehtml::render_item_table::ca
     }
 
     return {table_width_spacing, table_height_spacing};
+}
+
+void litehtml::render_item_table::collect_column_borders(std::vector<borders>& column_borders,
+                                                         std::vector<borders>& column_group_borders) const
+{
+    const int cols_count = m_grid->cols_count();
+    column_borders.assign(static_cast<size_t>(cols_count), borders());
+    column_group_borders.assign(static_cast<size_t>(cols_count), borders());
+
+    const auto fill = [cols_count](std::vector<borders>& target, const part_paint_area& area) {
+        const borders borders_of_part = area.el->get_styled_borders();
+        for(int i = 0; i < area.column_count; i++)
+        {
+            const int col = area.first_column + i;
+            if(col >= 0 && col < cols_count)
+            {
+                target[col] = borders_of_part;
+            }
+        }
+    };
+
+    for(const auto& area : m_column_areas)
+    {
+        // A column group without columns is painted as a column area too, but its border competes
+        // with the column group priority.
+        if(area.el->src_el()->css().get_display() == display_table_column)
+        {
+            fill(column_borders, area);
+        } else
+        {
+            fill(column_group_borders, area);
+        }
+    }
+    for(const auto& area : m_column_group_areas)
+    {
+        fill(column_group_borders, area);
+    }
 }
 
 litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
@@ -105,7 +130,34 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     // calc_table_spacings() already refreshed the collapsed-border cache above
     // when in the collapsing model.
     const bool collapse = src_el()->css().get_border_collapse() == border_collapse_collapse;
-    // In the collapsing model a cell takes up half of the collapsed borders on its edges
+    for(int row = 0; row < m_grid->rows_count(); row++)
+    {
+        for(int col = 0; col < m_grid->cols_count(); col++)
+        {
+            table_cell* cell = m_grid->cell(col, row);
+            if(!cell->el)
+            {
+                continue;
+            }
+            if(collapse)
+            {
+                // The cell box straddles the grid lines and paints the collapsed borders of its
+                // slot; one thinner than its neighbour's lies inside the wider one (CSS 2.1 17.6.2).
+                const borders& collapsed = m_grid->collapsed_borders(col, row);
+                margins        box_borders;
+                box_borders.left   = collapsed.left.width;
+                box_borders.right  = collapsed.right.width;
+                box_borders.top    = collapsed.top.width;
+                box_borders.bottom = collapsed.bottom.width;
+                cell->el->override_borders(box_borders);
+                cell->el->set_paint_borders(collapsed);
+            } else
+            {
+                cell->el->clear_borders_override(cell->borders);
+                cell->el->reset_paint_borders();
+            }
+        }
+    }
     auto cell_height = [&](int col, int row) {
         const table_cell* cell   = m_grid->cell(col, row);
         pixel_t           height = cell->el->height();
@@ -121,8 +173,10 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
         }
         if(collapse)
         {
-            const margins& collapsed = m_grid->collapsed_borders(col, row);
-            height += (collapsed.top + collapsed.bottom) / 2 - cell->borders.top - cell->borders.bottom;
+            // height() includes the collapsed borders the cell item was given; the row only holds
+            // half of them (CSS 2.1 17.6.2).
+            const borders& collapsed  = m_grid->collapsed_borders(col, row);
+            height                   -= (collapsed.top.width + collapsed.bottom.width) / 2;
         }
         return height;
     };
@@ -142,10 +196,17 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
                 {
                     span_col = m_grid->cols_count() - 1;
                 }
-                pixel_t cell_width = m_grid->column(span_col).right - m_grid->column(col).left;
+                pixel_t box_left  = m_grid->column(col).left;
+                pixel_t box_right = m_grid->column(span_col).right;
+                if(collapse)
+                {
+                    const borders& collapsed  = m_grid->collapsed_borders(col, row);
+                    box_left                 -= collapsed.left.width / 2;
+                    box_right                += collapsed.right.width / 2;
+                }
+                pixel_t cell_width = box_right - box_left;
 
-                pixel_t cell_ret =
-                    cell->el->render(m_grid->column(col).left, 0_px, self_size.new_width(cell_width), fmt_ctx, true);
+                pixel_t cell_ret = cell->el->render(box_left, 0_px, self_size.new_width(cell_width), fmt_ctx, true);
                 // A pixel-width cell that was shrunk below its preferred width uses all of its width
                 const css_length& cell_css_width = cell->el->css().get_width();
                 if(!cell_css_width.is_predefined() && !cell_css_width.has_percentage())
@@ -249,11 +310,10 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
                 pixel_t box_bottom = m_grid->row(span_row).bottom;
                 if(collapse)
                 {
-                    // The cell's own border straddles the grid line; one thinner than its
-                    // neighbour's lies inside the wider one, so the content clears both.
-                    const margins& collapsed  = m_grid->collapsed_borders(col, row);
-                    box_top                  += collapsed.top / 2 - cell->borders.top;
-                    box_bottom               += cell->borders.bottom - collapsed.bottom / 2;
+                    // The collapsed border is centered on the grid line.
+                    const borders& collapsed  = m_grid->collapsed_borders(col, row);
+                    box_top                  -= collapsed.top.width / 2;
+                    box_bottom               += collapsed.bottom.width / 2;
                 }
                 cell->el->pos().y = box_top + cell->el->content_offset_top();
                 cell->el->pos().height =
@@ -274,6 +334,21 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     } else
     {
         table_height += m_border_spacing_y;
+    }
+
+    if(collapse)
+    {
+        // The cells are laid out; only the painted borders are the collapsed ones from now on.
+        for(int row = 0; row < m_grid->rows_count(); row++)
+        {
+            for(int col = 0; col < m_grid->cols_count(); col++)
+            {
+                if(table_cell* cell = m_grid->cell(col, row); cell->el)
+                {
+                    cell->el->clear_borders_override(cell->borders);
+                }
+            }
+        }
     }
 
     // Render table captions
@@ -753,6 +828,11 @@ litehtml::pixel_t litehtml::render_item_table::get_draw_vertical_offset()
     return 0_px;
 }
 
+bool litehtml::render_item_table::paints_collapsed_borders() const
+{
+    return m_grid && m_grid->rows_count() > 0 && src_el()->css().get_border_collapse() == border_collapse_collapse;
+}
+
 bool litehtml::render_item_table_part::for_inline_boxes(
     const std::function<bool(const position& box, bool first, bool last)>& process) const
 {
@@ -790,12 +870,19 @@ bool litehtml::render_item_table_row::for_inline_boxes(
                     first = false;
                 }
             }
-            position pos;
-            pos.x = el->left() + el->margin_left();
-            pos.y = el->top() - m_padding.top - m_borders.top;
+            // The collapsed borders of a cell are wider than its own ones; the row box follows the
+            // painted border box so it covers the collapsed borders (CSS 2.1 17.6.2).
+            const margins own_borders  = el->get_borders();
+            const margins cell_borders = el->paint_border_widths();
 
-            pos.width  = el->right() - pos.x - el->margin_right() - el->margin_left();
-            pos.height = el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom;
+            position pos;
+            pos.x = el->left() + el->margin_left() + own_borders.left - cell_borders.left;
+            pos.y = el->top() - m_padding.top - m_borders.top + own_borders.top - cell_borders.top;
+
+            pos.width  = el->right() - pos.x - el->margin_right() - el->margin_left() + cell_borders.left -
+                         own_borders.left + cell_borders.right - own_borders.right;
+            pos.height = el->height() + m_padding.height() + m_borders.height() + cell_borders.top - own_borders.top +
+                         cell_borders.bottom - own_borders.bottom;
 
             prev_pos = pos;
         }
@@ -814,11 +901,16 @@ bool litehtml::render_item_table_row::is_point_inside(pixel_t x, pixel_t y) cons
     {
         if(el->src_el()->css().get_display() == display_table_cell)
         {
-            pos.x = el->left() + el->margin_left();
-            pos.y = el->top() - m_padding.top - m_borders.top;
+            const margins own_borders  = el->get_borders();
+            const margins cell_borders = el->paint_border_widths();
 
-            pos.width  = el->right() - pos.x - el->margin_right() - el->margin_left();
-            pos.height = el->height() + m_padding.top + m_padding.bottom + m_borders.top + m_borders.bottom;
+            pos.x = el->left() + el->margin_left() + own_borders.left - cell_borders.left;
+            pos.y = el->top() - m_padding.top - m_borders.top + own_borders.top - cell_borders.top;
+
+            pos.width  = el->right() - pos.x - el->margin_right() - el->margin_left() + cell_borders.left -
+                         own_borders.left + cell_borders.right - own_borders.right;
+            pos.height = el->height() + m_padding.height() + m_borders.height() + cell_borders.top - own_borders.top +
+                         cell_borders.bottom - own_borders.bottom;
 
             if(pos.is_point_inside(x, y))
             {

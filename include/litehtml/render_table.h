@@ -57,6 +57,9 @@ namespace litehtml
                                   const clipping* cur_clipping);
         void draw_row_group_backgrounds(uint_ptr hdc, const position& pos, const position* clip,
                                         const clipping* cur_clipping);
+        // The borders of the columns and their groups, one entry per column.
+        void collect_column_borders(std::vector<borders>& column_borders,
+                                    std::vector<borders>& column_group_borders) const;
 
         void    calc_intrinsic_size() override;
         pixel_t _render(pixel_t x, pixel_t y, const containing_block_context& containing_block_size,
@@ -77,6 +80,7 @@ namespace litehtml
             int zindex, const std::function<bool(const std::shared_ptr<render_item>&)>& check,
             const render_item* stacking_context = nullptr) override;
         pixel_t                      get_draw_vertical_offset() override;
+        bool                         paints_collapsed_borders() const override;
         std::shared_ptr<render_item> init() override;
     };
 
