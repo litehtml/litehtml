@@ -138,6 +138,12 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
                                                css().get_table_layout(), min_table_width, max_table_width);
     }
 
+    // With no columns there is no grid content to size; a specified table width still applies.
+    if(m_grid->cols_count() == 0 && self_size.width.type == containing_block_context::cbc_value_type_absolute)
+    {
+        table_width = self_size.render_width.value - table_width_spacing;
+    }
+
     min_table_width += table_width_spacing;
     max_table_width += table_width_spacing;
     table_width     += table_width_spacing;
@@ -358,6 +364,12 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
         table_height += m_border_spacing_y;
     }
 
+    // A table without rows still has its specified/minimum height.
+    if(m_grid->rows_count() == 0)
+    {
+        table_height = std::max(table_height, minimum_table_height);
+    }
+
     if(collapse)
     {
         // The cells are laid out; only the painted borders are the collapsed ones from now on.
@@ -373,29 +385,28 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
         }
     }
 
-    // Render table captions
-    // Table border doesn't round the caption, so we have to start caption in the border position
-    pixel_t top_captions = -border_top();
+    // CSS 2.1 17.4: the caption boxes are block boxes inside the table wrapper, placed above or
+    // below the table box. Their margins do not collapse with the table's margins.
+    const pixel_t caption_x     = -(m_borders.left + m_padding.left);
+    const pixel_t caption_width = table_width + m_padding.width() + m_borders.width();
+    pixel_t       top_caption_y = -(m_borders.top + m_padding.top);
+    pixel_t       top_captions  = 0_px;
 
     for(auto& caption : m_grid->captions())
     {
         if(caption->css().get_caption_side() == caption_side_top)
         {
-            caption->render(-border_left(), top_captions,
-                            self_size.new_width(table_width + border_left() + border_right()), fmt_ctx);
-            top_captions += caption->height();
+            caption->render(caption_x, top_caption_y, self_size.new_width(caption_width), fmt_ctx);
+            top_caption_y += caption->height();
+            top_captions  += caption->height();
         }
     }
 
+    m_grid->top_captions_height(top_captions);
+
     if(top_captions != 0_px)
     {
-        // Add border height to get the top of cells
-        top_captions += border_top();
-
-        // Save caption height for draw_background
-        m_grid->top_captions_height(top_captions);
-
-        // Move table cells to the bottom side
+        // Move the table grid below the captions.
         for(int row = 0; row < m_grid->rows_count(); row++)
         {
             m_grid->row(row).el_row->pos().y += top_captions;
@@ -454,17 +465,19 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     fill_paint_boxes(m_column_group_areas);
     fill_paint_boxes(m_column_areas);
 
-    pixel_t bottom_captions = 0_px;
+    pixel_t bottom_captions    = 0_px;
+    pixel_t bottom_caption_y   = top_captions + table_height + m_padding.bottom + m_borders.bottom;
 
     for(auto& caption : m_grid->captions())
     {
         if(caption->css().get_caption_side() == caption_side_bottom)
         {
-            caption->render(-border_left(), table_height + top_captions + bottom_captions,
-                            self_size.new_width(table_width + border_left() + border_right()), fmt_ctx);
-            bottom_captions += caption->height();
+            caption->render(caption_x, bottom_caption_y, self_size.new_width(caption_width), fmt_ctx);
+            bottom_caption_y += caption->height();
+            bottom_captions  += caption->height();
         }
     }
+    m_grid->bottom_captions_height(bottom_captions);
 
     m_pos.move_to(x + content_offset_left(), y + content_offset_top());
     m_pos.width                = table_width;
@@ -896,6 +909,15 @@ litehtml::pixel_t litehtml::render_item_table::get_draw_vertical_offset()
     if(m_grid)
     {
         return m_grid->top_captions_height();
+    }
+    return 0_px;
+}
+
+litehtml::pixel_t litehtml::render_item_table::get_draw_vertical_bottom_offset()
+{
+    if(m_grid)
+    {
+        return m_grid->bottom_captions_height();
     }
     return 0_px;
 }

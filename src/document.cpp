@@ -1630,10 +1630,16 @@ namespace litehtml
             add_tabular(annon_ri);
             annon_ri->parent(el_ptr);
             first_iter = el_ptr->children().insert(first_iter, annon_ri);
-            cur_iter   = std::next(first_iter);
-            while(cur_iter != el_ptr->children().end() && (*cur_iter)->parent() != el_ptr)
+            // Remove the elements from their previous parent's child list. They are not
+            // necessarily consecutive: skipped children (whitespace, display:none) may remain
+            // between them, and those must stay where they are.
+            for(const auto& moved : tmp)
             {
-                cur_iter = el_ptr->children().erase(cur_iter);
+                auto it = std::find(el_ptr->children().begin(), el_ptr->children().end(), moved);
+                if(it != el_ptr->children().end())
+                {
+                    el_ptr->children().erase(it);
+                }
             }
             first_iter = cur_iter;
             tmp.clear();
@@ -1643,21 +1649,28 @@ namespace litehtml
         {
             if((*cur_iter)->src_el()->css().get_display() != disp)
             {
+                // A table's row groups, captions and columns are its own children; they are not
+                // wrapped into an anonymous row group (CSS 2.1 17.2). They also end a run of
+                // cells/rows that would otherwise share one anonymous wrapper.
+                if(disp == display_table_row_group &&
+                   is_one_of((*cur_iter)->src_el()->css().get_display(), display_table_caption,
+                             display_table_column, display_table_column_group, display_table_header_group,
+                             display_table_footer_group))
+                {
+                    if(!tmp.empty())
+                    {
+                        flush_elements();
+                    }
+                    cur_iter++;
+                    continue;
+                }
                 if(!(*cur_iter)->src_el()->is_table_skip() || ((*cur_iter)->src_el()->is_table_skip() && !tmp.empty()))
                 {
-                    // A table's row groups, captions and columns are its own children; they are not
-                    // wrapped into an anonymous row group (CSS 2.1 17.2).
-                    if(disp != display_table_row_group ||
-                       !is_one_of((*cur_iter)->src_el()->css().get_display(), display_table_caption,
-                                  display_table_column, display_table_column_group, display_table_header_group,
-                                  display_table_footer_group))
+                    if(tmp.empty())
                     {
-                        if(tmp.empty())
-                        {
-                            first_iter = cur_iter;
-                        }
-                        tmp.push_back((*cur_iter));
+                        first_iter = cur_iter;
                     }
+                    tmp.push_back((*cur_iter));
                 }
                 cur_iter++;
             } else if(!tmp.empty())

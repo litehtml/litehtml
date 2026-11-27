@@ -80,6 +80,7 @@ namespace litehtml
             int zindex, const std::function<bool(const std::shared_ptr<render_item>&)>& check,
             const render_item* stacking_context = nullptr) override;
         pixel_t                      get_draw_vertical_offset() override;
+        pixel_t                      get_draw_vertical_bottom_offset() override;
         bool                         paints_collapsed_borders() const override;
         std::shared_ptr<render_item> init() override;
     };

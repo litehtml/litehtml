@@ -1285,6 +1285,13 @@ namespace litehtml
             pos.x        += x;
             pos.y        += y;
 
+            // Table captions sit outside the table box; the table's own box is painted below the
+            // top captions and above the bottom ones (CSS 2.1 17.4).
+            const pixel_t v_offset = ri->get_draw_vertical_offset();
+            pos.y                 += v_offset;
+            pos.height            -= v_offset;
+            pos.height            -= ri->get_draw_vertical_bottom_offset();
+
             position border_box  = pos;
             border_box          += ri->get_paddings();
             border_box          += border_widths;
@@ -1295,10 +1302,6 @@ namespace litehtml
 
             if(ink.does_intersect(clip) || is_root())
             {
-                auto v_offset  = ri->get_draw_vertical_offset();
-                pos.y         += v_offset;
-                pos.height    -= v_offset;
-
                 position shadow_box = border_box;
                 shadow_box.round();
                 border_radiuses shadow_radius =
