@@ -620,6 +620,125 @@ int main()
         }
     }
 
+    // CSS 2.1 17.2.1: consecutive row groups share one anonymous table, so their columns line up.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px}"
+            ".rg{display:table-row-group}.r{display:table-row}.c{display:table-cell}</style>"
+            "<div><div class=rg><div class=r><div class=c id=ga>abcdef</div></div></div>"
+            "<div class=rg><div class=r><div class=c id=gb>a</div></div></div></div>",
+            &container);
+        doc->render(800);
+
+        const auto ga = doc->root()->select_one("#ga");
+        const auto gb = doc->root()->select_one("#gb");
+        ok           &= check(ga && gb, "the row group cells should exist");
+        if(ga && gb)
+        {
+            ok &= check(ga->get_placement().width == 48_px && gb->get_placement().width == 48_px,
+                        "row groups of one block must share the anonymous table columns");
+            ok &= check(ga->get_placement().y < gb->get_placement().y, "the second row group is below the first");
+        }
+    }
+
+    // CSS 2.1 17.2.1: a table nested between two cells becomes a cell of the same row.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px}"
+            ".t{display:table}.r{display:table-row}.c{display:table-cell}</style>"
+            "<div class=t><div class=c id=na>aa</div>"
+            "<div class=t id=nested><div class=r><div class=c>bb</div></div></div>"
+            "<div class=c id=nc>cc</div></div>",
+            &container);
+        doc->render(800);
+
+        const auto na     = doc->root()->select_one("#na");
+        const auto nested = doc->root()->select_one("#nested");
+        const auto nc     = doc->root()->select_one("#nc");
+        ok               &= check(na && nested && nc, "the nested table should exist");
+        if(na && nested && nc)
+        {
+            ok &= check(na->get_placement().y == nc->get_placement().y,
+                        "a nested table between two cells must not break the row");
+            ok &= check(na->get_placement().x < nested->get_placement().x &&
+                            nested->get_placement().x < nc->get_placement().x,
+                        "the nested table sits between the two cells");
+        }
+    }
+
+    // CSS 2.1 17.2.1: cells inside an inline box generate an inline-table, so the text around
+    // them stays on the same line.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px}.c{display:table-cell}</style>"
+            "<div id=line>a<span><span class=c id=ia>b</span><span class=c id=ic>c</span></span>d</div>",
+            &container);
+        doc->render(800);
+
+        const auto line = doc->root()->select_one("#line");
+        const auto ia   = doc->root()->select_one("#ia");
+        const auto ic   = doc->root()->select_one("#ic");
+        ok             &= check(line && ia && ic, "the inline table cells should exist");
+        if(line && ia && ic)
+        {
+            ok &= check(line->get_placement().height == 16_px,
+                        "cells inside an inline box must not turn the content into blocks");
+            ok &= check(ia->get_placement().y == ic->get_placement().y, "the cells share one row");
+            ok &= check(ia->get_placement().x < ic->get_placement().x, "the cells are laid out in order");
+        }
+    }
+
+    // The cellpadding attribute maps to the padding of the cells, overriding the 1px default.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px}</style>"
+            "<table cellpadding=0 id=pad0><tr><td id=p0>ab</td></tr></table>"
+            "<table id=pad1><tr><td id=p1>ab</td></tr></table>",
+            &container);
+        doc->render(800);
+
+        const auto pad0 = doc->root()->select_one("#pad0");
+        const auto pad1 = doc->root()->select_one("#pad1");
+        ok             &= check(pad0 && pad1, "the cellpadding tables should exist");
+        if(pad0 && pad1)
+        {
+            ok &= check(pad0->get_placement().width == 20_px,
+                        "cellpadding=0 removes the default cell padding (2px spacing + 16px text)");
+            ok &= check(pad1->get_placement().width == 22_px,
+                        "without cellpadding the cells keep the 1px default padding");
+        }
+    }
+
+    // White space of a `white-space: pre` row is content and gets a cell of its own; collapsible
+    // white space between cells is dropped.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0;font-size:16px}"
+            ".t{display:table}.r{display:table-row}.c{display:table-cell}</style>"
+            "<div class=t id=pre><div class='r' style='white-space:pre'>"
+            "<div class=c>a</div> b <div class=c>c</div></div></div>"
+            "<div class=t id=normal><div class='r'>"
+            "<div class=c>a</div> b <div class=c>c</div></div></div>",
+            &container);
+        doc->render(800);
+
+        const auto pre    = doc->root()->select_one("#pre");
+        const auto normal = doc->root()->select_one("#normal");
+        ok               &= check(pre && normal, "the white space tables should exist");
+        if(pre && normal)
+        {
+            ok &= check(normal->get_placement().width == 24_px,
+                        "collapsible white space between cells is dropped (three 8px cells)");
+            ok &= check(pre->get_placement().width == 40_px,
+                        "white-space: pre keeps the spaces around the anonymous cell (8px + 24px + 8px)");
+        }
+    }
+
     if(ok)
     {
         std::cout << "All table layout tests passed\n";

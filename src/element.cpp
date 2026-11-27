@@ -184,14 +184,6 @@ namespace litehtml
         }
         if(ret)
         {
-            if(is_one_of(css().get_display(), display_table, display_inline_table, display_table_caption,
-                         display_table_cell, display_table_column, display_table_column_group,
-                         display_table_footer_group, display_table_header_group, display_table_row,
-                         display_table_row_group))
-            {
-                get_document()->add_tabular(ret);
-            }
-
             ret->parent(parent_ri);
             for(const auto& el : m_children)
             {

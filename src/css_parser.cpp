@@ -495,9 +495,20 @@ namespace litehtml
 
         trim_whitespace(value); // deviation from standard: removing leading whitespace as well
 
-        if(at(value, -1).ident() == "important" && at(value, -2).ch == '!')
+        // Whitespace is allowed between "!" and "important" ("! important" is valid).
+        int last = static_cast<int>(value.size()) - 1;
+        while(last >= 0 && value[last].type == ' ')
         {
-            remove(value, -2, 2);
+            last--;
+        }
+        int bang = last - 1;
+        while(bang >= 0 && value[bang].type == ' ')
+        {
+            bang--;
+        }
+        if(last >= 0 && bang >= 0 && value[last].ident() == "important" && value[bang].ch == '!')
+        {
+            remove(value, bang, static_cast<int>(value.size()) - bang);
             decl.important = true;
         }
 
