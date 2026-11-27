@@ -143,6 +143,19 @@ span {
 	display:inline
 }
 
+/* https://html.spec.whatwg.org/multipage/rendering.html#the-q-element */
+q {
+	display:inline;
+}
+
+q::before {
+	content: open-quote;
+}
+
+q::after {
+	content: close-quote;
+}
+
 img {
 	display: inline-block;
 }

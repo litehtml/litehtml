@@ -3,6 +3,7 @@
 #include "document_container.h"
 #include "el_anchor.h"
 #include "el_base.h"
+#include "el_before_after.h"
 #include "el_body.h"
 #include "el_break.h"
 #include "el_button.h"
@@ -186,6 +187,8 @@ namespace litehtml
 
             // Initialize element::m_css
             m_root->compute_styles();
+
+            resolve_generated_quotes();
 
             rebuild_render_tree();
         }
@@ -1261,6 +1264,42 @@ namespace litehtml
         m_fixed_boxes.push_back(pos);
     }
 
+    bool document::resolve_generated_quotes()
+    {
+        bool regenerated = false;
+        int  quote_depth = 0;
+        if(m_root)
+        {
+            resolve_generated_quotes_in(m_root.get(), quote_depth, regenerated);
+        }
+        return regenerated;
+    }
+
+    void document::resolve_generated_quotes_in(element* el, int& quote_depth, bool& regenerated)
+    {
+        if(el->css().get_display() == display_none)
+        {
+            // Content that is not rendered does not generate quote marks and does not change the nesting level.
+            return;
+        }
+        if(el->tag() == __tag_before_ || el->tag() == __tag_after_)
+        {
+            if(auto* pseudo = dynamic_cast<el_before_after_base*>(el))
+            {
+                if(pseudo->resolve_quotes(quote_depth))
+                {
+                    // The regenerated text nodes need their computed styles before the render tree is built.
+                    pseudo->compute_styles();
+                    regenerated = true;
+                }
+            }
+        }
+        for(const auto& child : el->children())
+        {
+            resolve_generated_quotes_in(child.get(), quote_depth, regenerated);
+        }
+    }
+
     void document::rebuild_render_tree()
     {
         // Reuse scroll state for surviving boxes; layout will clamp it to their new sizes.
@@ -1314,6 +1353,11 @@ namespace litehtml
     {
         styles_update update;
         const bool    changed = m_root->find_styles_changes(redraw_box, update);
+        if(changed && resolve_generated_quotes())
+        {
+            // The quote text of the generated content changed, so the render tree has to be rebuilt.
+            update.render_tree_changed = true;
+        }
 
         const auto redraw_everything = [&]() {
             const auto old_size = m_size;
@@ -1508,6 +1552,7 @@ namespace litehtml
         {
             m_root->refresh_styles();
             m_root->compute_styles();
+            resolve_generated_quotes();
             rebuild_render_tree();
             return true;
         }
@@ -1529,6 +1574,7 @@ namespace litehtml
             }
             m_root->refresh_styles();
             m_root->compute_styles();
+            resolve_generated_quotes();
             rebuild_render_tree();
             return true;
         }
@@ -1993,6 +2039,7 @@ namespace litehtml
             // Initialize m_css
             child->compute_styles();
         }
+        resolve_generated_quotes();
         rebuild_render_tree();
     }
 

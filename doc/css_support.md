@@ -150,12 +150,13 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `gap` / `row-gap` / `column-gap` | ⚠️ | [Flexbox](#flexbox) and [Grid](#grid); multi-column layout is not supported | Flex and Grid tests |
 | `caption-side` | ✅ | 2 | ~6 |
 | `content` | ✅ | see below | ~240 |
+| `quotes` | ✅ | `auto` / `none` / `[<string> <string>]+` (inherited) | quotes tests |
 | `counter-reset` / `counter-increment` | ✅ | — | ~240 |
 | `cursor` | ⚠️ | any | ~10 |
 | `appearance` | ❌ | 16 | 0 |
 
 Properties **not recognized at all** (silently ignored by the parser): `letter-spacing`, `word-spacing`, `empty-cells`, `direction`,
-`unicode-bidi`, `quotes`, `text-shadow`, `opacity`, `transform`,
+`unicode-bidi`, `text-shadow`, `opacity`, `transform`,
 `transition`, `animation`, `columns`, `column-*`, `filter`, `clip-path`,
 `object-fit` … (everything else not listed above).
 
@@ -667,6 +668,24 @@ Tests: [css21/caption-side-001.htm](https://github.com/litehtml/litehtml-tests/b
 #### `content`
 ✅ Supported (on `::before`/`::after`) — quoted strings, `attr()`, `counter()`, `counters()`,
 `url()`, and the quote keywords `open-quote`, `close-quote`, `no-open-quote`, `no-close-quote`.
+The quote keywords are resolved against the `quotes` property.
+
+#### `quotes`
+✅ Supported — inherited; values are `auto`, `none`, or one or more `<string> <string>` pairs.
+`open-quote`/`close-quote` insert the pair matching the document-wide quote nesting level
+(independent of element nesting); a `close-quote` at level 0 inserts nothing. `no-open-quote`
+and `no-close-quote` change the level without inserting a mark. When the level exceeds the
+number of pairs, the last pair is repeated. `auto` uses the UA's typographic defaults: `“ ”`
+for the outermost level and `‘ ’` for deeper levels (litehtml does not resolve quotation marks
+from the element language). The default stylesheet generates the quotation marks of `<q>` with
+`q::before`/`q::after`.
+
+Tests: [quotes-basic.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/quotes-basic.htm),
+[quotes-keywords.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/quotes-keywords.htm),
+[quotes-nesting.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/quotes-nesting.htm),
+[quotes-inheritance.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/quotes-inheritance.htm),
+[css21/quotes-032.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/quotes-032.htm),
+[css21/quotes-035.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/quotes-035.htm).
 
 #### `counter-reset`, `counter-increment`
 ✅ Supported — `<counter-name> <integer>?` lists; used by `counter()`/`counters()` in `content`.

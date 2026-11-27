@@ -374,6 +374,23 @@ namespace litehtml
         return false;
     }
 
+    css_quotes litehtml::html_tag::get_quotes() const
+    {
+        if(const property_value* value = m_style.find_property(_quotes_))
+        {
+            if(value->is<css_quotes>())
+            {
+                return value->get<css_quotes>();
+            }
+            // `inherit`, or a declaration that is invalid at computed-value time, takes the parent's value.
+        }
+        if(auto parent_tag = dynamic_cast<const html_tag*>(parent().get()))
+        {
+            return parent_tag->get_quotes();
+        }
+        return {};
+    }
+
     void litehtml::html_tag::compute_styles(bool recursive)
     {
         const char*   style = get_attr("style");

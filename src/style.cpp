@@ -974,6 +974,43 @@ namespace litehtml
             add_parsed_property(name, property_value(str, important));
             break;
 
+        case _quotes_:
+            {
+                // https://drafts.csswg.org/css-content-3/#propdef-quotes
+                // auto | none | [<string> <string>]+
+                if(value.size() == 1)
+                {
+                    const auto ident = value[0].ident();
+                    if(ident == "auto" || ident == "none")
+                    {
+                        add_parsed_property(
+                            name, property_value(ident == "auto" ? css_quotes() : css_quotes::none(), important));
+                    }
+                    break;
+                }
+                if(value.size() < 2 || value.size() % 2 != 0)
+                {
+                    break; // value must contain one or more pairs of strings
+                }
+                std::vector<std::string> strings;
+                strings.reserve(value.size());
+                bool valid = true;
+                for(const auto& tok : value)
+                {
+                    if(tok.type != STRING)
+                    {
+                        valid = false;
+                        break;
+                    }
+                    strings.push_back(tok.str());
+                }
+                if(valid)
+                {
+                    add_parsed_property(name, property_value(css_quotes::from_strings(std::move(strings)), important));
+                }
+            }
+            break;
+
             //  ==================================  OTHER  ==================================
 
         case _cursor_:

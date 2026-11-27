@@ -204,6 +204,11 @@ namespace litehtml
         std::shared_ptr<render_item> relayout_root_for(const std::shared_ptr<render_item>& item,
                                                        const styles_update&                update) const;
         void                         rebuild_render_tree();
+        // Regenerates all ::before/::after content in document order, resolving the quote keywords of the
+        // `content` property against the document-wide quote nesting level. Returns true when any content
+        // was regenerated.
+        bool                         resolve_generated_quotes();
+        void                         resolve_generated_quotes_in(element* el, int& quote_depth, bool& regenerated);
         void                         fix_tables_layout();
         // One stage of CSS 2.1 17.2.1 for one box. Each returns true when the tree changed.
         bool drop_irrelevant_table_boxes(const std::shared_ptr<render_item>& box);
