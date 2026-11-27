@@ -278,6 +278,79 @@ int main()
         }
     }
 
+    // CSS 2.1 17.2: the first header group is placed before all other rows and the first footer
+    // group after them, whatever their document order is.
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".t{display:table;border-spacing:0}"
+            ".rg{display:table-row-group}"
+            ".hg{display:table-header-group}"
+            ".fg{display:table-footer-group}"
+            ".r{display:table-row}"
+            ".c{display:table-cell;width:10px;height:10px}</style>"
+            "<div class=t id=t12>"
+            "<div class=fg><div class=r><div class=c id=f12></div></div></div>"
+            "<div class=rg><div class=r><div class=c id=b12a></div></div></div>"
+            "<div class=hg><div class=r><div class=c id=h12></div></div></div>"
+            "<div class=rg><div class=r><div class=c id=b12b></div></div></div>"
+            "</div>",
+            &container);
+        doc->render(800);
+
+        const auto t12  = doc->root()->select_one("#t12");
+        const auto h12  = doc->root()->select_one("#h12");
+        const auto b12a = doc->root()->select_one("#b12a");
+        const auto b12b = doc->root()->select_one("#b12b");
+        const auto f12  = doc->root()->select_one("#f12");
+        ok &= check(t12 && h12 && b12a && b12b && f12, "the header/footer group table should exist");
+        if(h12 && b12a && b12b && f12)
+        {
+            ok &= check(h12->get_placement().y < b12a->get_placement().y, "the header group is placed first");
+            ok &= check(b12a->get_placement().y < b12b->get_placement().y, "the row groups keep their order");
+            ok &= check(b12b->get_placement().y < f12->get_placement().y, "the footer group is placed last");
+            ok &= check(t12->get_placement().height == 40_px, "every row of the groups keeps its height");
+        }
+    }
+
+    // Only the first header and the first footer group are used that way; further ones behave as
+    // ordinary row groups and stay where they are (CSS 2.1 17.2.1).
+    {
+        grid_test_container container;
+        const auto          doc = document::createFromString(
+            "<style>body{margin:0}"
+            ".t{display:table}"
+            ".rg{display:table-row-group}"
+            ".hg{display:table-header-group}"
+            ".fg{display:table-footer-group}"
+            ".r{display:table-row}"
+            ".c{display:table-cell;width:10px;height:10px}</style>"
+            "<div class=t>"
+            "<div class=rg><div class=r><div class=c id=b13></div></div></div>"
+            "<div class=fg><div class=r><div class=c id=f13a></div></div></div>"
+            "<div class=fg><div class=r><div class=c id=f13b></div></div></div>"
+            "<div class=hg><div class=r><div class=c id=h13a></div></div></div>"
+            "<div class=hg><div class=r><div class=c id=h13b></div></div></div>"
+            "</div>",
+            &container);
+        doc->render(800);
+
+        const auto b13  = doc->root()->select_one("#b13");
+        const auto f13a = doc->root()->select_one("#f13a");
+        const auto f13b = doc->root()->select_one("#f13b");
+        const auto h13a = doc->root()->select_one("#h13a");
+        const auto h13b = doc->root()->select_one("#h13b");
+        ok &= check(b13 && f13a && f13b && h13a && h13b, "the multiple group table should exist");
+        if(b13 && f13a && f13b && h13a && h13b)
+        {
+            ok &= check(h13a->get_placement().y < b13->get_placement().y, "the first header group is placed first");
+            ok &= check(b13->get_placement().y < f13b->get_placement().y, "a second footer group stays in place");
+            ok &= check(f13b->get_placement().y < h13b->get_placement().y, "a second header group stays in place");
+            ok &= check(h13b->get_placement().y < f13a->get_placement().y, "the first footer group is placed last");
+        }
+    }
+
     if(ok)
     {
         std::cout << "All table layout tests passed\n";

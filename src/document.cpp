@@ -1579,7 +1579,13 @@ namespace litehtml
                 }
                 break;
             case display_table_row:
-                fix_table_parent(el_ptr, display_table_row_group, "table-row-group");
+                // A row can belong to any row group, including a header or footer group.
+                if(auto parent = el_ptr->parent();
+                   !parent || !is_one_of(parent->src_el()->css().get_display(), display_table_row_group,
+                                         display_table_header_group, display_table_footer_group))
+                {
+                    fix_table_parent(el_ptr, display_table_row_group, "table-row-group");
+                }
                 fix_table_children(el_ptr, display_table_cell, "table-cell");
                 break;
             case display_table_cell:
@@ -1639,9 +1645,12 @@ namespace litehtml
             {
                 if(!(*cur_iter)->src_el()->is_table_skip() || ((*cur_iter)->src_el()->is_table_skip() && !tmp.empty()))
                 {
+                    // A table's row groups, captions and columns are its own children; they are not
+                    // wrapped into an anonymous row group (CSS 2.1 17.2).
                     if(disp != display_table_row_group ||
                        !is_one_of((*cur_iter)->src_el()->css().get_display(), display_table_caption,
-                                  display_table_column, display_table_column_group))
+                                  display_table_column, display_table_column_group, display_table_header_group,
+                                  display_table_footer_group))
                     {
                         if(tmp.empty())
                         {

@@ -3,6 +3,28 @@
 #include "iterators.h"
 #include "pixel_type.h"
 
+namespace
+{
+    // The row group box a table row belongs to, if it is in one.
+    std::shared_ptr<litehtml::render_item> find_row_group(const std::shared_ptr<litehtml::render_item>& row)
+    {
+        for(auto el = row->parent(); el; el = el->parent())
+        {
+            const auto display = el->src_el()->css().get_display();
+            if(litehtml::is_one_of(display, litehtml::display_table_row_group, litehtml::display_table_header_group,
+                                   litehtml::display_table_footer_group))
+            {
+                return el;
+            }
+            if(litehtml::is_one_of(display, litehtml::display_table, litehtml::display_inline_table))
+            {
+                break;
+            }
+        }
+        return nullptr;
+    }
+} // namespace
+
 litehtml::render_item_table::render_item_table(std::shared_ptr<element> _src_el) :
     render_item(std::move(_src_el)),
     m_border_spacing_x(0),
@@ -528,18 +550,68 @@ std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()
 
     elements_iterator row_iter(false, &table_selector, &row_selector);
 
+    // CSS 2.1 17.2: the table header group is placed before all other row groups and rows, the
+    // table footer group after them. Only the first group of each kind is used that way; further
+    // ones behave as ordinary row groups (17.2.1). The rows are collected first, so the grid is
+    // built in that order regardless of the document order of the groups.
+    struct table_row_entry
+    {
+        std::shared_ptr<render_item> row;
+        std::shared_ptr<render_item> group;
+    };
+    std::vector<table_row_entry> rows;
+
     row_iter.process(shared_from_this(), [&](std::shared_ptr<render_item>& el, iterator_item_type /*item_type*/) {
-        m_grid->begin_row(el);
+        rows.push_back({el, find_row_group(el)});
+    });
+
+    const auto first_group_of_display = [&rows](style_display display) {
+        for(const auto& entry : rows)
+        {
+            if(entry.group && entry.group->src_el()->css().get_display() == display)
+            {
+                return entry.group;
+            }
+        }
+        return std::shared_ptr<render_item>();
+    };
+    const auto header_group = first_group_of_display(display_table_header_group);
+    const auto footer_group = first_group_of_display(display_table_footer_group);
+
+    const auto add_row = [&](const table_row_entry& entry) {
+        m_grid->begin_row(entry.row);
 
         elements_iterator cell_iter(true, &table_selector, &cell_selector);
-        cell_iter.process(el, [&](std::shared_ptr<render_item>& el, iterator_item_type item_type) {
+        cell_iter.process(entry.row, [&](std::shared_ptr<render_item>& el, iterator_item_type item_type) {
             if(item_type != iterator_item_type_end_parent)
             {
                 el = el->init();
                 m_grid->add_cell(el);
             }
         });
-    });
+    };
+
+    for(const auto& entry : rows)
+    {
+        if(entry.group && entry.group == header_group)
+        {
+            add_row(entry);
+        }
+    }
+    for(const auto& entry : rows)
+    {
+        if(!entry.group || (entry.group != header_group && entry.group != footer_group))
+        {
+            add_row(entry);
+        }
+    }
+    for(const auto& entry : rows)
+    {
+        if(entry.group && entry.group == footer_group)
+        {
+            add_row(entry);
+        }
+    }
 
     for(auto& el : m_children)
     {
