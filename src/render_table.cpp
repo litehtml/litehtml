@@ -164,6 +164,28 @@ litehtml::pixel_t litehtml::render_item_table::_render(pixel_t x, pixel_t y,
     min_table_width += table_width_spacing;
     max_table_width += table_width_spacing;
     table_width     += table_width_spacing;
+
+    // CSS 2.1 17.5.2: the used table width is also constrained by CAPMIN, the minimum width required by the
+    // caption. Captions are rendered as wide as the table's border box, so widen the table when it is narrower
+    // than its caption.
+    pixel_t caption_min_width = 0_px;
+    for(const auto& caption : m_grid->captions())
+    {
+        caption_min_width = std::max(caption_min_width, caption->get_intrinsic_min_size().width);
+    }
+    if(const pixel_t required_width = caption_min_width - (m_padding.width() + m_borders.width());
+       required_width > table_width)
+    {
+        const pixel_t delta = required_width - table_width;
+        if(m_grid->cols_count() > 0)
+        {
+            m_grid->distribute_width(delta, 0, m_grid->cols_count() - 1);
+        }
+        table_width     = required_width;
+        min_table_width = std::max(min_table_width, table_width);
+        max_table_width = std::max(max_table_width, table_width);
+    }
+
     m_grid->calc_horizontal_positions(m_borders, src_el()->css().get_border_collapse(), m_border_spacing_x);
 
     // Widest row of rendered cell contents, used to report the table's real extent
@@ -616,6 +638,13 @@ void litehtml::render_item_table::calc_intrinsic_size()
     m_intrinsic_max_size.width  += table_width_spacing + content_offset_width();
     m_intrinsic_min_size.height += table_height_spacing + content_offset_height();
     m_intrinsic_max_size.height += table_height_spacing + content_offset_height();
+
+    // CSS 2.1 17.5.2: CAPMIN, the minimum width required by the caption, contributes to the table width.
+    for(const auto& caption : m_grid->captions())
+    {
+        m_intrinsic_min_size.width = std::max(m_intrinsic_min_size.width, caption->get_intrinsic_min_size().width);
+        m_intrinsic_max_size.width = std::max(m_intrinsic_max_size.width, caption->get_intrinsic_max_size().width);
+    }
 }
 
 std::shared_ptr<litehtml::render_item> litehtml::render_item_table::init()

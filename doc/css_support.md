@@ -655,9 +655,12 @@ Tests: [css21/fixed-table-layout-001.htm](https://github.com/litehtml/litehtml-t
 [table-layout-fixed-overflow-table.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-overflow-table.htm).
 
 #### `caption-side`
-✅ Supported — `top`, `bottom` (verified: the caption moves).
+✅ Supported — `top`, `bottom` (verified: the caption moves). The used table width also takes
+`CAPMIN` (the caption's minimum width, CSS 2.1 17.5.2) into account, so a caption is laid out at
+least as wide as its intrinsic minimum.
 
-Tests: [css21/caption-side-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/caption-side-001.htm).
+Tests: [css21/caption-side-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/caption-side-001.htm),
+[css21/before-after-display-types-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/before-after-display-types-001.htm).
 
 `border-collapse` and `border-spacing` are documented under [Border](#border).
 

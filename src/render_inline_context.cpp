@@ -495,6 +495,10 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
     pixel_t line_max_width = 0_px;
     pixel_t line_height    = 0_px;
     pixel_t spaces_width   = 0_px;
+    // Intrinsic minimum width is the widest run of inline items with no line break opportunity between
+    // them, not the widest single item: adjacent text such as a closing quote and the preceding word must
+    // stay together.
+    pixel_t min_run_width = 0_px;
 
     white_space ws = src_el()->css().get_white_space();
 
@@ -514,6 +518,7 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
                             {
                                 spaces_width += el->get_intrinsic_max_size().width;
                             }
+                            min_run_width = 0_px;
                             return;
                         }
                     }
@@ -528,13 +533,24 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
 
                         line_max_width = 0_px;
                         line_height    = 0_px;
+                        min_run_width  = 0_px;
                     } else
                     {
                         line_max_width += spaces_width;
                     }
                     spaces_width = 0_px;
-                    m_intrinsic_min_size.width =
-                        std::max(m_intrinsic_min_size.width, el->get_intrinsic_min_size().width);
+                    if(el->src_el()->css().get_display() == display_inline_text && !el->src_el()->is_float())
+                    {
+                        // Plain text can be glued to the adjacent text without a break opportunity.
+                        min_run_width              += el->get_intrinsic_min_size().width;
+                        m_intrinsic_min_size.width  = std::max(m_intrinsic_min_size.width, min_run_width);
+                    } else
+                    {
+                        // Atomic inline boxes and floats offer a break opportunity on both sides.
+                        min_run_width = 0_px;
+                        m_intrinsic_min_size.width =
+                            std::max(m_intrinsic_min_size.width, el->get_intrinsic_min_size().width);
+                    }
                     m_intrinsic_max_size.height =
                         std::max(m_intrinsic_max_size.height, el->get_intrinsic_max_size().height);
                 }
