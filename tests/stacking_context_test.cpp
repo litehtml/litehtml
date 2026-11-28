@@ -498,5 +498,28 @@ int main()
         }
     }
 
+    for(const auto* atomic : {"inline-block", "inline-table", "inline-flex", "inline-grid"})
+    {
+        // CSS 2.1 E.2 step 7.2.1: an atomic inline-level box paints as if it created a stacking
+        // context, so its content paints in the inline pass, above the block backgrounds.
+        click_container container;
+        auto            doc = document::createFromString(
+            std::string("<!doctype html><style>body{margin:0}"
+                        ".wrapper{width:40px;height:40px}"
+                        ".atomic{display:") +
+                atomic +
+                ";width:40px;height:40px;vertical-align:top}"
+                ".atomic > div{width:40px;height:40px;background:#00ff00}"
+                "#after{width:40px;height:40px;margin-top:-40px;background:#ff0000}</style>"
+                "<div class=wrapper><span class=atomic><div></div></span></div>"
+                "<div id=after></div>",
+            &container);
+        doc->render(800);
+        container.fills.clear();
+        doc->draw(0, 0, 0, nullptr);
+        ok &= check(container.fills == std::vector<web_color>{web_color(255, 0, 0), web_color(0, 255, 0)},
+                    std::string(atomic) + " content paints in the inline pass, above the block background");
+    }
+
     return ok ? 0 : 1;
 }

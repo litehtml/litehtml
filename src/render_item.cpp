@@ -1635,10 +1635,10 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                    !el->src_el()->is_positioned() && !el->is_stacked_member())
                 {
                     el->src_el()->draw(hdc, pos.x, pos.y, clip, draw_clipping, el);
-                    if(el->src_el()->css().get_display() == display_inline_block ||
-                       el->src_el()->css().get_display() == display_inline_flex ||
-                       el->src_el()->css().get_display() == display_inline_grid)
+                    if(el->src_el()->is_inline_box())
                     {
+                        // CSS 2.1 E.2 step 7.2.1: an atomic inline-level box paints its content as if
+                        // it created a new stacking context, so all of it is painted in the inline pass.
                         el->draw_stacking_context(hdc, pos.x, pos.y, clip, el->creates_stacking_context(), child_cur,
                                                   child_abs);
                         process = false;
@@ -1660,9 +1660,8 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                     }
                 } else
                 {
-                    if(el->src_el()->css().get_float() == float_none &&
-                       el->src_el()->css().get_display() != display_inline_block && !el->src_el()->is_positioned() &&
-                       !el->is_stacked_member() && !el->creates_stacking_context())
+                    if(el->src_el()->css().get_float() == float_none && !el->src_el()->is_inline_box() &&
+                       !el->src_el()->is_positioned() && !el->is_stacked_member() && !el->creates_stacking_context())
                     {
                         el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context, child_cur,
                                           child_abs);
