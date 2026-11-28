@@ -654,6 +654,14 @@ Tests: [css21/fixed-table-layout-001.htm](https://github.com/litehtml/litehtml-t
 [table-layout-fixed-percent.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-percent.htm),
 [table-layout-fixed-overflow-table.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-overflow-table.htm).
 
+#### Table section elements
+✅ `<thead>`, `<tbody>` and `<tfoot>` map to `table-header-group`, `table-row-group` and
+`table-footer-group`. The header group is laid out before all other rows and the footer group after
+them (CSS 2.1 17.2.1); generated `::before`/`::after` content with these table display types is
+ordered the same way.
+
+Tests: [css21/before-after-table-parts-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/before-after-table-parts-001.htm).
+
 #### `caption-side`
 ✅ Supported — `top`, `bottom` (verified: the caption moves). The used table width also takes
 `CAPMIN` (the caption's minimum width, CSS 2.1 17.5.2) into account, so a caption is laid out at

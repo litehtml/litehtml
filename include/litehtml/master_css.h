@@ -194,8 +194,18 @@ table {
 	box-sizing: border-box;
 }
 
-tbody, tfoot, thead {
+tbody {
 	display:table-row-group;
+	vertical-align:middle;
+}
+
+thead {
+	display:table-header-group;
+	vertical-align:middle;
+}
+
+tfoot {
+	display:table-footer-group;
 	vertical-align:middle;
 }
 
