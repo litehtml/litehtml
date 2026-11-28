@@ -40,6 +40,28 @@ void litehtml::el_before_after_base::add_style(const style& style)
     }
 }
 
+void litehtml::el_before_after_base::compute_styles(bool recursive)
+{
+    html_tag::compute_styles(recursive);
+
+    // A ::before/::after pseudo-element generates a box only when its `content` is not `normal`. The element
+    // is kept in the tree so declarations from all matching pseudo rules combine, but it must not take part
+    // in layout when nothing is generated (for example a rule that only sets padding).
+    bool generates = false;
+    if(const property_value* content = m_style.find_property(_content_))
+    {
+        if(content->is<std::string>())
+        {
+            const auto& value = content->get<std::string>();
+            generates         = value != "none" && value != "normal";
+        }
+    }
+    if(!generates)
+    {
+        css().set_display(display_none);
+    }
+}
+
 bool litehtml::el_before_after_base::resolve_quotes(int& quote_depth)
 {
     if(m_quote_spans.empty())

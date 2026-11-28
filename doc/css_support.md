@@ -679,7 +679,11 @@ Tests: [css21/caption-side-001.htm](https://github.com/litehtml/litehtml-tests/b
 #### `content`
 ✅ Supported (on `::before`/`::after`) — quoted strings, `attr()`, `counter()`, `counters()`,
 `url()`, and the quote keywords `open-quote`, `close-quote`, `no-open-quote`, `no-close-quote`.
-The quote keywords are resolved against the `quotes` property.
+The quote keywords are resolved against the `quotes` property. A `::before`/`::after`
+pseudo-element only generates a box when `content` is not `normal`; rules that only set other
+properties on a pseudo-element do not create one.
+
+Tests: [css21/before-after-table-whitespace-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/before-after-table-whitespace-001.htm).
 
 #### `quotes`
 ✅ Supported — inherited; values are `auto`, `none`, or one or more `<string> <string>` pairs.

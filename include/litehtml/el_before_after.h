@@ -11,6 +11,7 @@ namespace litehtml
         el_before_after_base(const std::shared_ptr<document>& doc, bool before);
 
         void add_style(const style& style) override;
+        void compute_styles(bool recursive = true) override;
 
         // Regenerates the content resolving the quote keywords against the document-wide quote nesting level.
         // `quote_depth` is updated with the nesting level after this element's content. Returns true when the
