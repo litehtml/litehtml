@@ -71,7 +71,6 @@ namespace litehtml
         std::shared_ptr<element>                m_over_element;
         std::shared_ptr<element>                m_active_element;
         std::weak_ptr<element>                  m_focused_element;
-        std::list<std::shared_ptr<render_item>> m_tabular_elements;
         media_query_list_list::vector           m_media_lists;
         media_features                          m_media;
         std::string                             m_lang;
@@ -162,7 +161,6 @@ namespace litehtml
         bool                           media_changed();
         bool                           lang_changed();
         bool                           match_lang(const std::string& lang);
-        void                           add_tabular(const std::shared_ptr<render_item>& el);
         std::shared_ptr<const element> get_over_element() const
         {
             return m_over_element;
@@ -206,9 +204,31 @@ namespace litehtml
         std::shared_ptr<render_item> relayout_root_for(const std::shared_ptr<render_item>& item,
                                                        const styles_update&                update) const;
         void                         rebuild_render_tree();
+        // Regenerates all ::before/::after content in document order, resolving the quote keywords of the
+        // `content` property against the document-wide quote nesting level. Returns true when any content
+        // was regenerated.
+        bool                         resolve_generated_quotes();
+        void                         resolve_generated_quotes_in(element* el, int& quote_depth, bool& regenerated);
         void                         fix_tables_layout();
-        void fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str);
-        void fix_table_parent(const std::shared_ptr<render_item>& el_ptr, style_display disp, const char* disp_str);
+        // One stage of CSS 2.1 17.2.1 for one box. Each returns true when the tree changed.
+        bool drop_irrelevant_table_boxes(const std::shared_ptr<render_item>& box);
+        bool fix_table_child_wrappers(const std::shared_ptr<render_item>& box);
+        bool fix_table_cell_rows(const std::shared_ptr<render_item>& box);
+        bool fix_table_parents(const std::shared_ptr<render_item>& box);
+        bool walk_render_tree(const std::shared_ptr<render_item>&                                      box,
+                              const std::function<bool(const std::shared_ptr<render_item>&)>& process);
+        // Wrappers for the anonymous boxes of CSS 2.1 17.2.1.
+        std::shared_ptr<render_item> create_anonymous_table_box(const std::shared_ptr<render_item>& parent,
+                                                                style_display                       display);
+        bool wrap_children_in_anonymous_box(const std::shared_ptr<render_item>&               parent,
+                                            style_display                                     wrapper_display,
+                                            const std::vector<std::shared_ptr<render_item>>& items);
+        bool wrap_improper_children(const std::shared_ptr<render_item>&     box,
+                                    const std::function<bool(style_display)>& is_content,
+                                    style_display                             wrapper_display);
+        bool wrap_siblings(const std::shared_ptr<render_item>&     el,
+                           const std::function<bool(style_display)>& in_run,
+                           style_display                             wrapper_display);
     };
 
     inline std::shared_ptr<element> document::root()
@@ -219,11 +239,6 @@ namespace litehtml
     inline std::shared_ptr<render_item> document::root_render()
     {
         return m_root_render;
-    }
-
-    inline void document::add_tabular(const std::shared_ptr<render_item>& el)
-    {
-        m_tabular_elements.push_back(el);
     }
 
     inline bool document::match_lang(const std::string& lang)

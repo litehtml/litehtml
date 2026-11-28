@@ -3,6 +3,7 @@
 #include "document_container.h"
 #include "el_anchor.h"
 #include "el_base.h"
+#include "el_before_after.h"
 #include "el_body.h"
 #include "el_break.h"
 #include "el_button.h"
@@ -136,6 +137,11 @@ namespace litehtml
             m_master_css.parse_css_stylesheet(master_styles, "", shared_from_this());
             m_master_css.sort_selectors();
         }
+        if(m_mode == quirks_mode)
+        {
+            m_master_css.parse_css_stylesheet(std::string(quirks_css), "", shared_from_this());
+            m_master_css.sort_selectors();
+        }
         if(user_styles != "")
         {
             m_user_css.parse_css_stylesheet(user_styles, "", shared_from_this());
@@ -181,6 +187,8 @@ namespace litehtml
 
             // Initialize element::m_css
             m_root->compute_styles();
+
+            resolve_generated_quotes();
 
             rebuild_render_tree();
         }
@@ -1256,6 +1264,42 @@ namespace litehtml
         m_fixed_boxes.push_back(pos);
     }
 
+    bool document::resolve_generated_quotes()
+    {
+        bool regenerated = false;
+        int  quote_depth = 0;
+        if(m_root)
+        {
+            resolve_generated_quotes_in(m_root.get(), quote_depth, regenerated);
+        }
+        return regenerated;
+    }
+
+    void document::resolve_generated_quotes_in(element* el, int& quote_depth, bool& regenerated)
+    {
+        if(el->css().get_display() == display_none)
+        {
+            // Content that is not rendered does not generate quote marks and does not change the nesting level.
+            return;
+        }
+        if(el->tag() == __tag_before_ || el->tag() == __tag_after_)
+        {
+            if(auto* pseudo = dynamic_cast<el_before_after_base*>(el))
+            {
+                if(pseudo->resolve_quotes(quote_depth))
+                {
+                    // The regenerated text nodes need their computed styles before the render tree is built.
+                    pseudo->compute_styles();
+                    regenerated = true;
+                }
+            }
+        }
+        for(const auto& child : el->children())
+        {
+            resolve_generated_quotes_in(child.get(), quote_depth, regenerated);
+        }
+    }
+
     void document::rebuild_render_tree()
     {
         // Reuse scroll state for surviving boxes; layout will clamp it to their new sizes.
@@ -1274,7 +1318,6 @@ namespace litehtml
         {
             save_scroll_views(save_scroll_views, m_root_render);
         }
-        m_tabular_elements.clear();
         m_root_render.reset();
         if(!m_root)
         {
@@ -1310,6 +1353,11 @@ namespace litehtml
     {
         styles_update update;
         const bool    changed = m_root->find_styles_changes(redraw_box, update);
+        if(changed && resolve_generated_quotes())
+        {
+            // The quote text of the generated content changed, so the render tree has to be rebuilt.
+            update.render_tree_changed = true;
+        }
 
         const auto redraw_everything = [&]() {
             const auto old_size = m_size;
@@ -1504,6 +1552,7 @@ namespace litehtml
         {
             m_root->refresh_styles();
             m_root->compute_styles();
+            resolve_generated_quotes();
             rebuild_render_tree();
             return true;
         }
@@ -1525,6 +1574,7 @@ namespace litehtml
             }
             m_root->refresh_styles();
             m_root->compute_styles();
+            resolve_generated_quotes();
             rebuild_render_tree();
             return true;
         }
@@ -1553,193 +1603,391 @@ namespace litehtml
         }
     }
 
+    namespace
+    {
+        // https://www.w3.org/TR/CSS21/tables.html#anonymous-boxes
+        bool is_table_box(style_display display)
+        {
+            return is_one_of(display, display_table, display_inline_table);
+        }
+
+        bool is_row_group_box(style_display display)
+        {
+            return is_one_of(display, display_table_row_group, display_table_header_group, display_table_footer_group);
+        }
+
+        // A "proper table child" per CSS 2.1 17.2.1.
+        bool is_proper_table_child(style_display display)
+        {
+            return is_one_of(display, display_table_row, display_table_row_group, display_table_header_group,
+                             display_table_footer_group, display_table_column, display_table_column_group,
+                             display_table_caption);
+        }
+
+        // A box that does not interrupt a sequence of consecutive siblings. Only collapsible white
+        // space may be skipped: with `white-space: pre` the spaces are content and belong to the
+        // anonymous cell generated around them.
+        bool is_skippable_table_sibling(const render_item& el)
+        {
+            const element& src = *el.src_el();
+            return src.is_white_space() || src.is_comment() || src.css().get_display() == display_none;
+        }
+
+        // CSS 2.1 17.2.1 step 3.2: a proper table child is misparented when its parent cannot hold
+        // it, in which case an anonymous table is generated around it.
+        bool is_misparented_table_child(style_display display, const std::shared_ptr<render_item>& parent)
+        {
+            const style_display parent_display = parent->src_el()->css().get_display();
+            switch(display)
+            {
+            case display_table_row:
+                return !is_row_group_box(parent_display) && !is_table_box(parent_display);
+            case display_table_column:
+                return parent_display != display_table_column_group && !is_table_box(parent_display);
+            default:
+                return !is_table_box(parent_display);
+            }
+        }
+
+        // An internal table box or a caption: the boxes white space between which is not rendered
+        // (CSS 2.1 17.2.1 stage 1).
+        bool is_internal_table_box(style_display display)
+        {
+            return is_proper_table_child(display) || display == display_table_cell;
+        }
+
+        // The parent can hold table rows, row groups, columns, column groups and captions, so a
+        // white space only inline box inside it is not part of the content.
+        bool is_tabular_container(style_display display)
+        {
+            return is_table_box(display) || is_row_group_box(display) || display == display_table_row;
+        }
+    } // namespace
+
     void document::fix_tables_layout()
     {
-        for(const auto& el_ptr : m_tabular_elements)
+        if(!m_root_render)
         {
-            switch(el_ptr->src_el()->css().get_display())
+            return;
+        }
+        // The stages of CSS 2.1 17.2.1 run in order and are repeated until the tree stops changing:
+        // a box generated by one stage can make another one necessary (a row around cells still
+        // needs a table, a table row needs its cell wrappers). The stages must not short-circuit
+        // each other, so every one of them always runs.
+        for(int round = 0; round < 100; round++)
+        {
+            bool changed  = walk_render_tree(m_root_render, [this](const std::shared_ptr<render_item>& box) {
+                return drop_irrelevant_table_boxes(box);
+            });
+            changed      |= walk_render_tree(m_root_render, [this](const std::shared_ptr<render_item>& box) {
+                return fix_table_child_wrappers(box);
+            });
+            changed      |= walk_render_tree(
+                m_root_render, [this](const std::shared_ptr<render_item>& box) { return fix_table_cell_rows(box); });
+            changed |= walk_render_tree(
+                m_root_render, [this](const std::shared_ptr<render_item>& box) { return fix_table_parents(box); });
+            if(!changed)
             {
-            case display_inline_table:
-            case display_table:
-                fix_table_children(el_ptr, display_table_row_group, "table-row-group");
-                break;
-            case display_table_footer_group:
-            case display_table_row_group:
-            case display_table_header_group:
-                {
-                    auto parent = el_ptr->parent();
-                    if(parent)
-                    {
-                        if(parent->src_el()->css().get_display() != display_inline_table)
-                        {
-                            fix_table_parent(el_ptr, display_table, "table");
-                        }
-                    }
-                    fix_table_children(el_ptr, display_table_row, "table-row");
-                }
-                break;
-            case display_table_row:
-                fix_table_parent(el_ptr, display_table_row_group, "table-row-group");
-                fix_table_children(el_ptr, display_table_cell, "table-cell");
-                break;
-            case display_table_cell:
-                fix_table_parent(el_ptr, display_table_row, "table-row");
-                break;
-            // TODO: make table layout fix for table-caption, table-column etc. elements
-            case display_table_caption:
-            case display_table_column:
-            case display_table_column_group:
-            default:
                 break;
             }
         }
     }
 
-    void document::fix_table_children(const std::shared_ptr<render_item>& el_ptr, style_display disp,
-                                      const char* disp_str)
+    bool document::walk_render_tree(const std::shared_ptr<render_item>&                             box,
+                                    const std::function<bool(const std::shared_ptr<render_item>&)>& process)
     {
-        std::list<std::shared_ptr<render_item>> tmp;
-        auto                                    first_iter = el_ptr->children().begin();
-        auto                                    cur_iter   = el_ptr->children().begin();
+        bool changed = false;
+        // process() can move children into anonymous wrappers, so walk a snapshot.
+        const std::vector<std::shared_ptr<render_item>> children(box->children().begin(), box->children().end());
+        for(const auto& child : children)
+        {
+            if(walk_render_tree(child, process))
+            {
+                changed = true;
+            }
+        }
+        if(process(box))
+        {
+            changed = true;
+        }
+        return changed;
+    }
 
-        auto flush_elements = [&]() {
-            element::ptr annon_tag = std::make_shared<html_tag>(el_ptr->src_el(), std::string("display:") + disp_str);
-            std::shared_ptr<render_item> annon_ri;
-            if(annon_tag->css().get_display() == display_table_cell)
-            {
-                annon_tag->set_tagName("table_cell");
-                annon_ri = std::make_shared<render_item_block>(annon_tag);
-            } else if(annon_tag->css().get_display() == display_table_row)
-            {
-                annon_ri = std::make_shared<render_item_table_row>(annon_tag);
-            } else
-            {
-                annon_ri = std::make_shared<render_item_table_part>(annon_tag);
-            }
-            for(const auto& el : tmp)
-            {
-                annon_ri->add_child(el);
-            }
-            // add annon item as tabular for future processing
-            add_tabular(annon_ri);
-            annon_ri->parent(el_ptr);
-            first_iter = el_ptr->children().insert(first_iter, annon_ri);
-            cur_iter   = std::next(first_iter);
-            while(cur_iter != el_ptr->children().end() && (*cur_iter)->parent() != el_ptr)
-            {
-                cur_iter = el_ptr->children().erase(cur_iter);
-            }
-            first_iter = cur_iter;
-            tmp.clear();
+    // Stage 1 of CSS 2.1 17.2.1: a white space only inline box that sits between two table boxes
+    // (or next to the boundary of the tabular container) is not rendered. This holds whatever the
+    // white-space property says: the spaces inside a `white-space: pre` table are only the
+    // indentation of the markup, while spaces next to real content stay and become a cell.
+    bool document::drop_irrelevant_table_boxes(const std::shared_ptr<render_item>& box)
+    {
+        if(!is_tabular_container(box->src_el()->css().get_display()))
+        {
+            return false;
+        }
+
+        auto& children = box->children();
+
+        // The rendered children; a run of white space only boxes is looked at as a whole.
+        struct rendered_child
+        {
+            std::shared_ptr<render_item> el;
+            style_display                display;
+            bool                         is_space;
         };
-
-        while(cur_iter != el_ptr->children().end())
+        std::vector<rendered_child> items;
+        for(const auto& el : children)
         {
-            if((*cur_iter)->src_el()->css().get_display() != disp)
+            const element& src = *el->src_el();
+            if(src.is_comment() || src.css().get_display() == display_none)
             {
-                if(!(*cur_iter)->src_el()->is_table_skip() || ((*cur_iter)->src_el()->is_table_skip() && !tmp.empty()))
+                continue;
+            }
+            items.push_back({el, src.css().get_display(), src.is_space()});
+        }
+
+        std::vector<std::shared_ptr<render_item>> to_remove;
+        for(size_t i = 0; i < items.size();)
+        {
+            if(!items[i].is_space)
+            {
+                i++;
+                continue;
+            }
+            const size_t first = i;
+            while(i < items.size() && items[i].is_space)
+            {
+                i++;
+            }
+            const bool previous_is_table_box = first == 0 || is_internal_table_box(items[first - 1].display);
+            const bool next_is_table_box     = i == items.size() || is_internal_table_box(items[i].display);
+            if(previous_is_table_box && next_is_table_box)
+            {
+                for(size_t cur = first; cur < i; cur++)
                 {
-                    if(disp != display_table_row_group ||
-                       !is_one_of((*cur_iter)->src_el()->css().get_display(), display_table_caption,
-                                  display_table_column, display_table_column_group))
-                    {
-                        if(tmp.empty())
-                        {
-                            first_iter = cur_iter;
-                        }
-                        tmp.push_back((*cur_iter));
-                    }
+                    to_remove.push_back(items[cur].el);
                 }
-                cur_iter++;
-            } else if(!tmp.empty())
-            {
-                flush_elements();
-            } else
-            {
-                cur_iter++;
             }
         }
-        if(!tmp.empty())
+
+        for(const auto& el : to_remove)
         {
-            flush_elements();
+            if(auto it = std::find(children.begin(), children.end(), el); it != children.end())
+            {
+                children.erase(it);
+            }
+        }
+        return !to_remove.empty();
+    }
+
+    // Stage 2 of CSS 2.1 17.2.1: generate the missing child wrappers of a table, row group or row.
+    bool document::fix_table_child_wrappers(const std::shared_ptr<render_item>& box)
+    {
+        switch(box->src_el()->css().get_display())
+        {
+        case display_table:
+        case display_inline_table:
+            // A table's improper children are wrapped in an anonymous table-row.
+            return wrap_improper_children(box, is_proper_table_child, display_table_row);
+        case display_table_row_group:
+        case display_table_header_group:
+        case display_table_footer_group:
+            return wrap_improper_children(
+                box, [](style_display child_display) { return child_display == display_table_row; }, display_table_row);
+        case display_table_row:
+            return wrap_improper_children(
+                box, [](style_display child_display) { return child_display == display_table_cell; },
+                display_table_cell);
+        default:
+            return false;
         }
     }
 
-    void document::fix_table_parent(const std::shared_ptr<render_item>& el_ptr, style_display disp,
-                                    const char* disp_str)
+    // Stage 3 of CSS 2.1 17.2.1: a cell outside a row gets an anonymous table-row.
+    bool document::fix_table_cell_rows(const std::shared_ptr<render_item>& box)
     {
-        auto parent = el_ptr->parent();
-
-        if(parent->src_el()->css().get_display() != disp)
+        if(box->src_el()->css().get_display() != display_table_cell)
         {
-            auto this_element = std::find_if(parent->children().begin(), parent->children().end(),
-                                             [&](const std::shared_ptr<render_item>& el) { return el == el_ptr; });
-            if(this_element != parent->children().end())
+            return false;
+        }
+        const auto parent = box->parent();
+        if(!parent || parent->src_el()->css().get_display() == display_table_row)
+        {
+            return false;
+        }
+        return wrap_siblings(
+            box, [](style_display sibling_display) { return sibling_display == display_table_cell; },
+            display_table_row);
+    }
+
+    // Stage 3 of CSS 2.1 17.2.1: a proper table child that cannot stay in its parent gets an
+    // anonymous table around it and its consecutive proper table child siblings.
+    bool document::fix_table_parents(const std::shared_ptr<render_item>& box)
+    {
+        const style_display display = box->src_el()->css().get_display();
+        if(!is_proper_table_child(display))
+        {
+            return false;
+        }
+        const auto parent = box->parent();
+        if(!parent || !is_misparented_table_child(display, parent))
+        {
+            return false;
+        }
+        // The anonymous table is inline-level when it is generated inside an inline box.
+        const style_display table_display =
+            parent->src_el()->css().get_display() == display_inline ? display_inline_table : display_table;
+        return wrap_siblings(box, is_proper_table_child, table_display);
+    }
+
+    std::shared_ptr<render_item> document::create_anonymous_table_box(const std::shared_ptr<render_item>& parent,
+                                                                      style_display                       display)
+    {
+        element::ptr anon_tag = std::make_shared<html_tag>(
+            parent->src_el(), std::string("display:") + std::string(style_display_strings[display]));
+
+        std::shared_ptr<render_item> anon_ri;
+        if(is_table_box(display))
+        {
+            anon_ri = std::make_shared<render_item_table>(anon_tag);
+        } else if(display == display_table_row)
+        {
+            anon_ri = std::make_shared<render_item_table_row>(anon_tag);
+        } else if(display == display_table_cell)
+        {
+            anon_tag->set_tagName("table_cell");
+            anon_ri = std::make_shared<render_item_block>(anon_tag);
+        } else
+        {
+            anon_ri = std::make_shared<render_item_table_part>(anon_tag);
+        }
+        anon_ri->parent(parent);
+        return anon_ri;
+    }
+
+    bool document::wrap_children_in_anonymous_box(const std::shared_ptr<render_item>&              parent,
+                                                  style_display                                    wrapper_display,
+                                                  const std::vector<std::shared_ptr<render_item>>& items)
+    {
+        if(items.empty())
+        {
+            return false;
+        }
+
+        auto& children  = parent->children();
+        auto  insert_at = std::find(children.begin(), children.end(), items.front());
+        if(insert_at == children.end())
+        {
+            return false;
+        }
+
+        auto anon_ri = create_anonymous_table_box(parent, wrapper_display);
+        for(const auto& el : items)
+        {
+            anon_ri->add_child(el);
+        }
+        children.insert(insert_at, anon_ri);
+        for(const auto& el : items)
+        {
+            if(auto it = std::find(children.begin(), children.end(), el); it != children.end())
             {
-                style_display el_disp = el_ptr->src_el()->css().get_display();
-                auto          first   = this_element;
-                auto          last    = this_element;
-                auto          cur     = this_element;
-
-                // find first element with same display
-                while(true)
-                {
-                    if(cur == parent->children().begin())
-                    {
-                        break;
-                    }
-                    cur--;
-                    if((*cur)->src_el()->is_table_skip() || (*cur)->src_el()->css().get_display() == el_disp)
-                    {
-                        first = cur;
-                    } else
-                    {
-                        break;
-                    }
-                }
-
-                // find last element with same display
-                cur = this_element;
-                while(true)
-                {
-                    cur++;
-                    if(cur == parent->children().end())
-                    {
-                        break;
-                    }
-
-                    if((*cur)->src_el()->is_table_skip() || (*cur)->src_el()->css().get_display() == el_disp)
-                    {
-                        last = cur;
-                    } else
-                    {
-                        break;
-                    }
-                }
-
-                // extract elements with the same display and wrap them with anonymous object
-                element::ptr annon_tag =
-                    std::make_shared<html_tag>(parent->src_el(), std::string("display:") + disp_str);
-                std::shared_ptr<render_item> annon_ri;
-                if(annon_tag->css().get_display() == display_table ||
-                   annon_tag->css().get_display() == display_inline_table)
-                {
-                    annon_ri = std::make_shared<render_item_table>(annon_tag);
-                } else if(annon_tag->css().get_display() == display_table_row)
-                {
-                    annon_ri = std::make_shared<render_item_table_row>(annon_tag);
-                } else
-                {
-                    annon_ri = std::make_shared<render_item_table_part>(annon_tag);
-                }
-                std::for_each(first, std::next(last, 1),
-                              [&annon_ri](std::shared_ptr<render_item>& el) { annon_ri->add_child(el); });
-                first = parent->children().erase(first, std::next(last));
-                parent->children().insert(first, annon_ri);
-                add_tabular(annon_ri);
-                annon_ri->parent(parent);
+                children.erase(it);
             }
         }
+        return true;
+    }
+
+    bool document::wrap_improper_children(const std::shared_ptr<render_item>&       box,
+                                          const std::function<bool(style_display)>& is_content,
+                                          style_display                             wrapper_display)
+    {
+        std::vector<std::vector<std::shared_ptr<render_item>>> runs;
+        std::vector<std::shared_ptr<render_item>>              run;
+
+        for(const auto& el : box->children())
+        {
+            if(is_content(el->src_el()->css().get_display()))
+            {
+                if(!run.empty())
+                {
+                    runs.push_back(run);
+                    run.clear();
+                }
+                continue;
+            }
+            if(run.empty() && is_skippable_table_sibling(*el))
+            {
+                continue;
+            }
+            run.push_back(el);
+        }
+        if(!run.empty())
+        {
+            runs.push_back(run);
+        }
+
+        bool changed = false;
+        for(auto& items : runs)
+        {
+            // Skippable boxes at the end of a run stay where they are.
+            while(!items.empty() && is_skippable_table_sibling(*items.back()))
+            {
+                items.pop_back();
+            }
+            changed = wrap_children_in_anonymous_box(box, wrapper_display, items) || changed;
+        }
+        return changed;
+    }
+
+    bool document::wrap_siblings(const std::shared_ptr<render_item>&       el,
+                                 const std::function<bool(style_display)>& in_run, style_display wrapper_display)
+    {
+        const auto parent = el->parent();
+        if(!parent)
+        {
+            return false;
+        }
+
+        auto& children = parent->children();
+        auto  cur      = std::find(children.begin(), children.end(), el);
+        if(cur == children.end())
+        {
+            return false;
+        }
+
+        auto first = cur;
+        for(auto prev = cur; prev != children.begin();)
+        {
+            --prev;
+            if(in_run((*prev)->src_el()->css().get_display()))
+            {
+                first = prev;
+            } else if(!is_skippable_table_sibling(**prev))
+            {
+                break;
+            }
+        }
+
+        auto last = cur;
+        for(auto next = std::next(cur); next != children.end(); ++next)
+        {
+            if(in_run((*next)->src_el()->css().get_display()))
+            {
+                last = next;
+            } else if(!is_skippable_table_sibling(**next))
+            {
+                break;
+            }
+        }
+
+        std::vector<std::shared_ptr<render_item>> items;
+        for(auto it = first;; ++it)
+        {
+            items.push_back(*it);
+            if(it == last)
+            {
+                break;
+            }
+        }
+        return wrap_children_in_anonymous_box(parent, wrapper_display, items);
     }
 
     void document::append_children_from_string(element& parent, const char* str, bool replace_existing)
@@ -1791,6 +2039,7 @@ namespace litehtml
             // Initialize m_css
             child->compute_styles();
         }
+        resolve_generated_quotes();
         rebuild_render_tree();
     }
 

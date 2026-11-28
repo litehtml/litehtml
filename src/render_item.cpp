@@ -8,16 +8,31 @@
 #include <optional>
 #include <typeinfo>
 
+namespace
+{
+    // CSS 2.1 17.2: the margin properties do not apply to the internal table boxes.
+    bool margins_apply(const litehtml::css_properties& style)
+    {
+        return !litehtml::is_one_of(style.get_display(), litehtml::display_table_cell, litehtml::display_table_row,
+                                    litehtml::display_table_row_group, litehtml::display_table_header_group,
+                                    litehtml::display_table_footer_group, litehtml::display_table_column,
+                                    litehtml::display_table_column_group);
+    }
+} // namespace
+
 litehtml::render_item::render_item(std::shared_ptr<element> _src_el) :
     m_element(std::move(_src_el))
 {
     document::ptr doc = src_el()->get_document();
     auto          fm  = css().get_font_metrics();
 
-    m_margins.left   = doc->to_pixels(src_el()->css().get_margins().left, fm, 0_px);
-    m_margins.right  = doc->to_pixels(src_el()->css().get_margins().right, fm, 0_px);
-    m_margins.top    = doc->to_pixels(src_el()->css().get_margins().top, fm, 0_px);
-    m_margins.bottom = doc->to_pixels(src_el()->css().get_margins().bottom, fm, 0_px);
+    if(margins_apply(css()))
+    {
+        m_margins.left   = doc->to_pixels(src_el()->css().get_margins().left, fm, 0_px);
+        m_margins.right  = doc->to_pixels(src_el()->css().get_margins().right, fm, 0_px);
+        m_margins.top    = doc->to_pixels(src_el()->css().get_margins().top, fm, 0_px);
+        m_margins.bottom = doc->to_pixels(src_el()->css().get_margins().bottom, fm, 0_px);
+    }
 
     m_padding.left   = doc->to_pixels(src_el()->css().get_padding().left, fm, 0_px);
     m_padding.right  = doc->to_pixels(src_el()->css().get_padding().right, fm, 0_px);
@@ -28,6 +43,26 @@ litehtml::render_item::render_item(std::shared_ptr<element> _src_el) :
     m_borders.right  = doc->to_pixels(src_el()->css().get_borders().right.width, fm, 0_px);
     m_borders.top    = doc->to_pixels(src_el()->css().get_borders().top.width, fm, 0_px);
     m_borders.bottom = doc->to_pixels(src_el()->css().get_borders().bottom.width, fm, 0_px);
+}
+
+litehtml::borders litehtml::render_item::get_styled_borders() const
+{
+    const auto& css_borders = src_el()->css().get_borders();
+
+    borders ret;
+    ret.left.width   = m_borders.left;
+    ret.left.style   = css_borders.left.style;
+    ret.left.color   = css_borders.left.color;
+    ret.right.width  = m_borders.right;
+    ret.right.style  = css_borders.right.style;
+    ret.right.color  = css_borders.right.color;
+    ret.top.width    = m_borders.top;
+    ret.top.style    = css_borders.top.style;
+    ret.top.color    = css_borders.top.color;
+    ret.bottom.width = m_borders.bottom;
+    ret.bottom.style = css_borders.bottom.style;
+    ret.bottom.color = css_borders.bottom.color;
+    return ret;
 }
 
 void litehtml::render_item::update_height_dependency(uint64_t generation)
@@ -447,6 +482,25 @@ void litehtml::render_item::ensure_layout_tree()
     }
 }
 
+std::optional<litehtml::pixel_t> litehtml::render_item::get_first_in_flow_baseline()
+{
+    ensure_layout();
+    for(const auto& child : m_children)
+    {
+        const auto& style = child->css();
+        if(style.get_display() == display_none || style.get_float() != float_none ||
+           is_one_of(style.get_position(), element_position_absolute, element_position_fixed))
+        {
+            continue;
+        }
+        if(const auto baseline = child->get_first_in_flow_baseline())
+        {
+            return content_offset_top() + child->top() + *baseline;
+        }
+    }
+    return std::nullopt;
+}
+
 bool litehtml::render_item::has_definite_size() const
 {
     const auto& style = css();
@@ -475,14 +529,22 @@ void litehtml::render_item::calc_outlines(pixel_t parent_width)
     m_padding.left  = m_element->css().get_padding().left.calc_percent(parent_width);
     m_padding.right = m_element->css().get_padding().right.calc_percent(parent_width);
 
-    m_borders.left  = m_element->css().get_borders().left.width.calc_percent(parent_width);
-    m_borders.right = m_element->css().get_borders().right.width.calc_percent(parent_width);
+    if(!m_borders_overridden)
+    {
+        m_borders.left   = m_element->css().get_borders().left.width.calc_percent(parent_width);
+        m_borders.right  = m_element->css().get_borders().right.width.calc_percent(parent_width);
+        m_borders.top    = m_element->css().get_borders().top.width.calc_percent(parent_width);
+        m_borders.bottom = m_element->css().get_borders().bottom.width.calc_percent(parent_width);
+    }
 
-    m_margins.left  = m_element->css().get_margins().left.calc_percent(parent_width);
-    m_margins.right = m_element->css().get_margins().right.calc_percent(parent_width);
+    if(margins_apply(m_element->css()))
+    {
+        m_margins.left  = m_element->css().get_margins().left.calc_percent(parent_width);
+        m_margins.right = m_element->css().get_margins().right.calc_percent(parent_width);
 
-    m_margins.top    = m_element->css().get_margins().top.calc_percent(parent_width);
-    m_margins.bottom = m_element->css().get_margins().bottom.calc_percent(parent_width);
+        m_margins.top    = m_element->css().get_margins().top.calc_percent(parent_width);
+        m_margins.bottom = m_element->css().get_margins().bottom.calc_percent(parent_width);
+    }
 
     m_padding.top    = m_element->css().get_padding().top.calc_percent(parent_width);
     m_padding.bottom = m_element->css().get_padding().bottom.calc_percent(parent_width);
@@ -1573,10 +1635,10 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                    !el->src_el()->is_positioned() && !el->is_stacked_member())
                 {
                     el->src_el()->draw(hdc, pos.x, pos.y, clip, draw_clipping, el);
-                    if(el->src_el()->css().get_display() == display_inline_block ||
-                       el->src_el()->css().get_display() == display_inline_flex ||
-                       el->src_el()->css().get_display() == display_inline_grid)
+                    if(el->src_el()->is_inline_box())
                     {
+                        // CSS 2.1 E.2 step 7.2.1: an atomic inline-level box paints its content as if
+                        // it created a new stacking context, so all of it is painted in the inline pass.
                         el->draw_stacking_context(hdc, pos.x, pos.y, clip, el->creates_stacking_context(), child_cur,
                                                   child_abs);
                         process = false;
@@ -1598,9 +1660,8 @@ void litehtml::render_item::draw_children(uint_ptr hdc, pixel_t x, pixel_t y, co
                     }
                 } else
                 {
-                    if(el->src_el()->css().get_float() == float_none &&
-                       el->src_el()->css().get_display() != display_inline_block && !el->src_el()->is_positioned() &&
-                       !el->is_stacked_member() && !el->creates_stacking_context())
+                    if(el->src_el()->css().get_float() == float_none && !el->src_el()->is_inline_box() &&
+                       !el->src_el()->is_positioned() && !el->is_stacked_member() && !el->creates_stacking_context())
                     {
                         el->draw_children(hdc, pos.x, pos.y, clip, flag, zindex, stacking_context, child_cur,
                                           child_abs);

@@ -411,13 +411,23 @@ void litehtml::render_item_inline_context::place_inline(std::unique_ptr<line_box
     m_line_boxes.back()->add_item(std::move(item));
 }
 
-void litehtml::render_item_inline_context::apply_vertical_align()
+void litehtml::render_item_inline_context::apply_vertical_align(pixel_t baseline_shift)
 {
-    if(!m_line_boxes.empty())
+    if(m_line_boxes.empty())
     {
-        pixel_t add = 0_px;
+        return;
+    }
 
-        pixel_t content_height = m_line_boxes.back()->bottom();
+    pixel_t add = 0_px;
+
+    if(baseline_shift >= 0_px)
+    {
+        // Move the content so that its first baseline lands on the baseline of the row the cell
+        // belongs to (CSS 2.1 17.5.3).
+        add = baseline_shift;
+    } else
+    {
+        const pixel_t content_height = m_line_boxes.back()->bottom();
 
         if(m_pos.height > content_height)
         {
@@ -434,30 +444,35 @@ void litehtml::render_item_inline_context::apply_vertical_align()
                 break;
             }
         }
+    }
 
-        if(add != 0_px)
+    if(add != 0_px)
+    {
+        for(auto& box : m_line_boxes)
         {
-            for(auto& box : m_line_boxes)
-            {
-                box->y_shift(add);
-            }
+            box->y_shift(add);
         }
     }
 }
 
-litehtml::pixel_t litehtml::render_item_inline_context::get_first_baseline()
+std::optional<litehtml::pixel_t> litehtml::render_item_inline_context::get_first_in_flow_baseline()
 {
     ensure_layout();
-    pixel_t bl;
     if(!m_line_boxes.empty())
     {
         const auto& line = m_line_boxes.front();
-        bl               = line->bottom() - line->baseline() + content_offset_top();
-    } else
-    {
-        bl = height() - margin_bottom();
+        return line->bottom() - line->baseline() + content_offset_top();
     }
-    return bl;
+    return std::nullopt;
+}
+
+litehtml::pixel_t litehtml::render_item_inline_context::get_first_baseline()
+{
+    if(const auto baseline = get_first_in_flow_baseline())
+    {
+        return *baseline;
+    }
+    return height() - margin_bottom();
 }
 
 litehtml::pixel_t litehtml::render_item_inline_context::get_last_baseline()
@@ -480,6 +495,10 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
     pixel_t line_max_width = 0_px;
     pixel_t line_height    = 0_px;
     pixel_t spaces_width   = 0_px;
+    // Intrinsic minimum width is the widest run of inline items with no line break opportunity between
+    // them, not the widest single item: adjacent text such as a closing quote and the preceding word must
+    // stay together.
+    pixel_t min_run_width = 0_px;
 
     white_space ws = src_el()->css().get_white_space();
 
@@ -499,6 +518,7 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
                             {
                                 spaces_width += el->get_intrinsic_max_size().width;
                             }
+                            min_run_width = 0_px;
                             return;
                         }
                     }
@@ -513,13 +533,24 @@ void litehtml::render_item_inline_context::calc_intrinsic_size()
 
                         line_max_width = 0_px;
                         line_height    = 0_px;
+                        min_run_width  = 0_px;
                     } else
                     {
                         line_max_width += spaces_width;
                     }
                     spaces_width = 0_px;
-                    m_intrinsic_min_size.width =
-                        std::max(m_intrinsic_min_size.width, el->get_intrinsic_min_size().width);
+                    if(el->src_el()->css().get_display() == display_inline_text && !el->src_el()->is_float())
+                    {
+                        // Plain text can be glued to the adjacent text without a break opportunity.
+                        min_run_width              += el->get_intrinsic_min_size().width;
+                        m_intrinsic_min_size.width  = std::max(m_intrinsic_min_size.width, min_run_width);
+                    } else
+                    {
+                        // Atomic inline boxes and floats offer a break opportunity on both sides.
+                        min_run_width = 0_px;
+                        m_intrinsic_min_size.width =
+                            std::max(m_intrinsic_min_size.width, el->get_intrinsic_min_size().width);
+                    }
                     m_intrinsic_max_size.height =
                         std::max(m_intrinsic_max_size.height, el->get_intrinsic_max_size().height);
                 }

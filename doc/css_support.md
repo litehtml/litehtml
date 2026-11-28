@@ -150,12 +150,13 @@ tables. The separate rendering suite remains the golden-image regression check.
 | `gap` / `row-gap` / `column-gap` | ⚠️ | [Flexbox](#flexbox) and [Grid](#grid); multi-column layout is not supported | Flex and Grid tests |
 | `caption-side` | ✅ | 2 | ~6 |
 | `content` | ✅ | see below | ~240 |
+| `quotes` | ✅ | `auto` / `none` / `[<string> <string>]+` (inherited) | quotes tests |
 | `counter-reset` / `counter-increment` | ✅ | — | ~240 |
 | `cursor` | ⚠️ | any | ~10 |
 | `appearance` | ❌ | 16 | 0 |
 
 Properties **not recognized at all** (silently ignored by the parser): `letter-spacing`, `word-spacing`, `empty-cells`, `direction`,
-`unicode-bidi`, `quotes`, `text-shadow`, `opacity`, `transform`,
+`unicode-bidi`, `text-shadow`, `opacity`, `transform`,
 `transition`, `animation`, `columns`, `column-*`, `filter`, `clip-path`,
 `object-fit` … (everything else not listed above).
 
@@ -653,10 +654,21 @@ Tests: [css21/fixed-table-layout-001.htm](https://github.com/litehtml/litehtml-t
 [table-layout-fixed-percent.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-percent.htm),
 [table-layout-fixed-overflow-table.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/table-layout-fixed-overflow-table.htm).
 
-#### `caption-side`
-✅ Supported — `top`, `bottom` (verified: the caption moves).
+#### Table section elements
+✅ `<thead>`, `<tbody>` and `<tfoot>` map to `table-header-group`, `table-row-group` and
+`table-footer-group`. The header group is laid out before all other rows and the footer group after
+them (CSS 2.1 17.2.1); generated `::before`/`::after` content with these table display types is
+ordered the same way.
 
-Tests: [css21/caption-side-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/caption-side-001.htm).
+Tests: [css21/before-after-table-parts-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/before-after-table-parts-001.htm).
+
+#### `caption-side`
+✅ Supported — `top`, `bottom` (verified: the caption moves). The used table width also takes
+`CAPMIN` (the caption's minimum width, CSS 2.1 17.5.2) into account, so a caption is laid out at
+least as wide as its intrinsic minimum.
+
+Tests: [css21/caption-side-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/caption-side-001.htm),
+[css21/before-after-display-types-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/before-after-display-types-001.htm).
 
 `border-collapse` and `border-spacing` are documented under [Border](#border).
 
@@ -667,6 +679,28 @@ Tests: [css21/caption-side-001.htm](https://github.com/litehtml/litehtml-tests/b
 #### `content`
 ✅ Supported (on `::before`/`::after`) — quoted strings, `attr()`, `counter()`, `counters()`,
 `url()`, and the quote keywords `open-quote`, `close-quote`, `no-open-quote`, `no-close-quote`.
+The quote keywords are resolved against the `quotes` property. A `::before`/`::after`
+pseudo-element only generates a box when `content` is not `normal`; rules that only set other
+properties on a pseudo-element do not create one.
+
+Tests: [css21/before-after-table-whitespace-001.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/before-after-table-whitespace-001.htm).
+
+#### `quotes`
+✅ Supported — inherited; values are `auto`, `none`, or one or more `<string> <string>` pairs.
+`open-quote`/`close-quote` insert the pair matching the document-wide quote nesting level
+(independent of element nesting); a `close-quote` at level 0 inserts nothing. `no-open-quote`
+and `no-close-quote` change the level without inserting a mark. When the level exceeds the
+number of pairs, the last pair is repeated. `auto` uses the UA's typographic defaults: `“ ”`
+for the outermost level and `‘ ’` for deeper levels (litehtml does not resolve quotation marks
+from the element language). The default stylesheet generates the quotation marks of `<q>` with
+`q::before`/`q::after`.
+
+Tests: [quotes-basic.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/quotes-basic.htm),
+[quotes-keywords.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/quotes-keywords.htm),
+[quotes-nesting.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/quotes-nesting.htm),
+[quotes-inheritance.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/quotes-inheritance.htm),
+[css21/quotes-032.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/quotes-032.htm),
+[css21/quotes-035.htm](https://github.com/litehtml/litehtml-tests/blob/main/render/css21/quotes-035.htm).
 
 #### `counter-reset`, `counter-increment`
 ✅ Supported — `<counter-name> <integer>?` lists; used by `counter()`/`counters()` in `content`.

@@ -143,6 +143,19 @@ span {
 	display:inline
 }
 
+/* https://html.spec.whatwg.org/multipage/rendering.html#the-q-element */
+q {
+	display:inline;
+}
+
+q::before {
+	content: open-quote;
+}
+
+q::after {
+	content: close-quote;
+}
+
 img {
 	display: inline-block;
 }
@@ -178,14 +191,21 @@ table {
 	border-left-color:gray;
 	border-bottom-color:black;
 	border-right-color:black;
-	font-size: medium;
-	font-weight: normal;
-	font-style: normal;
 	box-sizing: border-box;
 }
 
-tbody, tfoot, thead {
+tbody {
 	display:table-row-group;
+	vertical-align:middle;
+}
+
+thead {
+	display:table-header-group;
+	vertical-align:middle;
+}
+
+tfoot {
+	display:table-footer-group;
 	vertical-align:middle;
 }
 
@@ -212,6 +232,7 @@ td, th {
 
 th {
 	font-weight: bold;
+	text-align: center;
 }
 
 table[border] {
@@ -249,6 +270,7 @@ table[align=center] {
 
 caption {
 	display: table-caption;
+	text-align: center;
 }
 
 td[nowrap], th[nowrap] {
@@ -365,7 +387,6 @@ input, textarea, keygen, select, button, isindex {
 	text-indent: 0;
 	text-shadow: none;
 	display: inline-block;
-	vertical-align: middle;
 }
 
 input[type="hidden"] {
@@ -559,6 +580,18 @@ figcaption {
 	display: block;
 }
 
+)##";
+
+    // Quirks mode only (see document::finalize_from_external_root). Browsers keep the font of the
+    // document out of tables in quirks mode, emulating the HTML4-era user agents (Gecko's quirk.css).
+    // In standards mode all inherited properties are inherited as required by CSS 2.1 6.2.
+    const char* const quirks_css = R"##(
+table, caption {
+	font-size: medium;
+	font-weight: normal;
+	font-style: normal;
+	font-variant: normal;
+}
 )##";
 }
 #endif // LITEHTML_MASTER_CSS_H

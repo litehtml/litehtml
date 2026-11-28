@@ -137,6 +137,7 @@ set(HEADER_LITEHTML
 	include/litehtml/css_margins.h
 	include/litehtml/css_offsets.h
 	include/litehtml/css_position.h
+	include/litehtml/css_quotes.h
 	include/litehtml/css_selector.h
 	include/litehtml/css_parser.h
 	include/litehtml/css_tokenizer.h

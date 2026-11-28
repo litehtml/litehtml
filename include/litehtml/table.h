@@ -4,6 +4,7 @@
 #include <optional>
 #include <vector>
 #include <memory>
+#include "borders.h"
 #include "css_length.h"
 #include "formatting_context.h"
 #include "types.h"
@@ -22,6 +23,9 @@ namespace litehtml
         std::shared_ptr<render_item> el_row;
         pixel_t                      top;
         pixel_t                      bottom;
+        // Distance from the row's top to its baseline (CSS 2.1 17.5.3). The bottom of the row is
+        // used when no cell of the row is aligned at the baseline.
+        pixel_t                      baseline;
         css_length                   css_height;
         pixel_t                      min_height;
 
@@ -30,6 +34,7 @@ namespace litehtml
             min_height    = 0;
             top           = 0;
             bottom        = 0;
+            baseline      = 0;
             border_bottom = 0;
             border_top    = 0;
             height        = 0;
@@ -44,6 +49,7 @@ namespace litehtml
             min_height    = val.min_height;
             top           = val.top;
             bottom        = val.bottom;
+            baseline      = val.baseline;
             border_bottom = val.border_bottom;
             border_top    = val.border_top;
             height        = val.height;
@@ -56,6 +62,7 @@ namespace litehtml
             min_height    = val.min_height;
             top           = val.top;
             bottom        = val.bottom;
+            baseline      = val.baseline;
             border_bottom = val.border_bottom;
             border_top    = val.border_top;
             height        = val.height;
@@ -162,6 +169,8 @@ namespace litehtml
         pixel_t                      max_height;
         pixel_t                      width;
         pixel_t                      height;
+        // Distance from the top of the cell's row to the cell's baseline (CSS 2.1 17.5.3).
+        pixel_t                      baseline;
         margins                      borders;
 
         table_cell()
@@ -172,6 +181,7 @@ namespace litehtml
             max_height = 0;
             width      = 0;
             height     = 0;
+            baseline   = 0;
             colspan    = 1;
             rowspan    = 1;
             el         = nullptr;
@@ -188,6 +198,7 @@ namespace litehtml
             min_height = val.min_height;
             max_width  = val.max_width;
             max_height = val.max_height;
+            baseline   = val.baseline;
             borders    = val.borders;
         }
 
@@ -202,6 +213,7 @@ namespace litehtml
             min_height = val.min_height;
             max_width  = val.max_width;
             max_height = val.max_height;
+            baseline   = val.baseline;
             borders    = val.borders;
         }
     };
@@ -219,15 +231,19 @@ namespace litehtml
         table_row::vector    m_rows;
         pixel_t              m_top_captions_height    = 0_px;
         pixel_t              m_bottom_captions_height = 0_px;
-        std::vector<margins> m_collapsed_borders;       // per grid slot: the cell's borders after collapsing
+        std::vector<borders> m_collapsed_borders;       // per grid slot: the resolved borders of the cell
         pixel_t              m_collapsed_top    = 0_px; // the widest collapsed border on the table's top edge
         pixel_t              m_collapsed_bottom = 0_px; // the widest collapsed border on the table's bottom edge
+        pixel_t              m_collapsed_left   = 0_px; // the widest collapsed border on the table's left edge
+        pixel_t              m_collapsed_right  = 0_px; // the widest collapsed border on the table's right edge
 
         std::vector<std::shared_ptr<render_item>> m_captions;
         std::vector<css_length>                   m_column_widths;
         // True when the matching m_column_widths entry comes from a <col> element
         // rather than a <colgroup>. Fixed layout gives <col> widths priority.
         std::vector<bool> m_column_widths_from_col;
+        // The first row of the row group that the next begin_row() call belongs to
+        int m_row_group_start = 0;
 
       public:
         void clear();
@@ -281,7 +297,7 @@ namespace litehtml
         {
             return m_bottom_captions_height;
         }
-        const margins& collapsed_borders(int col, int row) const
+        const borders& collapsed_borders(int col, int row) const
         {
             return m_collapsed_borders[row * m_cols_count + col];
         }
@@ -293,6 +309,14 @@ namespace litehtml
         {
             return m_collapsed_bottom;
         }
+        pixel_t collapsed_left() const
+        {
+            return m_collapsed_left;
+        }
+        pixel_t collapsed_right() const
+        {
+            return m_collapsed_right;
+        }
 
         void    distribute_max_width(pixel_t width, int start, int end);
         void    distribute_min_width(pixel_t width, int start, int end);
@@ -303,7 +327,8 @@ namespace litehtml
         pixel_t calc_fixed_table_width(pixel_t table_width, pixel_t& min_table_width, pixel_t& max_table_width);
         void    calc_horizontal_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_x);
         void    calc_vertical_positions(const margins& table_borders, border_collapse bc, pixel_t bdr_space_y);
-        void    calc_collapsed_borders(const margins& table_borders);
+        void    calc_collapsed_borders(const borders& table_borders, const std::vector<borders>& column_borders,
+                                       const std::vector<borders>& column_group_borders);
         void    calc_rows_height(pixel_t blockHeight, pixel_t borderSpacingY);
     };
 } // namespace litehtml

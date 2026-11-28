@@ -93,6 +93,9 @@ namespace litehtml
                                  uint_ptr css_properties_member_offset) const;
         bool        get_custom_property(string_id name, css_token_vector& result) const;
 
+        // Returns the value of the inherited `quotes` property for this element (initial value: auto).
+        css_quotes get_quotes() const;
+
         elements_list& children();
 
         int select(const css_selector::vector& selector_list, bool apply_pseudo = true) override;

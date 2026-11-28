@@ -277,7 +277,6 @@ namespace litehtml
         case _overflow_:
 
         case _text_align_:
-        case _vertical_align_:
         case _text_transform_:
         case _white_space_:
 
@@ -306,6 +305,21 @@ namespace litehtml
             if(auto index = m_valid_values.at(name).value_index(ident); index.has_value())
             {
                 add_parsed_property(name, property_value(*index, important));
+            }
+            break;
+
+        // baseline | sub | super | top | text-top | middle | bottom | text-bottom | <length-percentage>
+        // https://www.w3.org/TR/CSS21/visudet.html#propdef-vertical-align
+        case _vertical_align_:
+            if(auto index = m_valid_values.at(name).value_index(ident); index.has_value())
+            {
+                add_parsed_property(name, property_value(*index, important));
+            } else if(css_length offset; offset.from_token(val, f_length_percentage, css_values()))
+            {
+                // Table cells align at the baseline for sub/super/text-top/text-bottom and for
+                // <length>/<percentage> (CSS 2.1 17.5.3). Raising or lowering an inline box by the
+                // given length is not modelled, so the value computes to the baseline everywhere.
+                add_parsed_property(name, property_value(static_cast<int>(va_baseline), important));
             }
             break;
 
@@ -958,6 +972,43 @@ namespace litehtml
             // TODO: parse it properly here
             str = get_repr(value, 0, -1, true);
             add_parsed_property(name, property_value(str, important));
+            break;
+
+        case _quotes_:
+            {
+                // https://drafts.csswg.org/css-content-3/#propdef-quotes
+                // auto | none | [<string> <string>]+
+                if(value.size() == 1)
+                {
+                    const auto ident = value[0].ident();
+                    if(ident == "auto" || ident == "none")
+                    {
+                        add_parsed_property(
+                            name, property_value(ident == "auto" ? css_quotes() : css_quotes::none(), important));
+                    }
+                    break;
+                }
+                if(value.size() < 2 || value.size() % 2 != 0)
+                {
+                    break; // value must contain one or more pairs of strings
+                }
+                std::vector<std::string> strings;
+                strings.reserve(value.size());
+                bool valid = true;
+                for(const auto& tok : value)
+                {
+                    if(tok.type != STRING)
+                    {
+                        valid = false;
+                        break;
+                    }
+                    strings.push_back(tok.str());
+                }
+                if(valid)
+                {
+                    add_parsed_property(name, property_value(css_quotes::from_strings(std::move(strings)), important));
+                }
+            }
             break;
 
             //  ==================================  OTHER  ==================================

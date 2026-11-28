@@ -3,6 +3,99 @@
 #include "render_item.h"
 #include "types.h"
 
+namespace
+{
+    // CSS 2.1 17.6.3: element priority of the sources of a collapsed border.
+    enum border_source_priority
+    {
+        border_priority_table        = 1,
+        border_priority_column_group = 2,
+        border_priority_column       = 3,
+        border_priority_row_group    = 4,
+        border_priority_row          = 5,
+        border_priority_cell         = 6,
+    };
+
+    // CSS 2.1 17.6.3: the style priority used when the widths are equal.
+    int border_style_rank(litehtml::border_style style)
+    {
+        switch(style)
+        {
+        case litehtml::border_style_double:
+            return 6;
+        case litehtml::border_style_solid:
+            return 5;
+        case litehtml::border_style_dashed:
+            return 4;
+        case litehtml::border_style_dotted:
+            return 3;
+        case litehtml::border_style_ridge:
+            return 2;
+        case litehtml::border_style_outset:
+            return 1;
+        case litehtml::border_style_groove:
+            return 0;
+        case litehtml::border_style_inset:
+            return -1;
+        default:
+            return -2;
+        }
+    }
+
+    bool is_row_group(const std::shared_ptr<litehtml::render_item>& el)
+    {
+        return el && litehtml::is_one_of(el->src_el()->css().get_display(), litehtml::display_table_row_group,
+                                         litehtml::display_table_header_group, litehtml::display_table_footer_group);
+    }
+
+    // One side of a collapsed border, won by the widest border of the meeting table parts.
+    struct collapsed_border
+    {
+        litehtml::border value;
+        int              priority = 0;
+
+        bool wins(const litehtml::border& candidate, int candidate_priority) const
+        {
+            const bool candidate_hidden = candidate.style == litehtml::border_style_hidden;
+            const bool current_hidden   = value.style == litehtml::border_style_hidden;
+            if(candidate_hidden || current_hidden)
+            {
+                return candidate_hidden && !current_hidden;
+            }
+            if(candidate.width != value.width)
+            {
+                return candidate.width > value.width;
+            }
+            const int candidate_rank = border_style_rank(candidate.style);
+            const int current_rank   = border_style_rank(value.style);
+            if(candidate_rank != current_rank)
+            {
+                return candidate_rank > current_rank;
+            }
+            return candidate_priority > priority;
+        }
+
+        void add(const litehtml::border& candidate, int candidate_priority)
+        {
+            // A 'none' border is not there; 'hidden' wins even with a zero width.
+            if(candidate.style == litehtml::border_style_none)
+            {
+                return;
+            }
+            if(candidate.width <= litehtml::pixel_t(0) && candidate.style != litehtml::border_style_hidden)
+            {
+                return;
+            }
+            if(value.style == litehtml::border_style_none || value.width <= litehtml::pixel_t(0) ||
+               wins(candidate, candidate_priority))
+            {
+                value    = candidate;
+                priority = candidate_priority;
+            }
+        }
+    };
+} // namespace
+
 void litehtml::table_grid::add_cell(const std::shared_ptr<render_item>& el)
 {
     table_cell cell;
@@ -26,6 +119,29 @@ void litehtml::table_grid::add_cell(const std::shared_ptr<render_item>& el)
 
 void litehtml::table_grid::begin_row(const std::shared_ptr<render_item>& row)
 {
+    if(!m_rows.empty())
+    {
+        const auto prev_group = m_rows.back().el_row ? m_rows.back().el_row->parent() : nullptr;
+        const auto row_group  = row ? row->parent() : nullptr;
+        if(prev_group != row_group)
+        {
+            // CSS 2.1 17.5.1: a cell box cannot extend beyond the last row of its row group, so the
+            // rowspans of the group that just ended have to be clipped before the new row is filled.
+            const int last_row = static_cast<int>(m_cells.size()) - 1;
+            for(int r = m_row_group_start; r <= last_row; r++)
+            {
+                for(auto& cell : m_cells[r])
+                {
+                    if(cell.el)
+                    {
+                        cell.rowspan = std::min(cell.rowspan, last_row - r + 1);
+                    }
+                }
+            }
+            m_row_group_start = last_row + 1;
+        }
+    }
+
     std::vector<table_cell> r;
     m_cells.push_back(r);
 
@@ -569,6 +685,17 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
                     }
                     cell->max_width = std::max(cell->max_width, cell->min_width);
                 }
+                if(m_collapsed_borders.size() == static_cast<size_t>(m_rows_count * m_cols_count))
+                {
+                    // In the collapsing model a cell takes up half of the collapsed borders on its
+                    // edges, so the width it contributes to the column is not measured with its own
+                    // borders (CSS 2.1 17.6.2).
+                    const borders& collapsed = m_collapsed_borders[row * m_cols_count + col];
+                    const pixel_t  delta =
+                        (collapsed.left.width + collapsed.right.width) / 2 - cell->borders.left - cell->borders.right;
+                    cell->min_width = std::max(cell->min_width + delta, 0_px);
+                    cell->max_width = std::max(cell->max_width + delta, cell->min_width);
+                }
             }
         }
     }
@@ -834,8 +961,9 @@ litehtml::pixel_t litehtml::table_grid::calc_table_width(std::optional<pixel_t> 
 
 void litehtml::table_grid::clear()
 {
-    m_rows_count = 0;
-    m_cols_count = 0;
+    m_rows_count      = 0;
+    m_cols_count      = 0;
+    m_row_group_start = 0;
     m_cells.clear();
     m_columns.clear();
     m_rows.clear();
@@ -856,18 +984,11 @@ void litehtml::table_grid::calc_horizontal_positions(const margins& table_border
         }
     } else
     {
-        pixel_t left = 0;
-        if(m_cols_count)
-        {
-            left -= std::min(table_borders.left, m_columns[0].border_left);
-        }
+        // Column edges are the center lines of the collapsed borders; the table's box holds half of
+        // the outer ones, like the row positions do (CSS 2.1 17.6.2).
+        pixel_t left = m_collapsed_left / 2 - table_borders.left;
         for(int i = 0; i < m_cols_count; i++)
         {
-            if(i > 0)
-            {
-                left -= std::min(m_columns[i - 1].border_right, m_columns[i].border_left);
-            }
-
             m_columns[i].left  = left;
             m_columns[i].right = m_columns[i].left + m_columns[i].width;
             left               = m_columns[i].right;
@@ -901,7 +1022,9 @@ void litehtml::table_grid::calc_vertical_positions(const margins& table_borders,
     }
 }
 
-void litehtml::table_grid::calc_collapsed_borders(const margins& table_borders)
+void litehtml::table_grid::calc_collapsed_borders(const borders&              table_borders,
+                                                  const std::vector<borders>& column_borders,
+                                                  const std::vector<borders>& column_group_borders)
 {
     // The cell covering each slot of the grid, spanned slots included
     std::vector<table_cell*> owners(static_cast<size_t>(m_rows_count * m_cols_count), nullptr);
@@ -924,9 +1047,74 @@ void litehtml::table_grid::calc_collapsed_borders(const margins& table_borders)
         }
     }
 
-    m_collapsed_borders.assign(owners.size(), margins());
+    // The borders of the rows and of their groups, and the group each row belongs to.
+    std::vector<borders>            row_borders(m_rows_count);
+    std::vector<borders>            row_group_borders(m_rows_count);
+    std::vector<const render_item*> row_groups(m_rows_count, nullptr);
+    for(int row = 0; row < m_rows_count; row++)
+    {
+        const auto& row_item = m_rows[row].el_row;
+        if(!row_item)
+        {
+            continue;
+        }
+        row_borders[row] = row_item->get_styled_borders();
+        const auto group = row_item->parent();
+        if(is_row_group(group))
+        {
+            row_groups[row]        = group.get();
+            row_group_borders[row] = group->get_styled_borders();
+        }
+    }
+
+    // The styled borders of the cell covering each slot, so a border can be looked up for a slot
+    // covered by a spanning cell as well. The widths come from the cell's own borders, kept in the
+    // slot: during layout the cell item's borders hold the collapsed ones.
+    std::vector<std::optional<borders>> styled(owners.size());
+    for(size_t i = 0; i < owners.size(); i++)
+    {
+        if(const table_cell* owner = owners[i])
+        {
+            const auto& css_borders = owner->el->src_el()->css().get_borders();
+            borders     cell_borders;
+            cell_borders.left.width   = owner->borders.left;
+            cell_borders.left.style   = css_borders.left.style;
+            cell_borders.left.color   = css_borders.left.color;
+            cell_borders.right.width  = owner->borders.right;
+            cell_borders.right.style  = css_borders.right.style;
+            cell_borders.right.color  = css_borders.right.color;
+            cell_borders.top.width    = owner->borders.top;
+            cell_borders.top.style    = css_borders.top.style;
+            cell_borders.top.color    = css_borders.top.color;
+            cell_borders.bottom.width = owner->borders.bottom;
+            cell_borders.bottom.style = css_borders.bottom.style;
+            cell_borders.bottom.color = css_borders.bottom.color;
+            styled[i]                 = cell_borders;
+        }
+    }
+    const auto border_of = [&](int col, int row) -> const borders& {
+        static const borders empty;
+        if(col < 0 || col >= m_cols_count || row < 0 || row >= m_rows_count)
+        {
+            return empty;
+        }
+        const auto& value = styled[row * m_cols_count + col];
+        return value ? *value : empty;
+    };
+    const auto column_border_of = [](const std::vector<borders>& list, int col) -> const borders& {
+        static const borders empty;
+        if(col < 0 || col >= static_cast<int>(list.size()))
+        {
+            return empty;
+        }
+        return list[col];
+    };
+
+    m_collapsed_borders.assign(owners.size(), borders());
     m_collapsed_top    = 0_px;
     m_collapsed_bottom = 0_px;
+    m_collapsed_left   = 0_px;
+    m_collapsed_right  = 0_px;
     for(int row = 0; row < m_rows_count; row++)
     {
         for(int col = 0; col < m_cols_count; col++)
@@ -936,44 +1124,137 @@ void litehtml::table_grid::calc_collapsed_borders(const margins& table_borders)
             {
                 continue;
             }
-            const int last_row = std::min(row + c->rowspan, m_rows_count) - 1;
-            const int last_col = std::min(col + c->colspan, m_cols_count) - 1;
+            const int      last_row     = std::min(row + c->rowspan, m_rows_count) - 1;
+            const int      last_col     = std::min(col + c->colspan, m_cols_count) - 1;
+            const borders& cell_borders = border_of(col, row);
 
-            margins& collapsed = m_collapsed_borders[row * m_cols_count + col];
-            collapsed          = c->borders;
+            borders& collapsed = m_collapsed_borders[row * m_cols_count + col];
+
+            // A shared edge resolves the same border from both sides: the cell above/left is
+            // considered first, so it wins the ties (CSS 2.1 17.6.3).
+            collapsed_border top;
+            if(row > 0)
+            {
+                for(int k = col; k <= last_col; k++)
+                {
+                    top.add(border_of(k, row - 1).bottom, border_priority_cell);
+                }
+                top.add(row_borders[row - 1].bottom, border_priority_row);
+                if(row_groups[row - 1] != row_groups[row])
+                {
+                    top.add(row_group_borders[row - 1].bottom, border_priority_row_group);
+                }
+            }
+            top.add(cell_borders.top, border_priority_cell);
+            top.add(row_borders[row].top, border_priority_row);
+            if(row == 0 || row_groups[row - 1] != row_groups[row])
+            {
+                top.add(row_group_borders[row].top, border_priority_row_group);
+            }
             if(row == 0)
             {
-                collapsed.top = std::max(collapsed.top, table_borders.top);
+                top.add(table_borders.top, border_priority_table);
+                for(int k = col; k <= last_col; k++)
+                {
+                    top.add(column_border_of(column_borders, k).top, border_priority_column);
+                    top.add(column_border_of(column_group_borders, k).top, border_priority_column_group);
+                }
+            }
+            collapsed.top = top.value;
+
+            collapsed_border bottom;
+            bottom.add(cell_borders.bottom, border_priority_cell);
+            bottom.add(row_borders[last_row].bottom, border_priority_row);
+            if(last_row == m_rows_count - 1 || row_groups[last_row + 1] != row_groups[last_row])
+            {
+                bottom.add(row_group_borders[last_row].bottom, border_priority_row_group);
+            }
+            if(last_row < m_rows_count - 1)
+            {
+                for(int k = col; k <= last_col; k++)
+                {
+                    bottom.add(border_of(k, last_row + 1).top, border_priority_cell);
+                }
+                bottom.add(row_borders[last_row + 1].top, border_priority_row);
+                if(row_groups[last_row + 1] != row_groups[last_row])
+                {
+                    bottom.add(row_group_borders[last_row + 1].top, border_priority_row_group);
+                }
             }
             if(last_row == m_rows_count - 1)
             {
-                collapsed.bottom = std::max(collapsed.bottom, table_borders.bottom);
+                bottom.add(table_borders.bottom, border_priority_table);
+                for(int k = col; k <= last_col; k++)
+                {
+                    bottom.add(column_border_of(column_borders, k).bottom, border_priority_column);
+                    bottom.add(column_border_of(column_group_borders, k).bottom, border_priority_column_group);
+                }
             }
-            for(int k = col; k <= last_col; k++)
+            collapsed.bottom = bottom.value;
+
+            collapsed_border left;
+            if(col > 0)
             {
-                if(row > 0)
+                for(int r = row; r <= last_row; r++)
                 {
-                    if(const table_cell* above = owners[(row - 1) * m_cols_count + k])
-                    {
-                        collapsed.top = std::max(collapsed.top, above->borders.bottom);
-                    }
+                    left.add(border_of(col - 1, r).right, border_priority_cell);
                 }
-                if(last_row < m_rows_count - 1)
-                {
-                    if(const table_cell* below = owners[(last_row + 1) * m_cols_count + k])
-                    {
-                        collapsed.bottom = std::max(collapsed.bottom, below->borders.top);
-                    }
-                }
+                left.add(column_border_of(column_borders, col - 1).right, border_priority_column);
+                left.add(column_border_of(column_group_borders, col - 1).right, border_priority_column_group);
             }
+            left.add(cell_borders.left, border_priority_cell);
+            left.add(column_border_of(column_borders, col).left, border_priority_column);
+            left.add(column_border_of(column_group_borders, col).left, border_priority_column_group);
+            if(col == 0)
+            {
+                for(int r = row; r <= last_row; r++)
+                {
+                    left.add(row_borders[r].left, border_priority_row);
+                    left.add(row_group_borders[r].left, border_priority_row_group);
+                }
+                left.add(table_borders.left, border_priority_table);
+            }
+            collapsed.left = left.value;
+
+            collapsed_border right;
+            right.add(cell_borders.right, border_priority_cell);
+            right.add(column_border_of(column_borders, last_col).right, border_priority_column);
+            right.add(column_border_of(column_group_borders, last_col).right, border_priority_column_group);
+            if(last_col < m_cols_count - 1)
+            {
+                for(int r = row; r <= last_row; r++)
+                {
+                    right.add(border_of(last_col + 1, r).left, border_priority_cell);
+                }
+                right.add(column_border_of(column_borders, last_col + 1).left, border_priority_column);
+                right.add(column_border_of(column_group_borders, last_col + 1).left, border_priority_column_group);
+            }
+            if(last_col == m_cols_count - 1)
+            {
+                for(int r = row; r <= last_row; r++)
+                {
+                    right.add(row_borders[r].right, border_priority_row);
+                    right.add(row_group_borders[r].right, border_priority_row_group);
+                }
+                right.add(table_borders.right, border_priority_table);
+            }
+            collapsed.right = right.value;
 
             if(row == 0)
             {
-                m_collapsed_top = std::max(m_collapsed_top, collapsed.top);
+                m_collapsed_top = std::max(m_collapsed_top, collapsed.top.width);
             }
             if(last_row == m_rows_count - 1)
             {
-                m_collapsed_bottom = std::max(m_collapsed_bottom, collapsed.bottom);
+                m_collapsed_bottom = std::max(m_collapsed_bottom, collapsed.bottom.width);
+            }
+            if(col == 0)
+            {
+                m_collapsed_left = std::max(m_collapsed_left, collapsed.left.width);
+            }
+            if(last_col == m_cols_count - 1)
+            {
+                m_collapsed_right = std::max(m_collapsed_right, collapsed.right.width);
             }
         }
     }
@@ -1100,6 +1381,7 @@ litehtml::table_row::table_row(pixel_t h, const std::shared_ptr<render_item>& ro
     border_top    = 0;
     top           = 0;
     bottom        = 0;
+    baseline      = 0;
     if(row)
     {
         css_height = row->src_el()->css().get_height();

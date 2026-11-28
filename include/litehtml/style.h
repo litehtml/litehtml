@@ -5,6 +5,7 @@
 #include "css_length.h"
 #include "css_grid.h"
 #include "css_position.h"
+#include "css_quotes.h"
 #include "css_tokenizer.h"
 #include "gradient.h"
 #include "web_color.h"
@@ -24,7 +25,7 @@ namespace litehtml
     struct property_value
         : variant<invalid, inherit, int, int_vector, css_length, length_vector, float, web_color, color_vector,
                   std::vector<image>, std::string, std::vector<std::string>, size_vector, css_token_vector,
-                  grid_track_list, grid_track_size, grid_line, grid_template_areas>
+                  grid_track_list, grid_track_size, grid_line, grid_template_areas, css_quotes>
     {
         bool                     m_important = false;
         bool                     m_has_var   = false; // css_token_vector, parsing is delayed because of var()

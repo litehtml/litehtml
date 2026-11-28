@@ -11,6 +11,20 @@ namespace litehtml
 
     void el_td::parse_attributes()
     {
+        // https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-table-cellpadding
+        // The cellpadding attribute of the enclosing table maps to the padding of its cells.
+        for(element::ptr cur = parent(); cur; cur = cur->parent())
+        {
+            if(cur->tag() == _table_)
+            {
+                if(const char* cellpadding = cur->get_attr("cellpadding"))
+                {
+                    map_to_pixel_length_property(_padding_, cellpadding);
+                }
+                break;
+            }
+        }
+
         // https://html.spec.whatwg.org/multipage/rendering.html#tables-2:attr-tdth-width
         const char* str = get_attr("width");
         if(str)

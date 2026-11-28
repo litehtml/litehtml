@@ -3,6 +3,7 @@
 
 #include <memory>
 #include <list>
+#include <optional>
 #include <tuple>
 #include "html.h"
 #include "pixel_type.h"
@@ -33,10 +34,13 @@ namespace litehtml
         std::weak_ptr<render_item>                m_stacking_context;
         std::shared_ptr<scroll_view>              m_scroll_view;
 
-        margins  m_margins;
-        margins  m_padding;
-        margins  m_borders;
-        position m_pos;
+        margins m_margins;
+        margins m_padding;
+        margins m_borders;
+        // The borders the box is laid out with; the collapsed ones while the table renders a cell.
+        bool                   m_borders_overridden = false;
+        std::optional<borders> m_paint_borders;
+        position               m_pos;
         // Arguments of the last render(): the item can be laid out again in place without the
         // parent once its own box is known to be definite.
         containing_block_context m_cb_context;
@@ -406,6 +410,66 @@ namespace litehtml
             return m_borders;
         }
 
+        const margins& get_borders() const
+        {
+            return m_borders;
+        }
+
+        // Lays the box out with the collapsed borders of a table cell (CSS 2.1 17.6.2).
+        void override_borders(const margins& val)
+        {
+            m_borders            = val;
+            m_borders_overridden = true;
+        }
+
+        // Restores the borders the box is laid out with once the cell is laid out.
+        void clear_borders_override(const margins& own_borders)
+        {
+            m_borders            = own_borders;
+            m_borders_overridden = false;
+        }
+
+        // The widths of the borders painted around the box: the collapsed ones for a table cell,
+        // its own otherwise.
+        margins paint_border_widths() const
+        {
+            if(!m_paint_borders)
+            {
+                return m_borders;
+            }
+            margins ret;
+            ret.left   = m_paint_borders->left.width;
+            ret.right  = m_paint_borders->right.width;
+            ret.top    = m_paint_borders->top.width;
+            ret.bottom = m_paint_borders->bottom.width;
+            return ret;
+        }
+
+        // The element's borders with the used widths (in pixels) and the computed style and color.
+        borders get_styled_borders() const;
+
+        // The collapsed borders the table resolved for this item, painted instead of the element's own ones.
+        const std::optional<borders>& paint_borders() const
+        {
+            return m_paint_borders;
+        }
+
+        void set_paint_borders(const borders& val)
+        {
+            m_paint_borders = val;
+        }
+
+        void reset_paint_borders()
+        {
+            m_paint_borders.reset();
+        }
+
+        // True when this item paints the collapsed borders of its grid itself.
+        virtual bool paints_collapsed_borders() const
+        {
+            return false;
+        }
+
         /**
          * Top offset to the element content. Includes paddings, margins and borders.
          */
@@ -614,7 +678,16 @@ namespace litehtml
         pixel_t  calc_auto_margins(pixel_t parent_width); // returns left margin
 
         virtual std::shared_ptr<render_item> init();
-        virtual void                         apply_vertical_align() {}
+        /**
+         * Align the content of a box inside the box (table cells).
+         * @param baseline_shift when not negative, the distance the content has to be moved down to
+         *                       put its first baseline on the baseline of the row the box belongs to
+         *                       (table cells with 'vertical-align: baseline', CSS 2.1 17.5.3).
+         *                       When negative the value of 'vertical-align' is used instead.
+         */
+        virtual void apply_vertical_align([[maybe_unused]] pixel_t baseline_shift = -1_px) {}
+        // The first in-flow line box or table row, without a synthesized fallback baseline.
+        virtual std::optional<pixel_t> get_first_in_flow_baseline();
         /**
          * Get first baseline position. Default position is element bottom without bottom margin.
          * @returns offset of the first baseline from element top
@@ -673,6 +746,10 @@ namespace litehtml
                                    const render_item* stacking_context = nullptr,
                                    const clipping* cur_clipping = nullptr, const clipping* abs_clipping = nullptr);
         virtual pixel_t get_draw_vertical_offset()
+        {
+            return 0_px;
+        }
+        virtual pixel_t get_draw_vertical_bottom_offset()
         {
             return 0_px;
         }
